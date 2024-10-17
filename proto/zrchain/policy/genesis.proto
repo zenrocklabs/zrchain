@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package zrchain.policy;
+
+import "gogoproto/gogo.proto";
+import "zrchain/policy/params.proto";
+import "zrchain/policy/action.proto";
+import "zrchain/policy/policy.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// GenesisState defines the policy module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  string port_id = 2;
+  repeated Policy policies = 3 [ (gogoproto.nullable) = false ];
+  repeated Action actions = 4 [ (gogoproto.nullable) = false ];
+  repeated GenesisSignMethod sign_methods = 5 [ (gogoproto.nullable) = false ];
+}
+
+message GenesisSignMethod {
+  string owner = 1;
+  string id = 2;
+  google.protobuf.Any config = 3;
+}

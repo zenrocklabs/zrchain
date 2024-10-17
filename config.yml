@@ -1,0 +1,117 @@
+validation: sovereign
+version: 1
+build:
+  main: cmd/zenrockd
+  binary: zenrockd
+  proto:
+    path: ""
+    third_party_paths: []
+accounts:
+  - name: alice
+    # zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+    coins:
+      - 20000000000000urock
+    mnemonic: "strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue"
+  - name: bob
+    # zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+    coins:
+      - 10000000000000urock
+    mnemonic: "fee buzz avocado dolphin syrup rule access cave close puppy lemon round able bronze fame give spoon company since fog error trip toast unable"
+  - name: faucet
+    # zen17ekx844yl3ftmcl47ryc7fz5cd7uhxq4f5ma5q
+    coins:
+      - 10000000000000urock
+    mnemonic: "amused random require among toilet federal idea spider airport distance suit beef stumble banner brown merit immense until assist series truth sell transfer destroy"
+  - name: ZenrockKMS
+    # zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts
+    coins:
+      - 100000000000000urock
+    mnemonic: "exclude try nephew main caught favorite tone degree lottery device tissue tent ugly mouse pelican gasp lava flush pen river noise remind balcony emerge"
+  - name: ZenrockMPCConnector
+    # zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn
+    coins:
+      - 100000000000000urock
+    mnemonic: "top decade spare horn skin actor balcony swim prefer hood divert run sick save excess siege market proud enforce wood lecture drive near odor"
+  - name: KeyringWithFeesAccount
+    address: zen1xemxsupkv5mxcvmj0pskcat989mrgatcfwucpy
+    coins:
+      - 10000000urock
+  - name: ZrSignConnector
+    # zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq
+    coins:
+      - 100000000000000urock
+    mnemonic: "theme rocket judge useless snap happy step youth cousin inject sweet angry scan manual middle lake absorb mango six earth rescue elite settle dolphin"
+
+faucet:
+  name: bob
+  coins:
+    - 100000000000000urock
+client:
+  typescript:
+    path: ts-client
+  hooks:
+    path: react/src/hooks
+  openapi:
+    path: docs/static/openapi.yml
+genesis:
+  app_state:
+    identity:
+      keyrings:
+        - address: keyring1pfnq7r04rept47gaf5cpdew2
+          admins:
+            - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          description: ZenrockKMS
+          is_active: true
+          key_req_fee: 0
+          parties:
+            - zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts
+          sig_req_fee: 0
+        - address: keyring1k6vc6vhp6e6l3rxalue9v4ux
+          admins:
+            - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          description: Keyring with Fees
+          is_active: true
+          key_req_fee: 2
+          parties:
+            - zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts
+          sig_req_fee: 2
+        - address: keyring1k6vc6vhp6e6l3rxaard6fd
+          admins:
+            - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          description: TSS one
+          is_active: true
+          key_req_fee: 0
+          parties:
+            - zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn
+          sig_req_fee: 0
+      workspaces:
+        - address: workspace14a2hpadpsy9h4auve2z8lw
+          creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+          owners:
+            - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+    staking:
+      params:
+        bond_denom: urock
+    treasury:
+      params:
+        mpc_keyring: keyring1pfnq7r04rept47gaf5cpdew2
+        zr_sign_address: zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq
+        keyring_commission: 10
+        keyring_commission_destination: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+        min_gas_fee: 0.0001urock
+    gov:
+      params:
+        voting_period: 0h1m0s
+        expedited_voting_period: 0h0m30s
+
+  consensus:
+    params:
+      abci:
+        vote_extensions_enable_height: "0" # set to 0 to disable VEs or 1 to enable them
+  chain_id: zenrock
+validators:
+  - name: alice
+    bonded: 10000000000000urock

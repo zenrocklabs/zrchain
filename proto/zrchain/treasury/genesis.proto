@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package zrchain.treasury;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/treasury/params.proto";
+import "zrchain/treasury/key.proto";
+import "zrchain/treasury/mpcsign.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+
+// GenesisState defines the treasury module's genesis state.
+message GenesisState {
+
+  // params defines all the parameters of the module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  string port_id = 2;
+  repeated Key keys = 3 [ (gogoproto.nullable) = false ];
+  repeated KeyRequest key_requests = 4 [ (gogoproto.nullable) = false ];
+  repeated SignRequest sign_requests = 5 [ (gogoproto.nullable) = false ];
+  repeated SignTransactionRequest sign_tx_requests = 6 [ (gogoproto.nullable) = false ];
+  repeated ICATransactionRequest ica_tx_requests = 7 [ (gogoproto.nullable) = false ];
+}

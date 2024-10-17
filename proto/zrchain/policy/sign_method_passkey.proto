@@ -1,0 +1,12 @@
+syntax = "proto3";
+package zrchain.policy;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// SignMethodPasskey defines a structure containing passkey related data
+message SignMethodPasskey {
+  bytes raw_id = 1;
+  bytes attestation_object = 2;
+  bytes client_data_json = 3;
+  bool active = 4;
+}

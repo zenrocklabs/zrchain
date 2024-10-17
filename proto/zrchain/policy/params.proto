@@ -1,0 +1,16 @@
+syntax = "proto3";
+package zrchain.policy;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/policy/Params";
+  option (gogoproto.equal) = true;
+
+  uint64 minimum_btl = 1;
+  uint64 default_btl = 2;
+}

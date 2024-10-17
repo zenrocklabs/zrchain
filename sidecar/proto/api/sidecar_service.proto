@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package api;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api";
+
+service SidecarService {
+  rpc GetSidecarState(SidecarStateRequest) returns (SidecarStateResponse) {}
+  rpc GetSidecarStateByEthHeight(SidecarStateByEthHeightRequest) returns (SidecarStateResponse) {}
+  rpc GetBitcoinBlockHeaderByHeight(BitcoinBlockHeaderByHeightRequest) returns (BitcoinBlockHeaderResponse) {}
+  rpc GetLatestBitcoinBlockHeader(LatestBitcoinBlockHeaderRequest) returns (BitcoinBlockHeaderResponse) {}
+  rpc GetEthereumTransaction(EthereumTransactionRequest) returns (EthereumTransactionResponse) {}
+  rpc GetSolanaTransaction(SolanaTransactionRequest) returns (SolanaTransactionResponse) {}
+  rpc GetEthereumNonceAtHeight(EthereumNonceAtHeightRequest) returns (EthereumNonceAtHeightResponse) {}
+}
+
+message LatestBitcoinBlockHeaderRequest {
+  string ChainName = 1;
+}
+
+message BitcoinBlockHeaderByHeightRequest {
+  int64 BlockHeight = 1;
+  string ChainName = 2;
+}
+
+message BitcoinBlockHeaderResponse {
+  BTCBlockHeader blockHeader = 1;
+  int64 BlockHeight = 2;
+  int64 TipHeight = 3;
+}
+
+message BTCBlockHeader {
+  int64 Version = 1;
+  string PrevBlock = 2;
+  string MerkleRoot = 3;
+  int64 TimeStamp = 4;
+  int64 Bits = 5;
+  int64 Nonce = 6;
+  string BlockHash = 7;
+}
+
+message SidecarStateRequest {}
+
+message SidecarStateResponse {
+  bytes Delegations = 1;
+  string ROCKUSDPrice = 2;
+  string ETHUSDPrice = 3;
+  uint64 EthBlockHeight = 4;
+  string EthBlockHash = 5;
+  uint64 EthGasPrice = 6;
+  uint64 EthGasLimit = 7;
+}
+
+message SidecarStateByEthHeightRequest {
+  uint64 EthBlockHeight = 1;
+}
+
+message SolanaTransactionRequest {
+  string TxSignature = 1;
+}
+
+message SolanaTransactionResponse {
+  uint64 TxSlot = 4;
+}
+
+message EthereumNonceAtHeightRequest {
+  string Address = 1;
+  uint64 Height = 2;
+}
+
+message EthereumNonceAtHeightResponse {
+  uint64 Nonce = 1;
+}
+
+message EthereumTransactionRequest {
+  string TxHash = 1;
+}
+
+message EthereumTransactionResponse {
+  uint64 TxHeight = 1;
+}

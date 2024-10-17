@@ -1,0 +1,7 @@
+{
+  "name": "validator-sidecar",
+  "description": "The Zenrock validator sidecar",
+  "version": "0.0.1",
+  "author": "Zenrock Laboratories",
+  "license": "Apache2"
+}

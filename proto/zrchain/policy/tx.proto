@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package zrchain.policy;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/policy/params.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  
+  // UpdateParams defines the operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams (MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  
+  // NewPolicy defines the operation for creating a new policy.
+  rpc NewPolicy (MsgNewPolicy) returns (MsgNewPolicyResponse);
+  
+  // RevokeAction defines the operation for revoking an action.
+  rpc RevokeAction (MsgRevokeAction) returns (MsgRevokeActionResponse);
+  
+  // ApproveAction defines the operation for approving an action.
+  rpc ApproveAction (MsgApproveAction) returns (MsgApproveActionResponse);
+  
+  // AddSignMethod defines the operation for adding a sign method.
+  rpc AddSignMethod (MsgAddSignMethod) returns (MsgAddSignMethodResponse);
+  
+  // RemoveSignMethod defines the operation for removing a sign method.
+  rpc RemoveSignMethod    (MsgRemoveSignMethod) returns (MsgRemoveSignMethodResponse);
+  
+  // AddMultiGrant defines the operation for adding multiple grants
+  rpc AddMultiGrant       (MsgAddMultiGrant   ) returns (MsgAddMultiGrantResponse);
+  
+  // RemoveMultiGrant defines the operation for removing multiple grants
+  rpc RemoveMultiGrant    (MsgRemoveMultiGrant) returns (MsgRemoveMultiGrantResponse);
+}
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) =                        "authority";
+  option           (amino.name) = "zrchain/x/policy/MsgUpdateParams";
+  
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgNewPolicy defines the Msg/NewPolicy request type.
+message MsgNewPolicy {
+  option (cosmos.msg.v1.signer) = "creator";
+  string              creator = 1;
+  string              name    = 2;
+  google.protobuf.Any policy  = 3;
+  uint64              btl     = 4; 
+}
+
+// MsgNewPolicyResponse defines the response structure for executing a
+// MsgNewPolicy message.
+message MsgNewPolicyResponse {
+  uint64 id = 1;
+}
+
+// MsgRevokeAction defines the Msg/RevokeAction request type.
+message MsgRevokeAction {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator   = 1;
+  uint64 action_id = 2;
+}
+
+// MsgRevokeActionResponse defines the response structure for executing a
+// MsgRevokeAction message.
+message MsgRevokeActionResponse {}
+
+// MsgApproveAction defines the Msg/ApproveAction request type.
+message MsgApproveAction {
+  option (cosmos.msg.v1.signer) = "creator";
+           string              creator               = 1;
+           string              action_type           = 2;
+           uint64              action_id             = 3;
+  repeated google.protobuf.Any additional_signatures = 4;
+}
+
+// MsgApproveActionResponse defines the response structure for executing a
+// MsgApproveAction message.
+message MsgApproveActionResponse {
+  string status = 1;
+}
+
+// MsgAddSignMethod defines the Msg/AddSignMethod request type.
+message MsgAddSignMethod {
+  option (cosmos.msg.v1.signer) = "creator";
+  string              creator = 1;
+  google.protobuf.Any config  = 2;
+}
+
+// MsgAddSignMethodResponse defines the response structure for executing a
+// MsgAddSignMethod message.
+message MsgAddSignMethodResponse {}
+
+// MsgRemoveSignMethod defines the Msg/RemoveSignMethod request type.
+message MsgRemoveSignMethod {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string id      = 2;
+}
+
+// MsgRemoveSignMethodResponse defines the response structure for executing a
+// MsgRemoveSignMethod message.
+message MsgRemoveSignMethodResponse {}
+
+message MsgAddMultiGrant {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string grantee = 2;
+  repeated string msgs = 3;
+}
+
+message MsgAddMultiGrantResponse {}
+
+message MsgRemoveMultiGrant {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string grantee = 2;
+  repeated string msgs = 3;
+}
+
+message MsgRemoveMultiGrantResponse {}
+

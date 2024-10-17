@@ -1,0 +1,253 @@
+syntax = "proto3";
+
+package zrchain.identity;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/identity/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines the operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // NewWorkspace defines an operation for creating a new workspace
+  rpc NewWorkspace(MsgNewWorkspace) returns (MsgNewWorkspaceResponse);
+
+  // AddWorkspaceOwner defines an operation for adding a workspace owner
+  rpc AddWorkspaceOwner(MsgAddWorkspaceOwner)
+      returns (MsgAddWorkspaceOwnerResponse);
+
+  // AppendChildWorkspace defines an operation for appending a child workspace
+  rpc AppendChildWorkspace(MsgAppendChildWorkspace)
+      returns (MsgAppendChildWorkspaceResponse);
+
+  // NewChildWorkspace defines an operation for creating a new child workspace
+  rpc NewChildWorkspace(MsgNewChildWorkspace)
+      returns (MsgNewChildWorkspaceResponse);
+
+  // RemoveWorkspaceOwner defines an operation for removing a workspace owner
+  rpc RemoveWorkspaceOwner(MsgRemoveWorkspaceOwner)
+      returns (MsgRemoveWorkspaceOwnerResponse);
+
+  // // NewKeyring defines an operation for creating a keyring
+  rpc NewKeyring(MsgNewKeyring) returns (MsgNewKeyringResponse);
+
+  // AddKeyringParty defines an operation for adding a party to a keyring
+  rpc AddKeyringParty(MsgAddKeyringParty) returns (MsgAddKeyringPartyResponse);
+
+  // UpdateKeyring defines an operation to update the keyring attributes
+  rpc UpdateKeyring(MsgUpdateKeyring) returns (MsgUpdateKeyringResponse);
+
+  // RemoveKeyringParty defines an operation to remove a party from a keyring
+  rpc RemoveKeyringParty(MsgRemoveKeyringParty)
+      returns (MsgRemoveKeyringPartyResponse);
+
+  // AddKeyringAdmin defines an operation to add an admin to a keyring
+  rpc AddKeyringAdmin(MsgAddKeyringAdmin) returns (MsgAddKeyringAdminResponse);
+
+  // RemoveKeyringAdmin defines an operation to remove an admin from a keyring
+  rpc RemoveKeyringAdmin(MsgRemoveKeyringAdmin)
+      returns (MsgRemoveKeyringAdminResponse);
+
+  // Update a workspace, e.g. changing the policies in use.
+  rpc UpdateWorkspace(MsgUpdateWorkspace) returns (MsgUpdateWorkspaceResponse);
+
+  // Deactivate a keyring
+  rpc DeactivateKeyring(MsgDeactivateKeyring)
+      returns (MsgDeactivateKeyringResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) =
+      "github.com/Zenrock-Foundation/zrchain/v4/x/identity/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // params defines the module parameters to update.
+
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgNewWorkspace is the Msg/NewWorkspace request type
+message MsgNewWorkspace {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 admin_policy_id = 2;
+  uint64 sign_policy_id = 3;
+  repeated string additional_owners = 4; // Optional
+}
+
+// MsgNewWorkspaceResponse defines the response structure for executing a
+// MsgNewWorkspace message
+message MsgNewWorkspaceResponse { string addr = 1; }
+
+// MsgAddWorkspaceOwner is the Msg/AddWorkspaceOwner request type
+message MsgAddWorkspaceOwner {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string workspace_addr = 2;
+  string new_owner = 3;
+  uint64 btl = 4;
+}
+
+// MsgAddWorkspaceOwnerResponse defines the response structure for executing a
+// MsgAddWorkspaceOwner message
+message MsgAddWorkspaceOwnerResponse {}
+
+// MsgAppendChildWorkspace is the Msg/AppendChildWorkspace request type
+message MsgAppendChildWorkspace {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string parent_workspace_addr = 2;
+  string child_workspace_addr = 3;
+  uint64 btl = 4;
+}
+
+// MsgAppendChildWorkspaceResponse defines the response structure for executing
+// a MsgAppendChildWorkspace message
+message MsgAppendChildWorkspaceResponse {}
+
+// MsgNewChildWorkspace is the Msg/NewChildWorkspace request type
+message MsgNewChildWorkspace {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string parent_workspace_addr = 2;
+  uint64 btl = 3;
+}
+
+// MsgNewChildWorkspaceResponse defines the response structure for executing a
+// MsgNewChildWorkspaceResponse message
+message MsgNewChildWorkspaceResponse {
+  string address = 1;
+}
+
+// MsgRemoveWorkspaceOwner is the Msg/RemoveWorkspaceOwner request type
+message MsgRemoveWorkspaceOwner {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string workspace_addr = 2;
+  string owner = 3;
+  uint64 btl = 4;
+}
+
+// MsgRemoveWorkspaceOwnerResponse defines the response structure for executing
+// a MsgRemoveWorkspaceOwner message
+message MsgRemoveWorkspaceOwnerResponse {}
+
+// MsgNewKeyring is the Msg/NewKeyring request type
+message MsgNewKeyring {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string description = 2;
+  uint32 party_threshold = 3;
+  uint64 key_req_fee = 4;
+  uint64 sig_req_fee = 5;
+}
+
+// MsgNewKeyringResponse is the Msg/NewKeyringResponse response type
+message MsgNewKeyringResponse { string addr = 1; }
+
+// MsgAddKeyringParty is the Msg/AddKeyringParty request type
+message MsgAddKeyringParty {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+  string party = 3;
+  bool increase_threshold = 4; // Optional flag
+}
+
+// MsgAddKeyringPartyResponse is the Msg/AddKeyringPartyResponse response type
+message MsgAddKeyringPartyResponse {}
+
+// MsgUpdateKeyring is the Msg/UpdateKeyring request type
+message MsgUpdateKeyring {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+  uint32 party_threshold = 3;
+  uint64 key_req_fee = 4;
+  uint64 sig_req_fee = 5;
+  string description = 6;
+  bool is_active = 7;
+}
+
+// MsgUpdateKeyringResponse is the Msg/UpdateKeyringResponse response type
+message MsgUpdateKeyringResponse {}
+
+// MsgRemoveKeyringParty is the Msg/RemoveKeyringParty request type
+message MsgRemoveKeyringParty {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+  string party = 3;
+  bool decrease_threshold = 4; // Optional flag
+}
+
+// MsgRemoveKeyringPartyResponse is the Msg/RemoveKeyringPartyResponse response
+// type
+message MsgRemoveKeyringPartyResponse {}
+
+// MsgAddKeyringAdmin is the Msg/AddKeyringAdmin request type
+message MsgAddKeyringAdmin {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+  string admin = 3;
+}
+
+// MsgAddKeyringAdminResponse is the Msg/AddKeyringAdminResponse response type
+message MsgAddKeyringAdminResponse {}
+
+// MsgRemoveKeyringAdmin is the Msg/RemoveKeyringAdmin request type
+message MsgRemoveKeyringAdmin {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+  string admin = 3;
+}
+
+// MsgRemoveKeyringAdminResponse is the Msg/RemoveKeyringAdminResponse response
+// type
+message MsgRemoveKeyringAdminResponse {}
+
+// MsgUpdateWorkspace is the Msg/UpdateWorkspace request type
+message MsgUpdateWorkspace {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string workspace_addr = 2;
+  uint64 admin_policy_id = 3;
+  uint64 sign_policy_id = 4;
+  uint64 btl = 5;
+}
+
+// MsgUpdateWorkspaceResponse is the Msg/UpdateWorkspaceResponse response type
+message MsgUpdateWorkspaceResponse {}
+
+// MsgDeactivateKeyring is the Msg/DeactivateKeyring request type
+message MsgDeactivateKeyring {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring_addr = 2;
+}
+
+// MsgDeactivateKeyringResponse is the Msg/DeactivateKeyringResponse response
+// type
+message MsgDeactivateKeyringResponse {}

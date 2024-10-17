@@ -1,0 +1,13 @@
+syntax = "proto3";
+package zrchain.treasury;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+
+// defines the treasury packet data
+message TreasuryPacketData {
+  // defines contains of the packet
+  oneof packet { NoData no_data = 1; }
+}
+
+// defines the nodata message
+message NoData {}

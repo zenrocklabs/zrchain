@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package zrchain.identity;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "zrchain/identity/params.proto";
+import "zrchain/identity/workspace.proto";
+import "zrchain/identity/keyring.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/zrchain/identity/params";
+  }
+
+  // Queries a list of Workspaces items.
+  rpc Workspaces(QueryWorkspacesRequest) returns (QueryWorkspacesResponse) {
+    option (google.api.http).get = "/zrchain/identity/workspaces";
+  }
+
+  // Queries a list of WorkspaceByAddress items.
+  rpc WorkspaceByAddress(QueryWorkspaceByAddressRequest)
+      returns (QueryWorkspaceByAddressResponse) {
+    option (google.api.http).get =
+        "/zrchain/identity/workspace_by_address/{workspace_addr}";
+  }
+
+  // Queries a list of Keyrings items.
+  rpc Keyrings(QueryKeyringsRequest) returns (QueryKeyringsResponse) {
+    option (google.api.http).get = "/zrchain/identity/keyrings";
+  }
+
+  // Queries a list of KeyringByAddress items.
+  rpc KeyringByAddress(QueryKeyringByAddressRequest)
+      returns (QueryKeyringByAddressResponse) {
+    option (google.api.http).get =
+        "/zrchain/identity/keyring_by_address/{keyring_addr}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+
+  // params holds all the parameters of this module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// QueryWorkspacesRequest is request type for the Query/WorkspacesRequest RPC
+// Method
+message QueryWorkspacesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  string owner = 2;
+  string creator = 3;
+}
+
+// QueryWorkspacesResponse is response type for the Query/WorkspacesRequest RPC
+// method
+message QueryWorkspacesResponse {
+  repeated Workspace workspaces = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryWorkspaceByAddressRequest is request type for the
+// Query/WorkspaceByAddressRequest RPC method
+message QueryWorkspaceByAddressRequest { string workspace_addr = 1; }
+
+// QueryWorkspaceByAddressResponse is the response type for
+// Query/WorkspaceByAddressResponse RPC method
+message QueryWorkspaceByAddressResponse { Workspace workspace = 1; }
+
+// QueryKeyringsRequest is request type for the
+// Query/KeyringsRequest RPC method
+message QueryKeyringsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryKeyringsResponse is the response type for
+// Query/KeyringsResponse RPC method
+message QueryKeyringsResponse {
+  repeated Keyring keyrings = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryKeyringByAddressRequest is request type for the
+// Query/KeyringByAddressRequest RPC method
+message QueryKeyringByAddressRequest { string keyring_addr = 1; }
+
+// QueryKeyringByAddressResponse is the response type for
+// Query/KeyringByAddressResponse RPC method
+message QueryKeyringByAddressResponse { Keyring keyring = 1; }

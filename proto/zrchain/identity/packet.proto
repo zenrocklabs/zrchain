@@ -1,0 +1,13 @@
+syntax = "proto3";
+package zrchain.identity;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types";
+
+// defines IBC packet for identity module
+message IdentityPacketData {
+  // defines packet
+  oneof packet { NoData no_data = 1; }
+}
+
+// defines data for the IBC packet
+message NoData {}

@@ -1,0 +1,289 @@
+syntax = "proto3";
+
+package zrchain.treasury;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "zrchain/treasury/key.proto";
+import "zrchain/treasury/mpcsign.proto";
+import "zrchain/treasury/params.proto";
+import "zrchain/treasury/wallet.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines the operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // NewKeyRequest defines an operation for creating a key request.
+  rpc NewKeyRequest(MsgNewKeyRequest) returns (MsgNewKeyRequestResponse);
+
+  // FulfilKeyRequest defines an operation for responding to a key request
+  rpc FulfilKeyRequest(MsgFulfilKeyRequest) returns (MsgFulfilKeyRequestResponse);
+
+  // NewSignatureRequest defines an operation for creating a signature request
+  rpc NewSignatureRequest(MsgNewSignatureRequest) returns (MsgNewSignatureRequestResponse);
+
+  // FulfilSignatureRequest defines an operation for returning a signature
+  // response to a request
+  rpc FulfilSignatureRequest(MsgFulfilSignatureRequest) returns (MsgFulfilSignatureRequestResponse);
+
+  // NewSignTransactionRequest defines an operation for creating a signature for
+  // transaction request
+  rpc NewSignTransactionRequest(MsgNewSignTransactionRequest) returns (MsgNewSignTransactionRequestResponse);
+
+  // TransferFromKeyring defines an operation for transferring tokens from a
+  // keyring
+  rpc TransferFromKeyring(MsgTransferFromKeyring) returns (MsgTransferFromKeyringResponse);
+
+  // NewICATransactionRequest defines an operation for creating an interchain
+  // account transaction request
+  rpc NewICATransactionRequest(MsgNewICATransactionRequest) returns (MsgNewICATransactionRequestResponse);
+
+  // FulfilICATransactionRequest defines an operation for responding to an
+  // interchain account transaction request
+  rpc FulfilICATransactionRequest(MsgFulfilICATransactionRequest) returns (MsgFulfilICATransactionRequestResponse);
+  rpc NewZrSignSignatureRequest(MsgNewZrSignSignatureRequest) returns (MsgNewZrSignSignatureRequestResponse);
+  rpc UpdateKeyPolicy(MsgUpdateKeyPolicy) returns (MsgUpdateKeyPolicyResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgNewKeyRequest is the Msg/NewKeyRequest request type.
+message MsgNewKeyRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string workspace_addr = 2;
+  string keyring_addr = 3;
+  string key_type = 4;
+  uint64 btl = 5;
+  uint64 index = 6;
+  string ext_requester = 7;
+  uint64 ext_key_type = 8;
+  uint64 sign_policy_id = 9;
+  ZenBTCMetdata zenbtc_metadata = 10; // Optional
+}
+
+// MsgNewKeyRequestResponse defines the response structure for executing a
+// MsgNewKeyRequest message.
+message MsgNewKeyRequestResponse {
+  uint64 key_req_id = 1;
+}
+
+// MsgFulfilKeyRequest is the Msg/FulfilKeyRequest request type.
+message MsgFulfilKeyRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 request_id = 2;
+  KeyRequestStatus status = 3;
+
+  // Holds the result of the request. If status is approved, the result will
+  // contain the requested key's public key that can be used for signing
+  // payloads.
+  // If status is rejected, the result will contain the reason.
+  oneof result {
+    MsgNewKey key = 4;
+    string reject_reason = 5;
+  }
+  bytes keyring_party_signature = 6;
+}
+
+// MsgNewKey defines the attributes of a key
+message MsgNewKey {
+  bytes public_key = 1;
+}
+
+// MsgNewKeyRequestResponse defines the response structure for executing a
+// MsgNewKeyRequest message.
+message MsgFulfilKeyRequestResponse {}
+
+// MsgNewSignatureRequest is the Msg/NewSignatureRequest request type.
+message MsgNewSignatureRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 key_id = 2;
+  string data_for_signing = 3;
+  uint64 btl = 4;
+  bytes cache_id = 5;
+  bytes verify_signing_data = 6;
+  VerificationVersion verify_signing_data_version = 7;
+}
+
+// Verification contains any data required to verify the incoming data_fop_signing
+// 1st case is to check the sighashes generated from the supplied Bitcoin TX are correct
+enum VerificationVersion {
+  UNKNOWN = 0;
+  BITCOIN_PLUS = 1;
+}
+
+// MsgNewKeyRequestResponse defines the response structure for executing a
+// MsgNewKeyRequest message.
+message MsgNewSignatureRequestResponse {
+  uint64 sig_req_id = 1;
+}
+
+// MsgFulfilSignatureRequest is the Msg/NewSignatureRequest request type.
+message MsgFulfilSignatureRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 request_id = 2;
+  SignRequestStatus status = 3;
+  bytes keyring_party_signature = 4;
+  bytes signed_data = 5;
+  string reject_reason = 6;
+}
+
+// MsgFulfilSignatureRequestResponse defines the response structure for
+// executing a MsgFulfilSignatureRequest message.
+message MsgFulfilSignatureRequestResponse {}
+
+// MetadataEthereum defines the chain id
+message MetadataEthereum {
+  uint64 chain_id = 1;
+}
+
+// Define an enum for Solana network types
+enum SolanaNetworkType {
+  UNDEFINED = 0;
+  MAINNET = 1;
+  DEVNET = 2;
+  TESTNET = 3;
+}
+
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+message MetadataSolana {
+  SolanaNetworkType network = 1;
+}
+
+// MsgNewSignTransactionRequest is the Msg/NewSignTransactionRequest request
+// type.
+message MsgNewSignTransactionRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 key_id = 2;
+  WalletType wallet_type = 3;
+  bytes unsigned_transaction = 4;
+
+  // Additional metadata required when parsing the unsigned transaction.
+  google.protobuf.Any metadata = 5;
+  uint64 btl = 6;
+  bytes cache_id = 7;
+  bool no_broadcast = 8;
+}
+
+// MsgNewSignTransactionRequestResponse defines the response structure for
+// executing a MsgNewSignTransactionRequest message.
+message MsgNewSignTransactionRequestResponse {
+  uint64 id = 1;
+  uint64 signature_request_id = 2;
+}
+
+// MsgTransferFromKeyring is the Msg/TransferFromKeyring request type.
+message MsgTransferFromKeyring {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string keyring = 2;
+  string recipient = 3;
+  uint64 amount = 4;
+  string denom = 5;
+}
+
+// MsgTransferFromKeyringResponse defines the response structure for executing a
+// MsgTransferFromKeyring message.
+message MsgTransferFromKeyringResponse {}
+
+//
+// ---------------------
+//  INTERCHAIN ACCOUNTS
+// ---------------------
+//
+// MsgNewICATransactionRequest is the Msg/NewIcaTransactionRequest request type.
+message MsgNewICATransactionRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 key_id = 2;
+  string input_payload = 3;
+  string connection_id = 4;
+  uint64 relative_timeout_timestamp = 5;
+  uint64 btl = 6;
+}
+
+// MsgNewICATransactionRequestResponse defines the response structure for
+// executing a MsgNewICATransactionRequest message.
+message MsgNewICATransactionRequestResponse {
+  uint64 id = 1;
+  uint64 signature_request_id = 2;
+}
+
+// MsgFulfilICATransactionRequest is the Msg/FulfilICATransactionRequest request
+// type.
+message MsgFulfilICATransactionRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 request_id = 2;
+  SignRequestStatus status = 3;
+  bytes keyring_party_signature = 4;
+  bytes signed_data = 5;
+  string reject_reason = 6;
+}
+
+// MsgFulfilICATransactionRequestResponse defines the response structure for
+// executing a MsgFulfilICATransactionRequest message.
+message MsgFulfilICATransactionRequestResponse {}
+
+message MsgNewZrSignSignatureRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string address = 2;
+  uint64 key_type = 3;
+  uint64 wallet_index = 4;
+  bytes cache_id = 5;
+  string data = 6;
+  bytes verify_signing_data = 7;
+  VerificationVersion verify_signing_data_version = 8;
+  WalletType wallet_type = 9;
+  google.protobuf.Any metadata = 10;
+  bool no_broadcast = 11;
+  uint64 btl = 12;
+  bool tx = 13;
+}
+
+message MsgNewZrSignSignatureRequestResponse {
+  uint64 req_id = 1;
+}
+
+message MsgUpdateKeyPolicy {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 key_id = 2;
+  uint64 sign_policy_id = 3;
+}
+
+message MsgUpdateKeyPolicyResponse {}

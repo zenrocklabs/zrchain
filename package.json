@@ -1,0 +1,7 @@
+{
+  "name": "zenrockd",
+  "description": "The Zenrock blockchain node client",
+  "version": "1.21.4",
+  "author": "Zenrock Laboratories",
+  "license": "Apache2"
+}

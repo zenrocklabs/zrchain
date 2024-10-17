@@ -1,0 +1,9 @@
+---
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/python
+    out: proto/python
+  - plugin: buf.build/protocolbuffers/pyi:v26.1
+    out: proto/python
+  - plugin: buf.build/grpc/python:v1.54.0
+    out: proto/python

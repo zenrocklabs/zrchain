@@ -1,0 +1,43 @@
+syntax = "proto3";
+package zrchain.identity;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types";
+
+// defines workspace attributes
+message Workspace {
+
+  string address = 1;
+  string creator = 2;
+  repeated string owners = 3;
+  repeated string child_workspaces = 4;
+  // Optional ID of the policy to be applied to every *admin* operation.
+  // If not specified, the default policy is used.
+  //
+  // Admin operations are:
+  // - zrchain.identity.Msg.AddWorkspaceOwner
+  // - zrchain.identity.Msg.RemoveWorkspaceOwner
+  // - zrchain.identity.Msg.AppendChildWorkspace
+  // - zrchain.identity.Msg.NewChildWorkspace
+  //
+  // The default policy is to allow any operation when at least one of its
+  // owner approves it.
+  uint64 admin_policy_id = 5;
+
+  // Optional ID of the policy to be applied to every *sign* operation.
+  // If not specified, the default policy is used.
+  //
+  // Sign operations are:
+  // - zrchain.treasury.Msg.NewKeyRequest
+  // - zrchain.treasury.Msg.NewSignatureRequest
+  // - zrchain.treasury.Msg.NewWalletRequest
+  // - zrchain.treasury.Msg.NewSignTransactionRequest
+  //
+  // The default policy is to allow any operation when at least one of its
+  // owner approves it.
+  uint64 sign_policy_id = 6;
+
+
+  // Optional alias field to be used in various situations
+  // e.g. wallet type for zr sign workspaces
+  string alias = 7;
+}

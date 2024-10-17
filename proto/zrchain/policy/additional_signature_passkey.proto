@@ -1,0 +1,12 @@
+syntax = "proto3";
+package zrchain.policy;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// AdditionalSignaturePasskey is a message that contains passkey signature data
+message AdditionalSignaturePasskey {
+  bytes raw_id = 1;
+  bytes authenticator_data = 2;
+  bytes client_data_json = 3;
+  bytes signature = 4;
+}

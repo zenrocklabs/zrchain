@@ -1,0 +1,70 @@
+syntax = "proto3";
+package zrchain.policy;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+
+// Action is a message that represents an action that needs to be approved by
+// a set of approvers. Once the action is approved, it will be executed.
+message Action {
+  uint64 id = 1;
+  repeated string approvers = 2;
+  ActionStatus status = 3;
+  // Optional policy id that must be satisfied by the approvers.
+  // If not specified, it's up to the creator of the action to decide what to
+  // apply.
+  uint64 policy_id = 4;
+  // Original message that started the action, it will be executed when the
+  // policy is satisfied.
+  google.protobuf.Any msg = 5;
+  string creator = 6;
+  // BTL (blocks to live) is the block height up until this action can be
+  // approved or rejected.
+  uint64 btl = 7;
+  repeated KeyValue policy_data = 8;
+}
+
+// KeyValue is a simple key/value pair.
+message KeyValue {
+  string key = 1;
+  bytes value = 2;
+}
+
+// Current status of an action.
+enum ActionStatus {
+  // Unspecified status.
+  ACTION_STATUS_UNSPECIFIED = 0;
+
+  // Action is pending approval. This is the initial status.
+  ACTION_STATUS_PENDING = 1;
+
+  // Policy has been satified, action has been executed.
+  ACTION_STATUS_COMPLETED = 2;
+
+  // Action has been revoked by its creator.
+  ACTION_STATUS_REVOKED = 3;
+
+  // Action has been rejected since Btl is expired
+  ACTION_STATUS_TIMEOUT = 4;
+}
+
+// ActionResponse is a message that represents the response to an action that
+// has been approved or rejected.
+message ActionResponse {
+  uint64 id = 1;
+  repeated string approvers = 2;
+  string status = 3;
+  // Optional policy id that must be satisfied by the approvers.
+  // If not specified, it's up to the creator of the action to decide what to
+  // apply.
+  uint64 policy_id = 4;
+  // Original message that started the action, it will be executed when the
+  // policy is satisfied.
+  google.protobuf.Any msg = 5;
+  string creator = 6;
+  // BTL (blocks to live) is the block height up until this action can be
+  // approved or rejected.
+  uint64 btl = 7;
+  repeated KeyValue policy_data = 8;
+}

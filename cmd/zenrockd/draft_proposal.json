@@ -1,0 +1,25 @@
+{
+ "messages": [
+  {
+   "@type": "/zrchain.validation.MsgUpdateParams",
+   "authority": "zen10d07y265gmmuvt4z0w9aw880jnsr700jq0py6z",
+   "Params": {
+    "unbonding_time": "24h0m0s",
+    "max_validators": 75,
+    "max_entries": 7,
+    "historical_entries": 10000,
+    "bond_denom": "urock",
+    "min_commission_rate": "0.000000000000000000"
+   },
+   "HVParams": {
+    "AVSRewardsRate": "30000000000000000000000000000000000",
+    "BlockTime": "1"
+   }
+  }
+ ],
+ "metadata": "ipfs://QmR6DccPtVi9dBqNRGk4dtGdL1aBzWsDgH9BimCi1yg4re",
+ "deposit": "100000000urock",
+ "title": "Increase validators active set",
+ "summary": "Increase validators active set to 75",
+ "expedited": false
+}

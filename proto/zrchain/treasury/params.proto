@@ -1,0 +1,19 @@
+syntax = "proto3";
+package zrchain.treasury;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/Params";
+  option (gogoproto.equal) = true;
+
+  string mpc_keyring                    = 1;
+  string zr_sign_address                = 2;
+  uint64 keyring_commission             = 3;
+  string keyring_commission_destination = 4;
+  string min_gas_fee                    = 5;
+}
