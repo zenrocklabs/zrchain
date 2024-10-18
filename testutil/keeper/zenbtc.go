@@ -17,8 +17,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/types"
+	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
+	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 // func ZenbtcKeeper(t testing.TB, validationKeeper *validation.Keeper, treasuryKeeper *treasury.Keeper) (keeper.Keeper, sdk.Context) {

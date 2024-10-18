@@ -151,9 +151,9 @@ import (
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	zenbtckeeper "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/keeper"
-	zenbtc "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/module"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/types"
+	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
+	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 const appName = "ZenrockApp"
