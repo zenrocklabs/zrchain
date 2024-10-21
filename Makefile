@@ -180,3 +180,14 @@ web-gen:
 	sh ./scripts/webgen.sh
 
 .PHONY: web-gen
+
+###############################################################################
+###                              Sidecar                                    ###
+###############################################################################
+
+sidecar:
+	go build -o sidecar-new ./sidecar
+	rm sidecar/sidecar
+	mv sidecar-new sidecar/sidecar
+
+.PHONY: sidecar

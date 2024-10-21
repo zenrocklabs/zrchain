@@ -69,6 +69,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zenrocklabs/zenbtc v0.0.3
+	github.com/zenrocklabs/zenrock-avs v1.0.1
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golang.org/x/tools v0.25.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9
@@ -278,7 +279,6 @@ require (
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zenrocklabs/zenrock-avs v1.0.1 // indirect
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v0.15.0 // indirect
 	go.etcd.io/bbolt v1.4.0-alpha.1 // indirect
