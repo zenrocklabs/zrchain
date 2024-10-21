@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -34,7 +34,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize()
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
