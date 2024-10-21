@@ -16,3 +16,5 @@ cmd/zenrockd/zenrockd*
 !scripts/bootstrap/main.sh
 
 sidecar/neutrino/neutrino_*
+sidecar/sidecar
+sidecar/neutrino/neutrino_mainnet/reg_filter_headers.bin
