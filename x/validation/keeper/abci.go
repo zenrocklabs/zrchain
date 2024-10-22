@@ -65,7 +65,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
 
-	bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet3"}) // TODO: use config
+	bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
 	if err != nil {
 		return VoteExtension{}, err
 	}
@@ -265,7 +265,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	}
 
 	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet3", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
+		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
@@ -596,7 +596,7 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	}
 
 	if voteExt.BtcMerkleRoot != oracleData.BtcBlockHeader.MerkleRoot {
-		return fmt.Errorf("bitcoin merkle root mismatch, expected %x, got %x", voteExt.BtcMerkleRoot, oracleData.BtcBlockHeader.MerkleRoot)
+		return fmt.Errorf("bitcoin merkle root mismatch, expected %s, got %s - height %d", voteExt.BtcMerkleRoot, oracleData.BtcBlockHeader.MerkleRoot, voteExt.BtcBlockHeight)
 	}
 
 	if voteExt.EthTxHeight != oracleData.EthTxHeight {

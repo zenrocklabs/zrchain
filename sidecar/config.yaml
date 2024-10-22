@@ -14,3 +14,7 @@ eth_oracle:
 solana_rpc:
   testnet: "https://fittest-ultra-paper.solana-testnet.quiknode.pro/727ef0ea447615dbabbb6d1aad8fabfd58d98fd0/"
   mainnet: ""
+proxy_rpc:
+  url: "http://127.0.0.1:1234"
+  user: "user"
+  password: "secret"
