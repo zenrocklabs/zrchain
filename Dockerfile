@@ -34,8 +34,7 @@ RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 58e1f6bfa89ee390cb9abc69a5bc1
 RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
 
 # Set the working directory
-COPY zrchain /zrchain
-COPY avs /avs
+COPY . /zrchain
 WORKDIR /zrchain
 ENV BUILD_TAGS=muslc LINK_STATICALLY=true
 
