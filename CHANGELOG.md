@@ -1,3 +1,20 @@
+# 1.0.0 (2024-10-23)
+
+
+### Bug Fixes
+
+* bump zenbtc ver to fix `PendingMintTransactions` init issue ([b19d9ea](https://github.com/zenrocklabs/zrchain/commit/b19d9ea056b94ade61d4ffcb81304c7e5fb85e0a))
+* Dockerfile ([57326be](https://github.com/zenrocklabs/zrchain/commit/57326bef4193c3be071b1c63515ee6605d183364))
+* Dockerfile ([b748031](https://github.com/zenrocklabs/zrchain/commit/b748031b785c965f998e65e2c0630826f89e04f4))
+* zenbtc imports ([13b3854](https://github.com/zenrocklabs/zrchain/commit/13b3854c45cbc7fdc2c286782c7df45aeb4e25fb))
+
+
+### Features
+
+* add initial project files ([e3cf14b](https://github.com/zenrocklabs/zrchain/commit/e3cf14b165c6098e79497cf27eea712493fbf3da))
+* add LICENSE ([0c84405](https://github.com/zenrocklabs/zrchain/commit/0c844058f9c97ca6c8b83857cf95543985d3da1c))
+* add semantic_release ([d9cdf99](https://github.com/zenrocklabs/zrchain/commit/d9cdf99990e39fb11e7a4184da09c57e6ab2d59f))
+
 ## zenrockd [4.14.1](https://github.com/zenrocklabs/zenrock/compare/zenrockd@4.14.0...zenrockd@4.14.1) (2024-10-17)
 
 
