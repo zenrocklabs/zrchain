@@ -4,7 +4,7 @@ name: semantic_release
 on:
   push:
     branches:
-      - '*'
+      - main
 
 jobs:
   release:
@@ -16,30 +16,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Set tags
-        id: vars
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          echo "BUILD_DATE=$(git show -s --format=%ci ${{ env.COMMIT_SHA }})" >> $GITHUB_ENV
-          echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build binary
-        id: image_zenrockd
-        run: |
-          docker build -f ./Dockerfile \
-          --build-arg SERVICE=zenrockd \
-          --build-arg GIT_SHA=$(git rev-parse HEAD) \
-          --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-          --build-arg VERSION=$(git describe --tags --always) \
-          -t zenrockd:${TAG} .
-
-          docker run --entrypoint=/bin/cp --rm \
-            -v $(pwd):/tmp \
-            -v ~/.aws:/root/.aws \
-            zenrockd:${TAG} \
-            "/zenrockd" "/workspace/zenrockd"
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -51,6 +27,37 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - name: Install dependencies
         run: npm clean-install
+      - name: Set tags
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GIT_AUTHOR_EMAIL: 'semanticrelease@zenrocklabs.io'
+          GIT_COMMITTER_EMAIL: 'semanticrelease@zenrocklabs.io'
+          GIT_AUTHOR_NAME: '@semanticrelease'
+          GIT_COMMITTER_NAME: '@semanticrelease'
+        run: |
+          VERSION_SPACES=$(npx semantic-release --dryRun | grep -oP 'Published release \K.*? ')
+          VERSION="${VERSION_SPACES// /}"
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(git show -s --format=%ci ${{ env.COMMIT_SHA }})" >> $GITHUB_ENV
+          echo "TAG=${VERSION}" >> $GITHUB_ENV
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build binary
+        id: image_zenrockd
+        run: |
+          docker build -f ./Dockerfile \
+          --build-arg SERVICE=zenrockd \
+          --build-arg GIT_SHA=${{ env.COMMIT_SHA }} \
+          --build-arg BUILD_DATE="${{ env.BUILD_DATE }}" \
+          --build-arg VERSION=${{ env.TAG }} \
+          -t zenrockd:${{ env.TAG }} .
+
+          docker run --entrypoint=/bin/cp --rm \
+            -v $(pwd):/workspace \
+            -v ~/.aws:/root/.aws \
+            zenrockd:${TAG} \
+            "/zenrockd" "/workspace/zenrockd"
       - name: Semantic release
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

@@ -1242,8 +1242,8 @@ github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock h1:QKr8fWJ85qM/mcnKRQfsem6cNZ
 github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock/go.mod h1:6Eesrx3ZE7vxBZWpK++30H+Uc7Q4ahQWCL7JKU/LEdU=
 github.com/zenrocklabs/zenbtc v0.0.3 h1:wMY5icV2HwCAc2OGD+PvMWB0Hnoijy1Z6ltA/UVhxWY=
 github.com/zenrocklabs/zenbtc v0.0.3/go.mod h1:cvKxtp8dRdOHbHvQ3Q3f4Ghk9KX3tLJ2W3g7K0GgU2s=
-github.com/zenrocklabs/zenrock-avs v1.4.0 h1:NI9TBwFEuZ5YOXOwhOB63DHt5yhFlRnmTyr7OVIdiB4=
-github.com/zenrocklabs/zenrock-avs v1.4.0/go.mod h1:m/+r6uDn8gy1hFNz+XPf9CUxAZk6fnDtrNaVU/3A/ns=
+github.com/zenrocklabs/zenrock-avs v1.0.1 h1:tzW9UJ9tZnhOiCf3UcJ1VnXbGjrMIdru3YYVyTMZtx8=
+github.com/zenrocklabs/zenrock-avs v1.0.1/go.mod h1:m/+r6uDn8gy1hFNz+XPf9CUxAZk6fnDtrNaVU/3A/ns=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
 github.com/zondax/hid v0.9.2/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
 github.com/zondax/ledger-go v0.15.0 h1:5XJvuUf91dHLGo4tGK5pQXnxo538JXMhxkBXHXRJI6o=
