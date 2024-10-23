@@ -58,7 +58,9 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 }
 
 func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
-	latestHeader, err := o.EthClient.HeaderByNumber(context.Background(), nil)
+	ctx := context.Background()
+
+	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
@@ -70,17 +72,28 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	header, err := o.EthClient.HeaderByNumber(context.Background(), targetBlockNumber)
+	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to fetch ETH block data: %w", err)
 	}
 
-	gasPrice, err := o.EthClient.SuggestGasPrice(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to fetch gas price: %w", err)
+	// Get base fee from latest block
+	if header.BaseFee == nil {
+		return fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
-	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(context.Background(), nil)
+	// Get suggested priority fee from client
+	suggestedTip, err := o.EthClient.SuggestGasTipCap(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get suggested priority fee: %w", err)
+	}
+
+	// Calculate max fee per gas using standard formula:
+	// maxFeePerGas = (baseFee * 2) + maxPriorityFeePerGas
+	// gasFeeCap := new(big.Int).Mul(header.BaseFee, big.NewInt(2))
+	// gasFeeCap.Add(gasFeeCap, suggestedTip)
+
+	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
@@ -96,9 +109,10 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 		EthBlockHeight: header.Number.Uint64(),
 		EthBlockHash:   header.Hash().Hex(),
 		EthGasLimit:    header.GasLimit,
-		EthGasPrice:    gasPrice.Uint64(),
+		EthBaseFee:     header.BaseFee.Uint64(),
+		EthTipCap:      suggestedTip.Uint64(),
 		ETHUSDPrice:    ETHUSDPrice,
-		ROCKUSDPrice:   0, // placeholder until we have a price feed for ROCK
+		ROCKUSDPrice:   0,
 	}
 
 	return nil

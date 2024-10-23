@@ -85,8 +85,9 @@ func (o *Oracle) processUpdates() {
 		newState.Delegations = update.Delegations
 		newState.EthBlockHeight = update.EthBlockHeight
 		newState.EthBlockHash = update.EthBlockHash
-		newState.EthGasPrice = update.EthGasPrice
 		newState.EthGasLimit = update.EthGasLimit
+		newState.EthBaseFee = update.EthBaseFee
+		newState.EthTipCap = update.EthTipCap
 
 		log.Printf("Received prices: ETH/USD %f, ROCK/USD %f", update.ETHUSDPrice, update.ROCKUSDPrice) // TODO add network + height?
 		newState.ETHUSDPrice = update.ETHUSDPrice

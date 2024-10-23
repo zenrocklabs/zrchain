@@ -187,7 +187,7 @@ web-gen:
 
 sidecar:
 	go build -o sidecar-new ./sidecar
-	rm sidecar/sidecar
+	rm -f sidecar/sidecar
 	mv sidecar-new sidecar/sidecar
 
 .PHONY: sidecar

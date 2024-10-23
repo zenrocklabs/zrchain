@@ -33,8 +33,9 @@ func (o *Oracle) LoadFromFile(filename string) error {
 			Delegations:    latestState.Delegations,
 			EthBlockHeight: latestState.EthBlockHeight,
 			EthBlockHash:   latestState.EthBlockHash,
-			EthGasPrice:    latestState.EthGasPrice,
 			EthGasLimit:    latestState.EthGasLimit,
+			EthBaseFee:     latestState.EthBaseFee,
+			EthTipCap:      latestState.EthTipCap,
 			ETHUSDPrice:    latestState.ETHUSDPrice,
 			ROCKUSDPrice:   latestState.ROCKUSDPrice,
 		}

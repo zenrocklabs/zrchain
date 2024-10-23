@@ -81,8 +81,9 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ValidatorDelegations: validatorDelegations,
 		EthBlockHeight:       resp.EthBlockHeight,
 		EthBlockHash:         common.HexToHash(resp.EthBlockHash),
-		EthGasPrice:          resp.EthGasPrice,
 		EthGasLimit:          resp.EthGasLimit,
+		EthBaseFee:           resp.EthBaseFee,
+		EthTipCap:            resp.EthTipCap,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 	}, nil
 }
@@ -474,27 +475,78 @@ func (k *Keeper) handleUnlockTxError(ctx context.Context, chain, txID string, wi
 	}
 }
 
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount *big.Int, fee uint64, nonce, gasPrice, gasLimit uint64) ([]byte, error) {
-	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), amount, fee)
-	if err != nil {
-		return nil, err
+// func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+// 	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	chainID := big.NewInt(17000)
+// 	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
+// 	gasTipCap := new(big.Int).SetUint64(tipCap)
+// 	gasFeeCap := new(big.Int).Mul(new(big.Int).SetUint64(baseFee), big.NewInt(2))
+// 	gasFeeCap.Add(gasFeeCap, gasTipCap)
+
+// 	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+// 		ChainID:    chainID,
+// 		Nonce:      nonce,
+// 		GasTipCap:  gasTipCap,
+// 		GasFeeCap:  gasFeeCap,
+// 		Gas:        gasLimit,
+// 		To:         &addr,
+// 		Value:      big.NewInt(0), // we shouldn't send any ETH
+// 		Data:       encodedMintData,
+// 		AccessList: nil,
+// 	})
+
+// 	unsignedTxBz, err := unsignedTx.MarshalBinary()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	signer := ethtypes.LatestSignerForChainID(chainID)
+
+// 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+// }
+
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	// if chainID != 17000 && chainID != 11155111 {
+	if chainID != 17000 {
+		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
 
-	tx := ethtypes.NewTransaction(
-		nonce,
-		common.HexToAddress(k.GetZenBTCEthContractAddr(ctx)),
-		big.NewInt(0), // we shouldn't send any ETH
-		gasLimit,
-		big.NewInt(int64(gasPrice)),
-		encodedMintData,
+	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
+
+	// Convert EIP-1559 fees to legacy gas price
+	// gasPrice = baseFee + tipCap
+	gasPrice := new(big.Int).Add(
+		new(big.Int).SetUint64(baseFee),
+		new(big.Int).SetUint64(tipCap),
 	)
-	// unsignedRlpTx, err := tx.MarshalBinary()
-	chainId := big.NewInt(17000)
-	signer := ethtypes.LatestSignerForChainID(chainId)
-	// after signature
-	// signedTx,err := tx.WithSignature(signer, signature) TODO: Do we need to do this?
-	// err := client.Broadcast(signedTx)
-	return signer.Hash(tx).Bytes(), nil
+
+	// TODO: REMOVE THIS LINE BELOW
+	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(10))
+
+	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Gas:      gasLimit,
+		To:       &addr,
+		Value:    big.NewInt(0), // we shouldn't send any ETH
+		Data:     encodedMintData,
+	})
+
+	unsignedTxBz, err := unsignedTx.MarshalBinary()
+	if err != nil {
+		return nil, nil, err
+	}
+	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(chainID))
+
+	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
 func encodeMintData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
@@ -514,12 +566,22 @@ func encodeMintData(recipientAddr common.Address, amount *big.Int, fee uint64) (
 }
 
 func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
+	k.Logger(ctx).Error("foo", "checkpoint", 1)
+
+	keyID := k.GetZenBTCMinterKeyID(ctx)
+
+	k.Logger(ctx).Error("foo", "checkpoint", 2, "keyID", keyID)
+
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
-		Id:         k.GetZenBTCMinterKeyID(ctx),
+		Id:         keyID,
 		WalletType: treasurytypes.WalletType_WALLET_TYPE_EVM,
+		Prefixes:   make([]string, 0),
 	})
 	if err != nil {
 		return "", err
 	}
+
+	k.Logger(ctx).Error("foo", "checkpoint", 6, "q", fmt.Sprint(q))
+
 	return q.Wallets[0].Address, nil
 }

@@ -54,8 +54,9 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ETHUSDPrice:    fmt.Sprint(currentState.ETHUSDPrice),
 		EthBlockHeight: currentState.EthBlockHeight,
 		EthBlockHash:   currentState.EthBlockHash,
-		EthGasPrice:    currentState.EthGasPrice,
 		EthGasLimit:    currentState.EthGasLimit,
+		EthBaseFee:     currentState.EthBaseFee,
+		EthTipCap:      currentState.EthTipCap,
 	}, nil
 }
 
@@ -76,8 +77,9 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		ETHUSDPrice:    fmt.Sprint(state.ETHUSDPrice),
 		EthBlockHeight: state.EthBlockHeight,
 		EthBlockHash:   state.EthBlockHash,
-		EthGasPrice:    state.EthGasPrice,
 		EthGasLimit:    state.EthGasLimit,
+		EthBaseFee:     state.EthBaseFee,
+		EthTipCap:      state.EthTipCap,
 	}, nil
 }
 
@@ -166,7 +168,8 @@ func (s *oracleService) DebugGetSolanaTransaction(ctx context.Context, req *api.
 }
 
 func (s *oracleService) GetEthereumNonceAtHeight(ctx context.Context, req *api.EthereumNonceAtHeightRequest) (*api.EthereumNonceAtHeightResponse, error) {
-	nonce, err := s.oracle.EthClient.NonceAt(ctx, common.HexToAddress(req.Address), big.NewInt(int64(req.Height)))
+	// nonce, err := s.oracle.EthClient.NonceAt(ctx, common.HexToAddress(req.Address), big.NewInt(int64(req.Height)))
+	nonce, err := s.oracle.EthClient.NonceAt(ctx, common.HexToAddress(req.Address), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nonce: %w", err)
 	}

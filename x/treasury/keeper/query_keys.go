@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -75,7 +76,11 @@ func processWallets(
 	prefixes []string,
 ) []*types.WalletResponse {
 	wallets := []*types.WalletResponse{}
+	fmt.Println("foo", "checkpoint", 4)
+
 	walletTypes := deriveWalletTypes(walletType)
+
+	fmt.Println("foo", "checkpoint", 5)
 
 	for _, walletType := range walletTypes {
 		switch walletType {
