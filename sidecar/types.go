@@ -1,17 +1,16 @@
 package main
 
 import (
+	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
 	"math/big"
 	"sync/atomic"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
-	solana "github.com/gagliardetto/solana-go/rpc"
-
 	"github.com/ethereum/go-ethereum/ethclient"
+	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-// These constants should not be changed as they are important for synchronicity
+// / These constants should not be changed as they are important for synchronicity
 const (
 	MainLoopTickerInterval = 15 * time.Second
 	CacheSize              = 20
@@ -79,6 +78,13 @@ type Config struct {
 	Network        string            `yaml:"network"`
 	EthOracle      EthOracleConfig   `yaml:"eth_oracle"`
 	SolanaRPC      map[string]string `yaml:"solana_rpc"`
+	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
+}
+
+type ProxyRPCConfig struct {
+	URL      string `yaml:"url"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 }
 
 type EthOracleConfig struct {
