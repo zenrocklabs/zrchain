@@ -1,5 +1,5 @@
 {
-  "branches": ["main"],
+  "branches": ["feature/ci-pipeline"],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -14,7 +14,8 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "CHANGELOG.md", "label": "CHANGELOG" }
+          { "path": "CHANGELOG.md", "label": "CHANGELOG" },
+          { "path": "/tmp/zenrockd", "label": "zenrockd" }
         ],
         "successComment": false,
         "failComment": false
