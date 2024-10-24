@@ -13,15 +13,13 @@ import (
 
 func TestKeeper_QueryActionDetailsById(t *testing.T) {
 	policy, _ := codectypes.NewAnyWithValue(&types.BoolparserPolicy{
-		Definition: "u1 + u2 > 1",
+		Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 		Participants: []*types.PolicyParticipant{
 			{
-				Abbreviation: "u1",
-				Address:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 			},
 			{
-				Abbreviation: "u2",
-				Address:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 			},
 		},
 	})
@@ -42,7 +40,7 @@ func TestKeeper_QueryActionDetailsById(t *testing.T) {
 
 	action := types.Action{
 		Id:        1,
-		Approvers: []string{"u1"},
+		Approvers: []string{"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"},
 		Status:    types.ActionStatus_ACTION_STATUS_PENDING,
 		PolicyId:  1,
 		Msg:       newKeyReqMsg,
@@ -66,7 +64,7 @@ func TestKeeper_QueryActionDetailsById(t *testing.T) {
 		{
 			name: "PASS: Get Action details",
 			args: args{
-				approvers: []string{"u1"},
+				approvers: []string{"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"},
 				actionId:  1,
 				policyId:  1,
 			},
@@ -88,7 +86,7 @@ func TestKeeper_QueryActionDetailsById(t *testing.T) {
 		{
 			name: "FAIL: invalid action id",
 			args: args{
-				approvers: []string{"u1"},
+				approvers: []string{"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"},
 				actionId:  2,
 				policyId:  1,
 			},

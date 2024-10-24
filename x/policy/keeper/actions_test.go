@@ -52,8 +52,7 @@ func Test_msgServer_AddAction_Btl(t *testing.T) {
 			pol, _ := cdctypes.NewAnyWithValue(&types.BoolparserPolicy{
 				Participants: []*types.PolicyParticipant{
 					{
-						Address:      "some-creator",
-						Abbreviation: "aa",
+						Address: "some-creator",
 					},
 				},
 			})
