@@ -37,8 +37,9 @@ type (
 		BtcMerkleRoot      string
 		EthBlockHeight     uint64
 		EthBlockHash       common.Hash
-		EthGasPrice        uint64
 		EthGasLimit        uint64
+		EthBaseFee         uint64
+		EthTipCap          uint64
 		RequestedEthNonce  uint64
 		EthTxHeight        uint64
 		SolanaTxSlot       uint64
@@ -58,8 +59,9 @@ type (
 		BtcBlockHeader       sidecar.BTCBlockHeader
 		EthBlockHeight       uint64
 		EthBlockHash         common.Hash
-		EthGasPrice          uint64
 		EthGasLimit          uint64
+		EthBaseFee           uint64
+		EthTipCap            uint64
 		RequestedEthNonce    uint64
 		EthTxHeight          uint64
 		SolanaTxSlot         uint64
@@ -119,7 +121,8 @@ func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be ch
 		len(ve.AVSDelegationsHash) == 0 ||
 		ve.EthBlockHeight == 0 ||
 		len(ve.EthBlockHash) == 0 ||
-		ve.EthGasPrice == 0 ||
+		ve.EthBaseFee == 0 ||
+		ve.EthTipCap == 0 ||
 		ve.EthGasLimit == 0 ||
 		ve.BtcBlockHeight == 0 ||
 		len(ve.BtcMerkleRoot) == 0

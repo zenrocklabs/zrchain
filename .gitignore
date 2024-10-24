@@ -18,4 +18,5 @@ cmd/zenrockd/zenrockd*
 sidecar/neutrino/neutrino_*
 sidecar/sidecar
 sidecar/neutrino/neutrino_mainnet/reg_filter_headers.bin
+sidecar/cache.json
 reset.sh

@@ -50,8 +50,9 @@ message SidecarStateResponse {
   string ETHUSDPrice = 3;
   uint64 EthBlockHeight = 4;
   string EthBlockHash = 5;
-  uint64 EthGasPrice = 6;
-  uint64 EthGasLimit = 7;
+  uint64 EthGasLimit = 6;
+  uint64 EthBaseFee = 7;
+  uint64 EthTipCap = 8;
 }
 
 message SidecarStateByEthHeightRequest {

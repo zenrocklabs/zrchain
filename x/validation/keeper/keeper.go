@@ -114,6 +114,7 @@ func NewKeeper(
 		txDecoder:             txDecoder,
 		zrConfig:              zrConfig,
 		sidecarClient:         oracleClient,
+		treasuryKeeper:        treasuryKeeper,
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 

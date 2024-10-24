@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"reflect"
 
 	"cosmossdk.io/collections"
@@ -89,8 +88,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		BtcMerkleRoot:      bitcoinData.BlockHeader.MerkleRoot,
 		EthBlockHeight:     oracleData.EthBlockHeight,
 		EthBlockHash:       oracleData.EthBlockHash,
-		EthGasPrice:        oracleData.EthGasPrice,
 		EthGasLimit:        oracleData.EthGasLimit,
+		EthBaseFee:         oracleData.EthBaseFee,
+		EthTipCap:          oracleData.EthTipCap,
 		RequestedEthNonce:  nonce,
 		EthTxHeight:        0,
 		SolanaTxSlot:       0,
@@ -466,6 +466,7 @@ func (k *Keeper) createMintTransaction(ctx sdk.Context, oracleData OracleData) {
 			)
 			return
 		}
+		k.Logger(ctx).Error("creating mint transaction", "height", nonceHeight, "nonce", oracleData.RequestedEthNonce)
 		if err := k.initMintTransaction(ctx, nonceHeight, oracleData); err != nil {
 			k.Logger(ctx).Error("error creating mint transaction", "err", err)
 		}
@@ -482,8 +483,16 @@ func (k *Keeper) initMintTransaction(ctx sdk.Context, nonceHeight uint64, oracle
 	}
 	tx := pendingMints.Txs[0]
 
-	unsignedMintTx, err := k.constructMintTx(
-		ctx, tx.RecipientAddress, big.NewInt(int64(tx.Amount)), 0, oracleData.RequestedEthNonce, oracleData.EthGasPrice, oracleData.EthGasLimit,
+	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
+		ctx,
+		tx.RecipientAddress,
+		tx.ChainId,
+		tx.Amount,
+		0, // TODO: update fee (currently hardcoded to 0)
+		oracleData.RequestedEthNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
 	)
 	if err != nil {
 		return fmt.Errorf("error constructing mint transaction: %w", err)
@@ -501,7 +510,7 @@ func (k *Keeper) initMintTransaction(ctx sdk.Context, nonceHeight uint64, oracle
 		UnsignedTransaction: unsignedMintTx,
 		Metadata:            metadata,
 		NoBroadcast:         false,
-	}, unsignedMintTx); err != nil {
+	}, unsignedMintTxHash); err != nil {
 		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
 	}
 
@@ -583,12 +592,16 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("ethereum block hash mismatch, expected %s, got %s", voteExt.EthBlockHash, oracleData.EthBlockHash)
 	}
 
-	if voteExt.EthGasPrice != oracleData.EthGasPrice {
-		return fmt.Errorf("ethereum gas price mismatch, expected %d, got %d", voteExt.EthGasPrice, oracleData.EthGasPrice)
-	}
-
 	if voteExt.EthGasLimit != oracleData.EthGasLimit {
 		return fmt.Errorf("ethereum gas limit mismatch, expected %d, got %d", voteExt.EthGasLimit, oracleData.EthGasLimit)
+	}
+
+	if voteExt.EthBaseFee != oracleData.EthBaseFee {
+		return fmt.Errorf("ethereum base fee mismatch, expected %d, got %d", voteExt.EthBaseFee, oracleData.EthBaseFee)
+	}
+
+	if voteExt.EthTipCap != oracleData.EthTipCap {
+		return fmt.Errorf("ethereum tip cap mismatch, expected %d, got %d", voteExt.EthTipCap, oracleData.EthTipCap)
 	}
 
 	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
