@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/Zenrock-Foundation/zrchain/v4/boolparser"
@@ -29,8 +28,6 @@ func UnpackPolicy(cdc codec.BinaryCodec, policyPb *Policy) (policy.Policy, error
 
 var _ (policy.Policy) = (*BoolparserPolicy)(nil)
 
-var validAbbrev = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*$`)
-
 func (p *BoolparserPolicy) Validate() error {
 	if len(p.Participants) == 0 {
 		return fmt.Errorf("no participants")
@@ -39,31 +36,23 @@ func (p *BoolparserPolicy) Validate() error {
 		return fmt.Errorf("no definition")
 	}
 
-	existingAbbreviations := map[string]struct{}{}
 	existingAddresses := map[string]struct{}{}
 
 	for _, participant := range p.Participants {
 		if len(participant.Address) == 0 {
-			return fmt.Errorf("no address for %s", participant.Abbreviation)
+			return fmt.Errorf("no address for %s", participant.Address)
 		}
 
-		if !validAbbrev.MatchString(participant.Abbreviation) {
-			return fmt.Errorf("invalid abbreviation '%s' for participant '%s', it needs to match ^[A-Za-z][A-Za-z0-9_]*$", participant.Abbreviation, participant.Address)
-		}
+		// TODO: address verification
 
-		if !strings.Contains(p.Definition, participant.Abbreviation) {
-			return fmt.Errorf("participant %s not found in expression", participant.Abbreviation)
+		if !strings.Contains(p.Definition, participant.Address) {
+			return fmt.Errorf("participant %s not found in expression", participant.Address)
 		}
 
 		if _, ok := existingAddresses[participant.Address]; ok {
 			return fmt.Errorf("duplicate address for %s", participant.Address)
 		}
 		existingAddresses[participant.Address] = struct{}{}
-
-		if _, ok := existingAbbreviations[participant.Abbreviation]; ok {
-			return fmt.Errorf("duplicate abbreviation for (%s)", participant.Abbreviation)
-		}
-		existingAbbreviations[participant.Abbreviation] = struct{}{}
 
 		if !strings.HasPrefix(participant.Address, "passkey{") {
 			_, err := sdk.AccAddressFromBech32(participant.Address)
@@ -81,7 +70,7 @@ outer:
 			continue
 		}
 		for _, part2 := range p.Participants {
-			if strings.EqualFold(part.Value, part2.Abbreviation) {
+			if strings.EqualFold(part.Value, part2.Address) {
 				continue outer
 			}
 		}
@@ -93,7 +82,7 @@ outer:
 func (p *BoolparserPolicy) AddressToParticipant(addr string) (string, error) {
 	for _, participant := range p.Participants {
 		if participant.Address == addr {
-			return participant.Abbreviation, nil
+			return participant.Address, nil
 		}
 	}
 	return "", fmt.Errorf("address not a participant of this policy")
@@ -109,8 +98,8 @@ func (p *BoolparserPolicy) GetParticipantAddresses() []string {
 
 func (p *BoolparserPolicy) Verify(approvers policy.ApproverSet, policyData map[string][]byte) error {
 	expression := p.Definition
-	for abbr := range approvers {
-		expression = strings.ReplaceAll(expression, abbr, "1")
+	for addr := range approvers {
+		expression = strings.ReplaceAll(expression, addr, "1")
 	}
 
 	for valueName, value := range policyData {

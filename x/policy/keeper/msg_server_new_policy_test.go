@@ -15,15 +15,13 @@ import (
 
 func Test_msgServer_NewPolicy(t *testing.T) {
 	policy, err := codectypes.NewAnyWithValue(&types.BoolparserPolicy{
-		Definition: "u1 + u2 > 1",
+		Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 		Participants: []*types.PolicyParticipant{
 			{
-				Abbreviation: "u1",
-				Address:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 			},
 			{
-				Abbreviation: "u2",
-				Address:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 			},
 		},
 	})
