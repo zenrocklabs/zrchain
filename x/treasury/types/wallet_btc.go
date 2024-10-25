@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-
-	"github.com/btcsuite/btcd/chaincfg"
-
+	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 
@@ -83,9 +83,12 @@ func (w *BitcoinWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
 	if err != nil {
 		return Transfer{}, err
 	}
-
+	var dataForSigning []string
+	for _, hash := range hashes {
+		dataForSigning = append(dataForSigning, hex.EncodeToString(hash))
+	}
 	return Transfer{
-		SigHashes: hashes,
+		DataForSigning: []byte(strings.Join(dataForSigning, ",")),
 	}, nil
 }
 
