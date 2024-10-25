@@ -514,7 +514,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
 
-	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+	encodedMintData, err := encodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -529,7 +529,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	)
 
 	// TODO: REMOVE THIS LINE BELOW
-	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(10))
+	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(1000))
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
 		Nonce:    nonce,
@@ -549,28 +549,25 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func encodeMintData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
-	const mintFunctionABI = `[{"name":"mint","type":"function","inputs":[{"type":"address","name":"account"},{"type":"uint256","name":"value"},{"type":"uint256","name":"fee"}],"outputs":[]}]`
+func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+	const wrapFunctionABI = `[{"name":"wrap","type":"function","inputs":[{"type":"address","name":"account"},{"type":"uint256","name":"value"},{"type":"uint256","name":"fee"}],"outputs":[]}]`
 
-	parsedABI, err := abi.JSON(strings.NewReader(mintFunctionABI))
+	parsedABI, err := abi.JSON(strings.NewReader(wrapFunctionABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse ABI: %v", err)
 	}
 	feeAmount := new(big.Int).SetUint64(fee)
 
-	data, err := parsedABI.Pack("mint", recipientAddr, amount, feeAmount)
+	data, err := parsedABI.Pack("wrap", recipientAddr, amount, feeAmount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode mint function data: %v", err)
+		return nil, fmt.Errorf("failed to encode wrap call data: %v", err)
 	}
 	return data, nil
 }
 
 func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
-	k.Logger(ctx).Error("foo", "checkpoint", 1)
 
 	keyID := k.GetZenBTCMinterKeyID(ctx)
-
-	k.Logger(ctx).Error("foo", "checkpoint", 2, "keyID", keyID)
 
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
 		Id:         keyID,
@@ -580,8 +577,6 @@ func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) 
 	if err != nil {
 		return "", err
 	}
-
-	k.Logger(ctx).Error("foo", "checkpoint", 6, "q", fmt.Sprint(q))
 
 	return q.Wallets[0].Address, nil
 }

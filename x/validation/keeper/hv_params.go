@@ -11,7 +11,7 @@ import (
 var (
 	DefaultAVSRewardsRate, _               = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                int64  = 1                                // seconds
-	DefaultZenBTCEthContractAddr           = "0x4E236dAbF791633cC5bB867F3E6C3950D966Da7F"
+	DefaultZenBTCEthContractAddr           = "0x0832c25DcDD7E353749F50136a191377D9bA562e"
 	DefaultZenBTCDepositKeyringAddr        = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCMinterKeyID        uint64 = 2
 )
@@ -71,9 +71,9 @@ func (k Keeper) GetZenBTCDepositKeyringAddr(ctx context.Context) string {
 }
 
 func (k Keeper) GetZenBTCMinterKeyID(ctx context.Context) uint64 {
-	// params, err := k.HVParams.Get(ctx)
-	// if err != nil {
-	return DefaultZenBTCMinterKeyID
-	// }
-	// return params.ZenBTCParams.ZenBTCMinterKeyID
+	params, err := k.HVParams.Get(ctx)
+	if err != nil {
+		return DefaultZenBTCMinterKeyID
+	}
+	return params.ZenBTCParams.ZenBTCMinterKeyID
 }

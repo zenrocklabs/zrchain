@@ -466,7 +466,6 @@ func (k *Keeper) createMintTransaction(ctx sdk.Context, oracleData OracleData) {
 			)
 			return
 		}
-		k.Logger(ctx).Error("creating mint transaction", "height", nonceHeight, "nonce", oracleData.RequestedEthNonce)
 		if err := k.initMintTransaction(ctx, nonceHeight, oracleData); err != nil {
 			k.Logger(ctx).Error("error creating mint transaction", "err", err)
 		}
