@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Zenrock-Foundation/zrchain/v4/boolparser"
@@ -60,6 +61,16 @@ func (p *BoolparserPolicy) Validate() error {
 				return fmt.Errorf("invalid address %s", err)
 			}
 		}
+
+		approverNumber, err := p.GetApproverNumber()
+
+		if err != nil {
+			return fmt.Errorf("error getting approver number: %w", err)
+		}
+
+		if len(p.Participants) <= approverNumber {
+			return fmt.Errorf("number of participants is less than the approver number")
+		}
 	}
 
 	parser := boolparser.NewParser(strings.NewReader(p.Definition))
@@ -94,6 +105,28 @@ func (p *BoolparserPolicy) GetParticipantAddresses() []string {
 		addresses = append(addresses, part.Address)
 	}
 	return addresses
+}
+
+func (p *BoolparserPolicy) GetApproverNumber() (int, error) {
+
+	// Split the string into parts
+	parts := strings.Fields(p.Definition)
+
+	// Check if there are any parts
+	if len(parts) == 0 {
+		return 0, fmt.Errorf("no values found in the input string")
+	}
+
+	// Extract the last part with the approver number
+	lastValue := parts[len(parts)-1]
+
+	// Convert the last part to an integer
+	approverNumber, err := strconv.Atoi(lastValue)
+	if err != nil {
+		return 0, fmt.Errorf("error converting '%s' to int: %v", lastValue, err)
+	}
+
+	return approverNumber, nil
 }
 
 func (p *BoolparserPolicy) Verify(approvers policy.ApproverSet, policyData map[string][]byte) error {

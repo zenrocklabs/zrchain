@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"strconv"
 
 	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -33,13 +34,16 @@ func UpdatePolicies(ctx sdk.Context, policyCol collections.Map[uint64, types.Pol
 
 		bpPolicy := rawPolicy.(*types.BoolparserPolicy)
 
-		approverNumber := bpPolicy.Definition[len(bpPolicy.Definition)-1:]
+		approverNumber, err := bpPolicy.GetApproverNumber()
+		if err != nil {
+			return err
+		}
 		approvers := bpPolicy.GetParticipantAddresses()
 
 		var newDefinition string
 		for i, approver := range approvers {
 			if i == len(approvers)-1 {
-				newDefinition += approver + " > " + approverNumber
+				newDefinition += approver + " > " + strconv.Itoa(approverNumber)
 			} else {
 				newDefinition += approver + " + "
 			}

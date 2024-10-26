@@ -55,15 +55,24 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "fail: duplicate abbrev",
+			name: "fail: approver number can't be fulfilled",
 			bp: BoolparserPolicy{
-				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
 						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail: approver number can't be fulfilled",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 2",
+				Participants: []*PolicyParticipant{
 					{
-						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 				},
 			},
