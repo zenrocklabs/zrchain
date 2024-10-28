@@ -681,7 +681,7 @@ Example Output:
         "name": "policy1",
         "policy": {
           "@type": "/zrchain.policy.BoolparserPolicy",
-          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
           "participants": [
             {
               "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
@@ -701,7 +701,7 @@ Example Output:
         "name": "policy2",
         "policy": {
           "@type": "/zrchain.policy.BoolparserPolicy",
-          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
           "participants": [
             {
               "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
@@ -744,7 +744,7 @@ Example Output:
       "name": "policy1",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
@@ -787,7 +787,7 @@ Example Output:
       "name": "policy1",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
@@ -804,7 +804,7 @@ Example Output:
       "name": "policy2",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
@@ -866,7 +866,7 @@ Example Output:
     "name": "alice_faucet",
     "policy": {
       "@type": "/zrchain.policy.BoolparserPolicy",
-      "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
+      "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
       "participants": [
         {
           "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
