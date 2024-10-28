@@ -15,10 +15,10 @@ import (
 
 func Test_msgServer_QueryAction(t *testing.T) {
 	policyData := types.BoolparserPolicy{
-		Definition: "p1 + p2 > 1",
+		Definition: "creator + testApprover > 1",
 		Participants: []*types.PolicyParticipant{
-			{Abbreviation: "p1", Address: "creator"},
-			{Abbreviation: "p2", Address: "testApprover"},
+			{Address: "creator"},
+			{Address: "testApprover"},
 		},
 	}
 

@@ -42,7 +42,7 @@ func (k Keeper) ActionDetailsById(goCtx context.Context, req *types.QueryActionD
 		switch p := pol.(type) {
 		case *types.BoolparserPolicy:
 			for _, participant := range p.Participants {
-				participantMap[participant.Abbreviation] = participant.Address
+				participantMap[participant.Address] = participant.Address
 			}
 		}
 
