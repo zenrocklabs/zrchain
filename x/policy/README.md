@@ -90,7 +90,7 @@ message BoolparserPolicy {
 }
 
 message PolicyParticipant {
-  string abbreviation = 1;
+  string abbreviation = 1 [deprecated = true];
   string address = 2;
 }
 ```
@@ -98,12 +98,10 @@ message PolicyParticipant {
 It's expected to fail if
 
 * the specified policy definition is not valid 
-* a abbreviation doesnt match `^[A-Za-z][A-Za-z0-9_]*$`
 * a participant has no address specified 
 * a participant is not used in the expression
 * a participant address is used more than once
 * a participant address is not a valid Bech32 address
-* a participant abbreviation is used more than once
 
 ### Msg/ApproveAction
 
@@ -283,7 +281,7 @@ Example Output:
 
 ```yaml
 - approvers:
-  - u1
+  - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
   btl: "7744"
   creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
   id: "1"
@@ -320,7 +318,7 @@ Example Output:
 ```yaml
 action:
   approvers:
-  - u1
+  - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
   btl: "9199"
   creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
   id: "1"
@@ -348,12 +346,10 @@ policy:
   policy:
     type: /zrchain.policy.BoolparserPolicy
     value:
-      definition: u1 + u2 > 1
+      definition: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1
       participants:
-      - abbreviation: u1
-        address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
-      - abbreviation: u2
-        address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+      - address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+      - address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
 ```
 
 ##### policies
@@ -384,12 +380,10 @@ policies:
     policy:
       type: /zrchain.policy.BoolparserPolicy
       value:
-        definition: u1 + u2 > 1
+        definition: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1
         participants:
-        - abbreviation: u1
-          address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
-        - abbreviation: u2
-          address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+        - address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+        - address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
 ```
 
 ##### policies-by-creator
@@ -418,24 +412,20 @@ policies:
   policy:
     type: /zrchain.policy.BoolparserPolicy
     value:
-      definition: u1 + u2 > 1
+      definition: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1
       participants:
-      - abbreviation: u1
-        address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
-      - abbreviation: u2
-        address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+      - address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+      - address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
 - creator: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
   id: "2"
   name: policy2
   policy:
     type: /zrchain.policy.BoolparserPolicy
     value:
-      definition: u1 + u2 > 1
+      definition: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1
       participants:
-      - abbreviation: u1
-        address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
-      - abbreviation: u2
-        address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+      - address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+      - address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
 ```
 
 ##### policy-by-id
@@ -464,12 +454,10 @@ policy:
     policy:
       type: /zrchain.policy.BoolparserPolicy
       value:
-        definition: u1 + u2 > 1
+        definition: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1
         participants:
-        - abbreviation: u1
-          address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
-        - abbreviation: u2
-          address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
+        - address: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
+        - address: zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq
 ```
 
 ##### sign-methods-by-address
@@ -519,7 +507,7 @@ zenrockd tx policy new-policy [name] [policy] --btl [btl]
 Example:
 
 ```bash
-zenrockd tx policy new-policy policy1 '{"@type":"/zrchain.policy.BoolparserPolicy", "definition": "u1 + u2 > 1", "participants":[{ "abbreviation":"u1", "address":"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty" },{ "abbreviation":"u2", "address":"zen17ekx844yl3ftmcl47ryc7fz5cd7uhxq4f5ma5q" }]}'
+zenrockd tx policy new-policy policy1 '{"@type":"/zrchain.policy.BoolparserPolicy", "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1", "participants":[{ "address":"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty" },{  "address":"zen17ekx844yl3ftmcl47ryc7fz5cd7uhxq4f5ma5q" }]}'
 ```
 
 #### approve-action
@@ -645,7 +633,7 @@ Example Output:
     {
       "id": "1",
       "approvers": [
-        "u1"
+        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
       ],
       "status": "ACTION_STATUS_PENDING",
       "policyId": "1",
@@ -693,14 +681,12 @@ Example Output:
         "name": "policy1",
         "policy": {
           "@type": "/zrchain.policy.BoolparserPolicy",
-          "definition": "u1 + u2 \u003e 1",
+          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
           "participants": [
             {
-              "abbreviation": "u1",
               "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
             },
             {
-              "abbreviation": "u2",
               "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
             }
           ]
@@ -715,14 +701,12 @@ Example Output:
         "name": "policy2",
         "policy": {
           "@type": "/zrchain.policy.BoolparserPolicy",
-          "definition": "u1 + u2 \u003e 1",
+          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
           "participants": [
             {
-              "abbreviation": "u1",
               "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
             },
             {
-              "abbreviation": "u2",
               "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
             }
           ]
@@ -760,14 +744,12 @@ Example Output:
       "name": "policy1",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -805,14 +787,12 @@ Example Output:
       "name": "policy1",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -824,14 +804,12 @@ Example Output:
       "name": "policy2",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 \u003e 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -867,7 +845,7 @@ Example Output:
   "action": {
     "id": "1",
     "approvers": [
-      "u1"
+      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
     ],
     "status": "ACTION_STATUS_PENDING",
     "policyId": "1",
@@ -888,14 +866,12 @@ Example Output:
     "name": "alice_faucet",
     "policy": {
       "@type": "/zrchain.policy.BoolparserPolicy",
-      "definition": "u1 + u2 \u003e 1",
+      "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq \u003e 1",
       "participants": [
         {
-          "abbreviation": "u1",
           "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
         },
         {
-          "abbreviation": "u2",
           "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
         }
       ]
@@ -976,7 +952,7 @@ Example Output:
     {
       "id": "1",
       "approvers": [
-        "u1"
+        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
       ],
       "status": "ACTION_STATUS_PENDING",
       "policy_id": "1",
@@ -1030,14 +1006,12 @@ Example Output:
         "name": "policy1",
         "policy": {
           "@type": "/zrchain.policy.BoolparserPolicy",
-          "definition": "u1 + u2 > 1",
+          "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
           "participants": [
             {
-              "abbreviation": "u1",
               "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
             },
             {
-              "abbreviation": "u2",
               "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
             }
           ]
@@ -1075,14 +1049,12 @@ Example Output:
       "name": "alice_faucet",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 > 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -1119,14 +1091,12 @@ Example Output:
       "name": "policy1",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 > 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -1139,14 +1109,12 @@ Example Output:
       "name": "policy2",
       "policy": {
         "@type": "/zrchain.policy.BoolparserPolicy",
-        "definition": "u1 + u2 > 1",
+        "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
         "participants": [
           {
-            "abbreviation": "u1",
             "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
           },
           {
-            "abbreviation": "u2",
             "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
           }
         ]
@@ -1183,7 +1151,7 @@ Example Output:
   "action": {
     "id": "1",
     "approvers": [
-      "u1"
+      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
     ],
     "status": "ACTION_STATUS_PENDING",
     "policy_id": "1",
@@ -1209,14 +1177,12 @@ Example Output:
     "name": "policy1",
     "policy": {
       "@type": "/zrchain.policy.BoolparserPolicy",
-      "definition": "u1 + u2 > 1",
+      "definition": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
       "participants": [
         {
-          "abbreviation": "u1",
           "address": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
         },
         {
-          "abbreviation": "u2",
           "address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
         }
       ]

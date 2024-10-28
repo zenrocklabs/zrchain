@@ -81,7 +81,7 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: duplicate address",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u2 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
 						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
@@ -96,7 +96,7 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: invalid address",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u1 > 1",
+				Definition: "some-invalid-address + zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
 						Address: "some-invalid-address",
