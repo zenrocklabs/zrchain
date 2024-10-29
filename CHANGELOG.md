@@ -1,3 +1,16 @@
+# [4.16.0](https://github.com/zenrocklabs/zrchain/compare/v4.15.0...v4.16.0) (2024-10-28)
+
+
+### Bug Fixes
+
+* added zenbtc to upgrade ([6e0ff27](https://github.com/zenrocklabs/zrchain/commit/6e0ff27c6c71702e6b7c051559b23b952c17eeba))
+
+
+### Features
+
+* approvernumber verification ([1da8a59](https://github.com/zenrocklabs/zrchain/commit/1da8a5936dcb687c0670f7efabcb5305999c8fb5))
+* remove abbreviations in policies ([9aa7db1](https://github.com/zenrocklabs/zrchain/commit/9aa7db1aba8b06a9e8743eecf1d4efcc07e1f265))
+
 # [4.15.0](https://github.com/zenrocklabs/zrchain/compare/v4.14.1...v4.15.0) (2024-10-23)
 
 
