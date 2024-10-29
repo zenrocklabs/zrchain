@@ -39,9 +39,9 @@ func Test_msgServer_ApproveAction(t *testing.T) {
 	addToWorkspaceMsgAny, _ := codectypes.NewAnyWithValue(addToWorkspaceMsg)
 
 	policyData := types.BoolparserPolicy{
-		Definition: "p1 > 0",
+		Definition: "testApprover > 0",
 		Participants: []*types.PolicyParticipant{
-			{Abbreviation: "p1", Address: "testApprover"},
+			{Address: "testApprover"},
 		},
 	}
 
@@ -168,10 +168,10 @@ func Test_msgServer_ApproveAction_Passkeys(t *testing.T) {
 	addToWorkspaceMsgAny, _ := codectypes.NewAnyWithValue(addToWorkspaceMsg)
 
 	policyData := types.BoolparserPolicy{
-		Definition: "p1 + p2 > 1",
+		Definition: "testApprover + passkey{c29tZS1wYXNza2V5LWlk} > 1",
 		Participants: []*types.PolicyParticipant{
-			{Abbreviation: "p1", Address: "testApprover"},
-			{Abbreviation: "p2", Address: "passkey{c29tZS1wYXNza2V5LWlk}"}, // base64 urlencoded "some-passkey-id"
+			{Address: "testApprover"},
+			{Address: "passkey{c29tZS1wYXNza2V5LWlk}"}, // base64 urlencoded "some-passkey-id"
 		},
 	}
 
@@ -294,7 +294,7 @@ func Test_msgServer_ApproveAction_Passkeys(t *testing.T) {
 				msg:     &defaultApproval,
 				creator: "testApprover",
 			},
-			want:    []string{"p1"},
+			want:    []string{"testApprover"},
 			wantErr: true,
 		},
 		{
@@ -306,7 +306,7 @@ func Test_msgServer_ApproveAction_Passkeys(t *testing.T) {
 				creator: "testApprover",
 				config:  valid_config,
 			},
-			want:    []string{"p1"},
+			want:    []string{"testApprover"},
 			wantErr: false,
 		},
 		{
@@ -318,7 +318,7 @@ func Test_msgServer_ApproveAction_Passkeys(t *testing.T) {
 				creator: "testApprover",
 				config:  valid_config,
 			},
-			want:    []string{"p1"},
+			want:    []string{"testApprover"},
 			wantErr: false,
 		},
 		{
@@ -330,7 +330,7 @@ func Test_msgServer_ApproveAction_Passkeys(t *testing.T) {
 				creator: "testApprover",
 				config:  valid_config,
 			},
-			want:    []string{"p1", "p2"},
+			want:    []string{"testApprover", "passkey{c29tZS1wYXNza2V5LWlk}"},
 			wantErr: false,
 		},
 	}
