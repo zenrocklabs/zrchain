@@ -140,6 +140,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v4/wasmbinding"
 
 	appparams "github.com/Zenrock-Foundation/zrchain/v4/app/params"
+	v4 "github.com/Zenrock-Foundation/zrchain/v4/app/upgrades/v4"
 	genutil "github.com/Zenrock-Foundation/zrchain/v4/x/genutil"
 	genutiltypes "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
 	identitykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
@@ -1081,6 +1082,8 @@ func (app *ZenrockApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmt
 
 	// Set the AnteHandler for the app
 	app.SetAnteHandler(anteHandler)
+
+	app.setupUpgradeHandlers()
 }
 
 func (app *ZenrockApp) setPostHandler() {
@@ -1397,4 +1400,35 @@ func getTxPriority(fee sdk.Coins, gas int64) int64 {
 	}
 
 	return priority
+}
+
+func (app *ZenrockApp) setupUpgradeHandlers() {
+	// v1 to v2 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v4.UpgradeName,
+		v4.CreateUpgradeHandler(app.ModuleManager, app.Configurator()),
+	)
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	var storeUpgrades *storetypes.StoreUpgrades
+
+	switch upgradeInfo.Name {
+	case v4.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{zenbtctypes.ModuleName},
+		}
+	default:
+		return
+	}
+
+	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 }

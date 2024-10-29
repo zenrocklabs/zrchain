@@ -31,7 +31,6 @@ func UpdatePolicies(ctx sdk.Context, policyCol collections.Map[uint64, types.Pol
 
 		bpPolicy := rawPolicy.(*types.BoolparserPolicy)
 
-		// will be resolved when PR#6 is merged
 		approverNumber, err := bpPolicy.GetApproverNumber()
 		if err != nil {
 			return err
