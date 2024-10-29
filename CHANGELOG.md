@@ -1,3 +1,10 @@
+## [4.16.1](https://github.com/zenrocklabs/zrchain/compare/v4.16.0...v4.16.1) (2024-10-29)
+
+
+### Bug Fixes
+
+* bump buf version and update protos ([6ecea71](https://github.com/zenrocklabs/zrchain/commit/6ecea7116c17880542ff010841b2e757ee4c45f7))
+
 # [4.16.0](https://github.com/zenrocklabs/zrchain/compare/v4.15.0...v4.16.0) (2024-10-28)
 
 
