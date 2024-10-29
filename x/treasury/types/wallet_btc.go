@@ -88,6 +88,7 @@ func (w *BitcoinWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
 		dataForSigning = append(dataForSigning, hex.EncodeToString(hash))
 	}
 	return Transfer{
+		SigHashes:      hashes,
 		DataForSigning: []byte(strings.Join(dataForSigning, ",")),
 	}, nil
 }
