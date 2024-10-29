@@ -20,7 +20,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
 )
 
-const consensusVersion = 3
+const consensusVersion = 2
 
 var (
 	_ module.AppModuleBasic      = (*AppModule)(nil)
