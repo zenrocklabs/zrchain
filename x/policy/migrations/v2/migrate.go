@@ -1,64 +1,75 @@
-package v2
+package v3
 
 import (
 	"strconv"
 
 	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
 )
 
 func UpdatePolicies(ctx sdk.Context, policyCol collections.Map[uint64, types.Policy], codec codec.BinaryCodec) error {
-	ctx.Logger().Info("1")
 	policyStore, err := policyCol.Iterate(ctx, nil)
 	if err != nil {
 		return err
 	}
-	ctx.Logger().Info("2")
 	policies, err := policyStore.Values()
 	if err != nil {
 		return err
 	}
-	ctx.Logger().Info("3")
 	for _, policy := range policies {
-		ctx.Logger().Info("4")
 		rawPolicy, err := types.UnpackPolicy(codec, &policy)
 		if err != nil {
 			return err
 		}
-		ctx.Logger().Info("5")
 		bpPolicy := rawPolicy.(*types.BoolparserPolicy)
 
 		approverNumber, err := bpPolicy.GetApproverNumber()
 		if err != nil {
 			return err
 		}
-		ctx.Logger().Info("6")
 		approvers := bpPolicy.GetParticipantAddresses()
-		ctx.Logger().Info("7")
 		var newDefinition string
 		for i, approver := range approvers {
-			ctx.Logger().Info("8")
 			if i == len(approvers)-1 {
 				newDefinition += approver + " > " + strconv.Itoa(approverNumber)
 			} else {
 				newDefinition += approver + " + "
 			}
 		}
-		ctx.Logger().Info("9")
 		bpPolicy.Definition = newDefinition
 
-		policyCol.Set(ctx, policy.Id, types.Policy{
-			Creator: policy.Creator,
-			Name:    policy.Name,
-			Policy:  policy.Policy,
-			Btl:     policy.Btl,
-		})
+		participants := make([]*types.PolicyParticipant, len(approvers))
+		for i, addr := range approvers {
+			participants[i] = &types.PolicyParticipant{
+				Address: addr,
+			}
+		}
 
-		ctx.Logger().Info("10")
+		policyData := types.BoolparserPolicy{
+			Definition:   newDefinition,
+			Participants: participants,
+		}
 
+		policyDataAny, err := codectypes.NewAnyWithValue(&policyData)
+		if err != nil {
+			return err
+		}
+
+		var newPolicy = types.Policy{
+			Id:     policy.Id,
+			Name:   policy.Name,
+			Policy: policyDataAny,
+			Btl:    policy.Btl,
+		}
+
+		err = policyCol.Set(ctx, policy.Id, newPolicy)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
