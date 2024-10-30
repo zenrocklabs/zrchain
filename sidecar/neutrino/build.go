@@ -140,7 +140,7 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		node := liteNode.Node
 		blockStamp, err := node.BestBlock()
 		if err != nil {
-			log.Fatalf("Failed to get Tip Height %d: %v", node.ChainParams().Name)
+			log.Fatalf("Failed to get Tip Height: %v", err)
 		}
 		blockHeader, err := node.GetBlockHeader(&blockStamp.Hash)
 		if err != nil {

@@ -501,7 +501,7 @@ func (k *Keeper) initMintTransaction(ctx sdk.Context, nonceHeight uint64, oracle
 		UnsignedTransaction: unsignedMintTx,
 		Metadata:            metadata,
 		NoBroadcast:         false,
-	}, unsignedMintTx); err != nil {
+	}, []byte(hex.EncodeToString(unsignedMintTx))); err != nil {
 		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
 	}
 

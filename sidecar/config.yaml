@@ -12,5 +12,5 @@ eth_oracle:
     price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
   network_name: "Holešky Ethereum Testnet"
 solana_rpc:
-  testnet: "https://fittest-ultra-paper.solana-testnet.quiknode.pro/727ef0ea447615dbabbb6d1aad8fabfd58d98fd0/"
+  testnet: "https://api.testnet.solana.com"
   mainnet: ""
