@@ -3,6 +3,7 @@ package types
 import (
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,6 +36,6 @@ func (w *NativeWallet) Address() string {
 func (w *NativeWallet) ParseTx(b []byte, _ Metadata) (Transfer, error) {
 	dataHash := sha256.Sum256(b)
 	return Transfer{
-		DataForSigning: dataHash[:],
+		DataForSigning: []byte(hex.EncodeToString(dataHash[:])),
 	}, nil
 }
