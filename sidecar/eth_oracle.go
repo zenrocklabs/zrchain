@@ -67,7 +67,7 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, BlocksBeforeFinality)
 
-	delegations, err := o.getContractState(contractInstance, targetBlockNumber)
+	delegations, err := o.getServiceManagerState(contractInstance, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
@@ -87,11 +87,6 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 	if err != nil {
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
-
-	// Calculate max fee per gas using standard formula:
-	// maxFeePerGas = (baseFee * 2) + maxPriorityFeePerGas
-	// gasFeeCap := new(big.Int).Mul(header.BaseFee, big.NewInt(2))
-	// gasFeeCap.Add(gasFeeCap, suggestedTip)
 
 	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -118,7 +113,7 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 	return nil
 }
 
-func (o *Oracle) getContractState(contractInstance *middleware.ContractZRServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
+func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZRServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
 	delegations := make(map[string]map[string]*big.Int)
 
 	callOpts := &bind.CallOpts{
@@ -139,8 +134,6 @@ func (o *Oracle) getContractState(contractInstance *middleware.ContractZRService
 			log.Printf("Failed to get delegation for operator %s: %v", operator.Hex(), err)
 			continue
 		}
-
-		// log.Printf("Operator: %s, Validator: %s, Amount: %s", operator.Hex(), validatorAddress, amount.String())
 
 		// Only consider positive delegation amounts
 		if amount.Cmp(big.NewInt(0)) > 0 {

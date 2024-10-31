@@ -41,8 +41,6 @@ type (
 		EthBaseFee         uint64
 		EthTipCap          uint64
 		RequestedEthNonce  uint64
-		EthTxHeight        uint64
-		SolanaTxSlot       uint64
 	}
 
 	VEWithVotePower struct {
@@ -63,8 +61,6 @@ type (
 		EthBaseFee           uint64
 		EthTipCap            uint64
 		RequestedEthNonce    uint64
-		EthTxHeight          uint64
-		SolanaTxSlot         uint64
 		ConsensusData        abci.ExtendedCommitInfo
 	}
 
@@ -78,9 +74,7 @@ type (
 		GetSidecarStateByEthHeight(ctx context.Context, req *sidecar.SidecarStateByEthHeightRequest, opts ...grpc.CallOption) (*sidecar.SidecarStateResponse, error)
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
-		GetSolanaTransaction(ctx context.Context, in *sidecar.SolanaTransactionRequest, opts ...grpc.CallOption) (*sidecar.SolanaTransactionResponse, error)
-		GetEthereumTransaction(ctx context.Context, in *sidecar.EthereumTransactionRequest, opts ...grpc.CallOption) (*sidecar.EthereumTransactionResponse, error)
-		GetEthereumNonceAtHeight(ctx context.Context, in *sidecar.EthereumNonceAtHeightRequest, opts ...grpc.CallOption) (*sidecar.EthereumNonceAtHeightResponse, error)
+		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
 	}
 )
 
