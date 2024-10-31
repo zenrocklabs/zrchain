@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/require"
+	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
-	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 )
 
 func initTestOracle() *sidecar.Oracle {
