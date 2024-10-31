@@ -13,7 +13,7 @@ import (
 func TestGetLatestEthereumNonce(t *testing.T) {
 	oracle := initTestOracle()
 	oracleService := sidecar.NewOracleService(oracle)
-	out, err := oracleService.GetEthereumNonceAtHeight(context.Background(), &api.EthereumNonceAtHeightRequest{
+	out, err := oracleService.GetLatestEthereumNonceForAccount(context.Background(), &api.LatestEthereumNonceForAccountRequest{
 		Address: "0xF198A1Af2682538E834bBc5F1af1847Cf50603E1",
 	})
 	require.NoError(t, err)
