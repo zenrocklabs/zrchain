@@ -69,6 +69,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
+	github.com/test-go/testify v1.1.4
 	github.com/zenrocklabs/zenbtc v0.0.3
 	github.com/zenrocklabs/zenrock-avs v1.0.1
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0

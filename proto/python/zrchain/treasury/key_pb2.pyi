@@ -54,8 +54,8 @@ class KeyRequest(_message.Message):
     reject_reason: str
     index: int
     sign_policy_id: int
-    zenbtc_metadata: ZenBTCMetdata
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[_Union[KeyType, str]] = ..., status: _Optional[_Union[KeyRequestStatus, str]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetdata, _Mapping]] = ...) -> None: ...
+    zenbtc_metadata: ZenBTCMetadata
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[_Union[KeyType, str]] = ..., status: _Optional[_Union[KeyRequestStatus, str]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
 class KeyReqResponse(_message.Message):
     __slots__ = ("id", "creator", "workspace_addr", "keyring_addr", "key_type", "status", "keyring_party_signatures", "reject_reason", "index", "sign_policy_id", "zenbtc_metadata")
@@ -80,8 +80,8 @@ class KeyReqResponse(_message.Message):
     reject_reason: str
     index: int
     sign_policy_id: int
-    zenbtc_metadata: ZenBTCMetdata
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., status: _Optional[str] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetdata, _Mapping]] = ...) -> None: ...
+    zenbtc_metadata: ZenBTCMetadata
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., status: _Optional[str] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
 class Key(_message.Message):
     __slots__ = ("id", "workspace_addr", "keyring_addr", "type", "public_key", "index", "sign_policy_id", "zenbtc_metadata")
@@ -100,8 +100,8 @@ class Key(_message.Message):
     public_key: bytes
     index: int
     sign_policy_id: int
-    zenbtc_metadata: ZenBTCMetdata
-    def __init__(self, id: _Optional[int] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., type: _Optional[_Union[KeyType, str]] = ..., public_key: _Optional[bytes] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetdata, _Mapping]] = ...) -> None: ...
+    zenbtc_metadata: ZenBTCMetadata
+    def __init__(self, id: _Optional[int] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., type: _Optional[_Union[KeyType, str]] = ..., public_key: _Optional[bytes] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
 class KeyResponse(_message.Message):
     __slots__ = ("id", "workspace_addr", "keyring_addr", "type", "public_key", "index", "sign_policy_id", "zenbtc_metadata")
@@ -120,10 +120,10 @@ class KeyResponse(_message.Message):
     public_key: bytes
     index: int
     sign_policy_id: int
-    zenbtc_metadata: ZenBTCMetdata
-    def __init__(self, id: _Optional[int] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., type: _Optional[str] = ..., public_key: _Optional[bytes] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetdata, _Mapping]] = ...) -> None: ...
+    zenbtc_metadata: ZenBTCMetadata
+    def __init__(self, id: _Optional[int] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., type: _Optional[str] = ..., public_key: _Optional[bytes] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
-class ZenBTCMetdata(_message.Message):
+class ZenBTCMetadata(_message.Message):
     __slots__ = ("recipient_addr", "chain_type", "chain_id", "return_address")
     RECIPIENT_ADDR_FIELD_NUMBER: _ClassVar[int]
     CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]

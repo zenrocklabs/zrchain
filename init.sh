@@ -291,7 +291,7 @@ fi
 
 # Start the Oracle Sidecar only for the first validator node
 if [[ -z "$NO_SIDECAR" && "$NON_VALIDATOR" = false && ( "$LOCALNET" != "2" || -z "$LOCALNET" ) ]]; then
-    (cd ../avs/validator_sidecar && go run . > validator_sidecar.log 2>&1 &)
+    (cd sidecar && ./sidecar > sidecar.log 2>&1 &)
     echo -e "\nStarting Oracle Sidecar, sleeping for 25 seconds to allow Sidecar to start pulling data...\n"
     sleep 25
 fi

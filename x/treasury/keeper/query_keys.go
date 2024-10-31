@@ -74,6 +74,7 @@ func processWallets(
 	walletType types.WalletType,
 	prefixes []string,
 ) []*types.WalletResponse {
+
 	wallets := []*types.WalletResponse{}
 	walletTypes := deriveWalletTypes(walletType)
 

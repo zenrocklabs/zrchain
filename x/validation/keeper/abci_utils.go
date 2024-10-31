@@ -7,13 +7,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
 	"math/big"
 	"slices"
 	"sort"
 	"strings"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -29,7 +27,6 @@ import (
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
 )
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
@@ -81,8 +78,9 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ValidatorDelegations: validatorDelegations,
 		EthBlockHeight:       resp.EthBlockHeight,
 		EthBlockHash:         common.HexToHash(resp.EthBlockHash),
-		EthGasPrice:          resp.EthGasPrice,
 		EthGasLimit:          resp.EthGasLimit,
+		EthBaseFee:           resp.EthBaseFee,
+		EthTipCap:            resp.EthTipCap,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 	}, nil
 }
@@ -360,37 +358,13 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 	return nil
 }
 
-func (k *Keeper) nextRequestedEthereumNonceHeight(ctx context.Context) (uint64, error) {
-	var requestedHeight uint64 = 0
-	if err := k.RequestedEthereumNonceHeights.Walk(ctx, nil, func(height uint64) (bool, error) {
-		requestedHeight = height
-		return true, nil
-	}); err != nil {
-		k.Logger(ctx).Error("error walking through RequestedEthereumNonceHeights", "err", err)
-		return 0, err
-	}
-	return requestedHeight, nil
-}
-
 func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
-	nonceHeight, err := k.nextRequestedEthereumNonceHeight(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("error getting next requested Ethereum nonce height: %w", err)
-	}
-
-	if nonceHeight == 0 {
-		return 0, nil
-	}
-
 	addr, err := k.getZenBTCMinterAddressEVM(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
 	}
 
-	nonceResp, err := k.sidecarClient.GetEthereumNonceAtHeight(ctx, &sidecar.EthereumNonceAtHeightRequest{
-		Address: addr,
-		Height:  nonceHeight,
-	})
+	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {
 		return 0, fmt.Errorf("error fetching Ethereum nonce: %w", err)
 	}
@@ -398,128 +372,108 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
 	return nonceResp.Nonce, nil
 }
 
-func (k *Keeper) lookupNextUnlockTx(ctx context.Context) (string, uint64, error) {
-	chain, txID, withdrawalInfo, totalTxs, err := k.nextUnconfirmedUnlockTx(ctx)
+// func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+// 	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	chainID := big.NewInt(17000)
+// 	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
+// 	gasTipCap := new(big.Int).SetUint64(tipCap)
+// 	gasFeeCap := new(big.Int).Mul(new(big.Int).SetUint64(baseFee), big.NewInt(2))
+// 	gasFeeCap.Add(gasFeeCap, gasTipCap)
+
+// 	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+// 		ChainID:    chainID,
+// 		Nonce:      nonce,
+// 		GasTipCap:  gasTipCap,
+// 		GasFeeCap:  gasFeeCap,
+// 		Gas:        gasLimit,
+// 		To:         &addr,
+// 		Value:      big.NewInt(0), // we shouldn't send any ETH
+// 		Data:       encodedMintData,
+// 		AccessList: nil,
+// 	})
+
+// 	unsignedTxBz, err := unsignedTx.MarshalBinary()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	signer := ethtypes.LatestSignerForChainID(chainID)
+
+// 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+// }
+
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	// if chainID != 17000 && chainID != 11155111 {
+	if chainID != 17000 {
+		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
+	}
+
+	encodedMintData, err := encodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
-		return "", 0, err
+		return nil, nil, err
 	}
 
-	if totalTxs == 0 || chain == "" || txID == "" {
-		return "", 0, nil
-	}
+	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
 
-	return k.querySidecarForUnlockTx(ctx, chain, txID, withdrawalInfo)
-}
-
-func (k *Keeper) nextUnconfirmedUnlockTx(ctx context.Context) (string, string, types.WithdrawalInfo, uint64, error) {
-	var lowestRetryCount uint32 = math.MaxUint32
-	chain := ""
-	txID := ""
-	withdrawalInfo := types.WithdrawalInfo{}
-	var totalTxs uint64 = 0
-	if err := k.UnconfirmedUnlockTxs.Walk(ctx, nil, func(key collections.Pair[string, string], withdrawInfo types.WithdrawalInfo) (bool, error) {
-		totalTxs++
-		if withdrawalInfo.RetryCount < lowestRetryCount {
-			lowestRetryCount = withdrawalInfo.RetryCount
-			chain = key.K1()
-			txID = key.K2()
-			withdrawalInfo = withdrawInfo
-		}
-		return false, nil
-	}); err != nil {
-		k.Logger(ctx).Error("error walking through UnconfirmedSolanaUnlockTxs", "err", err)
-		return "", "", types.WithdrawalInfo{}, 0, err
-	}
-	return chain, txID, withdrawalInfo, totalTxs, nil
-}
-
-func (k *Keeper) querySidecarForUnlockTx(ctx context.Context, chain, txID string, withdrawalInfo types.WithdrawalInfo) (string, uint64, error) {
-	txHeight, err := k.getTransactionHeight(ctx, chain, txID)
-	if err != nil {
-		k.handleUnlockTxError(ctx, chain, txID, withdrawalInfo, err)
-	}
-	return chain, txHeight, err
-}
-
-func (k *Keeper) getTransactionHeight(ctx context.Context, chain, txID string) (uint64, error) {
-	switch chain {
-	case "eth":
-		resp, err := k.sidecarClient.GetEthereumTransaction(ctx, &sidecar.EthereumTransactionRequest{TxHash: txID})
-		if err != nil {
-			return 0, err
-		}
-		return resp.TxHeight, nil
-	case "sol":
-		resp, err := k.sidecarClient.GetSolanaTransaction(ctx, &sidecar.SolanaTransactionRequest{TxSignature: txID})
-		if err != nil {
-			return 0, err
-		}
-		return resp.TxSlot, nil
-	default:
-		return 0, fmt.Errorf("unsupported chain: %s", chain)
-	}
-}
-
-func (k *Keeper) handleUnlockTxError(ctx context.Context, chain, txID string, withdrawalInfo types.WithdrawalInfo, err error) {
-	k.Logger(ctx).Warn("error retrieving unlock tx", "error", err)
-	withdrawalInfo.RetryCount++
-	key := collections.Join(chain, txID)
-	if withdrawalInfo.RetryCount >= 25 {
-		k.Logger(ctx).Warn("unlock tx retry count exceeded; removing from store", "txSignature", txID)
-		if removeErr := k.UnconfirmedUnlockTxs.Remove(ctx, key); removeErr != nil {
-			k.Logger(ctx).Error("error removing unlock tx", "txID", txID, "error", removeErr)
-		}
-	} else {
-		k.UnconfirmedUnlockTxs.Set(ctx, key, withdrawalInfo)
-	}
-}
-
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount *big.Int, fee uint64, nonce, gasPrice, gasLimit uint64) ([]byte, error) {
-	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), amount, fee)
-	if err != nil {
-		return nil, err
-	}
-
-	tx := ethtypes.NewTransaction(
-		nonce,
-		common.HexToAddress(k.GetZenBTCEthContractAddr(ctx)),
-		big.NewInt(0), // we shouldn't send any ETH
-		gasLimit,
-		big.NewInt(int64(gasPrice)),
-		encodedMintData,
+	// Convert EIP-1559 fees to legacy gas price
+	// gasPrice = baseFee + tipCap
+	gasPrice := new(big.Int).Add(
+		new(big.Int).SetUint64(baseFee),
+		new(big.Int).SetUint64(tipCap),
 	)
-	// unsignedRlpTx, err := tx.MarshalBinary()
-	chainId := big.NewInt(17000)
-	signer := ethtypes.LatestSignerForChainID(chainId)
-	// after signature
-	// signedTx,err := tx.WithSignature(signer, signature) TODO: Do we need to do this?
-	// err := client.Broadcast(signedTx)
-	return signer.Hash(tx).Bytes(), nil
+
+	// TODO: REMOVE THIS LINE BELOW
+	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(1000))
+
+	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Gas:      gasLimit,
+		To:       &addr,
+		Value:    big.NewInt(0), // we shouldn't send any ETH
+		Data:     encodedMintData,
+	})
+
+	unsignedTxBz, err := unsignedTx.MarshalBinary()
+	if err != nil {
+		return nil, nil, err
+	}
+	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(chainID))
+
+	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func encodeMintData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
-	const mintFunctionABI = `[{"name":"mint","type":"function","inputs":[{"type":"address","name":"account"},{"type":"uint256","name":"value"},{"type":"uint256","name":"fee"}],"outputs":[]}]`
+func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+	const wrapFunctionABI = `[{"name":"wrap","type":"function","inputs":[{"type":"address","name":"account"},{"type":"uint256","name":"value"},{"type":"uint256","name":"fee"}],"outputs":[]}]`
 
-	parsedABI, err := abi.JSON(strings.NewReader(mintFunctionABI))
+	parsedABI, err := abi.JSON(strings.NewReader(wrapFunctionABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse ABI: %v", err)
 	}
 	feeAmount := new(big.Int).SetUint64(fee)
 
-	data, err := parsedABI.Pack("mint", recipientAddr, amount, feeAmount)
+	data, err := parsedABI.Pack("wrap", recipientAddr, amount, feeAmount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode mint function data: %v", err)
+		return nil, fmt.Errorf("failed to encode wrap call data: %v", err)
 	}
 	return data, nil
 }
 
 func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
+
+	keyID := k.GetZenBTCMinterKeyID(ctx)
+
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
-		Id:         k.GetZenBTCMinterKeyID(ctx),
+		Id:         keyID,
 		WalletType: treasurytypes.WalletType_WALLET_TYPE_EVM,
+		Prefixes:   make([]string, 0),
 	})
 	if err != nil {
 		return "", err
 	}
+
 	return q.Wallets[0].Address, nil
 }
