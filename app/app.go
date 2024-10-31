@@ -140,7 +140,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/wasmbinding"
 
 	appparams "github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	v4 "github.com/Zenrock-Foundation/zrchain/v5/app/upgrades/v4"
+	v5 "github.com/Zenrock-Foundation/zrchain/v5/app/upgrades/v5"
 	genutil "github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
 	genutiltypes "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
@@ -1405,8 +1405,8 @@ func getTxPriority(fee sdk.Coins, gas int64) int64 {
 func (app *ZenrockApp) setupUpgradeHandlers() {
 	// v1 to v2 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
-		v4.UpgradeName,
-		v4.CreateUpgradeHandler(app.ModuleManager, app.Configurator()),
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(app.ModuleManager, app.Configurator()),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -1421,7 +1421,7 @@ func (app *ZenrockApp) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-	case v4.UpgradeName:
+	case v5.UpgradeName:
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{zenbtctypes.ModuleName},
 		}
