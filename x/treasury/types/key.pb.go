@@ -115,7 +115,7 @@ type KeyRequest struct {
 	RejectReason           string           `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
 	Index                  uint64           `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
 	SignPolicyId           uint64           `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata         *ZenBTCMetdata   `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
+	ZenbtcMetadata         *ZenBTCMetadata  `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
 }
 
 func (m *KeyRequest) Reset()         { *m = KeyRequest{} }
@@ -221,7 +221,7 @@ func (m *KeyRequest) GetSignPolicyId() uint64 {
 	return 0
 }
 
-func (m *KeyRequest) GetZenbtcMetadata() *ZenBTCMetdata {
+func (m *KeyRequest) GetZenbtcMetadata() *ZenBTCMetadata {
 	if m != nil {
 		return m.ZenbtcMetadata
 	}
@@ -230,17 +230,17 @@ func (m *KeyRequest) GetZenbtcMetadata() *ZenBTCMetdata {
 
 // format of a key request response
 type KeyReqResponse struct {
-	Id                     uint64         `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Creator                string         `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	WorkspaceAddr          string         `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr            string         `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	KeyType                string         `protobuf:"bytes,5,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
-	Status                 string         `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
-	KeyringPartySignatures [][]byte       `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
-	RejectReason           string         `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
-	Index                  uint64         `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	SignPolicyId           uint64         `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata         *ZenBTCMetdata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
+	Id                     uint64          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator                string          `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	WorkspaceAddr          string          `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr            string          `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	KeyType                string          `protobuf:"bytes,5,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
+	Status                 string          `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	KeyringPartySignatures [][]byte        `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
+	RejectReason           string          `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
+	Index                  uint64          `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
+	SignPolicyId           uint64          `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata         *ZenBTCMetadata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
 }
 
 func (m *KeyReqResponse) Reset()         { *m = KeyReqResponse{} }
@@ -346,7 +346,7 @@ func (m *KeyReqResponse) GetSignPolicyId() uint64 {
 	return 0
 }
 
-func (m *KeyReqResponse) GetZenbtcMetadata() *ZenBTCMetdata {
+func (m *KeyReqResponse) GetZenbtcMetadata() *ZenBTCMetadata {
 	if m != nil {
 		return m.ZenbtcMetadata
 	}
@@ -355,14 +355,14 @@ func (m *KeyReqResponse) GetZenbtcMetadata() *ZenBTCMetdata {
 
 // format of a key
 type Key struct {
-	Id             uint64         `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	WorkspaceAddr  string         `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr    string         `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	Type           KeyType        `protobuf:"varint,4,opt,name=type,proto3,enum=zrchain.treasury.KeyType" json:"type,omitempty"`
-	PublicKey      []byte         `protobuf:"bytes,5,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Index          uint64         `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	SignPolicyId   uint64         `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata *ZenBTCMetdata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
+	Id             uint64          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	WorkspaceAddr  string          `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr    string          `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	Type           KeyType         `protobuf:"varint,4,opt,name=type,proto3,enum=zrchain.treasury.KeyType" json:"type,omitempty"`
+	PublicKey      []byte          `protobuf:"bytes,5,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Index          uint64          `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
+	SignPolicyId   uint64          `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata *ZenBTCMetadata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
 }
 
 func (m *Key) Reset()         { *m = Key{} }
@@ -447,7 +447,7 @@ func (m *Key) GetSignPolicyId() uint64 {
 	return 0
 }
 
-func (m *Key) GetZenbtcMetadata() *ZenBTCMetdata {
+func (m *Key) GetZenbtcMetadata() *ZenBTCMetadata {
 	if m != nil {
 		return m.ZenbtcMetadata
 	}
@@ -456,14 +456,14 @@ func (m *Key) GetZenbtcMetadata() *ZenBTCMetdata {
 
 // format of a key response
 type KeyResponse struct {
-	Id             uint64         `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	WorkspaceAddr  string         `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr    string         `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	Type           string         `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
-	PublicKey      []byte         `protobuf:"bytes,5,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Index          uint64         `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	SignPolicyId   uint64         `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata *ZenBTCMetdata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
+	Id             uint64          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	WorkspaceAddr  string          `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr    string          `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	Type           string          `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	PublicKey      []byte          `protobuf:"bytes,5,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Index          uint64          `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
+	SignPolicyId   uint64          `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata *ZenBTCMetadata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
 }
 
 func (m *KeyResponse) Reset()         { *m = KeyResponse{} }
@@ -548,33 +548,33 @@ func (m *KeyResponse) GetSignPolicyId() uint64 {
 	return 0
 }
 
-func (m *KeyResponse) GetZenbtcMetadata() *ZenBTCMetdata {
+func (m *KeyResponse) GetZenbtcMetadata() *ZenBTCMetadata {
 	if m != nil {
 		return m.ZenbtcMetadata
 	}
 	return nil
 }
 
-// ZenBTCMetdata is the metadata for a key on the zenBTC keyring.
-type ZenBTCMetdata struct {
+// ZenBTCMetadata is the metadata for a key on the zenBTC keyring.
+type ZenBTCMetadata struct {
 	RecipientAddr string     `protobuf:"bytes,1,opt,name=recipient_addr,json=recipientAddr,proto3" json:"recipient_addr,omitempty"`
 	ChainType     WalletType `protobuf:"varint,2,opt,name=chain_type,json=chainType,proto3,enum=zrchain.treasury.WalletType" json:"chain_type,omitempty"`
 	ChainId       uint64     `protobuf:"varint,3,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	ReturnAddress string     `protobuf:"bytes,4,opt,name=return_address,json=returnAddress,proto3" json:"return_address,omitempty"`
 }
 
-func (m *ZenBTCMetdata) Reset()         { *m = ZenBTCMetdata{} }
-func (m *ZenBTCMetdata) String() string { return proto.CompactTextString(m) }
-func (*ZenBTCMetdata) ProtoMessage()    {}
-func (*ZenBTCMetdata) Descriptor() ([]byte, []int) {
+func (m *ZenBTCMetadata) Reset()         { *m = ZenBTCMetadata{} }
+func (m *ZenBTCMetadata) String() string { return proto.CompactTextString(m) }
+func (*ZenBTCMetadata) ProtoMessage()    {}
+func (*ZenBTCMetadata) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4fe3d9b67a5056f9, []int{4}
 }
-func (m *ZenBTCMetdata) XXX_Unmarshal(b []byte) error {
+func (m *ZenBTCMetadata) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ZenBTCMetdata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ZenBTCMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ZenBTCMetdata.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ZenBTCMetadata.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -584,40 +584,40 @@ func (m *ZenBTCMetdata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *ZenBTCMetdata) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ZenBTCMetdata.Merge(m, src)
+func (m *ZenBTCMetadata) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ZenBTCMetadata.Merge(m, src)
 }
-func (m *ZenBTCMetdata) XXX_Size() int {
+func (m *ZenBTCMetadata) XXX_Size() int {
 	return m.Size()
 }
-func (m *ZenBTCMetdata) XXX_DiscardUnknown() {
-	xxx_messageInfo_ZenBTCMetdata.DiscardUnknown(m)
+func (m *ZenBTCMetadata) XXX_DiscardUnknown() {
+	xxx_messageInfo_ZenBTCMetadata.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ZenBTCMetdata proto.InternalMessageInfo
+var xxx_messageInfo_ZenBTCMetadata proto.InternalMessageInfo
 
-func (m *ZenBTCMetdata) GetRecipientAddr() string {
+func (m *ZenBTCMetadata) GetRecipientAddr() string {
 	if m != nil {
 		return m.RecipientAddr
 	}
 	return ""
 }
 
-func (m *ZenBTCMetdata) GetChainType() WalletType {
+func (m *ZenBTCMetadata) GetChainType() WalletType {
 	if m != nil {
 		return m.ChainType
 	}
 	return WalletType_WALLET_TYPE_UNSPECIFIED
 }
 
-func (m *ZenBTCMetdata) GetChainId() uint64 {
+func (m *ZenBTCMetadata) GetChainId() uint64 {
 	if m != nil {
 		return m.ChainId
 	}
 	return 0
 }
 
-func (m *ZenBTCMetdata) GetReturnAddress() string {
+func (m *ZenBTCMetadata) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
@@ -760,7 +760,7 @@ func init() {
 	proto.RegisterType((*KeyReqResponse)(nil), "zrchain.treasury.KeyReqResponse")
 	proto.RegisterType((*Key)(nil), "zrchain.treasury.Key")
 	proto.RegisterType((*KeyResponse)(nil), "zrchain.treasury.KeyResponse")
-	proto.RegisterType((*ZenBTCMetdata)(nil), "zrchain.treasury.ZenBTCMetdata")
+	proto.RegisterType((*ZenBTCMetadata)(nil), "zrchain.treasury.ZenBTCMetadata")
 	proto.RegisterType((*PendingMintTransaction)(nil), "zrchain.treasury.PendingMintTransaction")
 	proto.RegisterType((*PendingMintTransactions)(nil), "zrchain.treasury.PendingMintTransactions")
 }
@@ -1179,7 +1179,7 @@ func (m *KeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ZenBTCMetdata) Marshal() (dAtA []byte, err error) {
+func (m *ZenBTCMetadata) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1189,12 +1189,12 @@ func (m *ZenBTCMetdata) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ZenBTCMetdata) MarshalTo(dAtA []byte) (int, error) {
+func (m *ZenBTCMetadata) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ZenBTCMetdata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ZenBTCMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1508,7 +1508,7 @@ func (m *KeyResponse) Size() (n int) {
 	return n
 }
 
-func (m *ZenBTCMetdata) Size() (n int) {
+func (m *ZenBTCMetadata) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1895,7 +1895,7 @@ func (m *KeyRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ZenbtcMetadata == nil {
-				m.ZenbtcMetadata = &ZenBTCMetdata{}
+				m.ZenbtcMetadata = &ZenBTCMetadata{}
 			}
 			if err := m.ZenbtcMetadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2262,7 +2262,7 @@ func (m *KeyReqResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ZenbtcMetadata == nil {
-				m.ZenbtcMetadata = &ZenBTCMetdata{}
+				m.ZenbtcMetadata = &ZenBTCMetadata{}
 			}
 			if err := m.ZenbtcMetadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2522,7 +2522,7 @@ func (m *Key) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ZenbtcMetadata == nil {
-				m.ZenbtcMetadata = &ZenBTCMetdata{}
+				m.ZenbtcMetadata = &ZenBTCMetadata{}
 			}
 			if err := m.ZenbtcMetadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2795,7 +2795,7 @@ func (m *KeyResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ZenbtcMetadata == nil {
-				m.ZenbtcMetadata = &ZenBTCMetdata{}
+				m.ZenbtcMetadata = &ZenBTCMetadata{}
 			}
 			if err := m.ZenbtcMetadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2822,7 +2822,7 @@ func (m *KeyResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ZenBTCMetdata) Unmarshal(dAtA []byte) error {
+func (m *ZenBTCMetadata) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2845,10 +2845,10 @@ func (m *ZenBTCMetdata) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ZenBTCMetdata: wiretype end group for non-group")
+			return fmt.Errorf("proto: ZenBTCMetadata: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ZenBTCMetdata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ZenBTCMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

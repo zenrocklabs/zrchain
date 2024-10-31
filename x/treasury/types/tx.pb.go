@@ -187,16 +187,16 @@ var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 // MsgNewKeyRequest is the Msg/NewKeyRequest request type.
 type MsgNewKeyRequest struct {
-	Creator        string         `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	WorkspaceAddr  string         `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr    string         `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	KeyType        string         `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
-	Btl            uint64         `protobuf:"varint,5,opt,name=btl,proto3" json:"btl,omitempty"`
-	Index          uint64         `protobuf:"varint,6,opt,name=index,proto3" json:"index,omitempty"`
-	ExtRequester   string         `protobuf:"bytes,7,opt,name=ext_requester,json=extRequester,proto3" json:"ext_requester,omitempty"`
-	ExtKeyType     uint64         `protobuf:"varint,8,opt,name=ext_key_type,json=extKeyType,proto3" json:"ext_key_type,omitempty"`
-	SignPolicyId   uint64         `protobuf:"varint,9,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata *ZenBTCMetdata `protobuf:"bytes,10,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
+	Creator        string          `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	WorkspaceAddr  string          `protobuf:"bytes,2,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr    string          `protobuf:"bytes,3,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	KeyType        string          `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
+	Btl            uint64          `protobuf:"varint,5,opt,name=btl,proto3" json:"btl,omitempty"`
+	Index          uint64          `protobuf:"varint,6,opt,name=index,proto3" json:"index,omitempty"`
+	ExtRequester   string          `protobuf:"bytes,7,opt,name=ext_requester,json=extRequester,proto3" json:"ext_requester,omitempty"`
+	ExtKeyType     uint64          `protobuf:"varint,8,opt,name=ext_key_type,json=extKeyType,proto3" json:"ext_key_type,omitempty"`
+	SignPolicyId   uint64          `protobuf:"varint,9,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata *ZenBTCMetadata `protobuf:"bytes,10,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"`
 }
 
 func (m *MsgNewKeyRequest) Reset()         { *m = MsgNewKeyRequest{} }
@@ -295,7 +295,7 @@ func (m *MsgNewKeyRequest) GetSignPolicyId() uint64 {
 	return 0
 }
 
-func (m *MsgNewKeyRequest) GetZenbtcMetadata() *ZenBTCMetdata {
+func (m *MsgNewKeyRequest) GetZenbtcMetadata() *ZenBTCMetadata {
 	if m != nil {
 		return m.ZenbtcMetadata
 	}
@@ -1762,7 +1762,7 @@ func init() {
 func init() { proto.RegisterFile("zrchain/treasury/tx.proto", fileDescriptor_2a647f4f7f3768f2) }
 
 var fileDescriptor_2a647f4f7f3768f2 = []byte{
-	// 1816 bytes of a gzipped FileDescriptorProto
+	// 1813 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x58, 0x4f, 0x6f, 0xdb, 0xc8,
 	0x15, 0x37, 0x65, 0x5b, 0xb2, 0x9e, 0x65, 0x45, 0x19, 0x3b, 0x09, 0xad, 0x38, 0x8e, 0x2d, 0x27,
 	0x85, 0xeb, 0xd6, 0x52, 0xd6, 0xdb, 0x0d, 0xb6, 0xd9, 0xa6, 0x40, 0x9c, 0xd8, 0x88, 0xe0, 0x5a,
@@ -4490,7 +4490,7 @@ func (m *MsgNewKeyRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ZenbtcMetadata == nil {
-				m.ZenbtcMetadata = &ZenBTCMetdata{}
+				m.ZenbtcMetadata = &ZenBTCMetadata{}
 			}
 			if err := m.ZenbtcMetadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

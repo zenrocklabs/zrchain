@@ -9,9 +9,10 @@ import (
 	solana "github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-// These constants should not be changed as they are important for synchronicity
+// / These constants should not be changed as they are important for synchronicity
 const (
 	MainLoopTickerInterval = 15 * time.Second
 	CacheSize              = 20
@@ -22,8 +23,9 @@ var (
 		Delegations:    make(map[string]map[string]*big.Int),
 		EthBlockHeight: 0,
 		EthBlockHash:   "",
-		EthGasPrice:    0,
 		EthGasLimit:    0,
+		EthBaseFee:     0,
+		EthTipCap:      0,
 		ETHUSDPrice:    0,
 		ROCKUSDPrice:   0,
 	}
@@ -48,8 +50,9 @@ type OracleState struct {
 	ETHUSDPrice    float64                        `json:"ethUSDPrice"`
 	EthBlockHeight uint64                         `json:"ethBlockHeight"`
 	EthBlockHash   string                         `json:"ethBlockHash"`
-	EthGasPrice    uint64                         `json:"ethGasPrice"`
 	EthGasLimit    uint64                         `json:"ethGasLimit"`
+	EthBaseFee     uint64                         `json:"ethBaseFee"`
+	EthTipCap      uint64                         `json:"ethTipCap"`
 }
 
 type CoinMarketCapResponse struct {
@@ -79,6 +82,13 @@ type Config struct {
 	Network        string            `yaml:"network"`
 	EthOracle      EthOracleConfig   `yaml:"eth_oracle"`
 	SolanaRPC      map[string]string `yaml:"solana_rpc"`
+	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
+}
+
+type ProxyRPCConfig struct {
+	URL      string `yaml:"url"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 }
 
 type EthOracleConfig struct {

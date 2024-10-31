@@ -12,9 +12,7 @@ service SidecarService {
   rpc GetSidecarStateByEthHeight(SidecarStateByEthHeightRequest) returns (SidecarStateResponse) {}
   rpc GetBitcoinBlockHeaderByHeight(BitcoinBlockHeaderByHeightRequest) returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestBitcoinBlockHeader(LatestBitcoinBlockHeaderRequest) returns (BitcoinBlockHeaderResponse) {}
-  rpc GetEthereumTransaction(EthereumTransactionRequest) returns (EthereumTransactionResponse) {}
-  rpc GetSolanaTransaction(SolanaTransactionRequest) returns (SolanaTransactionResponse) {}
-  rpc GetEthereumNonceAtHeight(EthereumNonceAtHeightRequest) returns (EthereumNonceAtHeightResponse) {}
+  rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest) returns (LatestEthereumNonceForAccountResponse) {}
 }
 
 message LatestBitcoinBlockHeaderRequest {
@@ -50,35 +48,19 @@ message SidecarStateResponse {
   string ETHUSDPrice = 3;
   uint64 EthBlockHeight = 4;
   string EthBlockHash = 5;
-  uint64 EthGasPrice = 6;
-  uint64 EthGasLimit = 7;
+  uint64 EthGasLimit = 6;
+  uint64 EthBaseFee = 7;
+  uint64 EthTipCap = 8;
 }
 
 message SidecarStateByEthHeightRequest {
   uint64 EthBlockHeight = 1;
 }
 
-message SolanaTransactionRequest {
-  string TxSignature = 1;
-}
-
-message SolanaTransactionResponse {
-  uint64 TxSlot = 4;
-}
-
-message EthereumNonceAtHeightRequest {
+message LatestEthereumNonceForAccountRequest {
   string Address = 1;
-  uint64 Height = 2;
 }
 
-message EthereumNonceAtHeightResponse {
+message LatestEthereumNonceForAccountResponse {
   uint64 Nonce = 1;
-}
-
-message EthereumTransactionRequest {
-  string TxHash = 1;
-}
-
-message EthereumTransactionResponse {
-  uint64 TxHeight = 1;
 }

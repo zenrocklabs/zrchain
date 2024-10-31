@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino/rpcservice"
+
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -76,7 +78,7 @@ func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes
 	return nodeMap, err
 }
 
-func (ns *NeutrinoServer) Initialize() {
+func (ns *NeutrinoServer) Initialize(url, user, password string) {
 	var err error
 	nodes := make(map[string]LiteNode)
 
@@ -98,12 +100,19 @@ func (ns *NeutrinoServer) Initialize() {
 	// Register RPC server
 	rpc.Register(ns)
 	rpc.HandleHTTP()
-	// Listen for requests on port 1234
+	// Listen for requests on port 12345
 	l, e := net.Listen("tcp", ":12345")
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
 	go http.Serve(l, nil)
+
+	//Connect to Proxy
+	var caller *rpcservice.RpcCaller
+	if url != "" {
+		caller = rpcservice.NewRpcCaller(url, user, password)
+		ns.Proxy = caller
+	}
 }
 
 func (ns *NeutrinoServer) Stop() {
@@ -131,6 +140,16 @@ func (ns *NeutrinoServer) GetBlockHeaderByHeight(chainName string, height int64)
 		}
 		return blockHeader, blockHash, blockStamp.Height, nil
 	}
+
+	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	if chainName != "mainnet" {
+		blockHeader, hash, height, err := ns.ProxyGetBlockHeaderByHeight(chainName, height)
+		if err == nil {
+			return blockHeader, hash, height, err
+		}
+		//ignore this error - we can't get testnet data using the proxy fallback mechanism
+	}
+
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
 
 }
@@ -140,7 +159,7 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		node := liteNode.Node
 		blockStamp, err := node.BestBlock()
 		if err != nil {
-			log.Fatalf("Failed to get Tip Height: %v", err)
+			log.Fatalf("Failed to get Tip Height %s: %v", node.ChainParams().Name, err)
 		}
 		blockHeader, err := node.GetBlockHeader(&blockStamp.Hash)
 		if err != nil {
@@ -148,6 +167,15 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		}
 		return blockHeader, &blockStamp.Hash, blockStamp.Height, nil
 	}
+	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	if chainName != "mainnet" {
+		blockHeader, hash, height, err := ns.ProxyGetLatestBlockHeader(chainName)
+		if err == nil {
+			return blockHeader, hash, height, err
+		}
+		//ignore this error - we can't get testnet data using the proxy fallback mechanism
+	}
+
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
 }
 

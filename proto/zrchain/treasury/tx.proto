@@ -88,7 +88,7 @@ message MsgNewKeyRequest {
   string ext_requester = 7;
   uint64 ext_key_type = 8;
   uint64 sign_policy_id = 9;
-  ZenBTCMetdata zenbtc_metadata = 10; // Optional
+  ZenBTCMetadata zenbtc_metadata = 10; // Optional
 }
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
