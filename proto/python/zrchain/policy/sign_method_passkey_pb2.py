@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(zrchain/policy/sign_method_passkey.proto\x12\x0ezrchain.policy\"\x9b\x01\n\x11SignMethodPasskey\x12\x15\n\x06raw_id\x18\x01 \x01(\x0cR\x05rawId\x12-\n\x12\x61ttestation_object\x18\x02 \x01(\x0cR\x11\x61ttestationObject\x12(\n\x10\x63lient_data_json\x18\x03 \x01(\x0cR\x0e\x63lientDataJson\x12\x16\n\x06\x61\x63tive\x18\x04 \x01(\x08R\x06\x61\x63tiveB9Z7github.com/Zenrock-Foundation/zrchain/v4/x/policy/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(zrchain/policy/sign_method_passkey.proto\x12\x0ezrchain.policy\"\x9b\x01\n\x11SignMethodPasskey\x12\x15\n\x06raw_id\x18\x01 \x01(\x0cR\x05rawId\x12-\n\x12\x61ttestation_object\x18\x02 \x01(\x0cR\x11\x61ttestationObject\x12(\n\x10\x63lient_data_json\x18\x03 \x01(\x0cR\x0e\x63lientDataJson\x12\x16\n\x06\x61\x63tive\x18\x04 \x01(\x08R\x06\x61\x63tiveB9Z7github.com/Zenrock-Foundation/zrchain/v5/x/policy/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.policy.sign_method_passkey_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/Zenrock-Foundation/zrchain/v4/x/policy/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/Zenrock-Foundation/zrchain/v5/x/policy/types'
   _globals['_SIGNMETHODPASSKEY']._serialized_start=61
   _globals['_SIGNMETHODPASSKEY']._serialized_end=216
 # @@protoc_insertion_point(module_scope)

@@ -22,8 +22,8 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 )
 
 type Keeper struct {

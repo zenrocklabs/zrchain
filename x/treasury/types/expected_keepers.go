@@ -3,9 +3,9 @@ package types
 import (
 	"context"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 
-	idtypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

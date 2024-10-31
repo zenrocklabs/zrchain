@@ -11,7 +11,7 @@ import (
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	genutiltypes "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
+	genutiltypes "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 // AddGenesisAccount adds a genesis account to the genesis state.

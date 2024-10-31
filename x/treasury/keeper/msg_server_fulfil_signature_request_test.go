@@ -4,14 +4,14 @@ import (
 	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 var defaultKr = idTypes.Keyring{

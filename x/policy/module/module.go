@@ -16,11 +16,11 @@ import (
 
 	// this line is used by starport scaffolding # 1
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
-const consensusVersion = 2
+const consensusVersion = 3
 
 var (
 	_ module.AppModuleBasic      = (*AppModule)(nil)
@@ -118,8 +118,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
 	migrator := keeper.NewMigrator(am.keeper)
-	if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
+	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
 	}
 }
 

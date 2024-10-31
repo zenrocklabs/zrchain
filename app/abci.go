@@ -6,7 +6,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	validation "github.com/Zenrock-Foundation/zrchain/v4/x/validation/keeper"
+	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
 )
 
 func (app *ZenrockApp) ExtendVoteHandler(ctx sdk.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {

@@ -1,7 +1,7 @@
 package neutrino
 
 import (
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino/rpcservice"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino/rpcservice"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
 )

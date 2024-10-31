@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {

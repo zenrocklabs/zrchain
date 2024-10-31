@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/app/params"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/cobra"

@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

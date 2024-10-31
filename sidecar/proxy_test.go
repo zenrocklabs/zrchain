@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/hex"
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ProxyFunctions_Testnet3(t *testing.T) {

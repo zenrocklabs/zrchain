@@ -3,7 +3,7 @@ package treasury
 import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 
-	modulev1 "github.com/Zenrock-Foundation/zrchain/v4/api/zrchain/treasury"
+	modulev1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/treasury"
 )
 
 // AutoCLIOptions implements the autocli.HasAutoCLIConfig interface.

@@ -2,7 +2,6 @@ package neutrino
 
 import (
 	"fmt"
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino/rpcservice"
 	"log"
 	"net"
 	"net/http"
@@ -10,7 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino/rpcservice"
+
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

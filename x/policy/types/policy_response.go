@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/Zenrock-Foundation/zrchain/v4/policy"
+	"github.com/Zenrock-Foundation/zrchain/v5/policy"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 )

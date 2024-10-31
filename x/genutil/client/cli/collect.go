@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/genutil"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 const flagGenTxDir = "gentx-dir"

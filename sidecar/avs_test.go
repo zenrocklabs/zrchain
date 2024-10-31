@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/require"
+	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
-	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 )
 
 func initTestOracle() *sidecar.Oracle {

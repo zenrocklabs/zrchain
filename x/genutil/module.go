@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 const consensusVersion = 1

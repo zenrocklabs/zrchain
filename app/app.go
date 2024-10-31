@@ -64,9 +64,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v4/x/validation/keeper"
-	validation "github.com/Zenrock-Foundation/zrchain/v4/x/validation/module"
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
+	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -137,20 +137,21 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/wasmbinding"
+	"github.com/Zenrock-Foundation/zrchain/v5/wasmbinding"
 
-	appparams "github.com/Zenrock-Foundation/zrchain/v4/app/params"
-	genutil "github.com/Zenrock-Foundation/zrchain/v4/x/genutil"
-	genutiltypes "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
-	identitykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	appparams "github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	v5 "github.com/Zenrock-Foundation/zrchain/v5/app/upgrades/v5"
+	genutil "github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
+	genutiltypes "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
 	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -1081,6 +1082,8 @@ func (app *ZenrockApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmt
 
 	// Set the AnteHandler for the app
 	app.SetAnteHandler(anteHandler)
+
+	app.setupUpgradeHandlers()
 }
 
 func (app *ZenrockApp) setPostHandler() {
@@ -1397,4 +1400,35 @@ func getTxPriority(fee sdk.Coins, gas int64) int64 {
 	}
 
 	return priority
+}
+
+func (app *ZenrockApp) setupUpgradeHandlers() {
+	// v1 to v2 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(app.ModuleManager, app.Configurator()),
+	)
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	var storeUpgrades *storetypes.StoreUpgrades
+
+	switch upgradeInfo.Name {
+	case v5.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{zenbtctypes.ModuleName},
+		}
+	default:
+		return
+	}
+
+	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 }
