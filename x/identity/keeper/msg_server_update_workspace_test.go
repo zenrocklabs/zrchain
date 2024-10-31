@@ -22,15 +22,13 @@ var defaultWsWithOwners = types.Workspace{
 }
 
 var policy, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 + u2 > 1",
+	Definition: "testOwner + testOwner2 > 1",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner",
+			Address: "testOwner",
 		},
 		{
-			Abbreviation: "u2",
-			Address:      "testOwner2",
+			Address: "testOwner2",
 		},
 	},
 })

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-
-	"github.com/btcsuite/btcd/chaincfg"
-
+	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 
@@ -83,41 +83,39 @@ func (w *BitcoinWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
 	if err != nil {
 		return Transfer{}, err
 	}
-
+	var dataForSigning []string
+	for _, hash := range hashes {
+		dataForSigning = append(dataForSigning, hex.EncodeToString(hash))
+	}
 	return Transfer{
-		SigHashes: hashes,
+		SigHashes:      hashes,
+		DataForSigning: []byte(strings.Join(dataForSigning, ",")),
 	}, nil
 }
 
 func (w *BitcoinWallet) SigHashes(b []byte) (hashes [][]byte, err error) {
+	//Sighashes re-calculates the hash for the transaction to ensure they have not been tampered with
 	msgTx, err := DeserializeTransaction(b)
 	_ = msgTx
-
 	if err != nil {
 		return nil, err
 	}
-
-	// Loop through each unspent transaction for hashing
-
 	inputFetcher := txscript.NewMultiPrevOutFetcher(nil)
 	for _, txin := range msgTx.TxIn {
 		inputFetcher.AddPrevOut(txin.PreviousOutPoint, &wire.TxOut{})
 	}
-
-	// Generate signature hashes for the transaction
-	sigHashes := txscript.NewTxSigHashes(msgTx, inputFetcher)
-
 	for index, txin := range msgTx.TxIn {
-		witnessProgram := txin.Witness[0]
-		amount := BytesToInt64(txin.Witness[1])
-		//pubKey := txin.Witness[2]
-		hash, _ := txscript.CalcWitnessSigHash(witnessProgram, sigHashes, txscript.SigHashAll, msgTx, index, amount)
+		//Collect data from TX Witness
+		amount := BytesToInt64(txin.Witness[0])
+		pkscript := txin.Witness[2]
 
-		//h := Hashes{
-		//	Hash:   hash,
-		//	PubKey: string(pubKey),
-		//}
-
+		//Recalculate the Hash
+		prevOutFetcher := txscript.NewCannedPrevOutputFetcher(pkscript, amount)
+		sigHashes := txscript.NewTxSigHashes(msgTx, prevOutFetcher)
+		hash, err := txscript.CalcWitnessSigHash(pkscript, sigHashes, txscript.SigHashAll, msgTx, index, amount)
+		if err != nil {
+			return nil, fmt.Errorf("error CalcWitnessSigHash: %w", err)
+		}
 		hashes = append(hashes, hash)
 	}
 	return hashes, nil

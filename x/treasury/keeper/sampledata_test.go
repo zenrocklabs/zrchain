@@ -6,21 +6,19 @@ import (
 )
 
 var boolPol1, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 > 0",
+	Definition: "testOwner > 0",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner",
+			Address: "testOwner",
 		},
 	},
 })
 
 var boolPol2, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 > 0",
+	Definition: "testOwner2 > 0",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner2",
+			Address: "testOwner2",
 		},
 	},
 })

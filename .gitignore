@@ -9,6 +9,8 @@ release/
 build/
 genesis.json
 
+node_modules/
+
 scripts/bootstrap/**
 react
 ts-client

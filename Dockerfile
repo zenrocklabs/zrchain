@@ -4,7 +4,7 @@
 # docker run -e DOCKER_ENV=true -p 8080:8080 zenrockd:0.0.1
 
 # Use a  golang alpine as the base image
-FROM public.ecr.aws/docker/library/golang:1.23.0-alpine3.20 AS go_builder
+FROM public.ecr.aws/docker/library/golang:1.23.2-alpine3.20 AS go_builder
 RUN apk update
 RUN apk add make cmake git alpine-sdk linux-headers
 
@@ -34,8 +34,7 @@ RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 58e1f6bfa89ee390cb9abc69a5bc1
 RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
 
 # Set the working directory
-COPY zrchain /zrchain
-COPY avs /avs
+COPY . /zrchain
 WORKDIR /zrchain
 ENV BUILD_TAGS=muslc LINK_STATICALLY=true
 

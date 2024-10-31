@@ -14,7 +14,8 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "CHANGELOG.md", "label": "CHANGELOG" }
+          { "path": "CHANGELOG.md", "label": "CHANGELOG" },
+          { "path": "zenrockd", "label": "zenrockd" }
         ],
         "successComment": false,
         "failComment": false
