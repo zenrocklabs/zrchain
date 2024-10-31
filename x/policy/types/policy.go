@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/boolparser"
-	"github.com/Zenrock-Foundation/zrchain/v4/policy"
+	"github.com/Zenrock-Foundation/zrchain/v5/boolparser"
+	"github.com/Zenrock-Foundation/zrchain/v5/policy"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

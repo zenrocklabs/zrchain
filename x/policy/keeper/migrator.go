@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	v2 "github.com/Zenrock-Foundation/zrchain/v4/x/policy/migrations/v2"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/policy/migrations/v2"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

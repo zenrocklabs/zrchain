@@ -14,9 +14,9 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.MsgNewICATransactionRequest) (*types.MsgNewICATransactionRequestResponse, error) {

@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	pol "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

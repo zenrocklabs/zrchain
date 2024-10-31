@@ -4,11 +4,11 @@ package zrchain.identity;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types";
 
 // Params defines the parameters for the module.
 message Params {
-  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v4/x/identity/Params";
+  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v5/x/identity/Params";
   option (gogoproto.equal) = true;
 
   uint64 keyring_creation_fee = 1;

@@ -15,11 +15,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/app/params"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 type Keeper struct {

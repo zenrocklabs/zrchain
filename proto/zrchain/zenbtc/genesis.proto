@@ -5,7 +5,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zenbtc/params.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zenbtc/types";
 
 // GenesisState defines the zenbtc module's genesis state.
 message GenesisState {

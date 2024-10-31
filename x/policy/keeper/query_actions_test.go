@@ -1,16 +1,16 @@
 package keeper_test
 
 import (
-	idtypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 
 	"testing"
 
-	_ "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	_ "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 func Test_msgServer_QueryAction(t *testing.T) {

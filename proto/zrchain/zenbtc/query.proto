@@ -8,7 +8,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "zrchain/zenbtc/params.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zenbtc/types";
 
 // Query defines the gRPC querier service.
 service Query {

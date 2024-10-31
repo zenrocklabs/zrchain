@@ -1,7 +1,7 @@
 syntax = "proto3";
 package zrchain.policy;
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types";
 
 // AdditionalSignaturePasskey is a message that contains passkey signature data
 message AdditionalSignaturePasskey {

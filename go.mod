@@ -1,4 +1,4 @@
-module github.com/Zenrock-Foundation/zrchain/v4
+module github.com/Zenrock-Foundation/zrchain/v5
 
 go 1.23.2
 
@@ -13,6 +13,7 @@ replace (
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/zenrocklabs/zenrock-avs => github.com/zenrocklabs/zenrock-avs v1.0.1
 )
 
 require (
@@ -69,8 +70,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zenrocklabs/zenbtc v0.0.3
-	github.com/zenrocklabs/zenrock-avs v1.0.1
+	github.com/zenrocklabs/zenbtc v1.0.0
+	github.com/zenrocklabs/zenrock-avs v1.4.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golang.org/x/tools v0.25.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9
@@ -265,7 +266,7 @@ require (
 	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

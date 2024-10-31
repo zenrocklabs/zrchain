@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 

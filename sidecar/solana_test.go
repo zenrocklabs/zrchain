@@ -7,8 +7,8 @@ import (
 	"log"
 	"testing"
 
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar"
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	"github.com/stretchr/testify/require"
 
 	"github.com/near/borsh-go"

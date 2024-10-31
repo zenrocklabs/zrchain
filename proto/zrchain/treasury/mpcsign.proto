@@ -8,7 +8,7 @@ import "zrchain/treasury/key.proto";
 
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 
 // SignRequestStatus indicates the status of an MPC signature request.
 // A request starts as "pending", waiting to be picked up. Then it can move to

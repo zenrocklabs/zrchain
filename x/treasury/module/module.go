@@ -16,10 +16,10 @@ import (
 
 	// this line is used by starport scaffolding # 1
 
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 var (

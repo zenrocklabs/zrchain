@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	pol "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKeyPolicy) (*types.MsgUpdateKeyPolicyResponse, error) {

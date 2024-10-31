@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/assert"
 )

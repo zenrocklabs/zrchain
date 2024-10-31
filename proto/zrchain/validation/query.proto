@@ -10,7 +10,7 @@ import "cosmos_proto/cosmos.proto";
 import "cosmos/query/v1/query.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/validation/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
 
 // Query defines the gRPC querier service.
 service Query {

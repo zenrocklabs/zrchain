@@ -2,7 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	"github.com/Zenrock-Foundation/zrchain/v4/policy"
+	"github.com/Zenrock-Foundation/zrchain/v5/policy"
 )
 
 func (w *Workspace) SetAddress(addr string) { w.Address = addr }

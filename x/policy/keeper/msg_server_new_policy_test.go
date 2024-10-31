@@ -6,11 +6,11 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
-	_ "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policyModule "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	_ "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policyModule "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 func Test_msgServer_NewPolicy(t *testing.T) {

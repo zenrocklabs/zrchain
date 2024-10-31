@@ -16,8 +16,8 @@ import (
 
 	// this line is used by starport scaffolding # 1
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 const consensusVersion = 3

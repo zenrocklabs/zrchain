@@ -6,11 +6,11 @@ import (
 	"slices"
 
 	errorsmod "cosmossdk.io/errors"
-	pol "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -14,11 +14,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	v043 "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/migrations/v043"
-	v046 "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/migrations/v046"
-	v047 "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/migrations/v047"
+	v043 "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/migrations/v043"
+	v046 "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/migrations/v046"
+	v047 "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/migrations/v047"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 const flagGenesisTime = "genesis-time"

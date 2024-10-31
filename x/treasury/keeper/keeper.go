@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v4/app/params"
-	shared "github.com/Zenrock-Foundation/zrchain/v4/shared"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"cosmossdk.io/collections"
@@ -28,9 +28,9 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 type Keeper struct {

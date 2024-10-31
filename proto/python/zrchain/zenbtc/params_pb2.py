@@ -26,14 +26,14 @@ from amino import amino_pb2 as amino_dot_amino__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zenbtc/params.proto\x12\x0ezrchain.zenbtc\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"*\n\x06Params: \xe8\xa0\x1f\x01\x8a\xe7\xb0*\x17zrchain/x/zenbtc/ParamsB9Z7github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zenbtc/params.proto\x12\x0ezrchain.zenbtc\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"*\n\x06Params: \xe8\xa0\x1f\x01\x8a\xe7\xb0*\x17zrchain/x/zenbtc/ParamsB9Z7github.com/Zenrock-Foundation/zrchain/v5/x/zenbtc/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.zenbtc.params_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/Zenrock-Foundation/zrchain/v5/x/zenbtc/types'
   _globals['_PARAMS']._loaded_options = None
   _globals['_PARAMS']._serialized_options = b'\350\240\037\001\212\347\260*\027zrchain/x/zenbtc/Params'
   _globals['_PARAMS']._serialized_start=88

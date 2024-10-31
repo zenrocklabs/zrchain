@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/ethereum/go-ethereum/ethclient"

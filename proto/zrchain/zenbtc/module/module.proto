@@ -6,7 +6,7 @@ import "cosmos/app/v1alpha1/module.proto";
 // Module is the config object for the module.
 message Module {
   option (cosmos.app.v1alpha1.module) = {
-    go_import: "github.com/Zenrock-Foundation/zrchain/v4/x/zenbtc"
+    go_import: "github.com/Zenrock-Foundation/zrchain/v5/x/zenbtc"
   };
 
   // authority defines the custom module authority. If not set, defaults to the governance module.

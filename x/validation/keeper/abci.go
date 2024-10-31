@@ -11,9 +11,9 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

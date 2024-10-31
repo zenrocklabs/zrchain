@@ -17,4 +17,4 @@ ts-client
 cmd/zenrockd/zenrockd*
 !scripts/bootstrap/main.sh
 
-sidecar/neutrino/neutrino_*
+# sidecar/neutrino/neutrino_*
