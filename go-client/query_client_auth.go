@@ -1,0 +1,43 @@
+package client
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"google.golang.org/grpc"
+)
+
+// AuthQueryClient stores a query client for the zenrock auth module
+type AuthQueryClient struct {
+	client authtypes.QueryClient
+}
+
+// NewAuthQueryClient returns a new AuthQueryClient with the supplied GRPC client connection.
+func NewAuthQueryClient(c *grpc.ClientConn) *AuthQueryClient {
+	return &AuthQueryClient{
+		client: authtypes.NewQueryClient(c),
+	}
+}
+
+// Account returns the auth account for the supplied address.
+func (c *AuthQueryClient) Account(ctx context.Context, addr string) (types.AccountI, error) {
+	res, err := c.client.Account(ctx, &authtypes.QueryAccountRequest{
+		Address: addr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Check account type
+	if res.Account.TypeUrl != "/cosmos.auth.v1beta1.BaseAccount" {
+		return nil, fmt.Errorf("unknown account type: %s", res.Account.TypeUrl)
+	}
+
+	baseAccount := &authtypes.BaseAccount{}
+	if err := baseAccount.Unmarshal(res.Account.Value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal account: %w", err)
+	}
+	return baseAccount, nil
+}
