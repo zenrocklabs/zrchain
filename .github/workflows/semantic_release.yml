@@ -47,7 +47,6 @@ jobs:
         id: image_zenrockd
         run: |
           docker build -f ./Dockerfile \
-          --build-arg GITHUB_TOKEN=${{ env.GITHUB_TOKEN }} \
           --build-arg SERVICE=zenrockd \
           --build-arg GIT_SHA=${{ env.COMMIT_SHA }} \
           --build-arg BUILD_DATE="${{ env.BUILD_DATE }}" \
