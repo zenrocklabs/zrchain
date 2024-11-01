@@ -2,6 +2,7 @@ package types
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -74,7 +75,7 @@ func (*SolanaWallet) ParseTx(rawTx []byte, _ Metadata) (Transfer, error) {
 		To:             []byte(receiverAddress.String()),
 		Amount:         amount,
 		CoinIdentifier: coinIdentifier,
-		DataForSigning: rawTx,
+		DataForSigning: []byte(hex.EncodeToString(rawTx)),
 	}, nil
 }
 
