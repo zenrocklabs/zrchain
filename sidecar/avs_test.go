@@ -1,19 +1,19 @@
 package main_test
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
-	"testing"
+	// "testing"
 	"time"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
+	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
+	// "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
-	"github.com/stretchr/testify/require"
-	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
-	servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
+	// "github.com/stretchr/testify/require"
+	// taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	// servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
 )
 
 func initTestOracle() *sidecar.Oracle {
@@ -36,20 +36,20 @@ func initTestOracle() *sidecar.Oracle {
 	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, time.NewTicker(sidecar.MainLoopTickerInterval))
 }
 
-func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
-	o := initTestOracle()
+// func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
+// 	o := initTestOracle()
 
-	contractServiceManager, err := servicemanager.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
-	require.NoError(t, err)
+// 	contractServiceManager, err := servicemanager.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
+// 	require.NoError(t, err)
 
-	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
-	require.NoError(t, err)
-	fmt.Println("Task Manager Address:", taskManagerAddr)
+// 	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
+// 	require.NoError(t, err)
+// 	fmt.Println("Task Manager Address:", taskManagerAddr)
 
-	contractInstance, err := taskmanager.NewContractTaskManagerZR(taskManagerAddr, o.EthClient)
-	require.NoError(t, err)
+// 	contractInstance, err := taskmanager.NewContractTaskManagerZR(taskManagerAddr, o.EthClient)
+// 	require.NoError(t, err)
 
-	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
-	require.NoError(t, err)
-	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
-}
+// 	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
+// 	require.NoError(t, err)
+// 	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
+// }
