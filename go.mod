@@ -46,7 +46,7 @@ require (
 	github.com/cometbft/cometbft v0.38.13
 	github.com/cosmos/cosmos-db v1.0.2
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.50.9
+	github.com/cosmos/cosmos-sdk v0.50.10
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
@@ -71,8 +71,8 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/test-go/testify v1.1.4
-	github.com/zenrocklabs/zenbtc v1.0.1
-	github.com/zenrocklabs/zenrock-avs v1.1.3
+	github.com/zenrocklabs/zenbtc v1.0.2
+	github.com/zenrocklabs/zenrock-avs v1.0.1 // change to v1.1.4 before devnet
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38
@@ -107,7 +107,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/Zenrock-Foundation/zrchain/v4 v4.0.2 // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect

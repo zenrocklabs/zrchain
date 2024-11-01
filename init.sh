@@ -109,6 +109,9 @@ rm -rf $HOME_DIR
 set -e
 
 make install
+make sidecar
+rm -rf sidecar/neutrino/neutrino_*/*.bin
+rm -rf sidecar/neutrino/neutrino_*/*.db
 
 if [ "$NON_VALIDATOR" = false ]; then
     # Add keys for Alice and Bob using their mnemonics

@@ -17,9 +17,8 @@ scripts/bootstrap/**
 !scripts/bootstrap/main.sh
 reset.sh
 
+sidecar/neutrino/neutrino_*/*.bin
+sidecar/neutrino/neutrino_*/*.db
 sidecar/sidecar
-sidecar/neutrino/neutrino_mainnet/reg_filter_headers.bin
-sidecar/neutrino/neutrino_testnet3/reg_filter_headers.bin
-sidecar/cache.json
 sidecar/sidecar.log
-
+sidecar/cache.json
