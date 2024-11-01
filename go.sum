@@ -284,8 +284,6 @@ github.com/VictoriaMetrics/fastcache v1.12.2 h1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjC
 github.com/VictoriaMetrics/fastcache v1.12.2/go.mod h1:AmC+Nzz1+3G2eCPapF6UcsnkThDcMsQicp4xDukwJYI=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
-github.com/Zenrock-Foundation/zrchain/v4 v4.0.2 h1:MvAAd5UXti4grjbatP2mj8JC8IZ6q9bgJaa1qmpVLqg=
-github.com/Zenrock-Foundation/zrchain/v4 v4.0.2/go.mod h1:Ikeq3iPO1kg44ePYR0ECLBcEqJhSR3KRVV2YFlnip9U=
 github.com/adlio/schema v1.3.6 h1:k1/zc2jNfeiZBA5aFTRy37jlBIuCkXCm0XmvpzCKI9I=
 github.com/adlio/schema v1.3.6/go.mod h1:qkxwLgPBd1FgLRHYVCmQT/rrBr3JH38J9LjmVzWNudg=
 github.com/aead/siphash v1.0.1 h1:FwHfE/T45KPKYuuSAKyyvE+oPWcaQ+CUmFW0bPlM+kg=
@@ -1306,8 +1304,8 @@ github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock h1:QKr8fWJ85qM/mcnKRQfsem6cNZ1hBmrnrv4FWt4cSmc=
 github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock/go.mod h1:6Eesrx3ZE7vxBZWpK++30H+Uc7Q4ahQWCL7JKU/LEdU=
-github.com/zenrocklabs/zenbtc v1.0.1 h1:ScyxTRsZzwK4FKXnLzOqcrNIc7Oix3QSN5e7nSH+HDI=
-github.com/zenrocklabs/zenbtc v1.0.1/go.mod h1:OxMsg/8LVQ4fqjn8VCIEyj7u6DnYjhdCipAFv0d/6Eo=
+github.com/zenrocklabs/zenbtc v1.0.2 h1:Wj/gl5SlYZFb0mryvYlLs3MrJcOSwHiU1Ka0l6BvlXg=
+github.com/zenrocklabs/zenbtc v1.0.2/go.mod h1:8/OrG40LJjQ0MyoXg1p1C3aWeclPTAPuquKyrzNil38=
 github.com/zenrocklabs/zenrock-avs v1.1.3 h1:5xZq/v0W6fGXNbC5gqMt65ZQQdWU68gePrWnGW23pCU=
 github.com/zenrocklabs/zenrock-avs v1.1.3/go.mod h1:yThG6P0Pouem4ojwzCNwN8MeK8QqBpOyWJLAAGCsFu4=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=

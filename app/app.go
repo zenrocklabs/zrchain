@@ -153,6 +153,7 @@ import (
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
+	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -694,15 +695,15 @@ func NewZenrockApp(
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 
-	// app.ZenBTCKeeper = zenbtckeeper.NewKeeper(
-	// 	appCodec,
-	// 	runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
-	// 	logger,
-	// 	authAddr,
-	// 	app.ValidationKeeper,
-	// 	&app.TreasuryKeeper,
-	// )
-	// zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+	app.ZenBTCKeeper = zenbtckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
+		logger,
+		authAddr,
+		app.ValidationKeeper,
+		&app.TreasuryKeeper,
+	)
+	zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -839,7 +840,7 @@ func NewZenrockApp(
 		identityModule,
 		treasuryModule,
 		policyModule,
-		// zenBTCModule,
+		zenBTCModule,
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
