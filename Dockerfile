@@ -14,9 +14,7 @@ ARG ARCH=x86_64
 ARG BUILD_DATE
 ARG GIT_SHA
 ARG VERSION
-ARG GITHUB_TOKEN
 # Set env variables
-ENV GITHUB_TOKEN=$GITHUB_TOKEN
 ENV arch=$ARCH
 ENV build_date=$BUILD_DATE
 ENV commit_hash=$GIT_SHA
@@ -40,7 +38,6 @@ WORKDIR /zrchain
 ENV BUILD_TAGS=muslc LINK_STATICALLY=true
 
 # Download dependencies
-RUN git config --global url."https://$GITHUB_TOKEN@github.com".insteadOf "https://github.com"
 RUN go mod download
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
