@@ -1,3 +1,11 @@
+## [5.0.1](https://github.com/zenrocklabs/zrchain/compare/v5.0.0...v5.0.1) (2024-11-01)
+
+
+### Bug Fixes
+
+* v5 upgrade-related issues ([57bf22f](https://github.com/zenrocklabs/zrchain/commit/57bf22f27c7b9cf77cc0f963d4bdd9caac33dfad))
+* v5 upgrade-related issues ([8d77806](https://github.com/zenrocklabs/zrchain/commit/8d778061c229507674e98a1633ba299dfd8164ae))
+
 # [5.0.0](https://github.com/zenrocklabs/zrchain/compare/v4.16.1...v5.0.0) (2024-11-01)
 
 
