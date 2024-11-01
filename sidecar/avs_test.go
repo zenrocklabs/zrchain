@@ -42,11 +42,11 @@ func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
 	contractServiceManager, err := servicemanager.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
 	require.NoError(t, err)
 
-	taskManagerAddr, err := contractServiceManager.ZrTaskManager(&bind.CallOpts{})
+	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
 	require.NoError(t, err)
 	fmt.Println("Task Manager Address:", taskManagerAddr)
 
-	contractInstance, err := taskmanager.NewContractZRTaskManager(taskManagerAddr, o.EthClient)
+	contractInstance, err := taskmanager.NewContractTaskManagerZR(taskManagerAddr, o.EthClient)
 	require.NoError(t, err)
 
 	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
