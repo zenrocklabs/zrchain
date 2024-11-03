@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/base64"
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -237,28 +236,20 @@ func Test_msgServer_NewSignTransactionRequest(t *testing.T) {
 			msgSer := keeper.NewMsgServerImpl(*tk)
 
 			got, err := msgSer.NewSignTransactionRequest(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewSignTransactionRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !tt.wantErr {
-
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("NewSignTransactionRequest() got = %v, want %v", got, tt.want)
-				}
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 
 				gotSignTxReq, err := tk.SignTransactionRequestStore.Get(ctx, got.Id)
-				if err != nil {
-					t.Fatalf("GetSignTx failed, error = %v", err)
-				}
-
-				if !reflect.DeepEqual(&gotSignTxReq, tt.wantSignTxRequest) {
-					t.Fatalf("NewSignTransactionRequest() got = %v, want %v", gotSignTxReq, tt.wantSignTxRequest)
-				}
+				require.NoError(t, err)
+				require.Equal(t, tt.wantSignTxRequest, &gotSignTxReq)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-				assert.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
+				require.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
 			}
 		})
 	}

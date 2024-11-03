@@ -6,12 +6,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log"
-	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/stretchr/testify/require"
 )
 
 // TestSolanaWalletAddress tests Solana address derivation by building a Solana wallet and checking the solanaWallet.Address
@@ -37,9 +37,7 @@ func TestSolanaWalletAddress(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			wallet := solanaWallet(t, tC.seed)
-			if wallet.Address() != tC.expectedAddress {
-				t.Fatalf("got %v, want %v", wallet.Address(), tC.expectedAddress)
-			}
+			require.Equal(t, tC.expectedAddress, wallet.Address())
 		})
 	}
 }
@@ -93,20 +91,10 @@ func TestSolanaParseTx(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			wallet := solanaWallet(t, "example seed")
 			transfer, err := wallet.ParseTx(hexutil.MustDecode(tc.txBytes), nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(transfer.To, []byte(tc.to)) {
-				fmt.Printf("%#v\n", transfer)
-				t.Fatalf("to address: got %v, want %v", transfer.To, tc.to)
-			}
-			if transfer.Amount.Int64() != tc.amount {
-				t.Fatalf("amount: got %v, want %v", transfer.Amount, tc.amount)
-			}
-			got := fmt.Sprintf("%#x", transfer.DataForSigning)
-			if tc.txBytes != got {
-				t.Fatalf("data for signing: got %v, want %v", got, tc.txBytes)
-			}
+			require.NoError(t, err)
+			require.Equal(t, []byte(tc.to), transfer.To, "to address mismatch")
+			require.Equal(t, tc.amount, transfer.Amount.Int64(), "amount mismatch")
+			require.Equal(t, tc.txBytes, fmt.Sprintf("%#x", transfer.DataForSigning), "data for signing mismatch")
 		})
 	}
 }
@@ -151,13 +139,8 @@ func TestGetTransferFromInstruction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetTransferFromInstruction(tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetTransferFromInstruction() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetTransferFromInstruction() = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

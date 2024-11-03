@@ -201,12 +201,12 @@ func TestKeeper_SignRequest(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, genesis)
 
 			got, err := tk.SignatureRequests(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SignatureRequests() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 			}
-
-			require.Equal(t, tt.want, got)
 		})
 	}
 }

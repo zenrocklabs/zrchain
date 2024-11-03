@@ -29,9 +29,7 @@ func Test_msgServer_RevokeAction(t *testing.T) {
 	addToWorkspaceMsgAny, _ := cdctypes.NewAnyWithValue(addToWorkspaceMsg)
 
 	policyDataAny, err := cdctypes.NewAnyWithValue(&policyData)
-	if err != nil {
-		t.Fatalf("error decoding policyData, err %v", err)
-	}
+	require.NoError(t, err)
 
 	var defaultPolicy = types.Policy{
 		Id:     1,
@@ -90,11 +88,7 @@ func Test_msgServer_RevokeAction(t *testing.T) {
 			policy.InitGenesis(keepers.Ctx, *pk, polGenesis)
 			msgSer.RevokeAction(keepers.Ctx, tt.msg)
 			_, err := pk.ActionStore.Get(keepers.Ctx, 1)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			require.Equal(t, tt.wantErr, err != nil)
 		})
 	}
 }

@@ -14,7 +14,6 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -113,19 +112,19 @@ func Test_msgServer_AddMultiGrant(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 				require.NotNil(t, res)
-				assert.Equal(t, 2, authzmock.GrantCalled)
+				require.Equal(t, 2, authzmock.GrantCalled)
 				require.Equal(t, 2, len(authzmock.Grants))
 
-				for i, _ := range tt.args.msgs {
-					assert.Equal(t, tt.args.granter, authzmock.Grants[i].Granter)
-					assert.Equal(t, tt.args.grantee, authzmock.Grants[i].Grantee)
+				for i := range tt.args.msgs {
+					require.Equal(t, tt.args.granter, authzmock.Grants[i].Granter)
+					require.Equal(t, tt.args.grantee, authzmock.Grants[i].Grantee)
 					auth := &authztypes.GenericAuthorization{
 						Msg: tt.args.msgs[i],
 					}
 					authAny, err := codectypes.NewAnyWithValue(auth)
 					require.Nil(t, err)
-					assert.Equal(t, authAny.TypeUrl, authzmock.Grants[i].Grant.Authorization.TypeUrl)
-					assert.Equal(t, authAny.Value, authzmock.Grants[i].Grant.Authorization.Value)
+					require.Equal(t, authAny.TypeUrl, authzmock.Grants[i].Grant.Authorization.TypeUrl)
+					require.Equal(t, authAny.Value, authzmock.Grants[i].Grant.Authorization.Value)
 				}
 			}
 		})

@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -11,6 +10,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_TransferFromKeyring(t *testing.T) {
@@ -82,17 +82,12 @@ func Test_msgServer_TransferFromKeyring(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, trGenesis)
 
 			got, err := msgSer.TransferFromKeyring(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("TransferFromKeyring() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !tt.wantErr {
-
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("TransferFromKeyring() got = %v, want %v", got, tt.want)
-				}
-				ev := ctx.EventManager().Events()
-				fmt.Println(ev)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+				fmt.Println(ctx.EventManager().Events())
 			}
 		})
 	}

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -121,20 +120,14 @@ func Test_msgServer_AddKeyringAdmin(t *testing.T) {
 			identity.InitGenesis(ctx, *ik, genesis)
 
 			got, err := msgSer.AddKeyringAdmin(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("AddKeyringAdmin() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("AddKeyringAdmin() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got, "AddKeyringAdmin response does not match expected value")
 				gotKeyring, err := ik.KeyringStore.Get(ctx, tt.args.keyring.Address)
 				require.NoError(t, err)
 
-				if !reflect.DeepEqual(&gotKeyring, tt.wantKeyring) {
-					t.Fatalf("NewKeyring() got = %v, want %v", gotKeyring, tt.wantKeyring)
-				}
+				require.Equal(t, tt.wantKeyring, &gotKeyring, "keyring does not match expected value")
 			}
 		})
 	}

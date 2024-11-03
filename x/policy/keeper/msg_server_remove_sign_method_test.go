@@ -9,7 +9,7 @@ import (
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_RemoveSignMethod(t *testing.T) {
@@ -23,9 +23,7 @@ func Test_msgServer_RemoveSignMethod(t *testing.T) {
 		ClientDataJson:    valid_clientdata,
 	}
 	valid_config, err := codectypes.NewAnyWithValue(valid_sign_method)
-	if err != nil {
-		t.Fatalf("error encoding valid config, err %v", err)
-	}
+	require.NoError(t, err)
 
 	type args struct {
 		creator  string
@@ -75,7 +73,7 @@ func Test_msgServer_RemoveSignMethod(t *testing.T) {
 					Creator: tt.args.creator,
 					Config:  tt.args.config,
 				})
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			}
 
 			// Act
@@ -85,21 +83,20 @@ func Test_msgServer_RemoveSignMethod(t *testing.T) {
 			})
 
 			// Assert
-			errMsg := ""
-			if err != nil {
-				errMsg = err.Error()
-			}
-			assert.Contains(t, errMsg, tt.wantErr)
-			assert.Equal(t, tt.want, res)
+			if tt.wantErr != "" {
+				require.Contains(t, err.Error(), tt.wantErr)
+				require.Equal(t, tt.want, res)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, res)
 
-			if tt.wantErr == "" {
-				getRes, getErr := pk.SignMethodsByAddress(ctx, &types.QuerySignMethodsByAddressRequest{
+				getRes, err := pk.SignMethodsByAddress(ctx, &types.QuerySignMethodsByAddressRequest{
 					Address: tt.args.creator,
 				})
-				assert.Nil(t, getErr)
-				assert.NotNil(t, getRes)
-				assert.Len(t, getRes.Config, 1)
-				assert.Equal(t, valid_config.Compare(getRes.Config[0]), 0)
+				require.NoError(t, err)
+				require.NotNil(t, getRes)
+				require.Len(t, getRes.Config, 1)
+				require.Equal(t, valid_config.Compare(getRes.Config[0]), 0)
 			}
 		})
 	}

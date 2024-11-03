@@ -11,7 +11,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	treasurymodule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,24 +139,20 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			msgSer := keeper.NewMsgServerImpl(*tk)
 			got, err := msgSer.NewSignatureRequest(ctx, tt.args.msg)
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewSignatureRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !tt.wantErr {
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 				require.Equal(t, tt.want, got)
 
 				gotSigReq, err := tk.SignRequestStore.Get(ctx, got.SigReqId)
-				if err != nil {
-					t.Fatalf("GetSignRequest() got = %v", err)
-				}
-
+				require.NoError(t, err)
 				require.Equal(t, tt.wantSignRequest, &gotSigReq)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-				assert.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
+				require.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
 			}
 		})
 	}

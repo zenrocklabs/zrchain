@@ -6,6 +6,7 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_Workspaces(t *testing.T) {
@@ -47,14 +48,12 @@ func TestKeeper_Workspaces(t *testing.T) {
 				}
 			}
 			got, err := ik.Workspaces(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Workspaces() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if len(got.Workspaces) != tt.want {
-				t.Errorf("Workspaces() got = %v, want %v", got, tt.want)
-				return
-			}
+			require.NoError(t, err)
+			require.Equal(t, tt.want, len(got.Workspaces))
 		})
 	}
 }
