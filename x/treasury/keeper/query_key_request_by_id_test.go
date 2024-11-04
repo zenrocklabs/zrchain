@@ -1,12 +1,12 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_KeyRequestByID(t *testing.T) {
@@ -67,12 +67,11 @@ func TestKeeper_KeyRequestByID(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, genesis)
 
 			got, err := tk.KeyRequestByID(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("KeyRequestByID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("KeyRequestByID() got = %v, want %v", got, tt.want)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 			}
 		})
 	}

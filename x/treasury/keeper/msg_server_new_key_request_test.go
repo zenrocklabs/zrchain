@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -10,7 +9,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -181,25 +179,19 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, trGenesis)
 
 			got, err := msgSer.NewKeyRequest(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewKeyRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !tt.wantErr {
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 				require.Equal(t, tt.want, got)
 
 				gotKeyReq, err := tk.KeyRequestStore.Get(ctx, got.KeyReqId)
-				if err != nil {
-					t.Fatalf("GetKeyRequest() failed, error = %v", err)
-				}
-
-				if !reflect.DeepEqual(&gotKeyReq, tt.wantKeyRequest) {
-					t.Fatalf("NewKeyRequest() got = %v, want = %v", gotKeyReq, tt.wantKeyRequest)
-				}
+				require.NoError(t, err)
+				require.Equal(t, tt.wantKeyRequest, &gotKeyReq)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
 			}
 		})
 	}

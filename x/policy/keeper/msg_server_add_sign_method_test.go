@@ -9,26 +9,22 @@ import (
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_AddSignMethod(t *testing.T) {
 	empty_config, err := codectypes.NewAnyWithValue(&types.SignMethodPasskey{})
-	if err != nil {
-		t.Fatalf("error encoding empty config, err %v", err)
-	}
+	require.NoError(t, err)
+
 	unknown_config_type, err := codectypes.NewAnyWithValue(&types.MsgAddSignMethod{})
-	if err != nil {
-		t.Fatalf("error encoding invalid config, err %v", err)
-	}
+	require.NoError(t, err)
+
 	invalid_config, err := codectypes.NewAnyWithValue(&types.SignMethodPasskey{
 		RawId:             []byte("some-id"),
 		AttestationObject: []byte{},
 		ClientDataJson:    []byte{},
 	})
-	if err != nil {
-		t.Fatalf("error encoding empty config, err %v", err)
-	}
+	require.NoError(t, err)
 	invalid_clientdata_challenge, _ := base64.StdEncoding.DecodeString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiQ2lFRFIwTEhVVVJaWXpuSWgwbXZqM3F1dDVXUlRmczBhdEM5TThTY3dSVzZETFkiLCJvcmlnaW4iOiJodHRwczovL2RldmVsb3Blci5tb3ppbGxhLm9yZyIsImNyb3NzT3JpZ2luIjpmYWxzZX0=")
 
 	valid_tx_bytes, _ := base64.StdEncoding.DecodeString("CoEECv4DCiAvemVucm9jay5wb2xpY3kuTXNnQWRkU2lnbk1ldGhvZBLZAwoqemVuMTN5M3RtNjhnbXU5a250Y3h3dm11ZTgycDZha2FjbnB0MnY3bnR5EqoDCiEvemVucm9jay5wb2xpY3kuU2lnbk1ldGhvZFBhc3NrZXkShAMKG1RiZlJGUDUzYTh5SlBrU0hJeXh3eWN2VFhYWRIUTbfRFP53a8yJPkSHIyxwycvTXXYatgGjY2ZtdGRub25lZ2F0dFN0bXSgaGF1dGhEYXRhWJgRfYLbodlevvhdzK1ieUAGBKTRmNw28dlJczoSN+bjLV0AAAAA+/wwBxVOTsyMC24CBVfXvQAUTbfRFP53a8yJPkSHIyxwycvTXXalAQIDJiABIVggf6JpOflG9El/S3+/YvEBT69317zGkfjG2XcvBluSMBYiWCDqkyO8H1ULfUL6lLUz7iQTC0Ilqu7Kwa8yS4nnQDsv5CKVAXsidHlwZSI6IndlYmF1dGhuLmNyZWF0ZSIsImNoYWxsZW5nZSI6IkNpRURSMExIVVVSWll6bkloMG12ajNxdXQ1V1JUZnMwYXRDOU04U2N3Ulc2RExVIiwib3JpZ2luIjoiaHR0cHM6Ly9kZXZlbG9wZXIubW96aWxsYS5vcmciLCJjcm9zc09yaWdpbiI6ZmFsc2V9ElgKUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQNHQsdRRFljOciHSa+Peq63lZFN+zRq0L0zxJzBFboMtRIECgIIARgBEgQQwJoMGkD3sYFTIYM+izWXmSKQ+6ouuUwHfqPT0IWqG1mFnlmzhmiyk0MMGEhvlDDX2kMvCey/B7NS1+f5V1z9uQLN1S5R")
@@ -41,24 +37,18 @@ func Test_msgServer_AddSignMethod(t *testing.T) {
 		ClientDataJson:    valid_clientdata,
 	}
 	valid_config, err := codectypes.NewAnyWithValue(valid_sign_method)
-	if err != nil {
-		t.Fatalf("error encoding valid config, err %v", err)
-	}
+	require.NoError(t, err)
 
 	valid_sign_method.Active = true
 	stored_valid_config, err := codectypes.NewAnyWithValue(valid_sign_method)
-	if err != nil {
-		t.Fatalf("error encoding valid config, err %v", err)
-	}
+	require.NoError(t, err)
 
 	invalid_config_challenge, err := codectypes.NewAnyWithValue(&types.SignMethodPasskey{
 		RawId:             valid_rawid,
 		AttestationObject: valid_attestation,
 		ClientDataJson:    invalid_clientdata_challenge,
 	})
-	if err != nil {
-		t.Fatalf("error encoding invalid config challenfs, err %v", err)
-	}
+	require.NoError(t, err)
 
 	type args struct {
 		creator  string
@@ -164,17 +154,17 @@ func Test_msgServer_AddSignMethod(t *testing.T) {
 			if err != nil {
 				errMsg = err.Error()
 			}
-			assert.Contains(t, errMsg, tt.wantErr)
-			assert.Equal(t, tt.want, res)
+			require.Contains(t, errMsg, tt.wantErr)
+			require.Equal(t, tt.want, res)
 
 			if tt.wantErr == "" {
 				getRes, getErr := pk.SignMethodsByAddress(ctx, &types.QuerySignMethodsByAddressRequest{
 					Address: tt.args.creator,
 				})
-				assert.Nil(t, getErr)
-				assert.NotNil(t, getRes)
-				assert.Len(t, getRes.Config, 1)
-				assert.Equal(t, stored_valid_config.Compare(getRes.Config[0]), 0)
+				require.Nil(t, getErr)
+				require.NotNil(t, getRes)
+				require.Len(t, getRes.Config, 1)
+				require.Equal(t, stored_valid_config.Compare(getRes.Config[0]), 0)
 			}
 		})
 	}

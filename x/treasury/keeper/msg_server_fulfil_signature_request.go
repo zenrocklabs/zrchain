@@ -161,7 +161,7 @@ func (k msgServer) verifySignature(ctx sdk.Context, req *types.SignRequest, key 
 			v, err := k.calculateV(sigData, key.PublicKey, req.DataForSigning[0])
 			if err != nil {
 				ctx.Logger().Warn(err.Error())
-			} else if !ignoreThisSignature(sigData, ctx) { // FIXME temporary fix, remove when gardia is reset
+			} else {
 				sigData[64] = v
 			}
 		}

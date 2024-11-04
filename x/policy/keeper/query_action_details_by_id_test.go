@@ -8,7 +8,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_QueryActionDetailsById(t *testing.T) {
@@ -113,14 +113,14 @@ func TestKeeper_QueryActionDetailsById(t *testing.T) {
 			Id: tt.args.actionId,
 		})
 
-		if !tt.wantErr {
-			assert.Nil(t, err)
-			assert.NotNil(t, details)
-			assert.Equal(t, tt.wantApprovers, details.Approvers)
-			assert.Equal(t, tt.wantPendingApprovers, details.PendingApprovers)
-		} else {
-			assert.NotNil(t, err)
-			assert.Nil(t, details)
+		if tt.wantErr {
+			require.Error(t, err)
+			require.Nil(t, details)
+			return
 		}
+
+		require.NoError(t, err)
+		require.Equal(t, tt.wantApprovers, details.Approvers)
+		require.Equal(t, tt.wantPendingApprovers, details.PendingApprovers)
 	}
 }

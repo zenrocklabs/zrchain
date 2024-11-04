@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/Zenrock-Foundation/zrchain/v5/policy"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -119,22 +119,12 @@ func Test_msgServer_NewPolicy(t *testing.T) {
 			policyModule.InitGenesis(keepers.Ctx, *pk, plGenesis)
 
 			got, err := msgSer.NewPolicy(keepers.Ctx, tt.msg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewPolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewPolicy() got = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
+			require.Equal(t, tt.want, got)
 
 			gotPolicy, err := pk.PolicyById(keepers.Ctx, &types.QueryPolicyByIdRequest{Id: got.Id})
-			if err != nil {
-				t.Errorf("PolicyById() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(gotPolicy, tt.wantPolicy) {
-				t.Errorf("NewPolicy() got = %v, want %v", gotPolicy, tt.wantPolicy)
-				return
-			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantPolicy, gotPolicy)
 		})
 	}
 }

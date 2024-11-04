@@ -1,16 +1,15 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_WorkspaceByAddress(t *testing.T) {
-
 	type args struct {
 		req          *types.QueryWorkspaceByAddressRequest
 		msgWorkspace *types.MsgNewWorkspace
@@ -73,20 +72,18 @@ func TestKeeper_WorkspaceByAddress(t *testing.T) {
 			ik := keepers.IdentityKeeper
 			ctx := keepers.Ctx
 			msgSer := keeper.NewMsgServerImpl(*ik)
+
 			_, err := msgSer.NewWorkspace(ctx, tt.args.msgWorkspace)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
+
 			got, err := ik.WorkspaceByAddress(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("WorkspaceByAddress() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("WorkspaceByAddress() got = %v, want %v", got, tt.want)
-				}
-			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

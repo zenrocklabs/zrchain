@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
@@ -196,12 +196,11 @@ func TestKeeper_Keys(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, genesis)
 
 			got, err := tk.Keys(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Keys() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Keys() got = %v, want %v", got, tt.want)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 			}
 		})
 	}

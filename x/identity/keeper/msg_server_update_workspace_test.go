@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
@@ -11,7 +10,6 @@ import (
 	pol "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -160,27 +158,18 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 			pol.InitGenesis(ctx, *pk, polGenesis)
 
 			got, err := msgSer.UpdateWorkspace(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("UpdateWorkspace() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("UpdateWorkspace() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got)
 
 				gotWorkspace, err := ik.WorkspaceStore.Get(ctx, tt.args.workspace.Address)
 				require.NoError(t, err)
-
-				if !reflect.DeepEqual(&gotWorkspace, tt.wantWorkspace) {
-					t.Fatalf("UpdateWorkspace() got = %v, want %v", gotWorkspace, tt.wantWorkspace)
-				}
+				require.Equal(t, tt.wantWorkspace, &gotWorkspace)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-			} else {
-				require.NotNil(t, err)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
 			}
 		})
 	}
