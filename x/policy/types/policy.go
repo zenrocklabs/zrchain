@@ -110,7 +110,12 @@ func (p *BoolparserPolicy) GetParticipantAddresses() []string {
 func (p *BoolparserPolicy) GetApproverNumber() (int, error) {
 
 	// Split the string into parts
-	parts := strings.Fields(p.Definition)
+	parser := boolparser.NewParser(strings.NewReader(p.Definition))
+	stack, err := parser.Parse()
+	if err != nil {
+		return 0, fmt.Errorf("error parsing definition: %w", err)
+	}
+	parts := stack.Values
 
 	// Check if there are any parts
 	if len(parts) == 0 {
@@ -121,9 +126,9 @@ func (p *BoolparserPolicy) GetApproverNumber() (int, error) {
 	lastValue := parts[len(parts)-1]
 
 	// Convert the last part to an integer
-	approverNumber, err := strconv.Atoi(lastValue)
+	approverNumber, err := strconv.Atoi(lastValue.Value)
 	if err != nil {
-		return 0, fmt.Errorf("error converting '%s' to int: %v", lastValue, err)
+		return 0, fmt.Errorf("error converting '%s' to int: %v", lastValue.Value, err)
 	}
 
 	return approverNumber, nil

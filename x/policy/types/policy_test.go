@@ -28,6 +28,31 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "pass: one participant",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 0",
+				Participants: []*PolicyParticipant{
+					{
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					},
+				},
+			},
+		},
+		{
+			name: "pass: no spaces",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty+zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq>1",
+				Participants: []*PolicyParticipant{
+					{
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					},
+					{
+						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+					},
+				},
+			},
+		},
+		{
 			name: "fail: missing participant",
 			bp: BoolparserPolicy{
 				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + u2 > 1",

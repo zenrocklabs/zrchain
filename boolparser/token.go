@@ -20,4 +20,5 @@ const (
 	WHITESPACE
 	ERROR
 	EOF
+	PASSKEY
 )
