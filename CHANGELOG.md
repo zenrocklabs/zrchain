@@ -1,3 +1,11 @@
+## [5.0.2](https://github.com/zenrocklabs/zrchain/compare/v5.0.1...v5.0.2) (2024-11-04)
+
+
+### Bug Fixes
+
+* improve tests ([ba57a0b](https://github.com/zenrocklabs/zrchain/commit/ba57a0ba0c672922c33f8561575a3a7857082e93))
+* remove gardia-1 related file ([9b1fd5d](https://github.com/zenrocklabs/zrchain/commit/9b1fd5d1556cf4c432bef4942acb52b6e26a1fc2))
+
 ## [5.0.1](https://github.com/zenrocklabs/zrchain/compare/v5.0.0...v5.0.1) (2024-11-01)
 
 
