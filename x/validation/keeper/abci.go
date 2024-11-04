@@ -444,14 +444,19 @@ func (k *Keeper) createMintTransaction(ctx sdk.Context, oracleData OracleData) e
 		return fmt.Errorf("error creating metadata: %w", err)
 	}
 
-	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(ctx, &treasurytypes.MsgNewSignTransactionRequest{
-		Creator:             tx.Creator,
-		KeyId:               tx.KeyId,
-		WalletType:          tx.ChainType,
-		UnsignedTransaction: unsignedMintTx,
-		Metadata:            metadata,
-		NoBroadcast:         false,
-	}, unsignedMintTxHash); err != nil {
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             tx.Creator,
+			KeyId:               tx.KeyId,
+			WalletType:          tx.ChainType,
+			UnsignedTransaction: unsignedMintTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedMintTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating mint transaction", "err", err)
 		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
 	}
 

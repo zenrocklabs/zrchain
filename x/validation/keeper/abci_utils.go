@@ -405,6 +405,7 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
 // 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 // }
 
+// TODO: use above function instead of this one if possible
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	// if chainID != 17000 && chainID != 11155111 {
 	if chainID != 17000 {
@@ -426,7 +427,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	)
 
 	// TODO: REMOVE THIS LINE BELOW
-	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(1000))
+	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(10))
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
 		Nonce:    nonce,
