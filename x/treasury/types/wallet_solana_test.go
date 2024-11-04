@@ -92,7 +92,7 @@ func TestSolanaParseTx(t *testing.T) {
 			wallet := solanaWallet(t, "example seed")
 			txBytes := hexutil.MustDecode(tc.txHexstring)
 			transfer, err := wallet.ParseTx(txBytes, nil)
-			expectedDataForSigning := []byte(hex.EncodeToString(hexutil.MustDecode(tc.txHexstring)))
+			expectedDataForSigning := []byte(hex.EncodeToString(txBytes))
 			require.NoError(t, err)
 			require.Equal(t, []byte(tc.to), transfer.To, "to address mismatch")
 			require.Equal(t, tc.amount, transfer.Amount.Int64(), "amount mismatch")
