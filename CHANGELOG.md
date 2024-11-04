@@ -1,3 +1,11 @@
+## [5.0.4](https://github.com/zenrocklabs/zrchain/compare/v5.0.3...v5.0.4) (2024-11-04)
+
+
+### Bug Fixes
+
+* Dockerfile sha256sum ([2742ab1](https://github.com/zenrocklabs/zrchain/commit/2742ab1e39efa3a05ef92219c06c8e8c2f2e920c))
+* libwasm version bump ([8acb93c](https://github.com/zenrocklabs/zrchain/commit/8acb93cc67fa8ebf60d8d4e93b9daa145edde58a))
+
 ## [5.0.3](https://github.com/zenrocklabs/zrchain/compare/v5.0.2...v5.0.3) (2024-11-04)
 
 
