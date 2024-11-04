@@ -1,3 +1,11 @@
+## [5.0.5](https://github.com/zenrocklabs/zrchain/compare/v5.0.4...v5.0.5) (2024-11-04)
+
+
+### Bug Fixes
+
+* regressions (zenBTC e2e flow) ([0db15e3](https://github.com/zenrocklabs/zrchain/commit/0db15e3cf1509dbf0e18372de66e101fc5fdd616))
+* regressions (zenBTC e2e flow) ([0608f45](https://github.com/zenrocklabs/zrchain/commit/0608f458adc1fa25847331f868a027cda69e9ebd))
+
 ## [5.0.4](https://github.com/zenrocklabs/zrchain/compare/v5.0.3...v5.0.4) (2024-11-04)
 
 
