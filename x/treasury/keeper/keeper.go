@@ -447,6 +447,7 @@ func dataForSigning(data string) ([][]byte, error) {
 	}
 	return dataForSigning, nil
 }
+
 func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint64) error {
 	prms, err := k.ParamStore.Get(ctx)
 	if err != nil {
