@@ -58,6 +58,7 @@ jobs:
             -v ~/.aws:/root/.aws \
             zenrockd:${TAG} \
             "/zenrockd" "/workspace/zenrockd"
+          zip zenrockd.zip zenrockd
       - name: Semantic release
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

@@ -15,7 +15,8 @@
       {
         "assets": [
           { "path": "CHANGELOG.md", "label": "CHANGELOG" },
-          { "path": "zenrockd", "label": "zenrockd" }
+          { "path": "zenrockd", "label": "zenrockd" },
+          { "path": "zenrockd.zip", "label": "zenrockd.zip" }
         ],
         "successComment": false,
         "failComment": false
