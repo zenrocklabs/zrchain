@@ -12,6 +12,7 @@ genesis.json
 react
 ts-client
 node_modules/
+gentx
 cmd/zenrockd/zenrockd*
 scripts/bootstrap/**
 !scripts/bootstrap/main.sh
@@ -19,6 +20,7 @@ reset.sh
 
 sidecar/neutrino/neutrino_*/*.bin
 sidecar/neutrino/neutrino_*/*.db
+sidecar/neutrino/neutrino_*/peers.json
 sidecar/sidecar
 sidecar/sidecar.log
 sidecar/cache.json
