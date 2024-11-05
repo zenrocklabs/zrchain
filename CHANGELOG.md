@@ -1,3 +1,10 @@
+# [5.2.0](https://github.com/zenrocklabs/zrchain/compare/v5.1.0...v5.2.0) (2024-11-05)
+
+
+### Features
+
+* add sidecar binary ([#21](https://github.com/zenrocklabs/zrchain/issues/21)) ([87ad019](https://github.com/zenrocklabs/zrchain/commit/87ad01955624cd6ceeb14731efd29c45bbb9c724))
+
 # [5.1.0](https://github.com/zenrocklabs/zrchain/compare/v5.0.6...v5.1.0) (2024-11-05)
 
 
