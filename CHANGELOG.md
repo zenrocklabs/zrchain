@@ -1,3 +1,10 @@
+## [5.0.6](https://github.com/zenrocklabs/zrchain/compare/v5.0.5...v5.0.6) (2024-11-05)
+
+
+### Bug Fixes
+
+* migration script and adding parsing passkeys ([e2fd8e6](https://github.com/zenrocklabs/zrchain/commit/e2fd8e65826f71e019e516819f87ba3e460f4a6c))
+
 ## [5.0.5](https://github.com/zenrocklabs/zrchain/compare/v5.0.4...v5.0.5) (2024-11-04)
 
 
