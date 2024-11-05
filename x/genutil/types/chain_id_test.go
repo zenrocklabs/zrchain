@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 //go:embed testdata/parse_chain_id.json

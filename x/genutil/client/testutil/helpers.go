@@ -9,13 +9,13 @@ import (
 
 	"cosmossdk.io/log"
 
+	genutilcli "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 )
 
 func ExecInitCmd(testMbm module.BasicManager, home string, cdc codec.Codec) error {
