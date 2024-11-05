@@ -1,3 +1,10 @@
+## [5.2.1](https://github.com/zenrocklabs/zrchain/compare/v5.2.0...v5.2.1) (2024-11-05)
+
+
+### Bug Fixes
+
+* genutil tests ([d48f4aa](https://github.com/zenrocklabs/zrchain/commit/d48f4aaaa94e08332b6a4124ea56ce70cdd0c103))
+
 # [5.2.0](https://github.com/zenrocklabs/zrchain/compare/v5.1.0...v5.2.0) (2024-11-05)
 
 
