@@ -1,3 +1,10 @@
+# [5.1.0](https://github.com/zenrocklabs/zrchain/compare/v5.0.6...v5.1.0) (2024-11-05)
+
+
+### Features
+
+* add unit tests pipeline ([fca13d6](https://github.com/zenrocklabs/zrchain/commit/fca13d64ed7d86b99dc0bee7e3621d075dbf8c12))
+
 ## [5.0.6](https://github.com/zenrocklabs/zrchain/compare/v5.0.5...v5.0.6) (2024-11-05)
 
 
