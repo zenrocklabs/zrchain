@@ -15,6 +15,8 @@ solana_rpc:
   testnet: "https://api.testnet.solana.com"
   mainnet: ""
 proxy_rpc:
-  url: "http://127.0.0.1:1234"
+  url: "http://127.0.0.1:1234XXX"
   user: "user"
   password: "secret"
+neutrino:
+  path: "./neutrino" # ~ will not be properly expanded to the home directory

@@ -82,12 +82,17 @@ type Config struct {
 	EthOracle      EthOracleConfig   `yaml:"eth_oracle"`
 	SolanaRPC      map[string]string `yaml:"solana_rpc"`
 	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
+	Neutrino       NeutrinoConfig    `yaml:"neutrino"`
 }
 
 type ProxyRPCConfig struct {
 	URL      string `yaml:"url"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
+}
+
+type NeutrinoConfig struct {
+	Path string `yaml:"path"`
 }
 
 type EthOracleConfig struct {
