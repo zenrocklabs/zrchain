@@ -1,3 +1,10 @@
+## [5.2.2](https://github.com/zenrocklabs/zrchain/compare/v5.2.1...v5.2.2) (2024-11-06)
+
+
+### Bug Fixes
+
+* add neutrino database config path  ([#23](https://github.com/zenrocklabs/zrchain/issues/23)) ([55d6efe](https://github.com/zenrocklabs/zrchain/commit/55d6efeb5e721e7b782f2fcc64d3c732a2cb3f50))
+
 ## [5.2.1](https://github.com/zenrocklabs/zrchain/compare/v5.2.0...v5.2.1) (2024-11-05)
 
 
