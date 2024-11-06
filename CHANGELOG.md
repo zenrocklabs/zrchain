@@ -1,3 +1,10 @@
+## [5.2.3](https://github.com/zenrocklabs/zrchain/compare/v5.2.2...v5.2.3) (2024-11-06)
+
+
+### Bug Fixes
+
+* temporarily disable Bitcoin header querying for testnet ([#24](https://github.com/zenrocklabs/zrchain/issues/24)) ([d289564](https://github.com/zenrocklabs/zrchain/commit/d28956493484a6e387f56e308d53f29b9dbdd74d))
+
 ## [5.2.2](https://github.com/zenrocklabs/zrchain/compare/v5.2.1...v5.2.2) (2024-11-06)
 
 
