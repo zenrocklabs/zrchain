@@ -34,7 +34,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password)
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
