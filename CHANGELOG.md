@@ -1,3 +1,12 @@
+## [5.2.5](https://github.com/zenrocklabs/zrchain/compare/v5.2.4...v5.2.5) (2024-11-06)
+
+
+### Bug Fixes
+
+* bump `zenrock-avs` ver ([c92f783](https://github.com/zenrocklabs/zrchain/commit/c92f7835a8b347181766f0489f2b0e0122f40346))
+* bump `zenrock-avs` ver ([5cd5de0](https://github.com/zenrocklabs/zrchain/commit/5cd5de0ead959154079a48c7fc5ce9de70644d2a))
+* sidecar Dockerfile ([3187c5a](https://github.com/zenrocklabs/zrchain/commit/3187c5a85cd7e2ef70672eb0368b6c6e45551c14))
+
 ## [5.2.4](https://github.com/zenrocklabs/zrchain/compare/v5.2.3...v5.2.4) (2024-11-06)
 
 
