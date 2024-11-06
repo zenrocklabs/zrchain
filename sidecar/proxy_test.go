@@ -3,14 +3,28 @@ package main
 import (
 	"encoding/hex"
 	"testing"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ProxyFunctions_Testnet3(t *testing.T) {
+	//Do not run as part of CI.
+
+	//This test requires 2 additional pieces of setup, so will not work out of the box
+	/*
+		1. The 30 second sleep below gives the Neutrino nodes time to sync, an error will be returned unless the node
+		has sufficient time to download the block headers, once the database has been built the sleep can be removed if further
+		testing is run.
+		2. A Bitcoin Proxy needs to be running locally "http://127.0.0.1:1234", "user", "secret" so the alternative mechanism
+		of obtaining a block header can be tested.
+	*/
+
 	ns := neutrino.NeutrinoServer{}
 	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino")
+
+	time.Sleep(30 * time.Second)
 
 	//Get via the Neutrino Node
 	header1, hash1, _, err := ns.GetBlockHeaderByHeight("testnet3", 1000)
@@ -33,8 +47,20 @@ func Test_ProxyFunctions_Testnet3(t *testing.T) {
 }
 
 func Test_ProxyFunctions_Testnet4(t *testing.T) {
+	//Do not run as part of CI.
+
+	//This test requires 2 additional pieces of setup, so will not work out of the box
+	/*
+		1. The 30 second sleep below gives the Neutrino nodes time to sync, an error will be returned unless the node
+		has sufficient time to download the block headers, once the database has been built the sleep can be removed if further
+		testing is run.
+		2. A Bitcoin Proxy needs to be running locally "http://127.0.0.1:1234", "user", "secret" so the alternative mechanism
+		of obtaining a block header can be tested.
+	*/
+
 	ns := neutrino.NeutrinoServer{}
 	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino")
+	time.Sleep(30 * time.Second)
 
 	//Get via the Neutrino Node
 	_, _, _, err := ns.GetBlockHeaderByHeight("testnet4", 1000)
