@@ -34,7 +34,7 @@ func Test_ProxyFunctions_Testnet3(t *testing.T) {
 
 func Test_ProxyFunctions_Testnet4(t *testing.T) {
 	ns := neutrino.NeutrinoServer{}
-	ns.Initialize("http://127.0.0.1:1234", "user", "secret")
+	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino")
 
 	//Get via the Neutrino Node
 	_, _, _, err := ns.GetBlockHeaderByHeight("testnet4", 1000)
