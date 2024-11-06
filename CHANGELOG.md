@@ -1,3 +1,11 @@
+## [5.2.4](https://github.com/zenrocklabs/zrchain/compare/v5.2.3...v5.2.4) (2024-11-06)
+
+
+### Bug Fixes
+
+* avs rewards calculation + refactor ([84c3682](https://github.com/zenrocklabs/zrchain/commit/84c36823c43d3029d3e128e2bffa58c1527236ec))
+* avs rewards calculation + refactor ([9dc5dce](https://github.com/zenrocklabs/zrchain/commit/9dc5dce3f98898d661becfa07bff1cbb27c1eef3))
+
 ## [5.2.3](https://github.com/zenrocklabs/zrchain/compare/v5.2.2...v5.2.3) (2024-11-06)
 
 
