@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -128,18 +129,14 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpda
 // provisionAVSValidatorRewards calculates the rewards for all the bonded Zenrock validators
 // which have received AVS delegations and provisions them in the rewards pool for later withdrawal.
 func (k Keeper) provisionAVSValidatorRewards(ctx sdk.Context) error {
-	return k.IterateBondedZenrockValidatorsByPower(ctx, func(index int64, validator types.ValidatorHV) (stop bool) {
-		currentRewards, err := k.AVSRewardsPool.Get(ctx, validator.OperatorAddress)
-		if err != nil {
-			currentRewards = math.ZeroInt()
-		}
-
+	return k.IterateBondedZenrockValidatorsByPower(ctx, func(index int64, validator types.ValidatorHV) error {
 		rewardsPerBlock := k.calculateRewardsPerBlock(ctx, validator.TokensAVS)
-
-		if err = k.AVSRewardsPool.Set(ctx, validator.OperatorAddress, currentRewards.Add(rewardsPerBlock.TruncateInt())); err != nil {
+		amount := rewardsPerBlock.TruncateInt()
+		if err := k.addRewards(ctx, validator.OperatorAddress, amount); err != nil {
 			k.Logger(ctx).Error("couldn't set rewards for validator", "address", validator.OperatorAddress, "error", err)
+			return err
 		}
-		return false
+		return nil
 	})
 }
 
@@ -149,11 +146,12 @@ func (k Keeper) provisionAVSValidatorRewards(ctx sdk.Context) error {
 func (k Keeper) provisionAVSDelegatorRewardsAndCommissions(ctx sdk.Context) error {
 	return k.AVSDelegations.Walk(ctx, nil, func(key collections.Pair[string, string], delegated math.Int) (bool, error) {
 		validatorAddr, delegatorAddr := key.K1(), key.K2()
-
-		// this can error if an AVS operator delegates to a validator address that doesn't exist
-		// since it is possible for this to error in normal circumstances we shouldn't return the error or it will halt the chain
 		validator, err := k.GetZenrockValidatorFromBech32(ctx, validatorAddr)
 		if err != nil {
+			// This can error if an AVS operator delegates to a validator address that doesn't exist.
+			// Since it is possible for this to error in normal circumstances, we shouldn't return the error or it will halt the chain.
+			// In this case we must simply log the error and continue.
+			k.Logger(ctx).Error("couldn't get validator", "address", validatorAddr, "error", err)
 			return false, nil
 		}
 
@@ -161,33 +159,49 @@ func (k Keeper) provisionAVSDelegatorRewardsAndCommissions(ctx sdk.Context) erro
 		commission := rewardsPerBlock.Mul(validator.Commission.Rate).TruncateInt()
 		delegatorReward := rewardsPerBlock.Sub(commission.ToLegacyDec()).TruncateInt()
 
-		currentDelegatorRewards, err := k.AVSRewardsPool.Get(ctx, delegatorAddr)
-		if err != nil {
-			currentDelegatorRewards = math.ZeroInt()
+		if err := k.addRewards(ctx, delegatorAddr, delegatorReward); err != nil {
+			return true, fmt.Errorf("couldn't set rewards for delegator %s: %w", delegatorAddr, err)
 		}
 
-		if err = k.AVSRewardsPool.Set(ctx, delegatorAddr, currentDelegatorRewards.Add(delegatorReward)); err != nil {
-			return false, fmt.Errorf("couldn't set rewards for delegator %s: %w", delegatorAddr, err)
-		}
-
-		currentValidatorRewards, err := k.AVSRewardsPool.Get(ctx, validatorAddr)
-		if err != nil {
-			currentValidatorRewards = math.ZeroInt()
-		}
-
-		if err = k.AVSRewardsPool.Set(ctx, validatorAddr, currentValidatorRewards.Add(commission)); err != nil {
-			return false, fmt.Errorf("couldn't set rewards for validator %s: %w", validatorAddr, err)
+		if err := k.addRewards(ctx, validatorAddr, commission); err != nil {
+			return true, fmt.Errorf("couldn't set rewards for validator %s: %w", validatorAddr, err)
 		}
 
 		return false, nil
 	})
 }
 
-// calculateRewardsPerBlock calculates the rewards per block for a given amount of tokens
-// based on the current AVS rewards rate set in the module parameters via governance.
+// calculateRewardsPerBlock calculates the rewards per block for a given amount of staked AVS tokens.
+// This uses the current AVS rewards rate set in the module parameters via governance.
 func (k Keeper) calculateRewardsPerBlock(ctx sdk.Context, tokens math.Int) math.LegacyDec {
-	rewardsPerYear := k.GetAVSRewardsRate(ctx).Add(math.LegacyOneDec()).Mul(tokens.ToLegacyDec())
-	return rewardsPerYear.Quo(math.LegacyNewDec(365 * 24 * 60 * 60 / k.GetBlockTime(ctx)))
+	secondsPerYear := math.LegacyNewDec(365 * 24 * 60 * 60)
+	blockTime := math.LegacyNewDec(k.GetBlockTime(ctx))
+	blocksPerYear := secondsPerYear.Quo(blockTime)
+	rewardsPerYear := k.GetAVSRewardsRate(ctx).Mul(tokens.ToLegacyDec())
+	return rewardsPerYear.Quo(blocksPerYear)
+}
+
+// Helper function to get current rewards or zero if not found
+func (k Keeper) getCurrentRewards(ctx sdk.Context, addr string) (math.Int, error) {
+	currentRewards, err := k.AVSRewardsPool.Get(ctx, addr)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// If no rewards are found, return zero (since returning an error here halts the chain)
+			return math.ZeroInt(), nil
+		}
+		// Any other error is critical and should be returned
+		return math.ZeroInt(), err
+	}
+	return currentRewards, nil
+}
+
+// Helper function to add rewards to the pool
+func (k Keeper) addRewards(ctx sdk.Context, addr string, amount math.Int) error {
+	currentRewards, err := k.getCurrentRewards(ctx, addr)
+	if err != nil {
+		return err
+	}
+	return k.AVSRewardsPool.Set(ctx, addr, currentRewards.Add(amount))
 }
 
 // ApplyAndReturnValidatorSetUpdates applies and return accumulated updates to the bonded validator set. Also,
