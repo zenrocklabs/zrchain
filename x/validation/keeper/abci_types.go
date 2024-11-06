@@ -117,7 +117,7 @@ func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be ch
 		len(ve.EthBlockHash) == 0 ||
 		ve.EthBaseFee == 0 ||
 		ve.EthTipCap == 0 ||
-		ve.EthGasLimit == 0 ||
-		ve.BtcBlockHeight == 0 ||
-		len(ve.BtcMerkleRoot) == 0
+		ve.EthGasLimit == 0
+	// ve.BtcBlockHeight == 0 ||
+	// len(ve.BtcMerkleRoot) == 0
 }
