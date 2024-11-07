@@ -5,15 +5,15 @@ network: "testnet"
 eth_oracle:
   rpc:
     local: "http://127.0.0.1:8545"
-    testnet: ""
-    mainnet: ""
+    testnet: "https://ethereum-holesky-rpc.publicnode.com"
+    mainnet: "https://ethereum-rpc.publicnode.com"
   contract_addrs:
     service_manager: "0xA52cc1900387C36117dEf80970156a17C182e008"
     price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
   network_name: "Holešky Ethereum Testnet"
 solana_rpc:
   testnet: "https://api.testnet.solana.com"
-  mainnet: ""
+  mainnet: "https://api.mainnet-beta.solana.com/"
 proxy_rpc:
   url: "http://127.0.0.1:1234"
   user: "user"
