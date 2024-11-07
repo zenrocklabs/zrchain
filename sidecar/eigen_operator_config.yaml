@@ -1,20 +1,20 @@
 # this sets the logger level (true = info, false = debug)
 production: true
 
-operator_address: 0x86A69131998398874e528A9D4386C1145F83c8d3
-operator_validator_address: zenvaloper16uhx7qes24xz8qzgpz6yhzvsj3zsevfaw7pj9r
+operator_address: 0xa36951D284aDdA3343653BF6Dcf0148c08B9ab2f
+operator_validator_address: zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6
 
 # EigenLayer Slasher contract address
 
 # This is the address of the contracts which are deployed in the anvil saved state
 # The saved eigenlayer state is located in tests/anvil/credible_squaring_avs_deployment_output.json
 # TODO(samlaf): automate updating these addresses when we deploy new contracts
-avs_registry_coordinator_address: 0xD4BdE8DD7B82C04E4c1617B0F477f4F8B2CcdE2F
-operator_state_retriever_address: 0x148e80620b9464Fa0731467d504A2F760E7242C8
+avs_registry_coordinator_address: 0xb0d6ecDB2922571Ba0Fef3FbbbC49e401926Dd4f
+operator_state_retriever_address: 0x84106d33904dD10Ff73Eaf9660f060c89Ed1E323
 
 # ETH RPC URL
-eth_rpc_url: https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/
-eth_ws_url: wss://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/
+eth_rpc_url:
+eth_ws_url:
 
 # If you running this using eigenlayer CLI and the provided AVS packaging structure,
 # this should be /operator_keys/ecdsa_key.json as the host path will be asked while running
@@ -42,4 +42,4 @@ enable_node_api: true
 # addresses.erc20MockStrategy in tests/anvil/credible_squaring_avs_deployment_output.json
 token_strategy_addr: 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9
 
-service_manager_address: 0xb48F00b89A4017f78794F35cb1ef540EDA5d201B
+service_manager_address: 0xA52cc1900387C36117dEf80970156a17C182e008

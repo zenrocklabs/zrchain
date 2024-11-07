@@ -151,7 +151,7 @@ func (k Keeper) provisionAVSDelegatorRewardsAndCommissions(ctx sdk.Context) erro
 			// This can error if an AVS operator delegates to a validator address that doesn't exist.
 			// Since it is possible for this to error in normal circumstances, we shouldn't return the error or it will halt the chain.
 			// In this case we must simply log the error and continue.
-			k.Logger(ctx).Error("couldn't get validator", "address", validatorAddr, "error", err)
+			k.Logger(ctx).Debug("couldn't get validator", "address", validatorAddr, "error", err)
 			return false, nil
 		}
 
