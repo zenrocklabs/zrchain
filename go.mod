@@ -14,6 +14,7 @@ replace (
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/zenrocklabs/zenrock-avs => ../zenrock-avs
 )
 
 require (
@@ -72,7 +73,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/test-go/testify v1.1.4
 	github.com/zenrocklabs/zenbtc v1.0.3
-	github.com/zenrocklabs/zenrock-avs v1.2.2 // change to v1.1.4 before devnet
+	github.com/zenrocklabs/zenrock-avs v1.3.0 // change to v1.1.4 before devnet
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38

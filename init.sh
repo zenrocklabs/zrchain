@@ -109,7 +109,12 @@ rm -rf $HOME_DIR
 set -e
 
 make install
-make sidecar
+
+# Only make sidecar if not using --localnet 2 or --no-sidecar/--no-vote-extensions
+if [[ "$LOCALNET" != "2" && -z "$NO_SIDECAR" && -z "$NO_VOTE_EXTENSIONS" ]]; then
+    make sidecar
+fi
+
 rm -rf sidecar/neutrino/neutrino_*/*.bin
 rm -rf sidecar/neutrino/neutrino_*/*.db
 
