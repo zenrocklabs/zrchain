@@ -49,9 +49,14 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
+
+	k.Logger(ctx).Info("Unmarshalling delegations")
+
 	if err := json.Unmarshal(resp.Delegations, &delegations); err != nil {
 		return nil, err
 	}
+
+	k.Logger(ctx).Info("Processing delegations")
 
 	validatorDelegations, err := k.processDelegations(delegations)
 	if err != nil {
@@ -59,11 +64,15 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		return nil, ErrOracleSidecar
 	}
 
+	k.Logger(ctx).Info("Parsing ROCK price")
+
 	ROCKUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ROCKUSDPrice)
 	if err != nil {
 		k.Logger(ctx).Error("error parsing rock price", "error", err)
 		return nil, ErrOracleSidecar
 	}
+
+	k.Logger(ctx).Info("Parsing ETH price")
 
 	ETHUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ETHUSDPrice)
 	if err != nil {
@@ -359,10 +368,14 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 }
 
 func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
+	k.Logger(ctx).Info("Getting zenBTC minter address")
+
 	addr, err := k.getZenBTCMinterAddressEVM(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
 	}
+
+	k.Logger(ctx).Info("Fetching Ethereum nonce")
 
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {
