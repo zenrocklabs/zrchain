@@ -1,3 +1,10 @@
+## [5.2.8](https://github.com/zenrocklabs/zrchain/compare/v5.2.7...v5.2.8) (2024-11-07)
+
+
+### Bug Fixes
+
+* disable eth nonce querying in VE code for testnet ([#29](https://github.com/zenrocklabs/zrchain/issues/29)) ([6cf6cdd](https://github.com/zenrocklabs/zrchain/commit/6cf6cddfd2f9fdf84729f2cc1a6b0b2191f8791b))
+
 ## [5.2.7](https://github.com/zenrocklabs/zrchain/compare/v5.2.6...v5.2.7) (2024-11-07)
 
 
