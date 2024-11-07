@@ -1,3 +1,10 @@
+## [5.2.7](https://github.com/zenrocklabs/zrchain/compare/v5.2.6...v5.2.7) (2024-11-07)
+
+
+### Bug Fixes
+
+* add verbose logging to ExtendVoteHandler ([#27](https://github.com/zenrocklabs/zrchain/issues/27)) ([fd20d72](https://github.com/zenrocklabs/zrchain/commit/fd20d72dfddd65895c6b931a6fbc7fbef2e149fc))
+
 ## [5.2.6](https://github.com/zenrocklabs/zrchain/compare/v5.2.5...v5.2.6) (2024-11-07)
 
 
