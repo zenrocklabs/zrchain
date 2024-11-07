@@ -146,8 +146,8 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
 	if err != nil {
-		k.Logger(ctx).Error("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
-		return nil, nil
+		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
+		oracleData = &OracleData{}
 	}
 	oracleData.ConsensusData = req.LocalLastCommit
 
