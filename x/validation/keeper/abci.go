@@ -32,15 +32,11 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 
 // ExtendVoteHandler is called by all validators to extend the consensus vote with additional data to be voted on.
 func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
-	k.Logger(ctx).Info("Getting sidecar state", "height", req.Height)
-
 	oracleData, err := k.GetSidecarState(ctx, req.Height)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving AVS delegations", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
-
-	k.Logger(ctx).Info("Constructing vote extension", "height", req.Height)
 
 	voteExt, err := k.constructVoteExtension(ctx, req.Height, oracleData)
 	if err != nil {
@@ -48,14 +44,10 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	k.Logger(ctx).Info("Checking vote extension validity", "height", req.Height)
-
 	if voteExt.IsInvalid() {
 		k.Logger(ctx).Error("invalid vote extension in ExtendVote", "height", req.Height)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
-
-	k.Logger(ctx).Info("Marshalling vote extension", "height", req.Height)
 
 	voteExtBz, err := json.Marshal(voteExt)
 	if err != nil {
@@ -63,14 +55,10 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	k.Logger(ctx).Info("Returning vote extension bytes", "height", req.Height)
-
 	return &abci.ResponseExtendVote{VoteExtension: voteExtBz}, nil
 }
 
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
-	k.Logger(ctx).Info("Deriving AVS contract state hash", "height", height)
-
 	avsDelegationsHash, err := deriveAVSContractStateHash(oracleData.AVSDelegationsMap)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
@@ -81,12 +69,10 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	// 	return VoteExtension{}, err
 	// }
 
-	k.Logger(ctx).Info("Looking up ethereum nonce", "height", height)
-
-	nonce, err := k.lookupEthereumNonce(ctx)
-	if err != nil {
-		return VoteExtension{}, err
-	}
+	// nonce, err := k.lookupEthereumNonce(ctx)
+	// if err != nil {
+	// 	return VoteExtension{}, err
+	// }
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight: height,
@@ -95,12 +81,12 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		AVSDelegationsHash: avsDelegationsHash[:],
 		// BtcBlockHeight:     bitcoinData.BlockHeight,
 		// BtcMerkleRoot:      bitcoinData.BlockHeader.MerkleRoot,
-		EthBlockHeight:    oracleData.EthBlockHeight,
-		EthBlockHash:      oracleData.EthBlockHash,
-		EthGasLimit:       oracleData.EthGasLimit,
-		EthBaseFee:        oracleData.EthBaseFee,
-		EthTipCap:         oracleData.EthTipCap,
-		RequestedEthNonce: nonce,
+		EthBlockHeight: oracleData.EthBlockHeight,
+		EthBlockHash:   oracleData.EthBlockHash,
+		EthGasLimit:    oracleData.EthGasLimit,
+		EthBaseFee:     oracleData.EthBaseFee,
+		EthTipCap:      oracleData.EthTipCap,
+		// RequestedEthNonce: nonce,
 	}
 
 	return voteExt, nil
