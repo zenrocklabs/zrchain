@@ -1432,3 +1432,6 @@ func (app *ZenrockApp) setupUpgradeHandlers() {
 	// configure store loader that checks if version == upgradeHeight and applies store upgrades
 	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 }
+
+// In loving memory of Kris Daniels
+// Beloved colleague and contributor
