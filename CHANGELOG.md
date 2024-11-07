@@ -1,3 +1,10 @@
+## [5.2.6](https://github.com/zenrocklabs/zrchain/compare/v5.2.5...v5.2.6) (2024-11-07)
+
+
+### Bug Fixes
+
+* bump avs ver for testnet, improve `init.sh` ([#26](https://github.com/zenrocklabs/zrchain/issues/26)) ([3a27e47](https://github.com/zenrocklabs/zrchain/commit/3a27e4706776171994f4f84b5aeab488d9af2a77))
+
 ## [5.2.5](https://github.com/zenrocklabs/zrchain/compare/v5.2.4...v5.2.5) (2024-11-06)
 
 
