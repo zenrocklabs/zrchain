@@ -1,3 +1,40 @@
+## [5.2.9](https://github.com/zenrocklabs/zrchain/compare/v5.2.8...v5.2.9) (2024-11-08)
+
+
+### Bug Fixes
+
+* VE error handling, allow for separate sidecars `init.sh` ([#30](https://github.com/zenrocklabs/zrchain/issues/30)) ([f9832c4](https://github.com/zenrocklabs/zrchain/commit/f9832c4563b9409691c01d3774ea8586a7a1d5c8))
+
+## [5.2.8](https://github.com/zenrocklabs/zrchain/compare/v5.2.7...v5.2.8) (2024-11-07)
+
+
+### Bug Fixes
+
+* disable eth nonce querying in VE code for testnet ([#29](https://github.com/zenrocklabs/zrchain/issues/29)) ([6cf6cdd](https://github.com/zenrocklabs/zrchain/commit/6cf6cddfd2f9fdf84729f2cc1a6b0b2191f8791b))
+
+## [5.2.7](https://github.com/zenrocklabs/zrchain/compare/v5.2.6...v5.2.7) (2024-11-07)
+
+
+### Bug Fixes
+
+* add verbose logging to ExtendVoteHandler ([#27](https://github.com/zenrocklabs/zrchain/issues/27)) ([fd20d72](https://github.com/zenrocklabs/zrchain/commit/fd20d72dfddd65895c6b931a6fbc7fbef2e149fc))
+
+## [5.2.6](https://github.com/zenrocklabs/zrchain/compare/v5.2.5...v5.2.6) (2024-11-07)
+
+
+### Bug Fixes
+
+* bump avs ver for testnet, improve `init.sh` ([#26](https://github.com/zenrocklabs/zrchain/issues/26)) ([3a27e47](https://github.com/zenrocklabs/zrchain/commit/3a27e4706776171994f4f84b5aeab488d9af2a77))
+
+## [5.2.5](https://github.com/zenrocklabs/zrchain/compare/v5.2.4...v5.2.5) (2024-11-06)
+
+
+### Bug Fixes
+
+* bump `zenrock-avs` ver ([c92f783](https://github.com/zenrocklabs/zrchain/commit/c92f7835a8b347181766f0489f2b0e0122f40346))
+* bump `zenrock-avs` ver ([5cd5de0](https://github.com/zenrocklabs/zrchain/commit/5cd5de0ead959154079a48c7fc5ce9de70644d2a))
+* sidecar Dockerfile ([3187c5a](https://github.com/zenrocklabs/zrchain/commit/3187c5a85cd7e2ef70672eb0368b6c6e45551c14))
+
 ## [5.2.4](https://github.com/zenrocklabs/zrchain/compare/v5.2.3...v5.2.4) (2024-11-06)
 
 

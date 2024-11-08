@@ -49,6 +49,7 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
+
 	if err := json.Unmarshal(resp.Delegations, &delegations); err != nil {
 		return nil, err
 	}
@@ -359,10 +360,14 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 }
 
 func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
+	k.Logger(ctx).Info("Getting zenBTC minter address")
+
 	addr, err := k.getZenBTCMinterAddressEVM(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
 	}
+
+	k.Logger(ctx).Info("Fetching Ethereum nonce")
 
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {

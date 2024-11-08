@@ -69,10 +69,10 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	// 	return VoteExtension{}, err
 	// }
 
-	nonce, err := k.lookupEthereumNonce(ctx)
-	if err != nil {
-		return VoteExtension{}, err
-	}
+	// nonce, err := k.lookupEthereumNonce(ctx)
+	// if err != nil {
+	// 	return VoteExtension{}, err
+	// }
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight: height,
@@ -81,12 +81,12 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		AVSDelegationsHash: avsDelegationsHash[:],
 		// BtcBlockHeight:     bitcoinData.BlockHeight,
 		// BtcMerkleRoot:      bitcoinData.BlockHeader.MerkleRoot,
-		EthBlockHeight:    oracleData.EthBlockHeight,
-		EthBlockHash:      oracleData.EthBlockHash,
-		EthGasLimit:       oracleData.EthGasLimit,
-		EthBaseFee:        oracleData.EthBaseFee,
-		EthTipCap:         oracleData.EthTipCap,
-		RequestedEthNonce: nonce,
+		EthBlockHeight: oracleData.EthBlockHeight,
+		EthBlockHash:   oracleData.EthBlockHash,
+		EthGasLimit:    oracleData.EthGasLimit,
+		EthBaseFee:     oracleData.EthBaseFee,
+		EthTipCap:      oracleData.EthTipCap,
+		// RequestedEthNonce: nonce,
 	}
 
 	return voteExt, nil
@@ -146,8 +146,8 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
 	if err != nil {
-		k.Logger(ctx).Error("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
-		return nil, nil
+		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
+		oracleData = &OracleData{}
 	}
 	oracleData.ConsensusData = req.LocalLastCommit
 
