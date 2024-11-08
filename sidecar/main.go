@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -16,7 +17,15 @@ import (
 )
 
 func main() {
+	port := flag.Int("port", 0, "Override GRPC port from config")
+	flag.Parse()
+
 	cfg := LoadConfig()
+
+	// Override GRPC port if --port flag is provided
+	if *port != 0 {
+		cfg.GRPCPort = *port
+	}
 
 	var rpcAddress string
 	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
