@@ -28,6 +28,7 @@ var (
 	ConfirmedUnlockTxsKey      = collections.NewPrefix(9)
 	EthereumNonceRequestedKey  = collections.NewPrefix(10)
 	PendingMintTransactionsKey = collections.NewPrefix(11)
+	VoteExtensionRejectedKey   = collections.NewPrefix(12)
 
 	AssetPricesIndex             = "asset_prices"
 	SlashEventsIndex             = "slash_events"
@@ -41,6 +42,7 @@ var (
 	ConfirmedUnlockTxsIndex      = "confirmed_unlock_txs"
 	EthereumNonceRequestedIndex  = "ethereum_nonce_requested"
 	PendingMintTransactionsIndex = "pending_mint_transactions"
+	VoteExtensionRejectedIndex   = "vote_extension_rejected"
 )
 
 const (

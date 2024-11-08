@@ -196,7 +196,11 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	}
 
 	if err := k.validateOracleData(voteExt, &recoveredOracleData); err != nil {
-		return REJECT_PROPOSAL, err
+		if err = k.VoteExtensionRejected.Set(ctx, true); err != nil {
+			return REJECT_PROPOSAL, err
+		}
+		// TODO: record this in the store
+		return ACCEPT_PROPOSAL, nil
 	}
 
 	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, recoveredOracleData.ConsensusData)
@@ -221,9 +225,26 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
+	rejected, err := k.VoteExtensionRejected.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			rejected = false
+		} else {
+			k.Logger(ctx).Error("error getting vote extension rejected field", "height", req.Height, "error", err)
+			return nil
+		}
+	}
+	if rejected {
+		k.Logger(ctx).Warn("vote extension rejected; not storing VE data", "height", req.Height)
+		if err = k.VoteExtensionRejected.Set(ctx, false); err != nil {
+			k.Logger(ctx).Error("error resetting vote extension rejected field", "height", req.Height, "error", err)
+		}
+		return nil
+	}
+
 	oracleData, err := k.unmarshalOracleData(voteExtTx)
 	if err != nil {
-		k.Logger(ctx).Warn("error getting oracle data from tx", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error unmarshaling oracle data from tx", "height", req.Height, "error", err)
 		return nil
 	}
 

@@ -88,9 +88,9 @@ func main() {
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
 		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName, update.EthBlockHeight)
-		// log.Println(update.Delegations)
 		currentState := o.currentState.Load().(*OracleState)
 		newState := *currentState
+
 		newState.Delegations = update.Delegations
 		newState.EthBlockHeight = update.EthBlockHeight
 		newState.EthBlockHash = update.EthBlockHash
