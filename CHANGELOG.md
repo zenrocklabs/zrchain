@@ -1,3 +1,10 @@
+## [5.2.9](https://github.com/zenrocklabs/zrchain/compare/v5.2.8...v5.2.9) (2024-11-08)
+
+
+### Bug Fixes
+
+* VE error handling, allow for separate sidecars `init.sh` ([#30](https://github.com/zenrocklabs/zrchain/issues/30)) ([f9832c4](https://github.com/zenrocklabs/zrchain/commit/f9832c4563b9409691c01d3774ea8586a7a1d5c8))
+
 ## [5.2.8](https://github.com/zenrocklabs/zrchain/compare/v5.2.7...v5.2.8) (2024-11-07)
 
 
