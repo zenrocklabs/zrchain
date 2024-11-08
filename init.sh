@@ -240,13 +240,13 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "sig_req_fee": 2
       },
       {
-        "address": "keyring1k6vc6vhp6e6l3rxaard6fd",
+        "address": "keyring1w887ucurq2nmnj5mq5uaju6a",
         "admins": ["zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
         "creator": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
         "description": "TSS one",
         "is_active": true,
         "key_req_fee": 0,
-        "parties": ["zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn"],
+        "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts", "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
         "sig_req_fee": 0
       }
     ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
