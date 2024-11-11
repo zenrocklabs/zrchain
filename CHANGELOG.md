@@ -1,3 +1,10 @@
+## [5.2.10](https://github.com/zenrocklabs/zrchain/compare/v5.2.9...v5.2.10) (2024-11-11)
+
+
+### Bug Fixes
+
+* prefer liveness instead of rejecting proposal for mismatched VE ([#32](https://github.com/zenrocklabs/zrchain/issues/32)) ([e52ed8f](https://github.com/zenrocklabs/zrchain/commit/e52ed8f4aadfb9656fcd351e84fd004a3a071de5))
+
 ## [5.2.9](https://github.com/zenrocklabs/zrchain/compare/v5.2.8...v5.2.9) (2024-11-08)
 
 
