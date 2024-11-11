@@ -13,8 +13,8 @@ avs_registry_coordinator_address: 0xb0d6ecDB2922571Ba0Fef3FbbbC49e401926Dd4f
 operator_state_retriever_address: 0x84106d33904dD10Ff73Eaf9660f060c89Ed1E323
 
 # ETH RPC URL
-eth_rpc_url: https://ethereum-holesky-rpc.publicnode.com
-eth_ws_url: wss://ethereum-holesky-rpc.publicnode.com
+eth_rpc_url: 
+eth_ws_url: 
 
 # If you running this using eigenlayer CLI and the provided AVS packaging structure,
 # this should be /operator_keys/ecdsa_key.json as the host path will be asked while running

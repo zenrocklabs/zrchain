@@ -60,6 +60,8 @@ type Keeper struct {
 	EthereumNonceRequested collections.Item[bool]
 	// PendingMintTransactions - key: pending zenBTC mint transaction
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
+	// VoteExtensionRejected - key: bool (is rejected)
+	VoteExtensionRejected collections.Item[bool]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -126,6 +128,7 @@ func NewKeeper(
 		ConfirmedUnlockTxs:      collections.NewMap(sb, types.ConfirmedUnlockTxsKey, types.ConfirmedUnlockTxsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.WithdrawalInfo](cdc)),
 		EthereumNonceRequested:  collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
 		PendingMintTransactions: collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
+		VoteExtensionRejected:   collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
 	}
 }
 

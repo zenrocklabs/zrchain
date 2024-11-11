@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
-	"sort"
 	"strings"
 
 	"cosmossdk.io/core/comet"
@@ -108,32 +107,12 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 }
 
 func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) ([32]byte, error) {
-	sortDelegationsMap(avsDelegations) // Sort AVS delegations for determinism
-
 	avsDelegationsBz, err := json.Marshal(avsDelegations)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("error encoding AVS delegations: %w", err)
 	}
 
 	return sha256.Sum256(avsDelegationsBz), nil
-}
-
-func sortDelegationsMap(m map[string]map[string]*big.Int) {
-	outerKeys := make([]string, 0, len(m))
-	for k := range m {
-		outerKeys = append(outerKeys, k)
-	}
-	sort.Strings(outerKeys)
-
-	for _, outerKey := range outerKeys {
-		innerMap := m[outerKey]
-
-		innerKeys := make([]string, 0, len(innerMap))
-		for k := range innerMap {
-			innerKeys = append(innerKeys, k)
-		}
-		sort.Strings(innerKeys)
-	}
 }
 
 func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, error) {
