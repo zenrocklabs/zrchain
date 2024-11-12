@@ -1,3 +1,10 @@
+## [5.2.11](https://github.com/zenrocklabs/zrchain/compare/v5.2.10...v5.2.11) (2024-11-12)
+
+
+### Bug Fixes
+
+* bump `zenrock-avs` ver for tasks fix ([#33](https://github.com/zenrocklabs/zrchain/issues/33)) ([fa4ce17](https://github.com/zenrocklabs/zrchain/commit/fa4ce171e3b99ac136ad02057d939935049a5bef))
+
 ## [5.2.10](https://github.com/zenrocklabs/zrchain/compare/v5.2.9...v5.2.10) (2024-11-11)
 
 
