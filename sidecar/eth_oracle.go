@@ -8,11 +8,13 @@ import (
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
 
 	solana "github.com/gagliardetto/solana-go/rpc"
@@ -39,7 +41,11 @@ func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutr
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	contractInstance, err := middleware.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
+	serviceManager, err := middleware.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
+	if err != nil {
+		return fmt.Errorf("failed to create contract instance: %w", err)
+	}
+	redemptionTrackerHolesky, err := zenbtc.NewRedemptionTracker(common.HexToAddress(o.Config.EthOracle.ContractAddrs.RedemptionTrackers.EthHolesky), o.EthClient)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -50,14 +56,14 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(contractInstance, tempEthClient, priceFeed); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, redemptionTrackerHolesky, priceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 		}
 	}
 }
 
-func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
+func (o *Oracle) fetchAndProcessState(serviceManager *middleware.ContractZRServiceManager, redemptionTrackerHolesky *zenbtc.RedemptionTracker, priceFeed *aggregatorv3.AggregatorV3Interface, tempEthClient *ethclient.Client) error {
 	ctx := context.Background()
 
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
@@ -67,9 +73,14 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, BlocksBeforeFinality)
 
-	delegations, err := o.getServiceManagerState(contractInstance, targetBlockNumber)
+	delegations, err := o.getServiceManagerState(serviceManager, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
+	}
+
+	RedemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
+	if err != nil {
+		return fmt.Errorf("failed to get redemption tracker state: %w", err)
 	}
 
 	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
@@ -100,14 +111,15 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 	}
 
 	o.updateChan <- OracleState{
-		Delegations:    delegations,
-		EthBlockHeight: header.Number.Uint64(),
-		EthBlockHash:   header.Hash().Hex(),
-		EthGasLimit:    header.GasLimit,
-		EthBaseFee:     header.BaseFee.Uint64(),
-		EthTipCap:      suggestedTip.Uint64(),
-		ETHUSDPrice:    ETHUSDPrice,
-		ROCKUSDPrice:   0,
+		Delegations:         delegations,
+		EthBlockHeight:      header.Number.Uint64(),
+		EthBlockHash:        header.Hash().Hex(),
+		EthGasLimit:         header.GasLimit,
+		EthBaseFee:          header.BaseFee.Uint64(),
+		EthTipCap:           suggestedTip.Uint64(),
+		ETHUSDPrice:         ETHUSDPrice,
+		ROCKUSDPrice:        0, // TODO: add ROCKUSDPrice after TGE
+		RedemptionsEthereum: RedemptionsEthereum,
 	}
 
 	return nil
@@ -145,4 +157,26 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZRS
 	}
 
 	return delegations, nil
+}
+
+func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.RedemptionTracker, height *big.Int) ([]api.Redemption, error) {
+	callOpts := &bind.CallOpts{
+		BlockNumber: height,
+	}
+
+	recentRedemptions, err := contractInstance.GetRecentRedemptions(callOpts, 100)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get redemptions: %w", err)
+	}
+
+	// convert to []Redemptions - address[i] corresponds to amount[i]
+	redemptions := make([]api.Redemption, 0)
+	for i := 0; i < len(recentRedemptions.BtcAddresses); i++ {
+		redemptions = append(redemptions, api.Redemption{
+			BtcAddress: recentRedemptions.BtcAddresses[i],
+			Amount:     recentRedemptions.Amounts[i],
+		})
+	}
+
+	return redemptions, nil
 }

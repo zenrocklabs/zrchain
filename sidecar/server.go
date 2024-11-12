@@ -46,14 +46,15 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 	}
 
 	return &api.SidecarStateResponse{
-		Delegations:    contractState,
-		ROCKUSDPrice:   fmt.Sprint(currentState.ROCKUSDPrice),
-		ETHUSDPrice:    fmt.Sprint(currentState.ETHUSDPrice),
-		EthBlockHeight: currentState.EthBlockHeight,
-		EthBlockHash:   currentState.EthBlockHash,
-		EthGasLimit:    currentState.EthGasLimit,
-		EthBaseFee:     currentState.EthBaseFee,
-		EthTipCap:      currentState.EthTipCap,
+		Delegations:         contractState,
+		ROCKUSDPrice:        fmt.Sprint(currentState.ROCKUSDPrice),
+		ETHUSDPrice:         fmt.Sprint(currentState.ETHUSDPrice),
+		EthBlockHeight:      currentState.EthBlockHeight,
+		EthBlockHash:        currentState.EthBlockHash,
+		EthGasLimit:         currentState.EthGasLimit,
+		EthBaseFee:          currentState.EthBaseFee,
+		EthTipCap:           currentState.EthTipCap,
+		RedemptionsEthereum: currentState.RedemptionsEthereum,
 	}, nil
 }
 
@@ -69,14 +70,15 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 	}
 
 	return &api.SidecarStateResponse{
-		Delegations:    contractState,
-		ROCKUSDPrice:   fmt.Sprint(state.ROCKUSDPrice),
-		ETHUSDPrice:    fmt.Sprint(state.ETHUSDPrice),
-		EthBlockHeight: state.EthBlockHeight,
-		EthBlockHash:   state.EthBlockHash,
-		EthGasLimit:    state.EthGasLimit,
-		EthBaseFee:     state.EthBaseFee,
-		EthTipCap:      state.EthTipCap,
+		Delegations:         contractState,
+		ROCKUSDPrice:        fmt.Sprint(state.ROCKUSDPrice),
+		ETHUSDPrice:         fmt.Sprint(state.ETHUSDPrice),
+		EthBlockHeight:      state.EthBlockHeight,
+		EthBlockHash:        state.EthBlockHash,
+		EthGasLimit:         state.EthGasLimit,
+		EthBaseFee:          state.EthBaseFee,
+		EthTipCap:           state.EthTipCap,
+		RedemptionsEthereum: state.RedemptionsEthereum,
 	}, nil
 }
 

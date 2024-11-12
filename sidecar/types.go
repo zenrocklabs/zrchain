@@ -9,6 +9,7 @@ import (
 	solana "github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 )
 
 // / These constants should not be changed as they are important for synchronicity
@@ -44,14 +45,15 @@ type Oracle struct {
 }
 
 type OracleState struct {
-	Delegations    map[string]map[string]*big.Int `json:"delegations"`
-	ROCKUSDPrice   float64                        `json:"rockUSDPrice"`
-	ETHUSDPrice    float64                        `json:"ethUSDPrice"`
-	EthBlockHeight uint64                         `json:"ethBlockHeight"`
-	EthBlockHash   string                         `json:"ethBlockHash"`
-	EthGasLimit    uint64                         `json:"ethGasLimit"`
-	EthBaseFee     uint64                         `json:"ethBaseFee"`
-	EthTipCap      uint64                         `json:"ethTipCap"`
+	Delegations         map[string]map[string]*big.Int `json:"delegations"`
+	ROCKUSDPrice        float64                        `json:"rockUSDPrice"`
+	ETHUSDPrice         float64                        `json:"ethUSDPrice"`
+	EthBlockHeight      uint64                         `json:"ethBlockHeight"`
+	EthBlockHash        string                         `json:"ethBlockHash"`
+	EthGasLimit         uint64                         `json:"ethGasLimit"`
+	EthBaseFee          uint64                         `json:"ethBaseFee"`
+	EthTipCap           uint64                         `json:"ethTipCap"`
+	RedemptionsEthereum []api.Redemption               `json:"RedemptionsEthereum"`
 }
 
 type CoinMarketCapResponse struct {
@@ -102,6 +104,12 @@ type EthOracleConfig struct {
 }
 
 type ContractAddrs struct {
-	ServiceManager string `yaml:"service_manager"`
-	PriceFeed      string `yaml:"price_feed"`
+	ServiceManager     string             `yaml:"service_manager"`
+	PriceFeed          string             `yaml:"price_feed"`
+	RedemptionTrackers RedemptionTrackers `yaml:"redemption_trackers"`
+}
+
+type RedemptionTrackers struct {
+	EthMainnet string `yaml:"eth_mainnet"`
+	EthHolesky string `yaml:"eth_holesky"`
 }

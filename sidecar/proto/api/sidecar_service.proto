@@ -40,6 +40,11 @@ message BTCBlockHeader {
   string BlockHash = 7;
 }
 
+message Redemption {
+  bytes BtcAddress = 1;
+  uint64 Amount = 2;
+}
+
 message SidecarStateRequest {}
 
 message SidecarStateResponse {
@@ -51,6 +56,7 @@ message SidecarStateResponse {
   uint64 EthGasLimit = 6;
   uint64 EthBaseFee = 7;
   uint64 EthTipCap = 8;
+  repeated Redemption RedemptionsEthereum = 9 [(gogoproto.nullable) = false];
 }
 
 message SidecarStateByEthHeightRequest {
