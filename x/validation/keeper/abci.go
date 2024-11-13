@@ -419,19 +419,13 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 }
 
 func (k *Keeper) handleRedemptions(ctx sdk.Context, oracleData OracleData) {
-	pendingRedemptions, err := k.PendingRedemptions.Get(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("error getting pending redemption transactions", "err", err)
-		return
-	}
-	if len(pendingRedemptions.Redemptions) == 0 {
+	if len(oracleData.EthereumRedemptions) == 0 {
 		k.Logger(ctx).Debug("no pending redemption transactions")
 		return
 	}
 
-	index := 0
-	for i, tx := range pendingRedemptions.Redemptions {
-		redemptionBz, err := json.Marshal(tx)
+	for _, redemption := range oracleData.EthereumRedemptions {
+		redemptionBz, err := json.Marshal(redemption)
 		if err != nil {
 			k.Logger(ctx).Error("error marshalling redemption", "err", err)
 			continue
@@ -446,36 +440,29 @@ func (k *Keeper) handleRedemptions(ctx sdk.Context, oracleData OracleData) {
 			continue
 		}
 
-		index = i
-		break
-	}
+		// TODO: create unsigned Bitcoin redemption transaction bytes and hash
+		unsignedRedemptionTx := []byte{}
+		unsignedRedemptionTxHash := []byte{}
 
-	tx := pendingRedemptions.Redemptions[index]
-	_ = tx
-	// TODO: create transaction bytes and hash
-	unsignedRedemptionTx := []byte{}
-	unsignedRedemptionTxHash := []byte{}
+		if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+			ctx,
+			&treasurytypes.MsgNewSignTransactionRequest{
+				Creator:             "", // TODO: can this be left empty?
+				KeyId:               k.GetZenBTCWithdrawerKeyID(ctx),
+				WalletType:          treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET, // TODO: change to mainnet before launch
+				UnsignedTransaction: unsignedRedemptionTx,
+				Metadata:            nil,
+				NoBroadcast:         false,
+			},
+			[]byte(hex.EncodeToString(unsignedRedemptionTxHash)),
+		); err != nil {
+			k.Logger(ctx).Error("error creating redemption transaction", "err", err)
+			return
+		}
 
-	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
-		ctx,
-		&treasurytypes.MsgNewSignTransactionRequest{
-			Creator:             "", // TODO: can this be left empty?
-			KeyId:               k.GetZenBTCWithdrawerKeyID(ctx),
-			WalletType:          treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET, // TODO: change to mainnet before launch
-			UnsignedTransaction: unsignedRedemptionTx,
-			Metadata:            nil,
-			NoBroadcast:         false,
-		},
-		[]byte(hex.EncodeToString(unsignedRedemptionTxHash)),
-	); err != nil {
-		k.Logger(ctx).Error("error creating redemption transaction", "err", err)
-		return
-	}
-
-	pendingRedemptions.Redemptions = pendingRedemptions.Redemptions[1:]
-	if err := k.PendingRedemptions.Set(ctx, pendingRedemptions); err != nil {
-		k.Logger(ctx).Error("error setting pending redemption transactions", "err", err)
-		return
+		if err := k.CompletedRedemptions.Set(ctx, redemptionBz); err != nil {
+			k.Logger(ctx).Error("error adding redemption to completed redemptions", "err", err)
+		}
 	}
 }
 
