@@ -64,6 +64,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
 
+	ethereumRedemptionsHash, err := deriveEthereumRedemptionsHash(oracleData.EthereumRedemptions)
+	if err != nil {
+		return VoteExtension{}, fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
+	}
+
 	// bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
 	// if err != nil {
 	// 	return VoteExtension{}, err
@@ -75,10 +80,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	// }
 
 	voteExt := VoteExtension{
-		ZRChainBlockHeight: height,
-		ROCKUSDPrice:       oracleData.ROCKUSDPrice,
-		ETHUSDPrice:        oracleData.ETHUSDPrice,
-		AVSDelegationsHash: avsDelegationsHash[:],
+		ZRChainBlockHeight:      height,
+		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
+		ETHUSDPrice:             oracleData.ETHUSDPrice,
+		AVSDelegationsHash:      avsDelegationsHash[:],
+		EthereumRedemptionsHash: ethereumRedemptionsHash[:],
 		// BtcBlockHeight:     bitcoinData.BlockHeight,
 		// BtcMerkleRoot:      bitcoinData.BlockHeader.MerkleRoot,
 		EthBlockHeight: oracleData.EthBlockHeight,
@@ -254,6 +260,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.updateAVSDelegationStore(ctx, oracleData)
 
+	k.handleRedemptions(ctx, oracleData)
+
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
 	k.createMintTransaction(ctx, oracleData)
@@ -410,6 +418,67 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 	}
 }
 
+func (k *Keeper) handleRedemptions(ctx sdk.Context, oracleData OracleData) {
+	pendingRedemptions, err := k.PendingRedemptions.Get(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending redemption transactions", "err", err)
+		return
+	}
+	if len(pendingRedemptions.Redemptions) == 0 {
+		k.Logger(ctx).Debug("no pending redemption transactions")
+		return
+	}
+
+	index := 0
+	for i, tx := range pendingRedemptions.Redemptions {
+		redemptionBz, err := json.Marshal(tx)
+		if err != nil {
+			k.Logger(ctx).Error("error marshalling redemption", "err", err)
+			continue
+		}
+
+		exists, err := k.CompletedRedemptions.Has(ctx, redemptionBz)
+		if err != nil {
+			k.Logger(ctx).Error("error checking redemption completion", "err", err)
+			continue
+		}
+		if exists {
+			continue
+		}
+
+		index = i
+		break
+	}
+
+	tx := pendingRedemptions.Redemptions[index]
+	_ = tx
+	// TODO: create transaction bytes and hash
+	unsignedRedemptionTx := []byte{}
+	unsignedRedemptionTxHash := []byte{}
+
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             "", // TODO: can this be left empty?
+			KeyId:               k.GetZenBTCWithdrawerKeyID(ctx),
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET, // TODO: change to mainnet before launch
+			UnsignedTransaction: unsignedRedemptionTx,
+			Metadata:            nil,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedRedemptionTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating redemption transaction", "err", err)
+		return
+	}
+
+	pendingRedemptions.Redemptions = pendingRedemptions.Redemptions[1:]
+	if err := k.PendingRedemptions.Set(ctx, pendingRedemptions); err != nil {
+		k.Logger(ctx).Error("error setting pending redemption transactions", "err", err)
+		return
+	}
+}
+
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	if oracleData.BtcBlockHeight != 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
 		// TODO(sasha): check if entry exists for this height, if it does, we need to add last 6 block heights to a slice and
@@ -535,9 +604,16 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if err != nil {
 		return fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
-
 	if !bytes.Equal(voteExt.AVSDelegationsHash, avsDelegationsHash[:]) {
 		return fmt.Errorf("AVS contract delegation state hash mismatch, expected %x, got %x", voteExt.AVSDelegationsHash, avsDelegationsHash)
+	}
+
+	ethereumRedemptionsHash, err := deriveEthereumRedemptionsHash(oracleData.EthereumRedemptions)
+	if err != nil {
+		return fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
+	}
+	if !bytes.Equal(voteExt.EthereumRedemptionsHash, ethereumRedemptionsHash[:]) {
+		return fmt.Errorf("ethereum redemptions hash mismatch, expected %x, got %x", voteExt.EthereumRedemptionsHash, ethereumRedemptionsHash)
 	}
 
 	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {

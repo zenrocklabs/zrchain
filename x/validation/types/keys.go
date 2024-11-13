@@ -25,10 +25,11 @@ var (
 	AVSRewardsPoolKey          = collections.NewPrefix(6)
 	ValidationInfosKey         = collections.NewPrefix(7)
 	BtcBlockHeadersKey         = collections.NewPrefix(8)
-	ConfirmedUnlockTxsKey      = collections.NewPrefix(9)
-	EthereumNonceRequestedKey  = collections.NewPrefix(10)
-	PendingMintTransactionsKey = collections.NewPrefix(11)
-	VoteExtensionRejectedKey   = collections.NewPrefix(12)
+	EthereumNonceRequestedKey  = collections.NewPrefix(9)
+	PendingMintTransactionsKey = collections.NewPrefix(10)
+	PendingRedemptionsKey      = collections.NewPrefix(11)
+	CompletedRedemptionsKey    = collections.NewPrefix(12)
+	VoteExtensionRejectedKey   = collections.NewPrefix(13)
 
 	AssetPricesIndex             = "asset_prices"
 	SlashEventsIndex             = "slash_events"
@@ -39,9 +40,10 @@ var (
 	AVSRewardsPoolIndex          = "avs_rewards_pool"
 	ValidationInfosIndex         = "validation_infos"
 	BtcBlockHeadersIndex         = "btc_block_headers"
-	ConfirmedUnlockTxsIndex      = "confirmed_unlock_txs"
 	EthereumNonceRequestedIndex  = "ethereum_nonce_requested"
 	PendingMintTransactionsIndex = "pending_mint_transactions"
+	PendingRedemptionsIndex      = "pending_redemption_transactions"
+	CompletedRedemptionsIndex    = "completed_redemptions"
 	VoteExtensionRejectedIndex   = "vote_extension_rejected"
 )
 

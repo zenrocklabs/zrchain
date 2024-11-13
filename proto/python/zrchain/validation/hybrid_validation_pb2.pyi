@@ -77,14 +77,16 @@ class HVParams(_message.Message):
     def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., ZenBTCParams: _Optional[_Union[ZenBTCParams, _Mapping]] = ...) -> None: ...
 
 class ZenBTCParams(_message.Message):
-    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID")
+    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID")
     ZENBTCETHCONTRACTADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCDEPOSITKEYRINGADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCMINTERKEYID_FIELD_NUMBER: _ClassVar[int]
+    ZENBTCWITHDRAWERKEYID_FIELD_NUMBER: _ClassVar[int]
     zenBTCEthContractAddr: str
     zenBTCDepositKeyringAddr: str
     zenBTCMinterKeyID: int
-    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ...) -> None: ...
+    zenBTCWithdrawerKeyID: int
+    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions")

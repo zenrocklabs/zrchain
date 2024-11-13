@@ -133,6 +133,7 @@ message ZenBTCParams {
   string zenBTCEthContractAddr = 1;
   string zenBTCDepositKeyringAddr = 2;
   uint64 zenBTCMinterKeyID = 3;
+  uint64 zenBTCWithdrawerKeyID = 4;
 }
 
 message ValidationInfo {

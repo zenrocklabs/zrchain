@@ -30,7 +30,7 @@ var (
 		ROCKUSDPrice:   0,
 	}
 	// BlocksBeforeFinality   = big.NewInt(72)
-	BlocksBeforeFinality = big.NewInt(0) // only use this for testing
+	BlocksBeforeFinality = big.NewInt(0) // TODO: uncomment above and remove this line before mainnet
 )
 
 type Oracle struct {

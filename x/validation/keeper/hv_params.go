@@ -14,6 +14,7 @@ var (
 	DefaultZenBTCEthContractAddr           = "0x0832c25DcDD7E353749F50136a191377D9bA562e"
 	DefaultZenBTCDepositKeyringAddr        = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCMinterKeyID        uint64 = 2
+	DefaultZenBTCWithdrawerKeyID    uint64 = 1
 )
 
 // NewParams creates a new Params instance
@@ -34,6 +35,7 @@ func DefaultHVParams() *types.HVParams {
 			ZenBTCEthContractAddr:    DefaultZenBTCEthContractAddr,
 			ZenBTCDepositKeyringAddr: DefaultZenBTCDepositKeyringAddr,
 			ZenBTCMinterKeyID:        DefaultZenBTCMinterKeyID,
+			ZenBTCWithdrawerKeyID:    DefaultZenBTCWithdrawerKeyID,
 		},
 	)
 }
@@ -76,4 +78,12 @@ func (k Keeper) GetZenBTCMinterKeyID(ctx context.Context) uint64 {
 		return DefaultZenBTCMinterKeyID
 	}
 	return params.ZenBTCParams.ZenBTCMinterKeyID
+}
+
+func (k Keeper) GetZenBTCWithdrawerKeyID(ctx context.Context) uint64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil {
+		return DefaultZenBTCWithdrawerKeyID
+	}
+	return params.ZenBTCParams.ZenBTCWithdrawerKeyID
 }
