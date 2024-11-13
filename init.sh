@@ -12,6 +12,7 @@ LOCALNET=""
 HOME_DIR="$HOME/.zrchain"
 ALTERNATE_HOME_DIR="$HOME/.zrchain_alt"
 VALIDATOR_HOME="$HOME/.zrchain"
+SIDECAR_ADDR=""
 MNEMONIC1="strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue"
 MNEMONIC2="fee buzz avocado dolphin syrup rule access cave close puppy lemon round able bronze fame give spoon company since fog error trip toast unable"
 
@@ -43,6 +44,10 @@ while [[ $# -gt 0 ]]; do
         --alternate-ports)
             ALTERNATE_PORTS="--alternate-ports"
             shift
+            ;;
+        --sidecar-addr)
+            SIDECAR_ADDR=$2
+            shift 2
             ;;
         *)
             echo "Unknown option: $1"
@@ -109,6 +114,14 @@ rm -rf $HOME_DIR
 set -e
 
 make install
+
+# Only make sidecar if not using --localnet 2 or --no-sidecar/--no-vote-extensions
+if [[ "$LOCALNET" != "2" && -z "$NO_SIDECAR" && -z "$NO_VOTE_EXTENSIONS" ]]; then
+    make sidecar
+fi
+
+rm -rf sidecar/neutrino/neutrino_*/*.bin
+rm -rf sidecar/neutrino/neutrino_*/*.db
 
 if [ "$NON_VALIDATOR" = false ]; then
     # Add keys for Alice and Bob using their mnemonics
@@ -237,13 +250,13 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "sig_req_fee": 2
       },
       {
-        "address": "keyring1k6vc6vhp6e6l3rxaard6fd",
+        "address": "keyring1w887ucurq2nmnj5mq5uaju6a",
         "admins": ["zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
         "creator": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
         "description": "TSS one",
         "is_active": true,
         "key_req_fee": 0,
-        "parties": ["zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn"],
+        "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts", "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
         "sig_req_fee": 0
       }
     ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
@@ -291,16 +304,13 @@ fi
 
 # Start the Oracle Sidecar only for the first validator node
 if [[ -z "$NO_SIDECAR" && "$NON_VALIDATOR" = false && ( "$LOCALNET" != "2" || -z "$LOCALNET" ) ]]; then
-    (cd ../avs/validator_sidecar && go run . > validator_sidecar.log 2>&1 &)
+    (cd sidecar && ./sidecar > sidecar.log 2>&1 &)
     echo -e "\nStarting Oracle Sidecar, sleeping for 25 seconds to allow Sidecar to start pulling data...\n"
     sleep 25
 fi
 
-# Start the node
-if [ "$NON_VALIDATOR" = true ]; then
-    zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
-    --minimum-gas-prices=0.0001urock --api.enable --api.enabled-unsafe-cors --non-validator
-else
-    zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
-    --minimum-gas-prices=0.0001urock --api.enable --api.enabled-unsafe-cors
-fi
+# Start the node with optional flags
+zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
+--minimum-gas-prices=0.0001urock --api.enable --api.enabled-unsafe-cors \
+${NON_VALIDATOR:+--non-validator} \
+${SIDECAR_ADDR:+--sidecar-addr "$SIDECAR_ADDR"}

@@ -3,15 +3,14 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policymodule "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasurymodule "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	"github.com/stretchr/testify/assert"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policymodule "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasurymodule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,24 +139,20 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			msgSer := keeper.NewMsgServerImpl(*tk)
 			got, err := msgSer.NewSignatureRequest(ctx, tt.args.msg)
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewSignatureRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !tt.wantErr {
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 				require.Equal(t, tt.want, got)
 
 				gotSigReq, err := tk.SignRequestStore.Get(ctx, got.SigReqId)
-				if err != nil {
-					t.Fatalf("GetSignRequest() got = %v", err)
-				}
-
+				require.NoError(t, err)
 				require.Equal(t, tt.wantSignRequest, &gotSigReq)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-				assert.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
+				require.Equal(t, tt.args.key.SignPolicyId, act.PolicyId)
 			}
 		})
 	}

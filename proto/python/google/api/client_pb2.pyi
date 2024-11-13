@@ -46,12 +46,14 @@ API_VERSION_FIELD_NUMBER: _ClassVar[int]
 api_version: _descriptor.FieldDescriptor
 
 class CommonLanguageSettings(_message.Message):
-    __slots__ = ("reference_docs_uri", "destinations")
+    __slots__ = ("reference_docs_uri", "destinations", "selective_gapic_generation")
     REFERENCE_DOCS_URI_FIELD_NUMBER: _ClassVar[int]
     DESTINATIONS_FIELD_NUMBER: _ClassVar[int]
+    SELECTIVE_GAPIC_GENERATION_FIELD_NUMBER: _ClassVar[int]
     reference_docs_uri: str
     destinations: _containers.RepeatedScalarFieldContainer[ClientLibraryDestination]
-    def __init__(self, reference_docs_uri: _Optional[str] = ..., destinations: _Optional[_Iterable[_Union[ClientLibraryDestination, str]]] = ...) -> None: ...
+    selective_gapic_generation: SelectiveGapicGeneration
+    def __init__(self, reference_docs_uri: _Optional[str] = ..., destinations: _Optional[_Iterable[_Union[ClientLibraryDestination, str]]] = ..., selective_gapic_generation: _Optional[_Union[SelectiveGapicGeneration, _Mapping]] = ...) -> None: ...
 
 class ClientLibrarySettings(_message.Message):
     __slots__ = ("version", "launch_stage", "rest_numeric_enums", "java_settings", "cpp_settings", "php_settings", "python_settings", "node_settings", "dotnet_settings", "ruby_settings", "go_settings")
@@ -215,3 +217,9 @@ class MethodSettings(_message.Message):
     long_running: MethodSettings.LongRunning
     auto_populated_fields: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, selector: _Optional[str] = ..., long_running: _Optional[_Union[MethodSettings.LongRunning, _Mapping]] = ..., auto_populated_fields: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class SelectiveGapicGeneration(_message.Message):
+    __slots__ = ("methods",)
+    METHODS_FIELD_NUMBER: _ClassVar[int]
+    methods: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, methods: _Optional[_Iterable[str]] = ...) -> None: ...

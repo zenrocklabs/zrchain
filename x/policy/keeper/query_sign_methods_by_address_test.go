@@ -4,11 +4,10 @@ import (
 	"encoding/base64"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,9 +21,7 @@ func Test_SignMethodsByAddress(t *testing.T) {
 		ClientDataJson:    valid_clientdata,
 	}
 	valid_config, err := codectypes.NewAnyWithValue(valid_sign_method)
-	if err != nil {
-		t.Fatalf("error encoding valid config, err %v", err)
-	}
+	require.NoError(t, err)
 
 	keepers := keepertest.NewTest(t)
 	ctx := keepers.Ctx.WithTxBytes(valid_tx_bytes)
@@ -35,20 +32,20 @@ func Test_SignMethodsByAddress(t *testing.T) {
 		Creator: "owner1",
 		Config:  valid_config,
 	})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	_, err = msgSer.AddSignMethod(ctx, &types.MsgAddSignMethod{
 		Creator: "owner2",
 		Config:  valid_config,
 	})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	res, err := pk.SignMethodsByAddress(ctx, &types.QuerySignMethodsByAddressRequest{
 		Address: "owner2",
 	})
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.NotNil(t, res.Config)
-	assert.Len(t, res.Config, 1)
+	require.Len(t, res.Config, 1)
 }

@@ -19,7 +19,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 type msgServer struct {

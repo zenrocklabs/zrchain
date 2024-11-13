@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 // Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper

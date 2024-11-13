@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 // Slash a validator for an infraction committed at a known height

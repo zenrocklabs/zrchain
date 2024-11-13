@@ -22,9 +22,7 @@ type SidecarServiceClient interface {
 	GetSidecarStateByEthHeight(ctx context.Context, in *SidecarStateByEthHeightRequest, opts ...grpc.CallOption) (*SidecarStateResponse, error)
 	GetBitcoinBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
-	GetEthereumTransaction(ctx context.Context, in *EthereumTransactionRequest, opts ...grpc.CallOption) (*EthereumTransactionResponse, error)
-	GetSolanaTransaction(ctx context.Context, in *SolanaTransactionRequest, opts ...grpc.CallOption) (*SolanaTransactionResponse, error)
-	GetEthereumNonceAtHeight(ctx context.Context, in *EthereumNonceAtHeightRequest, opts ...grpc.CallOption) (*EthereumNonceAtHeightResponse, error)
+	GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error)
 }
 
 type sidecarServiceClient struct {
@@ -71,27 +69,9 @@ func (c *sidecarServiceClient) GetLatestBitcoinBlockHeader(ctx context.Context, 
 	return out, nil
 }
 
-func (c *sidecarServiceClient) GetEthereumTransaction(ctx context.Context, in *EthereumTransactionRequest, opts ...grpc.CallOption) (*EthereumTransactionResponse, error) {
-	out := new(EthereumTransactionResponse)
-	err := c.cc.Invoke(ctx, "/api.SidecarService/GetEthereumTransaction", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sidecarServiceClient) GetSolanaTransaction(ctx context.Context, in *SolanaTransactionRequest, opts ...grpc.CallOption) (*SolanaTransactionResponse, error) {
-	out := new(SolanaTransactionResponse)
-	err := c.cc.Invoke(ctx, "/api.SidecarService/GetSolanaTransaction", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sidecarServiceClient) GetEthereumNonceAtHeight(ctx context.Context, in *EthereumNonceAtHeightRequest, opts ...grpc.CallOption) (*EthereumNonceAtHeightResponse, error) {
-	out := new(EthereumNonceAtHeightResponse)
-	err := c.cc.Invoke(ctx, "/api.SidecarService/GetEthereumNonceAtHeight", in, out, opts...)
+func (c *sidecarServiceClient) GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error) {
+	out := new(LatestEthereumNonceForAccountResponse)
+	err := c.cc.Invoke(ctx, "/api.SidecarService/GetLatestEthereumNonceForAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +86,7 @@ type SidecarServiceServer interface {
 	GetSidecarStateByEthHeight(context.Context, *SidecarStateByEthHeightRequest) (*SidecarStateResponse, error)
 	GetBitcoinBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error)
-	GetEthereumTransaction(context.Context, *EthereumTransactionRequest) (*EthereumTransactionResponse, error)
-	GetSolanaTransaction(context.Context, *SolanaTransactionRequest) (*SolanaTransactionResponse, error)
-	GetEthereumNonceAtHeight(context.Context, *EthereumNonceAtHeightRequest) (*EthereumNonceAtHeightResponse, error)
+	GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error)
 	mustEmbedUnimplementedSidecarServiceServer()
 }
 
@@ -128,14 +106,8 @@ func (UnimplementedSidecarServiceServer) GetBitcoinBlockHeaderByHeight(context.C
 func (UnimplementedSidecarServiceServer) GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestBitcoinBlockHeader not implemented")
 }
-func (UnimplementedSidecarServiceServer) GetEthereumTransaction(context.Context, *EthereumTransactionRequest) (*EthereumTransactionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEthereumTransaction not implemented")
-}
-func (UnimplementedSidecarServiceServer) GetSolanaTransaction(context.Context, *SolanaTransactionRequest) (*SolanaTransactionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSolanaTransaction not implemented")
-}
-func (UnimplementedSidecarServiceServer) GetEthereumNonceAtHeight(context.Context, *EthereumNonceAtHeightRequest) (*EthereumNonceAtHeightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEthereumNonceAtHeight not implemented")
+func (UnimplementedSidecarServiceServer) GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLatestEthereumNonceForAccount not implemented")
 }
 func (UnimplementedSidecarServiceServer) mustEmbedUnimplementedSidecarServiceServer() {}
 
@@ -222,56 +194,20 @@ func _SidecarService_GetLatestBitcoinBlockHeader_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SidecarService_GetEthereumTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EthereumTransactionRequest)
+func _SidecarService_GetLatestEthereumNonceForAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LatestEthereumNonceForAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SidecarServiceServer).GetEthereumTransaction(ctx, in)
+		return srv.(SidecarServiceServer).GetLatestEthereumNonceForAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.SidecarService/GetEthereumTransaction",
+		FullMethod: "/api.SidecarService/GetLatestEthereumNonceForAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SidecarServiceServer).GetEthereumTransaction(ctx, req.(*EthereumTransactionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SidecarService_GetSolanaTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SolanaTransactionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SidecarServiceServer).GetSolanaTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.SidecarService/GetSolanaTransaction",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SidecarServiceServer).GetSolanaTransaction(ctx, req.(*SolanaTransactionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SidecarService_GetEthereumNonceAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EthereumNonceAtHeightRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SidecarServiceServer).GetEthereumNonceAtHeight(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.SidecarService/GetEthereumNonceAtHeight",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SidecarServiceServer).GetEthereumNonceAtHeight(ctx, req.(*EthereumNonceAtHeightRequest))
+		return srv.(SidecarServiceServer).GetLatestEthereumNonceForAccount(ctx, req.(*LatestEthereumNonceForAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -300,16 +236,8 @@ var SidecarService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SidecarService_GetLatestBitcoinBlockHeader_Handler,
 		},
 		{
-			MethodName: "GetEthereumTransaction",
-			Handler:    _SidecarService_GetEthereumTransaction_Handler,
-		},
-		{
-			MethodName: "GetSolanaTransaction",
-			Handler:    _SidecarService_GetSolanaTransaction_Handler,
-		},
-		{
-			MethodName: "GetEthereumNonceAtHeight",
-			Handler:    _SidecarService_GetEthereumNonceAtHeight_Handler,
+			MethodName: "GetLatestEthereumNonceForAccount",
+			Handler:    _SidecarService_GetLatestEthereumNonceForAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,34 +1,32 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/stretchr/testify/require"
 
-	_ "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policyModule "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	_ "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policyModule "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 func Test_msgServer_NewPolicy(t *testing.T) {
 	policy, err := codectypes.NewAnyWithValue(&types.BoolparserPolicy{
-		Definition: "u1 + u2 > 1",
+		Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 		Participants: []*types.PolicyParticipant{
 			{
-				Abbreviation: "u1",
-				Address:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 			},
 			{
-				Abbreviation: "u2",
-				Address:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 			},
 		},
 	})
 	//invalidPolicy, err := codectypes.NewAnyWithValue(&types.BoolparserPolicy{
-	//	Definition: "u1 + u2 > 1",
+	//	Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 	//})
 	if err != nil {
 		t.Fatal(err)
@@ -121,22 +119,12 @@ func Test_msgServer_NewPolicy(t *testing.T) {
 			policyModule.InitGenesis(keepers.Ctx, *pk, plGenesis)
 
 			got, err := msgSer.NewPolicy(keepers.Ctx, tt.msg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewPolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewPolicy() got = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
+			require.Equal(t, tt.want, got)
 
 			gotPolicy, err := pk.PolicyById(keepers.Ctx, &types.QueryPolicyByIdRequest{Id: got.Id})
-			if err != nil {
-				t.Errorf("PolicyById() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(gotPolicy, tt.wantPolicy) {
-				t.Errorf("NewPolicy() got = %v, want %v", gotPolicy, tt.wantPolicy)
-				return
-			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantPolicy, gotPolicy)
 		})
 	}
 }

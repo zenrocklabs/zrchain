@@ -8,8 +8,8 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 // WriteValidators returns a slice of bonded genesis validators.

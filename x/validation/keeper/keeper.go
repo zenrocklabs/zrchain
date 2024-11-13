@@ -15,11 +15,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/app/params"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 type Keeper struct {
@@ -54,16 +54,14 @@ type Keeper struct {
 	ValidationInfos collections.Map[int64, types.ValidationInfo]
 	// BitcoinMerkleRoots - key: block height | value: merkle root of Bitcoin block
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
-	// UnconfirmedUnlockTxs - key: chain + tx hash | value: withdrawal metadata
-	UnconfirmedUnlockTxs collections.Map[collections.Pair[string, string], types.WithdrawalInfo]
 	// ConfirmedUnlockTxs - key: chain + tx hash | value: withdrawal metadata
 	ConfirmedUnlockTxs collections.Map[collections.Pair[string, string], types.WithdrawalInfo]
-	// RequestedEthereumNonceHeights - key: block height
-	RequestedEthereumNonceHeights collections.KeySet[uint64]
-	// RequestedEthereumNonces - key: block height | value: nonce
-	RequestedEthereumNonces collections.Map[uint64, uint64]
+	// EthereumNonceRequested - key: bool (is requested)
+	EthereumNonceRequested collections.Item[bool]
 	// PendingMintTransactions - key: pending zenBTC mint transaction
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
+	// VoteExtensionRejected - key: bool (is rejected)
+	VoteExtensionRejected collections.Item[bool]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -114,23 +112,23 @@ func NewKeeper(
 		txDecoder:             txDecoder,
 		zrConfig:              zrConfig,
 		sidecarClient:         oracleClient,
+		treasuryKeeper:        treasuryKeeper,
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 
-		AVSDelegations:                collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
-		ValidatorDelegations:          collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
-		AVSRewardsPool:                collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
-		AssetPrices:                   collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, collections.StringKey, codec.CollValue[types.AssetPrice](cdc)),
-		SlashEvents:                   collections.NewMap(sb, types.SlashEventsKey, types.SlashEventsIndex, collections.Uint64Key, codec.CollValue[types.SlashEvent](cdc)),
-		SlashEventCount:               collections.NewItem(sb, types.SlashEventCountKey, types.SlashEventCountIndex, collections.Uint64Value),
-		HVParams:                      collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
-		ValidationInfos:               collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
-		BtcBlockHeaders:               collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
-		UnconfirmedUnlockTxs:          collections.NewMap(sb, types.UnconfirmedSolanaUnlockTxsKey, types.UnconfirmedSolanaUnlockTxsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.WithdrawalInfo](cdc)),
-		ConfirmedUnlockTxs:            collections.NewMap(sb, types.ConfirmedSolanaUnlockTxsKey, types.ConfirmedSolanaUnlockTxsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.WithdrawalInfo](cdc)),
-		RequestedEthereumNonceHeights: collections.NewKeySet(sb, types.RequestedEthereumNonceHeightsKey, types.RequestedEthereumNonceHeightsIndex, collections.Uint64Key),
-		RequestedEthereumNonces:       collections.NewMap(sb, types.RequestedEthereumNoncesKey, types.RequestedEthereumNoncesIndex, collections.Uint64Key, collections.Uint64Value),
-		PendingMintTransactions:       collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
+		AVSDelegations:          collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
+		ValidatorDelegations:    collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
+		AVSRewardsPool:          collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
+		AssetPrices:             collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, collections.StringKey, codec.CollValue[types.AssetPrice](cdc)),
+		SlashEvents:             collections.NewMap(sb, types.SlashEventsKey, types.SlashEventsIndex, collections.Uint64Key, codec.CollValue[types.SlashEvent](cdc)),
+		SlashEventCount:         collections.NewItem(sb, types.SlashEventCountKey, types.SlashEventCountIndex, collections.Uint64Value),
+		HVParams:                collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
+		ValidationInfos:         collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
+		BtcBlockHeaders:         collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
+		ConfirmedUnlockTxs:      collections.NewMap(sb, types.ConfirmedUnlockTxsKey, types.ConfirmedUnlockTxsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.WithdrawalInfo](cdc)),
+		EthereumNonceRequested:  collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
+		PendingMintTransactions: collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
+		VoteExtensionRejected:   collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
 	}
 }
 

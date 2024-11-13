@@ -1,17 +1,15 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	pol "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,15 +20,13 @@ var defaultWsWithOwners = types.Workspace{
 }
 
 var policy, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 + u2 > 1",
+	Definition: "testOwner + testOwner2 > 1",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner",
+			Address: "testOwner",
 		},
 		{
-			Abbreviation: "u2",
-			Address:      "testOwner2",
+			Address: "testOwner2",
 		},
 	},
 })
@@ -162,27 +158,18 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 			pol.InitGenesis(ctx, *pk, polGenesis)
 
 			got, err := msgSer.UpdateWorkspace(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("UpdateWorkspace() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("UpdateWorkspace() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got)
 
 				gotWorkspace, err := ik.WorkspaceStore.Get(ctx, tt.args.workspace.Address)
 				require.NoError(t, err)
-
-				if !reflect.DeepEqual(&gotWorkspace, tt.wantWorkspace) {
-					t.Fatalf("UpdateWorkspace() got = %v, want %v", gotWorkspace, tt.wantWorkspace)
-				}
+				require.Equal(t, tt.wantWorkspace, &gotWorkspace)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-			} else {
-				require.NotNil(t, err)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
 			}
 		})
 	}

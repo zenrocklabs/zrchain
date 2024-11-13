@@ -3,10 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_Keyrings(t *testing.T) {
@@ -48,19 +49,18 @@ func TestKeeper_Keyrings(t *testing.T) {
 			identity.InitGenesis(ctx, *ik, genesis)
 
 			for i := 0; i < tt.args.keyringCount; i++ {
-				if _, err := msgSer.NewKeyring(ctx, tt.args.msgKeyring); err != nil {
-					t.Fatal(err)
-				}
+				_, err := msgSer.NewKeyring(ctx, tt.args.msgKeyring)
+				require.NoError(t, err)
 			}
+
 			got, err := ik.Keyrings(ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Keyrings() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if len(got.Keyrings) != tt.want {
-				t.Errorf("Keyrings() got = %v, want %v", got, tt.want)
-				return
-			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, len(got.Keyrings))
 		})
 	}
 }

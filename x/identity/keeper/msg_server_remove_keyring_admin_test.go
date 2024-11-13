@@ -1,13 +1,12 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -129,21 +128,14 @@ func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
 			identity.InitGenesis(ctx, *ik, genesis)
 
 			got, err := msgSer.RemoveKeyringAdmin(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("RemoveKeyringParty() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("RemoveKeyringParty() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got)
 
 				gotKeyring, err := ik.KeyringStore.Get(ctx, tt.args.keyring.Address)
 				require.NoError(t, err)
-
-				if !reflect.DeepEqual(&gotKeyring, tt.wantKeyring) {
-					t.Errorf("RemoveKeyringParty() got = %v, want = %v", gotKeyring, tt.wantKeyring)
-				}
+				require.Equal(t, tt.wantKeyring, &gotKeyring)
 			}
 		})
 	}

@@ -3,17 +3,16 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/assert"
 
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	idtypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policymodule "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	treasurymodule "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policymodule "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	treasurymodule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 )
 
 func Test_msgServer_UpdateKeyPolicy(t *testing.T) {
@@ -95,20 +94,20 @@ func Test_msgServer_UpdateKeyPolicy(t *testing.T) {
 				SignPolicyId: 2,
 			})
 
-			if !tt.wantErr {
-				require.Nil(t, err)
-				// action needs to be approved using the existing policy id
-				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1), act.PolicyId)
-
-				// after update the key needs to have the new policy id
-				key, err := tk.KeyStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(2), key.SignPolicyId)
-			} else {
-				require.NotNil(t, err)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
 			}
+
+			require.NoError(t, err)
+
+			act, err := pk.ActionStore.Get(ctx, 1)
+			require.NoError(t, err)
+			require.Equal(t, uint64(1), act.PolicyId)
+
+			key, err := tk.KeyStore.Get(ctx, 1)
+			require.NoError(t, err)
+			require.Equal(t, uint64(2), key.SignPolicyId)
 		})
 	}
 }

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v4/app/params"
-	shared "github.com/Zenrock-Foundation/zrchain/v4/shared"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"cosmossdk.io/collections"
@@ -28,9 +28,9 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 type Keeper struct {
@@ -314,30 +314,10 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 }
 
 func (k *Keeper) signatureRequest(ctx sdk.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
+	dataForSigning, err := dataForSigning(msg.DataForSigning)
 	if err != nil {
-		return nil, fmt.Errorf("key %v not found", msg.KeyId)
+		return nil, err
 	}
-
-	if _, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr); err != nil {
-		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
-	}
-
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
-	if err != nil {
-		return nil, fmt.Errorf("keyring %s not found", key.KeyringAddr)
-	}
-
-	var dataForSigning [][]byte
-	payload := strings.Split(msg.DataForSigning, ",")
-	for _, p := range payload {
-		data, err := hex.DecodeString(p)
-		if err != nil {
-			return nil, err
-		}
-		dataForSigning = append(dataForSigning, data)
-	}
-
 	verified, err := VerifyDataForSigning(dataForSigning, msg.VerifySigningData, msg.VerifySigningDataVersion)
 	if verified == types.Verification_Failed {
 		return nil, fmt.Errorf("transaction & hash verfication transaction did not verify")
@@ -346,24 +326,48 @@ func (k *Keeper) signatureRequest(ctx sdk.Context, msg *types.MsgNewSignatureReq
 		return nil, fmt.Errorf("error whilst verifying transaction & hashes %s", err.Error())
 	}
 
-	if keyring.SigReqFee > 0 {
-		err := k.SplitKeyringFee(ctx, msg.Creator, keyring.Address, keyring.SigReqFee)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	parentReq := &types.SignRequest{
+	id, err := k.processSignatureRequests(ctx, dataForSigning, &types.SignRequest{
 		Creator:        msg.Creator,
 		KeyId:          msg.KeyId,
-		KeyType:        key.Type,
 		DataForSigning: dataForSigning,
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		CacheId:        msg.CacheId,
-	}
-	parentID, err := k.CreateSignRequest(ctx, parentReq)
+	})
 	if err != nil {
-		return nil, err
+		return nil, errorsmod.Wrap(err, "processSignatureRequests")
+	}
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventNewSignRequest,
+			sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(id, 10)),
+		),
+	})
+
+	return &types.MsgNewSignatureRequestResponse{SigReqId: id}, nil
+}
+
+func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, req *types.SignRequest) (uint64, error) {
+	key, err := k.KeyStore.Get(ctx, req.KeyId)
+	if err != nil {
+		return 0, fmt.Errorf("key %v not found", req.KeyId)
+	}
+	req.KeyType = key.Type
+
+	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	if err != nil {
+		return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
+	}
+
+	if keyring.SigReqFee > 0 {
+		err := k.SplitKeyringFee(ctx, req.Creator, keyring.Address, keyring.SigReqFee)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	parentID, err := k.CreateSignRequest(ctx, req)
+	if err != nil {
+		return 0, err
 	}
 
 	var childIDs []uint64
@@ -374,71 +378,45 @@ func (k *Keeper) signatureRequest(ctx sdk.Context, msg *types.MsgNewSignatureReq
 		}
 
 		req := &types.SignRequest{
-			Creator:        msg.Creator,
-			KeyId:          msg.KeyId,
+			Creator:        req.Creator,
+			KeyId:          req.KeyId,
 			KeyType:        key.Type,
 			DataForSigning: [][]byte{data},
 			Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 			ParentReqId:    parentID,
+			CacheId:        req.CacheId,
 		}
 
 		id, err := k.CreateSignRequest(ctx, req)
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
 		childIDs = append(childIDs, id)
 	}
 
-	parentReq.ChildReqIds = childIDs
-	k.SignRequestStore.Set(ctx, parentID, *parentReq)
+	req.ChildReqIds = childIDs
+	k.SignRequestStore.Set(ctx, parentID, *req)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventNewSignRequest,
-			sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(parentID, 10)),
-		),
-	})
-
-	return &types.MsgNewSignatureRequestResponse{SigReqId: parentID}, nil
+	return parentID, nil
 }
 
 func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNewSignTransactionRequest, data []byte) (*types.MsgNewSignTransactionRequestResponse, error) {
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
-	if err != nil {
-		return nil, fmt.Errorf("key not found")
-	}
-
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
-	if err != nil {
-		return nil, fmt.Errorf("keyring not found")
-	}
-
-	if keyring.SigReqFee > 0 {
-		err := k.SplitKeyringFee(ctx, msg.Creator, keyring.Address, keyring.SigReqFee)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// generate signature request
-	signatureRequest := &types.SignRequest{
-		Creator:        msg.Creator,
-		KeyId:          msg.KeyId,
-		KeyType:        key.Type,
-		DataForSigning: [][]byte{data},
-		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
-		Metadata:       msg.Metadata,
-		CacheId:        msg.CacheId,
-	}
-
-	signRequestID, err := k.CreateSignRequest(ctx, signatureRequest)
+	dataForSigning, err := dataForSigning(string(data))
 	if err != nil {
 		return nil, err
 	}
+	id, err := k.processSignatureRequests(ctx, dataForSigning, &types.SignRequest{
+		Creator:        msg.Creator,
+		KeyId:          msg.KeyId,
+		DataForSigning: dataForSigning,
+		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
+		Metadata:       msg.Metadata,
+		CacheId:        msg.CacheId,
+	})
 
-	id, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
+	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
 		Creator:             msg.Creator,
-		SignRequestId:       signRequestID,
+		SignRequestId:       id,
 		KeyId:               msg.KeyId,
 		WalletType:          msg.WalletType,
 		UnsignedTransaction: msg.UnsignedTransaction,
@@ -451,11 +429,23 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventNewSignRequest,
-			sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(id, 10)),
+			sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(tID, 10)),
 		),
 	})
+	return &types.MsgNewSignTransactionRequestResponse{Id: id, SignatureRequestId: id}, nil
+}
 
-	return &types.MsgNewSignTransactionRequestResponse{Id: id, SignatureRequestId: signRequestID}, nil
+func dataForSigning(data string) ([][]byte, error) {
+	var dataForSigning [][]byte
+	payload := strings.Split(data, ",")
+	for _, p := range payload {
+		data, err := hex.DecodeString(p)
+		if err != nil {
+			return nil, err
+		}
+		dataForSigning = append(dataForSigning, data)
+	}
+	return dataForSigning, nil
 }
 
 func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint64) error {

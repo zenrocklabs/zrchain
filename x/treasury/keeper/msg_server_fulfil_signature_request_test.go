@@ -1,17 +1,16 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 var defaultKr = idTypes.Keyring{
@@ -527,20 +526,14 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, trGenesis)
 
 			got, err := msgSer.FulfilSignatureRequest(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("FulfilSignatureRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Fatalf("FulfilSignatureRequest() got = %v, want %v", got, tt.want)
-				}
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 
 				gotSigReq, err := tk.SignRequestStore.Get(ctx, tt.args.msg.RequestId)
-				if err != nil {
-					t.Fatalf("GetSignRequest() got = %v", err)
-				}
-
+				require.NoError(t, err)
 				require.Equal(t, tt.wantSigReq, &gotSigReq)
 			}
 		})

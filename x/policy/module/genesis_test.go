@@ -3,10 +3,10 @@ package policy_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/testutil/nullify"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/testutil/nullify"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/stretchr/testify/require"
 )
 

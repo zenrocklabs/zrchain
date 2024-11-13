@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 )
 
 func TestMsgUpdateParams(t *testing.T) {

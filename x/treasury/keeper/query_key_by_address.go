@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,13 +41,14 @@ func (k Keeper) KeyByAddress(goCtx context.Context, req *types.QueryKeyByAddress
 		if req.Address == wallet.Address() {
 			return &types.QueryKeyByAddressResponse{Response: &types.KeyAndWalletResponse{
 				Key: &types.KeyResponse{
-					Id:            key.Id,
-					WorkspaceAddr: key.WorkspaceAddr,
-					KeyringAddr:   key.KeyringAddr,
-					Type:          key.Type.String(),
-					PublicKey:     key.PublicKey,
-					Index:         key.Index,
-					SignPolicyId:  key.SignPolicyId,
+					Id:             key.Id,
+					WorkspaceAddr:  key.WorkspaceAddr,
+					KeyringAddr:    key.KeyringAddr,
+					Type:           key.Type.String(),
+					PublicKey:      key.PublicKey,
+					Index:          key.Index,
+					SignPolicyId:   key.SignPolicyId,
+					ZenbtcMetadata: key.ZenbtcMetadata,
 				},
 				Wallets: processWallets(key, req.WalletType, req.Prefixes),
 			}}, nil

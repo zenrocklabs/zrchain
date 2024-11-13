@@ -3,5 +3,10 @@
   "description": "The Zenrock blockchain node client",
   "version": "1.21.4",
   "author": "Zenrock Laboratories",
-  "license": "Apache2"
+  "license": "Apache2",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^23.0.6"
+  }
 }

@@ -3,8 +3,8 @@ package identity
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

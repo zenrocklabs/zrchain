@@ -12,7 +12,7 @@ import "zrchain/treasury/mpcsign.proto";
 import "zrchain/treasury/params.proto";
 import "zrchain/treasury/wallet.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -57,7 +57,7 @@ service Msg {
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/MsgUpdateParams";
+  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/MsgUpdateParams";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -88,7 +88,7 @@ message MsgNewKeyRequest {
   string ext_requester = 7;
   uint64 ext_key_type = 8;
   uint64 sign_policy_id = 9;
-  ZenBTCMetdata zenbtc_metadata = 10; // Optional
+  ZenBTCMetadata zenbtc_metadata = 10; // Optional
 }
 
 // MsgNewKeyRequestResponse defines the response structure for executing a

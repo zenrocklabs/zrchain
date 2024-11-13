@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 func (k Keeper) CreateSignTransactionRequest(ctx sdk.Context, signTransactionRequest *types.SignTransactionRequest) (uint64, error) {

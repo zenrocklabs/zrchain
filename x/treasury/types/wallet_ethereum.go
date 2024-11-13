@@ -3,12 +3,13 @@ package types
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 
-	shared "github.com/Zenrock-Foundation/zrchain/v4/shared"
-	"github.com/ethereum/go-ethereum"
+	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -55,7 +56,7 @@ func (*EthereumWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
 		To:             tx.To.Bytes(),
 		Amount:         tx.Amount,
 		CoinIdentifier: coinIdentifier,
-		DataForSigning: tx.DataForSigning,
+		DataForSigning: []byte(hex.EncodeToString(tx.DataForSigning)),
 	}, nil
 }
 

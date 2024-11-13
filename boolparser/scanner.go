@@ -31,6 +31,14 @@ func (s *Scanner) Unread() {
 func (s *Scanner) Scan() Token {
 	ch := s.Read()
 
+	if ch == 'p' || ch == 'P' {
+		s.Unread()
+		if token := s.ScanPasskey(); token.Type != ERROR {
+			return token
+		}
+		s.Unread() // Reset position if it wasn't a valid passkey
+	}
+
 	if unicode.IsDigit(ch) {
 		s.Unread()
 		return s.ScanNumber()
@@ -136,6 +144,34 @@ func (s *Scanner) ScanWhitespace() Token {
 	}
 
 	return Token{WHITESPACE, buf.String()}
+}
+
+func (s *Scanner) ScanPasskey() Token {
+	var buf bytes.Buffer
+
+	// Read "passkey{"
+	expected := "passkey{"
+	for _, expectedCh := range expected {
+		ch := s.Read()
+		if unicode.ToLower(ch) != unicode.ToLower(expectedCh) {
+			return Token{ERROR, string(ch)}
+		}
+		buf.WriteRune(ch)
+	}
+
+	// Read until closing }
+	for {
+		ch := s.Read()
+		if ch == eof {
+			return Token{ERROR, buf.String()}
+		}
+		buf.WriteRune(ch)
+		if ch == '}' {
+			break
+		}
+	}
+
+	return Token{PASSKEY, buf.String()}
 }
 
 func IsOperator(r rune) bool {

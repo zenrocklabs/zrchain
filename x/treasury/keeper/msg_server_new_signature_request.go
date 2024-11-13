@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	pol "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -24,21 +24,18 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	}
 
 	payload := strings.Split(msg.DataForSigning, ",")
-	// FIXME: the length check assumes a 32 byte (hash) payload for signing. In Solana, the payload is the
-	// serialized transaction bytes, not the hash - so this will need to be amended to allow Solana transaction
-	// signatures. Consider removing the length check altogether.
 	if len(payload) == 1 && len(payload[0]) != 64 {
 		return nil, fmt.Errorf("data for signing should be a have a hex-encoded length of 64, not: %d", len(payload[0]))
 	}
 
-	signPolicyId := key.SignPolicyId
+	signPolicyID := key.SignPolicyId
 
-	if signPolicyId == 0 {
+	if signPolicyID == 0 {
 		ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
 		if err != nil {
-			return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
+			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, err)
 		}
-		signPolicyId = ws.SignPolicyId
+		signPolicyID = ws.SignPolicyId
 	}
 
 	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
@@ -46,7 +43,7 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil)
 	if err != nil {
 		return nil, err
 	}

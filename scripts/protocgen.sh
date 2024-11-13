@@ -39,6 +39,6 @@ chown -R 1000:1000 proto/python
 chown -R 1000:1000 github.com/zenrocklabs
 
 # move proto files to the right places
-cp -ar github.com/Zenrock-Foundation/zrchain/v4/* ./
+cp -ar github.com/Zenrock-Foundation/zrchain/v5/* ./
 rm -rf ./github.com
 

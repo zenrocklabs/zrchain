@@ -1,26 +1,24 @@
 package keeper_test
 
 import (
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 var boolPol1, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 > 0",
+	Definition: "testOwner > 0",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner",
+			Address: "testOwner",
 		},
 	},
 })
 
 var boolPol2, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "u1 > 0",
+	Definition: "testOwner2 > 0",
 	Participants: []*policytypes.PolicyParticipant{
 		{
-			Abbreviation: "u1",
-			Address:      "testOwner2",
+			Address: "testOwner2",
 		},
 	},
 })

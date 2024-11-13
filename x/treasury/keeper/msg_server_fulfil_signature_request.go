@@ -14,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgFulfilSignatureRequest) (*types.MsgFulfilSignatureRequestResponse, error) {
@@ -161,7 +161,7 @@ func (k msgServer) verifySignature(ctx sdk.Context, req *types.SignRequest, key 
 			v, err := k.calculateV(sigData, key.PublicKey, req.DataForSigning[0])
 			if err != nil {
 				ctx.Logger().Warn(err.Error())
-			} else if !ignoreThisSignature(sigData, ctx) { // FIXME temporary fix, remove when gardia is reset
+			} else {
 				sigData[64] = v
 			}
 		}

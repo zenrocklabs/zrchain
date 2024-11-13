@@ -14,7 +14,11 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "CHANGELOG.md", "label": "CHANGELOG" }
+          { "path": "CHANGELOG.md", "label": "CHANGELOG" },
+          { "path": "zenrockd", "label": "zenrockd" },
+          { "path": "zenrockd.zip", "label": "zenrockd.zip" },
+          { "path": "validator_sidecar", "label": "validator_sidecar" },
+          { "path": "validator_sidecar.zip", "label": "validator_sidecar.zip" }
         ],
         "successComment": false,
         "failComment": false

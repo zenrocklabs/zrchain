@@ -4,7 +4,7 @@
 # docker run -e DOCKER_ENV=true -p 8080:8080 zenrockd:0.0.1
 
 # Use a  golang alpine as the base image
-FROM public.ecr.aws/docker/library/golang:1.23.0-alpine3.20 AS go_builder
+FROM public.ecr.aws/docker/library/golang:1.23.2-alpine3.20 AS go_builder
 RUN apk update
 RUN apk add make cmake git alpine-sdk linux-headers
 
@@ -14,7 +14,6 @@ ARG ARCH=x86_64
 ARG BUILD_DATE
 ARG GIT_SHA
 ARG VERSION
-
 # Set env variables
 ENV arch=$ARCH
 ENV build_date=$BUILD_DATE
@@ -25,17 +24,16 @@ RUN echo "building service: ${service_name}, version: ${version}, build date: ${
 
 
 # Add libwasmvm for musl
-ENV WASMVM_VERSION=v2.1.2
+ENV WASMVM_VERSION=v2.1.3
 ADD https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
 ADD https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
-RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 0881c5b463e89e229b06370e9e2961aec0a5c636772d5142c68d351564464a66
-RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 58e1f6bfa89ee390cb9abc69a5bc126029a497fe09dd399f38a82d0d86fe95ef
+RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep faea4e15390e046d2ca8441c21a88dba56f9a0363f92c5d94015df0ac6da1f2d
+RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 8dab08434a5fe57a6fbbcb8041794bc3c31846d31f8ff5fb353ee74e0fcd3093
 
 RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
 
 # Set the working directory
-COPY zrchain /zrchain
-COPY avs /avs
+COPY . /zrchain
 WORKDIR /zrchain
 ENV BUILD_TAGS=muslc LINK_STATICALLY=true
 

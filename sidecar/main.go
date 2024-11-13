@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -16,7 +17,15 @@ import (
 )
 
 func main() {
+	port := flag.Int("port", 0, "Override GRPC port from config")
+	flag.Parse()
+
 	cfg := LoadConfig()
+
+	// Override GRPC port if --port flag is provided
+	if *port != 0 {
+		cfg.GRPCPort = *port
+	}
 
 	var rpcAddress string
 	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
@@ -34,7 +43,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize()
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
@@ -79,14 +88,15 @@ func main() {
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
 		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName, update.EthBlockHeight)
-		// log.Println(update.Delegations)
 		currentState := o.currentState.Load().(*OracleState)
 		newState := *currentState
+
 		newState.Delegations = update.Delegations
 		newState.EthBlockHeight = update.EthBlockHeight
 		newState.EthBlockHash = update.EthBlockHash
-		newState.EthGasPrice = update.EthGasPrice
 		newState.EthGasLimit = update.EthGasLimit
+		newState.EthBaseFee = update.EthBaseFee
+		newState.EthTipCap = update.EthTipCap
 
 		log.Printf("Received prices: ETH/USD %f, ROCK/USD %f", update.ETHUSDPrice, update.ROCKUSDPrice) // TODO add network + height?
 		newState.ETHUSDPrice = update.ETHUSDPrice

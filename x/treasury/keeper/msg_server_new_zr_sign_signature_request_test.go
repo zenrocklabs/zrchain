@@ -2,15 +2,14 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )
@@ -125,21 +124,15 @@ func Test_msgServer_NewZrSignSignatureRequest_Hash_OrData(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, tGenesis)
 			msgSer := keeper.NewMsgServerImpl(*tk)
 			got, err := msgSer.NewZrSignSignatureRequest(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewSignTransactionRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.wantResp) {
-					t.Fatalf("NewZrSignSignatureRequest() got = %v, want %v", got, tt.wantResp)
-				}
-				gotSignatureReq, err := tk.SignRequestStore.Get(ctx, got.ReqId)
-				if err != nil {
-					t.Fatalf("GetSignTx failed, error = %v", err)
-				}
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.wantResp, got)
 
-				if !reflect.DeepEqual(&gotSignatureReq, tt.wantReq) {
-					t.Fatalf("NewSignTransactionRequest() got = %v, want %v", gotSignatureReq, tt.wantReq)
-				}
+				gotSignatureReq, err := tk.SignRequestStore.Get(ctx, got.ReqId)
+				require.NoError(t, err)
+				require.Equal(t, tt.wantReq, &gotSignatureReq)
 			}
 		})
 	}
@@ -242,21 +235,15 @@ func Test_msgServer_NewZrSignSignatureRequest_Transaction(t *testing.T) {
 			treasury.InitGenesis(ctx, *tk, tGenesis)
 			msgSer := keeper.NewMsgServerImpl(*tk)
 			got, err := msgSer.NewZrSignSignatureRequest(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewSignTransactionRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.wantResp) {
-					t.Fatalf("NewZrSignSignatureRequest() got = %v, want %v", got, tt.wantResp)
-				}
-				gotSignatureReq, err := tk.SignTransactionRequestStore.Get(ctx, got.ReqId)
-				if err != nil {
-					t.Fatalf("GetSignTx failed, error = %v", err)
-				}
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.wantResp, got)
 
-				if !reflect.DeepEqual(&gotSignatureReq, tt.wantReq) {
-					t.Fatalf("NewSignTransactionRequest() got = %v, want %v", gotSignatureReq, tt.wantReq)
-				}
+				gotSignatureReq, err := tk.SignTransactionRequestStore.Get(ctx, got.ReqId)
+				require.NoError(t, err)
+				require.Equal(t, tt.wantReq, &gotSignatureReq)
 			}
 		})
 	}

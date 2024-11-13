@@ -4,7 +4,7 @@ package zrchain.genutil.v1beta1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types";
 
 // GenesisState defines the raw genesis transaction in JSON.
 message GenesisState {

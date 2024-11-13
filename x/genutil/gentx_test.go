@@ -15,16 +15,16 @@ import (
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
+	genutiltestutil "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/testutil"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	stakingtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltestutil "github.com/cosmos/cosmos-sdk/x/genutil/testutil"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var (
@@ -77,15 +77,15 @@ func (suite *GenTxTestSuite) setAccountBalance(balances []banktypes.Balance) jso
 		Params: banktypes.Params{DefaultSendEnabled: true},
 		Balances: []banktypes.Balance{
 			{
-				Address: "cosmos1fl48vsnmsdzcv85q5d2q4z5ajdha8yu34mf0eh",
+				Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Coins:   sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)},
 			},
 			{
-				Address: "cosmos1jv65s3grqf6v6jl3dp4t6c9t9rk99cd88lyufl",
+				Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				Coins:   sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 2059726)},
 			},
 			{
-				Address: "cosmos1k5lndq46x9xpejdxq52q3ql3ycrphg4qxlfqn7",
+				Address: "zen17ekx844yl3ftmcl47ryc7fz5cd7uhxq4f5ma5q",
 				Coins:   sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000000000000)},
 			},
 		},

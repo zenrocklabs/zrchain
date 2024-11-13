@@ -1,14 +1,13 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	pol "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,10 +99,7 @@ func Test_msgServer_NewWorkspace(t *testing.T) {
 			if !tt.wantErr {
 				gotWorkspace, err := ik.WorkspaceStore.Get(ctx, got.Addr)
 				require.NoError(t, err)
-
-				if !reflect.DeepEqual(&gotWorkspace, tt.wantCreated) {
-					t.Errorf("NewWorkspace() got = %v, want %v", gotWorkspace, tt.wantCreated)
-				}
+				require.Equal(t, tt.wantCreated, &gotWorkspace)
 			} else {
 				require.NotNil(t, err)
 			}

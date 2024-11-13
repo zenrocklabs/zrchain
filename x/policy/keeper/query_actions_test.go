@@ -1,24 +1,24 @@
 package keeper_test
 
 import (
-	idtypes "github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 
 	"testing"
 
-	_ "github.com/Zenrock-Foundation/zrchain/v4/policy"
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	_ "github.com/Zenrock-Foundation/zrchain/v5/policy"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 )
 
 func Test_msgServer_QueryAction(t *testing.T) {
 	policyData := types.BoolparserPolicy{
-		Definition: "p1 + p2 > 1",
+		Definition: "creator + testApprover > 1",
 		Participants: []*types.PolicyParticipant{
-			{Abbreviation: "p1", Address: "creator"},
-			{Abbreviation: "p2", Address: "testApprover"},
+			{Address: "creator"},
+			{Address: "testApprover"},
 		},
 	}
 
@@ -30,9 +30,7 @@ func Test_msgServer_QueryAction(t *testing.T) {
 	addToWorkspaceMsgAny, _ := cdctypes.NewAnyWithValue(addToWorkspaceMsg)
 
 	policyDataAny, err := cdctypes.NewAnyWithValue(&policyData)
-	if err != nil {
-		t.Fatalf("error decoding policyData, err %v", err)
-	}
+	require.NoError(t, err)
 
 	var defaultPolicy = types.Policy{
 		Id:     1,
@@ -90,11 +88,7 @@ func Test_msgServer_QueryAction(t *testing.T) {
 			}
 			policy.InitGenesis(ctx, *pk, polGenesis)
 			_, err := pk.ActionStore.Get(keepers.Ctx, 1)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			require.Equal(t, tt.wantErr, err != nil)
 		})
 	}
 }

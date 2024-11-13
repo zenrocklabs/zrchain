@@ -9,9 +9,9 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	identitykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
+	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 )
 
 type KeeperTest struct {

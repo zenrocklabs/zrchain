@@ -1,14 +1,12 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	"github.com/stretchr/testify/assert"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -74,23 +72,18 @@ func Test_msgServer_NewChildWorkspace(t *testing.T) {
 			identity.InitGenesis(ctx, *ik, genesis)
 
 			got, err := msgSer.NewChildWorkspace(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("NewChildWorkspace() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("NewChildWorkspace() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got)
 
 				gotWorkspace, err := ik.WorkspaceStore.Get(ctx, tt.args.workspace.Address)
 				require.NoError(t, err)
-
 				require.Equal(t, tt.wantWorkspace, &gotWorkspace)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
 			}
 		})
 	}

@@ -3,8 +3,8 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"

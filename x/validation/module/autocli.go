@@ -7,7 +7,7 @@ import (
 	_ "cosmossdk.io/api/cosmos/crypto/ed25519" // register to that it shows up in protoregistry.GlobalTypes
 	"github.com/cosmos/cosmos-sdk/version"
 
-	modulev3 "github.com/Zenrock-Foundation/zrchain/v4/api/zrchain/validation"
+	modulev3 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/validation"
 )
 
 func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {

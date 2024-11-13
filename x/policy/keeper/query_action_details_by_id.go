@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,7 +42,7 @@ func (k Keeper) ActionDetailsById(goCtx context.Context, req *types.QueryActionD
 		switch p := pol.(type) {
 		case *types.BoolparserPolicy:
 			for _, participant := range p.Participants {
-				participantMap[participant.Abbreviation] = participant.Address
+				participantMap[participant.Address] = participant.Address
 			}
 		}
 

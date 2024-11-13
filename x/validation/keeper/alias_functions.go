@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 // Validator Set
@@ -66,8 +66,9 @@ func (k Keeper) IterateBondedValidatorsByPower(ctx context.Context, fn func(inde
 	return nil
 }
 
-// IterateBondedValidatorsByPower iterates through the bonded validator set and perform the provided function
-func (k Keeper) IterateBondedZenrockValidatorsByPower(ctx context.Context, fn func(index int64, validator types.ValidatorHV) (stop bool)) error {
+// IterateBondedZenrockValidatorsByPower iterates through the bonded validator set and performs the provided function.
+// The iterator function can return an error to stop iteration and propagate the error.
+func (k Keeper) IterateBondedZenrockValidatorsByPower(ctx context.Context, fn func(index int64, validator types.ValidatorHV) error) error {
 	store := k.storeService.OpenKVStore(ctx)
 	maxValidators, err := k.MaxValidators(ctx)
 	if err != nil {
@@ -86,9 +87,8 @@ func (k Keeper) IterateBondedZenrockValidatorsByPower(ctx context.Context, fn fu
 		validator := k.mustGetValidator(ctx, address)
 
 		if validator.IsBonded() {
-			stop := fn(i, validator)
-			if stop {
-				break
+			if err := fn(i, validator); err != nil {
+				return err // Stop iteration and propagate the error
 			}
 			i++
 		}

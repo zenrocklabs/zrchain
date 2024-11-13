@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"time"
 
-	neutrino "github.com/Zenrock-Foundation/zrchain/v4/sidecar/neutrino"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -58,29 +58,37 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 }
 
 func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
-	latestHeader, err := o.EthClient.HeaderByNumber(context.Background(), nil)
+	ctx := context.Background()
+
+	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, BlocksBeforeFinality)
 
-	delegations, err := o.getContractState(contractInstance, targetBlockNumber)
+	delegations, err := o.getServiceManagerState(contractInstance, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	header, err := o.EthClient.HeaderByNumber(context.Background(), targetBlockNumber)
+	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to fetch ETH block data: %w", err)
 	}
 
-	gasPrice, err := o.EthClient.SuggestGasPrice(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to fetch gas price: %w", err)
+	// Get base fee from latest block
+	if header.BaseFee == nil {
+		return fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
-	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(context.Background(), nil)
+	// Get suggested priority fee from client
+	suggestedTip, err := o.EthClient.SuggestGasTipCap(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get suggested priority fee: %w", err)
+	}
+
+	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
@@ -96,15 +104,16 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 		EthBlockHeight: header.Number.Uint64(),
 		EthBlockHash:   header.Hash().Hex(),
 		EthGasLimit:    header.GasLimit,
-		EthGasPrice:    gasPrice.Uint64(),
+		EthBaseFee:     header.BaseFee.Uint64(),
+		EthTipCap:      suggestedTip.Uint64(),
 		ETHUSDPrice:    ETHUSDPrice,
-		ROCKUSDPrice:   0, // placeholder until we have a price feed for ROCK
+		ROCKUSDPrice:   0,
 	}
 
 	return nil
 }
 
-func (o *Oracle) getContractState(contractInstance *middleware.ContractZRServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
+func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZRServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
 	delegations := make(map[string]map[string]*big.Int)
 
 	callOpts := &bind.CallOpts{
@@ -125,8 +134,6 @@ func (o *Oracle) getContractState(contractInstance *middleware.ContractZRService
 			log.Printf("Failed to get delegation for operator %s: %v", operator.Hex(), err)
 			continue
 		}
-
-		// log.Printf("Operator: %s, Validator: %s, Amount: %s", operator.Hex(), validatorAddress, amount.String())
 
 		// Only consider positive delegation amounts
 		if amount.Cmp(big.NewInt(0)) > 0 {

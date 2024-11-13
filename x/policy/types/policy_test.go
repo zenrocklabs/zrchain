@@ -3,13 +3,10 @@ package types
 import (
 	"testing"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/testutil/sample"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBoolparserPolicy_Validate(t *testing.T) {
-	address1 := sample.AccAddress()
-	address2 := sample.AccAddress()
 
 	tests := []struct {
 		name    string
@@ -19,15 +16,38 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "pass: valid policy",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u2 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 					{
-						Abbreviation: "u2",
-						Address:      address2,
+						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+					},
+				},
+			},
+		},
+		{
+			name: "pass: one participant",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 0",
+				Participants: []*PolicyParticipant{
+					{
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					},
+				},
+			},
+		},
+		{
+			name: "pass: no spaces",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty+zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq>1",
+				Participants: []*PolicyParticipant{
+					{
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					},
+					{
+						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 					},
 				},
 			},
@@ -35,11 +55,10 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: missing participant",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u2 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + u2 > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 				},
 			},
@@ -48,32 +67,37 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: unused participant",
 			bp: BoolparserPolicy{
-				Definition: "u1 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 					{
-						Abbreviation: "u2",
-						Address:      address2,
+						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 					},
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "fail: duplicate abbrev",
+			name: "fail: approver number can't be fulfilled",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u1 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail: approver number can't be fulfilled",
+			bp: BoolparserPolicy{
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 2",
+				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address2,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 				},
 			},
@@ -82,15 +106,13 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: duplicate address",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u2 > 1",
+				Definition: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty + zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 					{
-						Abbreviation: "u2",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 				},
 			},
@@ -99,15 +121,13 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "fail: invalid address",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u1 > 1",
+				Definition: "some-invalid-address + zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      "some-invalid-address",
+						Address: "some-invalid-address",
 					},
 					{
-						Abbreviation: "u1",
-						Address:      address1,
+						Address: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 					},
 				},
 			},
@@ -116,66 +136,13 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 		{
 			name: "pass: passkey address",
 			bp: BoolparserPolicy{
-				Definition: "u1 + u2 > 1",
+				Definition: "passkey{passkey_id} + zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq > 1",
 				Participants: []*PolicyParticipant{
 					{
-						Abbreviation: "u1",
-						Address:      "passkey{passkey_id}",
+						Address: "passkey{passkey_id}",
 					},
 					{
-						Abbreviation: "u2",
-						Address:      address2,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "fail: invalid abbreviation",
-			bp: BoolparserPolicy{
-				Definition: "1 + 2 > 1",
-				Participants: []*PolicyParticipant{
-					{
-						Abbreviation: "1",
-						Address:      address1,
-					},
-					{
-						Abbreviation: "2",
-						Address:      address2,
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "fail: invalid abbreviation",
-			bp: BoolparserPolicy{
-				Definition: "1 + 2 > 1",
-				Participants: []*PolicyParticipant{
-					{
-						Abbreviation: "",
-						Address:      address1,
-					},
-					{
-						Abbreviation: "2",
-						Address:      address2,
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "pass: valid abbreviation",
-			bp: BoolparserPolicy{
-				Definition: "a_b + a_c > 1",
-				Participants: []*PolicyParticipant{
-					{
-						Abbreviation: "a_c",
-						Address:      address1,
-					},
-					{
-						Abbreviation: "a_b",
-						Address:      address2,
+						Address: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 					},
 				},
 			},
@@ -185,6 +152,7 @@ func TestBoolparserPolicy_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.bp.Validate()
+
 			if tt.wantErr {
 				require.NotNil(t, err)
 			} else {

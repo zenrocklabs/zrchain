@@ -1,16 +1,14 @@
 package keeper_test
 
 import (
-	"reflect"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v4/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v4/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
-	pol "github.com/Zenrock-Foundation/zrchain/v4/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v4/x/policy/types"
-	"github.com/stretchr/testify/assert"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -157,27 +155,18 @@ func Test_msgServer_RemoveWorkspaceOwner(t *testing.T) {
 			pol.InitGenesis(ctx, *pk, polGenesis)
 
 			got, err := msgSer.RemoveWorkspaceOwner(ctx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("RemoveWorkspaceOwner() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			require.Equal(t, tt.wantErr, err != nil)
 
 			if !tt.wantErr {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("RemoveWorkspaceOwner() got = %v, want %v", got, tt.want)
-				}
+				require.Equal(t, tt.want, got)
 
 				gotWorkspace, err := ik.WorkspaceStore.Get(ctx, tt.args.workspace.Address)
 				require.NoError(t, err)
-
-				if !reflect.DeepEqual(&gotWorkspace, tt.wantWorkspace) {
-					t.Errorf("RemoveWorkspaceOwner() got = %v, want %v", gotWorkspace, tt.wantWorkspace)
-				}
+				require.Equal(t, tt.wantWorkspace, &gotWorkspace)
 
 				act, err := pk.ActionStore.Get(ctx, 1)
-				require.Nil(t, err)
-				assert.Equal(t, uint64(1000), act.Btl)
-			} else {
-				require.NotNil(t, err)
+				require.NoError(t, err)
+				require.Equal(t, uint64(1000), act.Btl)
 			}
 		})
 	}

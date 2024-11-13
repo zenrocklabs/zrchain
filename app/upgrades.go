@@ -3,14 +3,12 @@ package app
 import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/app/upgrades"
-	v2 "github.com/Zenrock-Foundation/zrchain/v4/app/upgrades/v2"
-	v3 "github.com/Zenrock-Foundation/zrchain/v4/app/upgrades/v3"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/upgrades"
+	v5 "github.com/Zenrock-Foundation/zrchain/v5/app/upgrades/v5"
 )
 
 var Upgrades = []upgrades.Upgrade{
-	v2.Upgrade,
-	v3.Upgrade,
+	v5.Upgrade,
 }
 
 func (app ZenrockApp) RegisterUpgradeHandlers() {

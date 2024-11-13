@@ -3,8 +3,8 @@ package treasury
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

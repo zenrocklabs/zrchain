@@ -65,8 +65,8 @@ class MsgNewKeyRequest(_message.Message):
     ext_requester: str
     ext_key_type: int
     sign_policy_id: int
-    zenbtc_metadata: _key_pb2.ZenBTCMetdata
-    def __init__(self, creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., btl: _Optional[int] = ..., index: _Optional[int] = ..., ext_requester: _Optional[str] = ..., ext_key_type: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[_key_pb2.ZenBTCMetdata, _Mapping]] = ...) -> None: ...
+    zenbtc_metadata: _key_pb2.ZenBTCMetadata
+    def __init__(self, creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., btl: _Optional[int] = ..., index: _Optional[int] = ..., ext_requester: _Optional[str] = ..., ext_key_type: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[_key_pb2.ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
 class MsgNewKeyRequestResponse(_message.Message):
     __slots__ = ("key_req_id",)

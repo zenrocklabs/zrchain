@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -37,11 +37,10 @@ type (
 		BtcMerkleRoot      string
 		EthBlockHeight     uint64
 		EthBlockHash       common.Hash
-		EthGasPrice        uint64
 		EthGasLimit        uint64
+		EthBaseFee         uint64
+		EthTipCap          uint64
 		RequestedEthNonce  uint64
-		EthTxHeight        uint64
-		SolanaTxSlot       uint64
 	}
 
 	VEWithVotePower struct {
@@ -58,11 +57,10 @@ type (
 		BtcBlockHeader       sidecar.BTCBlockHeader
 		EthBlockHeight       uint64
 		EthBlockHash         common.Hash
-		EthGasPrice          uint64
 		EthGasLimit          uint64
+		EthBaseFee           uint64
+		EthTipCap            uint64
 		RequestedEthNonce    uint64
-		EthTxHeight          uint64
-		SolanaTxSlot         uint64
 		ConsensusData        abci.ExtendedCommitInfo
 	}
 
@@ -76,9 +74,7 @@ type (
 		GetSidecarStateByEthHeight(ctx context.Context, req *sidecar.SidecarStateByEthHeightRequest, opts ...grpc.CallOption) (*sidecar.SidecarStateResponse, error)
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
-		GetSolanaTransaction(ctx context.Context, in *sidecar.SolanaTransactionRequest, opts ...grpc.CallOption) (*sidecar.SolanaTransactionResponse, error)
-		GetEthereumTransaction(ctx context.Context, in *sidecar.EthereumTransactionRequest, opts ...grpc.CallOption) (*sidecar.EthereumTransactionResponse, error)
-		GetEthereumNonceAtHeight(ctx context.Context, in *sidecar.EthereumNonceAtHeightRequest, opts ...grpc.CallOption) (*sidecar.EthereumNonceAtHeightResponse, error)
+		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
 	}
 )
 
@@ -119,8 +115,9 @@ func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be ch
 		len(ve.AVSDelegationsHash) == 0 ||
 		ve.EthBlockHeight == 0 ||
 		len(ve.EthBlockHash) == 0 ||
-		ve.EthGasPrice == 0 ||
-		ve.EthGasLimit == 0 ||
-		ve.BtcBlockHeight == 0 ||
-		len(ve.BtcMerkleRoot) == 0
+		ve.EthBaseFee == 0 ||
+		ve.EthTipCap == 0 ||
+		ve.EthGasLimit == 0
+	// ve.BtcBlockHeight == 0 ||
+	// len(ve.BtcMerkleRoot) == 0
 }

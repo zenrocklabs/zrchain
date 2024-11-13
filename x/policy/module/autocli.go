@@ -3,7 +3,7 @@ package policy
 import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 
-	modulev1 "github.com/Zenrock-Foundation/zrchain/v4/api/zrchain/policy"
+	modulev1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/policy"
 )
 
 // AutoCLIOptions implements the autocli.HasAutoCLIConfig interface.

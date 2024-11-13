@@ -9,7 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/sidecar/proto/api"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino/rpcservice"
+
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -21,11 +23,16 @@ import (
 	"github.com/btcsuite/btclog"
 )
 
-func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes *map[string]LiteNode) (map[string]LiteNode, error) {
+func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes *map[string]LiteNode, path string) (map[string]LiteNode, error) {
 
 	chainName := chainParams.Name
-	dataDir := "./neutrino/neutrino_" + chainName
+	dataDir := path + "/neutrino_" + chainName
 	dbPath := dataDir + "/neutrino_" + chainName + ".db"
+
+	err := os.MkdirAll(dataDir, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create Neutrino directory: %v", dataDir)
+	}
 
 	backendLogger := btclog.NewBackend(os.Stdout)
 
@@ -76,12 +83,12 @@ func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes
 	return nodeMap, err
 }
 
-func (ns *NeutrinoServer) Initialize() {
+func (ns *NeutrinoServer) Initialize(url, user, password, path string) {
 	var err error
 	nodes := make(map[string]LiteNode)
 
 	//Testnet
-	nodes, err = buildNeutrinoNode(chaincfg.TestNet3Params, btclog.LevelError, &nodes)
+	nodes, err = buildNeutrinoNode(chaincfg.TestNet3Params, btclog.LevelError, &nodes, path)
 	if err != nil {
 		log.Printf("Failed to Start Node Testnet3")
 	}
@@ -89,7 +96,7 @@ func (ns *NeutrinoServer) Initialize() {
 	ns.Nodes = nodes
 
 	//Mainnet
-	nodes, err = buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes)
+	nodes, err = buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes, path)
 	if err != nil {
 		log.Printf("Failed to Start Node Mainnet")
 	}
@@ -98,12 +105,19 @@ func (ns *NeutrinoServer) Initialize() {
 	// Register RPC server
 	rpc.Register(ns)
 	rpc.HandleHTTP()
-	// Listen for requests on port 1234
+	// Listen for requests on port 12345
 	l, e := net.Listen("tcp", ":12345")
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
 	go http.Serve(l, nil)
+
+	//Connect to Proxy
+	var caller *rpcservice.RpcCaller
+	if url != "" {
+		caller = rpcservice.NewRpcCaller(url, user, password)
+		ns.Proxy = caller
+	}
 }
 
 func (ns *NeutrinoServer) Stop() {
@@ -131,6 +145,16 @@ func (ns *NeutrinoServer) GetBlockHeaderByHeight(chainName string, height int64)
 		}
 		return blockHeader, blockHash, blockStamp.Height, nil
 	}
+
+	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	if chainName != "mainnet" {
+		blockHeader, hash, height, err := ns.ProxyGetBlockHeaderByHeight(chainName, height)
+		if err == nil {
+			return blockHeader, hash, height, err
+		}
+		//ignore this error - we can't get testnet data using the proxy fallback mechanism
+	}
+
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
 
 }
@@ -140,7 +164,7 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		node := liteNode.Node
 		blockStamp, err := node.BestBlock()
 		if err != nil {
-			log.Fatalf("Failed to get Tip Height %d: %v", node.ChainParams().Name)
+			log.Fatalf("Failed to get Tip Height %s: %v", node.ChainParams().Name, err)
 		}
 		blockHeader, err := node.GetBlockHeader(&blockStamp.Hash)
 		if err != nil {
@@ -148,6 +172,15 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		}
 		return blockHeader, &blockStamp.Hash, blockStamp.Height, nil
 	}
+	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	if chainName != "mainnet" {
+		blockHeader, hash, height, err := ns.ProxyGetLatestBlockHeader(chainName)
+		if err == nil {
+			return blockHeader, hash, height, err
+		}
+		//ignore this error - we can't get testnet data using the proxy fallback mechanism
+	}
+
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
 }
 

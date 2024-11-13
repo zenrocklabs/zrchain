@@ -9,7 +9,7 @@ import (
 	stakingv3 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v3"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v4/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
 )
 
 // Migrate migrates exported state from v0.43 to a v0.46 genesis state.

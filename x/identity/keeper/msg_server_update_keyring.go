@@ -4,7 +4,7 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/Zenrock-Foundation/zrchain/v4/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
