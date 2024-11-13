@@ -1,3 +1,14 @@
+## [5.2.12](https://github.com/zenrocklabs/zrchain/compare/v5.2.11...v5.2.12) (2024-11-13)
+
+
+### Bug Fixes
+
+* ci workflows ([793a1b1](https://github.com/zenrocklabs/zrchain/commit/793a1b1ec687aa20e2a0758b8e57d547fe8028c8))
+* go.mod imports ([ed28ac3](https://github.com/zenrocklabs/zrchain/commit/ed28ac309a091a49e181fa189c38a8c66760de27))
+* go.mod imports ([#35](https://github.com/zenrocklabs/zrchain/issues/35)) ([2017d2f](https://github.com/zenrocklabs/zrchain/commit/2017d2fe60a7114fc9753a282404d50bf74948a4))
+* release v5.2.14 ([ddc9e3e](https://github.com/zenrocklabs/zrchain/commit/ddc9e3e04d071af5cb9584301618387bf3223314))
+* runs-on ci ([dfe125a](https://github.com/zenrocklabs/zrchain/commit/dfe125a5e18ef94c77618c85043d935e8dd4e87c))
+
 # [5.0.0](https://github.com/Zenrock-Foundation/zrchain/compare/v4.0.2...v5.0.0) (2024-11-13)
 
 
