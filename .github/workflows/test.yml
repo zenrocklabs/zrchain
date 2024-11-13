@@ -17,7 +17,6 @@ permissions:
 jobs:
   unit-test:
     name: test
-    runs-on: zenrock-devops
     defaults:
       run:
         working-directory: ./
