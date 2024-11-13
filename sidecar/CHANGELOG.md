@@ -1,6 +1,7 @@
 # validator-sidecar [1.3.0](https://github.com/zenrocklabs/zenrock/compare/validator-sidecar@1.2.3...validator-sidecar@1.3.0) (2024-10-16)
 
 
+
 ### Features
 
 * zenBTC core implementation ([#348](https://github.com/zenrocklabs/zenrock/issues/348)) ([a529bfc](https://github.com/zenrocklabs/zenrock/commit/a529bfc4080c7a93a2f243ece3d6feee8d8a09ac))
