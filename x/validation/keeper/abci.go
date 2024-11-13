@@ -437,6 +437,13 @@ func (k *Keeper) handleRedemptions(ctx sdk.Context, oracleData OracleData) {
 			continue
 		}
 		if exists {
+			k.Logger(ctx).Debug("redemption already completed", "bytes", hex.EncodeToString(redemptionBz))
+			continue
+		}
+
+		utxoInputs, err := k.RedemptionUTXOInputs.Get(ctx, redemptionBz)
+		if err != nil {
+			k.Logger(ctx).Debug("error getting redemption UTXO inputs", "bytes", hex.EncodeToString(redemptionBz), "err", err)
 			continue
 		}
 
