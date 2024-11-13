@@ -52,11 +52,12 @@ func (s *GenesisTestSuite) SetupTest() {
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
+	treasuryKeeper := minttestutil.NewMockTreasuryKeeper(ctrl)
 	s.accountKeeper = accountKeeper
 	accountKeeper.EXPECT().GetModuleAddress(minterAcc.Name).Return(minterAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAccount(s.sdkCtx, minterAcc.Name).Return(minterAcc)
 
-	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, "", "")
+	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, "", "", treasuryKeeper)
 }
 
 func (s *GenesisTestSuite) TestImportExportGenesis() {
@@ -69,6 +70,7 @@ func (s *GenesisTestSuite) TestImportExportGenesis() {
 		math.LegacyNewDecWithPrec(9, 2),
 		math.LegacyNewDecWithPrec(69, 2),
 		uint64(60*60*8766/5),
+		math.LegacyNewDecWithPrec(10, 2),
 	)
 
 	s.keeper.InitGenesis(s.sdkCtx, s.accountKeeper, genesisState)

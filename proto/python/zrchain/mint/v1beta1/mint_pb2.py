@@ -27,7 +27,7 @@ from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 from amino import amino_pb2 as amino_dot_amino__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fzrchain/mint/v1beta1/mint.proto\x12\x14zrchain.mint.v1beta1\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\"\xb9\x01\n\x06Minter\x12O\n\tinflation\x18\x01 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\tinflation\x12^\n\x11\x61nnual_provisions\x18\x02 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\x10\x61nnualProvisions\"\x80\x04\n\x06Params\x12\x1d\n\nmint_denom\x18\x01 \x01(\tR\tmintDenom\x12j\n\x15inflation_rate_change\x18\x02 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x13inflationRateChange\x12[\n\rinflation_max\x18\x03 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0cinflationMax\x12[\n\rinflation_min\x18\x04 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0cinflationMin\x12W\n\x0bgoal_bonded\x18\x05 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\ngoalBonded\x12&\n\x0f\x62locks_per_year\x18\x06 \x01(\x04R\rblocksPerYear:0\x8a\xe7\xb0*+Zenrock-Foundation/zrchain/v5/x/mint/ParamsB7Z5github.com/Zenrock-Foundation/zrchain/v5/x/mint/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fzrchain/mint/v1beta1/mint.proto\x12\x14zrchain.mint.v1beta1\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\"\xb9\x01\n\x06Minter\x12O\n\tinflation\x18\x01 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\tinflation\x12^\n\x11\x61nnual_provisions\x18\x02 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\x10\x61nnualProvisions\"\xdd\x04\n\x06Params\x12\x1d\n\nmint_denom\x18\x01 \x01(\tR\tmintDenom\x12j\n\x15inflation_rate_change\x18\x02 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x13inflationRateChange\x12[\n\rinflation_max\x18\x03 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0cinflationMax\x12[\n\rinflation_min\x18\x04 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0cinflationMin\x12W\n\x0bgoal_bonded\x18\x05 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\ngoalBonded\x12&\n\x0f\x62locks_per_year\x18\x06 \x01(\x04R\rblocksPerYear\x12[\n\rstaking_yield\x18\x07 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0cstakingYield:0\x8a\xe7\xb0*+Zenrock-Foundation/zrchain/v5/x/mint/ParamsB7Z5github.com/Zenrock-Foundation/zrchain/v5/x/mint/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,10 +47,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PARAMS'].fields_by_name['inflation_min']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
   _globals['_PARAMS'].fields_by_name['goal_bonded']._loaded_options = None
   _globals['_PARAMS'].fields_by_name['goal_bonded']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
+  _globals['_PARAMS'].fields_by_name['staking_yield']._loaded_options = None
+  _globals['_PARAMS'].fields_by_name['staking_yield']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
   _globals['_PARAMS']._loaded_options = None
   _globals['_PARAMS']._serialized_options = b'\212\347\260*+Zenrock-Foundation/zrchain/v5/x/mint/Params'
   _globals['_MINTER']._serialized_start=126
   _globals['_MINTER']._serialized_end=311
   _globals['_PARAMS']._serialized_start=314
-  _globals['_PARAMS']._serialized_end=826
+  _globals['_PARAMS']._serialized_end=919
 # @@protoc_insertion_point(module_scope)

@@ -24,11 +24,12 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	mintKeeper    keeper.Keeper
-	ctx           sdk.Context
-	msgServer     types.MsgServer
-	stakingKeeper *minttestutil.MockStakingKeeper
-	bankKeeper    *minttestutil.MockBankKeeper
+	mintKeeper     keeper.Keeper
+	ctx            sdk.Context
+	msgServer      types.MsgServer
+	stakingKeeper  *minttestutil.MockStakingKeeper
+	bankKeeper     *minttestutil.MockBankKeeper
+	treasuryKeeper *minttestutil.MockTreasuryKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -47,7 +48,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
-
+	treasuryKeeper := minttestutil.NewMockTreasuryKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
 
 	s.mintKeeper = keeper.NewKeeper(
@@ -58,9 +59,8 @@ func (s *IntegrationTestSuite) SetupTest() {
 		bankKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		treasuryKeeper,
 	)
-	s.stakingKeeper = stakingKeeper
-	s.bankKeeper = bankKeeper
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
 		s.mintKeeper.Logger(testCtx.Ctx))

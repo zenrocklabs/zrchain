@@ -12,6 +12,7 @@ import (
 type StakingKeeper interface {
 	StakingTokenSupply(ctx context.Context) (math.Int, error)
 	BondedRatio(ctx context.Context) (math.LegacyDec, error)
+	TotalBondedTokens(ctx context.Context) (math.Int, error)
 }
 
 // AccountKeeper defines the contract required for account APIs.
@@ -29,4 +30,10 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx context.Context, name string, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+}
+
+// TreasuryKeeper defines the contract needed to be fulfilled for treasury
+// dependencies.
+type TreasuryKeeper interface {
 }

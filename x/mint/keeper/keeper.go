@@ -10,17 +10,21 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Keeper of the mint store
 type Keeper struct {
-	cdc              codec.BinaryCodec
-	storeService     storetypes.KVStoreService
-	stakingKeeper    types.StakingKeeper
-	bankKeeper       types.BankKeeper
-	feeCollectorName string
+	cdc            codec.BinaryCodec
+	storeService   storetypes.KVStoreService
+	stakingKeeper  types.StakingKeeper
+	bankKeeper     types.BankKeeper
+	treasuryKeeper types.TreasuryKeeper
+
+	feeCollectorName     string
+	keyringCollectorName string
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -40,6 +44,7 @@ func NewKeeper(
 	bk types.BankKeeper,
 	feeCollectorName string,
 	authority string,
+	tk types.TreasuryKeeper,
 ) Keeper {
 	// ensure mint module account is set
 	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
@@ -56,6 +61,7 @@ func NewKeeper(
 		authority:        authority,
 		Params:           collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		Minter:           collections.NewItem(sb, types.MinterKey, "minter", codec.CollValue[types.Minter](cdc)),
+		treasuryKeeper:   tk,
 	}
 
 	schema, err := sb.Build()
@@ -105,3 +111,13 @@ func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 func (k Keeper) AddCollectedFees(ctx context.Context, fees sdk.Coins) error {
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, fees)
 }
+
+func (k Keeper) TotalBondedTokens(ctx context.Context) (math.Int, error) {
+	return k.stakingKeeper.TotalBondedTokens(ctx)
+}
+
+// func (k Keeper) NextStakingReward(ctx context.Context, totalBondedTokens math.Int, minter types.Minter) (math.Int, error) {
+// 	inflation := minter.Inflation
+
+// 	return nil
+// }

@@ -11,7 +11,7 @@ import (
 )
 
 // NewParams returns Params instance with the given values.
-func NewParams(mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded math.LegacyDec, blocksPerYear uint64) Params {
+func NewParams(mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded math.LegacyDec, blocksPerYear uint64, stakingYield math.LegacyDec) Params {
 	return Params{
 		MintDenom:           mintDenom,
 		InflationRateChange: inflationRateChange,
@@ -19,6 +19,7 @@ func NewParams(mintDenom string, inflationRateChange, inflationMax, inflationMin
 		InflationMin:        inflationMin,
 		GoalBonded:          goalBonded,
 		BlocksPerYear:       blocksPerYear,
+		StakingYield:        stakingYield,
 	}
 }
 
@@ -31,6 +32,7 @@ func DefaultParams() Params {
 		InflationMin:        math.LegacyNewDecWithPrec(7, 2),
 		GoalBonded:          math.LegacyNewDecWithPrec(67, 2),
 		BlocksPerYear:       uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
+		StakingYield:        math.LegacyNewDecWithPrec(10, 2),
 	}
 }
 
@@ -52,6 +54,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateBlocksPerYear(p.BlocksPerYear); err != nil {
+		return err
+	}
+	if err := validateStakingYield(p.StakingYield); err != nil {
 		return err
 	}
 	if p.InflationMax.LT(p.InflationMin) {
@@ -164,6 +169,25 @@ func validateBlocksPerYear(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("blocks per year must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateStakingYield(i interface{}) error {
+	v, ok := i.(math.LegacyDec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNil() {
+		return fmt.Errorf("staking yield must be positive: %s", v)
+	}
+	if v.IsNegative() || v.IsZero() {
+		return fmt.Errorf("staking yield must be positive: %s", v)
+	}
+	if v.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("staking yield too large: %s", v)
 	}
 
 	return nil

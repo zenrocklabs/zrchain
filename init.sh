@@ -261,6 +261,16 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
       }
     ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
+    jq '.app_state.mint.params = {
+        "mint_denom": "urock",
+        "inflation_rate_change": "0",
+        "inflation_max": "0",
+        "inflation_min": "0",
+        "goal_bonded": "0.670000000000000000",
+        "blocks_per_year": 6311520,
+        "staking_yield": "0.07"
+    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
     jq '.app_state.identity.workspaces = [
       {
         "address": "workspace14a2hpadpsy9h4auve2z8lw",

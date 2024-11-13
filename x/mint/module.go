@@ -16,6 +16,8 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/simulation"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -206,9 +208,10 @@ type ModuleInputs struct {
 	// LegacySubspace is used solely for migration of x/params managed parameters
 	LegacySubspace exported.Subspace `optional:"true"`
 
-	AccountKeeper types.AccountKeeper
-	BankKeeper    types.BankKeeper
-	StakingKeeper types.StakingKeeper
+	AccountKeeper  types.AccountKeeper
+	BankKeeper     types.BankKeeper
+	StakingKeeper  types.StakingKeeper
+	TreasuryKeeper treasurykeeper.Keeper
 }
 
 type ModuleOutputs struct {
@@ -238,6 +241,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		in.BankKeeper,
 		feeCollectorName,
 		authority.String(),
+		in.TreasuryKeeper,
 	)
 
 	// when no inflation calculation function is provided it will use the default types.DefaultInflationCalculationFn

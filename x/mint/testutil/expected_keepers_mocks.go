@@ -24,10 +24,28 @@ type MockStakingKeeperMockRecorder struct {
 	mock *MockStakingKeeper
 }
 
+// MockTreasuryKeeper is a mock of TreasuryKeeper interface.
+type MockTreasuryKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockTreasuryKeeperMockRecorder
+}
+
+// MockTreasuryKeeperMockRecorder is the mock recorder for MockTreasuryKeeper.
+type MockTreasuryKeeperMockRecorder struct {
+	mock *MockTreasuryKeeper
+}
+
 // NewMockStakingKeeper creates a new mock instance.
 func NewMockStakingKeeper(ctrl *gomock.Controller) *MockStakingKeeper {
 	mock := &MockStakingKeeper{ctrl: ctrl}
 	mock.recorder = &MockStakingKeeperMockRecorder{mock}
+	return mock
+}
+
+// NewMockTreasuryKeeper creates a new mock instance.
+func NewMockTreasuryKeeper(ctrl *gomock.Controller) *MockTreasuryKeeper {
+	mock := &MockTreasuryKeeper{ctrl: ctrl}
+	mock.recorder = &MockTreasuryKeeperMockRecorder{mock}
 	return mock
 }
 
@@ -64,6 +82,21 @@ func (m *MockStakingKeeper) StakingTokenSupply(ctx context.Context) (math.Int, e
 func (mr *MockStakingKeeperMockRecorder) StakingTokenSupply(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StakingTokenSupply", reflect.TypeOf((*MockStakingKeeper)(nil).StakingTokenSupply), ctx)
+}
+
+// TotalBondedTokens mocks base method.
+func (m *MockStakingKeeper) TotalBondedTokens(ctx context.Context) (math.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TotalBondedTokens", ctx)
+	ret0, _ := ret[0].(math.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TotalBondedTokens indicates an expected call of TotalBondedTokens.
+func (mr *MockStakingKeeperMockRecorder) TotalBondedTokens(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TotalBondedTokens", reflect.TypeOf((*MockStakingKeeper)(nil).TotalBondedTokens), ctx)
 }
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
@@ -192,4 +225,18 @@ func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, sender
 func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(ctx, senderModule, recipientModule, amt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), ctx, senderModule, recipientModule, amt)
+}
+
+// SendCoinsFromAccountToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types.AccAddress, recipientModule string, amt types.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromAccountToModule", ctx, senderAddr, recipientModule, amt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromAccountToModule indicates an expected call of SendCoinsFromAccountToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromAccountToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromAccountToModule), ctx, senderAddr, recipientModule, amt)
 }
