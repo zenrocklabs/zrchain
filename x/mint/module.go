@@ -12,6 +12,10 @@ import (
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/depinject"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -20,10 +24,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/mint/exported"
-	"github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	"github.com/cosmos/cosmos-sdk/x/mint/simulation"
-	"github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 // ConsensusVersion defines the current x/mint module consensus version.
