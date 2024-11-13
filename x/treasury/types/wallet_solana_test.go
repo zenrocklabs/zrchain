@@ -140,7 +140,7 @@ func TestGetTransferFromInstruction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetTransferFromInstruction(tt.args.msg)
+			got, err := getTransferFromInstruction(tt.args.msg)
 			require.Equal(t, tt.wantErr, err != nil)
 			require.Equal(t, tt.want, got)
 		})

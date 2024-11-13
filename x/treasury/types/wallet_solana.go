@@ -6,13 +6,19 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/cockroachdb/errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	bin "github.com/gagliardetto/binary"
 	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/programs/token"
 )
 
+type transfer struct {
+	amount    *big.Int
+	recipient string
+}
 type SolanaWallet struct {
 	key *ed25519.PublicKey
 }
@@ -49,7 +55,7 @@ func (w *SolanaWallet) Address() string {
 // ParseTx parses data from the raw bytes of an unsigned Solana transaction.
 // A recent Solana blockhash is included in the serialized txBytes. This is valid
 // for 150 blocks - approximately 1 minute after creation of the unsigned transaction.
-func (*SolanaWallet) ParseTx(rawTx []byte, _ Metadata) (Transfer, error) {
+func (*SolanaWallet) ParseTx(rawTx []byte, md Metadata) (Transfer, error) {
 	tx := &solana.Transaction{
 		Message: solana.Message{},
 	}
@@ -57,74 +63,104 @@ func (*SolanaWallet) ParseTx(rawTx []byte, _ Metadata) (Transfer, error) {
 		return Transfer{}, err
 	}
 
-	solTransfer, err := GetTransferFromInstruction(tx.Message)
+	solanaTx, err := getTransferFromInstruction(tx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
-	amount := new(big.Int)
-	if solTransfer.Lamports != nil {
-		amount.SetUint64(*solTransfer.Lamports)
+
+	meta, ok := md.(*MetadataSolana)
+	if !ok || meta == nil {
+		return Transfer{}, fmt.Errorf("invalid metadata field, expected *MetadataSolana, got %T", md)
 	}
 
-	to := solTransfer.GetRecipientAccount()
-	receiverAddress := to.PublicKey
-
-	coinIdentifier := []byte("SOL/")
+	coinIdentifier := []byte(fmt.Sprintf("SOL/%s", meta.MintAddress))
 
 	return Transfer{
-		To:             []byte(receiverAddress.String()),
-		Amount:         amount,
+		To:             []byte(solanaTx.recipient),
+		Amount:         solanaTx.amount,
 		CoinIdentifier: coinIdentifier,
 		DataForSigning: []byte(hex.EncodeToString(rawTx)),
 	}, nil
 }
 
 // ParseSignedTx parses data from the raw bytes of a signed Solana transaction.
-func (*SolanaWallet) ParseSignedTx(txBytes []byte, _ Metadata) (Transfer, error) {
+func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error) {
 	decodedTx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(txBytes))
 	if err != nil {
 		return Transfer{}, err
 	}
 
-	solTransfer, err := GetTransferFromInstruction(decodedTx.Message)
+	solanaTx, err := getTransferFromInstruction(decodedTx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
 
-	amount := new(big.Int)
-	if solTransfer.Lamports != nil {
-		amount.SetUint64(*solTransfer.Lamports)
+	meta, ok := md.(*MetadataSolana)
+	if !ok || meta == nil {
+		return Transfer{}, fmt.Errorf("invalid metadata field, expected *MetadataSolana, got %T", md)
 	}
 
-	to := solTransfer.GetRecipientAccount()
-	receiverAddress := to.PublicKey
-
-	coinIdentifier := []byte("SOL/")
+	coinIdentifier := []byte(fmt.Sprintf("SOL/%s", meta.MintAddress))
 
 	return Transfer{
-		To:             []byte(receiverAddress.String()),
-		Amount:         amount,
+		To:             []byte(solanaTx.recipient),
+		Amount:         solanaTx.amount,
 		CoinIdentifier: coinIdentifier,
 		DataForSigning: txBytes,
 	}, nil
 }
 
-// GetTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer which contains from, to, amount
-func GetTransferFromInstruction(msg solana.Message) (*system.Transfer, error) {
+// getTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer which contains from, to, amount
+func getTransferFromInstruction(msg solana.Message) (*transfer, error) {
+	for i, ak := range msg.AccountKeys {
+		fmt.Printf("%d: %s\n", i, ak.String())
+	}
+	tx := &transfer{
+		amount: new(big.Int),
+	}
+
 	for _, inst := range msg.Instructions {
 		accounts, err := inst.ResolveInstructionAccounts(&msg)
 		if err != nil {
 			return nil, err
 		}
-		instruction, err := system.DecodeInstruction(accounts, inst.Data)
-		if err != nil {
-			return nil, err
+
+		programID := msg.AccountKeys[inst.ProgramIDIndex]
+
+		if programID.Equals(solana.SystemProgramID) { // instruction is possibly a SOL transfer
+			instruction, err := system.DecodeInstruction(accounts, inst.Data)
+			if err != nil {
+				continue
+			}
+
+			st, ok := instruction.Impl.(*system.Transfer)
+			if !ok {
+				continue
+			}
+
+			if st.Lamports != nil {
+				tx.amount.SetUint64(*st.Lamports)
+			}
+			tx.recipient = st.GetRecipientAccount().PublicKey.String()
+		} else if programID.Equals(solana.TokenProgramID) { // instruction is possibly a token transfer
+			instruction, err := token.DecodeInstruction(accounts, inst.Data)
+			if err != nil {
+				continue
+			}
+			st, ok := instruction.Impl.(*token.Transfer)
+			if !ok {
+				continue
+			}
+			tx.amount = tx.amount.SetUint64(*st.Amount)
+			tx.recipient = msg.AccountKeys[inst.Accounts[1]].String()
 		}
-		if st, ok := instruction.Impl.(*system.Transfer); ok {
-			return st, nil
-		}
+
 	}
-	return nil, fmt.Errorf("no transfer instruction found")
+
+	if len(tx.recipient) == 0 && tx.amount.Uint64() == 0 {
+		return nil, errors.New("no transfer instruction found")
+	}
+	return tx, nil
 }
 
 // SolanaTransfer possibly not needed
