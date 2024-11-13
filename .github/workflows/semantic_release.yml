@@ -9,7 +9,6 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: zenrock-devops
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,7 +52,7 @@ jobs:
           --build-arg VERSION=${{ env.TAG }} \
           -t zenrockd:${{ env.TAG }} .
 
-          docker run --entrypoint=/bin/cp --rm \
+          docker run --user root --entrypoint=/bin/cp --rm \
             -v $(pwd):/workspace \
             -v ~/.aws:/root/.aws \
             zenrockd:${TAG} \
@@ -69,7 +68,7 @@ jobs:
           --build-arg VERSION=${{ env.TAG }} \
           -t validator_sidecar:${{ env.TAG }} .
 
-          docker run --entrypoint=/bin/cp --rm \
+          docker run --user root --entrypoint=/bin/cp --rm \
             -v $(pwd):/workspace \
             -v ~/.aws:/root/.aws \
             validator_sidecar:${TAG} \
