@@ -24,6 +24,20 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
+	// TODO - set new params for protocol wallet and distribution amounts
+	// TODO - receive keyring fees as rewards
+	// TODO - burn percentage
+	// TODO - send to protocol wallet
+	// TODO - handle if rewards are enough to cover the staking rewards
+	// TODO - implement excess reward mechanism
+	// TODO - handle top-up from protocol wallet to cover staking rewards
+	// TODO - adjust events
+	// TODO - remove legacy minting mechanism
+
+	// DONE - add TotalBondedTokens
+	// DONE - add NextStakingReward based on annual staking yield
+	// DONE - add amount to get distributed to stakers
+
 	// recalculate inflation rate
 	totalStakingSupply, err := k.StakingTokenSupply(ctx)
 	if err != nil {
@@ -36,6 +50,16 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	}
 
 	// totalBondedTokens, err := k.TotalBondedTokens(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))
 	// if err != nil {
 	// 	return err
 	// }
