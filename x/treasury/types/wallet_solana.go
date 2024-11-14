@@ -112,9 +112,6 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 
 // getTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer which contains from, to, amount
 func getTransferFromInstruction(msg solana.Message) (*transfer, error) {
-	for i, ak := range msg.AccountKeys {
-		fmt.Printf("%d: %s\n", i, ak.String())
-	}
 	tx := &transfer{
 		amount: new(big.Int),
 	}
