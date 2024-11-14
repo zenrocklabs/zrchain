@@ -313,7 +313,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 	}, nil
 }
 
-func (k *Keeper) signatureRequest(ctx sdk.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
+func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
 	dataForSigning, err := dataForSigning(msg.DataForSigning)
 	if err != nil {
 		return nil, err

@@ -40,3 +40,22 @@ func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
 
 	return hash, nil
 }
+
+func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, outputs string) (string, error) {
+	msg := &types.MsgSubmitUnsignedRedemptionTx{
+		Creator: c.c.Identity.Address.String(),
+		Outputs: outputs,
+	}
+
+	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := c.c.SendWaitTx(ctx, txBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
+}

@@ -87,7 +87,7 @@ func (k msgServer) NewSignatureRequestActionHandler(ctx sdk.Context, act *policy
 		k.cdc,
 		ctx,
 		act,
-		k.signatureRequest,
+		k.HandleSignatureRequest,
 	)
 }
 
