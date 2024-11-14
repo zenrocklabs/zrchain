@@ -66,11 +66,10 @@ func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
 	return hash, nil
 }
 
-func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, outputs [][]byte, keyIds []uint64, txBytes []byte) (string, error) {
+func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, unsignedUTXOs []types.UnsignedUTXO, txBytes []byte) (string, error) {
 	msg := &types.MsgSubmitUnsignedRedemptionTx{
 		Creator: c.c.Identity.Address.String(),
-		Outputs: outputs,
-		KeyIds:  keyIds,
+		Outputs: unsignedUTXOs,
 		TxBytes: txBytes,
 	}
 
