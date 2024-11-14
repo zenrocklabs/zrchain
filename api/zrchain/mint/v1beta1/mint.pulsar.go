@@ -500,14 +500,21 @@ func (x *fastReflection_Minter) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_Params                       protoreflect.MessageDescriptor
-	fd_Params_mint_denom            protoreflect.FieldDescriptor
-	fd_Params_inflation_rate_change protoreflect.FieldDescriptor
-	fd_Params_inflation_max         protoreflect.FieldDescriptor
-	fd_Params_inflation_min         protoreflect.FieldDescriptor
-	fd_Params_goal_bonded           protoreflect.FieldDescriptor
-	fd_Params_blocks_per_year       protoreflect.FieldDescriptor
-	fd_Params_staking_yield         protoreflect.FieldDescriptor
+	md_Params                            protoreflect.MessageDescriptor
+	fd_Params_mint_denom                 protoreflect.FieldDescriptor
+	fd_Params_inflation_rate_change      protoreflect.FieldDescriptor
+	fd_Params_inflation_max              protoreflect.FieldDescriptor
+	fd_Params_inflation_min              protoreflect.FieldDescriptor
+	fd_Params_goal_bonded                protoreflect.FieldDescriptor
+	fd_Params_blocks_per_year            protoreflect.FieldDescriptor
+	fd_Params_staking_yield              protoreflect.FieldDescriptor
+	fd_Params_burn_rate                  protoreflect.FieldDescriptor
+	fd_Params_protocol_wallet_rate       protoreflect.FieldDescriptor
+	fd_Params_protocol_wallet_address    protoreflect.FieldDescriptor
+	fd_Params_retention_rate             protoreflect.FieldDescriptor
+	fd_Params_additional_staking_rewards protoreflect.FieldDescriptor
+	fd_Params_additional_mpc_rewards     protoreflect.FieldDescriptor
+	fd_Params_additional_burn_rate       protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -520,6 +527,13 @@ func init() {
 	fd_Params_goal_bonded = md_Params.Fields().ByName("goal_bonded")
 	fd_Params_blocks_per_year = md_Params.Fields().ByName("blocks_per_year")
 	fd_Params_staking_yield = md_Params.Fields().ByName("staking_yield")
+	fd_Params_burn_rate = md_Params.Fields().ByName("burn_rate")
+	fd_Params_protocol_wallet_rate = md_Params.Fields().ByName("protocol_wallet_rate")
+	fd_Params_protocol_wallet_address = md_Params.Fields().ByName("protocol_wallet_address")
+	fd_Params_retention_rate = md_Params.Fields().ByName("retention_rate")
+	fd_Params_additional_staking_rewards = md_Params.Fields().ByName("additional_staking_rewards")
+	fd_Params_additional_mpc_rewards = md_Params.Fields().ByName("additional_mpc_rewards")
+	fd_Params_additional_burn_rate = md_Params.Fields().ByName("additional_burn_rate")
 }
 
 var _ protoreflect.Message = (*fastReflection_Params)(nil)
@@ -629,6 +643,48 @@ func (x *fastReflection_Params) Range(f func(protoreflect.FieldDescriptor, proto
 			return
 		}
 	}
+	if x.BurnRate != "" {
+		value := protoreflect.ValueOfString(x.BurnRate)
+		if !f(fd_Params_burn_rate, value) {
+			return
+		}
+	}
+	if x.ProtocolWalletRate != "" {
+		value := protoreflect.ValueOfString(x.ProtocolWalletRate)
+		if !f(fd_Params_protocol_wallet_rate, value) {
+			return
+		}
+	}
+	if x.ProtocolWalletAddress != "" {
+		value := protoreflect.ValueOfString(x.ProtocolWalletAddress)
+		if !f(fd_Params_protocol_wallet_address, value) {
+			return
+		}
+	}
+	if x.RetentionRate != "" {
+		value := protoreflect.ValueOfString(x.RetentionRate)
+		if !f(fd_Params_retention_rate, value) {
+			return
+		}
+	}
+	if x.AdditionalStakingRewards != "" {
+		value := protoreflect.ValueOfString(x.AdditionalStakingRewards)
+		if !f(fd_Params_additional_staking_rewards, value) {
+			return
+		}
+	}
+	if x.AdditionalMpcRewards != "" {
+		value := protoreflect.ValueOfString(x.AdditionalMpcRewards)
+		if !f(fd_Params_additional_mpc_rewards, value) {
+			return
+		}
+	}
+	if x.AdditionalBurnRate != "" {
+		value := protoreflect.ValueOfString(x.AdditionalBurnRate)
+		if !f(fd_Params_additional_burn_rate, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -658,6 +714,20 @@ func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.BlocksPerYear != uint64(0)
 	case "zrchain.mint.v1beta1.Params.staking_yield":
 		return x.StakingYield != ""
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		return x.BurnRate != ""
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		return x.ProtocolWalletRate != ""
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		return x.ProtocolWalletAddress != ""
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		return x.RetentionRate != ""
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		return x.AdditionalStakingRewards != ""
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		return x.AdditionalMpcRewards != ""
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
+		return x.AdditionalBurnRate != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.mint.v1beta1.Params"))
@@ -688,6 +758,20 @@ func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 		x.BlocksPerYear = uint64(0)
 	case "zrchain.mint.v1beta1.Params.staking_yield":
 		x.StakingYield = ""
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		x.BurnRate = ""
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		x.ProtocolWalletRate = ""
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		x.ProtocolWalletAddress = ""
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		x.RetentionRate = ""
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		x.AdditionalStakingRewards = ""
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		x.AdditionalMpcRewards = ""
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
+		x.AdditionalBurnRate = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.mint.v1beta1.Params"))
@@ -725,6 +809,27 @@ func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) pro
 	case "zrchain.mint.v1beta1.Params.staking_yield":
 		value := x.StakingYield
 		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		value := x.BurnRate
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		value := x.ProtocolWalletRate
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		value := x.ProtocolWalletAddress
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		value := x.RetentionRate
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		value := x.AdditionalStakingRewards
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		value := x.AdditionalMpcRewards
+		return protoreflect.ValueOfString(value)
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
+		value := x.AdditionalBurnRate
+		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.mint.v1beta1.Params"))
@@ -759,6 +864,20 @@ func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value proto
 		x.BlocksPerYear = value.Uint()
 	case "zrchain.mint.v1beta1.Params.staking_yield":
 		x.StakingYield = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		x.BurnRate = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		x.ProtocolWalletRate = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		x.ProtocolWalletAddress = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		x.RetentionRate = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		x.AdditionalStakingRewards = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		x.AdditionalMpcRewards = value.Interface().(string)
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
+		x.AdditionalBurnRate = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.mint.v1beta1.Params"))
@@ -793,6 +912,20 @@ func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protore
 		panic(fmt.Errorf("field blocks_per_year of message zrchain.mint.v1beta1.Params is not mutable"))
 	case "zrchain.mint.v1beta1.Params.staking_yield":
 		panic(fmt.Errorf("field staking_yield of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		panic(fmt.Errorf("field burn_rate of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		panic(fmt.Errorf("field protocol_wallet_rate of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		panic(fmt.Errorf("field protocol_wallet_address of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		panic(fmt.Errorf("field retention_rate of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		panic(fmt.Errorf("field additional_staking_rewards of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		panic(fmt.Errorf("field additional_mpc_rewards of message zrchain.mint.v1beta1.Params is not mutable"))
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
+		panic(fmt.Errorf("field additional_burn_rate of message zrchain.mint.v1beta1.Params is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.mint.v1beta1.Params"))
@@ -819,6 +952,20 @@ func (x *fastReflection_Params) NewField(fd protoreflect.FieldDescriptor) protor
 	case "zrchain.mint.v1beta1.Params.blocks_per_year":
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.mint.v1beta1.Params.staking_yield":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.burn_rate":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_rate":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.protocol_wallet_address":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.retention_rate":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.additional_staking_rewards":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.additional_mpc_rewards":
+		return protoreflect.ValueOfString("")
+	case "zrchain.mint.v1beta1.Params.additional_burn_rate":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
@@ -916,6 +1063,34 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		l = len(x.BurnRate)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.ProtocolWalletRate)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.ProtocolWalletAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.RetentionRate)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.AdditionalStakingRewards)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.AdditionalMpcRewards)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.AdditionalBurnRate)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -944,6 +1119,55 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.AdditionalBurnRate) > 0 {
+			i -= len(x.AdditionalBurnRate)
+			copy(dAtA[i:], x.AdditionalBurnRate)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdditionalBurnRate)))
+			i--
+			dAtA[i] = 0x72
+		}
+		if len(x.AdditionalMpcRewards) > 0 {
+			i -= len(x.AdditionalMpcRewards)
+			copy(dAtA[i:], x.AdditionalMpcRewards)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdditionalMpcRewards)))
+			i--
+			dAtA[i] = 0x6a
+		}
+		if len(x.AdditionalStakingRewards) > 0 {
+			i -= len(x.AdditionalStakingRewards)
+			copy(dAtA[i:], x.AdditionalStakingRewards)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdditionalStakingRewards)))
+			i--
+			dAtA[i] = 0x62
+		}
+		if len(x.RetentionRate) > 0 {
+			i -= len(x.RetentionRate)
+			copy(dAtA[i:], x.RetentionRate)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.RetentionRate)))
+			i--
+			dAtA[i] = 0x5a
+		}
+		if len(x.ProtocolWalletAddress) > 0 {
+			i -= len(x.ProtocolWalletAddress)
+			copy(dAtA[i:], x.ProtocolWalletAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtocolWalletAddress)))
+			i--
+			dAtA[i] = 0x52
+		}
+		if len(x.ProtocolWalletRate) > 0 {
+			i -= len(x.ProtocolWalletRate)
+			copy(dAtA[i:], x.ProtocolWalletRate)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtocolWalletRate)))
+			i--
+			dAtA[i] = 0x4a
+		}
+		if len(x.BurnRate) > 0 {
+			i -= len(x.BurnRate)
+			copy(dAtA[i:], x.BurnRate)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BurnRate)))
+			i--
+			dAtA[i] = 0x42
 		}
 		if len(x.StakingYield) > 0 {
 			i -= len(x.StakingYield)
@@ -1252,6 +1476,230 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 				}
 				x.StakingYield = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 8:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BurnRate", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.BurnRate = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 9:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtocolWalletRate", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ProtocolWalletRate = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 10:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtocolWalletAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ProtocolWalletAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 11:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RetentionRate", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.RetentionRate = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 12:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdditionalStakingRewards", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AdditionalStakingRewards = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 13:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdditionalMpcRewards", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AdditionalMpcRewards = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 14:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdditionalBurnRate", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AdditionalBurnRate = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1366,6 +1814,20 @@ type Params struct {
 	BlocksPerYear uint64 `protobuf:"varint,6,opt,name=blocks_per_year,json=blocksPerYear,proto3" json:"blocks_per_year,omitempty"`
 	// goal of percent staking yield
 	StakingYield string `protobuf:"bytes,7,opt,name=staking_yield,json=stakingYield,proto3" json:"staking_yield,omitempty"`
+	// rewards burn rate
+	BurnRate string `protobuf:"bytes,8,opt,name=burn_rate,json=burnRate,proto3" json:"burn_rate,omitempty"`
+	// rewards protocol wallet rate
+	ProtocolWalletRate string `protobuf:"bytes,9,opt,name=protocol_wallet_rate,json=protocolWalletRate,proto3" json:"protocol_wallet_rate,omitempty"`
+	// address of protocol wallet
+	ProtocolWalletAddress string `protobuf:"bytes,10,opt,name=protocol_wallet_address,json=protocolWalletAddress,proto3" json:"protocol_wallet_address,omitempty"`
+	// reward excess retention rate
+	RetentionRate string `protobuf:"bytes,11,opt,name=retention_rate,json=retentionRate,proto3" json:"retention_rate,omitempty"`
+	// additional staking rewards rate
+	AdditionalStakingRewards string `protobuf:"bytes,12,opt,name=additional_staking_rewards,json=additionalStakingRewards,proto3" json:"additional_staking_rewards,omitempty"`
+	// additional MPC rewards rate
+	AdditionalMpcRewards string `protobuf:"bytes,13,opt,name=additional_mpc_rewards,json=additionalMpcRewards,proto3" json:"additional_mpc_rewards,omitempty"`
+	// additional burn rate
+	AdditionalBurnRate string `protobuf:"bytes,14,opt,name=additional_burn_rate,json=additionalBurnRate,proto3" json:"additional_burn_rate,omitempty"`
 }
 
 func (x *Params) Reset() {
@@ -1437,6 +1899,55 @@ func (x *Params) GetStakingYield() string {
 	return ""
 }
 
+func (x *Params) GetBurnRate() string {
+	if x != nil {
+		return x.BurnRate
+	}
+	return ""
+}
+
+func (x *Params) GetProtocolWalletRate() string {
+	if x != nil {
+		return x.ProtocolWalletRate
+	}
+	return ""
+}
+
+func (x *Params) GetProtocolWalletAddress() string {
+	if x != nil {
+		return x.ProtocolWalletAddress
+	}
+	return ""
+}
+
+func (x *Params) GetRetentionRate() string {
+	if x != nil {
+		return x.RetentionRate
+	}
+	return ""
+}
+
+func (x *Params) GetAdditionalStakingRewards() string {
+	if x != nil {
+		return x.AdditionalStakingRewards
+	}
+	return ""
+}
+
+func (x *Params) GetAdditionalMpcRewards() string {
+	if x != nil {
+		return x.AdditionalMpcRewards
+	}
+	return ""
+}
+
+func (x *Params) GetAdditionalBurnRate() string {
+	if x != nil {
+		return x.AdditionalBurnRate
+	}
+	return ""
+}
+
 var File_zrchain_mint_v1beta1_mint_proto protoreflect.FileDescriptor
 
 var file_zrchain_mint_v1beta1_mint_proto_rawDesc = []byte{
@@ -1459,7 +1970,7 @@ var file_zrchain_mint_v1beta1_mint_proto_rawDesc = []byte{
 	0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65,
 	0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
 	0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x10, 0x61, 0x6e, 0x6e, 0x75, 0x61, 0x6c, 0x50, 0x72, 0x6f,
-	0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xdd, 0x04, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61,
+	0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x81, 0x0a, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61,
 	0x6d, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x69, 0x6e, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x69, 0x6e, 0x74, 0x44, 0x65, 0x6e, 0x6f,
 	0x6d, 0x12, 0x6a, 0x0a, 0x15, 0x69, 0x6e, 0x66, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72,
@@ -1494,23 +2005,65 @@ var file_zrchain_mint_v1beta1_mint_proto_rawDesc = []byte{
 	0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63,
 	0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44,
 	0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0c, 0x73, 0x74, 0x61, 0x6b, 0x69, 0x6e, 0x67,
-	0x59, 0x69, 0x65, 0x6c, 0x64, 0x3a, 0x30, 0x8a, 0xe7, 0xb0, 0x2a, 0x2b, 0x5a, 0x65, 0x6e, 0x72,
-	0x6f, 0x63, 0x6b, 0x2d, 0x46, 0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x35, 0x2f, 0x78, 0x2f, 0x6d, 0x69, 0x6e, 0x74,
-	0x2f, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0xca, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e,
-	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x6d, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x62,
-	0x65, 0x74, 0x61, 0x31, 0x42, 0x09, 0x4d, 0x69, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50,
-	0x01, 0x5a, 0x31, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x6d, 0x69, 0x6e, 0x74,
-	0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x3b, 0x6d, 0x69, 0x6e, 0x74, 0x76, 0x31, 0x62,
-	0x65, 0x74, 0x61, 0x31, 0xa2, 0x02, 0x03, 0x5a, 0x4d, 0x58, 0xaa, 0x02, 0x14, 0x5a, 0x72, 0x63,
-	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x4d, 0x69, 0x6e, 0x74, 0x2e, 0x56, 0x31, 0x62, 0x65, 0x74, 0x61,
-	0x31, 0xca, 0x02, 0x14, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x4d, 0x69, 0x6e, 0x74,
-	0x5c, 0x56, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0xe2, 0x02, 0x20, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x5c, 0x4d, 0x69, 0x6e, 0x74, 0x5c, 0x56, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x5c,
-	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x5a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x4d, 0x69, 0x6e, 0x74, 0x3a, 0x3a, 0x56, 0x31, 0x62,
-	0x65, 0x74, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x59, 0x69, 0x65, 0x6c, 0x64, 0x12, 0x53, 0x0a, 0x09, 0x62, 0x75, 0x72, 0x6e, 0x5f, 0x72, 0x61,
+	0x74, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde,
+	0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d,
+	0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d,
+	0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01,
+	0x52, 0x08, 0x62, 0x75, 0x72, 0x6e, 0x52, 0x61, 0x74, 0x65, 0x12, 0x68, 0x0a, 0x14, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x5f, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x72, 0x61,
+	0x74, 0x65, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde,
+	0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d,
+	0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d,
+	0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01,
+	0x52, 0x12, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74,
+	0x52, 0x61, 0x74, 0x65, 0x12, 0x36, 0x0a, 0x17, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c,
+	0x5f, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18,
+	0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x15, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x57,
+	0x61, 0x6c, 0x6c, 0x65, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x5d, 0x0a, 0x0e,
+	0x72, 0x65, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x0b,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e,
+	0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0d, 0x72, 0x65,
+	0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x61, 0x74, 0x65, 0x12, 0x74, 0x0a, 0x1a, 0x61,
+	0x64, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x73, 0x74, 0x61, 0x6b, 0x69, 0x6e,
+	0x67, 0x5f, 0x72, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73,
+	0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63,
+	0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44,
+	0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x18, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x61, 0x6c, 0x53, 0x74, 0x61, 0x6b, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64,
+	0x73, 0x12, 0x6c, 0x0a, 0x16, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f,
+	0x6d, 0x70, 0x63, 0x5f, 0x72, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x18, 0x0d, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
+	0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67,
+	0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x14, 0x61, 0x64, 0x64, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x4d, 0x70, 0x63, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x12,
+	0x68, 0x0a, 0x14, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x62, 0x75,
+	0x72, 0x6e, 0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x09, 0x42, 0x36, 0xc8,
+	0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44,
+	0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63,
+	0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x12, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x61,
+	0x6c, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x61, 0x74, 0x65, 0x3a, 0x30, 0x8a, 0xe7, 0xb0, 0x2a, 0x2b,
+	0x5a, 0x65, 0x6e, 0x72, 0x6f, 0x63, 0x6b, 0x2d, 0x46, 0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x35, 0x2f, 0x78, 0x2f,
+	0x6d, 0x69, 0x6e, 0x74, 0x2f, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0xca, 0x01, 0x0a, 0x18,
+	0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x6d, 0x69, 0x6e, 0x74,
+	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x42, 0x09, 0x4d, 0x69, 0x6e, 0x74, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x31, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
+	0x6d, 0x69, 0x6e, 0x74, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x3b, 0x6d, 0x69, 0x6e,
+	0x74, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0xa2, 0x02, 0x03, 0x5a, 0x4d, 0x58, 0xaa, 0x02,
+	0x14, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x4d, 0x69, 0x6e, 0x74, 0x2e, 0x56, 0x31,
+	0x62, 0x65, 0x74, 0x61, 0x31, 0xca, 0x02, 0x14, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
+	0x4d, 0x69, 0x6e, 0x74, 0x5c, 0x56, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0xe2, 0x02, 0x20, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x4d, 0x69, 0x6e, 0x74, 0x5c, 0x56, 0x31, 0x62, 0x65,
+	0x74, 0x61, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea,
+	0x02, 0x16, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x4d, 0x69, 0x6e, 0x74, 0x3a,
+	0x3a, 0x56, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
