@@ -41,8 +41,9 @@ message BTCBlockHeader {
 }
 
 message Redemption {
-  bytes BtcAddress = 1;
-  uint64 Amount = 2;
+  uint64 id = 1;
+  bytes destination_address = 2;
+  uint64 amount = 3;
 }
 
 message SidecarStateRequest {}

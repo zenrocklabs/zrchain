@@ -18,6 +18,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 func (k *Keeper) BeginBlocker(ctx context.Context) error {
@@ -225,7 +226,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	voteExtTx := req.Txs[0] // vote extension is always the first transaction in the block
+	voteExtTx := req.Txs[0] // vote extension is always the first "transaction" in the block
 
 	if !ContainsVoteExtension(voteExtTx, k.txDecoder) {
 		return nil
@@ -260,11 +261,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.updateAVSDelegationStore(ctx, oracleData)
 
-	k.handleRedemptions(ctx, oracleData)
-
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
-	k.createMintTransaction(ctx, oracleData)
+	k.createZenBTCMintTransaction(ctx, oracleData)
+
+	k.storeNewZenBTCRedemptionsEthereum(ctx, oracleData)
 
 	k.recordNonVotingValidators(ctx, req)
 
@@ -418,61 +419,6 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 	}
 }
 
-func (k *Keeper) handleRedemptions(ctx sdk.Context, oracleData OracleData) {
-	if len(oracleData.EthereumRedemptions) == 0 {
-		k.Logger(ctx).Debug("no pending redemption transactions")
-		return
-	}
-
-	for _, redemption := range oracleData.EthereumRedemptions {
-		redemptionBz, err := json.Marshal(redemption)
-		if err != nil {
-			k.Logger(ctx).Error("error marshalling redemption", "err", err)
-			continue
-		}
-
-		exists, err := k.CompletedRedemptions.Has(ctx, redemptionBz)
-		if err != nil {
-			k.Logger(ctx).Error("error checking redemption completion", "err", err)
-			continue
-		}
-		if exists {
-			k.Logger(ctx).Debug("redemption already completed", "bytes", hex.EncodeToString(redemptionBz))
-			continue
-		}
-
-		utxoInputs, err := k.RedemptionUTXOInputs.Get(ctx, redemptionBz)
-		if err != nil {
-			k.Logger(ctx).Debug("error getting redemption UTXO inputs", "bytes", hex.EncodeToString(redemptionBz), "err", err)
-			continue
-		}
-
-		// TODO: create unsigned Bitcoin redemption transaction bytes and hash
-		unsignedRedemptionTx := []byte{}
-		unsignedRedemptionTxHash := []byte{}
-
-		if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
-			ctx,
-			&treasurytypes.MsgNewSignTransactionRequest{
-				Creator:             "", // TODO: can this be left empty?
-				KeyId:               k.GetZenBTCWithdrawerKeyID(ctx),
-				WalletType:          treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET, // TODO: change to mainnet before launch
-				UnsignedTransaction: unsignedRedemptionTx,
-				Metadata:            nil,
-				NoBroadcast:         false,
-			},
-			[]byte(hex.EncodeToString(unsignedRedemptionTxHash)),
-		); err != nil {
-			k.Logger(ctx).Error("error creating redemption transaction", "err", err)
-			return
-		}
-
-		if err := k.CompletedRedemptions.Set(ctx, redemptionBz); err != nil {
-			k.Logger(ctx).Error("error adding redemption to completed redemptions", "err", err)
-		}
-	}
-}
-
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	if oracleData.BtcBlockHeight != 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
 		// TODO(sasha): check if entry exists for this height, if it does, we need to add last 6 block heights to a slice and
@@ -483,7 +429,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 }
 
-func (k *Keeper) createMintTransaction(ctx sdk.Context, oracleData OracleData) error {
+func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleData) error {
 	requested, err := k.EthereumNonceRequested.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -555,6 +501,28 @@ func (k *Keeper) createMintTransaction(ctx sdk.Context, oracleData OracleData) e
 	}
 
 	return nil
+}
+
+func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
+	if len(oracleData.EthereumRedemptions) == 0 {
+		k.Logger(ctx).Debug("no redemptions to store")
+		return
+	}
+	for _, redemption := range oracleData.EthereumRedemptions {
+		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
+		if err != nil {
+			k.Logger(ctx).Error("error checking redemption existence", "err", err)
+			continue
+		}
+		if redemptionExists {
+			k.Logger(ctx).Debug("redemption already stored", "id", redemption.Id)
+			continue
+		}
+		if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{Data: zenbtctypes.RedemptionData(redemption), Completed: false}); err != nil {
+			k.Logger(ctx).Error("error adding redemption to store", "err", err)
+			continue
+		}
+	}
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {

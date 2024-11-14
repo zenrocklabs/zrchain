@@ -28,7 +28,7 @@ var (
 	EthereumNonceRequestedKey  = collections.NewPrefix(9)
 	PendingMintTransactionsKey = collections.NewPrefix(10)
 	PendingRedemptionsKey      = collections.NewPrefix(11)
-	CompletedRedemptionsKey    = collections.NewPrefix(12)
+	ZenBTCRedemptionsKey       = collections.NewPrefix(12)
 	VoteExtensionRejectedKey   = collections.NewPrefix(13)
 
 	AssetPricesIndex             = "asset_prices"
@@ -43,7 +43,7 @@ var (
 	EthereumNonceRequestedIndex  = "ethereum_nonce_requested"
 	PendingMintTransactionsIndex = "pending_mint_transactions"
 	PendingRedemptionsIndex      = "pending_redemption_transactions"
-	CompletedRedemptionsIndex    = "completed_redemptions"
+	ZenBTCRedemptionsIndex       = "zenbtc_redemptions"
 	VoteExtensionRejectedIndex   = "vote_extension_rejected"
 )
 

@@ -169,12 +169,13 @@ func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.RedemptionTr
 		return nil, fmt.Errorf("failed to get redemptions: %w", err)
 	}
 
-	// convert to []Redemptions - address[i] corresponds to amount[i]
+	// convert to []Redemptions - id[i] corresponds to destinationAddr[i] and amount[i]
 	redemptions := make([]api.Redemption, 0)
-	for i := 0; i < len(recentRedemptions.BtcAddresses); i++ {
+	for i := 0; i < len(recentRedemptions.Ids); i++ {
 		redemptions = append(redemptions, api.Redemption{
-			BtcAddress: recentRedemptions.BtcAddresses[i],
-			Amount:     recentRedemptions.Amounts[i],
+			Id:                 recentRedemptions.Ids[i],
+			DestinationAddress: recentRedemptions.DestinationAddrs[i],
+			Amount:             recentRedemptions.Amounts[i],
 		})
 	}
 

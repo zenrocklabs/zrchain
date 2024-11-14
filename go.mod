@@ -14,6 +14,8 @@ replace (
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	// TODO: remove this once sasha/unwrapflow branch on zenbtc repo is merged
+	github.com/zenrocklabs/zenbtc => ../zenbtc
 )
 
 require (
@@ -70,7 +72,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zenrocklabs/zenbtc v1.4.0
+	github.com/zenrocklabs/zenbtc v1.4.2
 	github.com/zenrocklabs/zenrock-avs v1.3.4 // change to v1.1.4 before devnet
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
