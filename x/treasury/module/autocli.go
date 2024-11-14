@@ -111,10 +111,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewSignatureRequest",
-					Use:       "new-signature-request [key-id] [data-for-signing] --btl [btl] --cache-id [cache-id]",
+					Use:       "new-signature-request [key-ids] [data-for-signing] --btl [btl] --cache-id [cache-id]",
 					Short:     "Broadcast message NewSignatureRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "key_id"},
+						{ProtoField: "key_ids"},
 						{ProtoField: "data_for_signing"},
 					},
 				},

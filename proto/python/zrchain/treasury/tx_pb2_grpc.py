@@ -146,13 +146,15 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def NewZrSignSignatureRequest(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def UpdateKeyPolicy(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """UpdateKeyPolicy defines an operation for updating a key policy
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

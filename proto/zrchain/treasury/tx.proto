@@ -50,7 +50,11 @@ service Msg {
   // FulfilICATransactionRequest defines an operation for responding to an
   // interchain account transaction request
   rpc FulfilICATransactionRequest(MsgFulfilICATransactionRequest) returns (MsgFulfilICATransactionRequestResponse);
+
+  // NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
   rpc NewZrSignSignatureRequest(MsgNewZrSignSignatureRequest) returns (MsgNewZrSignSignatureRequestResponse);
+
+  // UpdateKeyPolicy defines an operation for updating a key policy
   rpc UpdateKeyPolicy(MsgUpdateKeyPolicy) returns (MsgUpdateKeyPolicyResponse);
 }
 
@@ -128,7 +132,7 @@ message MsgFulfilKeyRequestResponse {}
 message MsgNewSignatureRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
-  uint64 key_id = 2;
+  repeated uint64 key_ids = 2;
   string data_for_signing = 3;
   uint64 btl = 4;
   bytes cache_id = 5;

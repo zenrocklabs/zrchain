@@ -1,12 +1,11 @@
 syntax = "proto3";
 package zrchain.treasury;
 
-import "zrchain/treasury/wallet.proto";
-import "zrchain/treasury/key.proto";
-
 // import "ibc/applications/interchain_accounts/controller/v1/tx.proto";
 
 import "google/protobuf/any.proto";
+import "zrchain/treasury/key.proto";
+import "zrchain/treasury/wallet.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 
@@ -36,7 +35,7 @@ enum SignRequestStatus {
 message SignRequest {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  repeated uint64 key_ids = 3;
   KeyType key_type = 4;
   repeated bytes data_for_signing = 5;
   SignRequestStatus status = 6;
@@ -70,7 +69,7 @@ message SignTransactionRequest {
 message SignReqResponse {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  repeated uint64 key_ids = 3;
   string key_type = 4;
   repeated bytes data_for_signing = 5;
   string status = 6;

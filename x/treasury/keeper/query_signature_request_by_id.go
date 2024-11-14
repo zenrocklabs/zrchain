@@ -22,7 +22,7 @@ func (k Keeper) SignatureRequestByID(goCtx context.Context, req *types.QuerySign
 		SignRequest: &types.SignReqResponse{
 			Id:                     signReq.Id,
 			Creator:                signReq.Creator,
-			KeyId:                  signReq.KeyId,
+			KeyIds:                 signReq.KeyIds,
 			KeyType:                signReq.KeyType.String(),
 			DataForSigning:         signReq.DataForSigning,
 			Status:                 signReq.Status.String(),

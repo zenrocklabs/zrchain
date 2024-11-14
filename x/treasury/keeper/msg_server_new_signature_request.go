@@ -18,9 +18,9 @@ import (
 func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
+	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
-		return nil, fmt.Errorf("key %v not found", msg.KeyId)
+		return nil, fmt.Errorf("key %v not found", msg.KeyIds[0])
 	}
 
 	payload := strings.Split(msg.DataForSigning, ",")
@@ -68,9 +68,9 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 }
 
 func (k msgServer) NewSignatureRequestPolicyGenerator(ctx sdk.Context, msg *types.MsgNewSignatureRequest) (pol.Policy, error) {
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
+	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
-		return nil, fmt.Errorf("key %v not found", msg.KeyId)
+		return nil, fmt.Errorf("key %v not found", msg.KeyIds[0])
 	}
 
 	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
