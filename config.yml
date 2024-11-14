@@ -104,13 +104,13 @@ genesis:
         goal_bonded: "0.670000000000000000"
         blocks_per_year: 6311520
         staking_yield: "0.070000000000000000"
-        burn_rate: "0.000000000000000000"
-        protocol_wallet_rate: "0.000000000000000000"
-        protocol_wallet_address: ""
-        retention_rate: "0.000000000000000000"
-        additional_staking_rewards: "0.000000000000000000"
-        additional_mpc_rewards: "0.000000000000000000"
-        additional_burn_rate: "0.000000000000000000"
+        burn_rate: "0.100000000000000000"
+        protocol_wallet_rate: "0.300000000000000000"
+        protocol_wallet_address: "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq"
+        retention_rate: "0.400000000000000000"
+        additional_staking_rewards: "0.300000000000000000"
+        additional_mpc_rewards: "0.050000000000000000"
+        additional_burn_rate: "0.250000000000000000"
     treasury:
       params:
         mpc_keyring: keyring1pfnq7r04rept47gaf5cpdew2

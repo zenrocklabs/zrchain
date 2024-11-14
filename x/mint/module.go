@@ -7,10 +7,10 @@ import (
 
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	modulev1 "cosmossdk.io/api/cosmos/mint/module/v1"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/depinject"
+	modulev1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/mint/module/v1"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
