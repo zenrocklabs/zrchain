@@ -327,6 +327,8 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
 	for _, delegation := range oracleData.ValidatorDelegations {
+		k.Logger(ctx).Info("delegation", "validator", delegation.Validator, "stake", delegation.Stake)
+
 		valAddr, err := sdk.ValAddressFromBech32(delegation.Validator)
 		if err != nil {
 			k.Logger(ctx).Error("invalid validator address: "+delegation.Validator, "err", err)
