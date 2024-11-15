@@ -23,8 +23,7 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	treasuryKeeper types.TreasuryKeeper
 
-	feeCollectorName     string
-	keyringCollectorName string
+	feeCollectorName string
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.

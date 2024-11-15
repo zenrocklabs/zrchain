@@ -6,7 +6,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Op
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Keyring(_message.Message):
-    __slots__ = ("address", "creator", "description", "admins", "parties", "party_threshold", "key_req_fee", "sig_req_fee", "is_active")
+    __slots__ = ("address", "creator", "description", "admins", "parties", "party_threshold", "key_req_fee", "sig_req_fee", "is_active", "delegate_fees")
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
@@ -16,6 +16,7 @@ class Keyring(_message.Message):
     KEY_REQ_FEE_FIELD_NUMBER: _ClassVar[int]
     SIG_REQ_FEE_FIELD_NUMBER: _ClassVar[int]
     IS_ACTIVE_FIELD_NUMBER: _ClassVar[int]
+    DELEGATE_FEES_FIELD_NUMBER: _ClassVar[int]
     address: str
     creator: str
     description: str
@@ -25,4 +26,5 @@ class Keyring(_message.Message):
     key_req_fee: int
     sig_req_fee: int
     is_active: bool
-    def __init__(self, address: _Optional[str] = ..., creator: _Optional[str] = ..., description: _Optional[str] = ..., admins: _Optional[_Iterable[str]] = ..., parties: _Optional[_Iterable[str]] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., is_active: bool = ...) -> None: ...
+    delegate_fees: bool
+    def __init__(self, address: _Optional[str] = ..., creator: _Optional[str] = ..., description: _Optional[str] = ..., admins: _Optional[_Iterable[str]] = ..., parties: _Optional[_Iterable[str]] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., is_active: bool = ..., delegate_fees: bool = ...) -> None: ...

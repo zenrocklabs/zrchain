@@ -196,11 +196,12 @@ var maccPerms = map[string][]string{
 	govtypes.ModuleName:               {authtypes.Burner},
 	nft.ModuleName:                    nil,
 	// non sdk modules
-	ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-	ibcfeetypes.ModuleName:      nil,
-	icatypes.ModuleName:         nil,
-	wasmtypes.ModuleName:        {authtypes.Burner},
-	identitytypes.ModuleName:    nil,
+	ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+	ibcfeetypes.ModuleName:             nil,
+	icatypes.ModuleName:                nil,
+	wasmtypes.ModuleName:               {authtypes.Burner},
+	identitytypes.ModuleName:           nil,
+	treasurytypes.KeyringCollectorName: nil,
 }
 
 var (
