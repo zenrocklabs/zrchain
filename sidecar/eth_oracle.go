@@ -77,10 +77,11 @@ func (o *Oracle) fetchAndProcessState(serviceManager *middleware.ContractZRServi
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
+	log.Printf("Delegations: %v\n", delegations)
 
 	RedemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
 	if err != nil {
-		return fmt.Errorf("failed to get redemption tracker state: %w", err)
+		// return fmt.Errorf("failed to get redemption tracker state: %w", err) // TODO: uncomment when RedemptionTracker is deployed
 	}
 
 	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
