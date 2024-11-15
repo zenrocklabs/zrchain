@@ -132,6 +132,24 @@ fi
 # Initialize the node
 zenrockd init $MONIKER --chain-id $CHAINID --home $HOME_DIR
 
+# Set initial mint parameters
+jq '.app_state.mint.params = {
+    "mint_denom": "urock",
+    "inflation_rate_change": "0.000000000000000000",
+    "inflation_max": "0.000000000000000000",
+    "inflation_min": "0.000000000000000000",
+    "goal_bonded": "0.670000000000000000",
+    "blocks_per_year": "6311520",
+    "staking_yield": "0.070000000000000000",
+    "burn_rate": "0.100000000000000000",
+    "protocol_wallet_rate": "0.300000000000000000",
+    "protocol_wallet_address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+    "retention_rate": "0.400000000000000000",
+    "additional_staking_rewards": "0.300000000000000000",
+    "additional_mpc_rewards": "0.050000000000000000",
+    "additional_burn_rate": "0.250000000000000000"
+}' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
 function ssed {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         gsed "$@"
@@ -260,23 +278,6 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "sig_req_fee": 0
       }
     ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
-
-    jq '.app_state.mint.params = {
-        "mint_denom": "urock",
-        "inflation_rate_change": "0.000000000000000000",
-        "inflation_max": "0.000000000000000000",
-        "inflation_min": "0.000000000000000000",
-        "goal_bonded": "0.670000000000000000",
-        "blocks_per_year": "6311520",
-        "staking_yield": "0.070000000000000000",
-        "burn_rate": "0.100000000000000000",
-        "protocol_wallet_rate": "0.300000000000000000",
-        "protocol_wallet_address": "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq",
-        "retention_rate": "0.400000000000000000",
-        "additional_staking_rewards": "0.300000000000000000",
-        "additional_mpc_rewards": "0.050000000000000000",
-        "additional_burn_rate": "0.250000000000000000"
-    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
     jq '.app_state.identity.workspaces = [
       {
