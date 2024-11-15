@@ -30,6 +30,7 @@ type IntegrationTestSuite struct {
 	stakingKeeper  *minttestutil.MockStakingKeeper
 	bankKeeper     *minttestutil.MockBankKeeper
 	treasuryKeeper *minttestutil.MockTreasuryKeeper
+	accountKeeper  *minttestutil.MockAccountKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {

@@ -24,19 +24,21 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	// TODO - set new params for protocol wallet and distribution amounts
-	// TODO - receive keyring fees as rewards
-	// TODO - burn percentage
-	// TODO - send to protocol wallet
-	// TODO - handle if rewards are enough to cover the staking rewards
-	// TODO - implement excess reward mechanism
-	// TODO - handle top-up from protocol wallet to cover staking rewards
+	// TODO - create tests
+	// TODO -
 	// TODO - adjust events
 	// TODO - remove legacy minting mechanism
 
 	// DONE - add TotalBondedTokens
 	// DONE - add NextStakingReward based on annual staking yield
 	// DONE - add amount to get distributed to stakers
+	// DONE - set new params for protocol wallet and distribution amounts
+	// DONE - receive keyring fees as rewards
+	// DONE - burn percentage
+	// DONE - send to protocol wallet
+	// DONE - handle if rewards are enough to cover the staking rewards
+	// DONE - implement excess reward mechanism
+	// DONE - handle top-up from protocol wallet to cover staking rewards
 
 	// recalculate inflation rate
 	totalStakingSupply, err := k.StakingTokenSupply(ctx)
@@ -49,20 +51,67 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	// totalBondedTokens, err := k.TotalBondedTokens(ctx)
-	// if err != nil {
-	// 	return err
-	// }
+	keyringRewards, err := k.ClaimKeyringFees(ctx)
+	if err != nil {
+		return err
+	}
 
-	// totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
-	// if err != nil {
-	// 	return err
-	// }
+	keyringRewardsRest, err := k.BaseDistribution(ctx, keyringRewards)
+	if err != nil {
+		return err
+	}
 
-	// err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))
-	// if err != nil {
-	// 	return err
-	// }
+	totalBondedTokens, err := k.TotalBondedTokens(ctx)
+	if err != nil {
+		return err
+	}
+
+	totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
+	if err != nil {
+		return err
+	}
+
+	if totalBlockStakingReward.Amount.GT(keyringRewardsRest.Amount) {
+		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, keyringRewardsRest)
+		if err != nil {
+			return err
+		}
+
+		err = k.TopUpKeyringRewards(ctx, topUpAmount)
+		if err != nil {
+			return err
+		}
+
+		err = k.CheckModuleBalance(ctx, totalBlockStakingReward)
+		if err != nil {
+			return err
+		}
+	} else {
+		excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, keyringRewardsRest)
+		if err != nil {
+			return err
+		}
+
+		err = k.AdditionalBurn(ctx, excess)
+		if err != nil {
+			return err
+		}
+
+		err = k.AdditionalMpcRewards(ctx, excess)
+		if err != nil {
+			return err
+		}
+
+		err = k.AdditionalStakingRewards(ctx, excess)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))
+	if err != nil {
+		return err
+	}
 
 	minter.Inflation = ic(ctx, minter, params, bondedRatio)
 	minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)

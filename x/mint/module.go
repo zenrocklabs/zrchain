@@ -16,7 +16,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/simulation"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
-	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -211,7 +210,7 @@ type ModuleInputs struct {
 	AccountKeeper  types.AccountKeeper
 	BankKeeper     types.BankKeeper
 	StakingKeeper  types.StakingKeeper
-	TreasuryKeeper treasurykeeper.Keeper
+	TreasuryKeeper types.TreasuryKeeper
 }
 
 type ModuleOutputs struct {
