@@ -71,7 +71,6 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
-	fmt.Printf("delegations: %v\n", delegations)
 
 	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
 	if err != nil {
