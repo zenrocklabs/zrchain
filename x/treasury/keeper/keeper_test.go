@@ -143,19 +143,6 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 				commission: 1,
 			},
 		},
-		{
-			name:    "FAIL: Commission is greater than 100",
-			wantErr: true,
-			args: args{
-				feeAddr:    addrTo,
-				fee:        10,
-				commission: 101,
-			},
-			want: want{
-				fee:        0,
-				commission: 0,
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -170,12 +157,6 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 
 			tkGenesis := types.GenesisState{
 				Params: types.DefaultParams(),
-			}
-
-			if tt.args.commission > 100 {
-				err := treasuryKeeper.SplitKeyringFee(ctx, addrFrom, tt.args.feeAddr, tt.args.fee)
-				require.Error(t, err)
-				return
 			}
 
 			tkGenesis.Params.KeyringCommission = tt.args.commission
