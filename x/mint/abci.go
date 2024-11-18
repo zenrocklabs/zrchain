@@ -2,6 +2,7 @@ package mint
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
@@ -56,26 +57,41 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
+	// TODO - remove
+	fmt.Println("keyringRewards: ", keyringRewards)
+
 	keyringRewardsRest, err := k.BaseDistribution(ctx, keyringRewards)
 	if err != nil {
 		return err
 	}
+
+	// TODO - remove
+	fmt.Println("keyringRewardsRest: ", keyringRewardsRest)
 
 	totalBondedTokens, err := k.TotalBondedTokens(ctx)
 	if err != nil {
 		return err
 	}
 
+	// TODO - remove
+	fmt.Println("totalBondedTokens: ", totalBondedTokens)
+
 	totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
 	if err != nil {
 		return err
 	}
+
+	// TODO - remove
+	fmt.Println("totalBlockStakingReward: ", totalBlockStakingReward)
 
 	if totalBlockStakingReward.Amount.GT(keyringRewardsRest.Amount) {
 		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, keyringRewardsRest)
 		if err != nil {
 			return err
 		}
+
+		// TODO - remove
+		fmt.Println("topUpAmount: ", topUpAmount)
 
 		err = k.TopUpKeyringRewards(ctx, topUpAmount)
 		if err != nil {
@@ -92,20 +108,32 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			return err
 		}
 
+		// TODO - remove
+		fmt.Println("excess: ", excess)
+
 		err = k.AdditionalBurn(ctx, excess)
 		if err != nil {
 			return err
 		}
+
+		// TODO - remove
+		fmt.Println("excess after burn: ", excess)
 
 		err = k.AdditionalMpcRewards(ctx, excess)
 		if err != nil {
 			return err
 		}
 
+		// TODO - remove
+		fmt.Println("excess after mpc rewards: ", excess)
+
 		err = k.AdditionalStakingRewards(ctx, excess)
 		if err != nil {
 			return err
 		}
+
+		// TODO - remove
+		fmt.Println("excess after staking rewards: ", excess)
 	}
 
 	err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))

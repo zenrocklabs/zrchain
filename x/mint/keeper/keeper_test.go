@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -113,9 +114,15 @@ func (s *IntegrationTestSuite) TestClaimKeyringFees() {
 	// Setup expected keyring rewards
 	expectedRewards := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
 
-	// Mock the GetBalance call
+	// Mock getting the module account address
+	moduleAddr := sdk.AccAddress{}
+	s.accountKeeper.EXPECT().
+		GetModuleAddress(treasurytypes.KeyringCollectorName).
+		Return(moduleAddr)
+
+	// Mock the GetBalance call with the module account address
 	s.bankKeeper.EXPECT().
-		GetBalance(s.ctx, sdk.AccAddress(treasurytypes.KeyringCollectorName), params.MintDenom).
+		GetBalance(s.ctx, moduleAddr, params.MintDenom).
 		Return(expectedRewards)
 
 	// Mock the SendCoinsFromModuleToModule call
@@ -160,4 +167,189 @@ func (s *IntegrationTestSuite) TestTopUpKeyringRewards() {
 	// Call the function being tested
 	err = s.mintKeeper.TopUpKeyringRewards(s.ctx, topUpAmount)
 	s.Require().NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestCheckModuleBalance() {
+	testCases := []struct {
+		name        string
+		setupMocks  func()
+		reward      sdk.Coin
+		expectError bool
+	}{
+		{
+			name: "sufficient balance",
+			setupMocks: func() {
+				moduleAddr := sdk.AccAddress{}
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
+				s.bankKeeper.EXPECT().
+					GetBalance(s.ctx, moduleAddr, "urock").
+					Return(sdk.NewCoin("urock", math.NewInt(1000)))
+			},
+			reward:      sdk.NewCoin("urock", math.NewInt(500)),
+			expectError: false,
+		},
+		{
+			name: "insufficient balance",
+			setupMocks: func() {
+				moduleAddr := sdk.AccAddress{}
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
+				s.bankKeeper.EXPECT().
+					GetBalance(s.ctx, moduleAddr, "urock").
+					Return(sdk.NewCoin("urock", math.NewInt(100)))
+			},
+			reward:      sdk.NewCoin("urock", math.NewInt(500)),
+			expectError: true,
+		},
+		{
+			name:        "zero reward amount",
+			setupMocks:  func() {},
+			reward:      sdk.NewCoin("urock", math.NewInt(0)),
+			expectError: true,
+		},
+		{
+			name: "module address not found",
+			setupMocks: func() {
+				s.accountKeeper.EXPECT().
+					GetModuleAddress(types.ModuleName).
+					Return(nil)
+			},
+			reward:      sdk.NewCoin("urock", math.NewInt(500)),
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup the mocks
+			tc.setupMocks()
+
+			// Execute the method
+			err := s.mintKeeper.CheckModuleBalance(s.ctx, tc.reward)
+
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestTotalBondedTokens() {
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedValue math.Int
+		expectError   bool
+	}{
+		{
+			name: "successful query",
+			setupMocks: func() {
+				s.stakingKeeper.EXPECT().
+					TotalBondedTokens(s.ctx).
+					Return(math.NewInt(1000000), nil)
+			},
+			expectedValue: math.NewInt(1000000),
+			expectError:   false,
+		},
+		{
+			name: "staking keeper returns error",
+			setupMocks: func() {
+				s.stakingKeeper.EXPECT().
+					TotalBondedTokens(s.ctx).
+					Return(math.Int{}, fmt.Errorf("failed to get total bonded tokens"))
+			},
+			expectedValue: math.Int{},
+			expectError:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup the mocks
+			tc.setupMocks()
+
+			// Execute the method
+			result, err := s.mintKeeper.TotalBondedTokens(s.ctx)
+
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedValue, result)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestNextStakingReward() {
+	testCases := []struct {
+		name string
+
+		setupMocks     func()
+		totalBonded    math.Int
+		expectedReward sdk.Coin
+		expectError    bool
+	}{
+		{
+			name: "successful calculation",
+			setupMocks: func() {
+				params := types.Params{
+					MintDenom:     "urock",
+					BlocksPerYear: 6311520,
+					StakingYield:  math.LegacyNewDecWithPrec(15, 2),
+				}
+				err := s.mintKeeper.Params.Set(s.ctx, params)
+				s.Require().NoError(err)
+			},
+			totalBonded:    math.NewInt(1000000000),
+			expectedReward: sdk.NewCoin("urock", math.NewInt(23)),
+			expectError:    false,
+		},
+		{
+			name: "params get error",
+			setupMocks: func() {
+				err := s.mintKeeper.Params.Remove(s.ctx)
+				s.Require().NoError(err)
+			},
+			totalBonded:    math.NewInt(1000000000),
+			expectedReward: sdk.Coin{},
+			expectError:    true,
+		},
+		{
+			name: "zero bonded tokens",
+			setupMocks: func() {
+				params := types.Params{
+					MintDenom:     "urock",
+					BlocksPerYear: 6311520,
+					StakingYield:  math.LegacyNewDecWithPrec(15, 2),
+				}
+				err := s.mintKeeper.Params.Set(s.ctx, params)
+				s.Require().NoError(err)
+			},
+			totalBonded:    math.NewInt(0),
+			expectedReward: sdk.NewCoin("urock", math.NewInt(0)),
+			expectError:    false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup the mocks
+			tc.setupMocks()
+
+			// Execute the method
+			reward, err := s.mintKeeper.NextStakingReward(s.ctx, tc.totalBonded)
+
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedReward, reward)
+			}
+		})
+	}
 }

@@ -41,6 +41,14 @@ accounts:
     coins:
       - 100000000000000urock
     mnemonic: "theme rocket judge useless snap happy step youth cousin inject sweet angry scan manual middle lake absorb mango six earth rescue elite settle dolphin"
+  - name: KeyringCommissionAccount
+    # zen1gaukyu08qh0fv6rp0zvlar2wzy9s5p2gj7fdqt
+    mnemonic: "section close wealth giggle enable soon grief real pink dwarf mutual link kit pulse proud crawl useful lizard gate tomato oak yard soul empower"
+  - name: ProtocolWalletAccount
+    # zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj
+    coins:
+      - 100000000000000urock
+    mnemonic: "rescue piano material dirt true hurry humor coach agree require happy crumble debate finish pizza foil slogan concert before write alone bronze response bird"
 
 faucet:
   name: bob
@@ -83,10 +91,10 @@ genesis:
           creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
           description: TSS one
           is_active: true
-          key_req_fee: 0
+          key_req_fee: 33
           parties:
             - zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn
-          sig_req_fee: 0
+          sig_req_fee: 55
       workspaces:
         - address: workspace14a2hpadpsy9h4auve2z8lw
           creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
