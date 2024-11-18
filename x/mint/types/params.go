@@ -39,14 +39,14 @@ func DefaultParams() Params {
 		InflationMin:             math.LegacyNewDecWithPrec(7, 2),
 		GoalBonded:               math.LegacyNewDecWithPrec(67, 2),
 		BlocksPerYear:            uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
-		StakingYield:             math.LegacyNewDecWithPrec(10, 2),
-		BurnRate:                 math.LegacyNewDecWithPrec(0, 2),
-		ProtocolWalletRate:       math.LegacyNewDecWithPrec(0, 2),
-		RetentionRate:            math.LegacyNewDecWithPrec(0, 2),
-		AdditionalStakingRewards: math.LegacyNewDecWithPrec(0, 2),
-		AdditionalMpcRewards:     math.LegacyNewDecWithPrec(0, 2),
-		AdditionalBurnRate:       math.LegacyNewDecWithPrec(0, 2),
-		ProtocolWalletAddress:    "",
+		StakingYield:             math.LegacyNewDecWithPrec(7, 2),
+		BurnRate:                 math.LegacyNewDecWithPrec(10, 2),
+		ProtocolWalletRate:       math.LegacyNewDecWithPrec(30, 2),
+		RetentionRate:            math.LegacyNewDecWithPrec(40, 2),
+		AdditionalStakingRewards: math.LegacyNewDecWithPrec(30, 2),
+		AdditionalMpcRewards:     math.LegacyNewDecWithPrec(5, 2),
+		AdditionalBurnRate:       math.LegacyNewDecWithPrec(25, 2),
+		ProtocolWalletAddress:    "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
 	}
 }
 

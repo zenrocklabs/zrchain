@@ -52,6 +52,12 @@ func (s *IntegrationTestSuite) SetupTest() {
 	treasuryKeeper := minttestutil.NewMockTreasuryKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
 
+	// Assign the mock keepers to the suite fields
+	s.accountKeeper = accountKeeper
+	s.bankKeeper = bankKeeper
+	s.stakingKeeper = stakingKeeper
+	s.treasuryKeeper = treasuryKeeper
+
 	s.mintKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -74,6 +80,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 }
 
 func (s *IntegrationTestSuite) TestAliasFunctions() {
+
 	stakingTokenSupply := math.NewIntFromUint64(100000000000)
 	s.stakingKeeper.EXPECT().StakingTokenSupply(s.ctx).Return(stakingTokenSupply, nil)
 	tokenSupply, err := s.mintKeeper.StakingTokenSupply(s.ctx)
@@ -86,12 +93,12 @@ func (s *IntegrationTestSuite) TestAliasFunctions() {
 	s.Require().NoError(err)
 	s.Require().Equal(ratio, bondedRatio)
 
-	coins := sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1000000)))
+	coins := sdk.NewCoins(sdk.NewCoin("urock", math.NewInt(1000000)))
 	s.bankKeeper.EXPECT().MintCoins(s.ctx, types.ModuleName, coins).Return(nil)
 	s.Require().Equal(s.mintKeeper.MintCoins(s.ctx, sdk.NewCoins()), nil)
 	s.Require().Nil(s.mintKeeper.MintCoins(s.ctx, coins))
 
-	fees := sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1000)))
+	fees := sdk.NewCoins(sdk.NewCoin("urock", math.NewInt(1000)))
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, types.ModuleName, authtypes.FeeCollectorName, fees).Return(nil)
 	s.Require().Nil(s.mintKeeper.AddCollectedFees(s.ctx, fees))
 }
