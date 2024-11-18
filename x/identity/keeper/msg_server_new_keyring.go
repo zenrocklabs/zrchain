@@ -18,6 +18,7 @@ func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (
 		KeyReqFee:      msg.KeyReqFee,
 		SigReqFee:      msg.SigReqFee,
 		IsActive:       true,
+		DelegateFees:   msg.DelegateFees,
 	}
 
 	params, err := k.ParamStore.Get(goCtx)
