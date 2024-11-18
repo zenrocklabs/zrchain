@@ -173,7 +173,7 @@ func (k Keeper) sendProtocolWalletFees(ctx context.Context, protocolWalletPortio
 	if err != nil {
 		return err
 	}
-	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, params.ProtocolWalletAddress, sdk.NewCoins(protocolWalletPortion))
+	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sdk.AccAddress(params.ProtocolWalletAddress), sdk.NewCoins(protocolWalletPortion))
 }
 
 func (k Keeper) CalculateTopUp(ctx context.Context, stakingRewards sdk.Coin, keyringRewardRest sdk.Coin) (sdk.Coin, error) {
