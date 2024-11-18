@@ -336,6 +336,7 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 	id, err := k.processSignatureRequests(ctx, dataForSigning, msg.KeyIds, &types.SignRequest{
 		Creator:        msg.Creator,
 		DataForSigning: dataForSigning,
+		KeyIds:         msg.KeyIds,
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		CacheId:        msg.CacheId,
 	})
@@ -373,6 +374,8 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		if keyring.SigReqFee > 0 {
 			keyringFees[keyring.Address] += keyring.SigReqFee
 		}
+
+		req.KeyType = key.GetType()
 	}
 
 	// Process all keyring fees at once
