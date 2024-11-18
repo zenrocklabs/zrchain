@@ -2,6 +2,7 @@
 
 K1="alice"
 K2="bob"
+K3="protocolwallet"
 CHAINID="zenrock"
 KEYRING="test"
 LOGLEVEL="info"
@@ -15,6 +16,7 @@ VALIDATOR_HOME="$HOME/.zrchain"
 SIDECAR_ADDR=""
 MNEMONIC1="strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue"
 MNEMONIC2="fee buzz avocado dolphin syrup rule access cave close puppy lemon round able bronze fame give spoon company since fog error trip toast unable"
+MNEMONIC3="rescue piano material dirt true hurry humor coach agree require happy crumble debate finish pizza foil slogan concert before write alone bronze response bird"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -127,6 +129,7 @@ if [ "$NON_VALIDATOR" = false ]; then
     # Add keys for Alice and Bob using their mnemonics
     recover_key_with_mnemonic $K1 "$MNEMONIC1" $KEYRING $HOME_DIR
     recover_key_with_mnemonic $K2 "$MNEMONIC2" $KEYRING $HOME_DIR
+    recover_key_with_mnemonic $K3 "$MNEMONIC3" $KEYRING $HOME_DIR
 fi
 
 # Initialize the node
@@ -143,7 +146,7 @@ jq '.app_state.mint.params = {
     "staking_yield": "0.070000000000000000",
     "burn_rate": "0.100000000000000000",
     "protocol_wallet_rate": "0.300000000000000000",
-    "protocol_wallet_address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+    "protocol_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
     "retention_rate": "0.400000000000000000",
     "additional_staking_rewards": "0.300000000000000000",
     "additional_mpc_rewards": "0.050000000000000000",
@@ -161,8 +164,13 @@ function ssed {
 if [ "$NON_VALIDATOR" = false ]; then
     if [ "$LOCALNET" != "2" ]; then
         # First validator node in localnet or default single-node flow: allocate genesis accounts
-        zenrockd genesis add-genesis-account $K1 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        zenrockd genesis add-genesis-account $K2 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for Alice (K1)
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for Bob (K2)
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for protocol wallet (K3) - not a validator
+        zenrockd genesis add-genesis-account zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj 2000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for other accounts
         zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
         zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
     else

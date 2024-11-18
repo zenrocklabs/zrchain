@@ -13,6 +13,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	minttestutil "github.com/Zenrock-Foundation/zrchain/v5/x/mint/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -101,4 +102,62 @@ func (s *IntegrationTestSuite) TestAliasFunctions() {
 	fees := sdk.NewCoins(sdk.NewCoin("urock", math.NewInt(1000)))
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, types.ModuleName, authtypes.FeeCollectorName, fees).Return(nil)
 	s.Require().Nil(s.mintKeeper.AddCollectedFees(s.ctx, fees))
+}
+
+func (s *IntegrationTestSuite) TestClaimKeyringFees() {
+	// Setup test parameters
+	params := types.DefaultParams()
+	err := s.mintKeeper.Params.Set(s.ctx, params)
+	s.Require().NoError(err)
+
+	// Setup expected keyring rewards
+	expectedRewards := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
+
+	// Mock the GetBalance call
+	s.bankKeeper.EXPECT().
+		GetBalance(s.ctx, sdk.AccAddress(treasurytypes.KeyringCollectorName), params.MintDenom).
+		Return(expectedRewards)
+
+	// Mock the SendCoinsFromModuleToModule call
+	s.bankKeeper.EXPECT().
+		SendCoinsFromModuleToModule(
+			s.ctx,
+			treasurytypes.KeyringCollectorName,
+			types.ModuleName,
+			sdk.NewCoins(expectedRewards),
+		).
+		Return(nil)
+
+	// Call the function being tested
+	actualRewards, err := s.mintKeeper.ClaimKeyringFees(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedRewards, actualRewards)
+}
+
+func (s *IntegrationTestSuite) TestTopUpKeyringRewards() {
+	// Setup test parameters
+	params := types.DefaultParams()
+	err := s.mintKeeper.Params.Set(s.ctx, params)
+	s.Require().NoError(err)
+
+	// Setup test amount
+	topUpAmount := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
+
+	// Convert the protocol wallet address string to AccAddress before using it
+	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
+	s.Require().NoError(err)
+
+	// Mock the SendCoinsFromAccountToModule call with the correct address
+	s.bankKeeper.EXPECT().
+		SendCoinsFromAccountToModule(
+			s.ctx,
+			protocolAddr,
+			types.ModuleName,
+			sdk.NewCoins(topUpAmount),
+		).
+		Return(nil)
+
+	// Call the function being tested
+	err = s.mintKeeper.TopUpKeyringRewards(s.ctx, topUpAmount)
+	s.Require().NoError(err)
 }

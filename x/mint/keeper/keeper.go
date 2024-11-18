@@ -57,6 +57,7 @@ func NewKeeper(
 		cdc:              cdc,
 		storeService:     storeService,
 		stakingKeeper:    sk,
+		accountKeeper:    ak,
 		bankKeeper:       bk,
 		feeCollectorName: feeCollectorName,
 		authority:        authority,
@@ -191,11 +192,34 @@ func (k Keeper) TopUpKeyringRewards(ctx context.Context, topUpAmount sdk.Coin) e
 	if err != nil {
 		return err
 	}
-	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(params.ProtocolWalletAddress), types.ModuleName, sdk.NewCoins(topUpAmount))
+
+	// Convert string address to AccAddress
+	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
+	if err != nil {
+		return fmt.Errorf("invalid protocol wallet address: %v", err)
+	}
+
+	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, protocolAddr, types.ModuleName, sdk.NewCoins(topUpAmount))
 }
 
 func (k Keeper) CheckModuleBalance(ctx context.Context, totalBlockStakingReward sdk.Coin) error {
-	moduleBalance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ModuleName), totalBlockStakingReward.Denom)
+
+	// Validate input
+	if totalBlockStakingReward.IsZero() {
+		return fmt.Errorf("staking reward cannot be zero")
+	}
+
+	// Get the module address
+	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	fmt.Printf("Module address: %v\n", moduleAddr)
+
+	if moduleAddr == nil {
+		return fmt.Errorf("module address for %s not found", types.ModuleName)
+	}
+
+	// Add debug logging
+	moduleBalance := k.bankKeeper.GetBalance(ctx, moduleAddr, totalBlockStakingReward.Denom)
+
 	if moduleBalance.Amount.LT(totalBlockStakingReward.Amount) {
 		return fmt.Errorf("module balance %v is less than required staking reward %v", moduleBalance, totalBlockStakingReward)
 	}
