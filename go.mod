@@ -18,6 +18,7 @@ replace (
 	github.com/zenrocklabs/zenbtc => ../zenbtc
 )
 
+
 require (
 	cosmossdk.io/api v0.7.6
 	cosmossdk.io/client/v2 v2.0.0-beta.5
