@@ -29,20 +29,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	fmt.Println("---")
 
 	// TODO - create tests
-	// TODO -
 	// TODO - adjust events
 	// TODO - remove legacy minting mechanism
-
-	// DONE - add TotalBondedTokens
-	// DONE - add NextStakingReward based on annual staking yield
-	// DONE - add amount to get distributed to stakers
-	// DONE - set new params for protocol wallet and distribution amounts
-	// DONE - receive keyring fees as rewards
-	// DONE - burn percentage
-	// DONE - send to protocol wallet
-	// DONE - handle if rewards are enough to cover the staking rewards
-	// DONE - implement excess reward mechanism
-	// DONE - handle top-up from protocol wallet to cover staking rewards
 
 	// recalculate inflation rate
 	totalStakingSupply, err := k.StakingTokenSupply(ctx)
@@ -104,28 +92,9 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		// TODO - remove
 		fmt.Println("topUpAmount: ", topUpAmount)
 
-		// first use mint module leftover to cover the difference
-		if !mintLeftOver.IsZero() {
-			if mintLeftOver.IsLTE(topUpAmount) {
-				totalRewardsRest = totalRewardsRest.Add(mintLeftOver)
-			} else {
-				totalRewardsRest = totalBlockStakingReward
-			}
-		}
-
-		topUpAmount, err = k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("topUpAmount (after mint leftover added: ", topUpAmount)
-
-		// if mint leftover wasn't enough - top up from protocol wallet
-		if !topUpAmount.IsZero() {
-			err = k.TopUpTotalRewards(ctx, topUpAmount)
-			if err != nil {
-				return err
-			}
+		// if totalRewardsRest enough - top up from mint module
+		if !topUpAmount.IsZero() || !mintLeftOver.IsZero() {
+			totalRewardsRest = totalBlockStakingReward
 		}
 
 		err = k.CheckModuleBalance(ctx, totalBlockStakingReward)

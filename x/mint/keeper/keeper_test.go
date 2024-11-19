@@ -141,33 +141,33 @@ func (s *IntegrationTestSuite) TestClaimKeyringFees() {
 	s.Require().Equal(expectedRewards, actualRewards)
 }
 
-func (s *IntegrationTestSuite) TestTopUpKeyringRewards() {
-	// Setup test parameters
-	params := types.DefaultParams()
-	err := s.mintKeeper.Params.Set(s.ctx, params)
-	s.Require().NoError(err)
+// func (s *IntegrationTestSuite) TestTopUpKeyringRewards() {
+// 	// Setup test parameters
+// 	params := types.DefaultParams()
+// 	err := s.mintKeeper.Params.Set(s.ctx, params)
+// 	s.Require().NoError(err)
 
-	// Setup test amount
-	topUpAmount := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
+// 	// Setup test amount
+// 	topUpAmount := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
 
-	// Convert the protocol wallet address string to AccAddress before using it
-	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-	s.Require().NoError(err)
+// 	// Convert the protocol wallet address string to AccAddress before using it
+// 	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
+// 	s.Require().NoError(err)
 
-	// Mock the SendCoinsFromAccountToModule call with the correct address
-	s.bankKeeper.EXPECT().
-		SendCoinsFromAccountToModule(
-			s.ctx,
-			protocolAddr,
-			types.ModuleName,
-			sdk.NewCoins(topUpAmount),
-		).
-		Return(nil)
+// 	// Mock the SendCoinsFromAccountToModule call with the correct address
+// 	s.bankKeeper.EXPECT().
+// 		SendCoinsFromAccountToModule(
+// 			s.ctx,
+// 			protocolAddr,
+// 			types.ModuleName,
+// 			sdk.NewCoins(topUpAmount),
+// 		).
+// 		Return(nil)
 
-	// Call the function being tested
-	err = s.mintKeeper.TopUpTotalRewards(s.ctx, topUpAmount)
-	s.Require().NoError(err)
-}
+// 	// Call the function being tested
+// 	err = s.mintKeeper.TopUpTotalRewards(s.ctx, topUpAmount)
+// 	s.Require().NoError(err)
+// }
 
 func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 	testCases := []struct {

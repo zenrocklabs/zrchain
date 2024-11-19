@@ -165,14 +165,14 @@ if [ "$NON_VALIDATOR" = false ]; then
     if [ "$LOCALNET" != "2" ]; then
         # First validator node in localnet or default single-node flow: allocate genesis accounts
         # Add funds for Alice (K1)
-        zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
         # Add funds for Bob (K2)
-        zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        # Add funds for protocol wallet (K3) - not a validator
-        zenrockd genesis add-genesis-account zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj 2000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for mint module - not a validator
+        zenrockd genesis add-genesis-account zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR --module-name mint
         # Add funds for other accounts
-        zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
     else
         # Second validator node: copy genesis.json
         cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json
@@ -183,8 +183,8 @@ else
     cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json
 fi
 
-# Set block time to 1s
-ssed -i 's|timeout_commit = "5s"|timeout_commit = "1s"|g' $HOME_DIR/config/config.toml
+# Set block time to 20s
+ssed -i 's|timeout_commit = "5s"|timeout_commit = "20s"|g' $HOME_DIR/config/config.toml
 
 # Adjust ports if alternate ports are specified
 if [[ -n "$ALTERNATE_PORTS" ]]; then
@@ -215,10 +215,10 @@ if [ "$NON_VALIDATOR" = false ]; then
     # Create gentx for the validator
     if [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]; then
         # First validator node or default
-        zenrockd genesis gentx $K2 1000000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
+        zenrockd genesis gentx $K2 125000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
     elif [ "$LOCALNET" = "2" ]; then
         # Second validator node
-        zenrockd genesis gentx $K1 1000000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
+        zenrockd genesis gentx $K1 125000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
     fi
 
     if [ -n "$LOCALNET" ]; then
@@ -261,9 +261,9 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "creator": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
         "description": "ZenrockKMS",
         "is_active": true,
-        "key_req_fee": 0,
+        "key_req_fee": 100000000,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-        "sig_req_fee": 0
+        "sig_req_fee": 1000000
       },
       {
         "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",

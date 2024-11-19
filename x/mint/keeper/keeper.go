@@ -175,8 +175,6 @@ func (k Keeper) BaseDistribution(ctx context.Context, totalRewards sdk.Coin) (sd
 	// TODO - remove
 	fmt.Println("burnAmount: ", burnAmount)
 
-	totalRewards.Amount = totalRewards.Amount.Sub(burnAmount)
-
 	protocolWalletPortion := math.LegacyNewDecFromInt(totalRewards.Amount).Mul(params.ProtocolWalletRate).TruncateInt()
 
 	// TODO - remove
@@ -186,7 +184,7 @@ func (k Keeper) BaseDistribution(ctx context.Context, totalRewards sdk.Coin) (sd
 		return sdk.Coin{}, err
 	}
 
-	totalRewards.Amount = totalRewards.Amount.Sub(protocolWalletPortion)
+	totalRewards.Amount = totalRewards.Amount.Sub(protocolWalletPortion).Sub(burnAmount)
 
 	return totalRewards, nil
 }
@@ -219,20 +217,20 @@ func (k Keeper) CalculateTopUp(ctx context.Context, stakingRewards sdk.Coin, tot
 	return sdk.NewCoin(stakingRewards.Denom, topUpAmount), nil
 }
 
-func (k Keeper) TopUpTotalRewards(ctx context.Context, topUpAmount sdk.Coin) error {
-	params, err := k.Params.Get(ctx)
-	if err != nil {
-		return err
-	}
+// func (k Keeper) TopUpTotalRewards(ctx context.Context, topUpAmount sdk.Coin) error {
+// 	params, err := k.Params.Get(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	// Convert string address to AccAddress
-	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-	if err != nil {
-		return fmt.Errorf("invalid protocol wallet address: %v", err)
-	}
+// 	// Convert string address to AccAddress
+// 	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
+// 	if err != nil {
+// 		return fmt.Errorf("invalid protocol wallet address: %v", err)
+// 	}
 
-	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, protocolAddr, types.ModuleName, sdk.NewCoins(topUpAmount))
-}
+// 	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, protocolAddr, types.ModuleName, sdk.NewCoins(topUpAmount))
+// }
 
 func (k Keeper) CheckModuleBalance(ctx context.Context, totalBlockStakingReward sdk.Coin) error {
 
