@@ -108,32 +108,10 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			return err
 		}
 
-		// TODO - remove
-		fmt.Println("excess: ", excess)
-
-		err = k.AdditionalBurn(ctx, excess)
+		err = k.ExcessDistribution(ctx, excess)
 		if err != nil {
 			return err
 		}
-
-		// TODO - remove
-		fmt.Println("excess after burn: ", excess)
-
-		err = k.AdditionalMpcRewards(ctx, excess)
-		if err != nil {
-			return err
-		}
-
-		// TODO - remove
-		fmt.Println("excess after mpc rewards: ", excess)
-
-		err = k.AdditionalStakingRewards(ctx, excess)
-		if err != nil {
-			return err
-		}
-
-		// TODO - remove
-		fmt.Println("excess after staking rewards: ", excess)
 	}
 
 	err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))
