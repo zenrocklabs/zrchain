@@ -296,3 +296,60 @@ func (k Keeper) AdditionalStakingRewards(ctx context.Context, excess sdk.Coin) e
 	excess.Amount = excess.Amount.Sub(stakingRewards)
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards)))
 }
+
+func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) error {
+
+	mintModuleBalance, err := k.checkMintModuleBalance(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("mintModuleBalance before burn: ", mintModuleBalance)
+
+	err = k.AdditionalBurn(ctx, excessAmount)
+	if err != nil {
+		return err
+	}
+
+	mintModuleBalance, err = k.checkMintModuleBalance(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("mintModuleBalance after burn: ", mintModuleBalance)
+
+	err = k.AdditionalMpcRewards(ctx, excessAmount)
+	if err != nil {
+		return err
+	}
+
+	mintModuleBalance, err = k.checkMintModuleBalance(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("mintModuleBalance after mpcRewards: ", mintModuleBalance)
+
+	err = k.AdditionalStakingRewards(ctx, excessAmount)
+	if err != nil {
+		return err
+	}
+
+	mintModuleBalance, err = k.checkMintModuleBalance(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("mintModuleBalance after stakingRewards: ", mintModuleBalance)
+
+	return nil
+}
+
+func (k Keeper) checkMintModuleBalance(ctx context.Context) (sdk.Coin, error) {
+
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	mintModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	mintModuleBalance := k.bankKeeper.GetBalance(ctx, mintModuleAddr, params.MintDenom)
+
+	return mintModuleBalance, nil
+}
