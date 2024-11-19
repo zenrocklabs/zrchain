@@ -25,6 +25,9 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
+	// TODO remove
+	fmt.Println("---")
+
 	// TODO - create tests
 	// TODO -
 	// TODO - adjust events
@@ -52,21 +55,29 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	keyringRewards, err := k.ClaimKeyringFees(ctx)
+	mintLeftOver, err := k.CheckMintModuleBalance(ctx)
 	if err != nil {
 		return err
 	}
 
 	// TODO - remove
-	fmt.Println("keyringRewards: ", keyringRewards)
+	fmt.Println("mintLeftOver:", mintLeftOver)
 
-	keyringRewardsRest, err := k.BaseDistribution(ctx, keyringRewards)
+	totalRewards, err := k.ClaimTotalRewards(ctx)
 	if err != nil {
 		return err
 	}
 
 	// TODO - remove
-	fmt.Println("keyringRewardsRest: ", keyringRewardsRest)
+	fmt.Println("totalRewards: ", totalRewards)
+
+	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
+	if err != nil {
+		return err
+	}
+
+	// TODO - remove
+	fmt.Println("keyringRewardsRest: ", totalRewardsRest)
 
 	totalBondedTokens, err := k.TotalBondedTokens(ctx)
 	if err != nil {
@@ -84,8 +95,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	// TODO - remove
 	fmt.Println("totalBlockStakingReward: ", totalBlockStakingReward)
 
-	if totalBlockStakingReward.Amount.GT(keyringRewardsRest.Amount) {
-		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, keyringRewardsRest)
+	if totalBlockStakingReward.Amount.GT(totalRewardsRest.Amount) {
+		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
 			return err
 		}
@@ -93,9 +104,28 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		// TODO - remove
 		fmt.Println("topUpAmount: ", topUpAmount)
 
-		err = k.TopUpKeyringRewards(ctx, topUpAmount)
+		// first use mint module leftover to cover the difference
+		if !mintLeftOver.IsZero() {
+			if mintLeftOver.IsLTE(topUpAmount) {
+				totalRewardsRest = totalRewardsRest.Add(mintLeftOver)
+			} else {
+				totalRewardsRest = totalBlockStakingReward
+			}
+		}
+
+		topUpAmount, err = k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
 			return err
+		}
+
+		fmt.Println("topUpAmount (after mint leftover added: ", topUpAmount)
+
+		// if mint leftover wasn't enough - top up from protocol wallet
+		if !topUpAmount.IsZero() {
+			err = k.TopUpTotalRewards(ctx, topUpAmount)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = k.CheckModuleBalance(ctx, totalBlockStakingReward)
@@ -103,7 +133,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			return err
 		}
 	} else {
-		excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, keyringRewardsRest)
+		excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
 			return err
 		}
