@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	DefaultAVSRewardsRate, _               = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
-	DefaultBlockTime                int64  = 1                                // seconds
-	DefaultZenBTCEthContractAddr           = "0x0832c25DcDD7E353749F50136a191377D9bA562e"
-	DefaultZenBTCDepositKeyringAddr        = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
-	DefaultZenBTCMinterKeyID        uint64 = 2
-	DefaultZenBTCWithdrawerKeyID    uint64 = 1
+	DefaultAVSRewardsRate, _                  = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
+	DefaultBlockTime                 int64    = 1                                // seconds
+	DefaultZenBTCEthContractAddr              = "0x0832c25DcDD7E353749F50136a191377D9bA562e"
+	DefaultZenBTCDepositKeyringAddr           = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
+	DefaultZenBTCMinterKeyID         uint64   = 2
+	DefaultZenBTCWithdrawerKeyID     uint64   = 1
+	DefaultZenBTCChangeAddressKeyIDs []uint64 = []uint64{1, 2}
+	DefaultBitcoinProxyID                     = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 )
 
 // NewParams creates a new Params instance
