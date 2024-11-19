@@ -16,7 +16,7 @@ var (
 	DefaultZenBTCMinterKeyID         uint64   = 2
 	DefaultZenBTCWithdrawerKeyID     uint64   = 1
 	DefaultZenBTCChangeAddressKeyIDs []uint64 = []uint64{1, 2}
-	DefaultBitcoinProxyID                     = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
+	DefaultBitcoinProxyCreatorID              = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 )
 
 // NewParams creates a new Params instance
