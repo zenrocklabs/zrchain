@@ -165,7 +165,7 @@ func (s *IntegrationTestSuite) TestTopUpKeyringRewards() {
 		Return(nil)
 
 	// Call the function being tested
-	err = s.mintKeeper.TopUpKeyringRewards(s.ctx, topUpAmount)
+	err = s.mintKeeper.TopUpTotalRewards(s.ctx, topUpAmount)
 	s.Require().NoError(err)
 }
 
