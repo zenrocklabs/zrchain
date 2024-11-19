@@ -88,6 +88,17 @@ func MergeHashes(left, right *chainhash.Hash) *chainhash.Hash {
 	return &mergedHash
 }
 
+func DecodeTX(rawTx []byte) (*wire.MsgTx, error) {
+	reader := bytes.NewReader(rawTx)
+	// Parse the transaction bytes into a wire.MsgTx object
+	var msgTx wire.MsgTx
+	err := msgTx.Deserialize(reader)
+	if err != nil {
+		log.Fatalf("Failed to deserialize transaction: %v", err)
+	}
+	return &msgTx, nil
+}
+
 func DecodeOutputs(rawTx string, chainName string) ([]TXOutputs, error) {
 	rawTxBytes, err := hex.DecodeString(rawTx)
 	// Use a bytes.Reader to read the transaction bytes

@@ -17,7 +17,7 @@ MNEMONIC1="strategy social surge orange pioneer tiger skill endless lend slide o
 MNEMONIC2="fee buzz avocado dolphin syrup rule access cave close puppy lemon round able bronze fame give spoon company since fog error trip toast unable"
 
 # Start the node with optional flags
-echo zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
+zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
 --minimum-gas-prices=0.0001urock --api.enable --api.enabled-unsafe-cors \
 ${NON_VALIDATOR:+--non-validator} \
 ${SIDECAR_ADDR:+--sidecar-addr "$SIDECAR_ADDR"}
