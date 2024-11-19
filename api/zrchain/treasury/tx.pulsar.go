@@ -13857,8 +13857,9 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Verification contains any data required to verify the incoming data_fop_signing
-// 1st case is to check the sighashes generated from the supplied Bitcoin TX are correct
+// Verification contains any data required to verify the incoming
+// data_fop_signing 1st case is to check the sighashes generated from the
+// supplied Bitcoin TX are correct
 type VerificationVersion int32
 
 const (
@@ -14610,7 +14611,8 @@ func (x *MetadataEthereum) GetChainId() uint64 {
 	return 0
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
 type MetadataSolana struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -26,33 +26,42 @@ service Msg {
   rpc NewKeyRequest(MsgNewKeyRequest) returns (MsgNewKeyRequestResponse);
 
   // FulfilKeyRequest defines an operation for responding to a key request
-  rpc FulfilKeyRequest(MsgFulfilKeyRequest) returns (MsgFulfilKeyRequestResponse);
+  rpc FulfilKeyRequest(MsgFulfilKeyRequest)
+      returns (MsgFulfilKeyRequestResponse);
 
   // NewSignatureRequest defines an operation for creating a signature request
-  rpc NewSignatureRequest(MsgNewSignatureRequest) returns (MsgNewSignatureRequestResponse);
+  rpc NewSignatureRequest(MsgNewSignatureRequest)
+      returns (MsgNewSignatureRequestResponse);
 
   // FulfilSignatureRequest defines an operation for returning a signature
   // response to a request
-  rpc FulfilSignatureRequest(MsgFulfilSignatureRequest) returns (MsgFulfilSignatureRequestResponse);
+  rpc FulfilSignatureRequest(MsgFulfilSignatureRequest)
+      returns (MsgFulfilSignatureRequestResponse);
 
   // NewSignTransactionRequest defines an operation for creating a signature for
   // transaction request
-  rpc NewSignTransactionRequest(MsgNewSignTransactionRequest) returns (MsgNewSignTransactionRequestResponse);
+  rpc NewSignTransactionRequest(MsgNewSignTransactionRequest)
+      returns (MsgNewSignTransactionRequestResponse);
 
   // TransferFromKeyring defines an operation for transferring tokens from a
   // keyring
-  rpc TransferFromKeyring(MsgTransferFromKeyring) returns (MsgTransferFromKeyringResponse);
+  rpc TransferFromKeyring(MsgTransferFromKeyring)
+      returns (MsgTransferFromKeyringResponse);
 
   // NewICATransactionRequest defines an operation for creating an interchain
   // account transaction request
-  rpc NewICATransactionRequest(MsgNewICATransactionRequest) returns (MsgNewICATransactionRequestResponse);
+  rpc NewICATransactionRequest(MsgNewICATransactionRequest)
+      returns (MsgNewICATransactionRequestResponse);
 
   // FulfilICATransactionRequest defines an operation for responding to an
   // interchain account transaction request
-  rpc FulfilICATransactionRequest(MsgFulfilICATransactionRequest) returns (MsgFulfilICATransactionRequestResponse);
+  rpc FulfilICATransactionRequest(MsgFulfilICATransactionRequest)
+      returns (MsgFulfilICATransactionRequestResponse);
 
-  // NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
-  rpc NewZrSignSignatureRequest(MsgNewZrSignSignatureRequest) returns (MsgNewZrSignSignatureRequestResponse);
+  // NewZrSignSignatureRequest defines an operation for creating a zrsign
+  // signature request
+  rpc NewZrSignSignatureRequest(MsgNewZrSignSignatureRequest)
+      returns (MsgNewZrSignSignatureRequestResponse);
 
   // UpdateKeyPolicy defines an operation for updating a key policy
   rpc UpdateKeyPolicy(MsgUpdateKeyPolicy) returns (MsgUpdateKeyPolicyResponse);
@@ -61,19 +70,18 @@ service Msg {
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/MsgUpdateParams";
+  option (amino.name) =
+      "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/MsgUpdateParams";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
-  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // params defines the module parameters to update.
 
   // NOTE: All parameters must be supplied.
-  Params params = 2 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
@@ -97,9 +105,7 @@ message MsgNewKeyRequest {
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
 // MsgNewKeyRequest message.
-message MsgNewKeyRequestResponse {
-  uint64 key_req_id = 1;
-}
+message MsgNewKeyRequestResponse { uint64 key_req_id = 1; }
 
 // MsgFulfilKeyRequest is the Msg/FulfilKeyRequest request type.
 message MsgFulfilKeyRequest {
@@ -120,9 +126,7 @@ message MsgFulfilKeyRequest {
 }
 
 // MsgNewKey defines the attributes of a key
-message MsgNewKey {
-  bytes public_key = 1;
-}
+message MsgNewKey { bytes public_key = 1; }
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
 // MsgNewKeyRequest message.
@@ -140,8 +144,9 @@ message MsgNewSignatureRequest {
   VerificationVersion verify_signing_data_version = 7;
 }
 
-// Verification contains any data required to verify the incoming data_fop_signing
-// 1st case is to check the sighashes generated from the supplied Bitcoin TX are correct
+// Verification contains any data required to verify the incoming
+// data_fop_signing 1st case is to check the sighashes generated from the
+// supplied Bitcoin TX are correct
 enum VerificationVersion {
   UNKNOWN = 0;
   BITCOIN_PLUS = 1;
@@ -149,9 +154,7 @@ enum VerificationVersion {
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
 // MsgNewKeyRequest message.
-message MsgNewSignatureRequestResponse {
-  uint64 sig_req_id = 1;
-}
+message MsgNewSignatureRequestResponse { uint64 sig_req_id = 1; }
 
 // MsgFulfilSignatureRequest is the Msg/NewSignatureRequest request type.
 message MsgFulfilSignatureRequest {
@@ -169,9 +172,7 @@ message MsgFulfilSignatureRequest {
 message MsgFulfilSignatureRequestResponse {}
 
 // MetadataEthereum defines the chain id
-message MetadataEthereum {
-  uint64 chain_id = 1;
-}
+message MetadataEthereum { uint64 chain_id = 1; }
 
 // Define an enum for Solana network types
 enum SolanaNetworkType {
@@ -181,10 +182,9 @@ enum SolanaNetworkType {
   TESTNET = 3;
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
-message MetadataSolana {
-  SolanaNetworkType network = 1;
-}
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
+message MetadataSolana { SolanaNetworkType network = 1; }
 
 // MsgNewSignTransactionRequest is the Msg/NewSignTransactionRequest request
 // type.
@@ -279,9 +279,7 @@ message MsgNewZrSignSignatureRequest {
   bool tx = 13;
 }
 
-message MsgNewZrSignSignatureRequestResponse {
-  uint64 req_id = 1;
-}
+message MsgNewZrSignSignatureRequestResponse { uint64 req_id = 1; }
 
 message MsgUpdateKeyPolicy {
   option (cosmos.msg.v1.signer) = "creator";

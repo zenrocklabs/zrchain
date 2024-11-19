@@ -32,8 +32,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Verification contains any data required to verify the incoming data_fop_signing
-// 1st case is to check the sighashes generated from the supplied Bitcoin TX are correct
+// Verification contains any data required to verify the incoming
+// data_fop_signing 1st case is to check the sighashes generated from the
+// supplied Bitcoin TX are correct
 type VerificationVersion int32
 
 const (
@@ -861,7 +862,8 @@ func (m *MetadataEthereum) GetChainId() uint64 {
 	return 0
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
 type MetadataSolana struct {
 	Network SolanaNetworkType `protobuf:"varint,1,opt,name=network,proto3,enum=zrchain.treasury.SolanaNetworkType" json:"network,omitempty"`
 }
@@ -1916,7 +1918,8 @@ type MsgClient interface {
 	// FulfilICATransactionRequest defines an operation for responding to an
 	// interchain account transaction request
 	FulfilICATransactionRequest(ctx context.Context, in *MsgFulfilICATransactionRequest, opts ...grpc.CallOption) (*MsgFulfilICATransactionRequestResponse, error)
-	// NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
+	// NewZrSignSignatureRequest defines an operation for creating a zrsign
+	// signature request
 	NewZrSignSignatureRequest(ctx context.Context, in *MsgNewZrSignSignatureRequest, opts ...grpc.CallOption) (*MsgNewZrSignSignatureRequestResponse, error)
 	// UpdateKeyPolicy defines an operation for updating a key policy
 	UpdateKeyPolicy(ctx context.Context, in *MsgUpdateKeyPolicy, opts ...grpc.CallOption) (*MsgUpdateKeyPolicyResponse, error)
@@ -2055,7 +2058,8 @@ type MsgServer interface {
 	// FulfilICATransactionRequest defines an operation for responding to an
 	// interchain account transaction request
 	FulfilICATransactionRequest(context.Context, *MsgFulfilICATransactionRequest) (*MsgFulfilICATransactionRequestResponse, error)
-	// NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
+	// NewZrSignSignatureRequest defines an operation for creating a zrsign
+	// signature request
 	NewZrSignSignatureRequest(context.Context, *MsgNewZrSignSignatureRequest) (*MsgNewZrSignSignatureRequestResponse, error)
 	// UpdateKeyPolicy defines an operation for updating a key policy
 	UpdateKeyPolicy(context.Context, *MsgUpdateKeyPolicy) (*MsgUpdateKeyPolicyResponse, error)
@@ -2301,7 +2305,6 @@ func _Msg_UpdateKeyPolicy_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.treasury.Msg",
 	HandlerType: (*MsgServer)(nil),

@@ -46,8 +46,8 @@ type MsgCreateValidator struct {
 	Commission        CommissionRates       `protobuf:"bytes,2,opt,name=commission,proto3" json:"commission"`
 	MinSelfDelegation cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=min_self_delegation,json=minSelfDelegation,proto3,customtype=cosmossdk.io/math.Int" json:"min_self_delegation"`
 	// Deprecated: Use of Delegator Address in MsgCreateValidator is deprecated.
-	// The validator address bytes and delegator address bytes refer to the same account while creating validator (defer
-	// only in bech32 notation).
+	// The validator address bytes and delegator address bytes refer to the same
+	// account while creating validator (defer only in bech32 notation).
 	DelegatorAddress string      `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"` // Deprecated: Do not use.
 	ValidatorAddress string      `protobuf:"bytes,5,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 	Pubkey           *types.Any  `protobuf:"bytes,6,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
@@ -466,7 +466,8 @@ func (m *MsgUndelegateResponse) GetAmount() types1.Coin {
 	return types1.Coin{}
 }
 
-// MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unbonding delegation for delegator
+// MsgCancelUnbondingDelegation defines the SDK message for performing a cancel
+// unbonding delegation for delegator
 //
 // Since: cosmos-sdk 0.46
 type MsgCancelUnbondingDelegation struct {
@@ -554,7 +555,8 @@ var xxx_messageInfo_MsgCancelUnbondingDelegationResponse proto.InternalMessageIn
 //
 // Since: cosmos-sdk 0.47
 type MsgUpdateParams struct {
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// NOTE: All parameters must be supplied.
 	Params Params `protobuf:"bytes,2,opt,name=Params,proto3" json:"Params"`
@@ -1038,7 +1040,6 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.validation.Msg",
 	HandlerType: (*MsgServer)(nil),

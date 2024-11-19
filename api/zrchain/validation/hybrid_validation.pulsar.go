@@ -4894,11 +4894,14 @@ type ValidatorHV struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// operator_address defines the address of the validator's operator; bech encoded in JSON.
+	// operator_address defines the address of the validator's operator; bech
+	// encoded in JSON.
 	OperatorAddress string `protobuf:"bytes,1,opt,name=operator_address,json=operatorAddress,proto3" json:"operator_address,omitempty"`
-	// consensus_pubkey is the consensus public key of the validator, as a Protobuf Any.
+	// consensus_pubkey is the consensus public key of the validator, as a
+	// Protobuf Any.
 	ConsensusPubkey *anypb.Any `protobuf:"bytes,2,opt,name=consensus_pubkey,json=consensusPubkey,proto3" json:"consensus_pubkey,omitempty"`
-	// jailed defined whether the validator has been jailed from bonded status or not.
+	// jailed defined whether the validator has been jailed from bonded status or
+	// not.
 	Jailed bool `protobuf:"varint,3,opt,name=jailed,proto3" json:"jailed,omitempty"`
 	// status is the validator status (bonded/unbonding/unbonded).
 	Status BondStatus `protobuf:"varint,4,opt,name=status,proto3,enum=zrchain.validation.BondStatus" json:"status,omitempty"`
@@ -4909,17 +4912,22 @@ type ValidatorHV struct {
 	DelegatorShares string `protobuf:"bytes,7,opt,name=delegator_shares,json=delegatorShares,proto3" json:"delegator_shares,omitempty"`
 	// description defines the description terms for the validator.
 	Description *Description `protobuf:"bytes,8,opt,name=description,proto3" json:"description,omitempty"`
-	// unbonding_height defines, if unbonding, the height at which this validator has begun unbonding.
+	// unbonding_height defines, if unbonding, the height at which this validator
+	// has begun unbonding.
 	UnbondingHeight int64 `protobuf:"varint,9,opt,name=unbonding_height,json=unbondingHeight,proto3" json:"unbonding_height,omitempty"`
-	// unbonding_time defines, if unbonding, the min time for the validator to complete unbonding.
+	// unbonding_time defines, if unbonding, the min time for the validator to
+	// complete unbonding.
 	UnbondingTime *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
 	// commission defines the commission parameters.
 	Commission *Commission `protobuf:"bytes,11,opt,name=commission,proto3" json:"commission,omitempty"`
-	// min_self_delegation is the validator's self declared minimum self delegation.
+	// min_self_delegation is the validator's self declared minimum self
+	// delegation.
 	MinSelfDelegation string `protobuf:"bytes,12,opt,name=min_self_delegation,json=minSelfDelegation,proto3" json:"min_self_delegation,omitempty"`
-	// strictly positive if this validator's unbonding has been stopped by external modules
+	// strictly positive if this validator's unbonding has been stopped by
+	// external modules
 	UnbondingOnHoldRefCount int64 `protobuf:"varint,13,opt,name=unbonding_on_hold_ref_count,json=unbondingOnHoldRefCount,proto3" json:"unbonding_on_hold_ref_count,omitempty"`
-	// list of unbonding ids, each uniquely identifying an unbonding of this validator
+	// list of unbonding ids, each uniquely identifying an unbonding of this
+	// validator
 	UnbondingIds []uint64 `protobuf:"varint,14,rep,packed,name=unbonding_ids,json=unbondingIds,proto3" json:"unbonding_ids,omitempty"`
 }
 

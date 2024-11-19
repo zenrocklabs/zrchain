@@ -146,7 +146,8 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def NewZrSignSignatureRequest(self, request, context):
-        """NewZrSignSignatureRequest defines an operation for creating a zrsign signature request
+        """NewZrSignSignatureRequest defines an operation for creating a zrsign
+        signature request
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
