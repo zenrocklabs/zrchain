@@ -62,7 +62,7 @@ jq '.app_state.mint.params = {
     "inflation_min": "0.000000000000000000",
     "goal_bonded": "0.670000000000000000",
     "blocks_per_year": "6311520",
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Create Zenrock account
 # TOTAL_SUPPLY - Validators bonded tokens
@@ -112,7 +112,7 @@ jq '.app_state.treasury.params = {
   "keyring_commission": 10,
   "keyring_commission_destination": "zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3",
   "min_gas_fee": "2.5urock"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Update governance parameters
 jq '.app_state.gov.params = {
@@ -142,7 +142,7 @@ jq '.app_state.gov.params = {
     "burn_proposal_deposit_prevote": false,
     "burn_vote_veto": true,
     "min_deposit_ratio": "0.010000000000000000"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add distribution parameters
 jq '.app_state.distribution.params = {
@@ -150,7 +150,7 @@ jq '.app_state.distribution.params = {
     "base_proposer_reward": "0.000000000000000000",
     "bonus_proposer_reward": "0.000000000000000000",
     "withdraw_addr_enabled": false
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add crisis parameters
 jq '.app_state.crisis = {
@@ -158,7 +158,7 @@ jq '.app_state.crisis = {
         "denom": "urock",
         "amount": "1000000000"
     }
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add denom_metadata to the bank
 jq '.app_state.bank.denom_metadata = [
@@ -181,18 +181,18 @@ jq '.app_state.bank.denom_metadata = [
         "name": "ROCK",
         "symbol": "ROCK"
     }
-]' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+]' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add identity parameters
 jq '.app_state.identity.params = {
     "keyring_creation_fee": "10000000000"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add policy parameters
 jq '.app_state.policy.params = {
     "minimum_btl": "10",
     "default_btl": "1000"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add slashing parameters
 jq '.app_state.slashing.params = {
@@ -201,7 +201,7 @@ jq '.app_state.slashing.params = {
     "downtime_jail_duration": "600s",
     "slash_fraction_double_sign": "0.050000000000000000",
     "slash_fraction_downtime": "0.005000000000000000"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add validation parameters
 jq '.app_state.validation.params = {
@@ -220,7 +220,7 @@ jq '.app_state.validation.params = {
             "zenBTCMinterKeyID": 0
         }
     }
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add wasm parameters
 jq '.app_state.wasm.params = {
@@ -229,7 +229,7 @@ jq '.app_state.wasm.params = {
         "addresses": []
     },
     "instantiate_default_permission": "Nobody"
-}' $ARTIFACTS_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $ARTIFACTS_DIR/config/genesis.json
+}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Collect generated txs
 $NODE_BIN genesis collect-gentxs --home "$ARTIFACTS_DIR" 1>/dev/null 2>&1
