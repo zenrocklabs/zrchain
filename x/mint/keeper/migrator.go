@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
+	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -26,4 +27,12 @@ func NewMigrator(k Keeper, ss exported.Subspace) Migrator {
 // module state.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	return v2.Migrate(ctx, m.keeper.storeService.OpenKVStore(ctx), m.legacySubspace, m.keeper.cdc)
+}
+
+// Migrate migrates the x/mint module state from the consensus version 2 to
+// version 3. Specifically, it adds several new parameters to the mint module
+// and removes the legacy minter logic and replaces it with a deflationary
+// model.
+func (m Migrator) Migrate2to3(ctx sdk.Context) error {
+	return v3.UpdateParams(ctx, m.keeper.Params)
 }
