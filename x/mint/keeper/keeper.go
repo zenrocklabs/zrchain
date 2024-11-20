@@ -173,12 +173,12 @@ func (k Keeper) BaseDistribution(ctx context.Context, totalRewards sdk.Coin) (sd
 	}
 
 	// TODO - remove
-	fmt.Println("burnAmount: ", burnAmount)
+	fmt.Printf("burn amount:\t\t\t%v\n", burnAmount)
 
 	protocolWalletPortion := math.LegacyNewDecFromInt(totalRewards.Amount).Mul(params.ProtocolWalletRate).TruncateInt()
 
 	// TODO - remove
-	fmt.Println("protocolWalletPortion: ", protocolWalletPortion)
+	fmt.Printf("for protocol wallet:\t\t%v\n", protocolWalletPortion)
 	err = k.sendProtocolWalletFees(ctx, sdk.NewCoin(params.MintDenom, protocolWalletPortion))
 	if err != nil {
 		return sdk.Coin{}, err
@@ -250,7 +250,7 @@ func (k Keeper) CheckModuleBalance(ctx context.Context, totalBlockStakingReward 
 	moduleBalance := k.bankKeeper.GetBalance(ctx, moduleAddr, totalBlockStakingReward.Denom)
 
 	// TODO - remove
-	fmt.Println("moduleBalance: ", moduleBalance)
+	fmt.Printf("mint module balance:\t\t%v\n", moduleBalance)
 
 	if moduleBalance.Amount.LT(totalBlockStakingReward.Amount) {
 		return fmt.Errorf("module balance %v is less than required staking reward %v", moduleBalance, totalBlockStakingReward)
@@ -274,7 +274,7 @@ func (k Keeper) AdditionalBurn(ctx context.Context, excess sdk.Coin) error {
 
 	burnAmount := math.LegacyNewDecFromInt(excess.Amount).Mul(params.BurnRate).TruncateInt()
 	// TODO - remove
-	fmt.Println("excess burnAmount: ", burnAmount)
+	fmt.Printf("excess burn amt:\t\t%v\n", burnAmount)
 	excess.Amount = excess.Amount.Sub(burnAmount)
 	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount)))
 }
@@ -293,7 +293,7 @@ func (k Keeper) AdditionalMpcRewards(ctx context.Context, excess sdk.Coin) error
 
 	mpcRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
 	// TODO - remove
-	fmt.Println("mpcRewards: ", mpcRewards)
+	fmt.Printf("mpc rewards:\t\t\t%v\n", mpcRewards)
 	excess.Amount = excess.Amount.Sub(mpcRewards)
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards)))
 }
@@ -306,7 +306,7 @@ func (k Keeper) AdditionalStakingRewards(ctx context.Context, excess sdk.Coin) e
 
 	stakingRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
 	// TODO - remove
-	fmt.Println("stakingRewards: ", stakingRewards)
+	fmt.Printf("staking rewards:\t\t%v\n", stakingRewards)
 	excess.Amount = excess.Amount.Sub(stakingRewards)
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards)))
 }
@@ -317,7 +317,7 @@ func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) e
 	if err != nil {
 		return err
 	}
-	fmt.Println("mintModuleBalance before burn: ", mintModuleBalance)
+	fmt.Printf("mint bal before burn:\t\t%v\n", mintModuleBalance)
 
 	err = k.AdditionalBurn(ctx, excessAmount)
 	if err != nil {
@@ -328,7 +328,7 @@ func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) e
 	if err != nil {
 		return err
 	}
-	fmt.Println("mintModuleBalance after burn: ", mintModuleBalance)
+	fmt.Printf("mint after burn:\t\t%v\n", mintModuleBalance)
 
 	err = k.AdditionalMpcRewards(ctx, excessAmount)
 	if err != nil {
@@ -339,7 +339,7 @@ func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) e
 	if err != nil {
 		return err
 	}
-	fmt.Println("mintModuleBalance after mpcRewards: ", mintModuleBalance)
+	fmt.Printf("mint after mpc rewards:\t\t%v\n", mintModuleBalance)
 
 	err = k.AdditionalStakingRewards(ctx, excessAmount)
 	if err != nil {
@@ -350,7 +350,7 @@ func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) e
 	if err != nil {
 		return err
 	}
-	fmt.Println("mintModuleBalance after stakingRewards: ", mintModuleBalance)
+	fmt.Printf("mint after staking rewards:\t%v\n", mintModuleBalance)
 
 	return nil
 }
@@ -380,7 +380,7 @@ func (k Keeper) ClaimTotalRewards(ctx context.Context) (sdk.Coin, error) {
 	}
 
 	// TODO: remove
-	fmt.Printf("keyringRewards: %v\n", keyringRewards)
-	fmt.Printf("feeRewards: %v\n", feesAmount)
+	fmt.Printf("keyring rewards:\t\t%v\n", keyringRewards)
+	fmt.Printf("fee rewards:\t\t\t%v\n", feesAmount)
 	return keyringRewards.Add(feesAmount), nil
 }

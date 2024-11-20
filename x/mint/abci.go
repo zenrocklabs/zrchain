@@ -43,13 +43,13 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	mintLeftOver, err := k.CheckMintModuleBalance(ctx)
+	mintModuleBalance, err := k.CheckMintModuleBalance(ctx)
 	if err != nil {
 		return err
 	}
 
 	// TODO - remove
-	fmt.Println("mintLeftOver:", mintLeftOver)
+	fmt.Printf("mint module balance:\t\t%v\n", mintModuleBalance)
 
 	totalRewards, err := k.ClaimTotalRewards(ctx)
 	if err != nil {
@@ -57,7 +57,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	}
 
 	// TODO - remove
-	fmt.Println("totalRewards: ", totalRewards)
+	fmt.Printf("total rewards:\t\t\t%v\n", totalRewards)
 
 	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
 	if err != nil {
@@ -65,7 +65,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	}
 
 	// TODO - remove
-	fmt.Println("keyringRewardsRest: ", totalRewardsRest)
+	fmt.Printf("rewards after burn&pw:\t\t%v\n", totalRewardsRest)
 
 	totalBondedTokens, err := k.TotalBondedTokens(ctx)
 	if err != nil {
@@ -73,7 +73,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	}
 
 	// TODO - remove
-	fmt.Println("totalBondedTokens: ", totalBondedTokens)
+	fmt.Printf("total bonded tokens:\t\t%v\n", totalBondedTokens)
 
 	totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
 	if err != nil {
@@ -81,7 +81,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	}
 
 	// TODO - remove
-	fmt.Println("totalBlockStakingReward: ", totalBlockStakingReward)
+	fmt.Printf("total staking rewards:\t\t%v\n", totalBlockStakingReward)
 
 	if totalBlockStakingReward.Amount.GT(totalRewardsRest.Amount) {
 		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
@@ -90,10 +90,10 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		}
 
 		// TODO - remove
-		fmt.Println("topUpAmount: ", topUpAmount)
+		fmt.Printf("top-up amount:\t\t\t%v\n", topUpAmount)
 
 		// if totalRewardsRest enough - top up from mint module
-		if !topUpAmount.IsZero() || !mintLeftOver.IsZero() {
+		if !topUpAmount.IsZero() || !mintModuleBalance.IsZero() {
 			totalRewardsRest = totalBlockStakingReward
 		}
 
