@@ -1310,6 +1310,8 @@ github.com/zenrocklabs/zenrock-avs v1.3.6 h1:8uGEEe+WiitAU/11vr5tfz+W76gOTZZKmYW
 github.com/zenrocklabs/zenrock-avs v1.3.6/go.mod h1:FYLZw+/P1rsxJU9if1bpa68fTuxK3JKxeWrKjspLj2Y=
 github.com/zenrocklabs/zenrock-avs v1.4.1 h1:pE8kd6y2h0bNLpv420e5iIJ/gSQ8s3MMZrvRKlMpz9o=
 github.com/zenrocklabs/zenrock-avs v1.4.1/go.mod h1:FYLZw+/P1rsxJU9if1bpa68fTuxK3JKxeWrKjspLj2Y=
+github.com/zenrocklabs/zenrock-avs v1.4.2 h1:3sIc/6KRVgSXsd3XGaszWpm507O9Cjq3FXglvYO45SE=
+github.com/zenrocklabs/zenrock-avs v1.4.2/go.mod h1:TknHz989kyNt3Gnrb7TqnPZplHVaVxInr4ogtVfvkYw=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
 github.com/zondax/hid v0.9.2/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
 github.com/zondax/ledger-go v1.0.0 h1:BvNoksIyRqyQTW78rIZP9A44WwAminKiomQa7jXp9EI=
