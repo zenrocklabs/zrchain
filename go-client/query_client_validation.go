@@ -23,35 +23,66 @@ type ValidationQueryClient struct {
 //
 // Returns:
 //   - *ValidationQueryClient: A new validation query client instance
+//
+// Example:
+//
+//	client := NewValidationQueryClient(grpc.DialContext(context.Background(), "localhost:9090", grpc.WithTransportCredentials(insecure.NewCredentials())))
 func NewValidationQueryClient(c *grpc.ClientConn) *ValidationQueryClient {
 	return &ValidationQueryClient{
 		client: types.NewQueryClient(c),
 	}
 }
 
-// ActiveSetValidators retrieves a paginated list of currently bonded (active) validators.
-// These validators are participating in block production and consensus.
+// UnbondedValidators retrieves a paginated list of currently unbonded validators.
+// These validators are not currently participating in block production or consensus.
 //
 // Parameters:
 //   - ctx: Context for the request, can be used for timeouts and cancellation
 //   - pageRequest: Pagination parameters for the request
 //
 // Returns:
-//   - *types.QueryValidatorsResponse: Contains the list of active validators and pagination info
+//   - *types.QueryValidatorsResponse: Contains the list of unbonded validators and pagination info
 //   - error: An error if the query fails
 //
 // Example:
 //
-//	validators, err := client.ActiveSetValidators(context.Background(), &query.PageRequest{
+//	validators, err := client.UnbondedValidators(context.Background(), &query.PageRequest{
 //	    Limit: 10,
 //	    Offset: 0,
 //	})
 //	if err != nil {
 //	    // Handle error
 //	}
-func (c *ValidationQueryClient) ActiveSetValidators(ctx context.Context, pageRequest *query.PageRequest) (*types.QueryValidatorsResponse, error) {
+func (c *ValidationQueryClient) UnbondedValidators(ctx context.Context, pageRequest *query.PageRequest) (*types.QueryValidatorsResponse, error) {
 	return c.client.Validators(ctx, &types.QueryValidatorsRequest{
-		Status:     types.Bonded.String(),
+		Status:     types.Unbonded.String(),
+		Pagination: pageRequest,
+	})
+}
+
+// UnbondingValidators retrieves a paginated list of currently unbonding validators.
+// These validators are in the process of transitioning from bonded to unbonded status.
+//
+// Parameters:
+//   - ctx: Context for the request, can be used for timeouts and cancellation
+//   - pageRequest: Pagination parameters for the request
+//
+// Returns:
+//   - *types.QueryValidatorsResponse: Contains the list of unbonding validators and pagination info
+//   - error: An error if the query fails
+//
+// Example:
+//
+//	validators, err := client.UnbondingValidators(context.Background(), &query.PageRequest{
+//	    Limit: 10,
+//	    Offset: 0,
+//	})
+//	if err != nil {
+//	    // Handle error
+//	}
+func (c *ValidationQueryClient) UnbondingValidators(ctx context.Context, pageRequest *query.PageRequest) (*types.QueryValidatorsResponse, error) {
+	return c.client.Validators(ctx, &types.QueryValidatorsRequest{
+		Status:     types.Unbonding.String(),
 		Pagination: pageRequest,
 	})
 }
