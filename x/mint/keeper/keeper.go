@@ -272,7 +272,7 @@ func (k Keeper) AdditionalBurn(ctx context.Context, excess sdk.Coin) error {
 		return err
 	}
 
-	burnAmount := math.LegacyNewDecFromInt(excess.Amount).Mul(params.BurnRate).TruncateInt()
+	burnAmount := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
 	// TODO - remove
 	fmt.Printf("excess burn amt:\t\t%v\n", burnAmount)
 	excess.Amount = excess.Amount.Sub(burnAmount)
