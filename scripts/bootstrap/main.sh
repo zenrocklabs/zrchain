@@ -54,6 +54,9 @@ $NODE_BIN config set client keyring-backend "$KEYRING_BACKEND" --home "$ARTIFACT
 # Configure
 $NODE_BIN config set app minimum-gas-prices "0urock" --home "$ARTIFACTS_DIR"
 
+# temp file
+tmpfile=$(mktemp)
+
 # Set initial mint parameters
 jq '.app_state.mint.params = {
     "mint_denom": "urock",
@@ -91,7 +94,7 @@ done
 $NODE_BIN genesis add-genesis-account "zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3" "80000000000000urock" --keyring-backend "$KEYRING_BACKEND" --home "$ARTIFACTS_DIR" --module-name mint
 
 # Genesis params
-tmpfile=$(mktemp)
+
 # jq '.app_state["staking"]["params"]["bond_denom"]="urock"' < "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 # jq '.app_state["crisis"]["constant_fee"]["denom"]="urock"' < "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 # jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="urock"' < "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
