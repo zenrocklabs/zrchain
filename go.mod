@@ -5,7 +5,7 @@ go 1.23.2
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
-	github.com/Layr-Labs/eigensdk-go => github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775
+	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.0.0
 	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
@@ -71,7 +71,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zenrocklabs/zenbtc v1.0.3
-	github.com/zenrocklabs/zenrock-avs v1.4.2
+	github.com/zenrocklabs/zenrock-avs v1.4.5
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38
