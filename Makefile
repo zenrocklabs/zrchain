@@ -57,7 +57,7 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 ldflags = -X "github.com/cosmos/cosmos-sdk/version.Name=zenrock" \
 		  -X "github.com/cosmos/cosmos-sdk/version.AppName=$(NODE_BINARY)" \
-		  -X "github.com/cosmos/cosmos-sdk/version.Version=$(version)" \
+		  -X "github.com/cosmos/cosmos-sdk/version.Version=$(VERSION)" \
 		  -X "github.com/cosmos/cosmos-sdk/version.Commit=$(commit_hash)" \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
 		  -X "github.com/tendermint/tendermint/version.TMCoreSemVer=$(TMVERSION)" \
