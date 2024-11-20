@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
+	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
@@ -39,7 +39,7 @@ func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutr
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	contractInstance, err := middleware.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
+	contractInstance, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -57,7 +57,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	}
 }
 
-func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
+func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZrServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
 	ctx := context.Background()
 
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
@@ -113,34 +113,50 @@ func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZRSer
 	return nil
 }
 
-func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZRServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
+func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
 	delegations := make(map[string]map[string]*big.Int)
 
 	callOpts := &bind.CallOpts{
 		BlockNumber: height,
 	}
 
-	// Retrieve all operators from the contract
-	allOperators, err := contractInstance.GetAllOperators(callOpts)
+	// Retrieve all validators from the contract
+	allValidators, err := contractInstance.GetAllValidator(callOpts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all operators: %w", err)
+		return nil, fmt.Errorf("failed to get all validators: %w", err)
 	}
 
-	// Iterate over all operators
-	for _, operator := range allOperators {
-		// Fetch delegation details for the operator
-		validatorAddress, amount, err := contractInstance.GetDelegationsForOperator(callOpts, operator)
-		if err != nil {
-			log.Printf("Failed to get delegation for operator %s: %v", operator.Hex(), err)
-			continue
+	quorumNumber := uint8(0)
+
+	// Iterate over all validators
+	for _, validator := range allValidators {
+		validatorAddr := validator.ValidatorAddr
+		operators := validator.Operators
+
+		// Initialize the map for this validator if not already
+		if delegations[validatorAddr] == nil {
+			delegations[validatorAddr] = make(map[string]*big.Int)
 		}
 
-		// Only consider positive delegation amounts
-		if amount.Cmp(big.NewInt(0)) > 0 {
-			if delegations[validatorAddress] == nil {
-				delegations[validatorAddress] = make(map[string]*big.Int)
+		// Iterate over operators associated with the validator
+		for _, operator := range operators {
+			// Get the stake amount for the operator
+			amount, err := contractInstance.GetEigenStake(callOpts, operator, quorumNumber)
+			if err != nil {
+				log.Printf("Failed to get stake for operator %s: %v", operator.Hex(), err)
+				continue
 			}
-			delegations[validatorAddress][operator.Hex()] = amount
+
+			// Only consider positive stake amounts
+			if amount.Cmp(big.NewInt(0)) > 0 {
+				operatorAddr := operator.Hex()
+				// Sum up the stake if operator already exists under this validator
+				if existingAmount, exists := delegations[validatorAddr][operatorAddr]; exists {
+					delegations[validatorAddr][operatorAddr] = new(big.Int).Add(existingAmount, amount)
+				} else {
+					delegations[validatorAddr][operatorAddr] = amount
+				}
+			}
 		}
 	}
 
