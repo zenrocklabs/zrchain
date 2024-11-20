@@ -111,7 +111,7 @@ jq '.app_state.treasury.params = {
   "zr_sign_address": "",
   "keyring_commission": 10,
   "keyring_commission_destination": "zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3",
-  "min_gas_fee": "2.5urock"
+  "min_gas_fee": "0.0001urock"
 }' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Update governance parameters
@@ -164,10 +164,7 @@ jq '.app_state.crisis = {
 jq '.app_name = "zenrockd"' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Mint inflaction to 0
-jq '.app_state.mint.minter.infation = "0.000000000000000000"' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
-
-# Unbonding period 14 days
-jq '.app_state.validation.params.unbonding_time = "1209600s"' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
+jq '.app_state.mint.minter.inflation = "0.000000000000000000"' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Add denom_metadata to the bank
 jq '.app_state.bank.denom_metadata = [
@@ -214,7 +211,7 @@ jq '.app_state.slashing.params = {
 
 # Add validation parameters
 jq '.app_state.validation.params = {
-    "unbonding_time": "1814400s",
+    "unbonding_time": "1209600s",
     "max_validators": 75,
     "max_entries": 7,
     "historical_entries": 10000,
