@@ -271,8 +271,6 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 h1:GYUJLfvd++4DMuMhCFLgLXvFwofIxh/qOwoGuS/LTew=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0/go.mod h1:wRbFgBQUVm1YXrvWKofAEmq9HNJTDphbAaJSSX01KUI=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
-github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775 h1:xQQ4xnlzO1n0nU2HPizd00H2N3zacJjbSPwLhOHxZEo=
-github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
@@ -1304,14 +1302,10 @@ github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock h1:QKr8fWJ85qM/mcnKRQfsem6cNZ1hBmrnrv4FWt4cSmc=
 github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock/go.mod h1:6Eesrx3ZE7vxBZWpK++30H+Uc7Q4ahQWCL7JKU/LEdU=
+github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock h1:0lXiQgTZ0dCipYFT1WuZAEftEffDkjIsykdac3GTsn0=
+github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/zenrocklabs/zenbtc v1.0.3 h1:CMSjB+5RBDkrdtcBxJDXd4AINI7qKtEWHYM7DYv1a28=
 github.com/zenrocklabs/zenbtc v1.0.3/go.mod h1:8/OrG40LJjQ0MyoXg1p1C3aWeclPTAPuquKyrzNil38=
-github.com/zenrocklabs/zenrock-avs v1.3.6 h1:8uGEEe+WiitAU/11vr5tfz+W76gOTZZKmYWF0XIciQ0=
-github.com/zenrocklabs/zenrock-avs v1.3.6/go.mod h1:FYLZw+/P1rsxJU9if1bpa68fTuxK3JKxeWrKjspLj2Y=
-github.com/zenrocklabs/zenrock-avs v1.4.1 h1:pE8kd6y2h0bNLpv420e5iIJ/gSQ8s3MMZrvRKlMpz9o=
-github.com/zenrocklabs/zenrock-avs v1.4.1/go.mod h1:FYLZw+/P1rsxJU9if1bpa68fTuxK3JKxeWrKjspLj2Y=
-github.com/zenrocklabs/zenrock-avs v1.4.2 h1:3sIc/6KRVgSXsd3XGaszWpm507O9Cjq3FXglvYO45SE=
-github.com/zenrocklabs/zenrock-avs v1.4.2/go.mod h1:TknHz989kyNt3Gnrb7TqnPZplHVaVxInr4ogtVfvkYw=
 github.com/zenrocklabs/zenrock-avs v1.4.3 h1:b9ZKeZwmK5mbU80DTWfmZQ1orY5764MSCC/PIyBZY9o=
 github.com/zenrocklabs/zenrock-avs v1.4.3/go.mod h1:yFizpBYd/lSHinWNwpt586XjbWJTLhE2TGackIwyljo=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
