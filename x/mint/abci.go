@@ -14,6 +14,9 @@ import (
 func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalculationFn) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyBeginBlocker)
 
+	perms := k.GetModuleAccountPerms(ctx)
+	fmt.Println("Mint Module Permissions at BeginBlocker:", perms)
+
 	// fetch stored minter & params
 	minter, err := k.Minter.Get(ctx)
 	if err != nil {

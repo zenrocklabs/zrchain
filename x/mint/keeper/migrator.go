@@ -1,10 +1,14 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
 	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // Migrator is a struct for handling in-place state migrations.
@@ -34,5 +38,25 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 // and removes the legacy minter logic and replaces it with a deflationary
 // model.
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	return v3.UpdateParams(ctx, m.keeper.Params)
+	authKeeper, ok := m.keeper.accountKeeper.(authkeeper.AccountKeeper)
+	if !ok {
+		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
+	}
+
+	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	perms := moduleAccount.GetPermissions()
+	fmt.Println("Mint Module Permissions BEFORE:", perms)
+	perms = append(perms, authtypes.Burner)
+	authKeeper.SetModuleAccount(ctx, moduleAccount)
+	fmt.Println("Mint Module Permissions AFTER:", perms)
+	err := authKeeper.ValidatePermissions(moduleAccount)
+	if err != nil {
+		return err
+	}
+
+	// authtypes.NewPermissionsForAddress(v3.ModuleName, perms)
+
+	authKeeper.SetModuleAccount(ctx, moduleAccount)
+
+	return v3.UpdateParams(ctx, m.keeper.Params, authKeeper)
 }

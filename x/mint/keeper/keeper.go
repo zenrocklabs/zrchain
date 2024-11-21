@@ -384,3 +384,9 @@ func (k Keeper) ClaimTotalRewards(ctx context.Context) (sdk.Coin, error) {
 	fmt.Printf("fee rewards:\t\t\t%v\n", feesAmount)
 	return keyringRewards.Add(feesAmount), nil
 }
+
+func (k Keeper) GetModuleAccountPerms(ctx context.Context) []string {
+
+	moduleAccount := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
+	return moduleAccount.GetPermissions()
+}
