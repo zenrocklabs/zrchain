@@ -5,10 +5,10 @@ network: "testnet"
 eth_oracle:
   rpc:
     local: "http://127.0.0.1:8545"
-    testnet: "https://ethereum-holesky-rpc.publicnode.com"
-    mainnet: "https://ethereum-rpc.publicnode.com"
+    testnet: "https://rpc.ankr.com/eth_holesky"
+    mainnet: "https://rpc.ankr.com/eth"
   contract_addrs:
-    service_manager: "0xA52cc1900387C36117dEf80970156a17C182e008"
+    service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
     price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
   network_name: "Holešky Ethereum Testnet"
 solana_rpc:
@@ -19,4 +19,4 @@ proxy_rpc:
   user: "user"
   password: "secret"
 neutrino:
-  path: "./neutrino" # ~ will not be properly expanded to the home directory
+  path: "./neutrino"
