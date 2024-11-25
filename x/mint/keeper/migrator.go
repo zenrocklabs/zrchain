@@ -62,7 +62,7 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 		return fmt.Errorf("account is not of type *authtypes.BaseAccount: %v", baseAccount)
 	}
 
-	macc := authtypes.NewModuleAccount(baseAccount, authtypes.Minter, authtypes.Burner)
+	macc := authtypes.NewModuleAccount(baseAccount, v3.ModuleName, authtypes.Minter, authtypes.Burner)
 
 	fmt.Println("Module Account GetModuleAccountAndPermissions:", macc)
 	// fmt.Println("Module Account m.keeper.accountKeeper.Getmoduleaccount: ", macc)
