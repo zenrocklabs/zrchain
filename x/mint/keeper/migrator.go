@@ -43,8 +43,10 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
-	mintAcc, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
-	address := mintAcc.GetAddress()
+	_, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
+	// mintAcc.GetAddress()
+	address := authKeeper.GetModuleAddress(v3.ModuleName)
+	// address := mintAcc.GetAddress()
 	fmt.Println("Mint Module Address:", address)
 
 	account := authKeeper.GetAccount(ctx, address)
