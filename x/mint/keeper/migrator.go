@@ -50,11 +50,10 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	fmt.Println("Mint Module Address:", address)
 
 	account := authKeeper.GetAccount(ctx, address)
-
-	baseAccount := account.(*authtypes.BaseAccount)
-
-	// moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	// moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	baseAccount, ok := account.(*authtypes.BaseAccount)
+	if !ok {
+		return fmt.Errorf("account is not of type *authtypes.BaseAccount: %v", baseAccount)
+	}
 
 	macc := authtypes.NewModuleAccount(baseAccount, authtypes.Minter, authtypes.Burner)
 
