@@ -9,6 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // Migrator is a struct for handling in-place state migrations.
@@ -42,19 +43,27 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
-	moduleAccount, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
+	mintAcc, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
+	address := mintAcc.GetAddress()
+	fmt.Println("Mint Module Address:", address)
+
+	account := authKeeper.GetAccount(ctx, address)
+
+	baseAccount := account.(*authtypes.BaseAccount)
 
 	// moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	// moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
 
-	fmt.Println("Module Account GetModuleAccountAndPermissions:", moduleAccount)
-	fmt.Println("Module Account m.keeper.accountKeeper.Getmoduleaccount: ", moduleAccount2)
-	perms = moduleAccount.GetPermissions()
+	macc := authtypes.NewModuleAccount(baseAccount, authtypes.Minter, authtypes.Burner)
+
+	fmt.Println("Module Account GetModuleAccountAndPermissions:", macc)
+	// fmt.Println("Module Account m.keeper.accountKeeper.Getmoduleaccount: ", macc)
+	perms = macc.GetPermissions()
 	fmt.Println("Mint Module Permissions BEFORE:", perms)
 
-	m.keeper.accountKeeper.SetModuleAccount(ctx, moduleAccount2)
+	m.keeper.accountKeeper.SetModuleAccount(ctx, macc)
 
-	moduleAccount = authKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
 	perms = moduleAccount.GetPermissions()
 	fmt.Println("Mint Module Permissions AFTER:", perms)
 	err := authKeeper.ValidatePermissions(moduleAccount)
