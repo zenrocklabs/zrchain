@@ -47,7 +47,7 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	// mintAcc.GetAddress()
 	// address := authKeeper.GetModuleAddress(v3.ModuleName)
 	// address := mintAcc.GetAddress()
-	// fmt.Println("Mint Module Address:", address)
+	fmt.Println("Mint Module Perms Before change:", perms)
 
 	// account := authKeeper.GetAccount(ctx, address)
 

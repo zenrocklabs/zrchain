@@ -23,16 +23,6 @@ func (app ZenrockApp) RegisterUpgradeHandlers() {
 			upgrade.CreateUpgradeHandler(app.ModuleManager, app.Configurator()),
 		)
 
-		// ctx := context.Background()
-
-		// mintAccBase := authtypes.NewEmptyModuleAccount(v3.ModuleName, authtypes.Minter, authtypes.Burner)
-
-		// // Update the permissions
-		// macc := authtypes.NewModuleAccount(mintAccBase.BaseAccount, authtypes.Minter, authtypes.Burner)
-
-		// // Save the updated account
-		// app.AccountKeeper.SetModuleAccount(ctx, macc)
-
 		if upgradeInfo.Name == upgrade.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 			// configure store loader that checks if version == upgradeHeight and applies store upgrades
 			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
