@@ -43,45 +43,27 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
-	moduleAccount, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
-	// mintAcc.GetAddress()
-	// address := authKeeper.GetModuleAddress(v3.ModuleName)
-	// address := mintAcc.GetAddress()
-	fmt.Println("Mint Module Perms Before change:", perms)
+	// Get the current mint module account
+	moduleAccount, _ := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
 
-	// account := authKeeper.GetAccount(ctx, address)
-
+	// Create a new base account for the mint module with using the current attributes
 	baseAccount := authtypes.NewBaseAccount(
 		authKeeper.GetModuleAddress(v3.ModuleName),
 		nil,
 		moduleAccount.GetAccountNumber(),
 		moduleAccount.GetSequence(),
 	)
-	// baseAccount, ok := account.(*authtypes.BaseAccount)
-	if !ok {
-		return fmt.Errorf("account is not of type *authtypes.BaseAccount: %v", baseAccount)
-	}
 
+	// Create a new module account with the updated permissions
 	macc := authtypes.NewModuleAccount(baseAccount, v3.ModuleName, authtypes.Minter, authtypes.Burner)
 
-	fmt.Println("Module Account GetModuleAccountAndPermissions:", macc)
-	// fmt.Println("Module Account m.keeper.accountKeeper.Getmoduleaccount: ", macc)
-	perms = macc.GetPermissions()
-	fmt.Println("Mint Module Permissions BEFORE:", perms)
-
+	// Set the new module account
 	m.keeper.accountKeeper.SetModuleAccount(ctx, macc)
 
-	moduleAccount2 := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	perms = moduleAccount2.GetPermissions()
-	fmt.Println("Mint Module Permissions AFTER:", perms)
 	err := authKeeper.ValidatePermissions(moduleAccount)
 	if err != nil {
 		return err
 	}
-
-	// authtypes.NewPermissionsForAddress(v3.ModuleName, perms)
-
-	// authKeeper.SetModuleAccount(ctx, moduleAccount)
 
 	return v3.UpdateParams(ctx, m.keeper.Params, authKeeper)
 }
