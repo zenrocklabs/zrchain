@@ -6,6 +6,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
 	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -42,21 +43,27 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
+	// Get the current mint module account
+	moduleAccount, _ := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
 
-	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	perms := moduleAccount.GetPermissions()
-	fmt.Println("Mint Module Permissions BEFORE:", perms)
-	perms = append(perms, authtypes.Burner)
-	authKeeper.SetModuleAccount(ctx, moduleAccount)
-	fmt.Println("Mint Module Permissions AFTER:", perms)
+	// Create a new base account for the mint module with using the current attributes
+	baseAccount := authtypes.NewBaseAccount(
+		authKeeper.GetModuleAddress(v3.ModuleName),
+		nil,
+		moduleAccount.GetAccountNumber(),
+		moduleAccount.GetSequence(),
+	)
+
+	// Create a new module account with the updated permissions
+	macc := authtypes.NewModuleAccount(baseAccount, v3.ModuleName, authtypes.Minter, authtypes.Burner)
+
+	// Set the new module account
+	m.keeper.accountKeeper.SetModuleAccount(ctx, macc)
+
 	err := authKeeper.ValidatePermissions(moduleAccount)
 	if err != nil {
 		return err
 	}
-
-	// authtypes.NewPermissionsForAddress(v3.ModuleName, perms)
-
-	authKeeper.SetModuleAccount(ctx, moduleAccount)
 
 	return v3.UpdateParams(ctx, m.keeper.Params, authKeeper)
 }
