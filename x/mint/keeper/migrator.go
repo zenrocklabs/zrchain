@@ -6,6 +6,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
 	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 )
@@ -41,13 +42,17 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
+	moduleAccount, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
 
-	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	fmt.Println("Module Account:", moduleAccount)
-	perms := moduleAccount.GetPermissions()
+	// moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	moduleAccount2 := m.keeper.accountKeeper.GetModuleAccount(ctx, v3.ModuleName)
+
+	fmt.Println("Module Account GetModuleAccountAndPermissions:", moduleAccount)
+	fmt.Println("Module Account m.keeper.accountKeeper.Getmoduleaccount: ", moduleAccount2)
+	perms = moduleAccount.GetPermissions()
 	fmt.Println("Mint Module Permissions BEFORE:", perms)
 
-	m.keeper.accountKeeper.SetModuleAccount(ctx, authKeeper.GetModuleAccount(ctx, v3.ModuleName))
+	m.keeper.accountKeeper.SetModuleAccount(ctx, moduleAccount2)
 
 	moduleAccount = authKeeper.GetModuleAccount(ctx, v3.ModuleName)
 	perms = moduleAccount.GetPermissions()
