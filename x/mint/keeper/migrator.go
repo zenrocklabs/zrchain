@@ -43,14 +43,21 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	if !ok {
 		return fmt.Errorf("accountKeeper is not of type authkeeper.AccountKeeper")
 	}
-	_, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
+	moduleAccount, perms := authKeeper.GetModuleAccountAndPermissions(ctx, v3.ModuleName)
 	// mintAcc.GetAddress()
-	address := authKeeper.GetModuleAddress(v3.ModuleName)
+	// address := authKeeper.GetModuleAddress(v3.ModuleName)
 	// address := mintAcc.GetAddress()
-	fmt.Println("Mint Module Address:", address)
+	// fmt.Println("Mint Module Address:", address)
 
-	account := authKeeper.GetAccount(ctx, address)
-	baseAccount, ok := account.(*authtypes.BaseAccount)
+	// account := authKeeper.GetAccount(ctx, address)
+
+	baseAccount := authtypes.NewBaseAccount(
+		authKeeper.GetModuleAddress(v3.ModuleName),
+		nil,
+		moduleAccount.GetAccountNumber(),
+		moduleAccount.GetSequence(),
+	)
+	// baseAccount, ok := account.(*authtypes.BaseAccount)
 	if !ok {
 		return fmt.Errorf("account is not of type *authtypes.BaseAccount: %v", baseAccount)
 	}
@@ -64,8 +71,8 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 
 	m.keeper.accountKeeper.SetModuleAccount(ctx, macc)
 
-	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
-	perms = moduleAccount.GetPermissions()
+	moduleAccount2 := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	perms = moduleAccount2.GetPermissions()
 	fmt.Println("Mint Module Permissions AFTER:", perms)
 	err := authKeeper.ValidatePermissions(moduleAccount)
 	if err != nil {
