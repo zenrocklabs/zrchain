@@ -8,7 +8,6 @@ import (
 	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // Migrator is a struct for handling in-place state migrations.
@@ -44,10 +43,14 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	}
 
 	moduleAccount := authKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	fmt.Println("Module Account:", moduleAccount)
 	perms := moduleAccount.GetPermissions()
 	fmt.Println("Mint Module Permissions BEFORE:", perms)
-	perms = append(perms, authtypes.Burner)
-	authKeeper.SetModuleAccount(ctx, moduleAccount)
+
+	m.keeper.accountKeeper.SetModuleAccount(ctx, authKeeper.GetModuleAccount(ctx, v3.ModuleName))
+
+	moduleAccount = authKeeper.GetModuleAccount(ctx, v3.ModuleName)
+	perms = moduleAccount.GetPermissions()
 	fmt.Println("Mint Module Permissions AFTER:", perms)
 	err := authKeeper.ValidatePermissions(moduleAccount)
 	if err != nil {
@@ -56,7 +59,7 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 
 	// authtypes.NewPermissionsForAddress(v3.ModuleName, perms)
 
-	authKeeper.SetModuleAccount(ctx, moduleAccount)
+	// authKeeper.SetModuleAccount(ctx, moduleAccount)
 
 	return v3.UpdateParams(ctx, m.keeper.Params, authKeeper)
 }
