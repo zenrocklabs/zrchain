@@ -47,7 +47,7 @@ func Test_VerifyBTCUnlockTransaction(t *testing.T) {
 		BlockHash:  "0000000000000000000207bd7147ace5cda4cead0cf46babdfb8e6addfb0f8e2",
 	}
 
-	outputs, txid, err := VerifyBTCLockTransaction(rawTX, "mainnet", index, proof, blockHeader)
+	outputs, txid, err := VerifyBTCLockTransaction(rawTX, "mainnet", index, proof, blockHeader, []string{})
 	require.NoError(t, err)
 	require.True(t, txid == "0a9787e73cee590730cca5b787f8f1fd9c2205a7fa2c8f165b89fc43b9e22cfa", "invalid calculated txid")
 	require.True(t, len(outputs) == 1, "should be two outputs") //in this eg. 1 is real, 1 has 0 amount, no address
@@ -91,7 +91,7 @@ func Test_VerifyBTCLockTransaction(t *testing.T) {
 		BlockHash:  "000000003c057188e715529359ae9a45a9f7b8462f0c9b8b9f2f24ac196eb6fb",
 	}
 
-	outputs, txid, err := VerifyBTCLockTransaction(rawTX, "testnet", index, proof, blockHeader)
+	outputs, txid, err := VerifyBTCLockTransaction(rawTX, "testnet", index, proof, blockHeader, []string{})
 	require.NoError(t, err)
 	require.True(t, txid == "f0ace3a53686463bda143371613ac204780f0fddb6f19fe1cc88c2f0f2588541", "invalid calculated txid")
 	require.True(t, len(outputs) == 2, "should be two outputs") //in this eg. 1 is real, 1 has 0 amount, no address

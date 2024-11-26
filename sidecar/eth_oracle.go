@@ -14,8 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
+	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
@@ -41,7 +41,7 @@ func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutr
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	contractInstance, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
+	serviceManager, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -63,7 +63,12 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	}
 }
 
-func (o *Oracle) fetchAndProcessState(contractInstance *middleware.ContractZrServiceManager, tempEthClient *ethclient.Client, priceFeed *aggregatorv3.AggregatorV3Interface) error {
+func (o *Oracle) fetchAndProcessState(
+	serviceManager *middleware.ContractZrServiceManager,
+	redemptionTrackerHolesky *zenbtc.RedemptionTracker,
+	priceFeed *aggregatorv3.AggregatorV3Interface,
+	tempEthClient *ethclient.Client,
+) error {
 	ctx := context.Background()
 
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
