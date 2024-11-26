@@ -3,23 +3,32 @@ package v3_test
 import (
 	"testing"
 
+	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
+	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/stretchr/testify/require"
+
+	storetypes "cosmossdk.io/store/types"
+
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	// "testing"
-	// "github.com/stretchr/testify/require"
-	// "cosmossdk.io/collections"
-	// "cosmossdk.io/math"
-	// storetypes "cosmossdk.io/store/types"
-	// "github.com/Zenrock-Foundation/zrchain/v5/x/mint"
-	// "github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
-	// v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
-	// "github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
-	// "github.com/cosmos/cosmos-sdk/codec"
-	// "github.com/cosmos/cosmos-sdk/runtime"
-	// "github.com/cosmos/cosmos-sdk/testutil"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
-	// moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+)
+
+var (
+	stakingYield             = math.LegacyNewDecWithPrec(7, 2)
+	burnRate                 = math.LegacyNewDecWithPrec(10, 2)
+	protocolWalletRate       = math.LegacyNewDecWithPrec(30, 2)
+	protocolWalletAddress    = "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj"
+	retentionRate            = math.LegacyNewDecWithPrec(40, 2)
+	additionalStakingRewards = math.LegacyNewDecWithPrec(30, 2)
+	additionalMpcRewards     = math.LegacyNewDecWithPrec(5, 2)
+	additionalBurnRate       = math.LegacyNewDecWithPrec(25, 2)
 )
 
 type mockSubspace struct {
@@ -35,39 +44,32 @@ func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
 }
 
 func TestMigrate(t *testing.T) {
-	t.SkipNow()
-	// encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
-	// cdc := encCfg.Codec
+	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
+	cdc := encCfg.Codec
 
-	// storeKey := storetypes.NewKVStoreKey(v3.ModuleName)
-	// tKey := storetypes.NewTransientStoreKey("transient_test")
-	// ctx := testutil.DefaultContext(storeKey, tKey)
-	// kvStoreService := runtime.NewKVStoreService(storeKey)
-	// store := kvStoreService.OpenKVStore(ctx)
+	storeKey := storetypes.NewKVStoreKey(v3.ModuleName)
+	tKey := storetypes.NewTransientStoreKey("transient_test")
+	ctx := testutil.DefaultContext(storeKey, tKey)
 
-	// // Initialize the parameters with expected values
-	// params := types.Params{
-	// 	MintDenom:           "urock",
-	// 	InflationRateChange: math.LegacyNewDecWithPrec(0, 2),  // 0.13
-	// 	InflationMax:        math.LegacyNewDecWithPrec(0, 2),  // 0.20
-	// 	InflationMin:        math.LegacyNewDecWithPrec(0, 2),  // 0.07
-	// 	GoalBonded:          math.LegacyNewDecWithPrec(67, 2), // 0.67
-	// 	BlocksPerYear:       6311520,                          // for one year
-	// }
+	kvStoreService := runtime.NewKVStoreService(storeKey)
+	store := kvStoreService.OpenKVStore(ctx)
+	sb := collections.NewSchemaBuilder(kvStoreService)
+	params := collections.NewItem(sb, types.ParamsKey, "minter", codec.CollValue[types.Params](cdc))
+	err := params.Set(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	require.NoError(t, v3.UpdateParams(ctx, params))
 
-	// // Create a schema builder and prefix for the item
-	// schemaBuilder := collections.NewSchemaBuilder(kvStoreService)
-	// prefix := collections.NewPrefix(v3.ParamsKey)
+	var res types.Params
+	bz, err := store.Get(v3.ParamsKey)
+	require.NoError(t, err)
+	require.NoError(t, cdc.Unmarshal(bz, &res))
 
-	// // Set the parameters in the store
-	// err := store.Set(v3.ParamsKey, cdc.MustMarshal(&params)) // Ensure the key is set
-	// require.NoError(t, err)
-
-	// require.NoError(t, v3.UpdateParams(ctx, collections.NewItem(schemaBuilder, prefix, "params", codec.CollValue[types.Params](cdc))))
-
-	// var res types.Params
-	// bz, err := store.Get(v3.ParamsKey)
-	// require.NoError(t, err)
-	// require.NoError(t, cdc.Unmarshal(bz, &res))
-	// require.Equal(t, params, res)
+	require.True(t, res.AdditionalBurnRate.Equal(additionalBurnRate))
+	require.True(t, res.AdditionalMpcRewards.Equal(additionalMpcRewards))
+	require.True(t, res.StakingYield.Equal(stakingYield))
+	require.True(t, res.BurnRate.Equal(burnRate))
+	require.True(t, res.ProtocolWalletRate.Equal(protocolWalletRate))
+	require.Equal(t, res.ProtocolWalletAddress, protocolWalletAddress)
+	require.True(t, res.RetentionRate.Equal(retentionRate))
+	require.True(t, res.AdditionalStakingRewards.Equal(additionalStakingRewards))
 }

@@ -8,7 +8,6 @@ import (
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 )
 
 const (
@@ -24,7 +23,6 @@ var ParamsKey = []byte{0x01}
 func UpdateParams(
 	ctx sdk.Context,
 	params collections.Item[types.Params],
-	accountKeeper authkeeper.AccountKeeper,
 ) error {
 	oldParams, err := params.Get(ctx)
 	if err != nil {
