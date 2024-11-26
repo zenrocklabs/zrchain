@@ -82,6 +82,8 @@ require (
 	gotest.tools/v3 v3.5.1
 )
 
+require github.com/cockroachdb/errors v1.11.3
+
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.1-20240508200655-46a4cf4ba109.1 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.16.1-20240514010100-299bd9c9a0c4.1 // indirect
@@ -128,7 +130,6 @@ require (
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20240905190251-b4127c9b8d78 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/cockroachdb/errors v1.11.3 // indirect
 	github.com/cockroachdb/fifo v0.0.0-20240816210425-c5d0cb0b6fc0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/pebble v1.1.2 // indirect
