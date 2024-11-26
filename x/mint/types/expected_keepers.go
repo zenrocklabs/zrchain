@@ -34,8 +34,3 @@ type BankKeeper interface {
 	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	BurnCoins(ctx context.Context, name string, amt sdk.Coins) error
 }
-
-// TreasuryKeeper defines the contract needed to be fulfilled for treasury
-// dependencies.
-type TreasuryKeeper interface {
-}

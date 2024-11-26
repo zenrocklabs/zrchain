@@ -469,7 +469,6 @@ func NewZenrockApp(
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
 		authAddr,
-		app.TreasuryKeeper,
 	)
 
 	app.DistrKeeper = distrkeeper.NewKeeper(
