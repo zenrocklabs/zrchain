@@ -11,6 +11,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -70,15 +71,15 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
 	}
 
-	// bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
-	// if err != nil {
-	// 	return VoteExtension{}, err
-	// }
+	bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+	if err != nil {
+		return VoteExtension{}, err
+	}
 
-	// nonce, err := k.lookupEthereumNonce(ctx)
-	// if err != nil {
-	// 	return VoteExtension{}, err
-	// }
+	nonce, err := k.lookupEthereumNonce(ctx)
+	if err != nil {
+		return VoteExtension{}, err
+	}
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:      height,
@@ -86,14 +87,14 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		ETHUSDPrice:             oracleData.ETHUSDPrice,
 		AVSDelegationsHash:      avsDelegationsHash[:],
 		EthereumRedemptionsHash: ethereumRedemptionsHash[:],
-		// BtcBlockHeight:     bitcoinData.BlockHeight,
-		// BtcMerkleRoot:      bitcoinData.BlockHeader.MerkleRoot,
-		EthBlockHeight: oracleData.EthBlockHeight,
-		EthBlockHash:   oracleData.EthBlockHash,
-		EthGasLimit:    oracleData.EthGasLimit,
-		EthBaseFee:     oracleData.EthBaseFee,
-		EthTipCap:      oracleData.EthTipCap,
-		// RequestedEthNonce: nonce,
+		BtcBlockHeight:          bitcoinData.BlockHeight,
+		BtcMerkleRoot:           bitcoinData.BlockHeader.MerkleRoot,
+		EthBlockHeight:          oracleData.EthBlockHeight,
+		EthBlockHash:            oracleData.EthBlockHash,
+		EthGasLimit:             oracleData.EthGasLimit,
+		EthBaseFee:              oracleData.EthBaseFee,
+		EthTipCap:               oracleData.EthTipCap,
+		RequestedEthNonce:       nonce,
 	}
 
 	return voteExt, nil
@@ -278,15 +279,15 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 		return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
 	}
 
-	// bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-	// 	ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
-	// )
-	// if err != nil {
-	// 	return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
-	// }
+	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
+		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+	}
 
-	// oracleData.BtcBlockHeight = bitcoinData.BlockHeight
-	// oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
+	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
+	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	oracleData.RequestedEthNonce = voteExt.RequestedEthNonce
 
 	if err := k.validateOracleData(voteExt, oracleData); err != nil {
