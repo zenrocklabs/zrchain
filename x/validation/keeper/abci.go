@@ -502,6 +502,17 @@ func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleD
 		}
 	}
 
+	supply, err := k.ZenBTCSupply.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting zenBTC supply: %w", err)
+	}
+
+	supply.MintedZenBTC += tx.Amount
+
+	if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
+		return fmt.Errorf("error updating zenBTC supply: %w", err)
+	}
+
 	return nil
 }
 
@@ -510,6 +521,14 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		k.Logger(ctx).Debug("no redemptions to store")
 		return
 	}
+
+	// Get current exchange rate for conversion
+	exchangeRate, err := k.GetZenBTCExchangeRate(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
+		return
+	}
+
 	for _, redemption := range oracleData.EthereumRedemptions {
 		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
 		if err != nil {
@@ -520,7 +539,19 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 			k.Logger(ctx).Debug("redemption already stored", "id", redemption.Id)
 			continue
 		}
-		if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{Data: zenbtctypes.RedemptionData(redemption), Completed: false}); err != nil {
+
+		// Convert zenBTC amount to BTC amount
+		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
+		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
+
+		if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{
+			Data: zenbtctypes.RedemptionData{
+				Id:                 redemption.Id,
+				DestinationAddress: redemption.DestinationAddress,
+				Amount:             btcAmount,
+			},
+			Completed: false,
+		}); err != nil {
 			k.Logger(ctx).Error("error adding redemption to store", "err", err)
 			continue
 		}

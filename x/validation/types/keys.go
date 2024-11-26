@@ -30,6 +30,7 @@ var (
 	PendingRedemptionsKey      = collections.NewPrefix(11)
 	ZenBTCRedemptionsKey       = collections.NewPrefix(12)
 	VoteExtensionRejectedKey   = collections.NewPrefix(13)
+	ZenBTCSupplyKey            = collections.NewPrefix(14)
 
 	AssetPricesIndex             = "asset_prices"
 	SlashEventsIndex             = "slash_events"
@@ -45,6 +46,7 @@ var (
 	PendingRedemptionsIndex      = "pending_redemption_transactions"
 	ZenBTCRedemptionsIndex       = "zenbtc_redemptions"
 	VoteExtensionRejectedIndex   = "vote_extension_rejected"
+	ZenBTCSupplyIndex            = "zenbtc_supply"
 )
 
 const (

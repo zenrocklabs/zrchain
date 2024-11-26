@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -61,6 +62,8 @@ type Keeper struct {
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
 	// ZenBTCRedemptions - key: redemption index | value: redemption data
 	ZenBTCRedemptions collections.Map[uint64, zenbtctypes.Redemption]
+	// ZenBTCSupply - value: zenBTC supply data
+	ZenBTCSupply collections.Item[zenbtctypes.Supply]
 	// VoteExtensionRejected - key: bool (is rejected)
 	VoteExtensionRejected collections.Item[bool]
 }
@@ -129,6 +132,7 @@ func NewKeeper(
 		EthereumNonceRequested:  collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
 		PendingMintTransactions: collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
 		ZenBTCRedemptions:       collections.NewMap(sb, types.ZenBTCRedemptionsKey, types.ZenBTCRedemptionsIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.Redemption](cdc)),
+		ZenBTCSupply:            collections.NewItem(sb, types.ZenBTCSupplyKey, types.ZenBTCSupplyIndex, codec.CollValue[zenbtctypes.Supply](cdc)),
 		VoteExtensionRejected:   collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
 	}
 }
@@ -227,4 +231,22 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 	}
 
 	return valUpdates.Updates, nil
+}
+
+// GetZenBTCExchangeRate returns the current exchange rate between BTC and zenBTC
+// Returns the number of BTC represented by 1 zenBTC
+func (k Keeper) GetZenBTCExchangeRate(ctx sdk.Context) (float64, error) {
+	supply, err := k.ZenBTCSupply.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return 0, err
+		}
+		return 1.0, nil // Initial exchange rate of 1:1
+	}
+
+	if supply.MintedZenBTC == 0 {
+		return 1.0, nil // If no zenBTC minted yet, use 1:1 rate
+	}
+
+	return float64(supply.CustodiedBTC) / float64(supply.MintedZenBTC), nil
 }
