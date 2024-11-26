@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
@@ -113,6 +114,14 @@ func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) (
 	}
 
 	return sha256.Sum256(avsDelegationsBz), nil
+}
+
+func deriveEthereumRedemptionsHash(redemptions []api.Redemption) ([32]byte, error) {
+	redemptionsBz, err := json.Marshal(redemptions)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("error encoding ethereum redemptions: %w", err)
+	}
+	return sha256.Sum256(redemptionsBz), nil
 }
 
 func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, error) {

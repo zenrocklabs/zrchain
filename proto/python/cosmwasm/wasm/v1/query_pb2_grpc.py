@@ -75,6 +75,11 @@ class QueryStub(object):
                 request_serializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorRequest.SerializeToString,
                 response_deserializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorResponse.FromString,
                 )
+        self.WasmLimitsConfig = channel.unary_unary(
+                '/cosmwasm.wasm.v1.Query/WasmLimitsConfig',
+                request_serializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigRequest.SerializeToString,
+                response_deserializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigResponse.FromString,
+                )
         self.BuildAddress = channel.unary_unary(
                 '/cosmwasm.wasm.v1.Query/BuildAddress',
                 request_serializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryBuildAddressRequest.SerializeToString,
@@ -170,6 +175,14 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def WasmLimitsConfig(self, request, context):
+        """WasmLimitsConfig gets the configured limits for static validation of Wasm
+        files, encoded in JSON.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def BuildAddress(self, request, context):
         """BuildAddress builds a contract address
         """
@@ -239,6 +252,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.ContractsByCreator,
                     request_deserializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorRequest.FromString,
                     response_serializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorResponse.SerializeToString,
+            ),
+            'WasmLimitsConfig': grpc.unary_unary_rpc_method_handler(
+                    servicer.WasmLimitsConfig,
+                    request_deserializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigRequest.FromString,
+                    response_serializer=cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigResponse.SerializeToString,
             ),
             'BuildAddress': grpc.unary_unary_rpc_method_handler(
                     servicer.BuildAddress,
@@ -457,6 +475,23 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/cosmwasm.wasm.v1.Query/ContractsByCreator',
             cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorRequest.SerializeToString,
             cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryContractsByCreatorResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def WasmLimitsConfig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cosmwasm.wasm.v1.Query/WasmLimitsConfig',
+            cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigRequest.SerializeToString,
+            cosmwasm_dot_wasm_dot_v1_dot_query__pb2.QueryWasmLimitsConfigResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

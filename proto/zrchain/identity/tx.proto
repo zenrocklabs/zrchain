@@ -135,9 +135,7 @@ message MsgNewChildWorkspace {
 
 // MsgNewChildWorkspaceResponse defines the response structure for executing a
 // MsgNewChildWorkspaceResponse message
-message MsgNewChildWorkspaceResponse {
-  string address = 1;
-}
+message MsgNewChildWorkspaceResponse { string address = 1; }
 
 // MsgRemoveWorkspaceOwner is the Msg/RemoveWorkspaceOwner request type
 message MsgRemoveWorkspaceOwner {

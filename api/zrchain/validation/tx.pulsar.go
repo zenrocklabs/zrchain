@@ -7206,8 +7206,8 @@ type MsgCreateValidator struct {
 	Commission        *CommissionRates `protobuf:"bytes,2,opt,name=commission,proto3" json:"commission,omitempty"`
 	MinSelfDelegation string           `protobuf:"bytes,3,opt,name=min_self_delegation,json=minSelfDelegation,proto3" json:"min_self_delegation,omitempty"`
 	// Deprecated: Use of Delegator Address in MsgCreateValidator is deprecated.
-	// The validator address bytes and delegator address bytes refer to the same account while creating validator (defer
-	// only in bech32 notation).
+	// The validator address bytes and delegator address bytes refer to the same
+	// account while creating validator (defer only in bech32 notation).
 	//
 	// Deprecated: Do not use.
 	DelegatorAddress string        `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
@@ -7679,7 +7679,8 @@ func (x *MsgUndelegateResponse) GetAmount() *v1beta1.Coin {
 	return nil
 }
 
-// MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unbonding delegation for delegator
+// MsgCancelUnbondingDelegation defines the SDK message for performing a cancel
+// unbonding delegation for delegator
 //
 // Since: cosmos-sdk 0.46
 type MsgCancelUnbondingDelegation struct {
@@ -7780,7 +7781,8 @@ type MsgUpdateParams struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// NOTE: All parameters must be supplied.
 	Params *Params `protobuf:"bytes,2,opt,name=Params,proto3" json:"Params,omitempty"`

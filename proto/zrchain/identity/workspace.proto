@@ -36,7 +36,6 @@ message Workspace {
   // owner approves it.
   uint64 sign_policy_id = 6;
 
-
   // Optional alias field to be used in various situations
   // e.g. wallet type for zr sign workspaces
   string alias = 7;

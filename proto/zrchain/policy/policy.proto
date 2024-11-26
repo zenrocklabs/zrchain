@@ -24,6 +24,6 @@ message BoolparserPolicy {
 
 // PolicyParticipant defines a participant in a policy
 message PolicyParticipant {
-  string abbreviation = 1 [deprecated = true];
+  string abbreviation = 1 [ deprecated = true ];
   string address = 2;
 }

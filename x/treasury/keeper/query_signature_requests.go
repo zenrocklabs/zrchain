@@ -20,7 +20,7 @@ func (k Keeper) SignatureRequests(goCtx context.Context, req *types.QuerySignatu
 		req.Pagination,
 		func(key uint64, value types.SignRequest) (bool, error) {
 			if req.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_UNSPECIFIED || value.Status == req.Status {
-				keyInfo, err := k.KeyStore.Get(goCtx, value.KeyId)
+				keyInfo, err := k.KeyStore.Get(goCtx, value.KeyIds[0])
 				if err != nil {
 					return false, nil
 				}
@@ -37,7 +37,7 @@ func (k Keeper) SignatureRequests(goCtx context.Context, req *types.QuerySignatu
 			return &types.SignReqResponse{
 				Id:                     value.Id,
 				Creator:                value.Creator,
-				KeyId:                  value.KeyId,
+				KeyIds:                 value.KeyIds,
 				KeyType:                value.KeyType.String(),
 				DataForSigning:         value.DataForSigning,
 				Status:                 value.Status.String(),

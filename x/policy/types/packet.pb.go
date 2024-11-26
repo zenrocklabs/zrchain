@@ -27,6 +27,7 @@ type PolicyPacketData struct {
 	// defines packet
 	//
 	// Types that are valid to be assigned to Packet:
+	//
 	//	*PolicyPacketData_NoData
 	Packet isPolicyPacketData_Packet `protobuf_oneof:"packet"`
 }

@@ -10,9 +10,9 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types";
 message GenesisState {
   // gen_txs defines the genesis transactions.
   repeated bytes gen_txs = 1 [
-    (gogoproto.casttype)   = "encoding/json.RawMessage",
-    (gogoproto.jsontag)    = "gentxs",
-    (amino.field_name)     = "gentxs",
+    (gogoproto.casttype) = "encoding/json.RawMessage",
+    (gogoproto.jsontag) = "gentxs",
+    (amino.field_name) = "gentxs",
     (amino.dont_omitempty) = true
   ];
 }

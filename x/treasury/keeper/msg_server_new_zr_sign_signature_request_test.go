@@ -77,7 +77,7 @@ func Test_msgServer_NewZrSignSignatureRequest_Hash_OrData(t *testing.T) {
 			wantReq: &types.SignRequest{
 				Id:             1,
 				Creator:        "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq",
-				KeyId:          1,
+				KeyIds:         []uint64{1},
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 				DataForSigning: [][]byte{rawData},
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,

@@ -53,7 +53,7 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 				SignRequest: &types.SignReqResponse{
 					Id:                     signReq.Id,
 					Creator:                signReq.Creator,
-					KeyId:                  signReq.KeyId,
+					KeyIds:                 signReq.KeyIds,
 					KeyType:                signReq.KeyType.String(),
 					DataForSigning:         signReq.DataForSigning,
 					Status:                 signReq.Status.String(),

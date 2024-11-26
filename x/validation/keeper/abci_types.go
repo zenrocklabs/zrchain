@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,18 +30,19 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight int64
-		ROCKUSDPrice       math.LegacyDec
-		ETHUSDPrice        math.LegacyDec
-		AVSDelegationsHash []byte
-		BtcBlockHeight     int64
-		BtcMerkleRoot      string
-		EthBlockHeight     uint64
-		EthBlockHash       common.Hash
-		EthGasLimit        uint64
-		EthBaseFee         uint64
-		EthTipCap          uint64
-		RequestedEthNonce  uint64
+		ZRChainBlockHeight      int64
+		ROCKUSDPrice            math.LegacyDec
+		ETHUSDPrice             math.LegacyDec
+		AVSDelegationsHash      []byte
+		EthereumRedemptionsHash []byte
+		BtcBlockHeight          int64
+		BtcMerkleRoot           string
+		EthBlockHeight          uint64
+		EthBlockHash            common.Hash
+		EthGasLimit             uint64
+		EthBaseFee              uint64
+		EthTipCap               uint64
+		RequestedEthNonce       uint64
 	}
 
 	VEWithVotePower struct {
@@ -61,6 +63,7 @@ type (
 		EthBaseFee           uint64
 		EthTipCap            uint64
 		RequestedEthNonce    uint64
+		EthereumRedemptions  []api.Redemption
 		ConsensusData        abci.ExtendedCommitInfo
 	}
 

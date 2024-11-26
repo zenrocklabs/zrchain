@@ -200,6 +200,16 @@ class QueryContractsByCreatorResponse(_message.Message):
     pagination: _pagination_pb2.PageResponse
     def __init__(self, contract_addresses: _Optional[_Iterable[str]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
 
+class QueryWasmLimitsConfigRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryWasmLimitsConfigResponse(_message.Message):
+    __slots__ = ("config",)
+    CONFIG_FIELD_NUMBER: _ClassVar[int]
+    config: str
+    def __init__(self, config: _Optional[str] = ...) -> None: ...
+
 class QueryBuildAddressRequest(_message.Message):
     __slots__ = ("code_hash", "creator_address", "salt", "init_args")
     CODE_HASH_FIELD_NUMBER: _ClassVar[int]

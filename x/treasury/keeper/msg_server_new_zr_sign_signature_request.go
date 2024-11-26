@@ -81,9 +81,9 @@ func (k msgServer) NewZrSignSignatureRequest(goCtx context.Context, msg *types.M
 		}
 		response.ReqId = resp.Id
 	} else {
-		resp, err := k.signatureRequest(ctx, &types.MsgNewSignatureRequest{
+		resp, err := k.HandleSignatureRequest(ctx, &types.MsgNewSignatureRequest{
 			Creator:                  msg.Creator,
-			KeyId:                    key.Id,
+			KeyIds:                   []uint64{key.Id},
 			DataForSigning:           msg.Data,
 			Btl:                      msg.Btl,
 			CacheId:                  msg.CacheId,

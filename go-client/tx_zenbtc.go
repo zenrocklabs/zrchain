@@ -65,3 +65,26 @@ func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
 
 	return hash, nil
 }
+
+func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, hashkeys []*types.InputHashes, txBytes []byte, cacheID []byte, chainName string, redemptionIndexes []uint64) (string, error) {
+	msg := &types.MsgSubmitUnsignedRedemptionTx{
+		Creator:           c.c.Identity.Address.String(),
+		Inputs:            hashkeys,
+		Txbytes:           txBytes,
+		CacheId:           cacheID,
+		ChainName:         chainName,
+		RedemptionIndexes: redemptionIndexes,
+	}
+
+	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := c.c.SendWaitTx(ctx, txBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
+}

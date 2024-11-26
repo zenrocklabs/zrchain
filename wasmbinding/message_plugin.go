@@ -39,9 +39,9 @@ type newKeyRequest struct {
 }
 
 type signDataRequest struct {
-	Creator        string `json:"creator"`
-	KeyId          string `json:"key_id"`
-	DataForSigning string `json:"data_for_signing"`
+	Creator        string   `json:"creator"`
+	KeyIds         []string `json:"key_ids"`
+	DataForSigning string   `json:"data_for_signing"`
 }
 
 type transactionMetadata struct {
@@ -159,11 +159,15 @@ func (m *CustomMessageInterceptor) signData(ctx sdk.Context, req *signDataReques
 	internalReq := &treasurytypes.MsgNewSignatureRequest{
 		Creator:        req.Creator,
 		DataForSigning: req.DataForSigning,
+		KeyIds:         []uint64{},
 	}
 
-	internalReq.KeyId, err = strconv.ParseUint(req.KeyId, 10, 64)
-	if err != nil {
-		return cosmoserrors.Wrap(err, "keyId")
+	for _, keyID := range req.KeyIds {
+		uintKeyID, err := strconv.ParseUint(keyID, 10, 64)
+		if err != nil {
+			return cosmoserrors.Wrap(err, "keyId")
+		}
+		internalReq.KeyIds = append(internalReq.KeyIds, uintKeyID)
 	}
 
 	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury)

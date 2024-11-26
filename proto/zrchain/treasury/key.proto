@@ -101,7 +101,7 @@ message KeyResponse {
 message ZenBTCMetadata {
   string recipient_addr = 1; // Optional
   WalletType chain_type = 2; // Optional
-  uint64 chain_id = 3; // Optional
+  uint64 chain_id = 3;       // Optional
   string return_address = 4; // Optional
 }
 
@@ -115,6 +115,5 @@ message PendingMintTransaction {
   uint64 key_id = 6;
 }
 
-message PendingMintTransactions {
-  repeated PendingMintTransaction txs = 1;
-}
+// PendingMintTransactions is a collection of pending mint transactions.
+message PendingMintTransactions { repeated PendingMintTransaction txs = 1; }
