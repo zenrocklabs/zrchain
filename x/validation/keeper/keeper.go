@@ -95,7 +95,12 @@ func NewKeeper(
 		panic("validator and/or consensus address codec are nil")
 	}
 
-	oracleClient, err := NewSidecarClient(zrConfig.SidecarAddr)
+	// The config isn't created when we export the genesis state, so we blank it out
+	sidecarAddr := ""
+	if zrConfig != nil {
+		sidecarAddr = zrConfig.SidecarAddr
+	}
+	oracleClient, err := NewSidecarClient(sidecarAddr)
 	if err != nil {
 		panic("error creating sidecar client")
 	}
