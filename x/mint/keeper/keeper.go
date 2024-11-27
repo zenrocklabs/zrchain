@@ -169,13 +169,8 @@ func (k Keeper) BaseDistribution(ctx context.Context, totalRewards sdk.Coin) (sd
 		return sdk.Coin{}, err
 	}
 
-	// TODO - remove
-	fmt.Printf("burn amount:\t\t\t%v\n", burnAmount)
-
 	protocolWalletPortion := math.LegacyNewDecFromInt(totalRewards.Amount).Mul(params.ProtocolWalletRate).TruncateInt()
 
-	// TODO - remove
-	fmt.Printf("for protocol wallet:\t\t%v\n", protocolWalletPortion)
 	err = k.sendProtocolWalletFees(ctx, sdk.NewCoin(params.MintDenom, protocolWalletPortion))
 	if err != nil {
 		return sdk.Coin{}, err
@@ -214,21 +209,6 @@ func (k Keeper) CalculateTopUp(ctx context.Context, stakingRewards sdk.Coin, tot
 	return sdk.NewCoin(stakingRewards.Denom, topUpAmount), nil
 }
 
-// func (k Keeper) TopUpTotalRewards(ctx context.Context, topUpAmount sdk.Coin) error {
-// 	params, err := k.Params.Get(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Convert string address to AccAddress
-// 	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-// 	if err != nil {
-// 		return fmt.Errorf("invalid protocol wallet address: %v", err)
-// 	}
-
-// 	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, protocolAddr, types.ModuleName, sdk.NewCoins(topUpAmount))
-// }
-
 func (k Keeper) CheckModuleBalance(ctx context.Context, totalBlockStakingReward sdk.Coin) error {
 
 	// Validate input
@@ -246,12 +226,10 @@ func (k Keeper) CheckModuleBalance(ctx context.Context, totalBlockStakingReward 
 	// Add debug logging
 	moduleBalance := k.bankKeeper.GetBalance(ctx, moduleAddr, totalBlockStakingReward.Denom)
 
-	// TODO - remove
-	fmt.Printf("mint module balance:\t\t%v\n", moduleBalance)
-
 	if moduleBalance.Amount.LT(totalBlockStakingReward.Amount) {
 		return fmt.Errorf("module balance %v is less than required staking reward %v", moduleBalance, totalBlockStakingReward)
 	}
+
 	return nil
 }
 
@@ -260,6 +238,7 @@ func (k Keeper) CalculateExcess(ctx context.Context, totalBlockStakingReward sdk
 	if excess.IsZero() || excess.IsNegative() {
 		return sdk.Coin{}, fmt.Errorf("excess cannot be negative: %v", excess)
 	}
+
 	return sdk.NewCoin(totalBlockStakingReward.Denom, excess), nil
 }
 
@@ -270,9 +249,8 @@ func (k Keeper) AdditionalBurn(ctx context.Context, excess sdk.Coin) error {
 	}
 
 	burnAmount := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
-	// TODO - remove
-	fmt.Printf("excess burn amt:\t\t%v\n", burnAmount)
 	excess.Amount = excess.Amount.Sub(burnAmount)
+
 	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount)))
 }
 
@@ -289,9 +267,8 @@ func (k Keeper) AdditionalMpcRewards(ctx context.Context, excess sdk.Coin) error
 	}
 
 	mpcRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
-	// TODO - remove
-	fmt.Printf("mpc rewards:\t\t\t%v\n", mpcRewards)
 	excess.Amount = excess.Amount.Sub(mpcRewards)
+
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards)))
 }
 
@@ -302,57 +279,32 @@ func (k Keeper) AdditionalStakingRewards(ctx context.Context, excess sdk.Coin) e
 	}
 
 	stakingRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
-	// TODO - remove
-	fmt.Printf("staking rewards:\t\t%v\n", stakingRewards)
 	excess.Amount = excess.Amount.Sub(stakingRewards)
+
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards)))
 }
 
 func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) error {
 
-	mintModuleBalance, err := k.CheckMintModuleBalance(ctx)
+	err := k.AdditionalBurn(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("mint bal before burn:\t\t%v\n", mintModuleBalance)
-
-	err = k.AdditionalBurn(ctx, excessAmount)
-	if err != nil {
-		return err
-	}
-
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after burn:\t\t%v\n", mintModuleBalance)
 
 	err = k.AdditionalMpcRewards(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
 
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after mpc rewards:\t\t%v\n", mintModuleBalance)
-
 	err = k.AdditionalStakingRewards(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
 
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after staking rewards:\t%v\n", mintModuleBalance)
-
 	return nil
 }
 
-func (k Keeper) CheckMintModuleBalance(ctx context.Context) (sdk.Coin, error) {
+func (k Keeper) GetMintModuleBalance(ctx context.Context) (sdk.Coin, error) {
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
@@ -376,9 +328,6 @@ func (k Keeper) ClaimTotalRewards(ctx context.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 
-	// TODO: remove
-	fmt.Printf("keyring rewards:\t\t%v\n", keyringRewards)
-	fmt.Printf("fee rewards:\t\t\t%v\n", feesAmount)
 	return keyringRewards.Add(feesAmount), nil
 }
 

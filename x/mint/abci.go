@@ -2,7 +2,6 @@ package mint
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
@@ -13,9 +12,6 @@ import (
 // BeginBlocker mints new tokens for the previous block.
 func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalculationFn) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyBeginBlocker)
-
-	perms := k.GetModuleAccountPerms(ctx)
-	fmt.Println("Mint Module Permissions at BeginBlocker:", perms)
 
 	// fetch stored minter & params
 	minter, err := k.Minter.Get(ctx)
@@ -28,13 +24,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	// TODO remove
-	fmt.Println("---")
-
-	// TODO - create tests
-	// TODO - adjust events
-	// TODO - remove legacy minting mechanism
-
 	// recalculate inflation rate
 	totalStakingSupply, err := k.StakingTokenSupply(ctx)
 	if err != nil {
@@ -46,54 +35,36 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	mintModuleBalance, err := k.CheckMintModuleBalance(ctx)
+	mintModuleBalance, err := k.GetMintModuleBalance(ctx)
 	if err != nil {
 		return err
 	}
-
-	// TODO - remove
-	fmt.Printf("mint module balance:\t\t%v\n", mintModuleBalance)
 
 	totalRewards, err := k.ClaimTotalRewards(ctx)
 	if err != nil {
 		return err
 	}
 
-	// TODO - remove
-	fmt.Printf("total rewards:\t\t\t%v\n", totalRewards)
-
 	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
 	if err != nil {
 		return err
 	}
-
-	// TODO - remove
-	fmt.Printf("rewards after burn&pw:\t\t%v\n", totalRewardsRest)
 
 	totalBondedTokens, err := k.TotalBondedTokens(ctx)
 	if err != nil {
 		return err
 	}
 
-	// TODO - remove
-	fmt.Printf("total bonded tokens:\t\t%v\n", totalBondedTokens)
-
 	totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
 	if err != nil {
 		return err
 	}
-
-	// TODO - remove
-	fmt.Printf("total staking rewards:\t\t%v\n", totalBlockStakingReward)
 
 	if totalBlockStakingReward.Amount.GT(totalRewardsRest.Amount) {
 		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
 			return err
 		}
-
-		// TODO - remove
-		fmt.Printf("top-up amount:\t\t\t%v\n", topUpAmount)
 
 		// if totalRewardsRest enough - top up from mint module
 		if !topUpAmount.IsZero() || !mintModuleBalance.IsZero() {
