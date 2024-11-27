@@ -65,5 +65,5 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 		return err
 	}
 
-	return v3.UpdateParams(ctx, m.keeper.Params, authKeeper)
+	return v3.UpdateParams(ctx, m.keeper.Params)
 }

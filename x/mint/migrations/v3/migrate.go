@@ -8,7 +8,6 @@ import (
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 )
 
 const (
@@ -24,7 +23,6 @@ var ParamsKey = []byte{0x01}
 func UpdateParams(
 	ctx sdk.Context,
 	params collections.Item[types.Params],
-	accountKeeper authkeeper.AccountKeeper,
 ) error {
 	oldParams, err := params.Get(ctx)
 	if err != nil {
@@ -35,7 +33,7 @@ func UpdateParams(
 	currParams.StakingYield = math.LegacyNewDecWithPrec(7, 2)
 	currParams.BurnRate = math.LegacyNewDecWithPrec(10, 2)
 	currParams.ProtocolWalletRate = math.LegacyNewDecWithPrec(30, 2)
-	currParams.ProtocolWalletAddress = "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj"
+	currParams.ProtocolWalletAddress = "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"
 	currParams.RetentionRate = math.LegacyNewDecWithPrec(40, 2)
 	currParams.AdditionalStakingRewards = math.LegacyNewDecWithPrec(30, 2)
 	currParams.AdditionalMpcRewards = math.LegacyNewDecWithPrec(5, 2)
