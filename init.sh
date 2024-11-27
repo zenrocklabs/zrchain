@@ -147,7 +147,6 @@ jq '.app_state.mint.params = {
     "burn_rate": "0.100000000000000000",
     "protocol_wallet_rate": "0.300000000000000000",
     "protocol_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
-    "retention_rate": "0.400000000000000000",
     "additional_staking_rewards": "0.300000000000000000",
     "additional_mpc_rewards": "0.050000000000000000",
     "additional_burn_rate": "0.250000000000000000"
@@ -184,7 +183,7 @@ else
 fi
 
 # Set block time to 20s
-ssed -i 's|timeout_commit = "5s"|timeout_commit = "20s"|g' $HOME_DIR/config/config.toml
+ssed -i 's|timeout_commit = "5s"|timeout_commit = "1s"|g' $HOME_DIR/config/config.toml
 
 # Adjust ports if alternate ports are specified
 if [[ -n "$ALTERNATE_PORTS" ]]; then

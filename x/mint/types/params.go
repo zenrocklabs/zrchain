@@ -11,7 +11,7 @@ import (
 )
 
 // NewParams returns Params instance with the given values.
-func NewParams(mintDenom, protocolWalletAddress string, inflationRateChange, inflationMax, inflationMin, goalBonded, stakingYield, burnRate, protocolWalletRate, retentionRate, additionalStakingRewards, additionalMpcRewards, additionalBurnRate math.LegacyDec, blocksPerYear uint64) Params {
+func NewParams(mintDenom, protocolWalletAddress string, inflationRateChange, inflationMax, inflationMin, goalBonded, stakingYield, burnRate, protocolWalletRate, additionalStakingRewards, additionalMpcRewards, additionalBurnRate math.LegacyDec, blocksPerYear uint64) Params {
 	return Params{
 		MintDenom:                mintDenom,
 		InflationRateChange:      inflationRateChange,
@@ -22,7 +22,6 @@ func NewParams(mintDenom, protocolWalletAddress string, inflationRateChange, inf
 		StakingYield:             stakingYield,
 		BurnRate:                 burnRate,
 		ProtocolWalletRate:       protocolWalletRate,
-		RetentionRate:            retentionRate,
 		AdditionalStakingRewards: additionalStakingRewards,
 		AdditionalMpcRewards:     additionalMpcRewards,
 		AdditionalBurnRate:       additionalBurnRate,
@@ -42,11 +41,10 @@ func DefaultParams() Params {
 		StakingYield:             math.LegacyNewDecWithPrec(7, 2),
 		BurnRate:                 math.LegacyNewDecWithPrec(10, 2),
 		ProtocolWalletRate:       math.LegacyNewDecWithPrec(30, 2),
-		RetentionRate:            math.LegacyNewDecWithPrec(40, 2),
 		AdditionalStakingRewards: math.LegacyNewDecWithPrec(30, 2),
 		AdditionalMpcRewards:     math.LegacyNewDecWithPrec(5, 2),
 		AdditionalBurnRate:       math.LegacyNewDecWithPrec(25, 2),
-		ProtocolWalletAddress:    "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
+		ProtocolWalletAddress:    "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
 	}
 }
 
@@ -77,9 +75,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateProtocolWalletRate(p.ProtocolWalletRate); err != nil {
-		return err
-	}
-	if err := validateRetentionRate(p.RetentionRate); err != nil {
 		return err
 	}
 	if err := validateAdditionalStakingRewards(p.AdditionalStakingRewards); err != nil {
@@ -256,24 +251,6 @@ func validateProtocolWalletRate(i interface{}) error {
 	}
 	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("protocol wallet rate too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateRetentionRate(i interface{}) error {
-	v, ok := i.(math.LegacyDec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	if v.IsNil() {
-		return fmt.Errorf("retention rate must be positive: %s", v)
-	}
-	if v.IsNegative() || v.IsZero() {
-		return fmt.Errorf("retention rate must be positive: %s", v)
-	}
-	if v.GT(math.LegacyOneDec()) {
-		return fmt.Errorf("retention rate too large: %s", v)
 	}
 
 	return nil

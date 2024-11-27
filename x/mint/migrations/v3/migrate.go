@@ -34,7 +34,6 @@ func UpdateParams(
 	currParams.BurnRate = math.LegacyNewDecWithPrec(10, 2)
 	currParams.ProtocolWalletRate = math.LegacyNewDecWithPrec(30, 2)
 	currParams.ProtocolWalletAddress = "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"
-	currParams.RetentionRate = math.LegacyNewDecWithPrec(40, 2)
 	currParams.AdditionalStakingRewards = math.LegacyNewDecWithPrec(30, 2)
 	currParams.AdditionalMpcRewards = math.LegacyNewDecWithPrec(5, 2)
 	currParams.AdditionalBurnRate = math.LegacyNewDecWithPrec(25, 2)
