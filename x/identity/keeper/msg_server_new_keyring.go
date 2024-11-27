@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	treasury_types "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -30,7 +31,7 @@ func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (
 		if err := k.bankKeeper.SendCoinsFromAccountToModule(
 			goCtx,
 			sdk.MustAccAddressFromBech32(msg.Creator),
-			types.ModuleName,
+			treasury_types.KeyringCollectorName,
 			sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(params.KeyringCreationFee))),
 		); err != nil {
 			return nil, err
