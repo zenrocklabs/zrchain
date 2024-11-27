@@ -35,7 +35,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return err
 	}
 
-	mintModuleBalance, err := k.CheckMintModuleBalance(ctx)
+	mintModuleBalance, err := k.GetMintModuleBalance(ctx)
 	if err != nil {
 		return err
 	}

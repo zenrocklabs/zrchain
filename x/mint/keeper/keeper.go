@@ -289,49 +289,25 @@ func (k Keeper) AdditionalStakingRewards(ctx context.Context, excess sdk.Coin) e
 
 func (k Keeper) ExcessDistribution(ctx context.Context, excessAmount sdk.Coin) error {
 
-	mintModuleBalance, err := k.CheckMintModuleBalance(ctx)
+	err := k.AdditionalBurn(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("mint bal before burn:\t\t%v\n", mintModuleBalance)
-
-	err = k.AdditionalBurn(ctx, excessAmount)
-	if err != nil {
-		return err
-	}
-
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after burn:\t\t%v\n", mintModuleBalance)
 
 	err = k.AdditionalMpcRewards(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
 
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after mpc rewards:\t\t%v\n", mintModuleBalance)
-
 	err = k.AdditionalStakingRewards(ctx, excessAmount)
 	if err != nil {
 		return err
 	}
 
-	mintModuleBalance, err = k.CheckMintModuleBalance(ctx)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("mint after staking rewards:\t%v\n", mintModuleBalance)
-
 	return nil
 }
 
-func (k Keeper) CheckMintModuleBalance(ctx context.Context) (sdk.Coin, error) {
+func (k Keeper) GetMintModuleBalance(ctx context.Context) (sdk.Coin, error) {
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
