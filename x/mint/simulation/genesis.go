@@ -23,7 +23,6 @@ const (
 	AdditionalMpcRewards     = "additional_mpc_rewards"
 	AdditionalBurnRate       = "additional_burn_rate"
 	ProtocolWalletRate       = "protocol_wallet_rate"
-	RetentionRate            = "retention_rate"
 	ProtocolWalletAddress    = "protocol_wallet_address"
 	BurnRate                 = "burn_rate"
 )
@@ -78,10 +77,6 @@ func GenProtocolWalletRate(r *rand.Rand) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(10, 2)
 }
 
-func GenRetentionRate(r *rand.Rand) math.LegacyDec {
-	return math.LegacyNewDecWithPrec(10, 2)
-}
-
 // GenProtocolWalletAddress randomized ProtocolWalletAddress
 func GenProtocolWalletAddress(r *rand.Rand) string {
 	return "zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn"
@@ -126,9 +121,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	var protocolWalletRate math.LegacyDec
 	simState.AppParams.GetOrGenerate(ProtocolWalletRate, &protocolWalletRate, simState.Rand, func(r *rand.Rand) { protocolWalletRate = GenProtocolWalletRate(r) })
 
-	var retentionRate math.LegacyDec
-	simState.AppParams.GetOrGenerate(RetentionRate, &retentionRate, simState.Rand, func(r *rand.Rand) { retentionRate = GenRetentionRate(r) })
-
 	var protocolWalletAddress string
 	simState.AppParams.GetOrGenerate(ProtocolWalletAddress, &protocolWalletAddress, simState.Rand, func(r *rand.Rand) { protocolWalletAddress = GenProtocolWalletAddress(r) })
 
@@ -149,7 +141,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 		additionalMpcRewards,
 		additionalBurnRate,
 		protocolWalletRate,
-		retentionRate,
 		burnRate,
 		blocksPerYear,
 	)

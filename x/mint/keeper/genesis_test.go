@@ -75,7 +75,6 @@ func (s *GenesisTestSuite) TestImportExportGenesis() {
 		math.LegacyNewDecWithPrec(10, 2),
 		math.LegacyNewDecWithPrec(10, 2),
 		math.LegacyNewDecWithPrec(10, 2),
-		math.LegacyNewDecWithPrec(10, 2),
 		uint64(60*60*8766/5),
 	)
 

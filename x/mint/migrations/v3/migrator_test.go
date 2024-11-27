@@ -25,7 +25,6 @@ var (
 	burnRate                 = math.LegacyNewDecWithPrec(10, 2)
 	protocolWalletRate       = math.LegacyNewDecWithPrec(30, 2)
 	protocolWalletAddress    = "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"
-	retentionRate            = math.LegacyNewDecWithPrec(40, 2)
 	additionalStakingRewards = math.LegacyNewDecWithPrec(30, 2)
 	additionalMpcRewards     = math.LegacyNewDecWithPrec(5, 2)
 	additionalBurnRate       = math.LegacyNewDecWithPrec(25, 2)
@@ -70,7 +69,6 @@ func TestMigrate(t *testing.T) {
 	require.True(t, res.BurnRate.Equal(burnRate))
 	require.True(t, res.ProtocolWalletRate.Equal(protocolWalletRate))
 	require.Equal(t, res.ProtocolWalletAddress, protocolWalletAddress)
-	require.True(t, res.RetentionRate.Equal(retentionRate))
 	require.True(t, res.AdditionalStakingRewards.Equal(additionalStakingRewards))
 }
 
