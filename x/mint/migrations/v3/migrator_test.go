@@ -24,7 +24,7 @@ var (
 	stakingYield             = math.LegacyNewDecWithPrec(7, 2)
 	burnRate                 = math.LegacyNewDecWithPrec(10, 2)
 	protocolWalletRate       = math.LegacyNewDecWithPrec(30, 2)
-	protocolWalletAddress    = "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj"
+	protocolWalletAddress    = "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"
 	retentionRate            = math.LegacyNewDecWithPrec(40, 2)
 	additionalStakingRewards = math.LegacyNewDecWithPrec(30, 2)
 	additionalMpcRewards     = math.LegacyNewDecWithPrec(5, 2)
