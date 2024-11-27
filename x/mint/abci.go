@@ -2,7 +2,6 @@ package mint
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
@@ -66,9 +65,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		if err != nil {
 			return err
 		}
-
-		// TODO - remove
-		fmt.Printf("top-up amount:\t\t\t%v\n", topUpAmount)
 
 		// if totalRewardsRest enough - top up from mint module
 		if !topUpAmount.IsZero() || !mintModuleBalance.IsZero() {
