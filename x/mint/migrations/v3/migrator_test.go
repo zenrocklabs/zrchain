@@ -73,3 +73,18 @@ func TestMigrate(t *testing.T) {
 	require.True(t, res.RetentionRate.Equal(retentionRate))
 	require.True(t, res.AdditionalStakingRewards.Equal(additionalStakingRewards))
 }
+
+func TestMigrateFail(t *testing.T) {
+	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
+	cdc := encCfg.Codec
+
+	storeKey := storetypes.NewKVStoreKey(v3.ModuleName)
+	tKey := storetypes.NewTransientStoreKey("transient_test")
+	ctx := testutil.DefaultContext(storeKey, tKey)
+
+	kvStoreService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(kvStoreService)
+	params := collections.NewItem(sb, types.ParamsKey, "minter", codec.CollValue[types.Params](cdc))
+
+	require.Error(t, v3.UpdateParams(ctx, params))
+}
