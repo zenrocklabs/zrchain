@@ -26,13 +26,12 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	mintKeeper     keeper.Keeper
-	ctx            sdk.Context
-	msgServer      types.MsgServer
-	stakingKeeper  *minttestutil.MockStakingKeeper
-	bankKeeper     *minttestutil.MockBankKeeper
-	treasuryKeeper *minttestutil.MockTreasuryKeeper
-	accountKeeper  *minttestutil.MockAccountKeeper
+	mintKeeper    keeper.Keeper
+	ctx           sdk.Context
+	msgServer     types.MsgServer
+	stakingKeeper *minttestutil.MockStakingKeeper
+	bankKeeper    *minttestutil.MockBankKeeper
+	accountKeeper *minttestutil.MockAccountKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -51,15 +50,12 @@ func (s *IntegrationTestSuite) SetupTest() {
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
-	treasuryKeeper := minttestutil.NewMockTreasuryKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
 
 	// Assign the mock keepers to the suite fields
 	s.accountKeeper = accountKeeper
 	s.bankKeeper = bankKeeper
 	s.stakingKeeper = stakingKeeper
-	s.treasuryKeeper = treasuryKeeper
-
 	s.mintKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -68,7 +64,6 @@ func (s *IntegrationTestSuite) SetupTest() {
 		bankKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		treasuryKeeper,
 	)
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),

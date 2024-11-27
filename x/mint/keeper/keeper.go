@@ -18,12 +18,11 @@ import (
 
 // Keeper of the mint store
 type Keeper struct {
-	cdc            codec.BinaryCodec
-	storeService   storetypes.KVStoreService
-	stakingKeeper  types.StakingKeeper
-	bankKeeper     types.BankKeeper
-	treasuryKeeper types.TreasuryKeeper
-	accountKeeper  types.AccountKeeper
+	cdc           codec.BinaryCodec
+	storeService  storetypes.KVStoreService
+	stakingKeeper types.StakingKeeper
+	bankKeeper    types.BankKeeper
+	accountKeeper types.AccountKeeper
 
 	feeCollectorName string
 
@@ -45,7 +44,6 @@ func NewKeeper(
 	bk types.BankKeeper,
 	feeCollectorName string,
 	authority string,
-	tk types.TreasuryKeeper,
 ) Keeper {
 	// ensure mint module account is set
 	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
@@ -63,7 +61,6 @@ func NewKeeper(
 		authority:        authority,
 		Params:           collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		Minter:           collections.NewItem(sb, types.MinterKey, "minter", codec.CollValue[types.Minter](cdc)),
-		treasuryKeeper:   tk,
 	}
 
 	schema, err := sb.Build()
