@@ -182,7 +182,7 @@ else
     cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json
 fi
 
-# Set block time to 20s
+# Set block time to 1s
 ssed -i 's|timeout_commit = "5s"|timeout_commit = "1s"|g' $HOME_DIR/config/config.toml
 
 # Adjust ports if alternate ports are specified
@@ -260,9 +260,9 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "creator": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
         "description": "ZenrockKMS",
         "is_active": true,
-        "key_req_fee": 100000000,
+        "key_req_fee": 75,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-        "sig_req_fee": 1000000
+        "sig_req_fee": 50
       },
       {
         "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",
