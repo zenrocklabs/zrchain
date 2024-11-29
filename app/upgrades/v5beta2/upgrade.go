@@ -1,4 +1,4 @@
-package v6
+package v5beta2
 
 import (
 	"context"

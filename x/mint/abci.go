@@ -126,6 +126,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			sdk.NewAttribute(types.AttributeKeyAnnualProvisions, minter.AnnualProvisions.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
 			sdk.NewAttribute(types.AttributeBlockStakingRewards, totalBlockStakingReward.Amount.String()),
+			sdk.NewAttribute(types.AttributeTotalFees, totalRewards.Amount.String()),
 		),
 	)
 

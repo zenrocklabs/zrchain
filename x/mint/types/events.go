@@ -8,4 +8,5 @@ const (
 	AttributeKeyInflation        = "inflation"
 	AttributeKeyAnnualProvisions = "annual_provisions"
 	AttributeBlockStakingRewards = "total_block_staking_rewards"
+	AttributeTotalFees           = "total_fees"
 )
