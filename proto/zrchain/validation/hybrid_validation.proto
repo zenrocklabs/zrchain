@@ -136,8 +136,9 @@ message ZenBTCParams {
   string zenBTCDepositKeyringAddr = 2;
   uint64 zenBTCMinterKeyID = 3;
   uint64 zenBTCWithdrawerKeyID = 4;
-  repeated uint64 zenBTCChangeAddressKeyIDs = 5;
-  string bitcoinProxyCreatorID = 6;
+  uint64 zenBTCRewardsDepositKeyID = 5;
+  repeated uint64 zenBTCChangeAddressKeyIDs = 6;
+  string bitcoinProxyCreatorID = 7;
 }
 
 message ValidationInfo {

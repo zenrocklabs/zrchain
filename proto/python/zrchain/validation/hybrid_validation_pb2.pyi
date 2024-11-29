@@ -77,20 +77,22 @@ class HVParams(_message.Message):
     def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., ZenBTCParams: _Optional[_Union[ZenBTCParams, _Mapping]] = ...) -> None: ...
 
 class ZenBTCParams(_message.Message):
-    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCChangeAddressKeyIDs", "bitcoinProxyCreatorID")
+    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCRewardsDepositKeyID", "zenBTCChangeAddressKeyIDs", "bitcoinProxyCreatorID")
     ZENBTCETHCONTRACTADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCDEPOSITKEYRINGADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCMINTERKEYID_FIELD_NUMBER: _ClassVar[int]
     ZENBTCWITHDRAWERKEYID_FIELD_NUMBER: _ClassVar[int]
+    ZENBTCREWARDSDEPOSITKEYID_FIELD_NUMBER: _ClassVar[int]
     ZENBTCCHANGEADDRESSKEYIDS_FIELD_NUMBER: _ClassVar[int]
     BITCOINPROXYCREATORID_FIELD_NUMBER: _ClassVar[int]
     zenBTCEthContractAddr: str
     zenBTCDepositKeyringAddr: str
     zenBTCMinterKeyID: int
     zenBTCWithdrawerKeyID: int
+    zenBTCRewardsDepositKeyID: int
     zenBTCChangeAddressKeyIDs: _containers.RepeatedScalarFieldContainer[int]
     bitcoinProxyCreatorID: str
-    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., bitcoinProxyCreatorID: _Optional[str] = ...) -> None: ...
+    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCRewardsDepositKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., bitcoinProxyCreatorID: _Optional[str] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions")
