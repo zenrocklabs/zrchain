@@ -81,6 +81,28 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return VoteExtension{}, err
+		}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
+	}
+
+	if nonce == lastUsedNonce.Nonce {
+		lastUsedNonce.Counter++
+	} else {
+		lastUsedNonce.Nonce = nonce
+		lastUsedNonce.Counter = 0
+	}
+	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+		return VoteExtension{}, err
+	}
+
+	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
+		nonce = 0
+	}
+
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:      height,
 		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
@@ -264,7 +286,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
-	k.createZenBTCMintTransaction(ctx, oracleData)
+	k.processZenBTCMints(ctx, oracleData)
 
 	k.storeNewZenBTCRedemptionsEthereum(ctx, oracleData)
 
@@ -432,10 +454,53 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 }
 
-func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleData) error {
+func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) error {
+	if oracleData.RequestedEthNonce == 0 {
+		return nil
+	}
+
+	pendingMints, err := k.PendingMintTransactions.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting pending mint transactions: %w", err)
+	}
+	if len(pendingMints.Txs) == 0 {
+		return nil
+	}
+
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
+	}
+
+	if lastUsedNonce.Counter == 0 { // remove last pending tx + update supply (after nonce updated indicating successful mint)
+		pendingMints.Txs = pendingMints.Txs[1:]
+		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
+			return fmt.Errorf("error setting pending mint transactions: %w", err)
+		}
+
+		supply, err := k.ZenBTCSupply.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting zenBTC supply: %w", err)
+		}
+
+		successfulMintTx := pendingMints.Txs[0]
+		supply.MintedZenBTC += successfulMintTx.Amount
+
+		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
+			return fmt.Errorf("error updating zenBTC supply: %w", err)
+		}
+
+		if len(pendingMints.Txs) == 0 {
+			if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
+				return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+			}
+			return nil
+		}
+	}
+
 	requested, err := k.EthereumNonceRequested.Get(ctx)
 	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
+		if !errors.Is(err, collections.ErrNotFound) {
 			return fmt.Errorf("error getting EthereumNonceRequested state: %w", err)
 		}
 		requested = false
@@ -447,20 +512,13 @@ func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleD
 		return nil
 	}
 
-	pendingMints, err := k.PendingMintTransactions.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting pending mint transactions: %w", err)
-	}
-	if len(pendingMints.Txs) == 0 {
-		return fmt.Errorf("no pending mint transactions")
-	}
-	tx := pendingMints.Txs[0]
+	pendingMintTx := pendingMints.Txs[0]
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
-		tx.RecipientAddress,
-		tx.ChainId,
-		tx.Amount,
+		pendingMintTx.RecipientAddress,
+		pendingMintTx.ChainId,
+		pendingMintTx.Amount,
 		0, // TODO: update fee (currently hardcoded to 0)
 		oracleData.RequestedEthNonce,
 		oracleData.EthGasLimit,
@@ -471,7 +529,7 @@ func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleD
 		return fmt.Errorf("error constructing mint transaction: %w", err)
 	}
 
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: tx.ChainId})
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
 	if err != nil {
 		return fmt.Errorf("error creating metadata: %w", err)
 	}
@@ -479,9 +537,9 @@ func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleD
 	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
-			Creator:             tx.Creator,
-			KeyId:               tx.KeyId,
-			WalletType:          tx.ChainType,
+			Creator:             pendingMintTx.Creator,
+			KeyId:               pendingMintTx.KeyId,
+			WalletType:          pendingMintTx.ChainType,
 			UnsignedTransaction: unsignedMintTx,
 			Metadata:            metadata,
 			NoBroadcast:         false,
@@ -490,28 +548,6 @@ func (k *Keeper) createZenBTCMintTransaction(ctx sdk.Context, oracleData OracleD
 	); err != nil {
 		k.Logger(ctx).Error("error creating mint transaction", "err", err)
 		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
-	}
-
-	pendingMints.Txs = pendingMints.Txs[1:]
-	if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
-		return fmt.Errorf("error setting pending mint transactions: %w", err)
-	}
-
-	if len(pendingMints.Txs) == 0 {
-		if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
-			return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
-		}
-	}
-
-	supply, err := k.ZenBTCSupply.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting zenBTC supply: %w", err)
-	}
-
-	supply.MintedZenBTC += tx.Amount
-
-	if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
-		return fmt.Errorf("error updating zenBTC supply: %w", err)
 	}
 
 	return nil

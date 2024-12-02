@@ -58,6 +58,8 @@ type Keeper struct {
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
 	// EthereumNonceRequested - key: bool (is requested)
 	EthereumNonceRequested collections.Item[bool]
+	// LastUsedEthereumNonce - value: last used Ethereum nonce data
+	LastUsedEthereumNonce collections.Item[zenbtctypes.NonceData]
 	// PendingMintTransactions - key: pending zenBTC mint transaction
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
 	// ZenBTCRedemptions - key: redemption index | value: redemption data
