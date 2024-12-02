@@ -31,6 +31,7 @@ var (
 	ZenBTCRedemptionsKey       = collections.NewPrefix(12)
 	VoteExtensionRejectedKey   = collections.NewPrefix(13)
 	ZenBTCSupplyKey            = collections.NewPrefix(14)
+	LastUsedEthereumNonceKey   = collections.NewPrefix(15)
 
 	AssetPricesIndex             = "asset_prices"
 	SlashEventsIndex             = "slash_events"
@@ -47,6 +48,7 @@ var (
 	ZenBTCRedemptionsIndex       = "zenbtc_redemptions"
 	VoteExtensionRejectedIndex   = "vote_extension_rejected"
 	ZenBTCSupplyIndex            = "zenbtc_supply"
+	LastUsedEthereumNonceIndex   = "last_used_ethereum_nonce"
 )
 
 const (
