@@ -46,6 +46,15 @@ It can be broken down in the following way:
 * If the actual percentage of bonded tokens is above the goal %-bonded the inflation rate will
    decrease until a minimum value is reached
 
+## Custom changes for zrchain
+
+* To make the mint module deflationary, we set the inflation to zero so that no new tokens are minted.
+* Staking rewards are then paid out from the income through tx fees, request fees to the keyrings and keyring creation fees.
+* If the income is not sufficient to pay out the staking rewards, the deficit is taken from the mint module's balance.
+* If the income is higher than the staking rewards for this block, the surplus is added to the mint module's balance and used to pay out staking rewards for the next blocks' potential deficit.
+* The staking rewards are paid out through the existing process.
+* The newly added mint module params are defining the income distribution ratios for base distribution and surplus distribution.
+* Further, new events are emitted to track the total distribution on staking rewards as well as the burned amount in the base distribution.
 
 ## State
 
@@ -137,14 +146,20 @@ BlockProvision(params Params) sdk.Coin {
 
 The minting module contains the following parameters:
 
-| Key                 | Type            | Example                |
-|---------------------|-----------------|------------------------|
-| MintDenom           | string          | "uatom"                |
-| InflationRateChange | string (dec)    | "0.130000000000000000" |
-| InflationMax        | string (dec)    | "0.200000000000000000" |
-| InflationMin        | string (dec)    | "0.070000000000000000" |
-| GoalBonded          | string (dec)    | "0.670000000000000000" |
-| BlocksPerYear       | string (uint64) | "6311520"              |
+| Key                          | Type            | Example                  |
+|------------------------------|-----------------|--------------------------|
+| MintDenom                    | string          | "uatom"                  |
+| InflationRateChange          | string (dec)    | "0.000000000000000000"   |
+| InflationMax                 | string (dec)    | "0.000000000000000000"   |
+| InflationMin                 | string (dec)    | "0.000000000000000000"   |
+| GoalBonded                   | string (dec)    | "0.670000000000000000"   |
+| BlocksPerYear                | string (uint64) | "6311520"                |
+| StakingYield                 | string (dec)    | "0.070000000000000000"   |
+| BurnRate                     | string (dec)    | "0.100000000000000000"   |
+| ProtocolWalletRate           | string (dec)    | "0.300000000000000000"   |
+| AdditionalStakingRewards     | string (dec)    | "0.300000000000000000"   |
+| AdditionalMpcRewards         | string (dec)    | "0.050000000000000000"   |
+| AdditionalBurnRate           | string (dec)    | "0.250000000000000000"   |
 
 
 ## Events
@@ -153,13 +168,14 @@ The minting module emits the following events:
 
 ### BeginBlocker
 
-| Type | Attribute Key     | Attribute Value    |
-|------|-------------------|--------------------|
-| mint | bonded_ratio      | {bondedRatio}      |
-| mint | inflation         | {inflation}        |
-| mint | annual_provisions | {annualProvisions} |
-| mint | amount            | {amount}           |
-
+| Type | Attribute Key         | Attribute Value      |
+|------|-----------------------|----------------------|
+| mint | bonded_ratio          | {bondedRatio}        |
+| mint | inflation             | {inflation}          |
+| mint | annual_provisions     | {annualProvisions}   |
+| mint | amount                | {amount}             |
+| mint | block_staking_rewards | {blockStakingRewards}|
+| mint | total_fees            | {totalFees}          |
 
 ## Client
 
