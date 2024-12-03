@@ -261,6 +261,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	hvParams, err := k.HVParams.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	totalPower, err := k.GetLastTotalPower(ctx)
 	if err != nil {
 		panic(err)
@@ -289,5 +294,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		UnbondingDelegations: unbondingDelegations,
 		Redelegations:        redelegations,
 		Exported:             true,
+		HVParams:             &hvParams,
 	}
 }

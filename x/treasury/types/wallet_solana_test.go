@@ -91,7 +91,7 @@ func TestSolanaParseTx(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			wallet := solanaWallet(t, "example seed")
 			txBytes := hexutil.MustDecode(tc.txHexstring)
-			transfer, err := wallet.ParseTx(txBytes, nil)
+			transfer, err := wallet.ParseTx(txBytes, &MetadataSolana{})
 			expectedDataForSigning := []byte(hex.EncodeToString(txBytes))
 			require.NoError(t, err)
 			require.Equal(t, []byte(tc.to), transfer.To, "to address mismatch")
@@ -140,7 +140,7 @@ func TestGetTransferFromInstruction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetTransferFromInstruction(tt.args.msg)
+			got, err := getTransferFromInstruction(tt.args.msg)
 			require.Equal(t, tt.wantErr, err != nil)
 			require.Equal(t, tt.want, got)
 		})

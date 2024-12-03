@@ -3,7 +3,6 @@
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
     [
       "@semantic-release/git",
       {
@@ -14,7 +13,6 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "CHANGELOG.md", "label": "CHANGELOG" },
           { "path": "zenrockd", "label": "zenrockd" },
           { "path": "zenrockd.zip", "label": "zenrockd.zip" },
           { "path": "validator_sidecar", "label": "validator_sidecar" },
