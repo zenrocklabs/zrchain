@@ -325,11 +325,13 @@ func (k Keeper) GetValidators(ctx context.Context, maxRetrieve uint32) (validato
 	return validators[:i], nil // trim if the array length < maxRetrieve
 }
 
-func (k Keeper) GetBondedValidatorsByPower(ctx context.Context) (validators []stakingtypes.Validator, err error) {
+func (k Keeper) GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error) {
 	vals, err := k.GetBondedZenrockValidatorsByPower(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	validators := make([]stakingtypes.Validator, len(vals))
 
 	for i, val := range vals {
 		validators[i] = zenrockValidatorToSDKValidator(val)

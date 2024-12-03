@@ -27,6 +27,7 @@ type IdentityPacketData struct {
 	// defines packet
 	//
 	// Types that are valid to be assigned to Packet:
+	//
 	//	*IdentityPacketData_NoData
 	Packet isIdentityPacketData_Packet `protobuf_oneof:"packet"`
 }
