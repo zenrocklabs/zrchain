@@ -71,9 +71,28 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
 	}
 
-	bitcoinData, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
-		return VoteExtension{}, err
+		if !errors.Is(err, collections.ErrNotFound) {
+			return VoteExtension{}, err
+		}
+		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
+		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
+			return VoteExtension{}, err
+		}
+	}
+
+	var bitcoinData *sidecar.BitcoinBlockHeaderResponse
+	if len(requestedBitcoinHeaders.Heights) == 0 {
+		bitcoinData, err = k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+		if err != nil {
+			return VoteExtension{}, err
+		}
+	} else {
+		bitcoinData, err = k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
+		if err != nil {
+			return VoteExtension{}, err
+		}
 	}
 
 	nonce, err := k.lookupEthereumNonce(ctx)
@@ -448,6 +467,14 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	if oracleData.BtcBlockHeight != 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
 		// TODO(sasha): check if entry exists for this height, if it does, we need to add last 6 block heights to a slice and
 		// store all of those merkle roots from the Bitcoin node one at a time per block to not add too much latency to VEs
+		requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+		}
+
+		if k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight) {
+
+		}
 		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 			k.Logger(ctx).Error("error setting Bitcoin block header", "height", oracleData.BtcBlockHeight, "err", err)
 		}

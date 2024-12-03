@@ -16,39 +16,41 @@ import (
 )
 
 var (
-	AssetPricesKey             = collections.NewPrefix(0)
-	SlashEventsKey             = collections.NewPrefix(1)
-	SlashEventCountKey         = collections.NewPrefix(2)
-	AVSDelegationsKey          = collections.NewPrefix(3)
-	ValidatorDelegationsKey    = collections.NewPrefix(4)
-	HVParamsKey                = collections.NewPrefix(5)
-	AVSRewardsPoolKey          = collections.NewPrefix(6)
-	ValidationInfosKey         = collections.NewPrefix(7)
-	BtcBlockHeadersKey         = collections.NewPrefix(8)
-	EthereumNonceRequestedKey  = collections.NewPrefix(9)
-	PendingMintTransactionsKey = collections.NewPrefix(10)
-	PendingRedemptionsKey      = collections.NewPrefix(11)
-	ZenBTCRedemptionsKey       = collections.NewPrefix(12)
-	VoteExtensionRejectedKey   = collections.NewPrefix(13)
-	ZenBTCSupplyKey            = collections.NewPrefix(14)
-	LastUsedEthereumNonceKey   = collections.NewPrefix(15)
+	AssetPricesKey                       = collections.NewPrefix(0)
+	SlashEventsKey                       = collections.NewPrefix(1)
+	SlashEventCountKey                   = collections.NewPrefix(2)
+	AVSDelegationsKey                    = collections.NewPrefix(3)
+	ValidatorDelegationsKey              = collections.NewPrefix(4)
+	HVParamsKey                          = collections.NewPrefix(5)
+	AVSRewardsPoolKey                    = collections.NewPrefix(6)
+	ValidationInfosKey                   = collections.NewPrefix(7)
+	BtcBlockHeadersKey                   = collections.NewPrefix(8)
+	EthereumNonceRequestedKey            = collections.NewPrefix(9)
+	PendingMintTransactionsKey           = collections.NewPrefix(10)
+	PendingRedemptionsKey                = collections.NewPrefix(11)
+	ZenBTCRedemptionsKey                 = collections.NewPrefix(12)
+	VoteExtensionRejectedKey             = collections.NewPrefix(13)
+	ZenBTCSupplyKey                      = collections.NewPrefix(14)
+	LastUsedEthereumNonceKey             = collections.NewPrefix(15)
+	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(16)
 
-	AssetPricesIndex             = "asset_prices"
-	SlashEventsIndex             = "slash_events"
-	SlashEventCountIndex         = "slash_event_count"
-	AVSDelegationsIndex          = "avs_delegations"
-	ValidatorDelegationsIndex    = "validator_delegations"
-	HVParamsIndex                = "hv_params"
-	AVSRewardsPoolIndex          = "avs_rewards_pool"
-	ValidationInfosIndex         = "validation_infos"
-	BtcBlockHeadersIndex         = "btc_block_headers"
-	EthereumNonceRequestedIndex  = "ethereum_nonce_requested"
-	PendingMintTransactionsIndex = "pending_mint_transactions"
-	PendingRedemptionsIndex      = "pending_redemption_transactions"
-	ZenBTCRedemptionsIndex       = "zenbtc_redemptions"
-	VoteExtensionRejectedIndex   = "vote_extension_rejected"
-	ZenBTCSupplyIndex            = "zenbtc_supply"
-	LastUsedEthereumNonceIndex   = "last_used_ethereum_nonce"
+	AssetPricesIndex                       = "asset_prices"
+	SlashEventsIndex                       = "slash_events"
+	SlashEventCountIndex                   = "slash_event_count"
+	AVSDelegationsIndex                    = "avs_delegations"
+	ValidatorDelegationsIndex              = "validator_delegations"
+	HVParamsIndex                          = "hv_params"
+	AVSRewardsPoolIndex                    = "avs_rewards_pool"
+	ValidationInfosIndex                   = "validation_infos"
+	BtcBlockHeadersIndex                   = "btc_block_headers"
+	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
+	PendingMintTransactionsIndex           = "pending_mint_transactions"
+	PendingRedemptionsIndex                = "pending_redemption_transactions"
+	ZenBTCRedemptionsIndex                 = "zenbtc_redemptions"
+	VoteExtensionRejectedIndex             = "vote_extension_rejected"
+	ZenBTCSupplyIndex                      = "zenbtc_supply"
+	LastUsedEthereumNonceIndex             = "last_used_ethereum_nonce"
+	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
 )
 
 const (
