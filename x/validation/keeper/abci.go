@@ -465,18 +465,47 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	if oracleData.BtcBlockHeight != 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
-		// TODO(sasha): check if entry exists for this height, if it does, we need to add last 6 block heights to a slice and
-		// store all of those merkle roots from the Bitcoin node one at a time per block to not add too much latency to VEs
-		requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+		// Check if we already have a header at this height
+		existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
 		if err != nil {
-			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+			return
 		}
 
-		if k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight) {
+		// If we have an existing header and it's different from the new one, this indicates a potential fork
+		if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
+			requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+				return
+			}
 
+			prevHeights := make([]int64, 0, 6)
+			for i := int64(1); i <= 6; i++ {
+				if oracleData.BtcBlockHeight-i > 0 {
+					prevHeights = append(prevHeights, oracleData.BtcBlockHeight-i)
+				}
+			}
+
+			// Add the previous heights to requested headers
+			requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
+
+			if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+				k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
+				return
+			}
+
+			k.Logger(ctx).Info("detected potential fork, requesting verification of previous blocks",
+				"height", oracleData.BtcBlockHeight,
+				"existing_merkle", existingHeader.MerkleRoot,
+				"new_merkle", oracleData.BtcBlockHeader.MerkleRoot,
+				"requested_heights", prevHeights)
 		}
+
+		// Always store the new header
 		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 			k.Logger(ctx).Error("error setting Bitcoin block header", "height", oracleData.BtcBlockHeight, "err", err)
+			return
 		}
 	}
 }
