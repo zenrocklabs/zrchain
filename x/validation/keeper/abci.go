@@ -463,51 +463,85 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 	}
 }
 
-func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
-	if oracleData.BtcBlockHeight != 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
-		// Check if we already have a header at this height
-		existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
-		if err != nil {
-			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-			return
-		}
+func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) error {
+	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
+		return fmt.Errorf("invalid bitcoin header data: height=%d, merkle=%s",
+			oracleData.BtcBlockHeight, oracleData.BtcBlockHeader.MerkleRoot)
+	}
 
-		// If we have an existing header and it's different from the new one, this indicates a potential fork
-		if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
-			requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
-			if err != nil {
-				k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
-				return
-			}
+	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+		return err
+	}
 
-			prevHeights := make([]int64, 0, 6)
-			for i := int64(1); i <= 6; i++ {
-				if oracleData.BtcBlockHeight-i > 0 {
-					prevHeights = append(prevHeights, oracleData.BtcBlockHeight-i)
-				}
-			}
-
-			// Add the previous heights to requested headers
-			requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
-
-			if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
-				k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
-				return
-			}
-
-			k.Logger(ctx).Info("detected potential fork, requesting verification of previous blocks",
-				"height", oracleData.BtcBlockHeight,
-				"existing_merkle", existingHeader.MerkleRoot,
-				"new_merkle", oracleData.BtcBlockHeader.MerkleRoot,
-				"requested_heights", prevHeights)
-		}
-
-		// Always store the new header
-		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
-			k.Logger(ctx).Error("error setting Bitcoin block header", "height", oracleData.BtcBlockHeight, "err", err)
-			return
+	// Check if this is a requested historical header
+	isRequestedHeader := false
+	for _, height := range requestedHeaders.Heights {
+		if height == oracleData.BtcBlockHeight {
+			isRequestedHeader = true
+			break
 		}
 	}
+
+	// If it's a requested header, just store it and return
+	if isRequestedHeader {
+		k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
+		return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
+	}
+
+	// Check for existing header (potential fork)
+	existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
+	if err != nil {
+		k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+		return err
+	}
+
+	// If we have a different header for this height, handle potential fork
+	if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
+		if err := k.handlePotentialBitcoinFork(ctx, oracleData, existingHeader, requestedHeaders); err != nil {
+			return err
+		}
+	}
+
+	// Store the new header
+	return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
+}
+
+// handlePotentialBitcoinFork handles the case where we detect a potential fork by requesting previous blocks
+func (k *Keeper) handlePotentialBitcoinFork(
+	ctx sdk.Context,
+	oracleData OracleData,
+	existingHeader sidecar.BTCBlockHeader,
+	requestedHeaders zenbtctypes.RequestedBitcoinHeaders,
+) error {
+	prevHeights := make([]int64, 0, 6)
+	for i := int64(1); i <= 6; i++ {
+		prevHeight := oracleData.BtcBlockHeight - i
+		if prevHeight <= 0 {
+			break
+		}
+		prevHeights = append(prevHeights, prevHeight)
+	}
+
+	if len(prevHeights) == 0 {
+		return nil
+	}
+
+	requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
+
+	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
+		return err
+	}
+
+	k.Logger(ctx).Info("detected potential fork, requesting verification of previous blocks",
+		"height", oracleData.BtcBlockHeight,
+		"existing_hash", existingHeader.BlockHash,
+		"new_hash", oracleData.BtcBlockHeader.BlockHash,
+		"requested_heights", prevHeights)
+
+	return nil
 }
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) error {
