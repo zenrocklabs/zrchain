@@ -10,7 +10,6 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -30,19 +29,21 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight      int64
-		ROCKUSDPrice            math.LegacyDec
-		ETHUSDPrice             math.LegacyDec
-		AVSDelegationsHash      []byte
-		EthereumRedemptionsHash []byte
-		BtcBlockHeight          int64
-		BtcMerkleRoot           string
-		EthBlockHeight          uint64
-		EthBlockHash            common.Hash
-		EthGasLimit             uint64
-		EthBaseFee              uint64
-		EthTipCap               uint64
-		RequestedEthNonce       uint64
+		ZRChainBlockHeight         int64
+		EigenDelegationsHash       []byte
+		BtcBlockHeight             int64
+		BtcMerkleRoot              string // TODO: change to hash of entire header?
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedEthNonce          uint64
+		SolanaLamportsPerSignature uint64
+		EthereumRedemptionsHash    []byte
+		SolanaRedemptionsHash      []byte
+		ROCKUSDPrice               math.LegacyDec
+		BTCUSDPrice                math.LegacyDec
+		ETHUSDPrice                math.LegacyDec
 	}
 
 	VEWithVotePower struct {
@@ -51,20 +52,22 @@ type (
 	}
 
 	OracleData struct {
-		ROCKUSDPrice         math.LegacyDec
-		ETHUSDPrice          math.LegacyDec
-		AVSDelegationsMap    map[string]map[string]*big.Int
-		ValidatorDelegations []ValidatorDelegations
-		BtcBlockHeight       int64
-		BtcBlockHeader       sidecar.BTCBlockHeader
-		EthBlockHeight       uint64
-		EthBlockHash         common.Hash
-		EthGasLimit          uint64
-		EthBaseFee           uint64
-		EthTipCap            uint64
-		RequestedEthNonce    uint64
-		EthereumRedemptions  []api.Redemption
-		ConsensusData        abci.ExtendedCommitInfo
+		EigenDelegationsMap        map[string]map[string]*big.Int
+		ValidatorDelegations       []ValidatorDelegations
+		BtcBlockHeight             int64
+		BtcBlockHeader             sidecar.BTCBlockHeader
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedEthNonce          uint64
+		SolanaLamportsPerSignature uint64
+		EthereumRedemptions        []api.Redemption
+		SolanaRedemptions          []api.Redemption
+		ROCKUSDPrice               math.LegacyDec
+		BTCUSDPrice                math.LegacyDec
+		ETHUSDPrice                math.LegacyDec
+		ConsensusData              abci.ExtendedCommitInfo
 	}
 
 	ValidatorDelegations struct {

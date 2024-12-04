@@ -30,14 +30,17 @@ func (o *Oracle) LoadFromFile(filename string) error {
 	if len(states) > 0 {
 		latestState := &states[len(states)-1]
 		o.updateChan <- OracleState{
-			Delegations:    latestState.Delegations,
-			EthBlockHeight: latestState.EthBlockHeight,
-			EthBlockHash:   latestState.EthBlockHash,
-			EthGasLimit:    latestState.EthGasLimit,
-			EthBaseFee:     latestState.EthBaseFee,
-			EthTipCap:      latestState.EthTipCap,
-			ETHUSDPrice:    latestState.ETHUSDPrice,
-			ROCKUSDPrice:   latestState.ROCKUSDPrice,
+			EigenDelegations:           latestState.EigenDelegations,
+			EthBlockHeight:             latestState.EthBlockHeight,
+			EthGasLimit:                latestState.EthGasLimit,
+			EthBaseFee:                 latestState.EthBaseFee,
+			EthTipCap:                  latestState.EthTipCap,
+			SolanaLamportsPerSignature: latestState.SolanaLamportsPerSignature,
+			RedemptionsEthereum:        latestState.RedemptionsEthereum,
+			RedemptionsSolana:          latestState.RedemptionsSolana,
+			ROCKUSDPrice:               latestState.ROCKUSDPrice,
+			BTCUSDPrice:                latestState.BTCUSDPrice,
+			ETHUSDPrice:                latestState.ETHUSDPrice,
 		}
 		o.stateCache = states
 	} else {

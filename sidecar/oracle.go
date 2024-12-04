@@ -30,12 +30,7 @@ func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutr
 		updateChan:     make(chan OracleState, 32),
 		mainLoopTicker: ticker,
 	}
-
-	// Initialize the current state
-	initialState := &OracleState{
-		Delegations: make(map[string]map[string]*big.Int),
-	}
-	o.currentState.Store(initialState)
+	o.currentState.Store(EmptyOracleState)
 
 	return o
 }
@@ -76,9 +71,9 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
 
-	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, BlocksBeforeFinality)
+	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, EthBlocksBeforeFinality)
 
-	delegations, err := o.getServiceManagerState(serviceManager, targetBlockNumber)
+	eigenDelegations, err := o.getServiceManagerState(serviceManager, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
@@ -88,13 +83,10 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get redemption tracker state: %w", err)
 	}
 
-	header, err := o.EthClient.HeaderByNumber(ctx, targetBlockNumber)
-	if err != nil {
-		return fmt.Errorf("failed to fetch ETH block data: %w", err)
-	}
+	// TODO: get redemptions on Solana + get BTC price
 
 	// Get base fee from latest block
-	if header.BaseFee == nil {
+	if latestHeader.BaseFee == nil {
 		return fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
@@ -104,27 +96,35 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
 
-	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+	// We only need 1 signature for minting, so we can use GetRecentBlockhash
+	solanaBlockHash, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
 	if err != nil {
-		return fmt.Errorf("failed to fetch latest block: %w", err)
+		return fmt.Errorf("failed to get recent Solana blockhash data: %w", err)
 	}
-	targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, BlocksBeforeFinality)
 
-	ETHUSDPrice, err := o.fetchEthPrice(priceFeed, targetBlockNumberMainnet)
-	if err != nil {
-		return fmt.Errorf("failed to fetch ETH price: %w", err)
-	}
+	// mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to fetch latest block: %w", err)
+	// }
+	// targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+
+	// ETHUSDPrice, err := o.fetchEthPrice(priceFeed, targetBlockNumberMainnet)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to fetch ETH price: %w", err)
+	// }
 
 	o.updateChan <- OracleState{
-		Delegations:         delegations,
-		EthBlockHeight:      header.Number.Uint64(),
-		EthBlockHash:        header.Hash().Hex(),
-		EthGasLimit:         header.GasLimit,
-		EthBaseFee:          header.BaseFee.Uint64(),
-		EthTipCap:           suggestedTip.Uint64(),
-		ETHUSDPrice:         ETHUSDPrice,
-		ROCKUSDPrice:        0, // TODO: add ROCKUSDPrice after TGE
-		RedemptionsEthereum: RedemptionsEthereum,
+		EigenDelegations:           eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                latestHeader.GasLimit,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  suggestedTip.Uint64(),
+		SolanaLamportsPerSignature: solanaBlockHash.Value.FeeCalculator.LamportsPerSignature,
+		RedemptionsEthereum:        RedemptionsEthereum,
+		RedemptionsSolana:          nil,    // TODO: update me
+		ROCKUSDPrice:               0,      // TODO: add ROCKUSDPrice after TGE
+		BTCUSDPrice:                0,      // TODO: update me
+		ETHUSDPrice:                4000.0, // TODO: if we need ETH price let's uncomment above block
 	}
 
 	return nil

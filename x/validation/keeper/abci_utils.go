@@ -50,7 +50,7 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
 
-	if err := json.Unmarshal(resp.Delegations, &delegations); err != nil {
+	if err := json.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,6 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		AVSDelegationsMap:    delegations,
 		ValidatorDelegations: validatorDelegations,
 		EthBlockHeight:       resp.EthBlockHeight,
-		EthBlockHash:         common.HexToHash(resp.EthBlockHash),
 		EthGasLimit:          resp.EthGasLimit,
 		EthBaseFee:           resp.EthBaseFee,
 		EthTipCap:            resp.EthTipCap,

@@ -20,17 +20,20 @@ const (
 
 var (
 	EmptyOracleState = OracleState{
-		Delegations:    make(map[string]map[string]*big.Int),
-		EthBlockHeight: 0,
-		EthBlockHash:   "",
-		EthGasLimit:    0,
-		EthBaseFee:     0,
-		EthTipCap:      0,
-		ETHUSDPrice:    0,
-		ROCKUSDPrice:   0,
+		EigenDelegations:           make(map[string]map[string]*big.Int),
+		EthBlockHeight:             0,
+		EthGasLimit:                0,
+		EthBaseFee:                 0,
+		EthTipCap:                  0,
+		SolanaLamportsPerSignature: 0,
+		RedemptionsEthereum:        []api.Redemption{},
+		RedemptionsSolana:          []api.Redemption{},
+		ROCKUSDPrice:               0,
+		BTCUSDPrice:                0,
+		ETHUSDPrice:                0,
 	}
-	// BlocksBeforeFinality   = big.NewInt(72)
-	BlocksBeforeFinality = big.NewInt(0) // TODO: uncomment above and remove this line before mainnet
+	// EthBlocksBeforeFinality   = big.NewInt(72)
+	EthBlocksBeforeFinality = big.NewInt(0) // TODO: uncomment above and remove this line before mainnet
 )
 
 type Oracle struct {
@@ -45,15 +48,17 @@ type Oracle struct {
 }
 
 type OracleState struct {
-	Delegations         map[string]map[string]*big.Int `json:"delegations"`
-	ROCKUSDPrice        float64                        `json:"rockUSDPrice"`
-	ETHUSDPrice         float64                        `json:"ethUSDPrice"`
-	EthBlockHeight      uint64                         `json:"ethBlockHeight"`
-	EthBlockHash        string                         `json:"ethBlockHash"`
-	EthGasLimit         uint64                         `json:"ethGasLimit"`
-	EthBaseFee          uint64                         `json:"ethBaseFee"`
-	EthTipCap           uint64                         `json:"ethTipCap"`
-	RedemptionsEthereum []api.Redemption               `json:"RedemptionsEthereum"`
+	EigenDelegations           map[string]map[string]*big.Int `json:"eigenDelegations"`
+	EthBlockHeight             uint64                         `json:"ethBlockHeight"`
+	EthGasLimit                uint64                         `json:"ethGasLimit"`
+	EthBaseFee                 uint64                         `json:"ethBaseFee"`
+	EthTipCap                  uint64                         `json:"ethTipCap"`
+	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
+	RedemptionsEthereum        []api.Redemption               `json:"RedemptionsEthereum"`
+	RedemptionsSolana          []api.Redemption               `json:"RedemptionsSolana"`
+	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
+	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
+	ETHUSDPrice                float64                        `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
 }
 
 type CoinMarketCapResponse struct {
