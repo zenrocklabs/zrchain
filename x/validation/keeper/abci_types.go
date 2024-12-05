@@ -32,7 +32,7 @@ type (
 		ZRChainBlockHeight         int64
 		EigenDelegationsHash       []byte
 		BtcBlockHeight             int64
-		BtcMerkleRoot              string // TODO: change to hash of entire header?
+		BtcHeaderHash              []byte
 		EthBlockHeight             uint64
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
@@ -115,15 +115,18 @@ func VoteExtensionsEnabled(ctx sdk.Context) bool {
 
 func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be checked here? They're not as critical so maybe not
 	return ve.ZRChainBlockHeight == 0 ||
-		// TODO: uncomment this after TGE
-		// voteExt.ROCKUSDPrice.IsZero() ||
-		ve.ETHUSDPrice.IsZero() ||
-		len(ve.AVSDelegationsHash) == 0 ||
+		len(ve.EigenDelegationsHash) == 0 ||
 		ve.EthBlockHeight == 0 ||
-		len(ve.EthBlockHash) == 0 ||
 		ve.EthBaseFee == 0 ||
 		ve.EthTipCap == 0 ||
-		ve.EthGasLimit == 0
-	// ve.BtcBlockHeight == 0 ||
-	// len(ve.BtcMerkleRoot) == 0
+		ve.EthGasLimit == 0 ||
+		ve.BtcBlockHeight == 0 ||
+		len(ve.BtcHeaderHash) == 0 ||
+		ve.SolanaLamportsPerSignature == 0 ||
+		len(ve.EthereumRedemptionsHash) == 0 ||
+		len(ve.SolanaRedemptionsHash) == 0 ||
+		// TODO: uncomment this after TGE
+		// voteExt.ROCKUSDPrice.IsZero() ||
+		// ve.BTCUSDPrice.IsZero() ||
+		ve.ETHUSDPrice.IsZero()
 }

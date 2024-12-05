@@ -78,7 +78,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	RedemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
+	redemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get redemption tracker state: %w", err)
 	}
@@ -120,7 +120,7 @@ func (o *Oracle) fetchAndProcessState(
 		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
 		EthTipCap:                  suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: solanaBlockHash.Value.FeeCalculator.LamportsPerSignature,
-		RedemptionsEthereum:        RedemptionsEthereum,
+		RedemptionsEthereum:        redemptionsEthereum,
 		RedemptionsSolana:          nil,    // TODO: update me
 		ROCKUSDPrice:               0,      // TODO: add ROCKUSDPrice after TGE
 		BTCUSDPrice:                0,      // TODO: update me

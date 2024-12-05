@@ -6,11 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"slices"
 	"strings"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -23,10 +25,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
@@ -66,6 +70,12 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		return nil, ErrOracleSidecar
 	}
 
+	BTCUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.BTCUSDPrice)
+	if err != nil {
+		k.Logger(ctx).Error("error parsing btc price", "error", err)
+		return nil, ErrOracleSidecar
+	}
+
 	ETHUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ETHUSDPrice)
 	if err != nil {
 		k.Logger(ctx).Error("error parsing eth price", "error", err)
@@ -73,15 +83,17 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 	}
 
 	return &OracleData{
-		ROCKUSDPrice:         ROCKUSDPrice,
-		ETHUSDPrice:          ETHUSDPrice,
-		AVSDelegationsMap:    delegations,
-		ValidatorDelegations: validatorDelegations,
-		EthBlockHeight:       resp.EthBlockHeight,
-		EthGasLimit:          resp.EthGasLimit,
-		EthBaseFee:           resp.EthBaseFee,
-		EthTipCap:            resp.EthTipCap,
-		ConsensusData:        abci.ExtendedCommitInfo{},
+		ROCKUSDPrice:               ROCKUSDPrice,
+		BTCUSDPrice:                BTCUSDPrice,
+		ETHUSDPrice:                ETHUSDPrice,
+		EigenDelegationsMap:        delegations,
+		ValidatorDelegations:       validatorDelegations,
+		EthBlockHeight:             resp.EthBlockHeight,
+		EthGasLimit:                resp.EthGasLimit,
+		EthBaseFee:                 resp.EthBaseFee,
+		EthTipCap:                  resp.EthTipCap,
+		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
+		ConsensusData:              abci.ExtendedCommitInfo{},
 	}, nil
 }
 
@@ -104,23 +116,6 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 	}
 
 	return validatorDelegations, nil
-}
-
-func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) ([32]byte, error) {
-	avsDelegationsBz, err := json.Marshal(avsDelegations)
-	if err != nil {
-		return [32]byte{}, fmt.Errorf("error encoding AVS delegations: %w", err)
-	}
-
-	return sha256.Sum256(avsDelegationsBz), nil
-}
-
-func deriveEthereumRedemptionsHash(redemptions []api.Redemption) ([32]byte, error) {
-	redemptionsBz, err := json.Marshal(redemptions)
-	if err != nil {
-		return [32]byte{}, fmt.Errorf("error encoding ethereum redemptions: %w", err)
-	}
-	return sha256.Sum256(redemptionsBz), nil
 }
 
 func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, error) {
@@ -179,7 +174,9 @@ func validateVote(vote abci.ExtendedVoteInfo, currentHeight int64) (VoteExtensio
 
 func getVESubset(ve VoteExtension) VoteExtension {
 	ve.EthBlockHeight = 0
-	ve.EthBlockHash = [32]byte{}
+	ve.EthBaseFee = 0
+	ve.EthTipCap = 0
+	ve.EthGasLimit = 0
 	return ve
 }
 
@@ -200,7 +197,7 @@ func updateVotesPerVE(votesPerVoteExt map[string]*VEWithVotePower, voteExt VoteE
 			return
 		}
 		votesPerVoteExt[key] = &VEWithVotePower{
-			VoteExtension: fullMarshaledVE, // Store the full VE here
+			VoteExtension: fullMarshaledVE,
 			VotePower:     votePower,
 		}
 	}
@@ -228,6 +225,26 @@ func hasReachedSupermajority(totalVotePower, mostVotedVEVotePower int64) bool {
 
 func requisiteVotePower(totalVotePower int64) int64 {
 	return ((totalVotePower * 2) / 3) + 1
+}
+
+func deriveHash[T any](data T) ([32]byte, error) {
+	dataBz, err := json.Marshal(data)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("error encoding data: %w", err)
+	}
+	return sha256.Sum256(dataBz), nil
+}
+
+func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) ([32]byte, error) {
+	return deriveHash(avsDelegations)
+}
+
+func deriveRedemptionsHash(redemptions []api.Redemption) ([32]byte, error) {
+	return deriveHash(redemptions)
+}
+
+func deriveBitcoinHeaderHash(header *sidecar.BTCBlockHeader) ([32]byte, error) {
+	return deriveHash(header)
 }
 
 // ref: https://github.com/cosmos/cosmos-sdk/blob/c64d1010800d60677cc25e2fca5b3d8c37b683cc/baseapp/abci_utils.go#L44
@@ -469,4 +486,90 @@ func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) 
 	}
 
 	return q.Wallets[0].Address, nil
+}
+
+func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
+	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
+		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(requestedBitcoinHeaders.Heights) == 0 {
+		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+	}
+
+	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
+}
+
+func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
+	nonce, err := k.lookupEthereumNonce(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return 0, err
+		}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
+	}
+
+	if nonce == lastUsedNonce.Nonce {
+		lastUsedNonce.Counter++
+	} else {
+		lastUsedNonce.Nonce = nonce
+		lastUsedNonce.Counter = 0
+	}
+	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+		return 0, err
+	}
+
+	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
+		return 0, nil
+	}
+
+	return nonce, nil
+}
+
+func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
+	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
+	if err != nil {
+		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
+		return
+	}
+
+	for _, v := range consensusData.Votes {
+		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
+			info, err := k.ValidationInfos.Get(ctx, height)
+			if err != nil {
+				info = types.ValidationInfo{}
+			}
+			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, hex.EncodeToString(v.Validator.Address))
+			if err := k.ValidationInfos.Set(ctx, height, info); err != nil {
+				k.Logger(ctx).Error("error setting validation info", "height", height, "error", err)
+			}
+		}
+	}
+}
+
+func (k *Keeper) recordNonVotingValidators(ctx sdk.Context, req *abci.RequestFinalizeBlock) {
+	for _, v := range req.DecidedLastCommit.Votes {
+		if v.BlockIdFlag != cmtproto.BlockIDFlagCommit {
+			info, err := k.ValidationInfos.Get(ctx, req.Height)
+			if err != nil {
+				info = types.ValidationInfo{}
+			}
+			info.NonVotingValidators = append(info.NonVotingValidators, hex.EncodeToString(v.Validator.Address))
+			if err := k.ValidationInfos.Set(ctx, req.Height, info); err != nil {
+				k.Logger(ctx).Error("error setting validation info", "height", req.Height, "error", err)
+			}
+		}
+	}
 }

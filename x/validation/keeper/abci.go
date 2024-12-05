@@ -15,7 +15,6 @@ import (
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,77 +60,44 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 }
 
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
-	avsDelegationsHash, err := deriveAVSContractStateHash(oracleData.AVSDelegationsMap)
+	avsDelegationsHash, err := deriveAVSContractStateHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
 
-	ethereumRedemptionsHash, err := deriveEthereumRedemptionsHash(oracleData.EthereumRedemptions)
+	ethereumRedemptionsHash, err := deriveRedemptionsHash(oracleData.EthereumRedemptions)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
 	}
-
-	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	solanaRedemptionsHash, err := deriveRedemptionsHash(oracleData.SolanaRedemptions)
 	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return VoteExtension{}, err
-		}
-		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
-		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
-			return VoteExtension{}, err
-		}
+		return VoteExtension{}, fmt.Errorf("error deriving solana redemptions hash: %w", err)
 	}
 
-	var bitcoinData *sidecar.BitcoinBlockHeaderResponse
-	if len(requestedBitcoinHeaders.Heights) == 0 {
-		bitcoinData, err = k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
-		if err != nil {
-			return VoteExtension{}, err
-		}
-	} else {
-		bitcoinData, err = k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
-		if err != nil {
-			return VoteExtension{}, err
-		}
+	neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
+	if err != nil {
+		return VoteExtension{}, err
 	}
-
-	nonce, err := k.lookupEthereumNonce(ctx)
+	bitcoinHeaderHash, err := deriveBitcoinHeaderHash(neutrinoResponse.BlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
 	}
 
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	nonce, err := k.getNextEthereumNonce(ctx)
 	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return VoteExtension{}, err
-		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
-	}
-
-	if nonce == lastUsedNonce.Nonce {
-		lastUsedNonce.Counter++
-	} else {
-		lastUsedNonce.Nonce = nonce
-		lastUsedNonce.Counter = 0
-	}
-	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
 		return VoteExtension{}, err
-	}
-
-	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
-		nonce = 0
 	}
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:      height,
 		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
 		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		AVSDelegationsHash:      avsDelegationsHash[:],
+		EigenDelegationsHash:    avsDelegationsHash[:],
 		EthereumRedemptionsHash: ethereumRedemptionsHash[:],
-		BtcBlockHeight:          bitcoinData.BlockHeight,
-		BtcMerkleRoot:           bitcoinData.BlockHeader.MerkleRoot,
+		SolanaRedemptionsHash:   solanaRedemptionsHash[:],
+		BtcBlockHeight:          neutrinoResponse.BlockHeight,
+		BtcHeaderHash:           bitcoinHeaderHash[:],
 		EthBlockHeight:          oracleData.EthBlockHeight,
-		EthBlockHash:            oracleData.EthBlockHash,
 		EthGasLimit:             oracleData.EthGasLimit,
 		EthBaseFee:              oracleData.EthBaseFee,
 		EthTipCap:               oracleData.EthTipCap,
@@ -454,7 +420,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 }
 
 func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData) {
-	for validatorAddr, delegatorMap := range oracleData.AVSDelegationsMap {
+	for validatorAddr, delegatorMap := range oracleData.EigenDelegationsMap {
 		for delegatorAddr, amount := range delegatorMap {
 			if err := k.AVSDelegations.Set(ctx, collections.Join(validatorAddr, delegatorAddr), math.NewIntFromBigInt(amount)); err != nil {
 				k.Logger(ctx).Error("error setting AVS delegations", "err", err)
@@ -685,52 +651,16 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	}
 }
 
-func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
-	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
-	if err != nil {
-		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
-		return
-	}
-
-	for _, v := range consensusData.Votes {
-		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
-			info, err := k.ValidationInfos.Get(ctx, height)
-			if err != nil {
-				info = types.ValidationInfo{}
-			}
-			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, hex.EncodeToString(v.Validator.Address))
-			if err := k.ValidationInfos.Set(ctx, height, info); err != nil {
-				k.Logger(ctx).Error("error setting validation info", "height", height, "error", err)
-			}
-		}
-	}
-}
-
-func (k *Keeper) recordNonVotingValidators(ctx sdk.Context, req *abci.RequestFinalizeBlock) {
-	for _, v := range req.DecidedLastCommit.Votes {
-		if v.BlockIdFlag != cmtproto.BlockIDFlagCommit {
-			info, err := k.ValidationInfos.Get(ctx, req.Height)
-			if err != nil {
-				info = types.ValidationInfo{}
-			}
-			info.NonVotingValidators = append(info.NonVotingValidators, hex.EncodeToString(v.Validator.Address))
-			if err := k.ValidationInfos.Set(ctx, req.Height, info); err != nil {
-				k.Logger(ctx).Error("error setting validation info", "height", req.Height, "error", err)
-			}
-		}
-	}
-}
-
 func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
-	avsDelegationsHash, err := deriveAVSContractStateHash(oracleData.AVSDelegationsMap)
+	eigenDelegationsHash, err := deriveAVSContractStateHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
-	if !bytes.Equal(voteExt.AVSDelegationsHash, avsDelegationsHash[:]) {
-		return fmt.Errorf("AVS contract delegation state hash mismatch, expected %x, got %x", voteExt.AVSDelegationsHash, avsDelegationsHash)
+	if !bytes.Equal(voteExt.EigenDelegationsHash, eigenDelegationsHash[:]) {
+		return fmt.Errorf("AVS contract delegation state hash mismatch, expected %x, got %x", voteExt.EigenDelegationsHash, eigenDelegationsHash)
 	}
 
-	ethereumRedemptionsHash, err := deriveEthereumRedemptionsHash(oracleData.EthereumRedemptions)
+	ethereumRedemptionsHash, err := deriveRedemptionsHash(oracleData.EthereumRedemptions)
 	if err != nil {
 		return fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
 	}
@@ -738,20 +668,16 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("ethereum redemptions hash mismatch, expected %x, got %x", voteExt.EthereumRedemptionsHash, ethereumRedemptionsHash)
 	}
 
-	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
-		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
+	solanaRedemptionsHash, err := deriveRedemptionsHash(oracleData.SolanaRedemptions)
+	if err != nil {
+		return fmt.Errorf("error deriving solana redemptions hash: %w", err)
 	}
-
-	if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
-		return fmt.Errorf("ETH/USD price mismatch, expected %s, got %s", voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
+	if !bytes.Equal(voteExt.SolanaRedemptionsHash, solanaRedemptionsHash[:]) {
+		return fmt.Errorf("solana redemptions hash mismatch, expected %x, got %x", voteExt.SolanaRedemptionsHash, solanaRedemptionsHash)
 	}
 
 	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
 		return fmt.Errorf("ethereum block height mismatch, expected %d, got %d", voteExt.EthBlockHeight, oracleData.EthBlockHeight)
-	}
-
-	if voteExt.EthBlockHash != oracleData.EthBlockHash {
-		return fmt.Errorf("ethereum block hash mismatch, expected %s, got %s", voteExt.EthBlockHash, oracleData.EthBlockHash)
 	}
 
 	if voteExt.EthGasLimit != oracleData.EthGasLimit {
@@ -770,12 +696,28 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
 	}
 
-	if voteExt.BtcMerkleRoot != oracleData.BtcBlockHeader.MerkleRoot {
-		return fmt.Errorf("bitcoin merkle root mismatch, expected %s, got %s - height %d", voteExt.BtcMerkleRoot, oracleData.BtcBlockHeader.MerkleRoot, voteExt.BtcBlockHeight)
+	bitcoinHeaderHash, err := deriveBitcoinHeaderHash(&oracleData.BtcBlockHeader)
+	if err != nil {
+		return fmt.Errorf("error deriving bitcoin header hash: %w", err)
+	}
+	if !bytes.Equal(voteExt.BtcHeaderHash, bitcoinHeaderHash[:]) {
+		return fmt.Errorf("bitcoin header hash mismatch, expected %x, got %x", voteExt.BtcHeaderHash, bitcoinHeaderHash)
 	}
 
 	if voteExt.RequestedEthNonce != oracleData.RequestedEthNonce {
 		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthNonce, oracleData.RequestedEthNonce)
+	}
+
+	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
+	}
+
+	if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+		return fmt.Errorf("BTC/USD price mismatch, expected %s, got %s", voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
+	}
+
+	if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+		return fmt.Errorf("ETH/USD price mismatch, expected %s, got %s", voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
 	}
 
 	return nil
