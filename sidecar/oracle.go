@@ -30,7 +30,7 @@ func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutr
 		updateChan:     make(chan OracleState, 32),
 		mainLoopTicker: ticker,
 	}
-	o.currentState.Store(EmptyOracleState)
+	o.currentState.Store(&EmptyOracleState)
 
 	return o
 }
@@ -80,7 +80,7 @@ func (o *Oracle) fetchAndProcessState(
 
 	redemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
 	if err != nil {
-		return fmt.Errorf("failed to get redemption tracker state: %w", err)
+		// return fmt.Errorf("failed to get redemption tracker state: %w", err)
 	}
 
 	// TODO: get redemptions on Solana + get BTC price
@@ -96,11 +96,18 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
 
-	// We only need 1 signature for minting, so we can use GetRecentBlockhash
-	solanaBlockHash, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
-	if err != nil {
-		return fmt.Errorf("failed to get recent Solana blockhash data: %w", err)
-	}
+	// We only need 1 signature for minting, so we can use an empty message
+	// Message should contain your tx setup
+	// solanaFee, err := o.solanaClient.GetFeeForMessage(ctx, sol.Message{
+	// 	AccountKeys:         []sol.PublicKey{},
+	// 	Header:              sol.MessageHeader{},
+	// 	RecentBlockhash:     sol.Hash{},
+	// 	Instructions:        []sol.CompiledInstruction{},
+	// 	AddressTableLookups: sol.MessageAddressTableLookupSlice{},
+	// }.ToBase64(), solana.CommitmentFinalized)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get solana fee: %w", err)
+	// }
 
 	// mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 	// if err != nil {
@@ -114,12 +121,13 @@ func (o *Oracle) fetchAndProcessState(
 	// }
 
 	o.updateChan <- OracleState{
-		EigenDelegations:           eigenDelegations,
-		EthBlockHeight:             targetBlockNumber.Uint64(),
-		EthGasLimit:                latestHeader.GasLimit,
-		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
-		EthTipCap:                  suggestedTip.Uint64(),
-		SolanaLamportsPerSignature: solanaBlockHash.Value.FeeCalculator.LamportsPerSignature,
+		EigenDelegations: eigenDelegations,
+		EthBlockHeight:   targetBlockNumber.Uint64(),
+		EthGasLimit:      latestHeader.GasLimit,
+		EthBaseFee:       latestHeader.BaseFee.Uint64(),
+		EthTipCap:        suggestedTip.Uint64(),
+		// SolanaLamportsPerSignature: *solanaFee.Value,
+		SolanaLamportsPerSignature: 5000, // TODO: update me
 		RedemptionsEthereum:        redemptionsEthereum,
 		RedemptionsSolana:          nil,    // TODO: update me
 		ROCKUSDPrice:               0,      // TODO: add ROCKUSDPrice after TGE
