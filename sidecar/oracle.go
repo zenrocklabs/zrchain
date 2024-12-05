@@ -40,7 +40,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	redemptionTrackerHolesky, err := zenbtc.NewRedemptionTracker(common.HexToAddress(o.Config.EthOracle.ContractAddrs.RedemptionTrackers.EthHolesky), o.EthClient)
+	redemptionTrackerHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.RedemptionTrackers.EthHolesky), o.EthClient)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -60,7 +60,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
-	redemptionTrackerHolesky *zenbtc.RedemptionTracker,
+	redemptionTrackerHolesky *zenbtc.ZenBTC,
 	priceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
 ) error {
@@ -80,7 +80,7 @@ func (o *Oracle) fetchAndProcessState(
 
 	redemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
 	if err != nil {
-		// return fmt.Errorf("failed to get redemption tracker state: %w", err)
+		// return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}
 
 	// TODO: get redemptions on Solana + get BTC price
@@ -188,14 +188,14 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.RedemptionTracker, height *big.Int) ([]api.Redemption, error) {
+func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.ZenBTC, height *big.Int) ([]api.Redemption, error) {
 	callOpts := &bind.CallOpts{
 		BlockNumber: height,
 	}
 
-	recentRedemptions, err := contractInstance.GetRecentRedemptions(callOpts, 100)
+	recentRedemptions, err := contractInstance.GetRecentRedemptionData(callOpts, 100)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get redemptions: %w", err)
+		return nil, fmt.Errorf("failed to get recent redemption data: %w", err)
 	}
 
 	// convert to []Redemptions - id[i] corresponds to destinationAddr[i] and amount[i]
@@ -203,7 +203,7 @@ func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.RedemptionTr
 	for i := 0; i < len(recentRedemptions.Ids); i++ {
 		redemptions = append(redemptions, api.Redemption{
 			Id:                 recentRedemptions.Ids[i],
-			DestinationAddress: recentRedemptions.DestinationAddrs[i],
+			DestinationAddress: recentRedemptions.Destination[i],
 			Amount:             recentRedemptions.Amounts[i],
 		})
 	}
