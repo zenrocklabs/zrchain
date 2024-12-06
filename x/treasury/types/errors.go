@@ -15,4 +15,5 @@ var (
 	ErrNotFound             = sdkerrors.Register(ModuleName, 1503, "not found")
 	ErrInternal             = sdkerrors.Register(ModuleName, 1504, "internal error")
 	ErrInvalidArgument      = sdkerrors.Register(ModuleName, 1505, "invalid argument")
+	ErrInvalidCommission    = sdkerrors.Register(ModuleName, 1506, "commission must be between 0 and 100")
 )

@@ -64,6 +64,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
+	mintkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
+	minttypes "github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
 	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
@@ -122,9 +125,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -190,17 +190,18 @@ var (
 var maccPerms = map[string][]string{
 	authtypes.FeeCollectorName:        nil,
 	distrtypes.ModuleName:             nil,
-	minttypes.ModuleName:              {authtypes.Minter},
+	minttypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 	validationtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 	validationtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 	govtypes.ModuleName:               {authtypes.Burner},
 	nft.ModuleName:                    nil,
 	// non sdk modules
-	ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-	ibcfeetypes.ModuleName:      nil,
-	icatypes.ModuleName:         nil,
-	wasmtypes.ModuleName:        {authtypes.Burner},
-	identitytypes.ModuleName:    nil,
+	ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+	ibcfeetypes.ModuleName:             nil,
+	icatypes.ModuleName:                nil,
+	wasmtypes.ModuleName:               {authtypes.Burner},
+	identitytypes.ModuleName:           nil,
+	treasurytypes.KeyringCollectorName: nil,
 }
 
 var (
