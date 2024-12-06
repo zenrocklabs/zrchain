@@ -80,7 +80,7 @@ func (o *Oracle) fetchAndProcessState(
 
 	redemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
 	if err != nil {
-		// return fmt.Errorf("failed to get zenBTC contract state: %w", err)
+		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}
 
 	// TODO: get redemptions on Solana + get BTC price
