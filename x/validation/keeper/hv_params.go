@@ -16,7 +16,7 @@ var (
 	DefaultZenBTCWithdrawerKeyID     uint64 = 1
 	DefaultZenBTCMinterKeyID         uint64 = 2
 	DefaultZenBTCRewardsDepositKeyID uint64 = 3
-	DefaultZenBTCChangeAddressKeyIDs        = []uint64{4, 5}
+	DefaultZenBTCChangeAddressKeyIDs        = []uint64{1} //[]uint64{4, 5}
 	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 )
 

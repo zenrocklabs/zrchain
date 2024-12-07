@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -113,20 +114,66 @@ func VoteExtensionsEnabled(ctx sdk.Context) bool {
 	return ctx.BlockHeight() > consParams.Abci.VoteExtensionsEnableHeight
 }
 
-func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be checked here? They're not as critical so maybe not
-	return ve.ZRChainBlockHeight == 0 ||
-		len(ve.EigenDelegationsHash) == 0 ||
-		ve.EthBlockHeight == 0 ||
-		ve.EthBaseFee == 0 ||
-		ve.EthTipCap == 0 ||
-		ve.EthGasLimit == 0 ||
-		ve.BtcBlockHeight == 0 ||
-		len(ve.BtcHeaderHash) == 0 ||
-		ve.SolanaLamportsPerSignature == 0 ||
-		len(ve.EthereumRedemptionsHash) == 0 ||
-		len(ve.SolanaRedemptionsHash) == 0 ||
-		// TODO: uncomment this after TGE
-		// voteExt.ROCKUSDPrice.IsZero() ||
-		// ve.BTCUSDPrice.IsZero() ||
-		ve.ETHUSDPrice.IsZero()
+func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
+	invalid := false
+
+	if ve.ZRChainBlockHeight == 0 {
+		logger.Error("invalid vote extension: ZRChainBlockHeight is 0")
+		invalid = true
+	}
+	if len(ve.EigenDelegationsHash) == 0 {
+		logger.Error("invalid vote extension: EigenDelegationsHash is empty")
+		invalid = true
+	}
+	if ve.EthBlockHeight == 0 {
+		logger.Error("invalid vote extension: EthBlockHeight is 0")
+		invalid = true
+	}
+	if ve.EthBaseFee == 0 {
+		logger.Error("invalid vote extension: EthBaseFee is 0")
+		invalid = true
+	}
+	if ve.EthTipCap == 0 {
+		logger.Error("invalid vote extension: EthTipCap is 0")
+		invalid = true
+	}
+	if ve.EthGasLimit == 0 {
+		logger.Error("invalid vote extension: EthGasLimit is 0")
+		invalid = true
+	}
+	if ve.BtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: BtcBlockHeight is 0")
+		invalid = true
+	}
+	if len(ve.BtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: BtcHeaderHash is empty")
+		invalid = true
+	}
+	if ve.SolanaLamportsPerSignature == 0 {
+		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
+		invalid = true
+	}
+	if len(ve.EthereumRedemptionsHash) == 0 {
+		logger.Error("invalid vote extension: EthereumRedemptionsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaRedemptionsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaRedemptionsHash is empty")
+		invalid = true
+	}
+	// TODO: uncomment this after TGE
+	// if voteExt.ROCKUSDPrice.IsZero() {
+	//     logger.Error("invalid vote extension: ROCKUSDPrice is zero")
+	//     invalid = true
+	// }
+	// if ve.BTCUSDPrice.IsZero() {
+	//     logger.Error("invalid vote extension: BTCUSDPrice is zero")
+	//     invalid = true
+	// }
+	if ve.ETHUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ETHUSDPrice is zero")
+		invalid = true
+	}
+
+	return invalid
 }

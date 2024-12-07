@@ -125,7 +125,7 @@ func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, ext
 	for _, vote := range extCommit.Votes {
 		totalVotePower += vote.Validator.Power
 
-		voteExt, err := validateVote(vote, currentHeight)
+		voteExt, err := k.validateVote(ctx, vote, currentHeight)
 		if err != nil {
 			continue
 		}
@@ -154,7 +154,7 @@ func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, ext
 	return finalVoteExt, nil
 }
 
-func validateVote(vote abci.ExtendedVoteInfo, currentHeight int64) (VoteExtension, error) {
+func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, currentHeight int64) (VoteExtension, error) {
 	if vote.BlockIdFlag != cmtproto.BlockIDFlagCommit || len(vote.VoteExtension) == 0 {
 		return VoteExtension{}, fmt.Errorf("invalid vote")
 	}
@@ -165,7 +165,7 @@ func validateVote(vote abci.ExtendedVoteInfo, currentHeight int64) (VoteExtensio
 	}
 
 	voteExt.ZRChainBlockHeight = currentHeight - 1
-	if voteExt.IsInvalid() {
+	if voteExt.IsInvalid(k.Logger(ctx)) {
 		return VoteExtension{}, fmt.Errorf("invalid vote extension")
 	}
 
@@ -364,14 +364,10 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 }
 
 func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
-	k.Logger(ctx).Info("Getting zenBTC minter address")
-
 	addr, err := k.getZenBTCMinterAddressEVM(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
 	}
-
-	k.Logger(ctx).Info("Fetching Ethereum nonce")
 
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {

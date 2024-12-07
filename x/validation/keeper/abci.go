@@ -45,7 +45,7 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	if voteExt.IsInvalid() {
+	if voteExt.IsInvalid(k.Logger(ctx)) {
 		k.Logger(ctx).Error("invalid vote extension in ExtendVote", "height", req.Height)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
@@ -89,19 +89,20 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 
 	voteExt := VoteExtension{
-		ZRChainBlockHeight:      height,
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		EigenDelegationsHash:    avsDelegationsHash[:],
-		EthereumRedemptionsHash: ethereumRedemptionsHash[:],
-		SolanaRedemptionsHash:   solanaRedemptionsHash[:],
-		BtcBlockHeight:          neutrinoResponse.BlockHeight,
-		BtcHeaderHash:           bitcoinHeaderHash[:],
-		EthBlockHeight:          oracleData.EthBlockHeight,
-		EthGasLimit:             oracleData.EthGasLimit,
-		EthBaseFee:              oracleData.EthBaseFee,
-		EthTipCap:               oracleData.EthTipCap,
-		RequestedEthNonce:       nonce,
+		ZRChainBlockHeight:         height,
+		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
+		ETHUSDPrice:                oracleData.ETHUSDPrice,
+		EigenDelegationsHash:       avsDelegationsHash[:],
+		EthereumRedemptionsHash:    ethereumRedemptionsHash[:],
+		SolanaRedemptionsHash:      solanaRedemptionsHash[:],
+		BtcBlockHeight:             neutrinoResponse.BlockHeight,
+		BtcHeaderHash:              bitcoinHeaderHash[:],
+		EthBlockHeight:             oracleData.EthBlockHeight,
+		EthGasLimit:                oracleData.EthGasLimit,
+		EthBaseFee:                 oracleData.EthBaseFee,
+		EthTipCap:                  oracleData.EthTipCap,
+		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
+		RequestedEthNonce:          nonce,
 	}
 
 	return voteExt, nil
@@ -129,7 +130,7 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 		return REJECT_VOTE, nil
 	}
 
-	if voteExt.IsInvalid() {
+	if voteExt.IsInvalid(k.Logger(ctx)) {
 		k.Logger(ctx).Error("invalid vote extension in VerifyVoteExtension", "height", req.Height)
 		return REJECT_VOTE, nil
 	}
@@ -437,8 +438,15 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
-		return err
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+			return err
+		}
+		requestedHeaders = zenbtctypes.RequestedBitcoinHeaders{}
+		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
+			return err
+		}
 	}
 
 	// Check if this is a requested historical header
@@ -459,8 +467,11 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	// Check for existing header (potential fork)
 	existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
 	if err != nil {
-		k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-		return err
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+			return err
+		}
+		existingHeader = sidecar.BTCBlockHeader{}
 	}
 
 	// If we have a different header for this height, handle potential fork
