@@ -345,7 +345,10 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
 	for _, delegation := range oracleData.ValidatorDelegations {
-		k.Logger(ctx).Debug("delegation", "validator", delegation.Validator, "stake", delegation.Stake)
+		if delegation.Validator == "" {
+			k.Logger(ctx).Debug("empty validator address in delegation; skipping")
+			continue
+		}
 
 		valAddr, err := sdk.ValAddressFromBech32(delegation.Validator)
 		if err != nil {
@@ -354,10 +357,8 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		validator, err := k.GetZenrockValidator(ctx, valAddr)
-		if err != nil {
-			k.Logger(ctx).Debug(
-				"error retrieving validator "+delegation.Validator, "err", err, "reason", "incorrect address entered in delegation",
-			)
+		if err != nil || validator.Status != types.Bonded {
+			k.Logger(ctx).Debug("invalid delegation for "+delegation.Validator, "err", err, "reason", "invalid address / not bonded")
 			continue
 		}
 
