@@ -12,7 +12,9 @@ eth_oracle:
     price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
     redemption_trackers:
       eth_holesky: "0x1D6C5C694B212E983507B128D252335713770c29"
-  network_name: "Holešky Ethereum Testnet"
+  network_name:
+    mainnet: "Ethereum Mainnet"
+    testnet: "Holešky Ethereum Testnet"
 solana_rpc:
   testnet: "https://api.testnet.solana.com"
   mainnet: "https://api.mainnet-beta.solana.com/"

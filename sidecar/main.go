@@ -10,6 +10,7 @@ import (
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -87,8 +88,8 @@ func main() {
 
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
-		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName, update.EthBlockHeight)
-		currentState := o.currentState.Load().(*OracleState)
+		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName[o.Config.Network], update.EthBlockHeight)
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 		newState := *currentState
 
 		newState.EigenDelegations = update.EigenDelegations

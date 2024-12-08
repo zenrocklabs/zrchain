@@ -17,6 +17,7 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	// TODO: remove local replaces once inputhashes branch on zenbtc repo is merged
 	github.com/zenrocklabs/zenbtc => ../zenbtc
+	github.com/zenrocklabs/zenrock-avs => ../zenrock-avs
 	github.com/zenrocklabs/zenrock/bitcoinproxy => ../zenrock/bitcoin-proxy
 )
 
@@ -74,7 +75,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zenrocklabs/zenbtc v1.0.3
+	github.com/zenrocklabs/zenbtc v1.5.1
 	github.com/zenrocklabs/zenrock-avs v1.4.11
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0

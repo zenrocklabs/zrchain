@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 )
@@ -38,7 +39,7 @@ func NewOracleService(oracle *Oracle) *oracleService {
 }
 
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
-	currentState := s.oracle.currentState.Load().(*OracleState)
+	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
 
 	contractState, err := json.Marshal(currentState.EigenDelegations)
 	if err != nil {

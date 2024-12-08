@@ -10,6 +10,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 )
 
 // / These constants should not be changed as they are important for synchronicity
@@ -19,7 +20,7 @@ const (
 )
 
 var (
-	EmptyOracleState = OracleState{
+	EmptyOracleState = sidecartypes.OracleState{
 		EigenDelegations:           make(map[string]map[string]*big.Int),
 		EthBlockHeight:             0,
 		EthGasLimit:                0,
@@ -37,28 +38,14 @@ var (
 )
 
 type Oracle struct {
-	currentState   atomic.Value // *OracleState
-	stateCache     []OracleState
+	currentState   atomic.Value // *types.OracleState
+	stateCache     []sidecartypes.OracleState
 	Config         Config
 	EthClient      *ethclient.Client
 	neutrinoServer *neutrino.NeutrinoServer
 	solanaClient   *solana.Client
-	updateChan     chan OracleState
+	updateChan     chan sidecartypes.OracleState
 	mainLoopTicker *time.Ticker
-}
-
-type OracleState struct {
-	EigenDelegations           map[string]map[string]*big.Int `json:"eigenDelegations"`
-	EthBlockHeight             uint64                         `json:"ethBlockHeight"`
-	EthGasLimit                uint64                         `json:"ethGasLimit"`
-	EthBaseFee                 uint64                         `json:"ethBaseFee"`
-	EthTipCap                  uint64                         `json:"ethTipCap"`
-	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
-	RedemptionsEthereum        []api.Redemption               `json:"RedemptionsEthereum"`
-	RedemptionsSolana          []api.Redemption               `json:"RedemptionsSolana"`
-	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
-	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
-	ETHUSDPrice                float64                        `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
 }
 
 type CoinMarketCapResponse struct {
@@ -105,7 +92,7 @@ type NeutrinoConfig struct {
 type EthOracleConfig struct {
 	RPC           map[string]string `yaml:"rpc"`
 	ContractAddrs ContractAddrs     `yaml:"contract_addrs"`
-	NetworkName   string            `yaml:"network_name"`
+	NetworkName   map[string]string `yaml:"network_name"`
 }
 
 type ContractAddrs struct {

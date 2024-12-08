@@ -9,6 +9,7 @@ import (
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -22,12 +23,12 @@ import (
 
 func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solana.Client, ticker *time.Ticker) *Oracle {
 	o := &Oracle{
-		stateCache:     make([]OracleState, 0),
+		stateCache:     make([]sidecartypes.OracleState, 0),
 		Config:         config,
 		EthClient:      ethClient,
 		neutrinoServer: neutrinoServer,
 		solanaClient:   solanaClient,
-		updateChan:     make(chan OracleState, 32),
+		updateChan:     make(chan sidecartypes.OracleState, 32),
 		mainLoopTicker: ticker,
 	}
 	o.currentState.Store(&EmptyOracleState)
@@ -120,7 +121,7 @@ func (o *Oracle) fetchAndProcessState(
 	// 	return fmt.Errorf("failed to fetch ETH price: %w", err)
 	// }
 
-	o.updateChan <- OracleState{
+	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
 		EthGasLimit:      latestHeader.GasLimit,
