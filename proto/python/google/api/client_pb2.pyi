@@ -194,10 +194,19 @@ class RubySettings(_message.Message):
     def __init__(self, common: _Optional[_Union[CommonLanguageSettings, _Mapping]] = ...) -> None: ...
 
 class GoSettings(_message.Message):
-    __slots__ = ("common",)
+    __slots__ = ("common", "renamed_services")
+    class RenamedServicesEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
     COMMON_FIELD_NUMBER: _ClassVar[int]
+    RENAMED_SERVICES_FIELD_NUMBER: _ClassVar[int]
     common: CommonLanguageSettings
-    def __init__(self, common: _Optional[_Union[CommonLanguageSettings, _Mapping]] = ...) -> None: ...
+    renamed_services: _containers.ScalarMap[str, str]
+    def __init__(self, common: _Optional[_Union[CommonLanguageSettings, _Mapping]] = ..., renamed_services: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class MethodSettings(_message.Message):
     __slots__ = ("selector", "long_running", "auto_populated_fields")

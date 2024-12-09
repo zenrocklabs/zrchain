@@ -523,49 +523,6 @@ func (k *Keeper) handlePotentialBitcoinFork(
 }
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) error {
-	if oracleData.RequestedEthNonce == 0 {
-		return nil
-	}
-
-	pendingMints, err := k.PendingMintTransactions.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting pending mint transactions: %w", err)
-	}
-	if len(pendingMints.Txs) == 0 {
-		return nil
-	}
-
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
-	}
-
-	if lastUsedNonce.Counter == 0 { // remove last pending tx + update supply (after nonce updated indicating successful mint)
-		pendingMints.Txs = pendingMints.Txs[1:]
-		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
-			return fmt.Errorf("error setting pending mint transactions: %w", err)
-		}
-
-		supply, err := k.ZenBTCSupply.Get(ctx)
-		if err != nil {
-			return fmt.Errorf("error getting zenBTC supply: %w", err)
-		}
-
-		successfulMintTx := pendingMints.Txs[0]
-		supply.MintedZenBTC += successfulMintTx.Amount
-
-		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
-			return fmt.Errorf("error updating zenBTC supply: %w", err)
-		}
-
-		if len(pendingMints.Txs) == 0 {
-			if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
-				return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
-			}
-			return nil
-		}
-	}
-
 	requested, err := k.EthereumNonceRequested.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -580,7 +537,58 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		return nil
 	}
 
+	pendingMints, err := k.PendingMintTransactions.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting pending mint transactions: %w", err)
+	}
+	if len(pendingMints.Txs) == 0 {
+		return nil
+	}
+
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
+		}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthNonce, Counter: 0}
+		if err := k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+			return fmt.Errorf("error setting last used Ethereum nonce: %w", err)
+		}
+	}
+
+	lastMintTx := pendingMints.Txs[0]
+
+	// remove last pending tx + update supply (after nonce updated indicating successful mint)
+	if oracleData.RequestedEthNonce != lastMintTx.Nonce {
+		supply, err := k.ZenBTCSupply.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting zenBTC supply: %w", err)
+		}
+
+		supply.MintedZenBTC += lastMintTx.Amount
+
+		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
+			return fmt.Errorf("error updating zenBTC supply: %w", err)
+		}
+
+		pendingMints.Txs = pendingMints.Txs[1:]
+		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
+			return fmt.Errorf("error setting pending mint transactions: %w", err)
+		}
+
+		if len(pendingMints.Txs) == 0 {
+			if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
+				return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+			}
+			return nil
+		}
+	}
+
 	pendingMintTx := pendingMints.Txs[0]
+	pendingMintTx.Nonce = oracleData.RequestedEthNonce
+	if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
+		return fmt.Errorf("error setting pending mint transactions: %w", err)
+	}
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
