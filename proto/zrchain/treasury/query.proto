@@ -264,7 +264,7 @@ message QueryKeyByAddressResponse {
 message QueryZenbtcWalletsRequest {
   string                                recipient_addr = 1; // Optional
   WalletType                            chain_type     = 2; // Optional
-  uint64                                chain_id       = 3; // Optional
+  uint64                                mint_chain_id  = 3; // Optional
   string                                return_addr    = 4; // Optional
   cosmos.base.query.v1beta1.PageRequest pagination    = 5;
 }
