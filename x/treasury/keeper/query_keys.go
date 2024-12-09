@@ -47,13 +47,14 @@ func (k Keeper) Keys(
 		func(key uint64, value types.Key) (*types.KeyAndWalletResponse, error) {
 			return &types.KeyAndWalletResponse{
 				Key: &types.KeyResponse{
-					Id:            value.Id,
-					WorkspaceAddr: value.WorkspaceAddr,
-					KeyringAddr:   value.KeyringAddr,
-					Type:          value.Type.String(),
-					PublicKey:     value.PublicKey,
-					Index:         value.Index,
-					SignPolicyId:  value.SignPolicyId,
+					Id:             value.Id,
+					WorkspaceAddr:  value.WorkspaceAddr,
+					KeyringAddr:    value.KeyringAddr,
+					Type:           value.Type.String(),
+					PublicKey:      value.PublicKey,
+					Index:          value.Index,
+					SignPolicyId:   value.SignPolicyId,
+					ZenbtcMetadata: value.ZenbtcMetadata,
 				},
 				Wallets: processWallets(value, req.WalletType, req.Prefixes),
 			}, nil

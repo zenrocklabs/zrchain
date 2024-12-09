@@ -2,10 +2,11 @@ package neutrino
 
 import (
 	"encoding/json"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 	"strconv"
 	"time"
+
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 )
 
 func (ns *NeutrinoServer) ProxyGetLatestBlockHeader(chainName string) (*wire.BlockHeader, *chainhash.Hash, int32, error) {
