@@ -27,7 +27,7 @@ func (k Keeper) ZenbtcWallets(
 			}
 
 			switch {
-			case req.ChainId != 0 && value.ZenbtcMetadata.ChainId != req.ChainId:
+			case req.MintChainId != 0 && value.ZenbtcMetadata.ChainId != req.MintChainId:
 				return false, nil
 			case req.ChainType != types.WalletType_WALLET_TYPE_UNSPECIFIED && value.ZenbtcMetadata.ChainType != req.ChainType:
 				return false, nil
@@ -37,14 +37,11 @@ func (k Keeper) ZenbtcWallets(
 				return false, nil
 			}
 
-			keyType := types.KeyType_KEY_TYPE_UNSPECIFIED
-
 			recipientAddressMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
-			chainIdMatch := (req.ChainId == 0 || value.ZenbtcMetadata.ChainId == req.ChainId)
+			chainIdMatch := (req.MintChainId == 0 || value.ZenbtcMetadata.ChainId == req.MintChainId)
 			returnAddrMatch := (req.ReturnAddr == "" || value.ZenbtcMetadata.ReturnAddress == req.ReturnAddr)
-			keyTypeMatch := (value.Type == keyType || keyType == types.KeyType_KEY_TYPE_UNSPECIFIED)
 
-			return recipientAddressMatch && keyTypeMatch && chainIdMatch && returnAddrMatch, nil
+			return recipientAddressMatch && chainIdMatch && returnAddrMatch, nil
 		},
 		func(key uint64, value types.Key) (*types.KeyAndWalletResponse, error) {
 			return &types.KeyAndWalletResponse{
@@ -58,7 +55,7 @@ func (k Keeper) ZenbtcWallets(
 					SignPolicyId:   value.SignPolicyId,
 					ZenbtcMetadata: value.ZenbtcMetadata,
 				},
-				Wallets: processWallets(value, types.WalletType_WALLET_TYPE_UNSPECIFIED, nil),
+				Wallets: processWallets(value, req.ChainType, nil),
 			}, nil
 		},
 	)

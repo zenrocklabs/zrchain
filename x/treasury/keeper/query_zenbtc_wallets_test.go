@@ -108,7 +108,6 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
-							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -147,7 +146,6 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
-							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -186,7 +184,6 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
-							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -205,7 +202,6 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							},
 						},
 						Wallets: []*types.WalletResponse{
-							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -243,8 +239,8 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					},
 				},
 				req: &types.QueryZenbtcWalletsRequest{
-					ChainId:   17000,
-					ChainType: types.WalletType_WALLET_TYPE_EVM,
+					MintChainId: 17000,
+					ChainType:   types.WalletType_WALLET_TYPE_EVM,
 				},
 			},
 			want: &types.QueryZenbtcWalletsResponse{

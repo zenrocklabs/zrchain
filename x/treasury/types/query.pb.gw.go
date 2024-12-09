@@ -962,7 +962,7 @@ func request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainId")
 	}
 
-	protoReq.ChainId, err = runtime.Uint64(val)
+	protoReq.MintChainId, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainId", err)
@@ -1032,7 +1032,7 @@ func local_request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainId")
 	}
 
-	protoReq.ChainId, err = runtime.Uint64(val)
+	protoReq.MintChainId, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainId", err)
