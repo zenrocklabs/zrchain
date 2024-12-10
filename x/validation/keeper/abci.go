@@ -595,6 +595,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		return fmt.Errorf("error setting pending mint transactions: %w", err)
 	}
 
+	k.Logger(ctx).Warn("constructing mint tx", "nonce", oracleData.RequestedEthNonce)
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,

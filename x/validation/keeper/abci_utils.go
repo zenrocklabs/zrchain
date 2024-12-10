@@ -509,20 +509,25 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
+	firstRun := false
 	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return 0, err
 		}
 		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
+		firstRun = true
 	}
 
-	if nonce == lastUsedNonce.Nonce {
-		lastUsedNonce.Counter++
-	} else {
-		lastUsedNonce.Nonce = nonce
-		lastUsedNonce.Counter = 0
+	if !firstRun {
+		if nonce == lastUsedNonce.Nonce {
+			lastUsedNonce.Counter++
+		} else {
+			lastUsedNonce.Nonce = nonce
+			lastUsedNonce.Counter = 0
+		}
 	}
+
 	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
 		return 0, err
 	}
