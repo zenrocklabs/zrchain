@@ -389,7 +389,7 @@ func (k Keeper) GetStakeableAssets(ctx context.Context) (types.AssetData, types.
 		}
 	}
 
-	// TODO: zenBTC is 18 decimals of precision but BTC is 8 - need to factor this in
+	// TODO: zenBTC is 18 decimals of precision but BTC is 8 - need to think about what we want to do here
 	// btc, err := k.AssetDataStore.Get(ctx, types.Asset_BTC)
 	// if err != nil || btc.PriceUSD.LTE(math.LegacyZeroDec()) {
 	// 	btc = types.AssetData{PriceUSD: math.LegacyOneDec(), Precision: 8}

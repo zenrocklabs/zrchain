@@ -332,15 +332,16 @@ func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
-	if err := k.AssetDataStore.Set(ctx, types.Asset_ROCK, types.AssetData{PriceUSD: oracleData.ROCKUSDPrice}); err != nil {
+	if err := k.AssetDataStore.Set(ctx, types.Asset_ROCK, types.AssetData{PriceUSD: oracleData.ROCKUSDPrice, Precision: 6}); err != nil {
 		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetDataStore.Set(ctx, types.Asset_BTC, types.AssetData{PriceUSD: oracleData.BTCUSDPrice}); err != nil {
-		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
-	}
+	// TODO: zenBTC is 18 decimals of precision but BTC is 8 - need to think about what we want to do here
+	// if err := k.AssetDataStore.Set(ctx, types.Asset_BTC, types.AssetData{PriceUSD: oracleData.BTCUSDPrice, Precision: 8}); err != nil {
+	// 	k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+	// }
 
-	if err := k.AssetDataStore.Set(ctx, types.Asset_ETH, types.AssetData{PriceUSD: oracleData.ETHUSDPrice}); err != nil {
+	if err := k.AssetDataStore.Set(ctx, types.Asset_ETH, types.AssetData{PriceUSD: oracleData.ETHUSDPrice, Precision: 18}); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
