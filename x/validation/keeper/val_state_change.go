@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"sort"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -284,9 +285,9 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 		oldPowerBytes, found := last[valAddrStr]
 
-		ROCKUSDPrice, ETHUSDPrice := k.GetStakingAssetPrices(ctx)
-		nativePower := ROCKUSDPrice.MulInt64(validator.ConsensusPower(powerReduction))
-		avsPower := ETHUSDPrice.MulInt64(validator.AVSConsensusPower(powerReduction))
+		rock, eth := k.GetStakeableAssets(ctx)
+		nativePower := rock.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
+		avsPower := eth.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, eth.Precision).Int64())
 		newPower := nativePower.Add(avsPower).TruncateInt64()
 
 		consAddr, err := validator.GetConsAddr()
@@ -376,18 +377,50 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 	return updates, err
 }
 
-func (k Keeper) GetStakingAssetPrices(ctx context.Context) (math.LegacyDec, math.LegacyDec) {
-	rock, err := k.AssetPrices.Get(ctx, "rock")
+// func (k Keeper) GetStakeableAssets(ctx context.Context) (types.AssetData, types.AssetData, types.AssetData) {
+func (k Keeper) GetStakeableAssets(ctx context.Context) (types.AssetData, types.AssetData) {
+	rock, err := k.AssetDataStore.Get(ctx, types.Asset_ROCK)
 	if err != nil || rock.PriceUSD.LTE(math.LegacyZeroDec()) {
-		rock = types.AssetPrice{PriceUSD: math.LegacyOneDec()}
+		rock = types.AssetData{PriceUSD: math.LegacyOneDec(), Precision: 6}
+		if errors.Is(err, collections.ErrNotFound) {
+			if err := k.AssetDataStore.Set(ctx, types.Asset_ROCK, rock); err != nil {
+				k.Logger(ctx).Error("error setting ROCK price", "err", err)
+			}
+		}
 	}
 
-	eth, err := k.AssetPrices.Get(ctx, "eth")
+	// TODO: zenBTC is 18 decimals of precision but BTC is 8 - need to factor this in
+	// btc, err := k.AssetDataStore.Get(ctx, types.Asset_BTC)
+	// if err != nil || btc.PriceUSD.LTE(math.LegacyZeroDec()) {
+	// 	btc = types.AssetData{PriceUSD: math.LegacyOneDec(), Precision: 8}
+	// 	if errors.Is(err, collections.ErrNotFound) {
+	// 		if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btc); err != nil {
+	// 			k.Logger(ctx).Error("error setting BTC price", "err", err)
+	// 		}
+	// 	}
+	// }
+
+	eth, err := k.AssetDataStore.Get(ctx, types.Asset_ETH)
 	if err != nil || eth.PriceUSD.LTE(math.LegacyZeroDec()) {
-		eth = types.AssetPrice{PriceUSD: math.LegacyOneDec()}
+		eth = types.AssetData{PriceUSD: math.LegacyOneDec(), Precision: 18}
+		if errors.Is(err, collections.ErrNotFound) {
+			if err := k.AssetDataStore.Set(ctx, types.Asset_ETH, eth); err != nil {
+				k.Logger(ctx).Error("error setting ETH price", "err", err)
+			}
+		}
 	}
 
-	return rock.PriceUSD, eth.PriceUSD
+	// return rock, btc, eth
+	return rock, eth
+}
+
+func adjustPowerToPrecision(tokens math.Int, assetPrecision uint32) math.Int {
+	if assetPrecision == 6 {
+		return tokens
+	}
+	precisionDiff := assetPrecision - 6 // relative to ROCK's 6 decimals of precision
+	powerOf10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(precisionDiff)), nil)
+	return tokens.Quo(math.NewIntFromBigInt(powerOf10))
 }
 
 // Validator state transitions

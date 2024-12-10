@@ -44,8 +44,8 @@ type Keeper struct {
 	ValidatorDelegations collections.Map[string, math.Int]
 	// AVSRewardsPool - key: address | value: total unclaimed rewards for that address
 	AVSRewardsPool collections.Map[string, math.Int]
-	// AssetPrices - key: asset symbol | value: asset price struct
-	AssetPrices collections.Map[string, types.AssetPrice]
+	// AssetDataStore - key: asset type | value: asset price + precision
+	AssetDataStore collections.Map[types.Asset, types.AssetData]
 	// SlashEvents - key: id number | value: slash event struct
 	SlashEvents collections.Map[uint64, types.SlashEvent]
 	// SlashEventCount - value: number of slash events
@@ -127,7 +127,7 @@ func NewKeeper(
 		AVSDelegations:                    collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
 		ValidatorDelegations:              collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
 		AVSRewardsPool:                    collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
-		AssetPrices:                       collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, collections.StringKey, codec.CollValue[types.AssetPrice](cdc)),
+		AssetDataStore:                    collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, types.AssetKey{}, codec.CollValue[types.AssetData](cdc)),
 		SlashEvents:                       collections.NewMap(sb, types.SlashEventsKey, types.SlashEventsIndex, collections.Uint64Key, codec.CollValue[types.SlashEvent](cdc)),
 		SlashEventCount:                   collections.NewItem(sb, types.SlashEventCountKey, types.SlashEventCountIndex, collections.Uint64Value),
 		HVParams:                          collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),

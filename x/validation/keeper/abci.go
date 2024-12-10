@@ -332,11 +332,15 @@ func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
-	if err := k.AssetPrices.Set(ctx, "rock", types.AssetPrice{PriceUSD: oracleData.ROCKUSDPrice}); err != nil {
+	if err := k.AssetDataStore.Set(ctx, types.Asset_ROCK, types.AssetData{PriceUSD: oracleData.ROCKUSDPrice}); err != nil {
 		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, "eth", types.AssetPrice{PriceUSD: oracleData.ETHUSDPrice}); err != nil {
+	if err := k.AssetDataStore.Set(ctx, types.Asset_BTC, types.AssetData{PriceUSD: oracleData.BTCUSDPrice}); err != nil {
+		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetDataStore.Set(ctx, types.Asset_ETH, types.AssetData{PriceUSD: oracleData.ETHUSDPrice}); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
