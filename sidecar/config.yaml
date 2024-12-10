@@ -11,7 +11,7 @@ eth_oracle:
     service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
     price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
     redemption_trackers:
-      eth_holesky: "0x1D6C5C694B212E983507B128D252335713770c29"
+      eth_holesky: "0xEe6dd71ccf66E3F920a4D49a57020e0F89659407"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"
