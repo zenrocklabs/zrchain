@@ -432,7 +432,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	)
 
 	// TODO: REMOVE THIS LINE BELOW
-	// gasPrice = gasPrice.Mul(gasPrice, big.NewInt(10))
+	gasPrice = gasPrice.Mul(gasPrice, big.NewInt(100))
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
 		Nonce:    nonce,
@@ -537,6 +537,46 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
 	}
 
 	return nonce, nil
+}
+
+func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
+	oracleDataBz, err := json.Marshal(oracleData)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding oracle data: %w", err)
+	}
+
+	if int64(len(oracleDataBz)) > req.MaxTxBytes {
+		return nil, fmt.Errorf("oracle data too large: %d > %d", len(oracleDataBz), req.MaxTxBytes)
+	}
+
+	return oracleDataBz, nil
+}
+
+func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
+	if len(tx) == 0 {
+		return OracleData{}, fmt.Errorf("no transactions in block")
+	}
+
+	var oracleData OracleData
+	if err := json.Unmarshal(tx, &oracleData); err != nil {
+		return OracleData{}, err
+	}
+
+	return oracleData, nil
+}
+
+func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
+	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetPrices.Set(ctx, types.Asset_zenBTC, oracleData.BTCUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetPrices.Set(ctx, types.Asset_stETH, oracleData.ETHUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	}
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {

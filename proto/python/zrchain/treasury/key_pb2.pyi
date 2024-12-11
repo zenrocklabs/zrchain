@@ -136,22 +136,20 @@ class ZenBTCMetadata(_message.Message):
     def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., chain_id: _Optional[int] = ..., return_address: _Optional[str] = ...) -> None: ...
 
 class PendingMintTransaction(_message.Message):
-    __slots__ = ("chain_id", "chain_type", "recipient_address", "amount", "creator", "key_id", "nonce")
+    __slots__ = ("chain_id", "chain_type", "recipient_address", "amount", "creator", "key_id")
     CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
     CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]
     RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
-    NONCE_FIELD_NUMBER: _ClassVar[int]
     chain_id: int
     chain_type: _wallet_pb2.WalletType
     recipient_address: str
     amount: int
     creator: str
     key_id: int
-    nonce: int
-    def __init__(self, chain_id: _Optional[int] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., recipient_address: _Optional[str] = ..., amount: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., nonce: _Optional[int] = ...) -> None: ...
+    def __init__(self, chain_id: _Optional[int] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., recipient_address: _Optional[str] = ..., amount: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ...) -> None: ...
 
 class PendingMintTransactions(_message.Message):
     __slots__ = ("txs",)

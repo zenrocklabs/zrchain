@@ -113,7 +113,6 @@ message PendingMintTransaction {
   uint64 amount = 4;
   string creator = 5;
   uint64 key_id = 6;
-  uint64 nonce = 7;
 }
 
 // PendingMintTransactions is a collection of pending mint transactions.

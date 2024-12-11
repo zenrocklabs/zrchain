@@ -7,21 +7,21 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
 
-// AssetData is a struct that contains the price of an asset in USD
-// ERC-20 precision is 18, ROCK precision is 6
-message AssetData {
-  string priceUSD = 1 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
-  ];
-  uint32 precision = 2;
-}
-
 // Asset is an enum that represents the assets we store pricing for
 enum Asset {
   UNSPECIFIED = 0;
   ROCK = 1;
-  BTC = 2;
-  ETH = 3;
+  zenBTC = 2;
+  stETH = 3;
+}
+
+// AssetData is a struct that contains the price in USD + decimals of precision of an asset
+message AssetData {
+  Asset asset = 1;
+  string priceUSD = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  uint32 precision = 3;
 }

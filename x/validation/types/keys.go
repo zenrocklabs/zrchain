@@ -27,12 +27,11 @@ var (
 	BtcBlockHeadersKey                   = collections.NewPrefix(8)
 	EthereumNonceRequestedKey            = collections.NewPrefix(9)
 	PendingMintTransactionsKey           = collections.NewPrefix(10)
-	PendingRedemptionsKey                = collections.NewPrefix(11)
-	ZenBTCRedemptionsKey                 = collections.NewPrefix(12)
-	VoteExtensionRejectedKey             = collections.NewPrefix(13)
-	ZenBTCSupplyKey                      = collections.NewPrefix(14)
-	LastUsedEthereumNonceKey             = collections.NewPrefix(15)
-	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(16)
+	ZenBTCRedemptionsKey                 = collections.NewPrefix(11)
+	VoteExtensionRejectedKey             = collections.NewPrefix(12)
+	ZenBTCSupplyKey                      = collections.NewPrefix(13)
+	LastUsedEthereumNonceKey             = collections.NewPrefix(14)
+	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(15)
 
 	AssetPricesIndex                       = "asset_prices"
 	SlashEventsIndex                       = "slash_events"
@@ -45,7 +44,6 @@ var (
 	BtcBlockHeadersIndex                   = "btc_block_headers"
 	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
 	PendingMintTransactionsIndex           = "pending_mint_transactions"
-	PendingRedemptionsIndex                = "pending_redemption_transactions"
 	ZenBTCRedemptionsIndex                 = "zenbtc_redemptions"
 	VoteExtensionRejectedIndex             = "vote_extension_rejected"
 	ZenBTCSupplyIndex                      = "zenbtc_supply"

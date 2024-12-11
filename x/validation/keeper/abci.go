@@ -305,47 +305,6 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	return oracleData, &voteExt, nil
 }
 
-func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
-	oracleDataBz, err := json.Marshal(oracleData)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding oracle data: %w", err)
-	}
-
-	if int64(len(oracleDataBz)) > req.MaxTxBytes {
-		return nil, fmt.Errorf("oracle data too large: %d > %d", len(oracleDataBz), req.MaxTxBytes)
-	}
-
-	return oracleDataBz, nil
-}
-
-func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
-	if len(tx) == 0 {
-		return OracleData{}, fmt.Errorf("no transactions in block")
-	}
-
-	var oracleData OracleData
-	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		return OracleData{}, err
-	}
-
-	return oracleData, nil
-}
-
-func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
-	if err := k.AssetDataStore.Set(ctx, types.Asset_ROCK, types.AssetData{PriceUSD: oracleData.ROCKUSDPrice, Precision: 6}); err != nil {
-		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
-	}
-
-	// TODO: zenBTC is 18 decimals of precision but BTC is 8 - need to think about what we want to do here
-	// if err := k.AssetDataStore.Set(ctx, types.Asset_BTC, types.AssetData{PriceUSD: oracleData.BTCUSDPrice, Precision: 8}); err != nil {
-	// 	k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
-	// }
-
-	if err := k.AssetDataStore.Set(ctx, types.Asset_ETH, types.AssetData{PriceUSD: oracleData.ETHUSDPrice, Precision: 18}); err != nil {
-		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
-	}
-}
-
 func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
@@ -528,6 +487,11 @@ func (k *Keeper) handlePotentialBitcoinFork(
 }
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) error {
+	// Toggle mints every other block as VEs originate from block n-1 so requests have 1 block latency
+	if ctx.BlockHeight()%2 == 1 {
+		return nil
+	}
+
 	requested, err := k.EthereumNonceRequested.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -564,7 +528,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 	lastMintTx := pendingMints.Txs[0]
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
-	if oracleData.RequestedEthNonce != lastMintTx.Nonce {
+	if oracleData.RequestedEthNonce != lastUsedNonce.Nonce {
 		supply, err := k.ZenBTCSupply.Get(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting zenBTC supply: %w", err)
@@ -590,12 +554,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 	}
 
 	pendingMintTx := pendingMints.Txs[0]
-	pendingMintTx.Nonce = oracleData.RequestedEthNonce
-	if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
-		return fmt.Errorf("error setting pending mint transactions: %w", err)
-	}
 
-	k.Logger(ctx).Warn("constructing mint tx", "nonce", oracleData.RequestedEthNonce)
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,
