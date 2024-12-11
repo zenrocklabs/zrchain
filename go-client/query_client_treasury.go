@@ -227,3 +227,31 @@ func (t *TreasuryQueryClient) ZrSignKeys(ctx context.Context, page *PageRequest,
 
 	return res, nil
 }
+
+// GetZenbtcWallets retrieves Zenbtc wallets for a specific address and wallet type.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - page: Pagination parameters
+//   - mintChainId: The chain ID to filter wallets
+//   - chainType: The type of wallet to filter
+//   - recipientAddr: The recipient address to filter wallets
+//   - returnAddr: The return address to filter wallets
+//
+// Returns:
+//   - *types.QueryZenbtcWalletsResponse: Contains the Zenbtc wallets
+//   - error: An error if the query fails
+func (t *TreasuryQueryClient) GetZenbtcWallets(ctx context.Context, page *PageRequest, recipientAddr, returnAddr string, mintChainId uint64, chainType types.WalletType) (*types.QueryZenbtcWalletsResponse, error) {
+	res, err := t.client.ZenbtcWallets(ctx, &types.QueryZenbtcWalletsRequest{
+		RecipientAddr: recipientAddr,
+		ChainType:     chainType,
+		ReturnAddr:    returnAddr,
+		MintChainId:   mintChainId,
+		Pagination:    page,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
