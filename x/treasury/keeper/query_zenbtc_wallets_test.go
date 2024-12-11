@@ -213,6 +213,66 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 			},
 		},
 		{
+			name: "PASS: two filters applied",
+			args: args{
+				keys: []types.Key{
+					{
+						Id:            2,
+						WorkspaceAddr: "testWorkspace",
+						KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+						Type:          types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+						PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
+						ZenbtcMetadata: &types.ZenBTCMetadata{
+							RecipientAddr: "anotherETHAddress",
+							ChainType:     types.WalletType_WALLET_TYPE_EVM,
+							ChainId:       uint64(17000),
+							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
+						},
+					},
+					defaultECDSAKeyWithZenBTCMetadata,
+				},
+				req: &types.QueryZenbtcWalletsRequest{
+					RecipientAddr: "0x9D450478FDB879C2900Ad54A0A407B0607b20478",
+					ChainType:     types.WalletType_WALLET_TYPE_EVM,
+				},
+			},
+			want: &types.QueryZenbtcWalletsResponse{
+				ZenbtcWallets: []*types.KeyAndWalletResponse{
+					{
+						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
+						Wallets: []*types.WalletResponse{
+							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
+						},
+					},
+				},
+				Pagination: &query.PageResponse{
+					NextKey: nil,
+					Total:   1,
+				},
+			},
+		},
+		{
+			name: "PASS: key has no zenbtc metadata",
+			args: args{
+				keys: []types.Key{
+					{
+						Id:            1,
+						WorkspaceAddr: "testWorkspace",
+						KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+						Type:          types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+						PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
+					},
+				},
+				req: &types.QueryZenbtcWalletsRequest{},
+			},
+			want: &types.QueryZenbtcWalletsResponse{
+				Pagination: &query.PageResponse{
+					NextKey: nil,
+					Total:   0,
+				},
+			},
+		},
+		{
 			name: "FAIL: request is nil",
 			args: args{
 				keys: []types.Key{defaultECDSAKey},
@@ -338,7 +398,41 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 				},
 			},
 		},
-		// Add more test cases as needed
+		{
+			name: "FAIL: invalid chain type",
+			args: args{
+				keys: []types.Key{defaultECDSAKeyWithZenBTCMetadata},
+				req: &types.QueryZenbtcWalletsRequest{
+					ChainType: 10,
+				},
+			},
+			want: &types.QueryZenbtcWalletsResponse{
+				ZenbtcWallets: nil,
+				Pagination: &query.PageResponse{
+					NextKey: nil,
+					Total:   0,
+				},
+			},
+		},
+		{
+			name: "FAIL: multiple filters applied with no matches",
+			args: args{
+				keys: []types.Key{
+					defaultECDSAKeyWithZenBTCMetadata,
+				},
+				req: &types.QueryZenbtcWalletsRequest{
+					RecipientAddr: "nonexistentRecipient",
+					ChainType:     types.WalletType_WALLET_TYPE_EVM,
+				},
+			},
+			want: &types.QueryZenbtcWalletsResponse{
+				ZenbtcWallets: nil,
+				Pagination: &query.PageResponse{
+					NextKey: nil,
+					Total:   0,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
