@@ -96,12 +96,12 @@ type EthOracleConfig struct {
 }
 
 type ContractAddrs struct {
-	ServiceManager     string             `yaml:"service_manager"`
-	PriceFeed          string             `yaml:"price_feed"`
-	RedemptionTrackers RedemptionTrackers `yaml:"redemption_trackers"`
+	ServiceManager string `yaml:"service_manager"`
+	PriceFeed      string `yaml:"price_feed"`
+	ZenBTC         ZenBTC `yaml:"zen_btc"`
 }
 
-type RedemptionTrackers struct {
+type ZenBTC struct {
 	EthMainnet string `yaml:"eth_mainnet"`
 	EthHolesky string `yaml:"eth_holesky"`
 }

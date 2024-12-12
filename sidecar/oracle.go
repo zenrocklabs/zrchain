@@ -41,7 +41,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	redemptionTrackerHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.RedemptionTrackers.EthHolesky), o.EthClient)
+	zenBTCContractHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.EthHolesky), o.EthClient)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -52,7 +52,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, redemptionTrackerHolesky, priceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCContractHolesky, priceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 		}
@@ -61,7 +61,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
-	redemptionTrackerHolesky *zenbtc.ZenBTC,
+	zenBTCContractHolesky *zenbtc.ZenBTC,
 	priceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
 ) error {
@@ -79,7 +79,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	redemptionsEthereum, err := o.getRedemptionTrackerState(redemptionTrackerHolesky, targetBlockNumber)
+	redemptionsEthereum, err := o.getRedemptionTrackerState(zenBTCContractHolesky, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}

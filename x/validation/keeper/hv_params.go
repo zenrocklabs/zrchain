@@ -11,7 +11,7 @@ import (
 var (
 	DefaultAVSRewardsRate, _                = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                 int64  = 1                                // seconds
-	DefaultZenBTCEthContractAddr            = "0x0832c25DcDD7E353749F50136a191377D9bA562e"
+	DefaultZenBTCEthContractAddr            = "0xEe6dd71ccf66E3F920a4D49a57020e0F89659407"
 	DefaultZenBTCDepositKeyringAddr         = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCWithdrawerKeyID     uint64 = 1
 	DefaultZenBTCMinterKeyID         uint64 = 2

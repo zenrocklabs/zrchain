@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
-	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
@@ -22,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -31,6 +29,7 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	bindings "github.com/zenrocklabs/zenbtc/bindings"
 )
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
@@ -453,15 +452,17 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 }
 
 func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
-	const wrapFunctionABI = `[{"name":"wrap","type":"function","inputs":[{"type":"address","name":"account"},{"type":"uint256","name":"value"},{"type":"uint256","name":"fee"}],"outputs":[]}]`
-
-	parsedABI, err := abi.JSON(strings.NewReader(wrapFunctionABI))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse ABI: %v", err)
+	if !amount.IsUint64() {
+		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
-	feeAmount := new(big.Int).SetUint64(fee)
 
-	data, err := parsedABI.Pack("wrap", recipientAddr, amount, feeAmount)
+	parsed, err := bindings.ZenBTCMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	// Pack using the contract binding's ABI for the wrap function
+	data, err := parsed.Pack("wrap", recipientAddr, amount.Uint64(), fee)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode wrap call data: %v", err)
 	}
@@ -469,7 +470,6 @@ func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 }
 
 func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
-
 	keyID := k.GetZenBTCMinterKeyID(ctx)
 
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
