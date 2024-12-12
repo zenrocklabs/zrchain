@@ -20,7 +20,7 @@ var (
 	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 	DefaultStakeableAssets                  = []*types.AssetData{
 		{Asset: types.Asset_ROCK, Precision: 6},
-		{Asset: types.Asset_zenBTC, Precision: 18},
+		{Asset: types.Asset_zenBTC, Precision: 8},
 		{Asset: types.Asset_stETH, Precision: 18},
 	}
 )
