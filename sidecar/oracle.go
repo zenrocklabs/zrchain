@@ -111,18 +111,18 @@ func (o *Oracle) fetchAndProcessState(
 	// 	return fmt.Errorf("failed to get solana fee: %w", err)
 	// }
 
-	// mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to fetch latest block: %w", err)
-	// }
-	// targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to fetch latest block: %w", err)
+	}
+	targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
 
-	BTCUSDPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumber)
+	BTCUSDPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
 	if err != nil {
 		return fmt.Errorf("failed to fetch BTC price: %w", err)
 	}
 
-	// ETHUSDPrice, err := o.fetchPrice(priceFeed, targetBlockNumberMainnet)
+	// ETHUSDPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
 	// if err != nil {
 	// 	return fmt.Errorf("failed to fetch ETH price: %w", err)
 	// }
