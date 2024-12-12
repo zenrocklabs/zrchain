@@ -45,14 +45,14 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	tempEthClient, priceFeed := o.initPriceFeed()
+	tempEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCContractHolesky, priceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCContractHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 		}
@@ -62,7 +62,8 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
 	zenBTCContractHolesky *zenbtc.ZenBTC,
-	priceFeed *aggregatorv3.AggregatorV3Interface,
+	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
+	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
 ) error {
 	ctx := context.Background()
@@ -116,7 +117,12 @@ func (o *Oracle) fetchAndProcessState(
 	// }
 	// targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
 
-	// ETHUSDPrice, err := o.fetchEthPrice(priceFeed, targetBlockNumberMainnet)
+	BTCUSDPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumber)
+	if err != nil {
+		return fmt.Errorf("failed to fetch BTC price: %w", err)
+	}
+
+	// ETHUSDPrice, err := o.fetchPrice(priceFeed, targetBlockNumberMainnet)
 	// if err != nil {
 	// 	return fmt.Errorf("failed to fetch ETH price: %w", err)
 	// }
@@ -130,10 +136,10 @@ func (o *Oracle) fetchAndProcessState(
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		RedemptionsEthereum:        redemptionsEthereum,
-		RedemptionsSolana:          nil,    // TODO: update me
-		ROCKUSDPrice:               0,      // TODO: add ROCKUSDPrice after TGE
-		BTCUSDPrice:                0,      // TODO: update me
-		ETHUSDPrice:                4000.0, // TODO: if we need ETH price let's uncomment above block
+		RedemptionsSolana:          nil,         // TODO: update me
+		ROCKUSDPrice:               0,           // TODO: add ROCKUSDPrice after TGE
+		BTCUSDPrice:                BTCUSDPrice, // TODO: update me
+		ETHUSDPrice:                4000.0,      // TODO: if we need ETH price let's uncomment above block
 	}
 
 	return nil
