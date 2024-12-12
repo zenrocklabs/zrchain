@@ -91,6 +91,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
 		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
+		BTCUSDPrice:                oracleData.BTCUSDPrice,
 		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthereumRedemptionsHash:    ethereumRedemptionsHash[:],
@@ -596,7 +597,6 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 
 func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
 	if len(oracleData.EthereumRedemptions) == 0 {
-		k.Logger(ctx).Debug("no redemptions to store")
 		return
 	}
 

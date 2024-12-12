@@ -84,6 +84,7 @@ func (o *Oracle) fetchAndProcessState(
 	if err != nil {
 		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}
+	// log.Printf("redemptionsEthereum: %+v\n", redemptionsEthereum)
 
 	// TODO: get redemptions on Solana + get BTC price
 

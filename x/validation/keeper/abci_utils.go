@@ -82,9 +82,6 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 	}
 
 	return &OracleData{
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
 		EigenDelegationsMap:        delegations,
 		ValidatorDelegations:       validatorDelegations,
 		EthBlockHeight:             resp.EthBlockHeight,
@@ -92,6 +89,11 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		EthBaseFee:                 resp.EthBaseFee,
 		EthTipCap:                  resp.EthTipCap,
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
+		EthereumRedemptions:        resp.RedemptionsEthereum,
+		SolanaRedemptions:          resp.RedemptionsSolana,
+		ROCKUSDPrice:               ROCKUSDPrice,
+		BTCUSDPrice:                BTCUSDPrice,
+		ETHUSDPrice:                ETHUSDPrice,
 		ConsensusData:              abci.ExtendedCommitInfo{},
 	}, nil
 }

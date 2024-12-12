@@ -294,11 +294,15 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		avsPower := math.LegacyZeroDec()
 
 		for _, asset := range stakeableAssets {
-			if asset.Asset == types.Asset_ROCK {
+			switch asset.Asset {
+			case types.Asset_zenBTC:
+				continue
+			case types.Asset_ROCK:
 				nativePower = asset.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
-			} else {
-				avsPower = avsPower.Add(asset.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64()))
+			case types.Asset_stETH:
+				avsPower = asset.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
 			}
+			// TODO: use zenBTC stake instead of WETH/stETH
 		}
 
 		newPower := nativePower.Add(avsPower).TruncateInt64()
