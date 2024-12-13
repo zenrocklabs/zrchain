@@ -35,7 +35,7 @@ enum SignRequestStatus {
 message SignRequest {
   uint64 id = 1;
   string creator = 2;
-  repeated uint64 key_ids = 3;
+  uint64 key_id = 3; // Deprecated
   KeyType key_type = 4;
   repeated bytes data_for_signing = 5;
   SignRequestStatus status = 6;
@@ -46,6 +46,7 @@ message SignRequest {
   uint64 parent_req_id = 11;
   repeated uint64 child_req_ids = 12;
   bytes cache_id = 13;
+  repeated uint64 key_ids = 14;
 }
 
 // format of a signed data with an id value used to sort the signed data

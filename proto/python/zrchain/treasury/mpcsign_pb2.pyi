@@ -23,10 +23,10 @@ SIGN_REQUEST_STATUS_FULFILLED: SignRequestStatus
 SIGN_REQUEST_STATUS_REJECTED: SignRequestStatus
 
 class SignRequest(_message.Message):
-    __slots__ = ("id", "creator", "key_ids", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id")
+    __slots__ = ("id", "creator", "key_id", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "key_ids")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
-    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
     KEY_TYPE_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -37,9 +37,10 @@ class SignRequest(_message.Message):
     PARENT_REQ_ID_FIELD_NUMBER: _ClassVar[int]
     CHILD_REQ_IDS_FIELD_NUMBER: _ClassVar[int]
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
-    key_ids: _containers.RepeatedScalarFieldContainer[int]
+    key_id: int
     key_type: _key_pb2.KeyType
     data_for_signing: _containers.RepeatedScalarFieldContainer[bytes]
     status: SignRequestStatus
@@ -50,7 +51,8 @@ class SignRequest(_message.Message):
     parent_req_id: int
     child_req_ids: _containers.RepeatedScalarFieldContainer[int]
     cache_id: bytes
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ...) -> None: ...
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., key_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class SignedDataWithID(_message.Message):
     __slots__ = ("sign_request_id", "signed_data")
