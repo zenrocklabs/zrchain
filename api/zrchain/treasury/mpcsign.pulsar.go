@@ -2098,52 +2098,6 @@ func (x *fastReflection_SignedDataWithID) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var _ protoreflect.List = (*_SignTransactionRequest_8_list)(nil)
-
-type _SignTransactionRequest_8_list struct {
-	list *[]uint64
-}
-
-func (x *_SignTransactionRequest_8_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_SignTransactionRequest_8_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfUint64((*x.list)[i])
-}
-
-func (x *_SignTransactionRequest_8_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_SignTransactionRequest_8_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_SignTransactionRequest_8_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message SignTransactionRequest at list field KeyIds as it is not of Message kind"))
-}
-
-func (x *_SignTransactionRequest_8_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_SignTransactionRequest_8_list) NewElement() protoreflect.Value {
-	v := uint64(0)
-	return protoreflect.ValueOfUint64(v)
-}
-
-func (x *_SignTransactionRequest_8_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
 	md_SignTransactionRequest                      protoreflect.MessageDescriptor
 	fd_SignTransactionRequest_id                   protoreflect.FieldDescriptor
@@ -2153,7 +2107,6 @@ var (
 	fd_SignTransactionRequest_unsigned_transaction protoreflect.FieldDescriptor
 	fd_SignTransactionRequest_sign_request_id      protoreflect.FieldDescriptor
 	fd_SignTransactionRequest_no_broadcast         protoreflect.FieldDescriptor
-	fd_SignTransactionRequest_key_ids              protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -2166,7 +2119,6 @@ func init() {
 	fd_SignTransactionRequest_unsigned_transaction = md_SignTransactionRequest.Fields().ByName("unsigned_transaction")
 	fd_SignTransactionRequest_sign_request_id = md_SignTransactionRequest.Fields().ByName("sign_request_id")
 	fd_SignTransactionRequest_no_broadcast = md_SignTransactionRequest.Fields().ByName("no_broadcast")
-	fd_SignTransactionRequest_key_ids = md_SignTransactionRequest.Fields().ByName("key_ids")
 }
 
 var _ protoreflect.Message = (*fastReflection_SignTransactionRequest)(nil)
@@ -2276,12 +2228,6 @@ func (x *fastReflection_SignTransactionRequest) Range(f func(protoreflect.FieldD
 			return
 		}
 	}
-	if len(x.KeyIds) != 0 {
-		value := protoreflect.ValueOfList(&_SignTransactionRequest_8_list{list: &x.KeyIds})
-		if !f(fd_SignTransactionRequest_key_ids, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -2311,8 +2257,6 @@ func (x *fastReflection_SignTransactionRequest) Has(fd protoreflect.FieldDescrip
 		return x.SignRequestId != uint64(0)
 	case "zrchain.treasury.SignTransactionRequest.no_broadcast":
 		return x.NoBroadcast != false
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		return len(x.KeyIds) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTransactionRequest"))
@@ -2343,8 +2287,6 @@ func (x *fastReflection_SignTransactionRequest) Clear(fd protoreflect.FieldDescr
 		x.SignRequestId = uint64(0)
 	case "zrchain.treasury.SignTransactionRequest.no_broadcast":
 		x.NoBroadcast = false
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		x.KeyIds = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTransactionRequest"))
@@ -2382,12 +2324,6 @@ func (x *fastReflection_SignTransactionRequest) Get(descriptor protoreflect.Fiel
 	case "zrchain.treasury.SignTransactionRequest.no_broadcast":
 		value := x.NoBroadcast
 		return protoreflect.ValueOfBool(value)
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		if len(x.KeyIds) == 0 {
-			return protoreflect.ValueOfList(&_SignTransactionRequest_8_list{})
-		}
-		listValue := &_SignTransactionRequest_8_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTransactionRequest"))
@@ -2422,10 +2358,6 @@ func (x *fastReflection_SignTransactionRequest) Set(fd protoreflect.FieldDescrip
 		x.SignRequestId = value.Uint()
 	case "zrchain.treasury.SignTransactionRequest.no_broadcast":
 		x.NoBroadcast = value.Bool()
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		lv := value.List()
-		clv := lv.(*_SignTransactionRequest_8_list)
-		x.KeyIds = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTransactionRequest"))
@@ -2446,12 +2378,6 @@ func (x *fastReflection_SignTransactionRequest) Set(fd protoreflect.FieldDescrip
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_SignTransactionRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		if x.KeyIds == nil {
-			x.KeyIds = []uint64{}
-		}
-		value := &_SignTransactionRequest_8_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.SignTransactionRequest.id":
 		panic(fmt.Errorf("field id of message zrchain.treasury.SignTransactionRequest is not mutable"))
 	case "zrchain.treasury.SignTransactionRequest.creator":
@@ -2493,9 +2419,6 @@ func (x *fastReflection_SignTransactionRequest) NewField(fd protoreflect.FieldDe
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.treasury.SignTransactionRequest.no_broadcast":
 		return protoreflect.ValueOfBool(false)
-	case "zrchain.treasury.SignTransactionRequest.key_ids":
-		list := []uint64{}
-		return protoreflect.ValueOfList(&_SignTransactionRequest_8_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTransactionRequest"))
@@ -2588,13 +2511,6 @@ func (x *fastReflection_SignTransactionRequest) ProtoMethods() *protoiface.Metho
 		if x.NoBroadcast {
 			n += 2
 		}
-		if len(x.KeyIds) > 0 {
-			l = 0
-			for _, e := range x.KeyIds {
-				l += runtime.Sov(uint64(e))
-			}
-			n += 1 + runtime.Sov(uint64(l)) + l
-		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -2623,26 +2539,6 @@ func (x *fastReflection_SignTransactionRequest) ProtoMethods() *protoiface.Metho
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
-		}
-		if len(x.KeyIds) > 0 {
-			var pksize2 int
-			for _, num := range x.KeyIds {
-				pksize2 += runtime.Sov(uint64(num))
-			}
-			i -= pksize2
-			j1 := i
-			for _, num := range x.KeyIds {
-				for num >= 1<<7 {
-					dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
-					num >>= 7
-					j1++
-				}
-				dAtA[j1] = uint8(num)
-				j1++
-			}
-			i = runtime.EncodeVarint(dAtA, i, uint64(pksize2))
-			i--
-			dAtA[i] = 0x42
 		}
 		if x.NoBroadcast {
 			i--
@@ -2899,82 +2795,6 @@ func (x *fastReflection_SignTransactionRequest) ProtoMethods() *protoiface.Metho
 					}
 				}
 				x.NoBroadcast = bool(v != 0)
-			case 8:
-				if wireType == 0 {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					x.KeyIds = append(x.KeyIds, v)
-				} else if wireType == 2 {
-					var packedLen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						packedLen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if packedLen < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					postIndex := iNdEx + packedLen
-					if postIndex < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					if postIndex > l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					var elementCount int
-					var count int
-					for _, integer := range dAtA[iNdEx:postIndex] {
-						if integer < 128 {
-							count++
-						}
-					}
-					elementCount = count
-					if elementCount != 0 && len(x.KeyIds) == 0 {
-						x.KeyIds = make([]uint64, 0, elementCount)
-					}
-					for iNdEx < postIndex {
-						var v uint64
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							v |= uint64(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						x.KeyIds = append(x.KeyIds, v)
-					}
-				} else {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
-				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -3199,52 +3019,6 @@ func (x *_SignReqResponse_12_list) IsValid() bool {
 	return x.list != nil
 }
 
-var _ protoreflect.List = (*_SignReqResponse_14_list)(nil)
-
-type _SignReqResponse_14_list struct {
-	list *[]uint64
-}
-
-func (x *_SignReqResponse_14_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_SignReqResponse_14_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfUint64((*x.list)[i])
-}
-
-func (x *_SignReqResponse_14_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_SignReqResponse_14_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_SignReqResponse_14_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message SignReqResponse at list field KeyIds as it is not of Message kind"))
-}
-
-func (x *_SignReqResponse_14_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_SignReqResponse_14_list) NewElement() protoreflect.Value {
-	v := uint64(0)
-	return protoreflect.ValueOfUint64(v)
-}
-
-func (x *_SignReqResponse_14_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
 	md_SignReqResponse                          protoreflect.MessageDescriptor
 	fd_SignReqResponse_id                       protoreflect.FieldDescriptor
@@ -3260,7 +3034,6 @@ var (
 	fd_SignReqResponse_parent_req_id            protoreflect.FieldDescriptor
 	fd_SignReqResponse_child_req_ids            protoreflect.FieldDescriptor
 	fd_SignReqResponse_cache_id                 protoreflect.FieldDescriptor
-	fd_SignReqResponse_key_ids                  protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -3279,7 +3052,6 @@ func init() {
 	fd_SignReqResponse_parent_req_id = md_SignReqResponse.Fields().ByName("parent_req_id")
 	fd_SignReqResponse_child_req_ids = md_SignReqResponse.Fields().ByName("child_req_ids")
 	fd_SignReqResponse_cache_id = md_SignReqResponse.Fields().ByName("cache_id")
-	fd_SignReqResponse_key_ids = md_SignReqResponse.Fields().ByName("key_ids")
 }
 
 var _ protoreflect.Message = (*fastReflection_SignReqResponse)(nil)
@@ -3425,12 +3197,6 @@ func (x *fastReflection_SignReqResponse) Range(f func(protoreflect.FieldDescript
 			return
 		}
 	}
-	if len(x.KeyIds) != 0 {
-		value := protoreflect.ValueOfList(&_SignReqResponse_14_list{list: &x.KeyIds})
-		if !f(fd_SignReqResponse_key_ids, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -3472,8 +3238,6 @@ func (x *fastReflection_SignReqResponse) Has(fd protoreflect.FieldDescriptor) bo
 		return len(x.ChildReqIds) != 0
 	case "zrchain.treasury.SignReqResponse.cache_id":
 		return len(x.CacheId) != 0
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		return len(x.KeyIds) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignReqResponse"))
@@ -3516,8 +3280,6 @@ func (x *fastReflection_SignReqResponse) Clear(fd protoreflect.FieldDescriptor) 
 		x.ChildReqIds = nil
 	case "zrchain.treasury.SignReqResponse.cache_id":
 		x.CacheId = nil
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		x.KeyIds = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignReqResponse"))
@@ -3585,12 +3347,6 @@ func (x *fastReflection_SignReqResponse) Get(descriptor protoreflect.FieldDescri
 	case "zrchain.treasury.SignReqResponse.cache_id":
 		value := x.CacheId
 		return protoreflect.ValueOfBytes(value)
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		if len(x.KeyIds) == 0 {
-			return protoreflect.ValueOfList(&_SignReqResponse_14_list{})
-		}
-		listValue := &_SignReqResponse_14_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignReqResponse"))
@@ -3645,10 +3401,6 @@ func (x *fastReflection_SignReqResponse) Set(fd protoreflect.FieldDescriptor, va
 		x.ChildReqIds = *clv.list
 	case "zrchain.treasury.SignReqResponse.cache_id":
 		x.CacheId = value.Bytes()
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		lv := value.List()
-		clv := lv.(*_SignReqResponse_14_list)
-		x.KeyIds = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignReqResponse"))
@@ -3697,12 +3449,6 @@ func (x *fastReflection_SignReqResponse) Mutable(fd protoreflect.FieldDescriptor
 			x.ChildReqIds = []uint64{}
 		}
 		value := &_SignReqResponse_12_list{list: &x.ChildReqIds}
-		return protoreflect.ValueOfList(value)
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		if x.KeyIds == nil {
-			x.KeyIds = []uint64{}
-		}
-		value := &_SignReqResponse_14_list{list: &x.KeyIds}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.SignReqResponse.id":
 		panic(fmt.Errorf("field id of message zrchain.treasury.SignReqResponse is not mutable"))
@@ -3764,9 +3510,6 @@ func (x *fastReflection_SignReqResponse) NewField(fd protoreflect.FieldDescripto
 		return protoreflect.ValueOfList(&_SignReqResponse_12_list{list: &list})
 	case "zrchain.treasury.SignReqResponse.cache_id":
 		return protoreflect.ValueOfBytes(nil)
-	case "zrchain.treasury.SignReqResponse.key_ids":
-		list := []uint64{}
-		return protoreflect.ValueOfList(&_SignReqResponse_14_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignReqResponse"))
@@ -3894,13 +3637,6 @@ func (x *fastReflection_SignReqResponse) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if len(x.KeyIds) > 0 {
-			l = 0
-			for _, e := range x.KeyIds {
-				l += runtime.Sov(uint64(e))
-			}
-			n += 1 + runtime.Sov(uint64(l)) + l
-		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -3930,14 +3666,21 @@ func (x *fastReflection_SignReqResponse) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.KeyIds) > 0 {
+		if len(x.CacheId) > 0 {
+			i -= len(x.CacheId)
+			copy(dAtA[i:], x.CacheId)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.CacheId)))
+			i--
+			dAtA[i] = 0x6a
+		}
+		if len(x.ChildReqIds) > 0 {
 			var pksize2 int
-			for _, num := range x.KeyIds {
+			for _, num := range x.ChildReqIds {
 				pksize2 += runtime.Sov(uint64(num))
 			}
 			i -= pksize2
 			j1 := i
-			for _, num := range x.KeyIds {
+			for _, num := range x.ChildReqIds {
 				for num >= 1<<7 {
 					dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
 					num >>= 7
@@ -3947,33 +3690,6 @@ func (x *fastReflection_SignReqResponse) ProtoMethods() *protoiface.Methods {
 				j1++
 			}
 			i = runtime.EncodeVarint(dAtA, i, uint64(pksize2))
-			i--
-			dAtA[i] = 0x72
-		}
-		if len(x.CacheId) > 0 {
-			i -= len(x.CacheId)
-			copy(dAtA[i:], x.CacheId)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.CacheId)))
-			i--
-			dAtA[i] = 0x6a
-		}
-		if len(x.ChildReqIds) > 0 {
-			var pksize4 int
-			for _, num := range x.ChildReqIds {
-				pksize4 += runtime.Sov(uint64(num))
-			}
-			i -= pksize4
-			j3 := i
-			for _, num := range x.ChildReqIds {
-				for num >= 1<<7 {
-					dAtA[j3] = uint8(uint64(num)&0x7f | 0x80)
-					num >>= 7
-					j3++
-				}
-				dAtA[j3] = uint8(num)
-				j3++
-			}
-			i = runtime.EncodeVarint(dAtA, i, uint64(pksize4))
 			i--
 			dAtA[i] = 0x62
 		}
@@ -4546,82 +4262,6 @@ func (x *fastReflection_SignReqResponse) ProtoMethods() *protoiface.Methods {
 					x.CacheId = []byte{}
 				}
 				iNdEx = postIndex
-			case 14:
-				if wireType == 0 {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					x.KeyIds = append(x.KeyIds, v)
-				} else if wireType == 2 {
-					var packedLen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						packedLen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if packedLen < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					postIndex := iNdEx + packedLen
-					if postIndex < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					if postIndex > l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					var elementCount int
-					var count int
-					for _, integer := range dAtA[iNdEx:postIndex] {
-						if integer < 128 {
-							count++
-						}
-					}
-					elementCount = count
-					if elementCount != 0 && len(x.KeyIds) == 0 {
-						x.KeyIds = make([]uint64, 0, elementCount)
-					}
-					for iNdEx < postIndex {
-						var v uint64
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							v |= uint64(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						x.KeyIds = append(x.KeyIds, v)
-					}
-				} else {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
-				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -4657,52 +4297,6 @@ func (x *fastReflection_SignReqResponse) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var _ protoreflect.List = (*_SignTxReqResponse_8_list)(nil)
-
-type _SignTxReqResponse_8_list struct {
-	list *[]uint64
-}
-
-func (x *_SignTxReqResponse_8_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_SignTxReqResponse_8_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfUint64((*x.list)[i])
-}
-
-func (x *_SignTxReqResponse_8_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_SignTxReqResponse_8_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_SignTxReqResponse_8_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message SignTxReqResponse at list field KeyIds as it is not of Message kind"))
-}
-
-func (x *_SignTxReqResponse_8_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_SignTxReqResponse_8_list) NewElement() protoreflect.Value {
-	v := uint64(0)
-	return protoreflect.ValueOfUint64(v)
-}
-
-func (x *_SignTxReqResponse_8_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
 	md_SignTxReqResponse                      protoreflect.MessageDescriptor
 	fd_SignTxReqResponse_id                   protoreflect.FieldDescriptor
@@ -4712,7 +4306,6 @@ var (
 	fd_SignTxReqResponse_unsigned_transaction protoreflect.FieldDescriptor
 	fd_SignTxReqResponse_sign_request_id      protoreflect.FieldDescriptor
 	fd_SignTxReqResponse_no_broadcast         protoreflect.FieldDescriptor
-	fd_SignTxReqResponse_key_ids              protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -4725,7 +4318,6 @@ func init() {
 	fd_SignTxReqResponse_unsigned_transaction = md_SignTxReqResponse.Fields().ByName("unsigned_transaction")
 	fd_SignTxReqResponse_sign_request_id = md_SignTxReqResponse.Fields().ByName("sign_request_id")
 	fd_SignTxReqResponse_no_broadcast = md_SignTxReqResponse.Fields().ByName("no_broadcast")
-	fd_SignTxReqResponse_key_ids = md_SignTxReqResponse.Fields().ByName("key_ids")
 }
 
 var _ protoreflect.Message = (*fastReflection_SignTxReqResponse)(nil)
@@ -4835,12 +4427,6 @@ func (x *fastReflection_SignTxReqResponse) Range(f func(protoreflect.FieldDescri
 			return
 		}
 	}
-	if len(x.KeyIds) != 0 {
-		value := protoreflect.ValueOfList(&_SignTxReqResponse_8_list{list: &x.KeyIds})
-		if !f(fd_SignTxReqResponse_key_ids, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -4870,8 +4456,6 @@ func (x *fastReflection_SignTxReqResponse) Has(fd protoreflect.FieldDescriptor) 
 		return x.SignRequestId != uint64(0)
 	case "zrchain.treasury.SignTxReqResponse.no_broadcast":
 		return x.NoBroadcast != false
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		return len(x.KeyIds) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTxReqResponse"))
@@ -4902,8 +4486,6 @@ func (x *fastReflection_SignTxReqResponse) Clear(fd protoreflect.FieldDescriptor
 		x.SignRequestId = uint64(0)
 	case "zrchain.treasury.SignTxReqResponse.no_broadcast":
 		x.NoBroadcast = false
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		x.KeyIds = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTxReqResponse"))
@@ -4941,12 +4523,6 @@ func (x *fastReflection_SignTxReqResponse) Get(descriptor protoreflect.FieldDesc
 	case "zrchain.treasury.SignTxReqResponse.no_broadcast":
 		value := x.NoBroadcast
 		return protoreflect.ValueOfBool(value)
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		if len(x.KeyIds) == 0 {
-			return protoreflect.ValueOfList(&_SignTxReqResponse_8_list{})
-		}
-		listValue := &_SignTxReqResponse_8_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTxReqResponse"))
@@ -4981,10 +4557,6 @@ func (x *fastReflection_SignTxReqResponse) Set(fd protoreflect.FieldDescriptor, 
 		x.SignRequestId = value.Uint()
 	case "zrchain.treasury.SignTxReqResponse.no_broadcast":
 		x.NoBroadcast = value.Bool()
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		lv := value.List()
-		clv := lv.(*_SignTxReqResponse_8_list)
-		x.KeyIds = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTxReqResponse"))
@@ -5005,12 +4577,6 @@ func (x *fastReflection_SignTxReqResponse) Set(fd protoreflect.FieldDescriptor, 
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_SignTxReqResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		if x.KeyIds == nil {
-			x.KeyIds = []uint64{}
-		}
-		value := &_SignTxReqResponse_8_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.SignTxReqResponse.id":
 		panic(fmt.Errorf("field id of message zrchain.treasury.SignTxReqResponse is not mutable"))
 	case "zrchain.treasury.SignTxReqResponse.creator":
@@ -5052,9 +4618,6 @@ func (x *fastReflection_SignTxReqResponse) NewField(fd protoreflect.FieldDescrip
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.treasury.SignTxReqResponse.no_broadcast":
 		return protoreflect.ValueOfBool(false)
-	case "zrchain.treasury.SignTxReqResponse.key_ids":
-		list := []uint64{}
-		return protoreflect.ValueOfList(&_SignTxReqResponse_8_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.SignTxReqResponse"))
@@ -5148,13 +4711,6 @@ func (x *fastReflection_SignTxReqResponse) ProtoMethods() *protoiface.Methods {
 		if x.NoBroadcast {
 			n += 2
 		}
-		if len(x.KeyIds) > 0 {
-			l = 0
-			for _, e := range x.KeyIds {
-				l += runtime.Sov(uint64(e))
-			}
-			n += 1 + runtime.Sov(uint64(l)) + l
-		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -5183,26 +4739,6 @@ func (x *fastReflection_SignTxReqResponse) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
-		}
-		if len(x.KeyIds) > 0 {
-			var pksize2 int
-			for _, num := range x.KeyIds {
-				pksize2 += runtime.Sov(uint64(num))
-			}
-			i -= pksize2
-			j1 := i
-			for _, num := range x.KeyIds {
-				for num >= 1<<7 {
-					dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
-					num >>= 7
-					j1++
-				}
-				dAtA[j1] = uint8(num)
-				j1++
-			}
-			i = runtime.EncodeVarint(dAtA, i, uint64(pksize2))
-			i--
-			dAtA[i] = 0x42
 		}
 		if x.NoBroadcast {
 			i--
@@ -5474,82 +5010,6 @@ func (x *fastReflection_SignTxReqResponse) ProtoMethods() *protoiface.Methods {
 					}
 				}
 				x.NoBroadcast = bool(v != 0)
-			case 8:
-				if wireType == 0 {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					x.KeyIds = append(x.KeyIds, v)
-				} else if wireType == 2 {
-					var packedLen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						packedLen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if packedLen < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					postIndex := iNdEx + packedLen
-					if postIndex < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					if postIndex > l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					var elementCount int
-					var count int
-					for _, integer := range dAtA[iNdEx:postIndex] {
-						if integer < 128 {
-							count++
-						}
-					}
-					elementCount = count
-					if elementCount != 0 && len(x.KeyIds) == 0 {
-						x.KeyIds = make([]uint64, 0, elementCount)
-					}
-					for iNdEx < postIndex {
-						var v uint64
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							v |= uint64(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						x.KeyIds = append(x.KeyIds, v)
-					}
-				} else {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
-				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -5677,52 +5137,6 @@ func (x *_ICATransactionRequest_8_list) IsValid() bool {
 	return x.list != nil
 }
 
-var _ protoreflect.List = (*_ICATransactionRequest_10_list)(nil)
-
-type _ICATransactionRequest_10_list struct {
-	list *[]uint64
-}
-
-func (x *_ICATransactionRequest_10_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_ICATransactionRequest_10_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfUint64((*x.list)[i])
-}
-
-func (x *_ICATransactionRequest_10_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_ICATransactionRequest_10_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_ICATransactionRequest_10_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message ICATransactionRequest at list field KeyIds as it is not of Message kind"))
-}
-
-func (x *_ICATransactionRequest_10_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_ICATransactionRequest_10_list) NewElement() protoreflect.Value {
-	v := uint64(0)
-	return protoreflect.ValueOfUint64(v)
-}
-
-func (x *_ICATransactionRequest_10_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
 	md_ICATransactionRequest                          protoreflect.MessageDescriptor
 	fd_ICATransactionRequest_id                       protoreflect.FieldDescriptor
@@ -5734,7 +5148,6 @@ var (
 	fd_ICATransactionRequest_signed_data              protoreflect.FieldDescriptor
 	fd_ICATransactionRequest_keyring_party_signatures protoreflect.FieldDescriptor
 	fd_ICATransactionRequest_reject_reason            protoreflect.FieldDescriptor
-	fd_ICATransactionRequest_key_ids                  protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -5749,7 +5162,6 @@ func init() {
 	fd_ICATransactionRequest_signed_data = md_ICATransactionRequest.Fields().ByName("signed_data")
 	fd_ICATransactionRequest_keyring_party_signatures = md_ICATransactionRequest.Fields().ByName("keyring_party_signatures")
 	fd_ICATransactionRequest_reject_reason = md_ICATransactionRequest.Fields().ByName("reject_reason")
-	fd_ICATransactionRequest_key_ids = md_ICATransactionRequest.Fields().ByName("key_ids")
 }
 
 var _ protoreflect.Message = (*fastReflection_ICATransactionRequest)(nil)
@@ -5871,12 +5283,6 @@ func (x *fastReflection_ICATransactionRequest) Range(f func(protoreflect.FieldDe
 			return
 		}
 	}
-	if len(x.KeyIds) != 0 {
-		value := protoreflect.ValueOfList(&_ICATransactionRequest_10_list{list: &x.KeyIds})
-		if !f(fd_ICATransactionRequest_key_ids, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -5910,8 +5316,6 @@ func (x *fastReflection_ICATransactionRequest) Has(fd protoreflect.FieldDescript
 		return len(x.KeyringPartySignatures) != 0
 	case "zrchain.treasury.ICATransactionRequest.reject_reason":
 		return x.RejectReason != ""
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		return len(x.KeyIds) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.ICATransactionRequest"))
@@ -5946,8 +5350,6 @@ func (x *fastReflection_ICATransactionRequest) Clear(fd protoreflect.FieldDescri
 		x.KeyringPartySignatures = nil
 	case "zrchain.treasury.ICATransactionRequest.reject_reason":
 		x.RejectReason = ""
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		x.KeyIds = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.ICATransactionRequest"))
@@ -5997,12 +5399,6 @@ func (x *fastReflection_ICATransactionRequest) Get(descriptor protoreflect.Field
 	case "zrchain.treasury.ICATransactionRequest.reject_reason":
 		value := x.RejectReason
 		return protoreflect.ValueOfString(value)
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		if len(x.KeyIds) == 0 {
-			return protoreflect.ValueOfList(&_ICATransactionRequest_10_list{})
-		}
-		listValue := &_ICATransactionRequest_10_list{list: &x.KeyIds}
-		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.ICATransactionRequest"))
@@ -6045,10 +5441,6 @@ func (x *fastReflection_ICATransactionRequest) Set(fd protoreflect.FieldDescript
 		x.KeyringPartySignatures = *clv.list
 	case "zrchain.treasury.ICATransactionRequest.reject_reason":
 		x.RejectReason = value.Interface().(string)
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		lv := value.List()
-		clv := lv.(*_ICATransactionRequest_10_list)
-		x.KeyIds = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.ICATransactionRequest"))
@@ -6080,12 +5472,6 @@ func (x *fastReflection_ICATransactionRequest) Mutable(fd protoreflect.FieldDesc
 			x.KeyringPartySignatures = [][]byte{}
 		}
 		value := &_ICATransactionRequest_8_list{list: &x.KeyringPartySignatures}
-		return protoreflect.ValueOfList(value)
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		if x.KeyIds == nil {
-			x.KeyIds = []uint64{}
-		}
-		value := &_ICATransactionRequest_10_list{list: &x.KeyIds}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.ICATransactionRequest.id":
 		panic(fmt.Errorf("field id of message zrchain.treasury.ICATransactionRequest is not mutable"))
@@ -6134,9 +5520,6 @@ func (x *fastReflection_ICATransactionRequest) NewField(fd protoreflect.FieldDes
 		return protoreflect.ValueOfList(&_ICATransactionRequest_8_list{list: &list})
 	case "zrchain.treasury.ICATransactionRequest.reject_reason":
 		return protoreflect.ValueOfString("")
-	case "zrchain.treasury.ICATransactionRequest.key_ids":
-		list := []uint64{}
-		return protoreflect.ValueOfList(&_ICATransactionRequest_10_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.ICATransactionRequest"))
@@ -6242,13 +5625,6 @@ func (x *fastReflection_ICATransactionRequest) ProtoMethods() *protoiface.Method
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if len(x.KeyIds) > 0 {
-			l = 0
-			for _, e := range x.KeyIds {
-				l += runtime.Sov(uint64(e))
-			}
-			n += 1 + runtime.Sov(uint64(l)) + l
-		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -6277,26 +5653,6 @@ func (x *fastReflection_ICATransactionRequest) ProtoMethods() *protoiface.Method
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
-		}
-		if len(x.KeyIds) > 0 {
-			var pksize2 int
-			for _, num := range x.KeyIds {
-				pksize2 += runtime.Sov(uint64(num))
-			}
-			i -= pksize2
-			j1 := i
-			for _, num := range x.KeyIds {
-				for num >= 1<<7 {
-					dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
-					num >>= 7
-					j1++
-				}
-				dAtA[j1] = uint8(num)
-				j1++
-			}
-			i = runtime.EncodeVarint(dAtA, i, uint64(pksize2))
-			i--
-			dAtA[i] = 0x52
 		}
 		if len(x.RejectReason) > 0 {
 			i -= len(x.RejectReason)
@@ -6644,82 +6000,6 @@ func (x *fastReflection_ICATransactionRequest) ProtoMethods() *protoiface.Method
 				}
 				x.RejectReason = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 10:
-				if wireType == 0 {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					x.KeyIds = append(x.KeyIds, v)
-				} else if wireType == 2 {
-					var packedLen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						packedLen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if packedLen < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					postIndex := iNdEx + packedLen
-					if postIndex < 0 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-					}
-					if postIndex > l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					var elementCount int
-					var count int
-					for _, integer := range dAtA[iNdEx:postIndex] {
-						if integer < 128 {
-							count++
-						}
-					}
-					elementCount = count
-					if elementCount != 0 && len(x.KeyIds) == 0 {
-						x.KeyIds = make([]uint64, 0, elementCount)
-					}
-					for iNdEx < postIndex {
-						var v uint64
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							v |= uint64(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						x.KeyIds = append(x.KeyIds, v)
-					}
-				} else {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
-				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -7025,12 +6305,11 @@ type SignTransactionRequest struct {
 
 	Id                  uint64     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Creator             string     `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyId               uint64     `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"` // Deprecated
+	KeyId               uint64     `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	WalletType          WalletType `protobuf:"varint,4,opt,name=wallet_type,json=walletType,proto3,enum=zrchain.treasury.WalletType" json:"wallet_type,omitempty"`
 	UnsignedTransaction []byte     `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
 	SignRequestId       uint64     `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
 	NoBroadcast         bool       `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
-	KeyIds              []uint64   `protobuf:"varint,8,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (x *SignTransactionRequest) Reset() {
@@ -7102,13 +6381,6 @@ func (x *SignTransactionRequest) GetNoBroadcast() bool {
 	return false
 }
 
-func (x *SignTransactionRequest) GetKeyIds() []uint64 {
-	if x != nil {
-		return x.KeyIds
-	}
-	return nil
-}
-
 // format of a sign request response
 type SignReqResponse struct {
 	state         protoimpl.MessageState
@@ -7117,7 +6389,7 @@ type SignReqResponse struct {
 
 	Id                     uint64              `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Creator                string              `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyId                  uint64              `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"` // Deprecated
+	KeyId                  uint64              `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	KeyType                string              `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
 	DataForSigning         [][]byte            `protobuf:"bytes,5,rep,name=data_for_signing,json=dataForSigning,proto3" json:"data_for_signing,omitempty"`
 	Status                 string              `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
@@ -7128,7 +6400,6 @@ type SignReqResponse struct {
 	ParentReqId            uint64              `protobuf:"varint,11,opt,name=parent_req_id,json=parentReqId,proto3" json:"parent_req_id,omitempty"`
 	ChildReqIds            []uint64            `protobuf:"varint,12,rep,packed,name=child_req_ids,json=childReqIds,proto3" json:"child_req_ids,omitempty"`
 	CacheId                []byte              `protobuf:"bytes,13,opt,name=cache_id,json=cacheId,proto3" json:"cache_id,omitempty"`
-	KeyIds                 []uint64            `protobuf:"varint,14,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (x *SignReqResponse) Reset() {
@@ -7242,27 +6513,19 @@ func (x *SignReqResponse) GetCacheId() []byte {
 	return nil
 }
 
-func (x *SignReqResponse) GetKeyIds() []uint64 {
-	if x != nil {
-		return x.KeyIds
-	}
-	return nil
-}
-
 // format of a sign transaction request response
 type SignTxReqResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                  uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Creator             string   `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyId               uint64   `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"` // Deprecated
-	WalletType          string   `protobuf:"bytes,4,opt,name=wallet_type,json=walletType,proto3" json:"wallet_type,omitempty"`
-	UnsignedTransaction []byte   `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
-	SignRequestId       uint64   `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
-	NoBroadcast         bool     `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
-	KeyIds              []uint64 `protobuf:"varint,8,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
+	Id                  uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator             string `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	KeyId               uint64 `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
+	WalletType          string `protobuf:"bytes,4,opt,name=wallet_type,json=walletType,proto3" json:"wallet_type,omitempty"`
+	UnsignedTransaction []byte `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
+	SignRequestId       uint64 `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
+	NoBroadcast         bool   `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
 }
 
 func (x *SignTxReqResponse) Reset() {
@@ -7334,13 +6597,6 @@ func (x *SignTxReqResponse) GetNoBroadcast() bool {
 	return false
 }
 
-func (x *SignTxReqResponse) GetKeyIds() []uint64 {
-	if x != nil {
-		return x.KeyIds
-	}
-	return nil
-}
-
 // format of a sign transaction request for an InterChain Account transaction
 type ICATransactionRequest struct {
 	state         protoimpl.MessageState
@@ -7349,7 +6605,7 @@ type ICATransactionRequest struct {
 
 	Id       uint64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Creator  string  `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyId    uint64  `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"` // Deprecated
+	KeyId    uint64  `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	KeyType  KeyType `protobuf:"varint,4,opt,name=key_type,json=keyType,proto3,enum=zrchain.treasury.KeyType" json:"key_type,omitempty"`
 	InputMsg []byte  `protobuf:"bytes,5,opt,name=input_msg,json=inputMsg,proto3" json:"input_msg,omitempty"`
 	// ibc.applications.interchain_accounts.v1.MsgSendTx input_msg = 5;
@@ -7357,7 +6613,6 @@ type ICATransactionRequest struct {
 	SignedData             [][]byte          `protobuf:"bytes,7,rep,name=signed_data,json=signedData,proto3" json:"signed_data,omitempty"`
 	KeyringPartySignatures [][]byte          `protobuf:"bytes,8,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
 	RejectReason           string            `protobuf:"bytes,9,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
-	KeyIds                 []uint64          `protobuf:"varint,10,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (x *ICATransactionRequest) Reset() {
@@ -7443,13 +6698,6 @@ func (x *ICATransactionRequest) GetRejectReason() string {
 	return ""
 }
 
-func (x *ICATransactionRequest) GetKeyIds() []uint64 {
-	if x != nil {
-		return x.KeyIds
-	}
-	return nil
-}
-
 var File_zrchain_treasury_mpcsign_proto protoreflect.FileDescriptor
 
 var file_zrchain_treasury_mpcsign_proto_rawDesc = []byte{
@@ -7503,7 +6751,7 @@ var file_zrchain_treasury_mpcsign_proto_rawDesc = []byte{
 	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0d, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x64,
 	0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x73, 0x69, 0x67, 0x6e, 0x65,
-	0x64, 0x44, 0x61, 0x74, 0x61, 0x22, 0xaf, 0x02, 0x0a, 0x16, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72,
+	0x64, 0x44, 0x61, 0x74, 0x61, 0x22, 0x96, 0x02, 0x0a, 0x16, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72,
 	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64,
 	0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28,
@@ -7520,106 +6768,99 @@ var file_zrchain_treasury_mpcsign_proto_rawDesc = []byte{
 	0x65, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0d, 0x73, 0x69,
 	0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x6e,
 	0x6f, 0x5f, 0x62, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x0b, 0x6e, 0x6f, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x12, 0x17,
-	0x0a, 0x07, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x04, 0x52,
-	0x06, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x73, 0x22, 0x81, 0x04, 0x0a, 0x0f, 0x53, 0x69, 0x67, 0x6e,
-	0x52, 0x65, 0x71, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63,
-	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72,
-	0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x15, 0x0a, 0x06, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x08,
-	0x6b, 0x65, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
-	0x6b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x28, 0x0a, 0x10, 0x64, 0x61, 0x74, 0x61, 0x5f,
-	0x66, 0x6f, 0x72, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x18, 0x05, 0x20, 0x03, 0x28,
-	0x0c, 0x52, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x46, 0x6f, 0x72, 0x53, 0x69, 0x67, 0x6e, 0x69, 0x6e,
-	0x67, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x43, 0x0a, 0x0b, 0x73, 0x69, 0x67,
-	0x6e, 0x65, 0x64, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72,
-	0x79, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x57, 0x69, 0x74, 0x68,
-	0x49, 0x44, 0x52, 0x0a, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x38,
-	0x0a, 0x18, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f,
-	0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0c,
-	0x52, 0x16, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69,
-	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6a, 0x65,
-	0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12, 0x30, 0x0a,
-	0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x14, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x41, 0x6e, 0x79, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12,
-	0x22, 0x0a, 0x0d, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x72, 0x65, 0x71, 0x5f, 0x69, 0x64,
-	0x18, 0x0b, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x52, 0x65,
-	0x71, 0x49, 0x64, 0x12, 0x22, 0x0a, 0x0d, 0x63, 0x68, 0x69, 0x6c, 0x64, 0x5f, 0x72, 0x65, 0x71,
-	0x5f, 0x69, 0x64, 0x73, 0x18, 0x0c, 0x20, 0x03, 0x28, 0x04, 0x52, 0x0b, 0x63, 0x68, 0x69, 0x6c,
-	0x64, 0x52, 0x65, 0x71, 0x49, 0x64, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x63, 0x61, 0x63, 0x68, 0x65,
-	0x5f, 0x69, 0x64, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x61, 0x63, 0x68, 0x65,
-	0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x0e, 0x20,
-	0x03, 0x28, 0x04, 0x52, 0x06, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x73, 0x22, 0x8c, 0x02, 0x0a, 0x11,
-	0x53, 0x69, 0x67, 0x6e, 0x54, 0x78, 0x52, 0x65, 0x71, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69,
-	0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x15, 0x0a, 0x06, 0x6b,
-	0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x6b, 0x65, 0x79,
-	0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x74, 0x79, 0x70,
-	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54,
-	0x79, 0x70, 0x65, 0x12, 0x31, 0x0a, 0x14, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f,
-	0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x0c, 0x52, 0x13, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x54, 0x72, 0x61, 0x6e, 0x73,
-	0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x26, 0x0a, 0x0f, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x72,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52,
-	0x0d, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x64, 0x12, 0x21,
-	0x0a, 0x0c, 0x6e, 0x6f, 0x5f, 0x62, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x18, 0x07,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x0b, 0x6e, 0x6f, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73,
-	0x74, 0x12, 0x17, 0x0a, 0x07, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x08, 0x20, 0x03,
-	0x28, 0x04, 0x52, 0x06, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x73, 0x22, 0x81, 0x03, 0x0a, 0x15, 0x49,
-	0x43, 0x41, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04,
-	0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x15,
-	0x0a, 0x06, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05,
-	0x6b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x34, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x74, 0x79, 0x70,
-	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x4b, 0x65, 0x79, 0x54, 0x79,
-	0x70, 0x65, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x69,
-	0x6e, 0x70, 0x75, 0x74, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08,
-	0x69, 0x6e, 0x70, 0x75, 0x74, 0x4d, 0x73, 0x67, 0x12, 0x3b, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x23, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x53, 0x69, 0x67, 0x6e,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f,
-	0x64, 0x61, 0x74, 0x61, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x0a, 0x73, 0x69, 0x67, 0x6e,
-	0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x38, 0x0a, 0x18, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e,
-	0x67, 0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x16, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e,
-	0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73,
-	0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f,
-	0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52,
-	0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12, 0x17, 0x0a, 0x07, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x73,
-	0x18, 0x0a, 0x20, 0x03, 0x28, 0x04, 0x52, 0x06, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x73, 0x2a, 0xbf,
-	0x01, 0x0a, 0x11, 0x53, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x12, 0x23, 0x0a, 0x1f, 0x53, 0x49, 0x47, 0x4e, 0x5f, 0x52, 0x45, 0x51,
-	0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50,
-	0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1f, 0x0a, 0x1b, 0x53, 0x49, 0x47,
-	0x4e, 0x5f, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53,
-	0x5f, 0x50, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x1f, 0x0a, 0x1b, 0x53, 0x49,
+	0x08, 0x52, 0x0b, 0x6e, 0x6f, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x22, 0xe8,
+	0x03, 0x0a, 0x0f, 0x53, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x15, 0x0a, 0x06,
+	0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x6b, 0x65,
+	0x79, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x28,
+	0x0a, 0x10, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x66, 0x6f, 0x72, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x69,
+	0x6e, 0x67, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x46, 0x6f,
+	0x72, 0x53, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x43, 0x0a, 0x0b, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18,
+	0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x44,
+	0x61, 0x74, 0x61, 0x57, 0x69, 0x74, 0x68, 0x49, 0x44, 0x52, 0x0a, 0x73, 0x69, 0x67, 0x6e, 0x65,
+	0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x38, 0x0a, 0x18, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67,
+	0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x16, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67,
+	0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12,
+	0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e,
+	0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65,
+	0x61, 0x73, 0x6f, 0x6e, 0x12, 0x30, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x41, 0x6e, 0x79, 0x52, 0x08, 0x6d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x22, 0x0a, 0x0d, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74,
+	0x5f, 0x72, 0x65, 0x71, 0x5f, 0x69, 0x64, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x70,
+	0x61, 0x72, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x49, 0x64, 0x12, 0x22, 0x0a, 0x0d, 0x63, 0x68,
+	0x69, 0x6c, 0x64, 0x5f, 0x72, 0x65, 0x71, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x0c, 0x20, 0x03, 0x28,
+	0x04, 0x52, 0x0b, 0x63, 0x68, 0x69, 0x6c, 0x64, 0x52, 0x65, 0x71, 0x49, 0x64, 0x73, 0x12, 0x19,
+	0x0a, 0x08, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0c,
+	0x52, 0x07, 0x63, 0x61, 0x63, 0x68, 0x65, 0x49, 0x64, 0x22, 0xf3, 0x01, 0x0a, 0x11, 0x53, 0x69,
+	0x67, 0x6e, 0x54, 0x78, 0x52, 0x65, 0x71, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12,
+	0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x15, 0x0a, 0x06, 0x6b, 0x65, 0x79,
+	0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x6b, 0x65, 0x79, 0x49, 0x64,
+	0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79, 0x70,
+	0x65, 0x12, 0x31, 0x0a, 0x14, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x74, 0x72,
+	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x13, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x26, 0x0a, 0x0f, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x72, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0d, 0x73,
+	0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x64, 0x12, 0x21, 0x0a, 0x0c,
+	0x6e, 0x6f, 0x5f, 0x62, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x18, 0x07, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x0b, 0x6e, 0x6f, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x22,
+	0xe8, 0x02, 0x0a, 0x15, 0x49, 0x43, 0x41, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65,
+	0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61,
+	0x74, 0x6f, 0x72, 0x12, 0x15, 0x0a, 0x06, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x05, 0x6b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x34, 0x0a, 0x08, 0x6b, 0x65,
+	0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e,
+	0x4b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x1b, 0x0a, 0x09, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x05, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x08, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x4d, 0x73, 0x67, 0x12, 0x3b, 0x0a,
+	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x23, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79,
+	0x2e, 0x53, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x69,
+	0x67, 0x6e, 0x65, 0x64, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0c, 0x52,
+	0x0a, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x38, 0x0a, 0x18, 0x6b,
+	0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f, 0x73, 0x69, 0x67,
+	0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x16, 0x6b,
+	0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f,
+	0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x2a, 0xbf, 0x01, 0x0a, 0x11, 0x53,
+	0x69, 0x67, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x23, 0x0a, 0x1f, 0x53, 0x49, 0x47, 0x4e, 0x5f, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54,
+	0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
+	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1f, 0x0a, 0x1b, 0x53, 0x49, 0x47, 0x4e, 0x5f, 0x52, 0x45,
+	0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x50, 0x45, 0x4e,
+	0x44, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x1f, 0x0a, 0x1b, 0x53, 0x49, 0x47, 0x4e, 0x5f, 0x52,
+	0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x50, 0x41,
+	0x52, 0x54, 0x49, 0x41, 0x4c, 0x10, 0x02, 0x12, 0x21, 0x0a, 0x1d, 0x53, 0x49, 0x47, 0x4e, 0x5f,
+	0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x46,
+	0x55, 0x4c, 0x46, 0x49, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x03, 0x12, 0x20, 0x0a, 0x1c, 0x53, 0x49,
 	0x47, 0x4e, 0x5f, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55,
-	0x53, 0x5f, 0x50, 0x41, 0x52, 0x54, 0x49, 0x41, 0x4c, 0x10, 0x02, 0x12, 0x21, 0x0a, 0x1d, 0x53,
-	0x49, 0x47, 0x4e, 0x5f, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54,
-	0x55, 0x53, 0x5f, 0x46, 0x55, 0x4c, 0x46, 0x49, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x03, 0x12, 0x20,
-	0x0a, 0x1c, 0x53, 0x49, 0x47, 0x4e, 0x5f, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x53,
-	0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x52, 0x45, 0x4a, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x04,
-	0x42, 0xa8, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x42, 0x0c, 0x4d, 0x70, 0x63, 0x73, 0x69,
-	0x67, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x21, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
-	0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xa2, 0x02, 0x03, 0x5a,
-	0x54, 0x58, 0xaa, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x54, 0x72, 0x65,
-	0x61, 0x73, 0x75, 0x72, 0x79, 0xca, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
-	0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xe2, 0x02, 0x1c, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x5c, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x11, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x3a, 0x3a, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x53, 0x5f, 0x52, 0x45, 0x4a, 0x45, 0x43, 0x54, 0x45, 0x44, 0x10, 0x04, 0x42, 0xa8, 0x01, 0x0a,
+	0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65,
+	0x61, 0x73, 0x75, 0x72, 0x79, 0x42, 0x0c, 0x4d, 0x70, 0x63, 0x73, 0x69, 0x67, 0x6e, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x21, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
+	0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xa2, 0x02, 0x03, 0x5a, 0x54, 0x58, 0xaa, 0x02,
+	0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72,
+	0x79, 0xca, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x54, 0x72, 0x65, 0x61,
+	0x73, 0x75, 0x72, 0x79, 0xe2, 0x02, 0x1c, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x54,
+	0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0xea, 0x02, 0x11, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x54,
+	0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
