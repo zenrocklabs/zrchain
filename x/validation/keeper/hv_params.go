@@ -11,7 +11,7 @@ import (
 var (
 	DefaultAVSRewardsRate, _                = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                 int64  = 1                                // seconds
-	DefaultZenBTCEthContractAddr            = "0xEe6dd71ccf66E3F920a4D49a57020e0F89659407"
+	DefaultZenBTCEthBatcherAddr             = "0x17361a5050258cCeffD595957cB8fddF79cEeeEB"
 	DefaultZenBTCDepositKeyringAddr         = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCWithdrawerKeyID     uint64 = 1
 	DefaultZenBTCMinterKeyID         uint64 = 2
@@ -40,7 +40,7 @@ func DefaultHVParams() *types.HVParams {
 		DefaultAVSRewardsRate,
 		DefaultBlockTime,
 		&types.ZenBTCParams{
-			ZenBTCEthContractAddr:     DefaultZenBTCEthContractAddr,
+			ZenBTCEthBatcherAddr:      DefaultZenBTCEthBatcherAddr,
 			ZenBTCDepositKeyringAddr:  DefaultZenBTCDepositKeyringAddr,
 			ZenBTCMinterKeyID:         DefaultZenBTCMinterKeyID,
 			ZenBTCWithdrawerKeyID:     DefaultZenBTCWithdrawerKeyID,
@@ -68,12 +68,12 @@ func (k Keeper) GetBlockTime(ctx context.Context) int64 {
 	return params.BlockTime
 }
 
-func (k Keeper) GetZenBTCEthContractAddr(ctx context.Context) string {
+func (k Keeper) GetZenBTCEthBatcherAddr(ctx context.Context) string {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
-		return DefaultZenBTCEthContractAddr
+		return DefaultZenBTCEthBatcherAddr
 	}
-	return params.ZenBTCParams.ZenBTCEthContractAddr
+	return params.ZenBTCParams.ZenBTCEthBatcherAddr
 }
 
 func (k Keeper) GetZenBTCDepositKeyringAddr(ctx context.Context) string {

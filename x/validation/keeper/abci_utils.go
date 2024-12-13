@@ -423,7 +423,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
+	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// Convert EIP-1559 fees to legacy gas price
 	// gasPrice = baseFee + tipCap
@@ -433,7 +433,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	)
 
 	// TODO: REMOVE THIS LINE BELOW
-	gasPrice = gasPrice.Mul(gasPrice, big.NewInt(100))
+	gasPrice = gasPrice.Mul(gasPrice, big.NewInt(25))
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
 		Nonce:    nonce,
@@ -458,16 +458,24 @@ func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
 
-	parsed, err := bindings.ZenBTCMetaData.GetAbi()
+	parsed, err := bindings.ZenbtcbatcherMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
-	// Pack using the contract binding's ABI for the wrap function
-	data, err := parsed.Pack("wrap", recipientAddr, amount.Uint64(), fee)
+	// Pack using the contract binding's ABI for the wrapZenBTC function
+	data, err := parsed.Pack(
+		"wrapZenBTC",
+		recipientAddr,
+		amount.Uint64(),
+		fee,
+		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
+		// The fields on the line above can be left empty as we don't need them to delegate to our operator
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode wrap call data: %v", err)
+		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
 	}
+
 	return data, nil
 }
 

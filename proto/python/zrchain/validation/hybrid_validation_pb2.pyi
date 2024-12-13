@@ -78,8 +78,8 @@ class HVParams(_message.Message):
     def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., ZenBTCParams: _Optional[_Union[ZenBTCParams, _Mapping]] = ...) -> None: ...
 
 class ZenBTCParams(_message.Message):
-    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCRewardsDepositKeyID", "zenBTCChangeAddressKeyIDs", "bitcoinProxyCreatorID", "stakeableAssets")
-    ZENBTCETHCONTRACTADDR_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("zenBTCEthBatcherAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCRewardsDepositKeyID", "zenBTCChangeAddressKeyIDs", "bitcoinProxyCreatorID", "stakeableAssets")
+    ZENBTCETHBATCHERADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCDEPOSITKEYRINGADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCMINTERKEYID_FIELD_NUMBER: _ClassVar[int]
     ZENBTCWITHDRAWERKEYID_FIELD_NUMBER: _ClassVar[int]
@@ -87,7 +87,7 @@ class ZenBTCParams(_message.Message):
     ZENBTCCHANGEADDRESSKEYIDS_FIELD_NUMBER: _ClassVar[int]
     BITCOINPROXYCREATORID_FIELD_NUMBER: _ClassVar[int]
     STAKEABLEASSETS_FIELD_NUMBER: _ClassVar[int]
-    zenBTCEthContractAddr: str
+    zenBTCEthBatcherAddr: str
     zenBTCDepositKeyringAddr: str
     zenBTCMinterKeyID: int
     zenBTCWithdrawerKeyID: int
@@ -95,7 +95,7 @@ class ZenBTCParams(_message.Message):
     zenBTCChangeAddressKeyIDs: _containers.RepeatedScalarFieldContainer[int]
     bitcoinProxyCreatorID: str
     stakeableAssets: _containers.RepeatedCompositeFieldContainer[_asset_data_pb2.AssetData]
-    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCRewardsDepositKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., bitcoinProxyCreatorID: _Optional[str] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ...) -> None: ...
+    def __init__(self, zenBTCEthBatcherAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCRewardsDepositKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., bitcoinProxyCreatorID: _Optional[str] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions")
