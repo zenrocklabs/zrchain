@@ -13,10 +13,12 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 )
 
-// / These constants should not be changed as they are important for synchronicity
+// NB: these constants should not be changed as they are important for synchronicity.
+// Modifying them will exponentially increase the risk of your validator being slashed
 const (
 	MainLoopTickerInterval = 15 * time.Second
 	CacheSize              = 20
+	ROCKUSDPriceURL        = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 )
 
 var (

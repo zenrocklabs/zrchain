@@ -115,7 +115,7 @@ func (o *Oracle) fetchAndProcessState(
 	// 	return fmt.Errorf("failed to get solana fee: %w", err)
 	// }
 
-	resp, err := http.Get("https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT")
+	resp, err := http.Get(ROCKUSDPriceURL)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve ROCK price data: %w", err)
 	}
