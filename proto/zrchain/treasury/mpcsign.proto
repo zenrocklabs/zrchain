@@ -35,7 +35,7 @@ enum SignRequestStatus {
 message SignRequest {
   uint64 id = 1;
   string creator = 2;
-  repeated uint64 key_ids = 3;
+  uint64 key_id = 3; // Deprecated
   KeyType key_type = 4;
   repeated bytes data_for_signing = 5;
   SignRequestStatus status = 6;
@@ -46,6 +46,7 @@ message SignRequest {
   uint64 parent_req_id = 11;
   repeated uint64 child_req_ids = 12;
   bytes cache_id = 13;
+  repeated uint64 key_ids = 14;
 }
 
 // format of a signed data with an id value used to sort the signed data
@@ -58,18 +59,19 @@ message SignedDataWithID {
 message SignTransactionRequest {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  uint64 key_id = 3; // Deprecated
   WalletType wallet_type = 4;
   bytes unsigned_transaction = 5;
   uint64 sign_request_id = 6;
   bool no_broadcast = 7;
+  repeated uint64 key_ids = 8;
 }
 
 // format of a sign request response
 message SignReqResponse {
   uint64 id = 1;
   string creator = 2;
-  repeated uint64 key_ids = 3;
+  uint64 key_id = 3; // Deprecated
   string key_type = 4;
   repeated bytes data_for_signing = 5;
   string status = 6;
@@ -80,24 +82,26 @@ message SignReqResponse {
   uint64 parent_req_id = 11;
   repeated uint64 child_req_ids = 12;
   bytes cache_id = 13;
+  repeated uint64 key_ids = 14;
 }
 
 // format of a sign transaction request response
 message SignTxReqResponse {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  uint64 key_id = 3; // Deprecated
   string wallet_type = 4;
   bytes unsigned_transaction = 5;
   uint64 sign_request_id = 6;
   bool no_broadcast = 7;
+  repeated uint64 key_ids = 8;
 }
 
 // format of a sign transaction request for an InterChain Account transaction
 message ICATransactionRequest {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  uint64 key_id = 3; // Deprecated
   KeyType key_type = 4;
   bytes input_msg = 5;
   // ibc.applications.interchain_accounts.v1.MsgSendTx input_msg = 5;
@@ -105,4 +109,5 @@ message ICATransactionRequest {
   repeated bytes signed_data = 7;
   repeated bytes keyring_party_signatures = 8;
   string reject_reason = 9;
+  repeated uint64 key_ids = 10;
 }

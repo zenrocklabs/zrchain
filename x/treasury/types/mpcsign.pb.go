@@ -71,7 +71,7 @@ func (SignRequestStatus) EnumDescriptor() ([]byte, []int) {
 type SignRequest struct {
 	Id                     uint64              `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Creator                string              `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyIds                 []uint64            `protobuf:"varint,3,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
+	KeyId                  uint64              `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	KeyType                KeyType             `protobuf:"varint,4,opt,name=key_type,json=keyType,proto3,enum=zrchain.treasury.KeyType" json:"key_type,omitempty"`
 	DataForSigning         [][]byte            `protobuf:"bytes,5,rep,name=data_for_signing,json=dataForSigning,proto3" json:"data_for_signing,omitempty"`
 	Status                 SignRequestStatus   `protobuf:"varint,6,opt,name=status,proto3,enum=zrchain.treasury.SignRequestStatus" json:"status,omitempty"`
@@ -82,6 +82,7 @@ type SignRequest struct {
 	ParentReqId            uint64              `protobuf:"varint,11,opt,name=parent_req_id,json=parentReqId,proto3" json:"parent_req_id,omitempty"`
 	ChildReqIds            []uint64            `protobuf:"varint,12,rep,packed,name=child_req_ids,json=childReqIds,proto3" json:"child_req_ids,omitempty"`
 	CacheId                []byte              `protobuf:"bytes,13,opt,name=cache_id,json=cacheId,proto3" json:"cache_id,omitempty"`
+	KeyIds                 []uint64            `protobuf:"varint,14,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (m *SignRequest) Reset()         { *m = SignRequest{} }
@@ -131,11 +132,11 @@ func (m *SignRequest) GetCreator() string {
 	return ""
 }
 
-func (m *SignRequest) GetKeyIds() []uint64 {
+func (m *SignRequest) GetKeyId() uint64 {
 	if m != nil {
-		return m.KeyIds
+		return m.KeyId
 	}
-	return nil
+	return 0
 }
 
 func (m *SignRequest) GetKeyType() KeyType {
@@ -208,6 +209,13 @@ func (m *SignRequest) GetCacheId() []byte {
 	return nil
 }
 
+func (m *SignRequest) GetKeyIds() []uint64 {
+	if m != nil {
+		return m.KeyIds
+	}
+	return nil
+}
+
 // format of a signed data with an id value used to sort the signed data
 type SignedDataWithID struct {
 	SignRequestId uint64 `protobuf:"varint,1,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
@@ -270,6 +278,7 @@ type SignTransactionRequest struct {
 	UnsignedTransaction []byte     `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
 	SignRequestId       uint64     `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
 	NoBroadcast         bool       `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
+	KeyIds              []uint64   `protobuf:"varint,8,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (m *SignTransactionRequest) Reset()         { *m = SignTransactionRequest{} }
@@ -354,11 +363,18 @@ func (m *SignTransactionRequest) GetNoBroadcast() bool {
 	return false
 }
 
+func (m *SignTransactionRequest) GetKeyIds() []uint64 {
+	if m != nil {
+		return m.KeyIds
+	}
+	return nil
+}
+
 // format of a sign request response
 type SignReqResponse struct {
 	Id                     uint64              `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Creator                string              `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyIds                 []uint64            `protobuf:"varint,3,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
+	KeyId                  uint64              `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	KeyType                string              `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
 	DataForSigning         [][]byte            `protobuf:"bytes,5,rep,name=data_for_signing,json=dataForSigning,proto3" json:"data_for_signing,omitempty"`
 	Status                 string              `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
@@ -369,6 +385,7 @@ type SignReqResponse struct {
 	ParentReqId            uint64              `protobuf:"varint,11,opt,name=parent_req_id,json=parentReqId,proto3" json:"parent_req_id,omitempty"`
 	ChildReqIds            []uint64            `protobuf:"varint,12,rep,packed,name=child_req_ids,json=childReqIds,proto3" json:"child_req_ids,omitempty"`
 	CacheId                []byte              `protobuf:"bytes,13,opt,name=cache_id,json=cacheId,proto3" json:"cache_id,omitempty"`
+	KeyIds                 []uint64            `protobuf:"varint,14,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (m *SignReqResponse) Reset()         { *m = SignReqResponse{} }
@@ -418,11 +435,11 @@ func (m *SignReqResponse) GetCreator() string {
 	return ""
 }
 
-func (m *SignReqResponse) GetKeyIds() []uint64 {
+func (m *SignReqResponse) GetKeyId() uint64 {
 	if m != nil {
-		return m.KeyIds
+		return m.KeyId
 	}
-	return nil
+	return 0
 }
 
 func (m *SignReqResponse) GetKeyType() string {
@@ -495,15 +512,23 @@ func (m *SignReqResponse) GetCacheId() []byte {
 	return nil
 }
 
+func (m *SignReqResponse) GetKeyIds() []uint64 {
+	if m != nil {
+		return m.KeyIds
+	}
+	return nil
+}
+
 // format of a sign transaction request response
 type SignTxReqResponse struct {
-	Id                  uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Creator             string `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyId               uint64 `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
-	WalletType          string `protobuf:"bytes,4,opt,name=wallet_type,json=walletType,proto3" json:"wallet_type,omitempty"`
-	UnsignedTransaction []byte `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
-	SignRequestId       uint64 `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
-	NoBroadcast         bool   `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
+	Id                  uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator             string   `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	KeyId               uint64   `protobuf:"varint,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
+	WalletType          string   `protobuf:"bytes,4,opt,name=wallet_type,json=walletType,proto3" json:"wallet_type,omitempty"`
+	UnsignedTransaction []byte   `protobuf:"bytes,5,opt,name=unsigned_transaction,json=unsignedTransaction,proto3" json:"unsigned_transaction,omitempty"`
+	SignRequestId       uint64   `protobuf:"varint,6,opt,name=sign_request_id,json=signRequestId,proto3" json:"sign_request_id,omitempty"`
+	NoBroadcast         bool     `protobuf:"varint,7,opt,name=no_broadcast,json=noBroadcast,proto3" json:"no_broadcast,omitempty"`
+	KeyIds              []uint64 `protobuf:"varint,8,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (m *SignTxReqResponse) Reset()         { *m = SignTxReqResponse{} }
@@ -588,6 +613,13 @@ func (m *SignTxReqResponse) GetNoBroadcast() bool {
 	return false
 }
 
+func (m *SignTxReqResponse) GetKeyIds() []uint64 {
+	if m != nil {
+		return m.KeyIds
+	}
+	return nil
+}
+
 // format of a sign transaction request for an InterChain Account transaction
 type ICATransactionRequest struct {
 	Id       uint64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -600,6 +632,7 @@ type ICATransactionRequest struct {
 	SignedData             [][]byte          `protobuf:"bytes,7,rep,name=signed_data,json=signedData,proto3" json:"signed_data,omitempty"`
 	KeyringPartySignatures [][]byte          `protobuf:"bytes,8,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
 	RejectReason           string            `protobuf:"bytes,9,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
+	KeyIds                 []uint64          `protobuf:"varint,10,rep,packed,name=key_ids,json=keyIds,proto3" json:"key_ids,omitempty"`
 }
 
 func (m *ICATransactionRequest) Reset()         { *m = ICATransactionRequest{} }
@@ -698,6 +731,13 @@ func (m *ICATransactionRequest) GetRejectReason() string {
 	return ""
 }
 
+func (m *ICATransactionRequest) GetKeyIds() []uint64 {
+	if m != nil {
+		return m.KeyIds
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("zrchain.treasury.SignRequestStatus", SignRequestStatus_name, SignRequestStatus_value)
 	proto.RegisterType((*SignRequest)(nil), "zrchain.treasury.SignRequest")
@@ -711,60 +751,61 @@ func init() {
 func init() { proto.RegisterFile("zrchain/treasury/mpcsign.proto", fileDescriptor_19836ac54539a9ab) }
 
 var fileDescriptor_19836ac54539a9ab = []byte{
-	// 844 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0x4d, 0x6f, 0xe3, 0x44,
-	0x18, 0xae, 0x93, 0x34, 0x1f, 0xaf, 0xd3, 0x6e, 0x18, 0x76, 0x8b, 0xdb, 0xdd, 0x4d, 0xbc, 0xa9,
-	0x84, 0x2c, 0x24, 0x12, 0x28, 0x20, 0x81, 0x10, 0x87, 0x6c, 0xe3, 0xac, 0x0c, 0xa5, 0x2a, 0xe3,
-	0x54, 0x2b, 0x2d, 0x07, 0x6b, 0x6a, 0xcf, 0x26, 0x26, 0xed, 0x38, 0x9d, 0x19, 0xb3, 0x6b, 0x7e,
-	0x05, 0x27, 0x7e, 0x02, 0x7f, 0x83, 0x2b, 0xc7, 0x3d, 0x72, 0x44, 0xed, 0x05, 0x71, 0xe5, 0x0f,
-	0xa0, 0x99, 0x7c, 0xf4, 0x23, 0xd9, 0x4b, 0x0b, 0x88, 0xc3, 0xde, 0xec, 0xf7, 0x79, 0xf2, 0xe4,
-	0x9d, 0xf7, 0x7d, 0x1e, 0x79, 0xa0, 0xfe, 0x03, 0x0f, 0x87, 0x24, 0x66, 0x6d, 0xc9, 0x29, 0x11,
-	0x29, 0xcf, 0xda, 0x27, 0xe3, 0x50, 0xc4, 0x03, 0xd6, 0x1a, 0xf3, 0x44, 0x26, 0xa8, 0x36, 0xc5,
-	0x5b, 0x33, 0x7c, 0x6b, 0x73, 0x90, 0x24, 0x83, 0x63, 0xda, 0xd6, 0xf8, 0x51, 0xfa, 0xbc, 0x4d,
-	0x58, 0x36, 0x21, 0x6f, 0x6d, 0x2d, 0x88, 0x8d, 0xe8, 0x0c, 0x7b, 0xb8, 0x80, 0xbd, 0x20, 0xc7,
-	0xc7, 0x54, 0x4e, 0xe0, 0xe6, 0xcf, 0x05, 0x30, 0xfd, 0x78, 0xc0, 0x30, 0x3d, 0x4d, 0xa9, 0x90,
-	0x68, 0x1d, 0x72, 0x71, 0x64, 0x19, 0xb6, 0xe1, 0x14, 0x70, 0x2e, 0x8e, 0x90, 0x05, 0xa5, 0x90,
-	0x53, 0x22, 0x13, 0x6e, 0xe5, 0x6c, 0xc3, 0xa9, 0xe0, 0xd9, 0x2b, 0x7a, 0x07, 0x4a, 0x23, 0x9a,
-	0x05, 0x71, 0x24, 0xac, 0xbc, 0x9d, 0x77, 0x0a, 0xb8, 0x38, 0xa2, 0x99, 0x17, 0x09, 0xf4, 0x31,
-	0x94, 0x15, 0x20, 0xb3, 0x31, 0xb5, 0x0a, 0xb6, 0xe1, 0xac, 0xef, 0x6c, 0xb6, 0xae, 0x9f, 0xa6,
-	0xf5, 0x15, 0xcd, 0xfa, 0xd9, 0x98, 0x62, 0xa5, 0xa1, 0x1e, 0x90, 0x03, 0xb5, 0x88, 0x48, 0x12,
-	0x3c, 0x4f, 0x78, 0xa0, 0xe6, 0x10, 0xb3, 0x81, 0xb5, 0x6a, 0xe7, 0x9d, 0x2a, 0x5e, 0x57, 0xf5,
-	0x5e, 0xc2, 0xfd, 0x49, 0x15, 0x7d, 0x0e, 0x45, 0x21, 0x89, 0x4c, 0x85, 0x55, 0xd4, 0xea, 0xdb,
-	0x8b, 0xea, 0x97, 0x4e, 0xe4, 0x6b, 0x2a, 0x9e, 0xfe, 0x04, 0xed, 0x82, 0xa9, 0xd4, 0x69, 0x14,
-	0x28, 0x55, 0xab, 0x64, 0xe7, 0x1d, 0x73, 0xa7, 0xb9, 0x5c, 0x81, 0x46, 0x5d, 0x22, 0xc9, 0xd3,
-	0x58, 0x0e, 0xbd, 0x2e, 0x06, 0x31, 0xaf, 0xa0, 0x4f, 0xc1, 0x1a, 0xd1, 0x8c, 0xc7, 0x6c, 0x10,
-	0x8c, 0x09, 0x97, 0x99, 0x6e, 0x98, 0xc8, 0x94, 0x53, 0x61, 0x95, 0x75, 0xcf, 0x1b, 0x53, 0xfc,
-	0x40, 0xc1, 0xfe, 0x1c, 0x45, 0xdb, 0xb0, 0xc6, 0xe9, 0x77, 0x34, 0x94, 0x81, 0xfa, 0xa3, 0x84,
-	0x59, 0x15, 0x3d, 0xd4, 0xea, 0xa4, 0x88, 0x75, 0x0d, 0x7d, 0x00, 0xe5, 0x13, 0x2a, 0x89, 0x6e,
-	0x10, 0x6c, 0xc3, 0x31, 0x77, 0xee, 0xb6, 0x26, 0xcb, 0x6f, 0xcd, 0x96, 0xdf, 0xea, 0xb0, 0x0c,
-	0xcf, 0x59, 0xa8, 0x09, 0x6b, 0x63, 0xc2, 0x29, 0x53, 0xb2, 0xa7, 0x41, 0x1c, 0x59, 0xa6, 0x5e,
-	0xa0, 0x39, 0x29, 0x62, 0x7a, 0xea, 0x45, 0x8a, 0x13, 0x0e, 0xe3, 0xe3, 0x68, 0x4a, 0x11, 0x56,
-	0x55, 0x6f, 0xcd, 0xd4, 0x45, 0x4d, 0x11, 0x68, 0x13, 0xca, 0x21, 0x09, 0x87, 0x54, 0x49, 0xac,
-	0xd9, 0x86, 0x53, 0xc5, 0x25, 0xfd, 0xee, 0x45, 0xcd, 0x6f, 0xa1, 0x76, 0x7d, 0x26, 0xe8, 0x5d,
-	0xb8, 0xa3, 0x4e, 0xae, 0x14, 0xd5, 0xa8, 0x83, 0xb9, 0x73, 0xd6, 0xc4, 0xc5, 0x02, 0xbc, 0x08,
-	0x35, 0xae, 0x0e, 0x3d, 0xa7, 0x95, 0x2f, 0x0d, 0xb4, 0xf9, 0x53, 0x0e, 0x36, 0x94, 0x7a, 0x9f,
-	0x13, 0x26, 0x48, 0x28, 0xe3, 0xe4, 0x06, 0x86, 0xbc, 0x07, 0xc5, 0x89, 0x21, 0xad, 0xbc, 0x66,
-	0xaf, 0x6a, 0x3f, 0xa2, 0x2f, 0xc0, 0x9c, 0x38, 0xfe, 0xb2, 0x23, 0x1f, 0x2c, 0x6e, 0xfc, 0xa9,
-	0x26, 0x69, 0x53, 0xc2, 0x8b, 0xf9, 0x33, 0xfa, 0x10, 0xee, 0xa6, 0x6c, 0xda, 0xbd, 0xbc, 0x68,
-	0xcf, 0x5a, 0xd5, 0x87, 0x78, 0x7b, 0x86, 0x5d, 0xea, 0x7c, 0xd9, 0x58, 0x8a, 0xcb, 0xc6, 0xf2,
-	0x08, 0xaa, 0x2c, 0x09, 0x8e, 0x78, 0x42, 0xa2, 0x90, 0x08, 0x69, 0x95, 0x6c, 0xc3, 0x29, 0x63,
-	0x93, 0x25, 0x8f, 0x67, 0xa5, 0xe6, 0x9f, 0x79, 0xb8, 0x33, 0x35, 0x33, 0xa6, 0x62, 0x9c, 0x30,
-	0x41, 0xff, 0x89, 0x88, 0x6e, 0x5e, 0x8b, 0x68, 0xe5, 0x26, 0x39, 0xdc, 0xb8, 0x92, 0xc3, 0xca,
-	0x9b, 0x88, 0xdd, 0x36, 0x62, 0x7f, 0x19, 0xf0, 0x96, 0x4e, 0xc1, 0xcb, 0x9b, 0xad, 0xfb, 0x35,
-	0x01, 0x68, 0x2c, 0x06, 0xa0, 0xf2, 0x3f, 0xb2, 0xf8, 0x1f, 0x39, 0xb8, 0xe7, 0xed, 0x76, 0xfe,
-	0x8d, 0xe8, 0xdf, 0xec, 0x4b, 0x74, 0x1f, 0x2a, 0x31, 0x1b, 0xa7, 0x32, 0x38, 0x11, 0x83, 0xe9,
-	0x0c, 0xca, 0xba, 0xf0, 0xb5, 0xb8, 0xe5, 0xc7, 0xa7, 0xb1, 0x98, 0x8c, 0xea, 0x7f, 0xe8, 0xfa,
-	0xf7, 0x7e, 0x99, 0x1a, 0xec, 0x4a, 0x77, 0x68, 0x1b, 0x1a, 0xbe, 0xf7, 0x64, 0x3f, 0xc0, 0xee,
-	0x37, 0x87, 0xae, 0xdf, 0x0f, 0xfc, 0x7e, 0xa7, 0x7f, 0xe8, 0x07, 0x87, 0xfb, 0xfe, 0x81, 0xbb,
-	0xeb, 0xf5, 0x3c, 0xb7, 0x5b, 0x5b, 0x41, 0x0d, 0xb8, 0xbf, 0x8c, 0x74, 0xe0, 0xee, 0x77, 0xbd,
-	0xfd, 0x27, 0x35, 0xe3, 0xb5, 0x84, 0x0e, 0xee, 0x7b, 0x9d, 0xbd, 0x5a, 0x0e, 0x3d, 0x82, 0x87,
-	0xcb, 0x08, 0xbd, 0xc3, 0xbd, 0x9e, 0xb7, 0xb7, 0xe7, 0x76, 0x6b, 0x79, 0x64, 0xc3, 0x83, 0x65,
-	0x14, 0xec, 0x7e, 0xe9, 0xee, 0xf6, 0xdd, 0x6e, 0xad, 0xf0, 0xd8, 0xff, 0xf5, 0xac, 0x6e, 0xbc,
-	0x3a, 0xab, 0x1b, 0xbf, 0x9f, 0xd5, 0x8d, 0x1f, 0xcf, 0xeb, 0x2b, 0xaf, 0xce, 0xeb, 0x2b, 0xbf,
-	0x9d, 0xd7, 0x57, 0x9e, 0x7d, 0x36, 0x88, 0xe5, 0x30, 0x3d, 0x6a, 0x85, 0xc9, 0x49, 0xfb, 0x19,
-	0x65, 0x3c, 0x09, 0x47, 0xef, 0xf7, 0x92, 0x94, 0x45, 0x44, 0x59, 0xaa, 0x3d, 0xbb, 0x05, 0x7d,
-	0xff, 0x49, 0xfb, 0xe5, 0xc5, 0x55, 0x48, 0x39, 0x43, 0x1c, 0x15, 0x75, 0xe4, 0x3f, 0xfa, 0x3b,
-	0x00, 0x00, 0xff, 0xff, 0xeb, 0x59, 0x1c, 0x3b, 0x94, 0x09, 0x00, 0x00,
+	// 850 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xcf, 0x6f, 0xe3, 0x44,
+	0x14, 0xae, 0x93, 0x34, 0x3f, 0x5e, 0xd2, 0x6e, 0x18, 0x76, 0x8b, 0xdb, 0xdd, 0x4d, 0xbc, 0xa9,
+	0x84, 0x2c, 0x24, 0x12, 0x28, 0x20, 0x81, 0x10, 0x87, 0x6c, 0xe3, 0xac, 0x0c, 0xa5, 0x2a, 0x76,
+	0xaa, 0x95, 0x96, 0x83, 0x35, 0xb5, 0x67, 0x13, 0x93, 0x76, 0x26, 0x9d, 0x19, 0xb3, 0x6b, 0x6e,
+	0xdc, 0x39, 0xf0, 0x9f, 0xf0, 0x17, 0x20, 0xae, 0x1c, 0xf7, 0xc8, 0x11, 0xb5, 0xff, 0x08, 0x9a,
+	0x71, 0x92, 0xa6, 0x4d, 0xb8, 0xec, 0x0f, 0x24, 0xa4, 0xbd, 0xd9, 0xef, 0xfb, 0xfc, 0xfc, 0xfc,
+	0xbe, 0xef, 0xb3, 0x0d, 0x8d, 0x9f, 0x78, 0x38, 0xc2, 0x31, 0xed, 0x48, 0x4e, 0xb0, 0x48, 0x78,
+	0xda, 0x39, 0x9b, 0x84, 0x22, 0x1e, 0xd2, 0xf6, 0x84, 0x33, 0xc9, 0x50, 0x7d, 0x8a, 0xb7, 0x67,
+	0xf8, 0xce, 0xf6, 0x90, 0xb1, 0xe1, 0x29, 0xe9, 0x68, 0xfc, 0x24, 0x79, 0xda, 0xc1, 0x34, 0xcd,
+	0xc8, 0x3b, 0x3b, 0x4b, 0xcd, 0xc6, 0x64, 0x86, 0xdd, 0x5f, 0xc2, 0x9e, 0xe1, 0xd3, 0x53, 0x22,
+	0x33, 0xb8, 0xf5, 0x7b, 0x01, 0xaa, 0x7e, 0x3c, 0xa4, 0x1e, 0x39, 0x4f, 0x88, 0x90, 0x68, 0x13,
+	0x72, 0x71, 0x64, 0x1a, 0x96, 0x61, 0x17, 0xbc, 0x5c, 0x1c, 0x21, 0x13, 0x4a, 0x21, 0x27, 0x58,
+	0x32, 0x6e, 0xe6, 0x2c, 0xc3, 0xae, 0x78, 0xb3, 0x53, 0x74, 0x07, 0x8a, 0x63, 0x92, 0x06, 0x71,
+	0x64, 0xe6, 0x35, 0x7b, 0x7d, 0x4c, 0x52, 0x37, 0x42, 0x9f, 0x42, 0x59, 0x95, 0x65, 0x3a, 0x21,
+	0x66, 0xc1, 0x32, 0xec, 0xcd, 0xbd, 0xed, 0xf6, 0xcd, 0x67, 0x69, 0x7f, 0x43, 0xd2, 0x41, 0x3a,
+	0x21, 0x5e, 0x69, 0x9c, 0x1d, 0x20, 0x1b, 0xea, 0x11, 0x96, 0x38, 0x78, 0xca, 0x78, 0xa0, 0xb6,
+	0x10, 0xd3, 0xa1, 0xb9, 0x6e, 0xe5, 0xed, 0x9a, 0xb7, 0xa9, 0xea, 0x7d, 0xc6, 0xfd, 0xac, 0x8a,
+	0xbe, 0x84, 0xa2, 0x90, 0x58, 0x26, 0xc2, 0x2c, 0xea, 0xee, 0xbb, 0xcb, 0xdd, 0x17, 0x9e, 0xc7,
+	0xd7, 0x54, 0x6f, 0x7a, 0x09, 0xda, 0x87, 0xaa, 0xea, 0x4e, 0xa2, 0x40, 0x75, 0x35, 0x4b, 0x56,
+	0xde, 0xae, 0xee, 0xb5, 0x56, 0x77, 0x20, 0x51, 0x0f, 0x4b, 0xfc, 0x38, 0x96, 0x23, 0xb7, 0xe7,
+	0x81, 0x98, 0x57, 0xd0, 0xe7, 0x60, 0x8e, 0x49, 0xca, 0x63, 0x3a, 0x0c, 0x26, 0x98, 0xcb, 0x54,
+	0x0f, 0x8c, 0x65, 0xc2, 0x89, 0x30, 0xcb, 0x7a, 0xe6, 0xad, 0x29, 0x7e, 0xa4, 0x60, 0x7f, 0x8e,
+	0xa2, 0x5d, 0xd8, 0xe0, 0xe4, 0x07, 0x12, 0xca, 0x40, 0xdd, 0x88, 0x51, 0xb3, 0xa2, 0x57, 0x5a,
+	0xcb, 0x8a, 0x9e, 0xae, 0xa1, 0x8f, 0xa0, 0x7c, 0x46, 0x24, 0xd6, 0x03, 0x82, 0x65, 0xd8, 0xd5,
+	0xbd, 0xdb, 0xed, 0x4c, 0xfa, 0xf6, 0x4c, 0xfa, 0x76, 0x97, 0xa6, 0xde, 0x9c, 0x85, 0x5a, 0xb0,
+	0x31, 0xc1, 0x9c, 0x50, 0xd5, 0xf6, 0x5c, 0x09, 0x52, 0xd5, 0x82, 0x54, 0xb3, 0xa2, 0x47, 0xce,
+	0xdd, 0x48, 0x71, 0xc2, 0x51, 0x7c, 0x1a, 0x4d, 0x29, 0xc2, 0xac, 0x59, 0x79, 0xc5, 0xd1, 0x45,
+	0x4d, 0x11, 0x68, 0x1b, 0xca, 0x21, 0x0e, 0x47, 0x44, 0xb5, 0xd8, 0xb0, 0x0c, 0xbb, 0xe6, 0x95,
+	0xf4, 0xb9, 0x1b, 0xa1, 0xf7, 0xa0, 0x94, 0x89, 0x2d, 0xcc, 0x4d, 0x7d, 0x61, 0x51, 0xab, 0x2d,
+	0x5a, 0xdf, 0x43, 0xfd, 0xe6, 0xb2, 0xd0, 0xfb, 0x70, 0x4b, 0xad, 0x44, 0xdd, 0x4a, 0x69, 0x10,
+	0xcc, 0x0d, 0xb5, 0x21, 0xae, 0x94, 0x71, 0x23, 0xd4, 0xbc, 0xae, 0x46, 0x4e, 0xdf, 0x72, 0x61,
+	0xd3, 0xad, 0xdf, 0x72, 0xb0, 0xa5, 0xba, 0x0f, 0x38, 0xa6, 0x02, 0x87, 0x32, 0x66, 0xaf, 0xcf,
+	0xa7, 0x5f, 0x41, 0x35, 0x0b, 0xc2, 0xa2, 0x55, 0xef, 0x2d, 0x5b, 0xe1, 0xb1, 0x26, 0x69, 0xb7,
+	0xc2, 0xb3, 0xf9, 0x31, 0xfa, 0x18, 0x6e, 0x27, 0x74, 0x3a, 0xbd, 0xbc, 0x1a, 0xcf, 0x5c, 0xd7,
+	0x0f, 0xf1, 0xee, 0x0c, 0x5b, 0x98, 0x7c, 0xd5, 0x5a, 0x8a, 0xab, 0xd6, 0xf2, 0x00, 0x6a, 0x94,
+	0x05, 0x27, 0x9c, 0xe1, 0x28, 0xc4, 0x42, 0x9a, 0x25, 0xcb, 0xb0, 0xcb, 0x5e, 0x95, 0xb2, 0x87,
+	0xb3, 0xd2, 0xa2, 0x1c, 0xe5, 0x6b, 0x72, 0xfc, 0x5c, 0x80, 0x5b, 0x53, 0xfb, 0x7b, 0x44, 0x4c,
+	0x18, 0x15, 0xe4, 0xd5, 0x57, 0xb5, 0x7d, 0x23, 0xd2, 0x95, 0x97, 0xc9, 0xed, 0xd6, 0xb5, 0xdc,
+	0x56, 0xde, 0x46, 0xf2, 0x8d, 0x45, 0xf2, 0x97, 0x1c, 0xbc, 0xa3, 0x53, 0xf3, 0xfc, 0xb5, 0xba,
+	0xa0, 0xb9, 0x1c, 0x98, 0xca, 0xff, 0x22, 0x12, 0x79, 0xb8, 0xe3, 0xee, 0x77, 0xdf, 0xc4, 0x3b,
+	0xe4, 0xe5, 0xbe, 0x75, 0x77, 0xa1, 0x12, 0xd3, 0x49, 0x22, 0x83, 0x33, 0x31, 0x9c, 0x2e, 0xa7,
+	0xac, 0x0b, 0xdf, 0x8a, 0x57, 0xfc, 0xbc, 0x35, 0x97, 0xb3, 0x54, 0xfb, 0x2f, 0x73, 0xb2, 0xa0,
+	0x01, 0x2c, 0x6a, 0xf0, 0xc1, 0x1f, 0x46, 0x66, 0xc9, 0x6b, 0x63, 0xa3, 0x5d, 0x68, 0xfa, 0xee,
+	0xa3, 0xc3, 0xc0, 0x73, 0xbe, 0x3b, 0x76, 0xfc, 0x41, 0xe0, 0x0f, 0xba, 0x83, 0x63, 0x3f, 0x38,
+	0x3e, 0xf4, 0x8f, 0x9c, 0x7d, 0xb7, 0xef, 0x3a, 0xbd, 0xfa, 0x1a, 0x6a, 0xc2, 0xdd, 0x55, 0xa4,
+	0x23, 0xe7, 0xb0, 0xe7, 0x1e, 0x3e, 0xaa, 0x1b, 0xff, 0x4a, 0xe8, 0x7a, 0x03, 0xb7, 0x7b, 0x50,
+	0xcf, 0xa1, 0x07, 0x70, 0x7f, 0x15, 0xa1, 0x7f, 0x7c, 0xd0, 0x77, 0x0f, 0x0e, 0x9c, 0x5e, 0x3d,
+	0x8f, 0x2c, 0xb8, 0xb7, 0x8a, 0xe2, 0x39, 0x5f, 0x3b, 0xfb, 0x03, 0xa7, 0x57, 0x2f, 0x3c, 0xf4,
+	0xff, 0xbc, 0x68, 0x18, 0x2f, 0x2e, 0x1a, 0xc6, 0xdf, 0x17, 0x0d, 0xe3, 0xd7, 0xcb, 0xc6, 0xda,
+	0x8b, 0xcb, 0xc6, 0xda, 0x5f, 0x97, 0x8d, 0xb5, 0x27, 0x5f, 0x0c, 0x63, 0x39, 0x4a, 0x4e, 0xda,
+	0x21, 0x3b, 0xeb, 0x3c, 0x21, 0x94, 0xb3, 0x70, 0xfc, 0x61, 0x9f, 0x25, 0x34, 0xc2, 0xca, 0x6b,
+	0x9d, 0xd9, 0xef, 0xd7, 0x8f, 0x9f, 0x75, 0x9e, 0x5f, 0xfd, 0x83, 0x29, 0xcb, 0x88, 0x93, 0xa2,
+	0x7e, 0x7b, 0x7c, 0xf2, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6b, 0x48, 0xca, 0xd4, 0x0d, 0x0a,
+	0x00, 0x00,
 }
 
 func (m *SignRequest) Marshal() (dAtA []byte, err error) {
@@ -787,17 +828,10 @@ func (m *SignRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.CacheId) > 0 {
-		i -= len(m.CacheId)
-		copy(dAtA[i:], m.CacheId)
-		i = encodeVarintMpcsign(dAtA, i, uint64(len(m.CacheId)))
-		i--
-		dAtA[i] = 0x6a
-	}
-	if len(m.ChildReqIds) > 0 {
-		dAtA2 := make([]byte, len(m.ChildReqIds)*10)
+	if len(m.KeyIds) > 0 {
+		dAtA2 := make([]byte, len(m.KeyIds)*10)
 		var j1 int
-		for _, num := range m.ChildReqIds {
+		for _, num := range m.KeyIds {
 			for num >= 1<<7 {
 				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
@@ -809,6 +843,31 @@ func (m *SignRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= j1
 		copy(dAtA[i:], dAtA2[:j1])
 		i = encodeVarintMpcsign(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0x72
+	}
+	if len(m.CacheId) > 0 {
+		i -= len(m.CacheId)
+		copy(dAtA[i:], m.CacheId)
+		i = encodeVarintMpcsign(dAtA, i, uint64(len(m.CacheId)))
+		i--
+		dAtA[i] = 0x6a
+	}
+	if len(m.ChildReqIds) > 0 {
+		dAtA4 := make([]byte, len(m.ChildReqIds)*10)
+		var j3 int
+		for _, num := range m.ChildReqIds {
+			for num >= 1<<7 {
+				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j3++
+			}
+			dAtA4[j3] = uint8(num)
+			j3++
+		}
+		i -= j3
+		copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j3))
 		i--
 		dAtA[i] = 0x62
 	}
@@ -878,23 +937,10 @@ func (m *SignRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x20
 	}
-	if len(m.KeyIds) > 0 {
-		dAtA5 := make([]byte, len(m.KeyIds)*10)
-		var j4 int
-		for _, num := range m.KeyIds {
-			for num >= 1<<7 {
-				dAtA5[j4] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j4++
-			}
-			dAtA5[j4] = uint8(num)
-			j4++
-		}
-		i -= j4
-		copy(dAtA[i:], dAtA5[:j4])
-		i = encodeVarintMpcsign(dAtA, i, uint64(j4))
+	if m.KeyId != 0 {
+		i = encodeVarintMpcsign(dAtA, i, uint64(m.KeyId))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
 	if len(m.Creator) > 0 {
 		i -= len(m.Creator)
@@ -966,6 +1012,24 @@ func (m *SignTransactionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	_ = i
 	var l int
 	_ = l
+	if len(m.KeyIds) > 0 {
+		dAtA7 := make([]byte, len(m.KeyIds)*10)
+		var j6 int
+		for _, num := range m.KeyIds {
+			for num >= 1<<7 {
+				dAtA7[j6] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j6++
+			}
+			dAtA7[j6] = uint8(num)
+			j6++
+		}
+		i -= j6
+		copy(dAtA[i:], dAtA7[:j6])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j6))
+		i--
+		dAtA[i] = 0x42
+	}
 	if m.NoBroadcast {
 		i--
 		if m.NoBroadcast {
@@ -1033,6 +1097,24 @@ func (m *SignReqResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.KeyIds) > 0 {
+		dAtA9 := make([]byte, len(m.KeyIds)*10)
+		var j8 int
+		for _, num := range m.KeyIds {
+			for num >= 1<<7 {
+				dAtA9[j8] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j8++
+			}
+			dAtA9[j8] = uint8(num)
+			j8++
+		}
+		i -= j8
+		copy(dAtA[i:], dAtA9[:j8])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j8))
+		i--
+		dAtA[i] = 0x72
+	}
 	if len(m.CacheId) > 0 {
 		i -= len(m.CacheId)
 		copy(dAtA[i:], m.CacheId)
@@ -1041,20 +1123,20 @@ func (m *SignReqResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6a
 	}
 	if len(m.ChildReqIds) > 0 {
-		dAtA7 := make([]byte, len(m.ChildReqIds)*10)
-		var j6 int
+		dAtA11 := make([]byte, len(m.ChildReqIds)*10)
+		var j10 int
 		for _, num := range m.ChildReqIds {
 			for num >= 1<<7 {
-				dAtA7[j6] = uint8(uint64(num)&0x7f | 0x80)
+				dAtA11[j10] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
-				j6++
+				j10++
 			}
-			dAtA7[j6] = uint8(num)
-			j6++
+			dAtA11[j10] = uint8(num)
+			j10++
 		}
-		i -= j6
-		copy(dAtA[i:], dAtA7[:j6])
-		i = encodeVarintMpcsign(dAtA, i, uint64(j6))
+		i -= j10
+		copy(dAtA[i:], dAtA11[:j10])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j10))
 		i--
 		dAtA[i] = 0x62
 	}
@@ -1128,23 +1210,10 @@ func (m *SignReqResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.KeyIds) > 0 {
-		dAtA10 := make([]byte, len(m.KeyIds)*10)
-		var j9 int
-		for _, num := range m.KeyIds {
-			for num >= 1<<7 {
-				dAtA10[j9] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j9++
-			}
-			dAtA10[j9] = uint8(num)
-			j9++
-		}
-		i -= j9
-		copy(dAtA[i:], dAtA10[:j9])
-		i = encodeVarintMpcsign(dAtA, i, uint64(j9))
+	if m.KeyId != 0 {
+		i = encodeVarintMpcsign(dAtA, i, uint64(m.KeyId))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
 	if len(m.Creator) > 0 {
 		i -= len(m.Creator)
@@ -1181,6 +1250,24 @@ func (m *SignTxReqResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.KeyIds) > 0 {
+		dAtA14 := make([]byte, len(m.KeyIds)*10)
+		var j13 int
+		for _, num := range m.KeyIds {
+			for num >= 1<<7 {
+				dAtA14[j13] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j13++
+			}
+			dAtA14[j13] = uint8(num)
+			j13++
+		}
+		i -= j13
+		copy(dAtA[i:], dAtA14[:j13])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j13))
+		i--
+		dAtA[i] = 0x42
+	}
 	if m.NoBroadcast {
 		i--
 		if m.NoBroadcast {
@@ -1250,6 +1337,24 @@ func (m *ICATransactionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.KeyIds) > 0 {
+		dAtA16 := make([]byte, len(m.KeyIds)*10)
+		var j15 int
+		for _, num := range m.KeyIds {
+			for num >= 1<<7 {
+				dAtA16[j15] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j15++
+			}
+			dAtA16[j15] = uint8(num)
+			j15++
+		}
+		i -= j15
+		copy(dAtA[i:], dAtA16[:j15])
+		i = encodeVarintMpcsign(dAtA, i, uint64(j15))
+		i--
+		dAtA[i] = 0x52
+	}
 	if len(m.RejectReason) > 0 {
 		i -= len(m.RejectReason)
 		copy(dAtA[i:], m.RejectReason)
@@ -1336,12 +1441,8 @@ func (m *SignRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMpcsign(uint64(l))
 	}
-	if len(m.KeyIds) > 0 {
-		l = 0
-		for _, e := range m.KeyIds {
-			l += sovMpcsign(uint64(e))
-		}
-		n += 1 + sovMpcsign(uint64(l)) + l
+	if m.KeyId != 0 {
+		n += 1 + sovMpcsign(uint64(m.KeyId))
 	}
 	if m.KeyType != 0 {
 		n += 1 + sovMpcsign(uint64(m.KeyType))
@@ -1388,6 +1489,13 @@ func (m *SignRequest) Size() (n int) {
 	l = len(m.CacheId)
 	if l > 0 {
 		n += 1 + l + sovMpcsign(uint64(l))
+	}
+	if len(m.KeyIds) > 0 {
+		l = 0
+		for _, e := range m.KeyIds {
+			l += sovMpcsign(uint64(e))
+		}
+		n += 1 + sovMpcsign(uint64(l)) + l
 	}
 	return n
 }
@@ -1437,6 +1545,13 @@ func (m *SignTransactionRequest) Size() (n int) {
 	if m.NoBroadcast {
 		n += 2
 	}
+	if len(m.KeyIds) > 0 {
+		l = 0
+		for _, e := range m.KeyIds {
+			l += sovMpcsign(uint64(e))
+		}
+		n += 1 + sovMpcsign(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1453,12 +1568,8 @@ func (m *SignReqResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMpcsign(uint64(l))
 	}
-	if len(m.KeyIds) > 0 {
-		l = 0
-		for _, e := range m.KeyIds {
-			l += sovMpcsign(uint64(e))
-		}
-		n += 1 + sovMpcsign(uint64(l)) + l
+	if m.KeyId != 0 {
+		n += 1 + sovMpcsign(uint64(m.KeyId))
 	}
 	l = len(m.KeyType)
 	if l > 0 {
@@ -1508,6 +1619,13 @@ func (m *SignReqResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMpcsign(uint64(l))
 	}
+	if len(m.KeyIds) > 0 {
+		l = 0
+		for _, e := range m.KeyIds {
+			l += sovMpcsign(uint64(e))
+		}
+		n += 1 + sovMpcsign(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1540,6 +1658,13 @@ func (m *SignTxReqResponse) Size() (n int) {
 	}
 	if m.NoBroadcast {
 		n += 2
+	}
+	if len(m.KeyIds) > 0 {
+		l = 0
+		for _, e := range m.KeyIds {
+			l += sovMpcsign(uint64(e))
+		}
+		n += 1 + sovMpcsign(uint64(l)) + l
 	}
 	return n
 }
@@ -1585,6 +1710,13 @@ func (m *ICATransactionRequest) Size() (n int) {
 	l = len(m.RejectReason)
 	if l > 0 {
 		n += 1 + l + sovMpcsign(uint64(l))
+	}
+	if len(m.KeyIds) > 0 {
+		l = 0
+		for _, e := range m.KeyIds {
+			l += sovMpcsign(uint64(e))
+		}
+		n += 1 + sovMpcsign(uint64(l)) + l
 	}
 	return n
 }
@@ -1676,80 +1808,23 @@ func (m *SignRequest) Unmarshal(dAtA []byte) error {
 			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowMpcsign
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyId", wireType)
+			}
+			m.KeyId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMpcsign
 				}
-				m.KeyIds = append(m.KeyIds, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowMpcsign
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthMpcsign
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthMpcsign
-				}
-				if postIndex > l {
+				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.KeyId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
 				}
-				elementCount = count
-				if elementCount != 0 && len(m.KeyIds) == 0 {
-					m.KeyIds = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowMpcsign
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					m.KeyIds = append(m.KeyIds, v)
-				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
 			}
 		case 4:
 			if wireType != 0 {
@@ -2084,6 +2159,82 @@ func (m *SignRequest) Unmarshal(dAtA []byte) error {
 				m.CacheId = []byte{}
 			}
 			iNdEx = postIndex
+		case 14:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.KeyIds = append(m.KeyIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.KeyIds) == 0 {
+					m.KeyIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMpcsign
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.KeyIds = append(m.KeyIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMpcsign(dAtA[iNdEx:])
@@ -2399,6 +2550,82 @@ func (m *SignTransactionRequest) Unmarshal(dAtA []byte) error {
 				}
 			}
 			m.NoBroadcast = bool(v != 0)
+		case 8:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.KeyIds = append(m.KeyIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.KeyIds) == 0 {
+					m.KeyIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMpcsign
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.KeyIds = append(m.KeyIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMpcsign(dAtA[iNdEx:])
@@ -2501,80 +2728,23 @@ func (m *SignReqResponse) Unmarshal(dAtA []byte) error {
 			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowMpcsign
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyId", wireType)
+			}
+			m.KeyId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMpcsign
 				}
-				m.KeyIds = append(m.KeyIds, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowMpcsign
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthMpcsign
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthMpcsign
-				}
-				if postIndex > l {
+				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.KeyId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
 				}
-				elementCount = count
-				if elementCount != 0 && len(m.KeyIds) == 0 {
-					m.KeyIds = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowMpcsign
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					m.KeyIds = append(m.KeyIds, v)
-				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
 			}
 		case 4:
 			if wireType != 2 {
@@ -2935,6 +3105,82 @@ func (m *SignReqResponse) Unmarshal(dAtA []byte) error {
 				m.CacheId = []byte{}
 			}
 			iNdEx = postIndex
+		case 14:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.KeyIds = append(m.KeyIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.KeyIds) == 0 {
+					m.KeyIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMpcsign
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.KeyIds = append(m.KeyIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMpcsign(dAtA[iNdEx:])
@@ -3160,6 +3406,82 @@ func (m *SignTxReqResponse) Unmarshal(dAtA []byte) error {
 				}
 			}
 			m.NoBroadcast = bool(v != 0)
+		case 8:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.KeyIds = append(m.KeyIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.KeyIds) == 0 {
+					m.KeyIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMpcsign
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.KeyIds = append(m.KeyIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMpcsign(dAtA[iNdEx:])
@@ -3448,6 +3770,82 @@ func (m *ICATransactionRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.RejectReason = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 10:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.KeyIds = append(m.KeyIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowMpcsign
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthMpcsign
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.KeyIds) == 0 {
+					m.KeyIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowMpcsign
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.KeyIds = append(m.KeyIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMpcsign(dAtA[iNdEx:])
