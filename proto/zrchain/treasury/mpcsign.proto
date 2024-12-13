@@ -70,7 +70,7 @@ message SignTransactionRequest {
 message SignReqResponse {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3;
+  repeated uint64 key_ids = 3;
   string key_type = 4;
   repeated bytes data_for_signing = 5;
   string status = 6;

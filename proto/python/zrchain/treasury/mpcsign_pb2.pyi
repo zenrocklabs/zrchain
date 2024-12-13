@@ -81,10 +81,10 @@ class SignTransactionRequest(_message.Message):
     def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ...) -> None: ...
 
 class SignReqResponse(_message.Message):
-    __slots__ = ("id", "creator", "key_id", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id")
+    __slots__ = ("id", "creator", "key_ids", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
-    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     KEY_TYPE_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -97,7 +97,7 @@ class SignReqResponse(_message.Message):
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
-    key_id: int
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
     key_type: str
     data_for_signing: _containers.RepeatedScalarFieldContainer[bytes]
     status: str
@@ -108,7 +108,7 @@ class SignReqResponse(_message.Message):
     parent_req_id: int
     child_req_ids: _containers.RepeatedScalarFieldContainer[int]
     cache_id: bytes
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[str] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[str] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., key_type: _Optional[str] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[str] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ...) -> None: ...
 
 class SignTxReqResponse(_message.Message):
     __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast")
