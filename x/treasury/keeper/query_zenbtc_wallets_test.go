@@ -108,6 +108,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
+							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -146,7 +147,59 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
+							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
+						},
+					},
+				},
+				Pagination: &query.PageResponse{
+					NextKey: nil,
+					Total:   1,
+				},
+			},
+		},
+		{
+			name: "PASS: request Bitcoin wallet types for EVM chain type (metadata)",
+			args: args{
+				keys: []types.Key{
+					{
+						Id:            1,
+						WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+						KeyringAddr:   "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+						Type:          types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
+						PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
+						ZenbtcMetadata: &types.ZenBTCMetadata{
+							RecipientAddr: "0x9704Bc96D57180B3Cf4154fEf9Ba3A7aDFfDA9Ac",
+							ChainType:     types.WalletType_WALLET_TYPE_EVM,
+							ChainId:       uint64(11555111),
+							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
+						},
+					},
+				},
+				req: &types.QueryZenbtcWalletsRequest{
+					ChainType: types.WalletType_WALLET_TYPE_EVM,
+				},
+			},
+			want: &types.QueryZenbtcWalletsResponse{
+				ZenbtcWallets: []*types.KeyAndWalletResponse{
+					{
+						Key: &types.KeyResponse{
+							Id:            1,
+							WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+							KeyringAddr:   "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+							Type:          types.KeyType_KEY_TYPE_BITCOIN_SECP256K1.String(),
+							PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
+							ZenbtcMetadata: &types.ZenBTCMetadata{
+								RecipientAddr: "0x9704Bc96D57180B3Cf4154fEf9Ba3A7aDFfDA9Ac",
+								ChainType:     types.WalletType_WALLET_TYPE_EVM,
+								ChainId:       uint64(11555111),
+								ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
+							},
+						},
+						Wallets: []*types.WalletResponse{
+							{Address: "tb1qtun7x3s2ywksa32nl38d3fuuv8nk5angr0m8zv", Type: types.WalletType_WALLET_TYPE_BTC_TESTNET.String()},
+							{Address: "bc1qtun7x3s2ywksa32nl38d3fuuv8nk5angffq5el", Type: types.WalletType_WALLET_TYPE_BTC_MAINNET.String()},
+							{Address: "bcrt1qtun7x3s2ywksa32nl38d3fuuv8nk5angpxz249", Type: types.WalletType_WALLET_TYPE_BTC_REGNET.String()},
 						},
 					},
 				},
@@ -184,6 +237,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
+							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -202,6 +256,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							},
 						},
 						Wallets: []*types.WalletResponse{
+							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
@@ -241,6 +296,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					{
 						Key: &defaultECDSAKeyResponseWithZenBTCMetadata,
 						Wallets: []*types.WalletResponse{
+							{Address: "zen1tun7x3s2ywksa32nl38d3fuuv8nk5ang97v73r", Type: types.WalletType_WALLET_TYPE_NATIVE.String()},
 							{Address: "0xdEa33aE3DA8f2EbA6efBB3EF5d143415438a6541", Type: types.WalletType_WALLET_TYPE_EVM.String()},
 						},
 					},
