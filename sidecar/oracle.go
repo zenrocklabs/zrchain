@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
+	"strconv"
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
@@ -112,6 +115,21 @@ func (o *Oracle) fetchAndProcessState(
 	// 	return fmt.Errorf("failed to get solana fee: %w", err)
 	// }
 
+	resp, err := http.Get("https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT")
+	if err != nil {
+		return fmt.Errorf("failed to retrieve ROCK price data: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var priceData []PriceData
+	if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil {
+		return fmt.Errorf("failed to decode ROCK price data: %w", err)
+	}
+	ROCKUSDPrice, err := strconv.ParseFloat(priceData[0].Last, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse ROCK price data: %w", err)
+	}
+
 	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest block: %w", err)
@@ -137,10 +155,10 @@ func (o *Oracle) fetchAndProcessState(
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		RedemptionsEthereum:        redemptionsEthereum,
-		RedemptionsSolana:          nil,         // TODO: update me
-		ROCKUSDPrice:               0,           // TODO: add ROCKUSDPrice after TGE
-		BTCUSDPrice:                BTCUSDPrice, // TODO: update me
-		ETHUSDPrice:                4000.0,      // TODO: if we need ETH price let's uncomment above block
+		RedemptionsSolana:          nil, // TODO: update me
+		ROCKUSDPrice:               ROCKUSDPrice,
+		BTCUSDPrice:                BTCUSDPrice,
+		ETHUSDPrice:                4000.0, // TODO: if we need ETH price let's uncomment above block
 	}
 
 	return nil

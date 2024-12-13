@@ -48,26 +48,6 @@ type Oracle struct {
 	mainLoopTicker *time.Ticker
 }
 
-type CoinMarketCapResponse struct {
-	Status struct {
-		Timestamp    string `json:"timestamp"`
-		ErrorCode    int    `json:"error_code"`
-		ErrorMessage string `json:"error_message"`
-		Elapsed      int    `json:"elapsed"`
-		CreditCount  int    `json:"credit_count"`
-		Notice       string `json:"notice"`
-	} `json:"status"`
-	Data struct {
-		ETH struct {
-			Quote struct {
-				USD struct {
-					Price float64 `json:"price"`
-				} `json:"USD"`
-			} `json:"quote"`
-		} `json:"ETH"`
-	} `json:"data"`
-}
-
 type Config struct {
 	GRPCPort       int               `yaml:"grpc_port"`
 	StateFile      string            `yaml:"state_file"`
@@ -109,4 +89,18 @@ type PriceFeeds struct {
 type ZenBTC struct {
 	EthMainnet string `yaml:"eth_mainnet"`
 	EthHolesky string `yaml:"eth_holesky"`
+}
+
+type PriceData struct {
+	CurrencyPair     string `json:"currency_pair"`
+	Last             string `json:"last"`
+	LowestAsk        string `json:"lowest_ask"`
+	LowestSize       string `json:"lowest_size"`
+	HighestBid       string `json:"highest_bid"`
+	HighestSize      string `json:"highest_size"`
+	ChangePercentage string `json:"change_percentage"`
+	BaseVolume       string `json:"base_volume"`
+	QuoteVolume      string `json:"quote_volume"`
+	High24h          string `json:"high_24h"`
+	Low24h           string `json:"low_24h"`
 }

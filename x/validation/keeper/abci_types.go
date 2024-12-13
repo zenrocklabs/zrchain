@@ -161,19 +161,18 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: SolanaRedemptionsHash is empty")
 		invalid = true
 	}
-	// TODO: uncomment this after TGE
-	// if voteExt.ROCKUSDPrice.IsZero() {
-	//     logger.Error("invalid vote extension: ROCKUSDPrice is zero")
-	//     invalid = true
-	// }
-	// if ve.BTCUSDPrice.IsZero() {
-	//     logger.Error("invalid vote extension: BTCUSDPrice is zero")
-	//     invalid = true
-	// }
-	if ve.ETHUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ETHUSDPrice is zero")
+	if ve.ROCKUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ROCKUSDPrice is zero")
 		invalid = true
 	}
+	if ve.BTCUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: BTCUSDPrice is zero")
+		invalid = true
+	}
+	// if ve.ETHUSDPrice.IsZero() {
+	// 	logger.Error("invalid vote extension: ETHUSDPrice is zero")
+	// 	invalid = true
+	// }
 
 	return invalid
 }

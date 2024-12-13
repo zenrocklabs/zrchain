@@ -101,8 +101,7 @@ func (o *Oracle) processUpdates() {
 		newState.RedemptionsEthereum = update.RedemptionsEthereum
 		newState.RedemptionsSolana = update.RedemptionsSolana
 
-		// log.Printf("Received prices: ROCK/USD %f, BTC/USD %f, ETH/USD %f", update.ROCKUSDPrice, update.BTCUSDPrice, update.ETHUSDPrice)
-		// log.Printf("Received prices: ROCK/USD %f, BTC/USD %f", update.ROCKUSDPrice, update.BTCUSDPrice)
+		log.Printf("Received prices: ROCK/USD %f, BTC/USD %f", update.ROCKUSDPrice, update.BTCUSDPrice)
 		newState.ROCKUSDPrice = update.ROCKUSDPrice
 		newState.BTCUSDPrice = update.BTCUSDPrice
 		newState.ETHUSDPrice = update.ETHUSDPrice
