@@ -16,4 +16,5 @@ message Keyring {
   uint64 key_req_fee = 7;
   uint64 sig_req_fee = 8;
   bool is_active = 9;
+  bool delegate_fees = 10;
 }

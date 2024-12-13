@@ -264,7 +264,11 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 	}
 
 	if keyring.KeyReqFee > 0 {
-		err := k.SplitKeyringFee(ctx, msg.Creator, keyring.Address, keyring.KeyReqFee)
+		feeRecipient := keyring.Address
+		if keyring.DelegateFees {
+			feeRecipient = types.KeyringCollectorName
+		}
+		err := k.SplitKeyringFee(ctx, msg.Creator, feeRecipient, keyring.KeyReqFee)
 		if err != nil {
 			return nil, err
 		}
@@ -370,17 +374,12 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
 
-		// Accumulate fees per keyring
-		if keyring.SigReqFee > 0 {
-			keyringFees[keyring.Address] += keyring.SigReqFee
+	if keyring.SigReqFee > 0 {
+		feeRecipient := keyring.Address
+		if keyring.DelegateFees {
+			feeRecipient = types.KeyringCollectorName
 		}
-
-		req.KeyType = key.GetType()
-	}
-
-	// Process all keyring fees at once
-	for keyringAddr, fee := range keyringFees {
-		err := k.SplitKeyringFee(ctx, req.Creator, keyringAddr, fee)
+		err := k.SplitKeyringFee(ctx, req.Creator, feeRecipient, keyring.SigReqFee)
 		if err != nil {
 			return 0, err
 		}
@@ -480,24 +479,31 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 	zenrockFee := uint64(math.Round(float64(fee) * (float64(prms.KeyringCommission) / 100.0)))
 	keyringFee := fee - zenrockFee
 
-	dest := prms.KeyringCommissionDestination
-	err = k.bankKeeper.SendCoins(
+	err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(from),
-		sdk.MustAccAddressFromBech32(dest),
+		types.KeyringCollectorName,
 		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(zenrockFee))),
 	)
-
 	if err != nil {
 		return err
 	}
 
-	err = k.bankKeeper.SendCoins(
-		ctx,
-		sdk.MustAccAddressFromBech32(from),
-		sdk.MustAccAddressFromBech32(to),
-		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(keyringFee))),
-	)
+	if to == types.KeyringCollectorName {
+		err = k.bankKeeper.SendCoinsFromAccountToModule(
+			ctx,
+			sdk.MustAccAddressFromBech32(from),
+			types.KeyringCollectorName,
+			sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(keyringFee))),
+		)
+	} else {
+		err = k.bankKeeper.SendCoins(
+			ctx,
+			sdk.MustAccAddressFromBech32(from),
+			sdk.MustAccAddressFromBech32(to),
+			sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(keyringFee))),
+		)
+	}
 
 	return err
 }

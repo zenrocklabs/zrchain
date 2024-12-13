@@ -2,6 +2,7 @@
 
 K1="alice"
 K2="bob"
+K3="protocolwallet"
 CHAINID="zenrock"
 KEYRING="test"
 LOGLEVEL="info"
@@ -15,6 +16,7 @@ VALIDATOR_HOME="$HOME/.zrchain"
 SIDECAR_ADDR=""
 MNEMONIC1="strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue"
 MNEMONIC2="fee buzz avocado dolphin syrup rule access cave close puppy lemon round able bronze fame give spoon company since fog error trip toast unable"
+MNEMONIC3="rescue piano material dirt true hurry humor coach agree require happy crumble debate finish pizza foil slogan concert before write alone bronze response bird"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -127,10 +129,28 @@ if [ "$NON_VALIDATOR" = false ]; then
     # Add keys for Alice and Bob using their mnemonics
     recover_key_with_mnemonic $K1 "$MNEMONIC1" $KEYRING $HOME_DIR
     recover_key_with_mnemonic $K2 "$MNEMONIC2" $KEYRING $HOME_DIR
+    recover_key_with_mnemonic $K3 "$MNEMONIC3" $KEYRING $HOME_DIR
 fi
 
 # Initialize the node
 zenrockd init $MONIKER --chain-id $CHAINID --home $HOME_DIR
+
+# Set initial mint parameters
+jq '.app_state.mint.params = {
+    "mint_denom": "urock",
+    "inflation_rate_change": "0.000000000000000000",
+    "inflation_max": "0.000000000000000000",
+    "inflation_min": "0.000000000000000000",
+    "goal_bonded": "0.670000000000000000",
+    "blocks_per_year": "6311520",
+    "staking_yield": "0.070000000000000000",
+    "burn_rate": "0.100000000000000000",
+    "protocol_wallet_rate": "0.300000000000000000",
+    "protocol_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
+    "additional_staking_rewards": "0.300000000000000000",
+    "additional_mpc_rewards": "0.050000000000000000",
+    "additional_burn_rate": "0.250000000000000000"
+}' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
 function ssed {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -143,10 +163,15 @@ function ssed {
 if [ "$NON_VALIDATOR" = false ]; then
     if [ "$LOCALNET" != "2" ]; then
         # First validator node in localnet or default single-node flow: allocate genesis accounts
-        zenrockd genesis add-genesis-account $K1 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        zenrockd genesis add-genesis-account $K2 2000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-        zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 1000000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for Alice (K1)
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for Bob (K2)
+        zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        # Add funds for mint module - not a validator
+        zenrockd genesis add-genesis-account zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR --module-name mint
+        # Add funds for other accounts
+        zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+        zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
     else
         # Second validator node: copy genesis.json
         cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json
@@ -189,10 +214,10 @@ if [ "$NON_VALIDATOR" = false ]; then
     # Create gentx for the validator
     if [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]; then
         # First validator node or default
-        zenrockd genesis gentx $K2 1000000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
+        zenrockd genesis gentx $K2 125000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
     elif [ "$LOCALNET" = "2" ]; then
         # Second validator node
-        zenrockd genesis gentx $K1 1000000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
+        zenrockd genesis gentx $K1 125000000000000urock --keyring-backend $KEYRING --chain-id $CHAINID --home $HOME_DIR
     fi
 
     if [ -n "$LOCALNET" ]; then
@@ -235,9 +260,9 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "creator": "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
         "description": "ZenrockKMS",
         "is_active": true,
-        "key_req_fee": 0,
+        "key_req_fee": 75,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-        "sig_req_fee": 0
+        "sig_req_fee": 50
       },
       {
         "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",
