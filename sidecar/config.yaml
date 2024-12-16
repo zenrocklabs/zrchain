@@ -9,8 +9,10 @@ eth_oracle:
     mainnet: "https://rpc.ankr.com/eth"
   contract_addrs:
     service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
-    price_feed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-    redemption_trackers:
+    price_feeds:
+      btc: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+      eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+    zen_btc:
       eth_holesky: "0xEe6dd71ccf66E3F920a4D49a57020e0F89659407"
   network_name:
     mainnet: "Ethereum Mainnet"
