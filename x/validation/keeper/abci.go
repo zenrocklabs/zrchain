@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 
 	"cosmossdk.io/collections"
@@ -556,12 +557,20 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 
 	pendingMintTx := pendingMints.Txs[0]
 
+	baseFeePlusTip := new(big.Int).Add(new(big.Int).SetUint64(oracleData.EthBaseFee), new(big.Int).SetUint64(oracleData.EthTipCap))
+	feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
+
+	ethToBTC := oracleData.ETHUSDPrice.Quo(oracleData.BTCUSDPrice)
+	feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
+	feeBTCInt, _ := feeBTCFloat.Int(nil)
+	feeBTC := feeBTCInt.Uint64()
+
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,
 		pendingMintTx.ChainId,
 		pendingMintTx.Amount,
-		0, // TODO: update fee (currently hardcoded to 0)
+		feeBTC, // TODO: update fee (currently hardcoded to 0)
 		oracleData.RequestedEthNonce,
 		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,
