@@ -141,10 +141,10 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch BTC price: %w", err)
 	}
 
-	// ETHUSDPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to fetch ETH price: %w", err)
-	// }
+	ETHUSDPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
+	if err != nil {
+		return fmt.Errorf("failed to fetch ETH price: %w", err)
+	}
 
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
@@ -158,7 +158,7 @@ func (o *Oracle) fetchAndProcessState(
 		RedemptionsSolana:          nil, // TODO: update me
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                4000.0, // TODO: if we need ETH price let's uncomment above block
+		ETHUSDPrice:                ETHUSDPrice,
 	}
 
 	return nil
