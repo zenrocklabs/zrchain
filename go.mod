@@ -6,7 +6,6 @@ replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock
-	github.com/Zenrock-Foundation/zrchain/v5 => .
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.0.0
 	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
@@ -15,10 +14,6 @@ replace (
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	// TODO: remove local replaces once inputhashes branch on zenbtc repo is merged
-	github.com/zenrocklabs/zenbtc => ../zenbtc
-	github.com/zenrocklabs/zenrock-avs => ../zenrock-avs
-	github.com/zenrocklabs/zenrock/bitcoinproxy => ../zenrock/bitcoin-proxy
 )
 
 require (
@@ -76,7 +71,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zenrocklabs/zenbtc v1.5.1
-	github.com/zenrocklabs/zenrock-avs v1.4.11
+	github.com/zenrocklabs/zenrock-avs v1.4.12
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697
@@ -269,6 +264,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
@@ -306,10 +302,8 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
-	github.com/vrischmann/envconfig v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zenrocklabs/zenrock/bitcoinproxy v0.0.0-00010101000000-000000000000 // indirect
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v1.0.0 // indirect
 	go.etcd.io/bbolt v1.4.0-alpha.1 // indirect
@@ -319,7 +313,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
 	go.opentelemetry.io/otel v1.31.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.31.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.31.0 // indirect
@@ -331,11 +324,11 @@ require (
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/api v0.204.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
