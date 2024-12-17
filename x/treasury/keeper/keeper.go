@@ -359,9 +359,6 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 }
 
 func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, keyIds []uint64, req *types.SignRequest) (uint64, error) {
-	// Track fees per keyring
-	keyringFees := make(map[string]uint64)
-
 	// Verify all keys exist and collect keyring fees
 	for _, keyID := range keyIds {
 		key, err := k.KeyStore.Get(ctx, keyID)
@@ -376,21 +373,17 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 
 		// Accumulate fees per keyring
 		if keyring.SigReqFee > 0 {
-			keyringFees[keyring.Address] += keyring.SigReqFee
+			feeRecipient := keyring.Address
+			if keyring.DelegateFees {
+				feeRecipient = types.KeyringCollectorName
+			}
+			err := k.SplitKeyringFee(ctx, req.Creator, feeRecipient, keyring.SigReqFee)
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		req.KeyType = key.GetType()
-	}
-
-	if keyring.SigReqFee > 0 {
-		feeRecipient := keyring.Address
-		if keyring.DelegateFees {
-			feeRecipient = types.KeyringCollectorName
-		}
-		err := k.SplitKeyringFee(ctx, req.Creator, feeRecipient, keyring.SigReqFee)
-		if err != nil {
-			return 0, err
-		}
 	}
 
 	// Create parent request
@@ -487,13 +480,12 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 	zenrockFee := uint64(math.Round(float64(fee) * (float64(prms.KeyringCommission) / 100.0)))
 	keyringFee := fee - zenrockFee
 
-	err = k.bankKeeper.SendCoinsFromAccountToModule(
+	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(from),
 		types.KeyringCollectorName,
 		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(zenrockFee))),
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 

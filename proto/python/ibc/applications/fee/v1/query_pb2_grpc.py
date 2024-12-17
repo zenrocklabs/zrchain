@@ -86,7 +86,7 @@ class QueryServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def IncentivizedPacketsForChannel(self, request, context):
-        """Gets all incentivized packets for a specific channel
+        """IncentivizedPacketsForChannel retrieves all incentivized packets for a specific channel
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
