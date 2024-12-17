@@ -425,15 +425,17 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
-	// Convert EIP-1559 fees to legacy gas price
-	// gasPrice = baseFee + tipCap
-	gasPrice := new(big.Int).Add(
-		new(big.Int).SetUint64(baseFee),
-		new(big.Int).SetUint64(tipCap),
-	)
+	// For Holesky, use a high priority fee
+	priorityFee := new(big.Int).SetUint64(5_000_000_000) // 5 gwei
 
-	// TODO: REMOVE THIS LINE BELOW
-	gasPrice = gasPrice.Mul(gasPrice, big.NewInt(25))
+	// Buffer the base fee a little to allow for fluctuations
+	baseFeeBuffered := new(big.Int).Mul(
+		new(big.Int).SetUint64(baseFee),
+		big.NewInt(12),
+	)
+	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+
+	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
 		Nonce:    nonce,
