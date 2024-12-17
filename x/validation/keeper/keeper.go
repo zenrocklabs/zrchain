@@ -232,3 +232,7 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 
 	return valUpdates.Updates, nil
 }
+
+func (k Keeper) GetAssetPrice(asset string) (types.AssetPrice, error) {
+	return k.AssetPrices.Get(context.TODO(), asset)
+}

@@ -3,6 +3,7 @@ from cosmos.msg.v1 import msg_pb2 as _msg_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from zrchain.identity import params_pb2 as _params_pb2
+from zrchain.identity import keyring_pb2 as _keyring_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -105,20 +106,22 @@ class MsgRemoveWorkspaceOwnerResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgNewKeyring(_message.Message):
-    __slots__ = ("creator", "description", "party_threshold", "key_req_fee", "sig_req_fee", "delegate_fees")
+    __slots__ = ("creator", "description", "party_threshold", "key_req_fee", "sig_req_fee", "delegate_fees", "fees")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     PARTY_THRESHOLD_FIELD_NUMBER: _ClassVar[int]
     KEY_REQ_FEE_FIELD_NUMBER: _ClassVar[int]
     SIG_REQ_FEE_FIELD_NUMBER: _ClassVar[int]
     DELEGATE_FEES_FIELD_NUMBER: _ClassVar[int]
+    FEES_FIELD_NUMBER: _ClassVar[int]
     creator: str
     description: str
     party_threshold: int
     key_req_fee: int
     sig_req_fee: int
     delegate_fees: bool
-    def __init__(self, creator: _Optional[str] = ..., description: _Optional[str] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., delegate_fees: bool = ...) -> None: ...
+    fees: _keyring_pb2.KeyringFees
+    def __init__(self, creator: _Optional[str] = ..., description: _Optional[str] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., delegate_fees: bool = ..., fees: _Optional[_Union[_keyring_pb2.KeyringFees, _Mapping]] = ...) -> None: ...
 
 class MsgNewKeyringResponse(_message.Message):
     __slots__ = ("addr",)
@@ -143,7 +146,7 @@ class MsgAddKeyringPartyResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgUpdateKeyring(_message.Message):
-    __slots__ = ("creator", "keyring_addr", "party_threshold", "key_req_fee", "sig_req_fee", "description", "is_active")
+    __slots__ = ("creator", "keyring_addr", "party_threshold", "key_req_fee", "sig_req_fee", "description", "is_active", "fees")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEYRING_ADDR_FIELD_NUMBER: _ClassVar[int]
     PARTY_THRESHOLD_FIELD_NUMBER: _ClassVar[int]
@@ -151,6 +154,7 @@ class MsgUpdateKeyring(_message.Message):
     SIG_REQ_FEE_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     IS_ACTIVE_FIELD_NUMBER: _ClassVar[int]
+    FEES_FIELD_NUMBER: _ClassVar[int]
     creator: str
     keyring_addr: str
     party_threshold: int
@@ -158,7 +162,8 @@ class MsgUpdateKeyring(_message.Message):
     sig_req_fee: int
     description: str
     is_active: bool
-    def __init__(self, creator: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., description: _Optional[str] = ..., is_active: bool = ...) -> None: ...
+    fees: _keyring_pb2.KeyringFees
+    def __init__(self, creator: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., party_threshold: _Optional[int] = ..., key_req_fee: _Optional[int] = ..., sig_req_fee: _Optional[int] = ..., description: _Optional[str] = ..., is_active: bool = ..., fees: _Optional[_Union[_keyring_pb2.KeyringFees, _Mapping]] = ...) -> None: ...
 
 class MsgUpdateKeyringResponse(_message.Message):
     __slots__ = ()

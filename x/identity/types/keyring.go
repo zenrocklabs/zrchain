@@ -54,6 +54,10 @@ func (k *Keyring) SetDescription(description string) {
 	k.Description = description
 }
 
+func (k *Keyring) SetFees(fees *KeyringFees) {
+	k.Fees = fees
+}
+
 func (k *Keyring) RemoveParty(address string) {
 	for i, party := range k.Parties {
 		if party == address {

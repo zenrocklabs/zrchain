@@ -4,6 +4,7 @@ import (
 	"context"
 
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 
 	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,4 +37,8 @@ type ParamSubspace interface {
 
 type PolicyKeeper interface {
 	policykeeper.ExportedKeeper
+}
+
+type ValidationKeeper interface {
+	GetAssetPrice(string) (types.AssetPrice, error)
 }

@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
 	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"cosmossdk.io/collections"
@@ -60,6 +61,7 @@ type Keeper struct {
 	bankKeeper         types.BankKeeper
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
+	validationKeeper   types.ValidationKeeper
 }
 
 func NewKeeper(
@@ -70,6 +72,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	identityKeeper identity.Keeper,
 	policyKeeper policy.Keeper,
+	validationKeeper types.ValidationKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -78,13 +81,14 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:            cdc,
-		storeService:   storeService,
-		authority:      authority,
-		logger:         logger,
-		bankKeeper:     bankKeeper,
-		identityKeeper: identityKeeper,
-		policyKeeper:   policyKeeper,
+		cdc:              cdc,
+		storeService:     storeService,
+		authority:        authority,
+		logger:           logger,
+		bankKeeper:       bankKeeper,
+		identityKeeper:   identityKeeper,
+		policyKeeper:     policyKeeper,
+		validationKeeper: validationKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),
@@ -263,12 +267,14 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("keyring %s not found", msg.KeyringAddr)
 	}
 
-	if keyring.KeyReqFee > 0 {
+	fee, err := k.KeyFeeInRock(ctx, &keyring)
+
+	if fee > 0 {
 		feeRecipient := keyring.Address
 		if keyring.DelegateFees {
 			feeRecipient = types.KeyringCollectorName
 		}
-		err := k.SplitKeyringFee(ctx, msg.Creator, feeRecipient, keyring.KeyReqFee)
+		err := k.SplitKeyringFee(ctx, msg.Creator, feeRecipient, fee)
 		if err != nil {
 			return nil, err
 		}
@@ -362,12 +368,14 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 	}
 
-	if keyring.SigReqFee > 0 {
+	fee, err := k.SignatureFeeInRock(ctx, &keyring)
+
+	if fee > 0 {
 		feeRecipient := keyring.Address
 		if keyring.DelegateFees {
 			feeRecipient = types.KeyringCollectorName
 		}
-		err := k.SplitKeyringFee(ctx, req.Creator, feeRecipient, keyring.SigReqFee)
+		err := k.SplitKeyringFee(ctx, req.Creator, feeRecipient, fee)
 		if err != nil {
 			return 0, err
 		}
@@ -492,4 +500,43 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 	}
 
 	return err
+}
+
+// key and signature fee priority:
+//  1. usd_amount
+//  2. rock_amount
+//  3. sig_req_fee or key_req_fee
+
+func (k *Keeper) SignatureFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint64, error) {
+	if kr.Fees != nil && kr.Fees.Signature != nil {
+		if kr.Fees.Signature.UsdAmount > 0 {
+			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
+				urockPrice := ap.PriceUSD.Mul(sdkmath.LegacyNewDec(1000000))
+				sigPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Signature.UsdAmount)).Mul(urockPrice).RoundInt64()
+				return uint64(sigPrice), nil
+			}
+		} else if kr.Fees.Signature.RockAmount > 0 {
+			return kr.Fees.Signature.RockAmount, nil
+		}
+	}
+
+	return 0, nil
+}
+
+func (k *Keeper) KeyFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint64, error) {
+	if kr.Fees != nil && kr.Fees.Key != nil {
+		if kr.Fees.Key.UsdAmount > 0 {
+			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
+				urockPrice := ap.PriceUSD.Mul(sdkmath.LegacyNewDec(1000000))
+				if urockPrice.GT(sdkmath.LegacyNewDec(0)) {
+					keyPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Key.UsdAmount)).Mul(urockPrice).RoundInt64()
+					return uint64(keyPrice), nil
+				}
+			}
+		} else if kr.Fees.Key.RockAmount > 0 {
+			return kr.Fees.Key.RockAmount, nil
+		}
+	}
+
+	return 0, nil
 }
