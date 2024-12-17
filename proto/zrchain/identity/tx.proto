@@ -158,6 +158,7 @@ message MsgNewKeyring {
   uint32 party_threshold = 3;
   uint64 key_req_fee = 4;
   uint64 sig_req_fee = 5;
+  bool delegate_fees = 6;
 }
 
 // MsgNewKeyringResponse is the Msg/NewKeyringResponse response type

@@ -182,9 +182,11 @@ enum SolanaNetworkType {
   TESTNET = 3;
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
-// given transaction
-message MetadataSolana { SolanaNetworkType network = 1; }
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+message MetadataSolana {
+  SolanaNetworkType network = 1;
+  string mintAddress = 2;
+}
 
 // MsgNewSignTransactionRequest is the Msg/NewSignTransactionRequest request
 // type.

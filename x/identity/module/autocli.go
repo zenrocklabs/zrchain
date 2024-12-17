@@ -137,12 +137,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewKeyring",
-					Use:       "new-keyring [description] [key-request-fee] [sign-request-fee]",
+					Use:       "new-keyring [description] [key-request-fee] [sign-request-fee] [delegate-fees]",
 					Short:     "Send a new-keyring tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "description"},
 						{ProtoField: "key_req_fee"},
 						{ProtoField: "sig_req_fee"},
+						{ProtoField: "delegate_fees"},
 					},
 				},
 				{

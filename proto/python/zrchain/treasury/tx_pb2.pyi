@@ -152,10 +152,12 @@ class MetadataEthereum(_message.Message):
     def __init__(self, chain_id: _Optional[int] = ...) -> None: ...
 
 class MetadataSolana(_message.Message):
-    __slots__ = ("network",)
+    __slots__ = ("network", "mintAddress")
     NETWORK_FIELD_NUMBER: _ClassVar[int]
+    MINTADDRESS_FIELD_NUMBER: _ClassVar[int]
     network: SolanaNetworkType
-    def __init__(self, network: _Optional[_Union[SolanaNetworkType, str]] = ...) -> None: ...
+    mintAddress: str
+    def __init__(self, network: _Optional[_Union[SolanaNetworkType, str]] = ..., mintAddress: _Optional[str] = ...) -> None: ...
 
 class MsgNewSignTransactionRequest(_message.Message):
     __slots__ = ("creator", "key_id", "wallet_type", "unsigned_transaction", "metadata", "btl", "cache_id", "no_broadcast")

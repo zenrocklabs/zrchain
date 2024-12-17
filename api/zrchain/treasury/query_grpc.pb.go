@@ -40,6 +40,8 @@ type QueryClient interface {
 	ZrSignKeys(ctx context.Context, in *QueryZrSignKeysRequest, opts ...grpc.CallOption) (*QueryZrSignKeysResponse, error)
 	// Queries a list of KeyByAddress items.
 	KeyByAddress(ctx context.Context, in *QueryKeyByAddressRequest, opts ...grpc.CallOption) (*QueryKeyByAddressResponse, error)
+	// Queries a list of ZenbtcWallets items.
+	ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsRequest, opts ...grpc.CallOption) (*QueryZenbtcWalletsResponse, error)
 }
 
 type queryClient struct {
@@ -149,6 +151,15 @@ func (c *queryClient) KeyByAddress(ctx context.Context, in *QueryKeyByAddressReq
 	return out, nil
 }
 
+func (c *queryClient) ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsRequest, opts ...grpc.CallOption) (*QueryZenbtcWalletsResponse, error) {
+	out := new(QueryZenbtcWalletsResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.treasury.Query/ZenbtcWallets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -175,6 +186,8 @@ type QueryServer interface {
 	ZrSignKeys(context.Context, *QueryZrSignKeysRequest) (*QueryZrSignKeysResponse, error)
 	// Queries a list of KeyByAddress items.
 	KeyByAddress(context.Context, *QueryKeyByAddressRequest) (*QueryKeyByAddressResponse, error)
+	// Queries a list of ZenbtcWallets items.
+	ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -214,6 +227,9 @@ func (UnimplementedQueryServer) ZrSignKeys(context.Context, *QueryZrSignKeysRequ
 }
 func (UnimplementedQueryServer) KeyByAddress(context.Context, *QueryKeyByAddressRequest) (*QueryKeyByAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KeyByAddress not implemented")
+}
+func (UnimplementedQueryServer) ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ZenbtcWallets not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -426,6 +442,24 @@ func _Query_KeyByAddress_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ZenbtcWallets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryZenbtcWalletsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ZenbtcWallets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zrchain.treasury.Query/ZenbtcWallets",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ZenbtcWallets(ctx, req.(*QueryZenbtcWalletsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -476,6 +510,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KeyByAddress",
 			Handler:    _Query_KeyByAddress_Handler,
+		},
+		{
+			MethodName: "ZenbtcWallets",
+			Handler:    _Query_ZenbtcWallets_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -13,6 +13,10 @@ func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 		return nil, errorsmod.Wrapf(types.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.GetAuthority(), req.Authority)
 	}
 
+	if req.Params.KeyringCommission > 100 {
+		return nil, errorsmod.Wrapf(types.ErrInvalidCommission, "commission must be between 0 and 100")
+	}
+
 	if err := k.ParamStore.Set(goCtx, req.Params); err != nil {
 		return nil, err
 	}

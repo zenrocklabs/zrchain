@@ -1,0 +1,113 @@
+syntax = "proto3";
+package zrchain.mint.v1beta1;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/mint/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Minter represents the minting state.
+message Minter {
+  // current annual inflation rate
+  string inflation = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  // current annual expected provisions
+  string annual_provisions = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Params defines the parameters for the x/mint module.
+message Params {
+  option (amino.name) = "Zenrock-Foundation/zrchain/v5/x/mint/Params";
+
+  // type of coin to mint
+  string mint_denom = 1;
+  // maximum annual change in inflation rate
+  string inflation_rate_change = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // maximum inflation rate
+  string inflation_max = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // minimum inflation rate
+  string inflation_min = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // goal of percent bonded atoms
+  string goal_bonded = 5 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // expected blocks per year
+  uint64 blocks_per_year = 6;
+
+  // goal of percent staking yield
+  string staking_yield = 7 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // rewards burn rate
+  string burn_rate = 8 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // rewards protocol wallet rate
+  string protocol_wallet_rate = 9 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // address of protocol wallet
+  string protocol_wallet_address = 10;
+
+  // additional staking rewards rate
+  string additional_staking_rewards = 11 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // additional MPC rewards rate
+  string additional_mpc_rewards = 12 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // additional burn rate
+  string additional_burn_rate = 13 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+}
