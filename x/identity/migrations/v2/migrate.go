@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"fmt"
+
 	"cosmossdk.io/collections"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/pkg/errors"
@@ -38,7 +40,7 @@ func MigrateKeyrings(
 		if err != nil {
 			return err
 		}
-
+		fmt.Println(string(key))
 		value.Fees = &types.KeyringFees{
 			Key: &types.KeyringFee{
 				RockAmount: value.KeyReqFee,
