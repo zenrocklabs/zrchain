@@ -1310,6 +1310,8 @@ github.com/zenrocklabs/zenbtc v1.5.1 h1:Kjwch0X/XaSBAO0SltMePYIz7Y0SLi+JtbWBH28M
 github.com/zenrocklabs/zenbtc v1.5.1/go.mod h1:3cksxDyurBPn7wVBKcYWPPd7eSUX1MmGbhaXOTFeMr4=
 github.com/zenrocklabs/zenbtc v1.6.0 h1:wvzksgkpUuSyTbs49ri/6TPy6Hf1e7iH2LFr6+ochQA=
 github.com/zenrocklabs/zenbtc v1.6.0/go.mod h1:hOXhAfNG+CNsyeD033M4F6VmT1EJxWwE2tkKwHow5Nc=
+github.com/zenrocklabs/zenbtc v1.6.1 h1:9Nnj/45fUOtSxOIcZTr07TKxqCwQgE/GZ0zF5uAdLCw=
+github.com/zenrocklabs/zenbtc v1.6.1/go.mod h1:dVX+veroPdeY+/pKrZyszw7Yl9I9bk9CVgptU3ah/6I=
 github.com/zenrocklabs/zenrock-avs v1.4.12 h1:6ZoWf5f0bbpmj/iNlZ8pHcKlrPpllr2hBR5eeS3pY0A=
 github.com/zenrocklabs/zenrock-avs v1.4.12/go.mod h1:4X1JvR4bRBvFvvUCCWH4xDUJP3VHiJMnyl2QjqgrLFw=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
