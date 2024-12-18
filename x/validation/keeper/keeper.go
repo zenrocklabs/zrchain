@@ -69,6 +69,8 @@ type Keeper struct {
 	VoteExtensionRejected collections.Item[bool]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	// RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
+	// TODO: remove line below
+	ConfirmedUnlockTxs collections.Map[collections.Pair[string, string], types.WithdrawalInfo]
 }
 
 // NewKeeper creates a new staking Keeper instance
