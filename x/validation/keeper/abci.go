@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,10 +12,13 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 func (k *Keeper) BeginBlocker(ctx context.Context) error {
@@ -70,14 +74,14 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving solana redemptions hash: %w", err)
 	}
 
-	// neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
-	// if err != nil {
-	// 	return VoteExtension{}, err
-	// }
-	// bitcoinHeaderHash, err := deriveBitcoinHeaderHash(neutrinoResponse.BlockHeader)
-	// if err != nil {
-	// 	return VoteExtension{}, err
-	// }
+	neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
+	if err != nil {
+		return VoteExtension{}, err
+	}
+	bitcoinHeaderHash, err := deriveBitcoinHeaderHash(neutrinoResponse.BlockHeader)
+	if err != nil {
+		return VoteExtension{}, err
+	}
 
 	nonce, err := k.getNextEthereumNonce(ctx)
 	if err != nil {
@@ -85,15 +89,15 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 
 	voteExt := VoteExtension{
-		ZRChainBlockHeight:      height,
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		BTCUSDPrice:             oracleData.BTCUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		EigenDelegationsHash:    avsDelegationsHash[:],
-		EthereumRedemptionsHash: ethereumRedemptionsHash[:],
-		SolanaRedemptionsHash:   solanaRedemptionsHash[:],
-		// BtcBlockHeight:             neutrinoResponse.BlockHeight,
-		// BtcHeaderHash:              bitcoinHeaderHash[:],
+		ZRChainBlockHeight:         height,
+		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
+		BTCUSDPrice:                oracleData.BTCUSDPrice,
+		ETHUSDPrice:                oracleData.ETHUSDPrice,
+		EigenDelegationsHash:       avsDelegationsHash[:],
+		EthereumRedemptionsHash:    ethereumRedemptionsHash[:],
+		SolanaRedemptionsHash:      solanaRedemptionsHash[:],
+		BtcBlockHeight:             neutrinoResponse.BlockHeight,
+		BtcHeaderHash:              bitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
 		EthGasLimit:                oracleData.EthGasLimit,
 		EthBaseFee:                 oracleData.EthBaseFee,
@@ -398,50 +402,50 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 			oracleData.BtcBlockHeight, oracleData.BtcBlockHeader.MerkleRoot)
 	}
 
-	// requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
-	// if err != nil {
-	// 	if !errors.Is(err, collections.ErrNotFound) {
-	// 		k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
-	// 		return err
-	// 	}
-	// 	requestedHeaders = zenbtctypes.RequestedBitcoinHeaders{}
-	// 	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
-	// 		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
-	// 		return err
-	// 	}
-	// }
+	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+			return err
+		}
+		requestedHeaders = zenbtctypes.RequestedBitcoinHeaders{}
+		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
+			return err
+		}
+	}
 
 	// Check if this is a requested historical header
-	// isRequestedHeader := false
-	// for _, height := range requestedHeaders.Heights {
-	// 	if height == oracleData.BtcBlockHeight {
-	// 		isRequestedHeader = true
-	// 		break
-	// 	}
-	// }
+	isRequestedHeader := false
+	for _, height := range requestedHeaders.Heights {
+		if height == oracleData.BtcBlockHeight {
+			isRequestedHeader = true
+			break
+		}
+	}
 
 	// If it's a requested header, just store it and return
-	// if isRequestedHeader {
-	// 	k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
-	// 	return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
-	// }
+	if isRequestedHeader {
+		k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
+		return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
+	}
 
 	// Check for existing header (potential fork)
-	// existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
-	// if err != nil {
-	// 	if !errors.Is(err, collections.ErrNotFound) {
-	// 		k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-	// 		return err
-	// 	}
-	// 	existingHeader = sidecar.BTCBlockHeader{}
-	// }
+	existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+			return err
+		}
+		existingHeader = sidecar.BTCBlockHeader{}
+	}
 
 	// If we have a different header for this height, handle potential fork
-	// if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
-	// 	if err := k.handlePotentialBitcoinFork(ctx, oracleData, existingHeader, requestedHeaders); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
+		if err := k.handlePotentialBitcoinFork(ctx, oracleData, existingHeader, requestedHeaders); err != nil {
+			return err
+		}
+	}
 
 	// Store the new header
 	return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
@@ -452,7 +456,7 @@ func (k *Keeper) handlePotentialBitcoinFork(
 	ctx sdk.Context,
 	oracleData OracleData,
 	existingHeader sidecar.BTCBlockHeader,
-	// requestedHeaders zenbtctypes.RequestedBitcoinHeaders,
+	requestedHeaders zenbtctypes.RequestedBitcoinHeaders,
 ) error {
 	prevHeights := make([]int64, 0, 6)
 	for i := int64(1); i <= 6; i++ {
@@ -467,12 +471,12 @@ func (k *Keeper) handlePotentialBitcoinFork(
 		return nil
 	}
 
-	// requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
+	requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
 
-	// if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
-	// 	k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
-	// 	return err
-	// }
+	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
+		return err
+	}
 
 	k.Logger(ctx).Info("detected potential fork, requesting verification of previous blocks",
 		"height", oracleData.BtcBlockHeight,
@@ -511,46 +515,46 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		return nil
 	}
 
-	// lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
-	// if err != nil {
-	// 	if !errors.Is(err, collections.ErrNotFound) {
-	// 		return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
-	// 	}
-	// 	lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthNonce, Counter: 0}
-	// 	if err := k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
-	// 		return fmt.Errorf("error setting last used Ethereum nonce: %w", err)
-	// 	}
-	// }
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
+		}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthNonce, Counter: 0}
+		if err := k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+			return fmt.Errorf("error setting last used Ethereum nonce: %w", err)
+		}
+	}
 
-	// lastMintTx := pendingMints.Txs[0]
+	lastMintTx := pendingMints.Txs[0]
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
-	// if oracleData.RequestedEthNonce != lastUsedNonce.Nonce {
-	// 	supply, err := k.ZenBTCSupply.Get(ctx)
-	// 	if err != nil {
-	// 		return fmt.Errorf("error getting zenBTC supply: %w", err)
-	// 	}
+	if oracleData.RequestedEthNonce != lastUsedNonce.Nonce {
+		supply, err := k.ZenBTCSupply.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting zenBTC supply: %w", err)
+		}
 
-	// 	supply.MintedZenBTC += lastMintTx.Amount
+		supply.MintedZenBTC += lastMintTx.Amount
 
-	// 	if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
-	// 		return fmt.Errorf("error updating zenBTC supply: %w", err)
-	// 	}
+		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
+			return fmt.Errorf("error updating zenBTC supply: %w", err)
+		}
 
-	// 	pendingMints.Txs = pendingMints.Txs[1:]
-	// 	if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
-	// 		return fmt.Errorf("error setting pending mint transactions: %w", err)
-	// 	}
+		pendingMints.Txs = pendingMints.Txs[1:]
+		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
+			return fmt.Errorf("error setting pending mint transactions: %w", err)
+		}
 
-	// 	if len(pendingMints.Txs) == 0 {
-	// 		if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
-	// 			return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
-	// 		}
-	// 		return nil
-	// 	}
-	// }
+		if len(pendingMints.Txs) == 0 {
+			if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
+				return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+			}
+			return nil
+		}
+	}
 
-	// pendingMintTx := pendingMints.Txs[0]
+	pendingMintTx := pendingMints.Txs[0]
 
 	// baseFeePlusTip := new(big.Int).Add(new(big.Int).SetUint64(oracleData.EthBaseFee), new(big.Int).SetUint64(oracleData.EthTipCap))
 	// feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
@@ -563,42 +567,42 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 	// feeBTCInt, _ := feeBTCFloat.Int(nil)
 	// feeBTC := feeBTCInt.Uint64()
 
-	// unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
-	// 	ctx,
-	// 	pendingMintTx.RecipientAddress,
-	// 	pendingMintTx.ChainId,
-	// 	pendingMintTx.Amount,
-	// 	// feeBTC,
-	// 	0,
-	// 	oracleData.RequestedEthNonce,
-	// 	oracleData.EthGasLimit,
-	// 	oracleData.EthBaseFee,
-	// 	oracleData.EthTipCap,
-	// )
-	// if err != nil {
-	// 	return fmt.Errorf("error constructing mint transaction: %w", err)
-	// }
+	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
+		ctx,
+		pendingMintTx.RecipientAddress,
+		pendingMintTx.ChainId,
+		pendingMintTx.Amount,
+		// feeBTC,
+		0,
+		oracleData.RequestedEthNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		return fmt.Errorf("error constructing mint transaction: %w", err)
+	}
 
-	// metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
-	// if err != nil {
-	// 	return fmt.Errorf("error creating metadata: %w", err)
-	// }
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
+	if err != nil {
+		return fmt.Errorf("error creating metadata: %w", err)
+	}
 
-	// if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
-	// 	ctx,
-	// 	&treasurytypes.MsgNewSignTransactionRequest{
-	// 		Creator:             pendingMintTx.Creator,
-	// 		KeyId:               pendingMintTx.KeyId,
-	// 		WalletType:          pendingMintTx.ChainType,
-	// 		UnsignedTransaction: unsignedMintTx,
-	// 		Metadata:            metadata,
-	// 		NoBroadcast:         false,
-	// 	},
-	// 	[]byte(hex.EncodeToString(unsignedMintTxHash)),
-	// ); err != nil {
-	// 	k.Logger(ctx).Error("error creating mint transaction", "err", err)
-	// 	return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
-	// }
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             pendingMintTx.Creator,
+			KeyId:               pendingMintTx.KeyId,
+			WalletType:          pendingMintTx.ChainType,
+			UnsignedTransaction: unsignedMintTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedMintTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating mint transaction", "err", err)
+		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
+	}
 
 	return nil
 }
@@ -609,11 +613,11 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	}
 
 	// Get current exchange rate for conversion
-	// exchangeRate, err := k.GetZenBTCExchangeRate(ctx)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
-	// 	return
-	// }
+	exchangeRate, err := k.GetZenBTCExchangeRate(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
+		return
+	}
 
 	for _, redemption := range oracleData.EthereumRedemptions {
 		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
@@ -628,19 +632,19 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 
 		// Convert zenBTC amount to BTC amount
 		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
-		// btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
+		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
 
-		// if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{
-		// 	Data: zenbtctypes.RedemptionData{
-		// 		Id:                 redemption.Id,
-		// 		DestinationAddress: redemption.DestinationAddress,
-		// 		Amount:             btcAmount,
-		// 	},
-		// 	Completed: false,
-		// }); err != nil {
-		// 	k.Logger(ctx).Error("error adding redemption to store", "err", err)
-		// 	continue
-		// }
+		if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{
+			Data: zenbtctypes.RedemptionData{
+				Id:                 redemption.Id,
+				DestinationAddress: redemption.DestinationAddress,
+				Amount:             btcAmount,
+			},
+			Completed: false,
+		}); err != nil {
+			k.Logger(ctx).Error("error adding redemption to store", "err", err)
+			continue
+		}
 	}
 }
 
