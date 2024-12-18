@@ -117,9 +117,9 @@ set -e
 
 make install
 
-# Only make sidecar if not using --localnet 2 or --no-sidecar/--no-vote-extensions
+# Only build sidecar if not using --localnet 2 or --no-sidecar/--no-vote-extensions
 if [[ "$LOCALNET" != "2" && -z "$NO_SIDECAR" && -z "$NO_VOTE_EXTENSIONS" ]]; then
-    make sidecar
+    make build-sidecar
 fi
 
 rm -rf sidecar/neutrino/neutrino_*/*.bin

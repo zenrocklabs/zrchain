@@ -15,47 +15,45 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  
+
   // Parameters queries the parameters of the module.
-  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/zrchain/policy/params";
-  
   }
-  
+
   // Queries a list of Actions items.
-  rpc Actions (QueryActionsRequest) returns (QueryActionsResponse) {
+  rpc Actions(QueryActionsRequest) returns (QueryActionsResponse) {
     option (google.api.http).get = "/zrchain/policy/actions";
-  
   }
-  
+
   // Queries a list of Policies items.
-  rpc Policies (QueryPoliciesRequest) returns (QueryPoliciesResponse) {
+  rpc Policies(QueryPoliciesRequest) returns (QueryPoliciesResponse) {
     option (google.api.http).get = "/zrchain/policy/policies";
-  
   }
-  
+
   // Queries a list of PolicyById items.
-  rpc PolicyById (QueryPolicyByIdRequest) returns (QueryPolicyByIdResponse) {
+  rpc PolicyById(QueryPolicyByIdRequest) returns (QueryPolicyByIdResponse) {
     option (google.api.http).get = "/zrchain/policy/policy_by_id/{id}";
-  
   }
-  
+
   // Queries a list of SignMethodsByAddress items.
-  rpc SignMethodsByAddress (QuerySignMethodsByAddressRequest) returns (QuerySignMethodsByAddressResponse) {
-    option (google.api.http).get = "/zrchain/policy/sign_methods_by_address/{address}";
-  
+  rpc SignMethodsByAddress(QuerySignMethodsByAddressRequest)
+      returns (QuerySignMethodsByAddressResponse) {
+    option (google.api.http).get =
+        "/zrchain/policy/sign_methods_by_address/{address}";
   }
-  
+
   // Queries a list of PoliciesByCreator items.
-  rpc PoliciesByCreator (QueryPoliciesByCreatorRequest) returns (QueryPoliciesByCreatorResponse) {
-    option (google.api.http).get = "/zrchain/policy/policies_by_creator/{creators}";
-  
+  rpc PoliciesByCreator(QueryPoliciesByCreatorRequest)
+      returns (QueryPoliciesByCreatorResponse) {
+    option (google.api.http).get =
+        "/zrchain/policy/policies_by_creator/{creators}";
   }
-  
+
   // Queries a list of ActionDetailsById items.
-  rpc ActionDetailsById (QueryActionDetailsByIdRequest) returns (QueryActionDetailsByIdResponse) {
+  rpc ActionDetailsById(QueryActionDetailsByIdRequest)
+      returns (QueryActionDetailsByIdResponse) {
     option (google.api.http).get = "/zrchain/policy/action_details_by_id/{id}";
-  
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -63,22 +61,23 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-  
+
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // QueryActionsRequest is request type for the Query/Actions RPC method.
 message QueryActionsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
-  string                                address    = 2;
-  ActionStatus                          status     = 3;
+  string address = 2;
+  ActionStatus status = 3;
 }
 
 // QueryActionsResponse is response type for the Query/Actions RPC method.
 message QueryActionsResponse {
-           cosmos.base.query.v1beta1.PageResponse pagination = 1;
-  repeated ActionResponse                         actions    = 2 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated ActionResponse actions = 2 [ (gogoproto.nullable) = false ];
 }
 
 // QueryPoliciesRequest is request type for the Query/Policies RPC method.
@@ -88,57 +87,51 @@ message QueryPoliciesRequest {
 
 // PolicyResponse defines the properties of a policy.
 message PolicyResponse {
-  Policy              policy   = 1;
+  Policy policy = 1;
   google.protobuf.Any metadata = 2;
 }
 
 // QueryPoliciesResponse is response type for the Query/Policies RPC method.
 message QueryPoliciesResponse {
-           cosmos.base.query.v1beta1.PageResponse pagination = 1;
-  repeated PolicyResponse                         policies   = 2 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated PolicyResponse policies = 2 [ (gogoproto.nullable) = false ];
 }
 
 // QueryPolicyByIdRequest is request type for the Query/PolicyById RPC method.
-message QueryPolicyByIdRequest {
-  uint64 id = 1;
-}
+message QueryPolicyByIdRequest { uint64 id = 1; }
 
 // QueryPolicyByIdResponse is response type for the Query/PolicyById RPC method.
-message QueryPolicyByIdResponse {
-  PolicyResponse policy = 1;
-}
+message QueryPolicyByIdResponse { PolicyResponse policy = 1; }
 
 // QuerySignMethodsByAddressRequest is request type for the
 // Query/SignMethodsByAddress RPC method.
 message QuerySignMethodsByAddressRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
-  string                                address    = 2;
+  string address = 2;
 }
 
 // QuerySignMethodsByAddressResponse is response type for the
 // Query/SignMethodsByAddress RPC method.
 message QuerySignMethodsByAddressResponse {
-           cosmos.base.query.v1beta1.PageResponse pagination = 1;
-  repeated google.protobuf.Any                    config     = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated google.protobuf.Any config = 2;
 }
 
 // QueryPoliciesByCreatorRequest is request type for the
 // Query/PoliciesByCreatorRequest RPC method.
 message QueryPoliciesByCreatorRequest {
-  repeated string                                creators   = 1;
-           cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  repeated string creators = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 // QueryPoliciesByCreatorResponse is response type for the
 // Query/PoliciesByCreatorRequest RPC method.
 message QueryPoliciesByCreatorResponse {
-  repeated Policy                                 policies   = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated Policy policies = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryActionDetailsByIdRequest {
-  uint64 id = 1;
-}
+message QueryActionDetailsByIdRequest { uint64 id = 1; }
 
 message QueryActionDetailsByIdResponse {
   uint64 id = 1;
@@ -148,4 +141,3 @@ message QueryActionDetailsByIdResponse {
   repeated string pending_approvers = 5;
   uint64 current_height = 6;
 }
-

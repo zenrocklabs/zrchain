@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,35 +16,38 @@ func (o *Oracle) LoadFromFile(filename string) error {
 		if os.IsNotExist(err) {
 			// Initialize with empty state if file doesn't exist
 			o.updateChan <- EmptyOracleState
-			o.stateCache = []OracleState{EmptyOracleState}
+			o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 			return nil
 		}
 		return err
 	}
 	defer file.Close()
 
-	var states []OracleState
+	var states []sidecartypes.OracleState
 	if err := json.NewDecoder(file).Decode(&states); err != nil {
 		return fmt.Errorf("failed to decode state file: %w", err)
 	}
 
 	if len(states) > 0 {
 		latestState := &states[len(states)-1]
-		o.updateChan <- OracleState{
-			Delegations:    latestState.Delegations,
-			EthBlockHeight: latestState.EthBlockHeight,
-			EthBlockHash:   latestState.EthBlockHash,
-			EthGasLimit:    latestState.EthGasLimit,
-			EthBaseFee:     latestState.EthBaseFee,
-			EthTipCap:      latestState.EthTipCap,
-			ETHUSDPrice:    latestState.ETHUSDPrice,
-			ROCKUSDPrice:   latestState.ROCKUSDPrice,
+		o.updateChan <- sidecartypes.OracleState{
+			EigenDelegations:           latestState.EigenDelegations,
+			EthBlockHeight:             latestState.EthBlockHeight,
+			EthGasLimit:                latestState.EthGasLimit,
+			EthBaseFee:                 latestState.EthBaseFee,
+			EthTipCap:                  latestState.EthTipCap,
+			SolanaLamportsPerSignature: latestState.SolanaLamportsPerSignature,
+			RedemptionsEthereum:        latestState.RedemptionsEthereum,
+			RedemptionsSolana:          latestState.RedemptionsSolana,
+			ROCKUSDPrice:               latestState.ROCKUSDPrice,
+			BTCUSDPrice:                latestState.BTCUSDPrice,
+			ETHUSDPrice:                latestState.ETHUSDPrice,
 		}
 		o.stateCache = states
 	} else {
 		// Initialize with empty state if the file is empty
 		o.updateChan <- EmptyOracleState
-		o.stateCache = []OracleState{EmptyOracleState}
+		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 	}
 
 	return nil
@@ -60,7 +64,7 @@ func (o *Oracle) SaveToFile(filename string) error {
 }
 
 func (o *Oracle) CacheState() {
-	currentState := o.currentState.Load().(*OracleState)
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 	newState := *currentState // Create a copy of the current state
 
 	// Update the ID and store the new state
@@ -77,7 +81,7 @@ func (o *Oracle) CacheState() {
 	}
 }
 
-func (o *Oracle) getStateByEthHeight(height uint64) (*OracleState, error) {
+func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, error) {
 	for _, state := range o.stateCache {
 		if state.EthBlockHeight == height {
 			return &state, nil

@@ -15,7 +15,7 @@ func TestKeeper_SignRequest(t *testing.T) {
 	var defaultSignReq = types.SignRequest{
 		Id:             1,
 		Creator:        "testCreator",
-		KeyId:          1,
+		KeyIds:         []uint64{1},
 		DataForSigning: [][]byte{[]byte("test")},
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -24,7 +24,7 @@ func TestKeeper_SignRequest(t *testing.T) {
 	var defaultSignReqResponse = types.SignReqResponse{
 		Id:             1,
 		Creator:        "testCreator",
-		KeyId:          1,
+		KeyIds:         []uint64{1},
 		DataForSigning: [][]byte{[]byte("test")},
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING.String(),
 		KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1.String(),
@@ -33,7 +33,7 @@ func TestKeeper_SignRequest(t *testing.T) {
 	var signReqExisting = types.SignRequest{
 		Id:             2,
 		Creator:        "testCreator",
-		KeyId:          2,
+		KeyIds:         []uint64{2},
 		DataForSigning: [][]byte{[]byte("test")},
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -107,7 +107,7 @@ func TestKeeper_SignRequest(t *testing.T) {
 				signReqs: []types.SignRequest{{
 					Id:      1,
 					Creator: "testCreator",
-					KeyId:   50756,
+					KeyIds:  []uint64{50756},
 				}},
 				req: &types.QuerySignatureRequestsRequest{
 					KeyringAddr: defaultKr.Address,
@@ -140,21 +140,21 @@ func TestKeeper_SignRequest(t *testing.T) {
 					{
 						Id:      1,
 						Creator: "testCreator",
-						KeyId:   1,
+						KeyIds:  []uint64{1},
 						KeyType: types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 						Status:  types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					},
 					{
 						Id:      2,
 						Creator: "testCreator",
-						KeyId:   1,
+						KeyIds:  []uint64{1},
 						KeyType: types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 						Status:  types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					},
 					{
 						Id:      3,
 						Creator: "testCreator",
-						KeyId:   1,
+						KeyIds:  []uint64{1},
 						KeyType: types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 						Status:  types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
 					},
@@ -169,7 +169,7 @@ func TestKeeper_SignRequest(t *testing.T) {
 					{
 						Id:      2,
 						Creator: "testCreator",
-						KeyId:   1,
+						KeyIds:  []uint64{1},
 						KeyType: types.KeyType_KEY_TYPE_ECDSA_SECP256K1.String(),
 						Status:  types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING.String(),
 					},

@@ -1224,11 +1224,14 @@ const (
 	AuthorizationType_AUTHORIZATION_TYPE_UNSPECIFIED AuthorizationType = 0
 	// AUTHORIZATION_TYPE_DELEGATE defines an authorization type for Msg/Delegate
 	AuthorizationType_AUTHORIZATION_TYPE_DELEGATE AuthorizationType = 1
-	// AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for Msg/Undelegate
+	// AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for
+	// Msg/Undelegate
 	AuthorizationType_AUTHORIZATION_TYPE_UNDELEGATE AuthorizationType = 2
-	// AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for Msg/BeginRedelegate
+	// AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for
+	// Msg/BeginRedelegate
 	AuthorizationType_AUTHORIZATION_TYPE_REDELEGATE AuthorizationType = 3
-	// AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION defines an authorization type for Msg/MsgCancelUnbondingDelegation
+	// AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION defines an authorization
+	// type for Msg/MsgCancelUnbondingDelegation
 	AuthorizationType_AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION AuthorizationType = 4
 )
 
@@ -1285,8 +1288,9 @@ type StakeAuthorization struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// max_tokens specifies the maximum amount of tokens can be delegate to a validator. If it is
-	// empty, there is no spend limit and any amount of coins can be delegated.
+	// max_tokens specifies the maximum amount of tokens can be delegate to a
+	// validator. If it is empty, there is no spend limit and any amount of coins
+	// can be delegated.
 	MaxTokens *v1beta1.Coin `protobuf:"bytes,1,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
 	// validators is the oneof that represents either allow_list or deny_list
 	//
@@ -1359,13 +1363,14 @@ type isStakeAuthorization_Validators interface {
 }
 
 type StakeAuthorization_AllowList struct {
-	// allow_list specifies list of validator addresses to whom grantee can delegate tokens on behalf of granter's
-	// account.
+	// allow_list specifies list of validator addresses to whom grantee can
+	// delegate tokens on behalf of granter's account.
 	AllowList *StakeAuthorization_Validators `protobuf:"bytes,2,opt,name=allow_list,json=allowList,proto3,oneof"`
 }
 
 type StakeAuthorization_DenyList struct {
-	// deny_list specifies list of validator addresses to whom grantee can not delegate tokens.
+	// deny_list specifies list of validator addresses to whom grantee can not
+	// delegate tokens.
 	DenyList *StakeAuthorization_Validators `protobuf:"bytes,3,opt,name=deny_list,json=denyList,proto3,oneof"`
 }
 

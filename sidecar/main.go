@@ -10,6 +10,7 @@ import (
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -87,20 +88,23 @@ func main() {
 
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
-		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName, update.EthBlockHeight)
-		currentState := o.currentState.Load().(*OracleState)
+		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName[o.Config.Network], update.EthBlockHeight)
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 		newState := *currentState
 
-		newState.Delegations = update.Delegations
+		newState.EigenDelegations = update.EigenDelegations
 		newState.EthBlockHeight = update.EthBlockHeight
-		newState.EthBlockHash = update.EthBlockHash
 		newState.EthGasLimit = update.EthGasLimit
 		newState.EthBaseFee = update.EthBaseFee
 		newState.EthTipCap = update.EthTipCap
+		newState.SolanaLamportsPerSignature = update.SolanaLamportsPerSignature
+		newState.RedemptionsEthereum = update.RedemptionsEthereum
+		newState.RedemptionsSolana = update.RedemptionsSolana
 
-		log.Printf("Received prices: ETH/USD %f, ROCK/USD %f", update.ETHUSDPrice, update.ROCKUSDPrice) // TODO add network + height?
-		newState.ETHUSDPrice = update.ETHUSDPrice
+		log.Printf("Received prices: ROCK/USD %f, BTC/USD %f, ETH/USD %f", update.ROCKUSDPrice, update.BTCUSDPrice, update.ETHUSDPrice)
 		newState.ROCKUSDPrice = update.ROCKUSDPrice
+		newState.BTCUSDPrice = update.BTCUSDPrice
+		newState.ETHUSDPrice = update.ETHUSDPrice
 		o.currentState.Store(&newState)
 
 		o.CacheState()

@@ -8,6 +8,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 import "tendermint/types/types.proto";
+import "zrchain/validation/asset_data.proto";
 import "zrchain/validation/staking.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
@@ -27,11 +28,14 @@ message ValidatorHV {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // operator_address defines the address of the validator's operator; bech encoded in JSON.
+  // operator_address defines the address of the validator's operator; bech
+  // encoded in JSON.
   string operator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  // consensus_pubkey is the consensus public key of the validator, as a Protobuf Any.
+  // consensus_pubkey is the consensus public key of the validator, as a
+  // Protobuf Any.
   google.protobuf.Any consensus_pubkey = 2 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
-  // jailed defined whether the validator has been jailed from bonded status or not.
+  // jailed defined whether the validator has been jailed from bonded status or
+  // not.
   bool jailed = 3;
   // status is the validator status (bonded/unbonding/unbonded).
   BondStatus status = 4;
@@ -57,9 +61,11 @@ message ValidatorHV {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // unbonding_height defines, if unbonding, the height at which this validator has begun unbonding.
+  // unbonding_height defines, if unbonding, the height at which this validator
+  // has begun unbonding.
   int64 unbonding_height = 9;
-  // unbonding_time defines, if unbonding, the min time for the validator to complete unbonding.
+  // unbonding_time defines, if unbonding, the min time for the validator to
+  // complete unbonding.
   google.protobuf.Timestamp unbonding_time = 10 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
@@ -70,17 +76,20 @@ message ValidatorHV {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // min_self_delegation is the validator's self declared minimum self delegation.
+  // min_self_delegation is the validator's self declared minimum self
+  // delegation.
   string min_self_delegation = 12 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
-  // strictly positive if this validator's unbonding has been stopped by external modules
+  // strictly positive if this validator's unbonding has been stopped by
+  // external modules
   int64 unbonding_on_hold_ref_count = 13;
 
-  // list of unbonding ids, each uniquely identifying an unbonding of this validator
+  // list of unbonding ids, each uniquely identifying an unbonding of this
+  // validator
   repeated uint64 unbonding_ids = 14;
 }
 
@@ -130,9 +139,14 @@ message HVParams {
 }
 
 message ZenBTCParams {
-  string zenBTCEthContractAddr = 1;
+  string zenBTCEthBatcherAddr = 1;
   string zenBTCDepositKeyringAddr = 2;
   uint64 zenBTCMinterKeyID = 3;
+  uint64 zenBTCWithdrawerKeyID = 4;
+  uint64 zenBTCRewardsDepositKeyID = 5;
+  repeated uint64 zenBTCChangeAddressKeyIDs = 6;
+  string bitcoinProxyCreatorID = 7;
+  repeated AssetData stakeableAssets = 8;
 }
 
 message ValidationInfo {
