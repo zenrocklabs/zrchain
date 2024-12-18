@@ -418,7 +418,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
 
-	encodedMintData, err := encodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -455,7 +455,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func encodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
 	if !amount.IsUint64() {
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}

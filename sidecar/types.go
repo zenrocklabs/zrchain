@@ -80,7 +80,8 @@ type EthOracleConfig struct {
 type ContractAddrs struct {
 	ServiceManager string     `yaml:"service_manager"`
 	PriceFeeds     PriceFeeds `yaml:"price_feeds"`
-	ZenBTC         ZenBTC     `yaml:"zen_btc"`
+	ZenBTC         Networks   `yaml:"zen_btc"`
+	Batcher        Networks   `yaml:"batcher"`
 }
 
 type PriceFeeds struct {
@@ -88,7 +89,7 @@ type PriceFeeds struct {
 	ETH string `yaml:"eth"`
 }
 
-type ZenBTC struct {
+type Networks struct {
 	EthMainnet string `yaml:"eth_mainnet"`
 	EthHolesky string `yaml:"eth_holesky"`
 }

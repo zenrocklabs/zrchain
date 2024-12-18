@@ -102,6 +102,23 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
 
+	// mintCallData, err := validationkeeper.EncodeWrapCallData(
+	// 	common.HexToAddress("0x0000000000000000000000000000000000000000"),
+	// 	big.NewInt(1000000000000000000),
+	// 	10000000000,
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("failed to encode wrap call data: %w", err)
+	// }
+	// addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.Batcher.EthHolesky)
+	// estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
+	// 	To:   &addr,
+	// 	Data: mintCallData,
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("failed to estimate gas: %w", err)
+	// }
+
 	// We only need 1 signature for minting, so we can use an empty message
 	// Message should contain your tx setup
 	// solanaFee, err := o.solanaClient.GetFeeForMessage(ctx, sol.Message{
@@ -149,9 +166,10 @@ func (o *Oracle) fetchAndProcessState(
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      latestHeader.GasLimit,
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        suggestedTip.Uint64(),
+		// EthGasLimit:      estimatedGas,
+		EthGasLimit: latestHeader.GasLimit, // TODO: update me
+		EthBaseFee:  latestHeader.BaseFee.Uint64(),
+		EthTipCap:   suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		RedemptionsEthereum:        redemptionsEthereum,
