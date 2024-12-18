@@ -11,8 +11,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-// func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof []string, blockHeader *api.BTCBlockHeader, ignoreAddresses []string) ([]TXOutputs, string, error) {
-func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof []string, blockHeader *api.BTCBlockHeader) ([]TXOutputs, string, error) {
+func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof []string, blockHeader *api.BTCBlockHeader, ignoreAddresses []string) ([]TXOutputs, string, error) {
 	//1st Check the blockheader is valid
 	err := CheckBlockHeader(blockHeader)
 	if err != nil {
@@ -52,7 +51,7 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 	}
 
 	//Remove ignoreAddresses from outputs
-	cleanedOutputs := filterTXOutputs(outputs, nil)
+	cleanedOutputs := filterTXOutputs(outputs, ignoreAddresses)
 
 	return cleanedOutputs, calculatedIDString, nil
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -58,19 +59,17 @@ type Keeper struct {
 	// EthereumNonceRequested - key: bool (is requested)
 	EthereumNonceRequested collections.Item[bool]
 	// LastUsedEthereumNonce - value: last used Ethereum nonce data
-	// LastUsedEthereumNonce collections.Item[zenbtctypes.NonceData]
+	LastUsedEthereumNonce collections.Item[zenbtctypes.NonceData]
 	// PendingMintTransactions - key: pending zenBTC mint transaction
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
 	// ZenBTCRedemptions - key: redemption index | value: redemption data
 	ZenBTCRedemptions collections.Map[uint64, zenbtctypes.Redemption]
 	// ZenBTCSupply - value: zenBTC supply data
-	// ZenBTCSupply collections.Item[zenbtctypes.Supply]
+	ZenBTCSupply collections.Item[zenbtctypes.Supply]
 	// VoteExtensionRejected - key: bool (is rejected)
 	VoteExtensionRejected collections.Item[bool]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
-	// RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
-	// TODO: remove line below
-	ConfirmedUnlockTxs collections.Map[collections.Pair[string, string], types.WithdrawalInfo]
+	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -130,22 +129,22 @@ func NewKeeper(
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 
-		AVSDelegations:         collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
-		ValidatorDelegations:   collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
-		AVSRewardsPool:         collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
-		AssetPrices:            collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, types.AssetKey{}, sdk.LegacyDecValue),
-		SlashEvents:            collections.NewMap(sb, types.SlashEventsKey, types.SlashEventsIndex, collections.Uint64Key, codec.CollValue[types.SlashEvent](cdc)),
-		SlashEventCount:        collections.NewItem(sb, types.SlashEventCountKey, types.SlashEventCountIndex, collections.Uint64Value),
-		HVParams:               collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
-		ValidationInfos:        collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
-		BtcBlockHeaders:        collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
-		EthereumNonceRequested: collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
-		// LastUsedEthereumNonce:             collections.NewItem(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, codec.CollValue[zenbtctypes.NonceData](cdc)),
-		PendingMintTransactions: collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
-		ZenBTCRedemptions:       collections.NewMap(sb, types.ZenBTCRedemptionsKey, types.ZenBTCRedemptionsIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.Redemption](cdc)),
-		// ZenBTCSupply:                      collections.NewItem(sb, types.ZenBTCSupplyKey, types.ZenBTCSupplyIndex, codec.CollValue[zenbtctypes.Supply](cdc)),
-		VoteExtensionRejected: collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
-		// RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		AVSDelegations:                    collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
+		ValidatorDelegations:              collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
+		AVSRewardsPool:                    collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
+		AssetPrices:                       collections.NewMap(sb, types.AssetPricesKey, types.AssetPricesIndex, types.AssetKey{}, sdk.LegacyDecValue),
+		SlashEvents:                       collections.NewMap(sb, types.SlashEventsKey, types.SlashEventsIndex, collections.Uint64Key, codec.CollValue[types.SlashEvent](cdc)),
+		SlashEventCount:                   collections.NewItem(sb, types.SlashEventCountKey, types.SlashEventCountIndex, collections.Uint64Value),
+		HVParams:                          collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
+		ValidationInfos:                   collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
+		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
+		EthereumNonceRequested:            collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
+		LastUsedEthereumNonce:             collections.NewItem(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, codec.CollValue[zenbtctypes.NonceData](cdc)),
+		PendingMintTransactions:           collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
+		ZenBTCRedemptions:                 collections.NewMap(sb, types.ZenBTCRedemptionsKey, types.ZenBTCRedemptionsIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.Redemption](cdc)),
+		ZenBTCSupply:                      collections.NewItem(sb, types.ZenBTCSupplyKey, types.ZenBTCSupplyIndex, codec.CollValue[zenbtctypes.Supply](cdc)),
+		VoteExtensionRejected:             collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
+		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 	}
 }
 
@@ -247,18 +246,18 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 
 // GetZenBTCExchangeRate returns the current exchange rate between BTC and zenBTC
 // Returns the number of BTC represented by 1 zenBTC
-// func (k Keeper) GetZenBTCExchangeRate(ctx sdk.Context) (float64, error) {
-// 	supply, err := k.ZenBTCSupply.Get(ctx)
-// 	if err != nil {
-// 		if !errors.Is(err, collections.ErrNotFound) {
-// 			return 0, err
-// 		}
-// 		return 1.0, nil // Initial exchange rate of 1:1
-// 	}
+func (k Keeper) GetZenBTCExchangeRate(ctx sdk.Context) (float64, error) {
+	supply, err := k.ZenBTCSupply.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return 0, err
+		}
+		return 1.0, nil // Initial exchange rate of 1:1
+	}
 
-// 	if supply.MintedZenBTC == 0 {
-// 		return 1.0, nil // If no zenBTC minted yet, use 1:1 rate
-// 	}
+	if supply.MintedZenBTC == 0 {
+		return 1.0, nil // If no zenBTC minted yet, use 1:1 rate
+	}
 
-// 	return float64(supply.CustodiedBTC) / float64(supply.MintedZenBTC), nil
-// }
+	return float64(supply.CustodiedBTC) / float64(supply.MintedZenBTC), nil
+}
