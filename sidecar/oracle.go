@@ -11,14 +11,12 @@ import (
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	solana "github.com/gagliardetto/solana-go/rpc"
@@ -44,10 +42,10 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCContractHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.EthHolesky), o.EthClient)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
+	// zenBTCContractHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.EthHolesky), o.EthClient)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create contract instance: %w", err)
+	// }
 	tempEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	for {
@@ -55,7 +53,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCContractHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 		}
@@ -64,7 +62,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCContractHolesky *zenbtc.ZenBTC,
+	// zenBTCContractHolesky *zenbtc.ZenBTC,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -83,10 +81,10 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	redemptionsEthereum, err := o.getRedemptionTrackerState(zenBTCContractHolesky, targetBlockNumber)
-	if err != nil {
-		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
-	}
+	// redemptionsEthereum, err := o.getRedemptionTrackerState(zenBTCContractHolesky, targetBlockNumber)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get zenBTC contract state: %w", err)
+	// }
 	// log.Printf("redemptionsEthereum: %+v\n", redemptionsEthereum)
 
 	// TODO: get redemptions on Solana + get BTC price
@@ -172,11 +170,12 @@ func (o *Oracle) fetchAndProcessState(
 		EthTipCap:   suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
-		RedemptionsEthereum:        redemptionsEthereum,
-		RedemptionsSolana:          nil, // TODO: update me
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
+		// RedemptionsEthereum:        redemptionsEthereum,
+		RedemptionsEthereum: nil, // TODO: update me
+		RedemptionsSolana:   nil, // TODO: update me
+		ROCKUSDPrice:        ROCKUSDPrice,
+		BTCUSDPrice:         BTCUSDPrice,
+		ETHUSDPrice:         ETHUSDPrice,
 	}
 
 	return nil
@@ -232,25 +231,25 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.ZenBTC, height *big.Int) ([]api.Redemption, error) {
-	callOpts := &bind.CallOpts{
-		BlockNumber: height,
-	}
+// func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.ZenBTC, height *big.Int) ([]api.Redemption, error) {
+// 	callOpts := &bind.CallOpts{
+// 		BlockNumber: height,
+// 	}
 
-	recentRedemptions, err := contractInstance.GetRecentRedemptionData(callOpts, 100)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get recent redemption data: %w", err)
-	}
+// 	recentRedemptions, err := contractInstance.GetRecentRedemptionData(callOpts, 100)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to get recent redemption data: %w", err)
+// 	}
 
-	// convert to []Redemptions - id[i] corresponds to destinationAddr[i] and amount[i]
-	redemptions := make([]api.Redemption, 0)
-	for i := 0; i < len(recentRedemptions.Ids); i++ {
-		redemptions = append(redemptions, api.Redemption{
-			Id:                 recentRedemptions.Ids[i],
-			DestinationAddress: recentRedemptions.Destination[i],
-			Amount:             recentRedemptions.Amounts[i],
-		})
-	}
+// 	// convert to []Redemptions - id[i] corresponds to destinationAddr[i] and amount[i]
+// 	redemptions := make([]api.Redemption, 0)
+// 	for i := 0; i < len(recentRedemptions.Ids); i++ {
+// 		redemptions = append(redemptions, api.Redemption{
+// 			Id:                 recentRedemptions.Ids[i],
+// 			DestinationAddress: recentRedemptions.Destination[i],
+// 			Amount:             recentRedemptions.Amounts[i],
+// 		})
+// 	}
 
-	return redemptions, nil
-}
+// 	return redemptions, nil
+// }
