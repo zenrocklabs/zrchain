@@ -6,12 +6,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"slices"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -23,13 +21,11 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
-	bindings "github.com/zenrocklabs/zenbtc/bindings"
 )
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
@@ -418,10 +414,10 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
 
-	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
-	if err != nil {
-		return nil, nil, err
-	}
+	// encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
 
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
@@ -443,7 +439,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 		Gas:      gasLimit,
 		To:       &addr,
 		Value:    big.NewInt(0), // we shouldn't send any ETH
-		Data:     encodedMintData,
+		// Data:     encodedMintData,
 	})
 
 	unsignedTxBz, err := unsignedTx.MarshalBinary()
@@ -455,31 +451,31 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
-	if !amount.IsUint64() {
-		return nil, fmt.Errorf("amount exceeds uint64 max value")
-	}
+// func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+// 	if !amount.IsUint64() {
+// 		return nil, fmt.Errorf("amount exceeds uint64 max value")
+// 	}
 
-	parsed, err := bindings.ZenbtcbatcherMetaData.GetAbi()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get ABI: %v", err)
-	}
+// parsed, err := bindings.ZenbtcbatcherMetaData.GetAbi()
+// if err != nil {
+// 	return nil, fmt.Errorf("failed to get ABI: %v", err)
+// }
 
-	// Pack using the contract binding's ABI for the wrapZenBTC function
-	data, err := parsed.Pack(
-		"wrapZenBTC",
-		recipientAddr,
-		amount.Uint64(),
-		fee,
-		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
-		// The fields on the line above can be left empty as we don't need them to delegate to our operator
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
-	}
+// Pack using the contract binding's ABI for the wrapZenBTC function
+// data, err := parsed.Pack(
+// 	"wrapZenBTC",
+// 	recipientAddr,
+// 	amount.Uint64(),
+// 	fee,
+// 	bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
+// The fields on the line above can be left empty as we don't need them to delegate to our operator
+// )
+// if err != nil {
+// 	return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
+// }
 
-	return data, nil
-}
+// return data, nil
+// }
 
 func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
 	keyID := k.GetZenBTCMinterKeyID(ctx)
@@ -496,24 +492,24 @@ func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) 
 	return q.Wallets[0].Address, nil
 }
 
-func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
-	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return nil, err
-		}
-		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
-		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
-			return nil, err
-		}
-	}
+// func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
+// requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+// if err != nil {
+// 	if !errors.Is(err, collections.ErrNotFound) {
+// 		return nil, err
+// 	}
+// 	requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
+// 	if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
+// 		return nil, err
+// 	}
+// }
 
-	if len(requestedBitcoinHeaders.Heights) == 0 {
-		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
-	}
+// if len(requestedBitcoinHeaders.Heights) == 0 {
+// 	return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+// }
 
-	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
-}
+// return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
+// }
 
 func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
 	nonce, err := k.lookupEthereumNonce(ctx)
@@ -521,32 +517,32 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	firstRun := false
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return 0, err
-		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
-		firstRun = true
-	}
+	// firstRun := false
+	// lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	// if err != nil {
+	// 	if !errors.Is(err, collections.ErrNotFound) {
+	// 		return 0, err
+	// 	}
+	// 	lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
+	// 	firstRun = true
+	// }
 
-	if !firstRun {
-		if nonce == lastUsedNonce.Nonce {
-			lastUsedNonce.Counter++
-		} else {
-			lastUsedNonce.Nonce = nonce
-			lastUsedNonce.Counter = 0
-		}
-	}
+	// if !firstRun {
+	// 	if nonce == lastUsedNonce.Nonce {
+	// 		lastUsedNonce.Counter++
+	// 	} else {
+	// 		lastUsedNonce.Nonce = nonce
+	// 		lastUsedNonce.Counter = 0
+	// 	}
+	// }
 
-	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
-		return 0, err
-	}
+	// if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+	// 	return 0, err
+	// }
 
-	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
-		return 0, nil
-	}
+	// if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
+	// 	return 0, nil
+	// }
 
 	return nonce, nil
 }
