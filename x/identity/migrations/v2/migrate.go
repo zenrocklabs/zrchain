@@ -7,7 +7,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/pkg/errors"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -20,11 +19,7 @@ var ParamsKey = []byte{0x01}
 // MigrateKeyrings migrates the x/identity to v3. It migrates the keyring fields
 // sig_req_fee -> fees.signature.rock_amount
 // key_req_fee -> fees.key.rock_amount
-func MigrateKeyrings(
-	ctx sdk.Context,
-	ks collections.Map[string, types.Keyring],
-	cdc codec.BinaryCodec,
-) error {
+func MigrateKeyrings(ctx sdk.Context, ks collections.Map[string, types.Keyring]) error {
 
 	it, err := ks.Iterate(ctx, nil)
 	if err != nil {

@@ -21,5 +21,5 @@ func NewMigrator(k Keeper) Migrator {
 // version 3. Specifically, it adds a new field 'fees' to the keyring type
 // and migrates 'key_req_fee' and 'sig_req_fee' to use the new  fees type
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	return v2.MigrateKeyrings(ctx, m.keeper.KeyringStore, m.keeper.cdc)
+	return v2.MigrateKeyrings(ctx, m.keeper.KeyringStore)
 }

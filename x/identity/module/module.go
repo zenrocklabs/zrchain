@@ -21,7 +21,7 @@ import (
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 )
 
-const consensusVersion = 1
+const consensusVersion = 2
 
 var (
 	_ module.AppModuleBasic      = (*AppModule)(nil)
