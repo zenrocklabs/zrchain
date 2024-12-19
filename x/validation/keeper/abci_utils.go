@@ -364,8 +364,8 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 	return nil
 }
 
-func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
-	addr, err := k.getZenBTCMinterAddressEVM(ctx)
+func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	addr, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_EVM)
 	if err != nil {
 		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
 	}
@@ -460,7 +460,7 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
 
-	parsed, err := bindings.ZenbtcbatcherMetaData.GetAbi()
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
@@ -481,12 +481,10 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
-	keyID := k.GetZenBTCMinterKeyID(ctx)
-
+func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType treasurytypes.WalletType) (string, error) {
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
 		Id:         keyID,
-		WalletType: treasurytypes.WalletType_WALLET_TYPE_EVM,
+		WalletType: walletType,
 		Prefixes:   make([]string, 0),
 	})
 	if err != nil {
@@ -515,14 +513,14 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
 }
 
-func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
-	nonce, err := k.lookupEthereumNonce(ctx)
+func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	nonce, err := k.lookupEthereumNonce(ctx, keyID)
 	if err != nil {
 		return 0, err
 	}
 
 	firstRun := false
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return 0, err
@@ -540,7 +538,7 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
 		}
 	}
 
-	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
+	if err = k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
 		return 0, err
 	}
 

@@ -143,19 +143,15 @@ message ZenBTCParams {
   string zenBTCDepositKeyringAddr = 2;
   uint64 zenBTCMinterKeyID = 3;
   uint64 zenBTCWithdrawerKeyID = 4;
-  uint64 zenBTCRewardsDepositKeyID = 5;
-  repeated uint64 zenBTCChangeAddressKeyIDs = 6;
-  string bitcoinProxyCreatorID = 7;
-  repeated AssetData stakeableAssets = 8;
+  uint64 zenBTCUnstakerKeyID = 5;
+  uint64 zenBTCBurnerKeyID = 6;
+  uint64 zenBTCRewardsDepositKeyID = 7;
+  repeated uint64 zenBTCChangeAddressKeyIDs = 8;
+  string bitcoinProxyCreatorID = 9;
+  repeated AssetData stakeableAssets = 10;
 }
 
 message ValidationInfo {
   repeated string non_voting_validators = 1;
   repeated string mismatched_vote_extensions = 2;
-}
-
-message WithdrawalInfo {
-  string withdrawal_address = 1;
-  uint64 amount = 2;
-  uint32 retry_count = 3;
 }

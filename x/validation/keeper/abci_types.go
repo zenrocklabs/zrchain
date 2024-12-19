@@ -38,7 +38,9 @@ type (
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
 		EthTipCap                  uint64
-		RequestedEthNonce          uint64
+		RequestedEthMinterNonce    uint64
+		RequestedEthUnstakerNonce  uint64
+		RequestedEthBurnerNonce    uint64
 		SolanaLamportsPerSignature uint64
 		EthereumRedemptionsHash    []byte
 		SolanaRedemptionsHash      []byte
@@ -61,7 +63,9 @@ type (
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
 		EthTipCap                  uint64
-		RequestedEthNonce          uint64
+		RequestedEthMinterNonce    uint64
+		RequestedEthUnstakerNonce  uint64
+		RequestedEthBurnerNonce    uint64
 		SolanaLamportsPerSignature uint64
 		EthereumRedemptions        []api.Redemption
 		SolanaRedemptions          []api.Redemption

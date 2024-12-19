@@ -15,8 +15,10 @@ var (
 	DefaultZenBTCDepositKeyringAddr         = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCWithdrawerKeyID     uint64 = 1
 	DefaultZenBTCMinterKeyID         uint64 = 2
-	DefaultZenBTCRewardsDepositKeyID uint64 = 4
 	DefaultZenBTCChangeAddressKeyIDs        = []uint64{3}
+	DefaultZenBTCUnstakerKeyID       uint64 = 4
+	DefaultZenBTCBurnerKeyID         uint64 = 5
+	DefaultZenBTCRewardsDepositKeyID uint64 = 6
 	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 	DefaultStakeableAssets                  = []*types.AssetData{
 		{Asset: types.Asset_ROCK, Precision: 6},
@@ -44,6 +46,8 @@ func DefaultHVParams() *types.HVParams {
 			ZenBTCDepositKeyringAddr:  DefaultZenBTCDepositKeyringAddr,
 			ZenBTCMinterKeyID:         DefaultZenBTCMinterKeyID,
 			ZenBTCWithdrawerKeyID:     DefaultZenBTCWithdrawerKeyID,
+			ZenBTCUnstakerKeyID:       DefaultZenBTCUnstakerKeyID,
+			ZenBTCBurnerKeyID:         DefaultZenBTCBurnerKeyID,
 			ZenBTCRewardsDepositKeyID: DefaultZenBTCRewardsDepositKeyID,
 			BitcoinProxyCreatorID:     DefaultBitcoinProxyCreatorID,
 			ZenBTCChangeAddressKeyIDs: DefaultZenBTCChangeAddressKeyIDs,
@@ -90,6 +94,22 @@ func (k Keeper) GetZenBTCMinterKeyID(ctx context.Context) uint64 {
 		return DefaultZenBTCMinterKeyID
 	}
 	return params.ZenBTCParams.ZenBTCMinterKeyID
+}
+
+func (k Keeper) GetZenBTCUnstakerKeyID(ctx context.Context) uint64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil {
+		return DefaultZenBTCUnstakerKeyID
+	}
+	return params.ZenBTCParams.ZenBTCUnstakerKeyID
+}
+
+func (k Keeper) GetZenBTCBurnerKeyID(ctx context.Context) uint64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil {
+		return DefaultZenBTCBurnerKeyID
+	}
+	return params.ZenBTCParams.ZenBTCBurnerKeyID
 }
 
 func (k Keeper) GetZenBTCWithdrawerKeyID(ctx context.Context) uint64 {
