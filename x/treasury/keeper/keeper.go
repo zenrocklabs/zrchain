@@ -525,7 +525,7 @@ func (k *Keeper) SignatureFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint6
 	if kr.Fees != nil && kr.Fees.Signature != nil {
 		if kr.Fees.Signature.UsdAmount > 0 {
 			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
-				urockPrice := ap.PriceUSD.Mul(sdkmath.LegacyNewDec(1000000))
+				urockPrice := ap.Mul(sdkmath.LegacyNewDec(1000000))
 				sigPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Signature.UsdAmount)).Mul(urockPrice).RoundInt64()
 				return uint64(sigPrice), nil
 			}
@@ -541,7 +541,7 @@ func (k *Keeper) KeyFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint64, err
 	if kr.Fees != nil && kr.Fees.Key != nil {
 		if kr.Fees.Key.UsdAmount > 0 {
 			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
-				urockPrice := ap.PriceUSD.Mul(sdkmath.LegacyNewDec(1000000))
+				urockPrice := ap.Mul(sdkmath.LegacyNewDec(1000000))
 				if urockPrice.GT(sdkmath.LegacyNewDec(0)) {
 					keyPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Key.UsdAmount)).Mul(urockPrice).RoundInt64()
 					return uint64(keyPrice), nil

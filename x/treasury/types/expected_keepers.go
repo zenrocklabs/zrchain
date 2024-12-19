@@ -3,10 +3,9 @@ package types
 import (
 	"context"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
-
+	"cosmossdk.io/math"
 	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -40,5 +39,5 @@ type PolicyKeeper interface {
 }
 
 type ValidationKeeper interface {
-	GetAssetPrice(string) (types.AssetPrice, error)
+	GetAssetPrice(string) (math.LegacyDec, error)
 }

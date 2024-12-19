@@ -1,4 +1,4 @@
-package v6
+package v5beta4
 
 import (
 	storetypes "cosmossdk.io/store/types"
