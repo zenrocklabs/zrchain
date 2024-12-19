@@ -3,9 +3,9 @@ package types
 import (
 	"context"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-
+	"cosmossdk.io/math"
 	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -36,4 +36,8 @@ type ParamSubspace interface {
 
 type PolicyKeeper interface {
 	policykeeper.ExportedKeeper
+}
+
+type ValidationKeeper interface {
+	GetAssetPrice(string) (math.LegacyDec, error)
 }

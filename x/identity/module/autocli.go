@@ -115,14 +115,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "UpdateKeyring",
-					Use:       "update-keyring [keyring-addr] [is-active:true|false] [party-threshold] [key-req-fee] [sig-req-fee] [description]",
+					Use:       "update-keyring [keyring-addr] [is-active:true|false] [party-threshold] [keyring-fees] [description]",
 					Short:     "Send a update-keyring tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "keyring_addr"},
 						{ProtoField: "is_active"},
 						{ProtoField: "party_threshold"},
-						{ProtoField: "key_req_fee"},
-						{ProtoField: "sig_req_fee"},
+						{ProtoField: "fees"},
 						{ProtoField: "description"},
 					},
 				},
@@ -137,12 +136,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewKeyring",
-					Use:       "new-keyring [description] [key-request-fee] [sign-request-fee] [delegate-fees]",
+					Use:       "new-keyring [description] [keyring-fees] [delegate-fees]",
 					Short:     "Send a new-keyring tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "description"},
-						{ProtoField: "key_req_fee"},
-						{ProtoField: "sig_req_fee"},
+						{ProtoField: "fees"},
 						{ProtoField: "delegate_fees"},
 					},
 				},
