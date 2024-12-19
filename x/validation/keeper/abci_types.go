@@ -5,11 +5,12 @@ import (
 	"errors"
 	"math/big"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -29,18 +30,21 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight int64
-		ROCKUSDPrice       math.LegacyDec
-		ETHUSDPrice        math.LegacyDec
-		AVSDelegationsHash []byte
-		BtcBlockHeight     int64
-		BtcMerkleRoot      string
-		EthBlockHeight     uint64
-		EthBlockHash       common.Hash
-		EthGasLimit        uint64
-		EthBaseFee         uint64
-		EthTipCap          uint64
-		RequestedEthNonce  uint64
+		ZRChainBlockHeight         int64
+		EigenDelegationsHash       []byte
+		BtcBlockHeight             int64
+		BtcHeaderHash              []byte
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedEthNonce          uint64
+		SolanaLamportsPerSignature uint64
+		EthereumRedemptionsHash    []byte
+		SolanaRedemptionsHash      []byte
+		ROCKUSDPrice               math.LegacyDec
+		BTCUSDPrice                math.LegacyDec
+		ETHUSDPrice                math.LegacyDec
 	}
 
 	VEWithVotePower struct {
@@ -49,19 +53,22 @@ type (
 	}
 
 	OracleData struct {
-		ROCKUSDPrice         math.LegacyDec
-		ETHUSDPrice          math.LegacyDec
-		AVSDelegationsMap    map[string]map[string]*big.Int
-		ValidatorDelegations []ValidatorDelegations
-		BtcBlockHeight       int64
-		BtcBlockHeader       sidecar.BTCBlockHeader
-		EthBlockHeight       uint64
-		EthBlockHash         common.Hash
-		EthGasLimit          uint64
-		EthBaseFee           uint64
-		EthTipCap            uint64
-		RequestedEthNonce    uint64
-		ConsensusData        abci.ExtendedCommitInfo
+		EigenDelegationsMap        map[string]map[string]*big.Int
+		ValidatorDelegations       []ValidatorDelegations
+		BtcBlockHeight             int64
+		BtcBlockHeader             sidecar.BTCBlockHeader
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedEthNonce          uint64
+		SolanaLamportsPerSignature uint64
+		EthereumRedemptions        []api.Redemption
+		SolanaRedemptions          []api.Redemption
+		ROCKUSDPrice               math.LegacyDec
+		BTCUSDPrice                math.LegacyDec
+		ETHUSDPrice                math.LegacyDec
+		ConsensusData              abci.ExtendedCommitInfo
 	}
 
 	ValidatorDelegations struct {
@@ -107,17 +114,65 @@ func VoteExtensionsEnabled(ctx sdk.Context) bool {
 	return ctx.BlockHeight() > consParams.Abci.VoteExtensionsEnableHeight
 }
 
-func (ve VoteExtension) IsInvalid() bool { // Sasha: Should bitcoin fields be checked here? They're not as critical so maybe not
-	return ve.ZRChainBlockHeight == 0 ||
-		// TODO: uncomment this after TGE
-		// voteExt.ROCKUSDPrice.IsZero() ||
-		ve.ETHUSDPrice.IsZero() ||
-		len(ve.AVSDelegationsHash) == 0 ||
-		ve.EthBlockHeight == 0 ||
-		len(ve.EthBlockHash) == 0 ||
-		ve.EthBaseFee == 0 ||
-		ve.EthTipCap == 0 ||
-		ve.EthGasLimit == 0
-	// ve.BtcBlockHeight == 0 ||
-	// len(ve.BtcMerkleRoot) == 0
+func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
+	invalid := false
+
+	if ve.ZRChainBlockHeight == 0 {
+		logger.Error("invalid vote extension: ZRChainBlockHeight is 0")
+		invalid = true
+	}
+	if len(ve.EigenDelegationsHash) == 0 {
+		logger.Error("invalid vote extension: EigenDelegationsHash is empty")
+		invalid = true
+	}
+	if ve.EthBlockHeight == 0 {
+		logger.Error("invalid vote extension: EthBlockHeight is 0")
+		invalid = true
+	}
+	if ve.EthBaseFee == 0 {
+		logger.Error("invalid vote extension: EthBaseFee is 0")
+		invalid = true
+	}
+	if ve.EthTipCap == 0 {
+		logger.Error("invalid vote extension: EthTipCap is 0")
+		invalid = true
+	}
+	if ve.EthGasLimit == 0 {
+		logger.Error("invalid vote extension: EthGasLimit is 0")
+		invalid = true
+	}
+	if ve.BtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: BtcBlockHeight is 0")
+		invalid = true
+	}
+	if len(ve.BtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: BtcHeaderHash is empty")
+		invalid = true
+	}
+	if ve.SolanaLamportsPerSignature == 0 {
+		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
+		invalid = true
+	}
+	if len(ve.EthereumRedemptionsHash) == 0 {
+		logger.Error("invalid vote extension: EthereumRedemptionsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaRedemptionsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaRedemptionsHash is empty")
+		invalid = true
+	}
+	if ve.ROCKUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ROCKUSDPrice is zero")
+		invalid = true
+	}
+	if ve.BTCUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: BTCUSDPrice is zero")
+		invalid = true
+	}
+	// if ve.ETHUSDPrice.IsZero() {
+	// 	logger.Error("invalid vote extension: ETHUSDPrice is zero")
+	// 	invalid = true
+	// }
+
+	return invalid
 }

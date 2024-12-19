@@ -97,6 +97,24 @@ func (t *TreasuryQueryClient) GetKey(ctx context.Context, keyId uint64) (*types.
 	return res, nil
 }
 
+// GetKey retrieves the last Key ID
+// Parameters:
+//   - ctx: Context for the request
+//
+// Returns:
+//   - *types.QueryKeyByIDResponse: Contains the key details
+//   - error: An error if the query fails or key is not found
+func (t *TreasuryQueryClient) GetLastKey(ctx context.Context) (*types.QueryKeysResponse, error) {
+	res, err := t.client.Keys(ctx, &types.QueryKeysRequest{
+		Pagination: &query.PageRequest{Limit: 1, Reverse: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // GetKeyRequest retrieves details for a specific key request by its ID.
 //
 // Parameters:
@@ -153,6 +171,26 @@ func (t *TreasuryQueryClient) PendingSignatureRequests(ctx context.Context, page
 func (t *TreasuryQueryClient) FulfilledSignatureRequests(ctx context.Context, offset uint64, pagesize uint64) (*types.QuerySignatureRequestsResponse, error) {
 	res, err := t.client.SignatureRequests(ctx, &types.QuerySignatureRequestsRequest{
 		Pagination: &query.PageRequest{Offset: offset, Limit: pagesize},
+		Status:     types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// FulfilledSignatureRequests retrieves the latesat fulfilled signature request.
+//
+// Parameters:
+//   - ctx: Context for the request
+//
+// Returns:
+//   - *types.QuerySignatureRequestsResponse: Contains the list of fulfilled requests
+//   - error: An error if the query fails
+func (t *TreasuryQueryClient) LastFulfilledSignatureRequest(ctx context.Context) (*types.QuerySignatureRequestsResponse, error) {
+	res, err := t.client.SignatureRequests(ctx, &types.QuerySignatureRequestsRequest{
+		Pagination: &query.PageRequest{Limit: 1, Reverse: true},
 		Status:     types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 	})
 	if err != nil {
@@ -220,6 +258,34 @@ func (t *TreasuryQueryClient) ZrSignKeys(ctx context.Context, page *PageRequest,
 	res, err := t.client.ZrSignKeys(ctx, &types.QueryZrSignKeysRequest{
 		Address:    address,
 		WalletType: walletType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// GetZenbtcWallets retrieves Zenbtc wallets for a specific address and wallet type.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - page: Pagination parameters
+//   - mintChainId: The chain ID to filter wallets
+//   - chainType: The type of wallet to filter
+//   - recipientAddr: The recipient address to filter wallets
+//   - returnAddr: The return address to filter wallets
+//
+// Returns:
+//   - *types.QueryZenbtcWalletsResponse: Contains the Zenbtc wallets
+//   - error: An error if the query fails
+func (t *TreasuryQueryClient) GetZenbtcWallets(ctx context.Context, page *PageRequest, recipientAddr, returnAddr string, mintChainId uint64, chainType types.WalletType) (*types.QueryZenbtcWalletsResponse, error) {
+	res, err := t.client.ZenbtcWallets(ctx, &types.QueryZenbtcWalletsRequest{
+		RecipientAddr: recipientAddr,
+		ChainType:     chainType,
+		ReturnAddr:    returnAddr,
+		MintChainId:   mintChainId,
+		Pagination:    page,
 	})
 	if err != nil {
 		return nil, err

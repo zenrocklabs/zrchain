@@ -4,12 +4,14 @@ import (
 	"context"
 	"flag"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -17,12 +19,19 @@ import (
 )
 
 func main() {
+	cfg := LoadConfig()
+
+	if !cfg.Enabled {
+		for {
+			slog.Info("Sidecar is disabled in config; sleeping...")
+			time.Sleep(time.Hour)
+		}
+	}
+
 	port := flag.Int("port", 0, "Override GRPC port from config")
 	flag.Parse()
 
-	cfg := LoadConfig()
-
-	// Override GRPC port if --port flag is provided
+	// Override defeault GRPC port if --port flag is provided
 	if *port != 0 {
 		cfg.GRPCPort = *port
 	}
@@ -59,12 +68,12 @@ func main() {
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
-	log.Printf("gRPC server listening on port %d", cfg.GRPCPort)
-	log.Printf("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates\n", MainLoopTickerInterval/time.Second)
+	slog.Info("gRPC server listening on port", "port", cfg.GRPCPort)
+	slog.Info("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates", "seconds", MainLoopTickerInterval/time.Second)
 
 	go func() {
 		if err := oracle.runAVSContractOracleLoop(ctx); err != nil {
-			log.Printf("Error in Ethereum oracle loop: %v", err)
+			slog.Error("Error in Ethereum oracle loop", "error", err)
 		}
 	}()
 
@@ -81,26 +90,29 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("Shutting down gracefully...")
+	slog.Info("Shutting down gracefully...")
 	cancel()
 }
 
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
-		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName, update.EthBlockHeight)
-		currentState := o.currentState.Load().(*OracleState)
+		slog.Info("Received AVS contract state for", "network", o.Config.EthOracle.NetworkName[o.Config.Network], "block", update.EthBlockHeight)
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 		newState := *currentState
 
-		newState.Delegations = update.Delegations
+		newState.EigenDelegations = update.EigenDelegations
 		newState.EthBlockHeight = update.EthBlockHeight
-		newState.EthBlockHash = update.EthBlockHash
 		newState.EthGasLimit = update.EthGasLimit
 		newState.EthBaseFee = update.EthBaseFee
 		newState.EthTipCap = update.EthTipCap
+		newState.SolanaLamportsPerSignature = update.SolanaLamportsPerSignature
+		newState.RedemptionsEthereum = update.RedemptionsEthereum
+		newState.RedemptionsSolana = update.RedemptionsSolana
 
-		log.Printf("Received prices: ETH/USD %f, ROCK/USD %f", update.ETHUSDPrice, update.ROCKUSDPrice) // TODO add network + height?
-		newState.ETHUSDPrice = update.ETHUSDPrice
+		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
 		newState.ROCKUSDPrice = update.ROCKUSDPrice
+		newState.BTCUSDPrice = update.BTCUSDPrice
+		newState.ETHUSDPrice = update.ETHUSDPrice
 		o.currentState.Store(&newState)
 
 		o.CacheState()

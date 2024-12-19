@@ -36,11 +36,14 @@ const (
 	AuthorizationType_AUTHORIZATION_TYPE_UNSPECIFIED AuthorizationType = 0
 	// AUTHORIZATION_TYPE_DELEGATE defines an authorization type for Msg/Delegate
 	AuthorizationType_AUTHORIZATION_TYPE_DELEGATE AuthorizationType = 1
-	// AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for Msg/Undelegate
+	// AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for
+	// Msg/Undelegate
 	AuthorizationType_AUTHORIZATION_TYPE_UNDELEGATE AuthorizationType = 2
-	// AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for Msg/BeginRedelegate
+	// AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for
+	// Msg/BeginRedelegate
 	AuthorizationType_AUTHORIZATION_TYPE_REDELEGATE AuthorizationType = 3
-	// AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION defines an authorization type for Msg/MsgCancelUnbondingDelegation
+	// AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION defines an authorization
+	// type for Msg/MsgCancelUnbondingDelegation
 	AuthorizationType_AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION AuthorizationType = 4
 )
 
@@ -72,8 +75,9 @@ func (AuthorizationType) EnumDescriptor() ([]byte, []int) {
 //
 // Since: cosmos-sdk 0.43
 type StakeAuthorization struct {
-	// max_tokens specifies the maximum amount of tokens can be delegate to a validator. If it is
-	// empty, there is no spend limit and any amount of coins can be delegated.
+	// max_tokens specifies the maximum amount of tokens can be delegate to a
+	// validator. If it is empty, there is no spend limit and any amount of coins
+	// can be delegated.
 	MaxTokens *types.Coin `protobuf:"bytes,1,opt,name=max_tokens,json=maxTokens,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"max_tokens,omitempty"`
 	// validators is the oneof that represents either allow_list or deny_list
 	//

@@ -185,9 +185,15 @@ web-gen:
 ###                              Sidecar                                    ###
 ###############################################################################
 
-sidecar:
+build-sidecar:
 	go build -o sidecar-new ./sidecar
 	rm -f sidecar/sidecar
 	mv sidecar-new sidecar/sidecar
+	chmod +x sidecar/sidecar
 
-.PHONY: sidecar
+run-sidecar:
+	cd sidecar && ./sidecar
+
+sidecar: build-sidecar run-sidecar
+
+.PHONY: build-sidecar run-sidecar sidecar

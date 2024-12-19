@@ -77,6 +77,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "address"},
 					},
 				},
+				{
+					RpcMethod: "ZenbtcWallets",
+					Use:       "zenbtc-wallets --recipient-addr [recipient-addr] --chain-type [chain-type] --chain-id [chain-id] --return-addr [return-addr]",
+					Short:     "query-zenbtc-wallets optionally filtering by recipient address, chain type, chain id, and return address",
+				},
 
 				// this line is used by ignite scaffolding # autocli/query
 			},
@@ -111,10 +116,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewSignatureRequest",
-					Use:       "new-signature-request [key-id] [data-for-signing] --btl [btl] --cache-id [cache-id]",
+					Use:       "new-signature-request [key-ids] [data-for-signing] --btl [btl] --cache-id [cache-id]",
 					Short:     "Broadcast message NewSignatureRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "key_id"},
+						{ProtoField: "key_ids"},
 						{ProtoField: "data_for_signing"},
 					},
 				},

@@ -115,6 +115,7 @@ message PendingMintTransaction {
   uint64 key_id = 6;
 }
 
+// PendingMintTransactions is a collection of pending mint transactions.
 message PendingMintTransactions {
   repeated PendingMintTransaction txs = 1;
 }

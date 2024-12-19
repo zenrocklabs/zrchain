@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package zrchain.validation;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
+
+// Asset is an enum that represents the assets we store pricing for
+enum Asset {
+  UNSPECIFIED = 0;
+  ROCK = 1;
+  zenBTC = 2;
+  stETH = 3;
+}
+
+// AssetData is a struct that contains the price in USD + decimals of precision of an asset
+message AssetData {
+  Asset asset = 1;
+  string priceUSD = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  uint32 precision = 3;
+}

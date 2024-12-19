@@ -42,7 +42,10 @@ type MsgClient interface {
 	// FulfilICATransactionRequest defines an operation for responding to an
 	// interchain account transaction request
 	FulfilICATransactionRequest(ctx context.Context, in *MsgFulfilICATransactionRequest, opts ...grpc.CallOption) (*MsgFulfilICATransactionRequestResponse, error)
+	// NewZrSignSignatureRequest defines an operation for creating a zrsign
+	// signature request
 	NewZrSignSignatureRequest(ctx context.Context, in *MsgNewZrSignSignatureRequest, opts ...grpc.CallOption) (*MsgNewZrSignSignatureRequestResponse, error)
+	// UpdateKeyPolicy defines an operation for updating a key policy
 	UpdateKeyPolicy(ctx context.Context, in *MsgUpdateKeyPolicy, opts ...grpc.CallOption) (*MsgUpdateKeyPolicyResponse, error)
 }
 
@@ -181,7 +184,10 @@ type MsgServer interface {
 	// FulfilICATransactionRequest defines an operation for responding to an
 	// interchain account transaction request
 	FulfilICATransactionRequest(context.Context, *MsgFulfilICATransactionRequest) (*MsgFulfilICATransactionRequestResponse, error)
+	// NewZrSignSignatureRequest defines an operation for creating a zrsign
+	// signature request
 	NewZrSignSignatureRequest(context.Context, *MsgNewZrSignSignatureRequest) (*MsgNewZrSignSignatureRequestResponse, error)
+	// UpdateKeyPolicy defines an operation for updating a key policy
 	UpdateKeyPolicy(context.Context, *MsgUpdateKeyPolicy) (*MsgUpdateKeyPolicyResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }

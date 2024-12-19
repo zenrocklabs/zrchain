@@ -6250,6 +6250,7 @@ func (x *PendingMintTransaction) GetKeyId() uint64 {
 	return 0
 }
 
+// PendingMintTransactions is a collection of pending mint transactions.
 type PendingMintTransactions struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
