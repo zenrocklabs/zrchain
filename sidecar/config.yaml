@@ -16,7 +16,7 @@ eth_oracle:
     zen_btc:
       eth_holesky: "0xEe6dd71ccf66E3F920a4D49a57020e0F89659407"
     batcher:
-      eth_holesky: "0x17361a5050258cCeffD595957cB8fddF79cEeeEB"
+      eth_holesky: "0xE2753c22020A72Ea84a444D1DB25b8b7dfaeb7D6"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"
