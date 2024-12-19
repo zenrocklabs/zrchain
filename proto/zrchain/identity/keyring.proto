@@ -13,8 +13,21 @@ message Keyring {
   // The MPC threshold, i.e. the number of parties required to submit signed txs
   // in order for a request to be fulfilled
   uint32 party_threshold = 6;
+  // deprecated
   uint64 key_req_fee = 7;
+  // deprecated
   uint64 sig_req_fee = 8;
   bool is_active = 9;
   bool delegate_fees = 10;
+  KeyringFees fees = 11;
+}
+
+message KeyringFee {
+  uint64 rock_amount = 1;
+  uint64 usd_amount = 2;
+}
+
+message KeyringFees {
+  KeyringFee signature = 1;
+  KeyringFee key = 2;
 }

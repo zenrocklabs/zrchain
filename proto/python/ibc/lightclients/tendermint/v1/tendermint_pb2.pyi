@@ -1,5 +1,5 @@
-from tendermint.types import validator_pb2 as _validator_pb2
-from tendermint.types import types_pb2 as _types_pb2
+from cometbft.types.v1 import validator_pb2 as _validator_pb2
+from cometbft.types.v1 import types_pb2 as _types_pb2
 from cosmos.ics23.v1 import proofs_pb2 as _proofs_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2

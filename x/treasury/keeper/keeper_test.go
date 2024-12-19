@@ -5,17 +5,30 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	treasuryModule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	vtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+type validationKeeperMock struct {
+	rockPrice string
+}
+
+func (vk validationKeeperMock) GetAssetPrice(asset string) (vtypes.AssetPrice, error) {
+	return vtypes.AssetPrice{
+		PriceUSD: sdkmath.LegacyMustNewDecFromStr(vk.rockPrice),
+	}, nil
+}
 
 type bankKeeperMock struct {
 	transactions []struct {
@@ -153,7 +166,7 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 			bkmock := newBankKeeperMock()
 			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
 			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
-			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore)
+			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore, nil)
 
 			tkGenesis := types.GenesisState{
 				Params: types.DefaultParams(),
@@ -207,6 +220,88 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 				)
 			}
 			require.Equal(t, tt.want.fee, bkmock.transactions[1].amount.AmountOf(params.BondDenom).Uint64(), "Second transaction amount should be remaining fee")
+		})
+	}
+}
+
+func Test_TreasuryKeeper_keyAndSignatureFees(t *testing.T) {
+	type args struct {
+		keyUSDFee  uint64
+		keyROCKFee uint64
+		sigUSDFee  uint64
+		sigROCKFee uint64
+		vk         types.ValidationKeeper
+	}
+	type want struct {
+		keyFee uint64
+		sigFee uint64
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "USDFees",
+			args: args{
+				keyUSDFee: 5,
+				sigUSDFee: 5,
+				vk:        &validationKeeperMock{rockPrice: "0.02"},
+			},
+			want: want{
+				keyFee: 100000,
+				sigFee: 100000,
+			},
+		},
+		{
+			name: "ROCKFees",
+			args: args{
+				keyROCKFee: 15000,
+				sigROCKFee: 15000,
+				vk:         &validationKeeperMock{rockPrice: "0"},
+			},
+			want: want{
+				keyFee: 15000,
+				sigFee: 15000,
+			},
+		},
+		{
+			name: "NoFees",
+			args: args{
+				vk: &validationKeeperMock{rockPrice: "0"},
+			},
+			want: want{
+				keyFee: 0,
+				sigFee: 0,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := dbm.NewMemDB()
+			stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
+			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
+			treasuryKeeper, ctx := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, nil, db, stateStore, tt.args.vk)
+			kr := &idtypes.Keyring{
+				Fees: &idtypes.KeyringFees{
+					Signature: &idtypes.KeyringFee{
+						UsdAmount:  tt.args.sigUSDFee,
+						RockAmount: tt.args.sigROCKFee,
+					},
+					Key: &idtypes.KeyringFee{
+						UsdAmount:  tt.args.sigUSDFee,
+						RockAmount: tt.args.sigROCKFee,
+					},
+				},
+			}
+			keyFee, err := treasuryKeeper.KeyFeeInRock(ctx, kr)
+			require.Equal(t, tt.want.keyFee, keyFee)
+			sigFee, err := treasuryKeeper.SignatureFeeInRock(ctx, kr)
+			require.Equal(t, tt.want.sigFee, sigFee)
+			require.NoError(t, err)
 		})
 	}
 }
