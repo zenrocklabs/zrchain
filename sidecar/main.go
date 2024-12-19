@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,12 +19,19 @@ import (
 )
 
 func main() {
+	cfg := LoadConfig()
+
+	if !cfg.Enabled {
+		for {
+			slog.Info("Sidecar is disabled in config; sleeping...")
+			time.Sleep(time.Hour)
+		}
+	}
+
 	port := flag.Int("port", 0, "Override GRPC port from config")
 	flag.Parse()
 
-	cfg := LoadConfig()
-
-	// Override GRPC port if --port flag is provided
+	// Override defeault GRPC port if --port flag is provided
 	if *port != 0 {
 		cfg.GRPCPort = *port
 	}
@@ -60,12 +68,12 @@ func main() {
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
-	log.Printf("gRPC server listening on port %d", cfg.GRPCPort)
-	log.Printf("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates\n", MainLoopTickerInterval/time.Second)
+	slog.Info("gRPC server listening on port", "port", cfg.GRPCPort)
+	slog.Info("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates", "seconds", MainLoopTickerInterval/time.Second)
 
 	go func() {
 		if err := oracle.runAVSContractOracleLoop(ctx); err != nil {
-			log.Printf("Error in Ethereum oracle loop: %v", err)
+			slog.Error("Error in Ethereum oracle loop", "error", err)
 		}
 	}()
 
@@ -82,13 +90,13 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("Shutting down gracefully...")
+	slog.Info("Shutting down gracefully...")
 	cancel()
 }
 
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
-		log.Printf("Received AVS contract state for %s block %d", o.Config.EthOracle.NetworkName[o.Config.Network], update.EthBlockHeight)
+		slog.Info("Received AVS contract state for", "network", o.Config.EthOracle.NetworkName[o.Config.Network], "block", update.EthBlockHeight)
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 		newState := *currentState
 
@@ -101,7 +109,7 @@ func (o *Oracle) processUpdates() {
 		newState.RedemptionsEthereum = update.RedemptionsEthereum
 		newState.RedemptionsSolana = update.RedemptionsSolana
 
-		log.Printf("Received prices: ROCK/USD %f, BTC/USD %f, ETH/USD %f", update.ROCKUSDPrice, update.BTCUSDPrice, update.ETHUSDPrice)
+		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
 		newState.ROCKUSDPrice = update.ROCKUSDPrice
 		newState.BTCUSDPrice = update.BTCUSDPrice
 		newState.ETHUSDPrice = update.ETHUSDPrice

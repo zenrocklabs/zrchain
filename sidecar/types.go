@@ -51,6 +51,7 @@ type Oracle struct {
 }
 
 type Config struct {
+	Enabled        bool              `yaml:"enabled"`
 	GRPCPort       int               `yaml:"grpc_port"`
 	StateFile      string            `yaml:"state_file"`
 	OperatorConfig string            `yaml:"operator_config"`
