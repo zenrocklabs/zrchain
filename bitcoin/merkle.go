@@ -52,6 +52,7 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 	}
 
 	//Remove ignoreAddresses from outputs
+	// cleanedOutputs := filterTXOutputs(outputs, ignoreAddresses)
 	cleanedOutputs := filterTXOutputs(outputs, nil)
 
 	return cleanedOutputs, calculatedIDString, nil
