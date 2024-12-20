@@ -18,8 +18,8 @@ var (
 	DefaultZenBTCMinterKeyID         uint64 = 2
 	DefaultZenBTCChangeAddressKeyIDs        = []uint64{3}
 	DefaultZenBTCUnstakerKeyID       uint64 = 4
-	DefaultZenBTCBurnerKeyID         uint64 = 5
-	DefaultZenBTCRewardsDepositKeyID uint64 = 6
+	// DefaultZenBTCBurnerKeyID         uint64 = 5
+	DefaultZenBTCRewardsDepositKeyID uint64 = 5
 	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 	DefaultZenBTCStrategyAddr               = "0x0000000000000000000000000000000000000000"
 	DefaultStakeableAssets                  = []*types.AssetData{
@@ -44,12 +44,12 @@ func DefaultHVParams() *types.HVParams {
 		DefaultAVSRewardsRate,
 		DefaultBlockTime,
 		&types.ZenBTCParams{
-			ZenBTCEthBatcherAddr:      DefaultZenBTCEthBatcherAddr,
-			ZenBTCDepositKeyringAddr:  DefaultZenBTCDepositKeyringAddr,
-			ZenBTCMinterKeyID:         DefaultZenBTCMinterKeyID,
-			ZenBTCWithdrawerKeyID:     DefaultZenBTCWithdrawerKeyID,
-			ZenBTCUnstakerKeyID:       DefaultZenBTCUnstakerKeyID,
-			ZenBTCBurnerKeyID:         DefaultZenBTCBurnerKeyID,
+			ZenBTCEthBatcherAddr:     DefaultZenBTCEthBatcherAddr,
+			ZenBTCDepositKeyringAddr: DefaultZenBTCDepositKeyringAddr,
+			ZenBTCMinterKeyID:        DefaultZenBTCMinterKeyID,
+			ZenBTCWithdrawerKeyID:    DefaultZenBTCWithdrawerKeyID,
+			ZenBTCUnstakerKeyID:      DefaultZenBTCUnstakerKeyID,
+			// ZenBTCBurnerKeyID:         DefaultZenBTCBurnerKeyID,
 			ZenBTCRewardsDepositKeyID: DefaultZenBTCRewardsDepositKeyID,
 			BitcoinProxyCreatorID:     DefaultBitcoinProxyCreatorID,
 			ZenBTCChangeAddressKeyIDs: DefaultZenBTCChangeAddressKeyIDs,
@@ -106,13 +106,13 @@ func (k Keeper) GetZenBTCUnstakerKeyID(ctx context.Context) uint64 {
 	return params.ZenBTCParams.ZenBTCUnstakerKeyID
 }
 
-func (k Keeper) GetZenBTCBurnerKeyID(ctx context.Context) uint64 {
-	params, err := k.HVParams.Get(ctx)
-	if err != nil {
-		return DefaultZenBTCBurnerKeyID
-	}
-	return params.ZenBTCParams.ZenBTCBurnerKeyID
-}
+// func (k Keeper) GetZenBTCBurnerKeyID(ctx context.Context) uint64 {
+// 	params, err := k.HVParams.Get(ctx)
+// 	if err != nil {
+// 		return DefaultZenBTCBurnerKeyID
+// 	}
+// 	return params.ZenBTCParams.ZenBTCBurnerKeyID
+// }
 
 func (k Keeper) GetZenBTCWithdrawerKeyID(ctx context.Context) uint64 {
 	params, err := k.HVParams.Get(ctx)

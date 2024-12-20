@@ -86,7 +86,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	// Create a map to store nonces for different key IDs
 	nonces := make(map[uint64]uint64)
 
-	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx), k.GetZenBTCBurnerKeyID(ctx)}
+	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
 	for _, key := range keys {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
 		if err != nil {
@@ -118,7 +118,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
 		RequestedEthMinterNonce:    nonces[k.GetZenBTCMinterKeyID(ctx)],
 		RequestedEthUnstakerNonce:  nonces[k.GetZenBTCUnstakerKeyID(ctx)],
-		RequestedEthBurnerNonce:    nonces[k.GetZenBTCBurnerKeyID(ctx)],
+		// RequestedEthBurnerNonce:    nonces[k.GetZenBTCBurnerKeyID(ctx)],
 	}
 
 	return voteExt, nil
@@ -314,7 +314,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
 	oracleData.RequestedEthUnstakerNonce = voteExt.RequestedEthUnstakerNonce
-	oracleData.RequestedEthBurnerNonce = voteExt.RequestedEthBurnerNonce
+	// oracleData.RequestedEthBurnerNonce = voteExt.RequestedEthBurnerNonce
 
 	if err := k.validateOracleData(voteExt, oracleData); err != nil {
 		return nil, nil, err
@@ -842,9 +842,9 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthUnstakerNonce, oracleData.RequestedEthUnstakerNonce)
 	}
 
-	if voteExt.RequestedEthBurnerNonce != oracleData.RequestedEthBurnerNonce {
-		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthBurnerNonce, oracleData.RequestedEthBurnerNonce)
-	}
+	// if voteExt.RequestedEthBurnerNonce != oracleData.RequestedEthBurnerNonce {
+	// 	return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthBurnerNonce, oracleData.RequestedEthBurnerNonce)
+	// }
 
 	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
 		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
