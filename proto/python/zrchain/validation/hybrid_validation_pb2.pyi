@@ -4,6 +4,7 @@ from gogoproto import gogo_pb2 as _gogo_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from tendermint.types import types_pb2 as _types_pb2
+from zrchain.validation import asset_data_pb2 as _asset_data_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
@@ -77,14 +78,24 @@ class HVParams(_message.Message):
     def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., ZenBTCParams: _Optional[_Union[ZenBTCParams, _Mapping]] = ...) -> None: ...
 
 class ZenBTCParams(_message.Message):
-    __slots__ = ("zenBTCEthContractAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID")
-    ZENBTCETHCONTRACTADDR_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("zenBTCEthBatcherAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCRewardsDepositKeyID", "zenBTCChangeAddressKeyIDs", "bitcoinProxyCreatorID", "stakeableAssets")
+    ZENBTCETHBATCHERADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCDEPOSITKEYRINGADDR_FIELD_NUMBER: _ClassVar[int]
     ZENBTCMINTERKEYID_FIELD_NUMBER: _ClassVar[int]
-    zenBTCEthContractAddr: str
+    ZENBTCWITHDRAWERKEYID_FIELD_NUMBER: _ClassVar[int]
+    ZENBTCREWARDSDEPOSITKEYID_FIELD_NUMBER: _ClassVar[int]
+    ZENBTCCHANGEADDRESSKEYIDS_FIELD_NUMBER: _ClassVar[int]
+    BITCOINPROXYCREATORID_FIELD_NUMBER: _ClassVar[int]
+    STAKEABLEASSETS_FIELD_NUMBER: _ClassVar[int]
+    zenBTCEthBatcherAddr: str
     zenBTCDepositKeyringAddr: str
     zenBTCMinterKeyID: int
-    def __init__(self, zenBTCEthContractAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ...) -> None: ...
+    zenBTCWithdrawerKeyID: int
+    zenBTCRewardsDepositKeyID: int
+    zenBTCChangeAddressKeyIDs: _containers.RepeatedScalarFieldContainer[int]
+    bitcoinProxyCreatorID: str
+    stakeableAssets: _containers.RepeatedCompositeFieldContainer[_asset_data_pb2.AssetData]
+    def __init__(self, zenBTCEthBatcherAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCRewardsDepositKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., bitcoinProxyCreatorID: _Optional[str] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions")

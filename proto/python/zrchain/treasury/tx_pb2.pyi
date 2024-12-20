@@ -7,10 +7,11 @@ from zrchain.treasury import key_pb2 as _key_pb2
 from zrchain.treasury import mpcsign_pb2 as _mpcsign_pb2
 from zrchain.treasury import params_pb2 as _params_pb2
 from zrchain.treasury import wallet_pb2 as _wallet_pb2
+from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -101,22 +102,22 @@ class MsgFulfilKeyRequestResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgNewSignatureRequest(_message.Message):
-    __slots__ = ("creator", "key_id", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version")
+    __slots__ = ("creator", "key_ids", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
-    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     BTL_FIELD_NUMBER: _ClassVar[int]
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
     VERIFY_SIGNING_DATA_FIELD_NUMBER: _ClassVar[int]
     VERIFY_SIGNING_DATA_VERSION_FIELD_NUMBER: _ClassVar[int]
     creator: str
-    key_id: int
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
     data_for_signing: str
     btl: int
     cache_id: bytes
     verify_signing_data: bytes
     verify_signing_data_version: VerificationVersion
-    def __init__(self, creator: _Optional[str] = ..., key_id: _Optional[int] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ...) -> None: ...
 
 class MsgNewSignatureRequestResponse(_message.Message):
     __slots__ = ("sig_req_id",)

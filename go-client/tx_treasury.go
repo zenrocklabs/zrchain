@@ -185,7 +185,7 @@ func (c *TreasuryTxClient) NewSignTransactionRequest(ctx context.Context, keyID 
 //
 // CLI Equivalent:
 // zenrockd tx treasury new-signature-request 1 50081cf6e000400018985834e7ead66fc0a0ce7fbdb220ad88b5f9052bf6814f --yes --from alice --chain-id zenrock
-func (c *TreasuryTxClient) NewSignatureRequest(ctx context.Context, keyID uint64, dataForSigning [][]byte, cacheID []byte, unsignedPlusTX []byte) (string, error) {
+func (c *TreasuryTxClient) NewSignatureRequest(ctx context.Context, keyIDs []uint64, dataForSigning [][]byte, cacheID []byte, unsignedPlusTX []byte) (string, error) {
 	// convert data for signing into a comma separated list
 
 	dataForSigningCSV := ""
@@ -199,7 +199,7 @@ func (c *TreasuryTxClient) NewSignatureRequest(ctx context.Context, keyID uint64
 
 	msg := &types.MsgNewSignatureRequest{
 		Creator:        c.c.Identity.Address.String(),
-		KeyId:          keyID,
+		KeyIds:         keyIDs,
 		DataForSigning: dataForSigningCSV,
 		Btl:            0,
 		CacheId:        cacheID,

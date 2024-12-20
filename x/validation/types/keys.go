@@ -16,33 +16,39 @@ import (
 )
 
 var (
-	AssetPricesKey             = collections.NewPrefix(0)
-	SlashEventsKey             = collections.NewPrefix(1)
-	SlashEventCountKey         = collections.NewPrefix(2)
-	AVSDelegationsKey          = collections.NewPrefix(3)
-	ValidatorDelegationsKey    = collections.NewPrefix(4)
-	HVParamsKey                = collections.NewPrefix(5)
-	AVSRewardsPoolKey          = collections.NewPrefix(6)
-	ValidationInfosKey         = collections.NewPrefix(7)
-	BtcBlockHeadersKey         = collections.NewPrefix(8)
-	ConfirmedUnlockTxsKey      = collections.NewPrefix(9)
-	EthereumNonceRequestedKey  = collections.NewPrefix(10)
-	PendingMintTransactionsKey = collections.NewPrefix(11)
-	VoteExtensionRejectedKey   = collections.NewPrefix(12)
+	AssetPricesKey                       = collections.NewPrefix(0)
+	SlashEventsKey                       = collections.NewPrefix(1)
+	SlashEventCountKey                   = collections.NewPrefix(2)
+	AVSDelegationsKey                    = collections.NewPrefix(3)
+	ValidatorDelegationsKey              = collections.NewPrefix(4)
+	HVParamsKey                          = collections.NewPrefix(5)
+	AVSRewardsPoolKey                    = collections.NewPrefix(6)
+	ValidationInfosKey                   = collections.NewPrefix(7)
+	BtcBlockHeadersKey                   = collections.NewPrefix(8)
+	EthereumNonceRequestedKey            = collections.NewPrefix(9)
+	PendingMintTransactionsKey           = collections.NewPrefix(10)
+	ZenBTCRedemptionsKey                 = collections.NewPrefix(11)
+	VoteExtensionRejectedKey             = collections.NewPrefix(12)
+	ZenBTCSupplyKey                      = collections.NewPrefix(13)
+	LastUsedEthereumNonceKey             = collections.NewPrefix(14)
+	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(15)
 
-	AssetPricesIndex             = "asset_prices"
-	SlashEventsIndex             = "slash_events"
-	SlashEventCountIndex         = "slash_event_count"
-	AVSDelegationsIndex          = "avs_delegations"
-	ValidatorDelegationsIndex    = "validator_delegations"
-	HVParamsIndex                = "hv_params"
-	AVSRewardsPoolIndex          = "avs_rewards_pool"
-	ValidationInfosIndex         = "validation_infos"
-	BtcBlockHeadersIndex         = "btc_block_headers"
-	ConfirmedUnlockTxsIndex      = "confirmed_unlock_txs"
-	EthereumNonceRequestedIndex  = "ethereum_nonce_requested"
-	PendingMintTransactionsIndex = "pending_mint_transactions"
-	VoteExtensionRejectedIndex   = "vote_extension_rejected"
+	AssetPricesIndex                       = "asset_prices"
+	SlashEventsIndex                       = "slash_events"
+	SlashEventCountIndex                   = "slash_event_count"
+	AVSDelegationsIndex                    = "avs_delegations"
+	ValidatorDelegationsIndex              = "validator_delegations"
+	HVParamsIndex                          = "hv_params"
+	AVSRewardsPoolIndex                    = "avs_rewards_pool"
+	ValidationInfosIndex                   = "validation_infos"
+	BtcBlockHeadersIndex                   = "btc_block_headers"
+	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
+	PendingMintTransactionsIndex           = "pending_mint_transactions"
+	ZenBTCRedemptionsIndex                 = "zenbtc_redemptions"
+	VoteExtensionRejectedIndex             = "vote_extension_rejected"
+	ZenBTCSupplyIndex                      = "zenbtc_supply"
+	LastUsedEthereumNonceIndex             = "last_used_ethereum_nonce"
+	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
 )
 
 const (

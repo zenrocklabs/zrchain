@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-buf generate
+buf generate -v

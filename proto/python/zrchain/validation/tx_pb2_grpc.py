@@ -95,8 +95,8 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def CancelUnbondingDelegation(self, request, context):
-        """CancelUnbondingDelegation defines a method for performing canceling the unbonding delegation
-        and delegate back to previous validator.
+        """CancelUnbondingDelegation defines a method for performing canceling the
+        unbonding delegation and delegate back to previous validator.
 
         Since: cosmos-sdk 0.46
         """

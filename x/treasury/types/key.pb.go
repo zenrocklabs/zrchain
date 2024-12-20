@@ -709,6 +709,7 @@ func (m *PendingMintTransaction) GetKeyId() uint64 {
 	return 0
 }
 
+// PendingMintTransactions is a collection of pending mint transactions.
 type PendingMintTransactions struct {
 	Txs []*PendingMintTransaction `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
 }

@@ -157,15 +157,11 @@ message WalletResponse {
 
 // QueryKeyRequestByIDRequest is request type for the
 // Query/KeyRequestByIDRequest RPC method.
-message QueryKeyRequestByIDRequest {
-  uint64 id = 1;
-}
+message QueryKeyRequestByIDRequest { uint64 id = 1; }
 
 // QueryKeyRequestByIDResponse is response type for the
 // Query/KeyRequestByIDResponse RPC method.
-message QueryKeyRequestByIDResponse {
-  KeyReqResponse key_request = 1;
-}
+message QueryKeyRequestByIDResponse { KeyReqResponse key_request = 1; }
 
 // QuerySignatureRequestsRequest is request type for the
 // Query/SignatureRequestsRequest RPC method.
@@ -184,15 +180,11 @@ message QuerySignatureRequestsResponse {
 
 // QuerySignatureRequestByIDRequest is request type for the
 // Query/SignatureRequestByIDRequest RPC method.
-message QuerySignatureRequestByIDRequest {
-  uint64 id = 1;
-}
+message QuerySignatureRequestByIDRequest { uint64 id = 1; }
 
 // QuerySignatureRequestByIDResponse is response type for the
 // Query/SignatureRequestByIDResponse RPC method.
-message QuerySignatureRequestByIDResponse {
-  SignReqResponse sign_request = 1;
-}
+message QuerySignatureRequestByIDResponse { SignReqResponse sign_request = 1; }
 
 // QuerySignTransactionRequestsRequest is request type for the
 // Query/SignTransactionRequestsRequest RPC method.
@@ -219,9 +211,7 @@ message SignTransactionRequestsResponse {
 
 // QuerySignTransactionRequestByIDRequest is request type for the
 // Query/SignTransactionRequestByIDRequest RPC method.
-message QuerySignTransactionRequestByIDRequest {
-  uint64 id = 1;
-}
+message QuerySignTransactionRequestByIDRequest { uint64 id = 1; }
 
 // QuerySignTransactionRequestByIDResponse is response type for the
 // Query/SignTransactionRequestByIDResponse RPC method.
@@ -255,9 +245,7 @@ message QueryKeyByAddressRequest {
   repeated string     prefixes     = 5;
 }
 
-message QueryKeyByAddressResponse {
-  KeyAndWalletResponse response = 1;
-}
+message QueryKeyByAddressResponse { KeyAndWalletResponse response = 1; }
 
 // QueryZenbtcWalletsRequest is request type for the
 // Query/ZenbtcWalletsRequest RPC method.

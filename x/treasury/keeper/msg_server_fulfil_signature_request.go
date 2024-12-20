@@ -68,7 +68,7 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("request is not pending/partial, can't be updated")
 	}
 
-	key, err := k.KeyStore.Get(ctx, req.KeyId)
+	key, err := k.KeyStore.Get(ctx, req.KeyIds[0])
 	if err != nil {
 		return nil, nil, fmt.Errorf("key not found")
 	}

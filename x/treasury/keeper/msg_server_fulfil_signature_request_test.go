@@ -95,7 +95,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 	var defaultSigRequest = types.SignRequest{
 		Id:                     1,
 		Creator:                "testCreator",
-		KeyId:                  1,
+		KeyIds:                 []uint64{1},
 		DataForSigning:         sigRequestPayload,
 		Status:                 types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL,
 		KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -133,7 +133,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			wantSigReq: &types.SignRequest{
 				Id:             1,
 				Creator:        "testCreator",
-				KeyId:          1,
+				KeyIds:         []uint64{1},
 				DataForSigning: sigRequestPayload,
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -152,7 +152,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:                     1,
 					Creator:                "testCreator",
-					KeyId:                  1,
+					KeyIds:                 []uint64{1},
 					DataForSigning:         sigRequestPayload,
 					Status:                 types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL,
 					KeyType:                types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -170,7 +170,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			wantSigReq: &types.SignRequest{
 				Id:             1,
 				Creator:        "testCreator",
-				KeyId:          1,
+				KeyIds:         []uint64{1},
 				DataForSigning: sigRequestPayload,
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -189,7 +189,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -205,7 +205,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			wantSigReq: &types.SignRequest{
 				Id:             1,
 				Creator:        "testCreator",
-				KeyId:          1,
+				KeyIds:         []uint64{1},
 				DataForSigning: sigRequestPayload,
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -226,7 +226,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:                     1,
 					Creator:                "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-					KeyId:                  1,
+					KeyIds:                 []uint64{1},
 					DataForSigning:         [][]byte{{0xe8, 0xcc, 0x5a, 0x88, 0x37, 0xc8, 0x4e, 0x8f, 0x21, 0xab, 0xcc, 0x1e, 0xa6, 0x66, 0x24, 0xa9, 0x3e, 0x01, 0x12, 0xbe, 0xc6, 0xf3, 0xdb, 0x3a, 0xef, 0x79, 0x64, 0x9d, 0x6c, 0xac, 0xc0, 0xe0}},
 					Status:                 types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -244,7 +244,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			wantSigReq: &types.SignRequest{
 				Id:             1,
 				Creator:        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				KeyId:          1,
+				KeyIds:         []uint64{1},
 				DataForSigning: [][]byte{{0xe8, 0xcc, 0x5a, 0x88, 0x37, 0xc8, 0x4e, 0x8f, 0x21, 0xab, 0xcc, 0x1e, 0xa6, 0x66, 0x24, 0xa9, 0x3e, 0x01, 0x12, 0xbe, 0xc6, 0xf3, 0xdb, 0x3a, 0xef, 0x79, 0x64, 0x9d, 0x6c, 0xac, 0xc0, 0xe0}},
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -263,7 +263,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -285,7 +285,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -302,7 +302,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -324,7 +324,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -346,7 +346,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -370,7 +370,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_UNSPECIFIED,
@@ -392,7 +392,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
@@ -416,7 +416,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -440,7 +440,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -464,7 +464,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
@@ -486,7 +486,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				req: &types.SignRequest{
 					Id:             1,
 					Creator:        "testCreator",
-					KeyId:          1,
+					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
 					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,

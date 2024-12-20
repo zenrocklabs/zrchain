@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 )
@@ -38,22 +39,25 @@ func NewOracleService(oracle *Oracle) *oracleService {
 }
 
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
-	currentState := s.oracle.currentState.Load().(*OracleState)
+	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
 
-	contractState, err := json.Marshal(currentState.Delegations)
+	contractState, err := json.Marshal(currentState.EigenDelegations)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal state: %w", err)
 	}
 
 	return &api.SidecarStateResponse{
-		Delegations:    contractState,
-		ROCKUSDPrice:   fmt.Sprint(currentState.ROCKUSDPrice),
-		ETHUSDPrice:    fmt.Sprint(currentState.ETHUSDPrice),
-		EthBlockHeight: currentState.EthBlockHeight,
-		EthBlockHash:   currentState.EthBlockHash,
-		EthGasLimit:    currentState.EthGasLimit,
-		EthBaseFee:     currentState.EthBaseFee,
-		EthTipCap:      currentState.EthTipCap,
+		EigenDelegations:           contractState,
+		EthBlockHeight:             currentState.EthBlockHeight,
+		EthGasLimit:                currentState.EthGasLimit,
+		EthBaseFee:                 currentState.EthBaseFee,
+		EthTipCap:                  currentState.EthTipCap,
+		SolanaLamportsPerSignature: currentState.SolanaLamportsPerSignature,
+		RedemptionsEthereum:        currentState.RedemptionsEthereum,
+		RedemptionsSolana:          currentState.RedemptionsSolana,
+		ROCKUSDPrice:               fmt.Sprint(currentState.ROCKUSDPrice),
+		BTCUSDPrice:                fmt.Sprint(currentState.BTCUSDPrice),
+		ETHUSDPrice:                fmt.Sprint(currentState.ETHUSDPrice),
 	}, nil
 }
 
@@ -63,20 +67,23 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		return nil, err
 	}
 
-	contractState, err := json.Marshal(state.Delegations)
+	contractState, err := json.Marshal(state.EigenDelegations)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal state: %w", err)
 	}
 
 	return &api.SidecarStateResponse{
-		Delegations:    contractState,
-		ROCKUSDPrice:   fmt.Sprint(state.ROCKUSDPrice),
-		ETHUSDPrice:    fmt.Sprint(state.ETHUSDPrice),
-		EthBlockHeight: state.EthBlockHeight,
-		EthBlockHash:   state.EthBlockHash,
-		EthGasLimit:    state.EthGasLimit,
-		EthBaseFee:     state.EthBaseFee,
-		EthTipCap:      state.EthTipCap,
+		EigenDelegations:           contractState,
+		EthBlockHeight:             state.EthBlockHeight,
+		EthGasLimit:                state.EthGasLimit,
+		EthBaseFee:                 state.EthBaseFee,
+		EthTipCap:                  state.EthTipCap,
+		SolanaLamportsPerSignature: state.SolanaLamportsPerSignature,
+		RedemptionsEthereum:        state.RedemptionsEthereum,
+		RedemptionsSolana:          state.RedemptionsSolana,
+		ROCKUSDPrice:               fmt.Sprint(state.ROCKUSDPrice),
+		BTCUSDPrice:                fmt.Sprint(state.BTCUSDPrice),
+		ETHUSDPrice:                fmt.Sprint(state.ETHUSDPrice),
 	}, nil
 }
 

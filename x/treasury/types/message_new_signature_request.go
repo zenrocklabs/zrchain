@@ -11,7 +11,7 @@ var _ sdk.Msg = &MsgNewSignatureRequest{}
 func NewMsgNewSignatureRequest(creator string, keyId uint64, dataForSigning string, btl uint64) *MsgNewSignatureRequest {
 	return &MsgNewSignatureRequest{
 		Creator:        creator,
-		KeyId:          keyId,
+		KeyIds:         []uint64{keyId},
 		DataForSigning: dataForSigning,
 		Btl:            btl,
 	}
