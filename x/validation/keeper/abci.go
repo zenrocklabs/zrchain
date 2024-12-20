@@ -90,7 +90,13 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	for _, key := range keys {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
 		if err != nil {
-			return VoteExtension{}, err
+			if !errors.Is(err, collections.ErrNotFound) {
+				return VoteExtension{}, err
+			}
+			requested = false
+			if err := k.EthereumNonceRequested.Set(ctx, key, false); err != nil {
+				return VoteExtension{}, err
+			}
 		}
 		if requested {
 			nonce, err := k.getNextEthereumNonce(ctx, key)
