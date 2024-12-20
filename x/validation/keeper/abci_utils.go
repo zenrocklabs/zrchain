@@ -375,6 +375,8 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 		return 0, fmt.Errorf("error fetching Ethereum nonce: %w", err)
 	}
 
+	k.Logger(ctx).Warn("nonceResp", "nonce", nonceResp.Nonce, "keyID", keyID)
+
 	return nonceResp.Nonce, nil
 }
 
@@ -486,6 +488,8 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, ethNonce,
 		return nil, nil, err
 	}
 
+	k.Logger(ctx).Warn("bar encodedUnstakeData", "encodedUnstakeData", encodedUnstakeData)
+
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// For Holesky, use a high priority fee
@@ -524,9 +528,11 @@ func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64)
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
+	k.Logger(ctx).Warn("foo redemptionID", "redemptionID", redemptionID)
+
 	data, err := parsed.Pack(
 		"unstakeRockBTComplete",
-		redemptionID,
+		&redemptionID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
@@ -543,6 +549,10 @@ func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType
 	})
 	if err != nil {
 		return "", err
+	}
+
+	if len(q.Wallets) == 0 {
+		return "", fmt.Errorf("no wallets found for key ID %d", keyID)
 	}
 
 	return q.Wallets[0].Address, nil
