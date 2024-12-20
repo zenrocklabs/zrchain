@@ -55,7 +55,7 @@ func (k Keeper) ZenbtcWallets(
 					SignPolicyId:   value.SignPolicyId,
 					ZenbtcMetadata: value.ZenbtcMetadata,
 				},
-				Wallets: processWallets(value, req.ChainType, nil),
+				Wallets: processWallets(value, types.WalletType_WALLET_TYPE_UNSPECIFIED, nil),
 			}, nil
 		},
 	)
