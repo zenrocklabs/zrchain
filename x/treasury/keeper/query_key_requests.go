@@ -39,6 +39,7 @@ func (k Keeper) KeyRequests(goCtx context.Context, req *types.QueryKeyRequestsRe
 				RejectReason:           value.RejectReason,
 				Index:                  value.Index,
 				SignPolicyId:           value.SignPolicyId,
+				ZenbtcMetadata:         value.ZenbtcMetadata,
 			}, nil
 		},
 	)

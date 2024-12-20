@@ -8,7 +8,7 @@ import (
 
 var _ sdk.Msg = &MsgNewKeyRequest{}
 
-func NewMsgNewKeyRequest(creator string, workspaceAddr string, keyringAddr string, keyType string, btl uint64, signPolicyId uint64) *MsgNewKeyRequest {
+func NewMsgNewKeyRequest(creator, workspaceAddr, keyringAddr, keyType string, btl, signPolicyId uint64) *MsgNewKeyRequest {
 	return &MsgNewKeyRequest{
 		Creator:       creator,
 		WorkspaceAddr: workspaceAddr,

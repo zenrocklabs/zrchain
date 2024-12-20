@@ -20,13 +20,14 @@ func (k Keeper) KeyByID(goCtx context.Context, req *types.QueryKeyByIDRequest) (
 
 	return &types.QueryKeyByIDResponse{
 		Key: &types.KeyResponse{
-			Id:            key.Id,
-			WorkspaceAddr: key.WorkspaceAddr,
-			KeyringAddr:   key.KeyringAddr,
-			Type:          key.Type.String(),
-			PublicKey:     key.PublicKey,
-			Index:         key.Index,
-			SignPolicyId:  key.SignPolicyId,
+			Id:             key.Id,
+			WorkspaceAddr:  key.WorkspaceAddr,
+			KeyringAddr:    key.KeyringAddr,
+			Type:           key.Type.String(),
+			PublicKey:      key.PublicKey,
+			Index:          key.Index,
+			SignPolicyId:   key.SignPolicyId,
+			ZenbtcMetadata: key.ZenbtcMetadata,
 		},
 		Wallets: processWallets(key, req.WalletType, req.Prefixes),
 	}, nil
