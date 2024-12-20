@@ -14,7 +14,6 @@ import (
 	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	treasuryModule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	vtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -24,10 +23,8 @@ type validationKeeperMock struct {
 	rockPrice string
 }
 
-func (vk validationKeeperMock) GetAssetPrice(asset string) (vtypes.AssetPrice, error) {
-	return vtypes.AssetPrice{
-		PriceUSD: sdkmath.LegacyMustNewDecFromStr(vk.rockPrice),
-	}, nil
+func (vk validationKeeperMock) GetAssetPrice(asset string) (sdkmath.LegacyDec, error) {
+	return sdkmath.LegacyMustNewDecFromStr(vk.rockPrice), nil
 }
 
 type bankKeeperMock struct {
