@@ -304,7 +304,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	}
 
 	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
+		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: make configurable
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
@@ -543,6 +543,10 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		}
 	}
 
+	if lastUsedNonce.Nonce != 0 && oracleData.RequestedEthMinterNonce == 0 {
+		return nil
+	}
+
 	lastMintTx := pendingMints.Txs[0]
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
@@ -569,6 +573,10 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 			}
 			return nil
 		}
+	}
+
+	if lastUsedNonce.Skip {
+		return nil
 	}
 
 	pendingMintTx := pendingMints.Txs[0]
@@ -706,6 +714,10 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		}
 	}
 
+	if lastUsedNonce.Nonce != 0 && oracleData.RequestedEthUnstakerNonce == 0 {
+		return nil
+	}
+
 	var pendingRedemption zenbtctypes.Redemption
 	var lastUnstakeSucceeded = oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce
 	var firstInitiatedProcessed bool
@@ -732,6 +744,10 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return fmt.Errorf("error walking zenBTC redemptions: %w", err)
 	}
 
+	if lastUsedNonce.Skip {
+		return nil
+	}
+
 	// baseFeePlusTip := new(big.Int).Add(new(big.Int).SetUint64(oracleData.EthBaseFee), new(big.Int).SetUint64(oracleData.EthTipCap))
 	// feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
 
@@ -745,9 +761,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 
 	unsignedUnstakeTxHash, unsignedUnstakeTx, err := k.constructUnstakeTx(
 		ctx,
-		pendingRedemption.Data.Amount,
-		// feeBTC,
-		0,
+		pendingRedemption.Data.Id,
 		oracleData.RequestedEthUnstakerNonce,
 		oracleData.EthGasLimit, // TODO: update to reflect gas required instead of max block limit
 		oracleData.EthBaseFee,
@@ -757,7 +771,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return fmt.Errorf("error constructing mint transaction: %w", err)
 	}
 
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 1})
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000}) // TODO: make configurable
 	if err != nil {
 		return fmt.Errorf("error creating metadata: %w", err)
 	}

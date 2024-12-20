@@ -44,7 +44,9 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCContractHolesky, err := zenbtc.NewZenBTC(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.EthHolesky), o.EthClient)
+	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTCController.Ethereum[o.Config.Network]), o.EthClient,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
@@ -55,7 +57,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCContractHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 		}
@@ -64,7 +66,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCContractHolesky *zenbtc.ZenBTC,
+	zenBTCControllerHolesky *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -83,7 +85,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	redemptionsEthereum, err := o.getRedemptionTrackerState(zenBTCContractHolesky, targetBlockNumber)
+	redemptionsEthereum, err := o.getRedemptionsEVM(zenBTCControllerHolesky, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}
@@ -232,23 +234,22 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) getRedemptionTrackerState(contractInstance *zenbtc.ZenBTC, height *big.Int) ([]api.Redemption, error) {
+func (o *Oracle) getRedemptionsEVM(contractInstance *zenbtc.ZenBTController, height *big.Int) ([]api.Redemption, error) {
 	callOpts := &bind.CallOpts{
 		BlockNumber: height,
 	}
 
-	recentRedemptions, err := contractInstance.GetRecentRedemptionData(callOpts, 100)
+	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get recent redemption data: %w", err)
+		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
 	}
 
-	// convert to []Redemptions - id[i] corresponds to destinationAddr[i] and amount[i]
 	redemptions := make([]api.Redemption, 0)
-	for i := 0; i < len(recentRedemptions.Ids); i++ {
+	for _, redemption := range redemptionData {
 		redemptions = append(redemptions, api.Redemption{
-			Id:                 recentRedemptions.Ids[i],
-			DestinationAddress: recentRedemptions.Destination[i],
-			Amount:             recentRedemptions.Amounts[i],
+			Id:                 redemption.Nonce.Uint64(),
+			DestinationAddress: redemption.DestinationAddress,
+			Amount:             redemption.ZenBTCValue.Uint64(),
 		})
 	}
 

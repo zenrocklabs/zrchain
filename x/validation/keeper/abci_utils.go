@@ -480,8 +480,8 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, new(big.Int).SetUint64(amount), fee)
+func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -501,7 +501,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, amount, fee, nonce, gas
 	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
 
 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
-		Nonce:    nonce,
+		Nonce:    ethNonce,
 		GasPrice: gasPrice,
 		Gas:      gasLimit,
 		To:       &addr,
@@ -518,24 +518,18 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, amount, fee, nonce, gas
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, amount *big.Int, fee uint64) ([]byte, error) {
+func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
 	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
 	data, err := parsed.Pack(
-		"unwrapInit",
-		[]bindings.IDelegationManagerQueuedWithdrawalParams{
-			{
-				Strategies: []common.Address{k.GetZenBTCStrategyAddr(ctx)},
-				Shares:     []*big.Int{amount},
-				Withdrawer: common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx)),
-			},
-		},
+		"unstakeRockBTComplete",
+		redemptionID,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode unwrapInit call data: %v", err)
+		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
 	}
 
 	return data, nil
@@ -598,12 +592,14 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64
 		}
 	}
 
+	skip := false
+	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
+		skip = true
+	}
+	lastUsedNonce.Skip = skip
+
 	if err = k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
 		return 0, err
-	}
-
-	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
-		return 0, nil
 	}
 
 	return nonce, nil
