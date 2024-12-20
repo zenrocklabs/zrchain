@@ -3214,54 +3214,54 @@ func (x *_ZenBTCParams_8_list) IsValid() bool {
 	return x.list != nil
 }
 
-var _ protoreflect.List = (*_ZenBTCParams_10_list)(nil)
+var _ protoreflect.List = (*_ZenBTCParams_11_list)(nil)
 
-type _ZenBTCParams_10_list struct {
+type _ZenBTCParams_11_list struct {
 	list *[]*AssetData
 }
 
-func (x *_ZenBTCParams_10_list) Len() int {
+func (x *_ZenBTCParams_11_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_ZenBTCParams_10_list) Get(i int) protoreflect.Value {
+func (x *_ZenBTCParams_11_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
-func (x *_ZenBTCParams_10_list) Set(i int, value protoreflect.Value) {
+func (x *_ZenBTCParams_11_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*AssetData)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_ZenBTCParams_10_list) Append(value protoreflect.Value) {
+func (x *_ZenBTCParams_11_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*AssetData)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_ZenBTCParams_10_list) AppendMutable() protoreflect.Value {
+func (x *_ZenBTCParams_11_list) AppendMutable() protoreflect.Value {
 	v := new(AssetData)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_ZenBTCParams_10_list) Truncate(n int) {
+func (x *_ZenBTCParams_11_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_ZenBTCParams_10_list) NewElement() protoreflect.Value {
+func (x *_ZenBTCParams_11_list) NewElement() protoreflect.Value {
 	v := new(AssetData)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_ZenBTCParams_10_list) IsValid() bool {
+func (x *_ZenBTCParams_11_list) IsValid() bool {
 	return x.list != nil
 }
 
@@ -3275,6 +3275,7 @@ var (
 	fd_ZenBTCParams_zenBTCBurnerKeyID         protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCRewardsDepositKeyID protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCChangeAddressKeyIDs protoreflect.FieldDescriptor
+	fd_ZenBTCParams_zenBTCStrategyAddr        protoreflect.FieldDescriptor
 	fd_ZenBTCParams_bitcoinProxyCreatorID     protoreflect.FieldDescriptor
 	fd_ZenBTCParams_stakeableAssets           protoreflect.FieldDescriptor
 )
@@ -3290,6 +3291,7 @@ func init() {
 	fd_ZenBTCParams_zenBTCBurnerKeyID = md_ZenBTCParams.Fields().ByName("zenBTCBurnerKeyID")
 	fd_ZenBTCParams_zenBTCRewardsDepositKeyID = md_ZenBTCParams.Fields().ByName("zenBTCRewardsDepositKeyID")
 	fd_ZenBTCParams_zenBTCChangeAddressKeyIDs = md_ZenBTCParams.Fields().ByName("zenBTCChangeAddressKeyIDs")
+	fd_ZenBTCParams_zenBTCStrategyAddr = md_ZenBTCParams.Fields().ByName("zenBTCStrategyAddr")
 	fd_ZenBTCParams_bitcoinProxyCreatorID = md_ZenBTCParams.Fields().ByName("bitcoinProxyCreatorID")
 	fd_ZenBTCParams_stakeableAssets = md_ZenBTCParams.Fields().ByName("stakeableAssets")
 }
@@ -3407,6 +3409,12 @@ func (x *fastReflection_ZenBTCParams) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if x.ZenBTCStrategyAddr != "" {
+		value := protoreflect.ValueOfString(x.ZenBTCStrategyAddr)
+		if !f(fd_ZenBTCParams_zenBTCStrategyAddr, value) {
+			return
+		}
+	}
 	if x.BitcoinProxyCreatorID != "" {
 		value := protoreflect.ValueOfString(x.BitcoinProxyCreatorID)
 		if !f(fd_ZenBTCParams_bitcoinProxyCreatorID, value) {
@@ -3414,7 +3422,7 @@ func (x *fastReflection_ZenBTCParams) Range(f func(protoreflect.FieldDescriptor,
 		}
 	}
 	if len(x.StakeableAssets) != 0 {
-		value := protoreflect.ValueOfList(&_ZenBTCParams_10_list{list: &x.StakeableAssets})
+		value := protoreflect.ValueOfList(&_ZenBTCParams_11_list{list: &x.StakeableAssets})
 		if !f(fd_ZenBTCParams_stakeableAssets, value) {
 			return
 		}
@@ -3450,6 +3458,8 @@ func (x *fastReflection_ZenBTCParams) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.ZenBTCRewardsDepositKeyID != uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		return len(x.ZenBTCChangeAddressKeyIDs) != 0
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		return x.ZenBTCStrategyAddr != ""
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		return x.BitcoinProxyCreatorID != ""
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
@@ -3486,6 +3496,8 @@ func (x *fastReflection_ZenBTCParams) Clear(fd protoreflect.FieldDescriptor) {
 		x.ZenBTCRewardsDepositKeyID = uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		x.ZenBTCChangeAddressKeyIDs = nil
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		x.ZenBTCStrategyAddr = ""
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		x.BitcoinProxyCreatorID = ""
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
@@ -3533,14 +3545,17 @@ func (x *fastReflection_ZenBTCParams) Get(descriptor protoreflect.FieldDescripto
 		}
 		listValue := &_ZenBTCParams_8_list{list: &x.ZenBTCChangeAddressKeyIDs}
 		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		value := x.ZenBTCStrategyAddr
+		return protoreflect.ValueOfString(value)
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		value := x.BitcoinProxyCreatorID
 		return protoreflect.ValueOfString(value)
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		if len(x.StakeableAssets) == 0 {
-			return protoreflect.ValueOfList(&_ZenBTCParams_10_list{})
+			return protoreflect.ValueOfList(&_ZenBTCParams_11_list{})
 		}
-		listValue := &_ZenBTCParams_10_list{list: &x.StakeableAssets}
+		listValue := &_ZenBTCParams_11_list{list: &x.StakeableAssets}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -3580,11 +3595,13 @@ func (x *fastReflection_ZenBTCParams) Set(fd protoreflect.FieldDescriptor, value
 		lv := value.List()
 		clv := lv.(*_ZenBTCParams_8_list)
 		x.ZenBTCChangeAddressKeyIDs = *clv.list
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		x.ZenBTCStrategyAddr = value.Interface().(string)
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		x.BitcoinProxyCreatorID = value.Interface().(string)
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		lv := value.List()
-		clv := lv.(*_ZenBTCParams_10_list)
+		clv := lv.(*_ZenBTCParams_11_list)
 		x.StakeableAssets = *clv.list
 	default:
 		if fd.IsExtension() {
@@ -3616,7 +3633,7 @@ func (x *fastReflection_ZenBTCParams) Mutable(fd protoreflect.FieldDescriptor) p
 		if x.StakeableAssets == nil {
 			x.StakeableAssets = []*AssetData{}
 		}
-		value := &_ZenBTCParams_10_list{list: &x.StakeableAssets}
+		value := &_ZenBTCParams_11_list{list: &x.StakeableAssets}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.ZenBTCParams.zenBTCEthBatcherAddr":
 		panic(fmt.Errorf("field zenBTCEthBatcherAddr of message zrchain.validation.ZenBTCParams is not mutable"))
@@ -3632,6 +3649,8 @@ func (x *fastReflection_ZenBTCParams) Mutable(fd protoreflect.FieldDescriptor) p
 		panic(fmt.Errorf("field zenBTCBurnerKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		panic(fmt.Errorf("field zenBTCRewardsDepositKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		panic(fmt.Errorf("field zenBTCStrategyAddr of message zrchain.validation.ZenBTCParams is not mutable"))
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		panic(fmt.Errorf("field bitcoinProxyCreatorID of message zrchain.validation.ZenBTCParams is not mutable"))
 	default:
@@ -3664,11 +3683,13 @@ func (x *fastReflection_ZenBTCParams) NewField(fd protoreflect.FieldDescriptor) 
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		list := []uint64{}
 		return protoreflect.ValueOfList(&_ZenBTCParams_8_list{list: &list})
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		return protoreflect.ValueOfString("")
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		return protoreflect.ValueOfString("")
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		list := []*AssetData{}
-		return protoreflect.ValueOfList(&_ZenBTCParams_10_list{list: &list})
+		return protoreflect.ValueOfList(&_ZenBTCParams_11_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ZenBTCParams"))
@@ -3768,6 +3789,10 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 			}
 			n += 1 + runtime.Sov(uint64(l)) + l
 		}
+		l = len(x.ZenBTCStrategyAddr)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		l = len(x.BitcoinProxyCreatorID)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
@@ -3820,13 +3845,20 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], encoded)
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
-				dAtA[i] = 0x52
+				dAtA[i] = 0x5a
 			}
 		}
 		if len(x.BitcoinProxyCreatorID) > 0 {
 			i -= len(x.BitcoinProxyCreatorID)
 			copy(dAtA[i:], x.BitcoinProxyCreatorID)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BitcoinProxyCreatorID)))
+			i--
+			dAtA[i] = 0x52
+		}
+		if len(x.ZenBTCStrategyAddr) > 0 {
+			i -= len(x.ZenBTCStrategyAddr)
+			copy(dAtA[i:], x.ZenBTCStrategyAddr)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ZenBTCStrategyAddr)))
 			i--
 			dAtA[i] = 0x4a
 		}
@@ -4175,6 +4207,38 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				}
 			case 9:
 				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCStrategyAddr", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ZenBTCStrategyAddr = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 10:
+				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BitcoinProxyCreatorID", wireType)
 				}
 				var stringLen uint64
@@ -4205,7 +4269,7 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				}
 				x.BitcoinProxyCreatorID = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 10:
+			case 11:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field StakeableAssets", wireType)
 				}
@@ -5237,8 +5301,9 @@ type ZenBTCParams struct {
 	ZenBTCBurnerKeyID         uint64       `protobuf:"varint,6,opt,name=zenBTCBurnerKeyID,proto3" json:"zenBTCBurnerKeyID,omitempty"`
 	ZenBTCRewardsDepositKeyID uint64       `protobuf:"varint,7,opt,name=zenBTCRewardsDepositKeyID,proto3" json:"zenBTCRewardsDepositKeyID,omitempty"`
 	ZenBTCChangeAddressKeyIDs []uint64     `protobuf:"varint,8,rep,packed,name=zenBTCChangeAddressKeyIDs,proto3" json:"zenBTCChangeAddressKeyIDs,omitempty"`
-	BitcoinProxyCreatorID     string       `protobuf:"bytes,9,opt,name=bitcoinProxyCreatorID,proto3" json:"bitcoinProxyCreatorID,omitempty"`
-	StakeableAssets           []*AssetData `protobuf:"bytes,10,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
+	ZenBTCStrategyAddr        string       `protobuf:"bytes,9,opt,name=zenBTCStrategyAddr,proto3" json:"zenBTCStrategyAddr,omitempty"`
+	BitcoinProxyCreatorID     string       `protobuf:"bytes,10,opt,name=bitcoinProxyCreatorID,proto3" json:"bitcoinProxyCreatorID,omitempty"`
+	StakeableAssets           []*AssetData `protobuf:"bytes,11,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
 }
 
 func (x *ZenBTCParams) Reset() {
@@ -5315,6 +5380,13 @@ func (x *ZenBTCParams) GetZenBTCChangeAddressKeyIDs() []uint64 {
 		return x.ZenBTCChangeAddressKeyIDs
 	}
 	return nil
+}
+
+func (x *ZenBTCParams) GetZenBTCStrategyAddr() string {
+	if x != nil {
+		return x.ZenBTCStrategyAddr
+	}
+	return ""
 }
 
 func (x *ZenBTCParams) GetBitcoinProxyCreatorID() string {
@@ -5502,7 +5574,7 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
 	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72,
 	0x61, 0x6d, 0x73, 0x52, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x22, 0xbd, 0x04, 0x0a, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61,
+	0x73, 0x22, 0xed, 0x04, 0x0a, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61,
 	0x6d, 0x73, 0x12, 0x32, 0x0a, 0x14, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x45, 0x74, 0x68, 0x42,
 	0x61, 0x74, 0x63, 0x68, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x14, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x45, 0x74, 0x68, 0x42, 0x61, 0x74, 0x63, 0x68,
@@ -5530,11 +5602,14 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x4b, 0x65, 0x79, 0x49, 0x44,
 	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x04, 0x52, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x43,
 	0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x4b, 0x65, 0x79, 0x49,
-	0x44, 0x73, 0x12, 0x34, 0x0a, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f,
-	0x78, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x18, 0x09, 0x20, 0x01, 0x28,
+	0x44, 0x73, 0x12, 0x2e, 0x0a, 0x12, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x53, 0x74, 0x72, 0x61,
+	0x74, 0x65, 0x67, 0x79, 0x41, 0x64, 0x64, 0x72, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12,
+	0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x41, 0x64,
+	0x64, 0x72, 0x12, 0x34, 0x0a, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f,
+	0x78, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x18, 0x0a, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f, 0x78, 0x79, 0x43,
 	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x12, 0x47, 0x0a, 0x0f, 0x73, 0x74, 0x61, 0x6b,
-	0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x0a, 0x20, 0x03, 0x28,
+	0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x0b, 0x20, 0x03, 0x28,
 	0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
 	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61,
 	0x52, 0x0f, 0x73, 0x74, 0x61, 0x6b, 0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74,

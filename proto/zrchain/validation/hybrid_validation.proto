@@ -147,8 +147,9 @@ message ZenBTCParams {
   uint64 zenBTCBurnerKeyID = 6;
   uint64 zenBTCRewardsDepositKeyID = 7;
   repeated uint64 zenBTCChangeAddressKeyIDs = 8;
-  string bitcoinProxyCreatorID = 9;
-  repeated AssetData stakeableAssets = 10;
+  string zenBTCStrategyAddr = 9;
+  string bitcoinProxyCreatorID = 10;
+  repeated AssetData stakeableAssets = 11;
 }
 
 message ValidationInfo {

@@ -413,7 +413,6 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 
 // TODO: use above function instead of this one if possible
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	// if chainID != 17000 && chainID != 11155111 {
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
@@ -476,6 +475,67 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func (k *Keeper) constructUnstakeTx(ctx context.Context, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, new(big.Int).SetUint64(amount), fee)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
+
+	// For Holesky, use a high priority fee
+	priorityFee := new(big.Int).SetUint64(5_000_000_000) // 5 gwei
+
+	// Buffer the base fee a little to allow for fluctuations
+	baseFeeBuffered := new(big.Int).Mul(
+		new(big.Int).SetUint64(baseFee),
+		big.NewInt(12),
+	)
+	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+
+	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
+
+	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Gas:      gasLimit,
+		To:       &addr,
+		Value:    big.NewInt(0), // we shouldn't send any ETH
+		Data:     encodedUnstakeData,
+	})
+
+	unsignedTxBz, err := unsignedTx.MarshalBinary()
+	if err != nil {
+		return nil, nil, err
+	}
+	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(17000))
+
+	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+}
+
+func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, amount *big.Int, fee uint64) ([]byte, error) {
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	data, err := parsed.Pack(
+		"unwrapInit",
+		[]bindings.IDelegationManagerQueuedWithdrawalParams{
+			{
+				Strategies: []common.Address{k.GetZenBTCStrategyAddr(ctx)},
+				Shares:     []*big.Int{amount},
+				Withdrawer: common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx)),
+			},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode unwrapInit call data: %v", err)
 	}
 
 	return data, nil

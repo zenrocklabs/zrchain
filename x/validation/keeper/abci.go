@@ -636,6 +636,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		return
 	}
 
+	foundNewRedemption := false
+
 	for _, redemption := range oracleData.EthereumRedemptions {
 		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
 		if err != nil {
@@ -647,6 +649,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 			continue
 		}
 
+		foundNewRedemption = true
+
 		// Convert zenBTC amount to BTC amount
 		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
 		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
@@ -657,12 +661,124 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 				DestinationAddress: redemption.DestinationAddress,
 				Amount:             btcAmount,
 			},
-			Completed: false,
+			Status: zenbtctypes.RedemptionStatus_INITIATED,
 		}); err != nil {
 			k.Logger(ctx).Error("error adding redemption to store", "err", err)
 			continue
 		}
 	}
+
+	if foundNewRedemption {
+		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
+		}
+	}
+}
+
+func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) error {
+	// Toggle unstaking every other block as VEs originate from block n-1 so requests have 1 block latency
+	if ctx.BlockHeight()%2 == 1 {
+		return nil
+	}
+
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return fmt.Errorf("error getting EthereumNonceRequested state: %w", err)
+		}
+		requested = false
+		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), requested); err != nil {
+			return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+		}
+	}
+	if !requested {
+		return nil
+	}
+
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
+		}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthUnstakerNonce, Counter: 0}
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), lastUsedNonce); err != nil {
+			return fmt.Errorf("error setting last used Ethereum nonce: %w", err)
+		}
+	}
+
+	var pendingRedemption zenbtctypes.Redemption
+	var lastUnstakeSucceeded = oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce
+	var firstInitiatedProcessed bool
+
+	if err := k.ZenBTCRedemptions.Walk(ctx, nil, func(id uint64, redemption zenbtctypes.Redemption) (stop bool, err error) {
+		if redemption.Status != zenbtctypes.RedemptionStatus_INITIATED {
+			return false, nil
+		}
+
+		// If we need to update the first initiated redemption and haven't done so yet
+		if lastUnstakeSucceeded && !firstInitiatedProcessed {
+			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+			if err := k.ZenBTCRedemptions.Set(ctx, id, redemption); err != nil {
+				return false, fmt.Errorf("error updating redemption status: %w", err)
+			}
+			firstInitiatedProcessed = true
+			return false, nil
+		}
+
+		// Either we've already updated the first one, or we didn't need to
+		pendingRedemption = redemption
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("error walking zenBTC redemptions: %w", err)
+	}
+
+	// baseFeePlusTip := new(big.Int).Add(new(big.Int).SetUint64(oracleData.EthBaseFee), new(big.Int).SetUint64(oracleData.EthTipCap))
+	// feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
+
+	if oracleData.BTCUSDPrice.IsZero() {
+		return nil
+	}
+	// ethToBTC := oracleData.ETHUSDPrice.Quo(oracleData.BTCUSDPrice)
+	// feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
+	// feeBTCInt, _ := feeBTCFloat.Int(nil)
+	// feeBTC := feeBTCInt.Uint64()
+
+	unsignedUnstakeTxHash, unsignedUnstakeTx, err := k.constructUnstakeTx(
+		ctx,
+		pendingRedemption.Data.Amount,
+		// feeBTC,
+		0,
+		oracleData.RequestedEthUnstakerNonce,
+		oracleData.EthGasLimit, // TODO: update to reflect gas required instead of max block limit
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		return fmt.Errorf("error constructing mint transaction: %w", err)
+	}
+
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 1})
+	if err != nil {
+		return fmt.Errorf("error creating metadata: %w", err)
+	}
+
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             "zenrock", // TODO: does this need updating?
+			KeyId:               k.GetZenBTCUnstakerKeyID(ctx),
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedUnstakeTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedUnstakeTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating unstaking transaction", "err", err)
+		return fmt.Errorf("error creating sign transaction request for zenBTC unstaking: %w", err)
+	}
+
+	return nil
 }
 
 func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
