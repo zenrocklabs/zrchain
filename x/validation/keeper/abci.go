@@ -795,6 +795,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		return
 	}
 
+	k.Logger(ctx).Warn("creating unstake transaction", "creator", creator, "nonce", oracleData.RequestedEthUnstakerNonce)
+
 	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{

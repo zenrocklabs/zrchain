@@ -367,7 +367,7 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
 	addr, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_EVM)
 	if err != nil {
-		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
+		return 0, fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}
 
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
