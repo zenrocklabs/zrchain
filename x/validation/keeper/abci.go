@@ -781,19 +781,15 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		oracleData.EthTipCap,
 	)
 	if err != nil {
-		k.Logger(ctx).Error("error constructing mint transaction", "err", err)
+		k.Logger(ctx).Error("error constructing unstake transaction", "err", err)
 	}
-
-	k.Logger(ctx).Warn("qux unsignedUnstakeTxHash", "unsignedUnstakeTxHash", unsignedUnstakeTxHash)
 
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000}) // TODO: make configurable
 	if err != nil {
 		k.Logger(ctx).Error("error creating metadata", "err", err)
 	}
 
-	k.Logger(ctx).Error("handling unstake")
-
-	creator, err := k.getAddressByKeyID(ctx, k.GetZenBTCUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM)
+	creator, err := k.getAddressByKeyID(ctx, k.GetZenBTCUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 	if err != nil {
 		k.Logger(ctx).Error("error getting creator address", "err", err)
 		return
@@ -811,7 +807,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		},
 		[]byte(hex.EncodeToString(unsignedUnstakeTxHash)),
 	); err != nil {
-		k.Logger(ctx).Error("error creating unstaking transaction", "err", err)
+		k.Logger(ctx).Error("error creating unstake transaction", "err", err)
 	}
 }
 
