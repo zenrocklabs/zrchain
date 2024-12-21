@@ -225,63 +225,21 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 // PreBlocker is called before each block to process oracle data and update state.
 // We don't return errors in the PreBlocker as this would halt the chain. Instead, we log errors and continue.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
-	if len(req.Txs) == 0 {
+	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
 	}
 
-	if req.Height == 1 || !VoteExtensionsEnabled(ctx) {
+	oracleData, ok := k.unmarshalOracleData(ctx, req.Txs[0])
+	if !ok {
 		return nil
 	}
 
-	voteExtTx := req.Txs[0] // vote extension is always the first "transaction" in the block
-
-	if !ContainsVoteExtension(voteExtTx, k.txDecoder) {
+	voteExt, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
+	if !ok {
 		return nil
 	}
 
-	oracleData, err := k.unmarshalOracleData(voteExtTx)
-	if err != nil {
-		k.Logger(ctx).Error("error unmarshaling oracle data from tx", "height", req.Height, "error", err)
-		return nil
-	}
-
-	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, oracleData.ConsensusData)
-	if err != nil {
-		return fmt.Errorf("error retrieving supermajority vote extensions: %w", err)
-	}
-	if reflect.DeepEqual(voteExt, VoteExtension{}) {
-		k.Logger(ctx).Warn("accepting empty vote extension", "height", req.Height)
-		return nil
-	}
-	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
-		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", req.Height, "error", err)
-		// TODO: record this in the store to slash the proposer?
-		return nil
-	}
-
-	// Update nonce state for each key that needs it
-	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
-	for _, keyID := range keys {
-		requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
-		if err != nil && !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error checking nonce request state", "error", err)
-			continue
-		}
-
-		if requested {
-			var currentNonce uint64
-			switch keyID {
-			case k.GetZenBTCMinterKeyID(ctx):
-				currentNonce = oracleData.RequestedEthMinterNonce
-			case k.GetZenBTCUnstakerKeyID(ctx):
-				currentNonce = oracleData.RequestedEthUnstakerNonce
-			}
-
-			if err := k.updateNonceState(ctx, keyID, currentNonce); err != nil {
-				k.Logger(ctx).Error("error updating nonce state", "error", err)
-			}
-		}
-	}
+	k.updateNonces(ctx, oracleData)
 
 	k.updateAssetPrices(ctx, oracleData)
 
@@ -302,6 +260,79 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, oracleData.ConsensusData)
 
 	return nil
+}
+
+// shouldProcessOracleData checks if oracle data should be processed for this block
+func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
+	if len(req.Txs) == 0 {
+		k.Logger(ctx).Debug("no transactions in block")
+		return false
+	}
+
+	if req.Height == 1 || !VoteExtensionsEnabled(ctx) {
+		k.Logger(ctx).Debug("vote extensions not enabled for this block", "height", req.Height)
+		return false
+	}
+
+	if !ContainsVoteExtension(req.Txs[0], k.txDecoder) {
+		k.Logger(ctx).Debug("first transaction does not contain vote extension", "height", req.Height)
+		return false
+	}
+
+	return true
+}
+
+// validateCanonicalVE validates the oracle data and retrieves the supermajority vote extension
+func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
+	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
+	if err != nil {
+		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
+		return VoteExtension{}, false
+	}
+
+	if reflect.DeepEqual(voteExt, VoteExtension{}) {
+		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
+		return voteExt, true
+	}
+
+	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
+		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
+		return VoteExtension{}, false
+	}
+
+	return voteExt, true
+}
+
+// updateNonces handles updating nonce state for all relevant keys
+func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
+	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
+
+	for _, keyID := range keys {
+		requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+		if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error checking nonce request state", "keyID", keyID, "error", err)
+			continue
+		}
+
+		if !requested {
+			continue
+		}
+
+		var currentNonce uint64
+		switch keyID {
+		case k.GetZenBTCMinterKeyID(ctx):
+			currentNonce = oracleData.RequestedEthMinterNonce
+		case k.GetZenBTCUnstakerKeyID(ctx):
+			currentNonce = oracleData.RequestedEthUnstakerNonce
+		default:
+			k.Logger(ctx).Error("invalid key ID", "keyID", keyID)
+			continue
+		}
+
+		if err := k.updateNonceState(ctx, keyID, currentNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "keyID", keyID, "error", err)
+		}
+	}
 }
 
 func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtension) (*OracleData, *VoteExtension, error) {

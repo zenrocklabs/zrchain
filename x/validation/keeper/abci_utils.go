@@ -630,17 +630,19 @@ func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData 
 	return oracleDataBz, nil
 }
 
-func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
+func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bool) {
 	if len(tx) == 0 {
-		return OracleData{}, fmt.Errorf("no transactions in block")
+		k.Logger(ctx).Error("no transactions or vote extension in block")
+		return OracleData{}, false
 	}
 
 	var oracleData OracleData
 	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		return OracleData{}, err
+		k.Logger(ctx).Error("error unmarshalling oracle data JSON", "err", err)
+		return OracleData{}, false
 	}
 
-	return oracleData, nil
+	return oracleData, true
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
