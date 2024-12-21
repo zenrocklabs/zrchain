@@ -657,6 +657,30 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
+func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce uint64) error {
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return err
+		}
+		lastUsedNonce = zenbtctypes.NonceData{
+			Nonce:   currentNonce,
+			Counter: 0,
+			Skip:    false,
+		}
+	} else {
+		if currentNonce == lastUsedNonce.Nonce {
+			lastUsedNonce.Counter++
+		} else {
+			lastUsedNonce.Nonce = currentNonce
+			lastUsedNonce.Counter = 0
+		}
+		lastUsedNonce.Skip = lastUsedNonce.Counter%8 != 0
+	}
+
+	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
+}
+
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
 	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {

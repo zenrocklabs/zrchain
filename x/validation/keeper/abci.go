@@ -83,9 +83,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
-	// Create a map to store nonces for different key IDs
 	nonces := make(map[uint64]uint64)
-
 	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
 	for _, key := range keys {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -94,12 +92,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 				return VoteExtension{}, err
 			}
 			requested = false
-			if err := k.EthereumNonceRequested.Set(ctx, key, false); err != nil {
-				return VoteExtension{}, err
-			}
 		}
 		if requested {
-			nonce, err := k.getNextEthereumNonce(ctx, key)
+			nonce, err := k.lookupEthereumNonce(ctx, key)
 			if err != nil {
 				return VoteExtension{}, err
 			}
@@ -262,6 +257,30 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", req.Height, "error", err)
 		// TODO: record this in the store to slash the proposer?
 		return nil
+	}
+
+	// Update nonce state for each key that needs it
+	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
+	for _, keyID := range keys {
+		requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+		if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error checking nonce request state", "error", err)
+			continue
+		}
+
+		if requested {
+			var currentNonce uint64
+			switch keyID {
+			case k.GetZenBTCMinterKeyID(ctx):
+				currentNonce = oracleData.RequestedEthMinterNonce
+			case k.GetZenBTCUnstakerKeyID(ctx):
+				currentNonce = oracleData.RequestedEthUnstakerNonce
+			}
+
+			if err := k.updateNonceState(ctx, keyID, currentNonce); err != nil {
+				k.Logger(ctx).Error("error updating nonce state", "error", err)
+			}
+		}
 	}
 
 	k.updateAssetPrices(ctx, oracleData)
