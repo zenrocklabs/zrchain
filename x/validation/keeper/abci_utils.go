@@ -425,7 +425,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(5_000_000_000) // 5 gwei
+	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
 
 	// Buffer the base fee a little to allow for fluctuations
 	baseFeeBuffered := new(big.Int).Mul(
@@ -489,7 +489,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, ethNonce,
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(5_000_000_000) // 5 gwei
+	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
 
 	// Buffer the base fee a little to allow for fluctuations
 	baseFeeBuffered := new(big.Int).Mul(
@@ -585,14 +585,17 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64
 		if !errors.Is(err, collections.ErrNotFound) {
 			return 0, err
 		}
+		k.Logger(ctx).Warn("first run", "err", err)
 		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
 		firstRun = true
 	}
 
 	if !firstRun {
 		if nonce == lastUsedNonce.Nonce {
+			k.Logger(ctx).Warn("incrementing counter")
 			lastUsedNonce.Counter++
 		} else {
+			k.Logger(ctx).Warn("resetting counter")
 			lastUsedNonce.Nonce = nonce
 			lastUsedNonce.Counter = 0
 		}
@@ -604,7 +607,10 @@ func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64
 	}
 	lastUsedNonce.Skip = skip
 
+	k.Logger(ctx).Warn("foo", "nonce1", nonce, "nonce2", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "keyID", keyID)
+
 	if err = k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
+		k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		return 0, err
 	}
 

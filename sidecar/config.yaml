@@ -15,7 +15,7 @@ eth_oracle:
       eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
     zenbtc_controller:
       ethereum:
-        testnet: "0xa827D4c1b73E03f57b6e9c1944739a0b04a8F763"
+        testnet: "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"
