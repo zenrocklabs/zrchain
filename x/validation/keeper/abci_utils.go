@@ -524,12 +524,7 @@ func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64)
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
-	k.Logger(ctx).Warn("foo redemptionID", "redemptionID", redemptionID)
-
-	data, err := parsed.Pack(
-		"unstakeRockBTComplete",
-		new(big.Int).SetUint64(redemptionID),
-	)
+	data, err := parsed.Pack("unstakeRockBTComplete", new(big.Int).SetUint64(redemptionID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
 	}
