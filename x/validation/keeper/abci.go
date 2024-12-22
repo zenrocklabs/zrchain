@@ -766,7 +766,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		k.Logger(ctx).Error("error finding redemption", "err", err)
 		return
 	}
-
 	if !found {
 		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), false); err != nil {
 			k.Logger(ctx).Error("error updating nonce request state", "err", err)
