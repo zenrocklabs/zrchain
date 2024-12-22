@@ -728,9 +728,6 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 }
 
 func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Info("starting redemption processing",
-		"oracle_unstaker_nonce", oracleData.RequestedEthUnstakerNonce)
-
 	// Check if we should process redemptions
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
 	if err != nil && !errors.Is(err, collections.ErrNotFound) {
@@ -738,7 +735,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		return
 	}
 	if !requested {
-		k.Logger(ctx).Info("nonce not requested")
 		return
 	}
 
@@ -749,12 +745,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		return
 	}
 
-	k.Logger(ctx).Info("got nonce state",
-		"last_used_nonce", lastUsedNonce.Nonce,
-		"skip", lastUsedNonce.Skip)
-
 	if lastUsedNonce.Skip {
-		k.Logger(ctx).Info("skipping due to counter")
 		return
 	}
 
@@ -777,24 +768,14 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	}
 
 	if !found {
-		k.Logger(ctx).Info("no INITIATED redemptions found")
 		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), false); err != nil {
 			k.Logger(ctx).Error("error updating nonce request state", "err", err)
 		}
 		return
 	}
 
-	k.Logger(ctx).Info("found redemption",
-		"redemption_id", redemptionID,
-		"status", redemption.Status)
-
 	// If nonce changed, previous unstake succeeded - update status
 	if oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce {
-		k.Logger(ctx).Info("nonce changed, updating status",
-			"redemption_id", redemptionID,
-			"old_nonce", lastUsedNonce.Nonce,
-			"new_nonce", oracleData.RequestedEthUnstakerNonce)
-
 		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 		if err := k.ZenBTCRedemptions.Set(ctx, redemptionID, redemption); err != nil {
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
@@ -807,12 +788,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		}
 		return
 	}
-
-	k.Logger(ctx).Warn("nonce unchanged, creating new unstake tx",
-		"redemption_id", redemptionID,
-		"nonce", oracleData.RequestedEthUnstakerNonce,
-		"last_used_nonce", lastUsedNonce.Nonce,
-	)
 
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
