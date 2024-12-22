@@ -252,11 +252,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	// Toggle minting + unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency
 	if ctx.BlockHeight()%2 == 0 {
 
-		k.updateNonces(ctx, oracleData)
-
 		k.processZenBTCMints(ctx, oracleData)
 
 		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
+
+		k.updateNonces(ctx, oracleData)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -578,7 +578,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
 		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthMinterNonce, Counter: 0, Skip: false}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthMinterNonce, Counter: 0, Skip: true}
 		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCMinterKeyID(ctx), lastUsedNonce); err != nil {
 			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		}
@@ -749,13 +749,11 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
 		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthUnstakerNonce, Counter: 0, Skip: false}
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthUnstakerNonce, Counter: 0, Skip: true}
 		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), lastUsedNonce); err != nil {
 			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		}
 	}
-
-	k.Logger(ctx).Warn("baz lastUsedNonce", "nonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "keyID", k.GetZenBTCUnstakerKeyID(ctx))
 
 	if lastUsedNonce.Nonce != 0 && oracleData.RequestedEthUnstakerNonce == 0 {
 		return
@@ -834,8 +832,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		return
 	}
 
-	k.Logger(ctx).Warn("creating unstake transaction", "creator", creator, "nonce", oracleData.RequestedEthUnstakerNonce, "lastUsedNonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip)
-
 	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
@@ -912,10 +908,6 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if voteExt.RequestedEthUnstakerNonce != oracleData.RequestedEthUnstakerNonce {
 		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthUnstakerNonce, oracleData.RequestedEthUnstakerNonce)
 	}
-
-	// if voteExt.RequestedEthBurnerNonce != oracleData.RequestedEthBurnerNonce {
-	// 	return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthBurnerNonce, oracleData.RequestedEthBurnerNonce)
-	// }
 
 	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
 		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
