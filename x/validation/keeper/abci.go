@@ -239,8 +239,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	k.updateNonces(ctx, oracleData)
-
 	k.updateAssetPrices(ctx, oracleData)
 
 	k.updateValidatorStakes(ctx, oracleData)
@@ -249,11 +247,17 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
-	k.processZenBTCMints(ctx, oracleData)
-
 	k.storeNewZenBTCRedemptionsEthereum(ctx, oracleData)
 
-	k.processZenBTCRedemptionsEthereum(ctx, oracleData)
+	// Toggle minting + unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency
+	if ctx.BlockHeight()%2 == 0 {
+
+		k.updateNonces(ctx, oracleData)
+
+		k.processZenBTCMints(ctx, oracleData)
+
+		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
+	}
 
 	k.recordNonVotingValidators(ctx, req)
 
@@ -282,7 +286,7 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE validates the oracle data and retrieves the supermajority vote extension
+// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
 	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
 	if err != nil {
@@ -303,10 +307,9 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 	return voteExt, true
 }
 
-// updateNonces handles updating nonce state for all relevant keys
+// updateNonces handles updating nonce state for keys used for minting and unstaking
 func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
-
 	for _, keyID := range keys {
 		requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
 		if err != nil && !errors.Is(err, collections.ErrNotFound) {
@@ -547,11 +550,6 @@ func (k *Keeper) handlePotentialBitcoinFork(
 }
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
-	// Toggle mints every other block as VEs originate from block n-1 so requests have 1 block latency
-	if ctx.BlockHeight()%2 == 1 {
-		return
-	}
-
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCMinterKeyID(ctx))
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -730,11 +728,6 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 }
 
 func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
-	// Toggle unstaking every other block as VEs originate from block n-1 so requests have 1 block latency
-	if ctx.BlockHeight()%2 == 1 {
-		return
-	}
-
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
