@@ -165,12 +165,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: SolanaRedemptionsHash is empty")
 		invalid = true
 	}
-	if ve.ROCKUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ROCKUSDPrice is zero")
+	if ve.ROCKUSDPrice.IsNil() || ve.ROCKUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ROCKUSDPrice is nil or zero")
 		invalid = true
 	}
-	if ve.BTCUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: BTCUSDPrice is zero")
+	if ve.BTCUSDPrice.IsNil() || ve.BTCUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
 		invalid = true
 	}
 	// if ve.ETHUSDPrice.IsZero() {
