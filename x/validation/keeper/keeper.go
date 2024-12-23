@@ -56,18 +56,16 @@ type Keeper struct {
 	ValidationInfos collections.Map[int64, types.ValidationInfo]
 	// BitcoinMerkleRoots - key: block height | value: merkle root of Bitcoin block
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
-	// EthereumNonceRequested - key: bool (is requested)
-	EthereumNonceRequested collections.Item[bool]
-	// LastUsedEthereumNonce - value: last used Ethereum nonce data
-	LastUsedEthereumNonce collections.Item[zenbtctypes.NonceData]
+	// EthereumNonceRequested - key: key ID | value: bool (is requested)
+	EthereumNonceRequested collections.Map[uint64, bool]
+	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
+	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
 	// PendingMintTransactions - key: pending zenBTC mint transaction
 	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
 	// ZenBTCRedemptions - key: redemption index | value: redemption data
 	ZenBTCRedemptions collections.Map[uint64, zenbtctypes.Redemption]
 	// ZenBTCSupply - value: zenBTC supply data
 	ZenBTCSupply collections.Item[zenbtctypes.Supply]
-	// VoteExtensionRejected - key: bool (is rejected)
-	VoteExtensionRejected collections.Item[bool]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -138,12 +136,11 @@ func NewKeeper(
 		HVParams:                          collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
 		ValidationInfos:                   collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
 		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
-		EthereumNonceRequested:            collections.NewItem(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.BoolValue),
-		LastUsedEthereumNonce:             collections.NewItem(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, codec.CollValue[zenbtctypes.NonceData](cdc)),
+		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
+		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		PendingMintTransactions:           collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
 		ZenBTCRedemptions:                 collections.NewMap(sb, types.ZenBTCRedemptionsKey, types.ZenBTCRedemptionsIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.Redemption](cdc)),
 		ZenBTCSupply:                      collections.NewItem(sb, types.ZenBTCSupplyKey, types.ZenBTCSupplyIndex, codec.CollValue[zenbtctypes.Supply](cdc)),
-		VoteExtensionRejected:             collections.NewItem(sb, types.VoteExtensionRejectedKey, types.VoteExtensionRejectedIndex, collections.BoolValue),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 	}
 }

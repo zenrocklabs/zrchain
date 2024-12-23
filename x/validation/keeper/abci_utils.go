@@ -364,10 +364,10 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 	return nil
 }
 
-func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
-	addr, err := k.getZenBTCMinterAddressEVM(ctx)
+func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	addr, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_EVM)
 	if err != nil {
-		return 0, fmt.Errorf("error getting ZenBTC minter address: %w", err)
+		return 0, fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}
 
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
@@ -413,7 +413,6 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context) (uint64, error) {
 
 // TODO: use above function instead of this one if possible
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	// if chainID != 17000 && chainID != 11155111 {
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
@@ -426,7 +425,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(5_000_000_000) // 5 gwei
+	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
 
 	// Buffer the base fee a little to allow for fluctuations
 	baseFeeBuffered := new(big.Int).Mul(
@@ -460,7 +459,7 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
 
-	parsed, err := bindings.ZenbtcbatcherMetaData.GetAbi()
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
@@ -481,16 +480,70 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) getZenBTCMinterAddressEVM(ctx context.Context) (string, error) {
-	keyID := k.GetZenBTCMinterKeyID(ctx)
+func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
+	if err != nil {
+		return nil, nil, err
+	}
 
+	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
+
+	// For Holesky, use a high priority fee
+	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
+
+	// Buffer the base fee a little to allow for fluctuations
+	baseFeeBuffered := new(big.Int).Mul(
+		new(big.Int).SetUint64(baseFee),
+		big.NewInt(12),
+	)
+	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+
+	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
+
+	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
+		Nonce:    ethNonce,
+		GasPrice: gasPrice,
+		Gas:      gasLimit,
+		To:       &addr,
+		Value:    big.NewInt(0), // we shouldn't send any ETH
+		Data:     encodedUnstakeData,
+	})
+
+	unsignedTxBz, err := unsignedTx.MarshalBinary()
+	if err != nil {
+		return nil, nil, err
+	}
+	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(17000))
+
+	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+}
+
+func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	data, err := parsed.Pack("unstakeRockBTComplete", new(big.Int).SetUint64(redemptionID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType treasurytypes.WalletType) (string, error) {
 	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
 		Id:         keyID,
-		WalletType: treasurytypes.WalletType_WALLET_TYPE_EVM,
+		WalletType: walletType,
 		Prefixes:   make([]string, 0),
 	})
 	if err != nil {
 		return "", err
+	}
+
+	if len(q.Wallets) == 0 {
+		return "", fmt.Errorf("no wallets found for key ID %d", keyID)
 	}
 
 	return q.Wallets[0].Address, nil
@@ -515,37 +568,45 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
 }
 
-func (k *Keeper) getNextEthereumNonce(ctx context.Context) (uint64, error) {
-	nonce, err := k.lookupEthereumNonce(ctx)
+func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	nonce, err := k.lookupEthereumNonce(ctx, keyID)
 	if err != nil {
 		return 0, err
 	}
 
 	firstRun := false
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return 0, err
 		}
+		k.Logger(ctx).Warn("first run", "err", err)
 		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
 		firstRun = true
 	}
 
 	if !firstRun {
 		if nonce == lastUsedNonce.Nonce {
+			k.Logger(ctx).Warn("incrementing counter")
 			lastUsedNonce.Counter++
 		} else {
+			k.Logger(ctx).Warn("resetting counter")
 			lastUsedNonce.Nonce = nonce
 			lastUsedNonce.Counter = 0
 		}
 	}
 
-	if err = k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
-		return 0, err
-	}
-
+	skip := false
 	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
-		return 0, nil
+		skip = true
+	}
+	lastUsedNonce.Skip = skip
+
+	k.Logger(ctx).Warn("foo", "nonce1", nonce, "nonce2", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "keyID", keyID)
+
+	if err = k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
+		k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
+		return 0, err
 	}
 
 	return nonce, nil
@@ -564,17 +625,19 @@ func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData 
 	return oracleDataBz, nil
 }
 
-func (k *Keeper) unmarshalOracleData(tx []byte) (OracleData, error) {
+func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bool) {
 	if len(tx) == 0 {
-		return OracleData{}, fmt.Errorf("no transactions in block")
+		k.Logger(ctx).Error("no transactions or vote extension in block")
+		return OracleData{}, false
 	}
 
 	var oracleData OracleData
 	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		return OracleData{}, err
+		k.Logger(ctx).Error("error unmarshalling oracle data JSON", "err", err)
+		return OracleData{}, false
 	}
 
-	return oracleData, nil
+	return oracleData, true
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
@@ -589,6 +652,30 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	if err := k.AssetPrices.Set(ctx, types.Asset_stETH, oracleData.ETHUSDPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
+}
+
+func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce uint64) error {
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return err
+		}
+		lastUsedNonce = zenbtctypes.NonceData{
+			Nonce:   currentNonce,
+			Counter: 0,
+			Skip:    true,
+		}
+	} else {
+		if currentNonce == lastUsedNonce.Nonce {
+			lastUsedNonce.Counter++
+		} else {
+			lastUsedNonce.Nonce = currentNonce
+			lastUsedNonce.Counter = 0
+		}
+		lastUsedNonce.Skip = lastUsedNonce.Counter%8 != 0
+	}
+
+	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
