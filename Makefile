@@ -2,7 +2,7 @@
 
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -Ev 'vendor|importer|wasm|simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION ?= $(shell echo $(shell git describe --tags `git rev-list --tags="v*" --max-count=1`) | sed 's/^v//')
+VERSION ?= $(shell git describe --tags --exact-match 2>/dev/null || echo $(shell git describe --tags git rev-list --tags="v*" --max-count=1) | sed 's/^v//')
 VERSION_DATE ?= $(shell git show -s --format=%ci)
 TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 COMMIT := $(shell git log -1 --format='%H')
