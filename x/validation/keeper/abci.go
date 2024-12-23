@@ -83,9 +83,23 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
-	nonce, err := k.getNextEthereumNonce(ctx)
-	if err != nil {
-		return VoteExtension{}, err
+	nonces := make(map[uint64]uint64)
+	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
+	for _, key := range keys {
+		requested, err := k.EthereumNonceRequested.Get(ctx, key)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				return VoteExtension{}, err
+			}
+			requested = false
+		}
+		if requested {
+			nonce, err := k.lookupEthereumNonce(ctx, key)
+			if err != nil {
+				return VoteExtension{}, err
+			}
+			nonces[key] = nonce
+		}
 	}
 
 	voteExt := VoteExtension{
@@ -103,7 +117,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
-		RequestedEthNonce:          nonce,
+		RequestedEthMinterNonce:    nonces[k.GetZenBTCMinterKeyID(ctx)],
+		RequestedEthUnstakerNonce:  nonces[k.GetZenBTCUnstakerKeyID(ctx)],
+		// RequestedEthBurnerNonce:    nonces[k.GetZenBTCBurnerKeyID(ctx)],
 	}
 
 	return voteExt, nil
@@ -203,65 +219,23 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, err
 	}
 
-	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, recoveredOracleData.ConsensusData)
-	if err != nil {
-		return REJECT_PROPOSAL, fmt.Errorf("error retrieving supermajority vote extensions: %w", err)
-	}
-	if reflect.DeepEqual(voteExt, VoteExtension{}) {
-		k.Logger(ctx).Warn("accepting empty vote extension", "height", req.Height)
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	if err := k.validateOracleData(voteExt, &recoveredOracleData); err != nil {
-		if err = k.VoteExtensionRejected.Set(ctx, true); err != nil {
-			return REJECT_PROPOSAL, err
-		}
-		// TODO: record this in the store
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, recoveredOracleData.ConsensusData)
-
 	return ACCEPT_PROPOSAL, nil
 }
 
 // PreBlocker is called before each block to process oracle data and update state.
 // We don't return errors in the PreBlocker as this would halt the chain. Instead, we log errors and continue.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
-	if len(req.Txs) == 0 {
+	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
 	}
 
-	if req.Height == 1 || !VoteExtensionsEnabled(ctx) {
+	oracleData, ok := k.unmarshalOracleData(ctx, req.Txs[0])
+	if !ok {
 		return nil
 	}
 
-	voteExtTx := req.Txs[0] // vote extension is always the first "transaction" in the block
-
-	if !ContainsVoteExtension(voteExtTx, k.txDecoder) {
-		return nil
-	}
-
-	rejected, err := k.VoteExtensionRejected.Get(ctx)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			rejected = false
-		} else {
-			k.Logger(ctx).Error("error getting vote extension rejected field", "height", req.Height, "error", err)
-			return nil
-		}
-	}
-	if rejected {
-		k.Logger(ctx).Warn("vote extension rejected; not storing VE data", "height", req.Height)
-		if err = k.VoteExtensionRejected.Set(ctx, false); err != nil {
-			k.Logger(ctx).Error("error resetting vote extension rejected field", "height", req.Height, "error", err)
-		}
-		return nil
-	}
-
-	oracleData, err := k.unmarshalOracleData(voteExtTx)
-	if err != nil {
-		k.Logger(ctx).Error("error unmarshaling oracle data from tx", "height", req.Height, "error", err)
+	voteExt, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
+	if !ok {
 		return nil
 	}
 
@@ -273,13 +247,95 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
-	k.processZenBTCMints(ctx, oracleData)
-
 	k.storeNewZenBTCRedemptionsEthereum(ctx, oracleData)
+
+	// Toggle minting + unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency
+	if ctx.BlockHeight()%2 == 0 {
+
+		k.processZenBTCMints(ctx, oracleData)
+
+		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
+
+		k.updateNonces(ctx, oracleData)
+	}
 
 	k.recordNonVotingValidators(ctx, req)
 
+	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, oracleData.ConsensusData)
+
 	return nil
+}
+
+// shouldProcessOracleData checks if oracle data should be processed for this block
+func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
+	if len(req.Txs) == 0 {
+		k.Logger(ctx).Debug("no transactions in block")
+		return false
+	}
+
+	if req.Height == 1 || !VoteExtensionsEnabled(ctx) {
+		k.Logger(ctx).Debug("vote extensions not enabled for this block", "height", req.Height)
+		return false
+	}
+
+	if !ContainsVoteExtension(req.Txs[0], k.txDecoder) {
+		k.Logger(ctx).Debug("first transaction does not contain vote extension", "height", req.Height)
+		return false
+	}
+
+	return true
+}
+
+// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension
+func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
+	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
+	if err != nil {
+		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
+		return VoteExtension{}, false
+	}
+
+	if reflect.DeepEqual(voteExt, VoteExtension{}) {
+		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
+		return voteExt, true
+	}
+
+	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
+		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
+		return VoteExtension{}, false
+	}
+
+	return voteExt, true
+}
+
+// updateNonces handles updating nonce state for keys used for minting and unstaking
+func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
+	keys := []uint64{k.GetZenBTCMinterKeyID(ctx), k.GetZenBTCUnstakerKeyID(ctx)}
+	for _, keyID := range keys {
+		requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+		if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error checking nonce request state", "keyID", keyID, "error", err)
+			continue
+		}
+
+		if !requested {
+			continue
+		}
+
+		var currentNonce uint64
+		switch keyID {
+		case k.GetZenBTCMinterKeyID(ctx):
+			currentNonce = oracleData.RequestedEthMinterNonce
+		case k.GetZenBTCUnstakerKeyID(ctx):
+			currentNonce = oracleData.RequestedEthUnstakerNonce
+		default:
+			k.Logger(ctx).Error("invalid key ID", "keyID", keyID)
+			continue
+		}
+
+		if err := k.updateNonceState(ctx, keyID, currentNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "keyID", keyID, "error", err)
+		}
+	}
 }
 
 func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtension) (*OracleData, *VoteExtension, error) {
@@ -289,7 +345,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	}
 
 	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: use config
+		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: make configurable
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
@@ -297,7 +353,9 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 
 	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
 	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
-	oracleData.RequestedEthNonce = voteExt.RequestedEthNonce
+	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
+	oracleData.RequestedEthUnstakerNonce = voteExt.RequestedEthUnstakerNonce
+	// oracleData.RequestedEthBurnerNonce = voteExt.RequestedEthBurnerNonce
 
 	if err := k.validateOracleData(voteExt, oracleData); err != nil {
 		return nil, nil, err
@@ -396,22 +454,21 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 	}
 }
 
-func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) error {
+func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
-		return fmt.Errorf("invalid bitcoin header data: height=%d, merkle=%s",
-			oracleData.BtcBlockHeight, oracleData.BtcBlockHeader.MerkleRoot)
+		k.Logger(ctx).Error("invalid bitcoin header data", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
 	}
 
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
-			return err
+			return
 		}
 		requestedHeaders = zenbtctypes.RequestedBitcoinHeaders{}
 		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
 			k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
-			return err
+			return
 		}
 	}
 
@@ -427,7 +484,10 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	// If it's a requested header, just store it and return
 	if isRequestedHeader {
 		k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
-		return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
+		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
+			k.Logger(ctx).Error("error storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+		}
+		return
 	}
 
 	// Check for existing header (potential fork)
@@ -435,7 +495,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-			return err
+			return
 		}
 		existingHeader = sidecar.BTCBlockHeader{}
 	}
@@ -443,12 +503,14 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	// If we have a different header for this height, handle potential fork
 	if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
 		if err := k.handlePotentialBitcoinFork(ctx, oracleData, existingHeader, requestedHeaders); err != nil {
-			return err
+			k.Logger(ctx).Error("error handling potential Bitcoin fork", "height", oracleData.BtcBlockHeight, "err", err)
 		}
 	}
 
 	// Store the new header
-	return k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader)
+	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
+		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+	}
 }
 
 // handlePotentialBitcoinFork handles the case where we detect a potential fork by requesting previous blocks
@@ -487,71 +549,81 @@ func (k *Keeper) handlePotentialBitcoinFork(
 	return nil
 }
 
-func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) error {
-	// Toggle mints every other block as VEs originate from block n-1 so requests have 1 block latency
-	if ctx.BlockHeight()%2 == 1 {
-		return nil
-	}
-
-	requested, err := k.EthereumNonceRequested.Get(ctx)
+func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCMinterKeyID(ctx))
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
-			return fmt.Errorf("error getting EthereumNonceRequested state: %w", err)
+			k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
 		}
 		requested = false
-		if err := k.EthereumNonceRequested.Set(ctx, requested); err != nil {
-			return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCMinterKeyID(ctx), requested); err != nil {
+			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
 		}
 	}
 	if !requested {
-		return nil
+		return
 	}
 
 	pendingMints, err := k.PendingMintTransactions.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting pending mint transactions: %w", err)
+		k.Logger(ctx).Error("error getting pending mint transactions", "err", err)
+		return
 	}
 	if len(pendingMints.Txs) == 0 {
-		return nil
+		return
 	}
 
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx)
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.GetZenBTCMinterKeyID(ctx))
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
-			return fmt.Errorf("error getting last used Ethereum nonce: %w", err)
+			k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
 		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthNonce, Counter: 0}
-		if err := k.LastUsedEthereumNonce.Set(ctx, lastUsedNonce); err != nil {
-			return fmt.Errorf("error setting last used Ethereum nonce: %w", err)
+		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthMinterNonce, Counter: 0, Skip: true}
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCMinterKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		}
+	}
+
+	if lastUsedNonce.Nonce != 0 && oracleData.RequestedEthMinterNonce == 0 {
+		return
 	}
 
 	lastMintTx := pendingMints.Txs[0]
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
-	if oracleData.RequestedEthNonce != lastUsedNonce.Nonce {
+	if oracleData.RequestedEthMinterNonce != lastUsedNonce.Nonce {
 		supply, err := k.ZenBTCSupply.Get(ctx)
 		if err != nil {
-			return fmt.Errorf("error getting zenBTC supply: %w", err)
+			k.Logger(ctx).Error("error getting zenBTC supply", "err", err)
 		}
 
 		supply.MintedZenBTC += lastMintTx.Amount
 
 		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
-			return fmt.Errorf("error updating zenBTC supply: %w", err)
+			k.Logger(ctx).Error("error updating zenBTC supply", "err", err)
+		}
+
+		lastUsedNonce.Nonce = oracleData.RequestedEthMinterNonce
+		lastUsedNonce.Counter = 0
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCMinterKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		}
 
 		pendingMints.Txs = pendingMints.Txs[1:]
 		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
-			return fmt.Errorf("error setting pending mint transactions: %w", err)
+			k.Logger(ctx).Error("error setting pending mint transactions", "err", err)
 		}
 
 		if len(pendingMints.Txs) == 0 {
-			if err := k.EthereumNonceRequested.Set(ctx, false); err != nil {
-				return fmt.Errorf("error setting EthereumNonceRequested state: %w", err)
+			if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCMinterKeyID(ctx), false); err != nil {
+				k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
 			}
-			return nil
+			return
 		}
+	}
+
+	if lastUsedNonce.Skip {
+		return
 	}
 
 	pendingMintTx := pendingMints.Txs[0]
@@ -560,7 +632,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 	// feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
 
 	if oracleData.BTCUSDPrice.IsZero() {
-		return nil
+		return
 	}
 	// ethToBTC := oracleData.ETHUSDPrice.Quo(oracleData.BTCUSDPrice)
 	// feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
@@ -574,18 +646,18 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		pendingMintTx.Amount,
 		// feeBTC,
 		0,
-		oracleData.RequestedEthNonce,
+		oracleData.RequestedEthMinterNonce,
 		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
 	)
 	if err != nil {
-		return fmt.Errorf("error constructing mint transaction: %w", err)
+		k.Logger(ctx).Error("error constructing mint transaction", "err", err)
 	}
 
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
 	if err != nil {
-		return fmt.Errorf("error creating metadata: %w", err)
+		k.Logger(ctx).Error("error creating metadata", "err", err)
 	}
 
 	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
@@ -601,10 +673,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) erro
 		[]byte(hex.EncodeToString(unsignedMintTxHash)),
 	); err != nil {
 		k.Logger(ctx).Error("error creating mint transaction", "err", err)
-		return fmt.Errorf("error creating sign transaction request for zenBTC mint: %w", err)
 	}
-
-	return nil
 }
 
 func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
@@ -619,6 +688,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		return
 	}
 
+	foundNewRedemption := false
+
 	for _, redemption := range oracleData.EthereumRedemptions {
 		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
 		if err != nil {
@@ -630,6 +701,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 			continue
 		}
 
+		foundNewRedemption = true
+
 		// Convert zenBTC amount to BTC amount
 		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
 		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
@@ -640,11 +713,120 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 				DestinationAddress: redemption.DestinationAddress,
 				Amount:             btcAmount,
 			},
-			Completed: false,
+			Status: zenbtctypes.RedemptionStatus_INITIATED,
 		}); err != nil {
 			k.Logger(ctx).Error("error adding redemption to store", "err", err)
 			continue
 		}
+	}
+
+	if foundNewRedemption {
+		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
+		}
+	}
+}
+
+func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
+	// Check if we should process redemptions
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	// Get last used nonce state
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.GetZenBTCUnstakerKeyID(ctx))
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
+		return
+	}
+
+	if lastUsedNonce.Skip {
+		return
+	}
+
+	// Get the first INITIATED redemption
+	var redemption zenbtctypes.Redemption
+	var redemptionID uint64
+	var found bool
+
+	if err := k.ZenBTCRedemptions.Walk(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
+			redemption = r
+			redemptionID = id
+			found = true
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		k.Logger(ctx).Error("error finding redemption", "err", err)
+		return
+	}
+	if !found {
+		if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), false); err != nil {
+			k.Logger(ctx).Error("error updating nonce request state", "err", err)
+		}
+		return
+	}
+
+	// If nonce changed, previous unstake succeeded - update status
+	if oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce {
+		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+		if err := k.ZenBTCRedemptions.Set(ctx, redemptionID, redemption); err != nil {
+			k.Logger(ctx).Error("error updating redemption status", "err", err)
+			return
+		}
+		lastUsedNonce.Nonce = oracleData.RequestedEthUnstakerNonce
+		lastUsedNonce.Counter = 0
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.GetZenBTCUnstakerKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "err", err)
+		}
+		return
+	}
+
+	// Create and sign new unstake transaction
+	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+		ctx,
+		redemption.Data.Id,
+		oracleData.RequestedEthUnstakerNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing unstake transaction", "err", err)
+		return
+	}
+
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "err", err)
+		return
+	}
+
+	creator, err := k.getAddressByKeyID(ctx, k.GetZenBTCUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	if err != nil {
+		k.Logger(ctx).Error("error getting creator address", "err", err)
+		return
+	}
+
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               k.GetZenBTCUnstakerKeyID(ctx),
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating unstake transaction", "err", err)
 	}
 }
 
@@ -701,8 +883,12 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("bitcoin header hash mismatch, expected %x, got %x", voteExt.BtcHeaderHash, bitcoinHeaderHash)
 	}
 
-	if voteExt.RequestedEthNonce != oracleData.RequestedEthNonce {
-		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthNonce, oracleData.RequestedEthNonce)
+	if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
+		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
+	}
+
+	if voteExt.RequestedEthUnstakerNonce != oracleData.RequestedEthUnstakerNonce {
+		return fmt.Errorf("requested Ethereum nonce mismatch, expected %d, got %d", voteExt.RequestedEthUnstakerNonce, oracleData.RequestedEthUnstakerNonce)
 	}
 
 	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {

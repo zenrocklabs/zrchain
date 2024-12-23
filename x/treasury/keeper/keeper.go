@@ -427,6 +427,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	if err != nil {
 		return nil, err
 	}
+
 	keyIDs := []uint64{msg.KeyId}
 	id, err := k.processSignatureRequests(ctx, dataForSigning, keyIDs, &types.SignRequest{
 		Creator:        msg.Creator,
@@ -436,6 +437,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		Metadata:       msg.Metadata,
 		CacheId:        msg.CacheId,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
 		Creator:             msg.Creator,

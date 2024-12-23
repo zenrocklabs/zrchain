@@ -30,15 +30,17 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight         int64
-		EigenDelegationsHash       []byte
-		BtcBlockHeight             int64
-		BtcHeaderHash              []byte
-		EthBlockHeight             uint64
-		EthGasLimit                uint64
-		EthBaseFee                 uint64
-		EthTipCap                  uint64
-		RequestedEthNonce          uint64
+		ZRChainBlockHeight        int64
+		EigenDelegationsHash      []byte
+		BtcBlockHeight            int64
+		BtcHeaderHash             []byte
+		EthBlockHeight            uint64
+		EthGasLimit               uint64
+		EthBaseFee                uint64
+		EthTipCap                 uint64
+		RequestedEthMinterNonce   uint64
+		RequestedEthUnstakerNonce uint64
+		// RequestedEthBurnerNonce    uint64
 		SolanaLamportsPerSignature uint64
 		EthereumRedemptionsHash    []byte
 		SolanaRedemptionsHash      []byte
@@ -53,15 +55,17 @@ type (
 	}
 
 	OracleData struct {
-		EigenDelegationsMap        map[string]map[string]*big.Int
-		ValidatorDelegations       []ValidatorDelegations
-		BtcBlockHeight             int64
-		BtcBlockHeader             sidecar.BTCBlockHeader
-		EthBlockHeight             uint64
-		EthGasLimit                uint64
-		EthBaseFee                 uint64
-		EthTipCap                  uint64
-		RequestedEthNonce          uint64
+		EigenDelegationsMap       map[string]map[string]*big.Int
+		ValidatorDelegations      []ValidatorDelegations
+		BtcBlockHeight            int64
+		BtcBlockHeader            sidecar.BTCBlockHeader
+		EthBlockHeight            uint64
+		EthGasLimit               uint64
+		EthBaseFee                uint64
+		EthTipCap                 uint64
+		RequestedEthMinterNonce   uint64
+		RequestedEthUnstakerNonce uint64
+		// RequestedEthBurnerNonce    uint64
 		SolanaLamportsPerSignature uint64
 		EthereumRedemptions        []api.Redemption
 		SolanaRedemptions          []api.Redemption

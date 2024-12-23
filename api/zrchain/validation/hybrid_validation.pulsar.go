@@ -3168,56 +3168,10 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var _ protoreflect.List = (*_ZenBTCParams_6_list)(nil)
-
-type _ZenBTCParams_6_list struct {
-	list *[]uint64
-}
-
-func (x *_ZenBTCParams_6_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_ZenBTCParams_6_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfUint64((*x.list)[i])
-}
-
-func (x *_ZenBTCParams_6_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_ZenBTCParams_6_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Uint()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_ZenBTCParams_6_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message ZenBTCParams at list field ZenBTCChangeAddressKeyIDs as it is not of Message kind"))
-}
-
-func (x *_ZenBTCParams_6_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_ZenBTCParams_6_list) NewElement() protoreflect.Value {
-	v := uint64(0)
-	return protoreflect.ValueOfUint64(v)
-}
-
-func (x *_ZenBTCParams_6_list) IsValid() bool {
-	return x.list != nil
-}
-
 var _ protoreflect.List = (*_ZenBTCParams_8_list)(nil)
 
 type _ZenBTCParams_8_list struct {
-	list *[]*AssetData
+	list *[]uint64
 }
 
 func (x *_ZenBTCParams_8_list) Len() int {
@@ -3228,40 +3182,86 @@ func (x *_ZenBTCParams_8_list) Len() int {
 }
 
 func (x *_ZenBTCParams_8_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+	return protoreflect.ValueOfUint64((*x.list)[i])
 }
 
 func (x *_ZenBTCParams_8_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Uint()
+	concreteValue := valueUnwrapped
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_ZenBTCParams_8_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Uint()
+	concreteValue := valueUnwrapped
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_ZenBTCParams_8_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message ZenBTCParams at list field ZenBTCChangeAddressKeyIDs as it is not of Message kind"))
+}
+
+func (x *_ZenBTCParams_8_list) Truncate(n int) {
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_ZenBTCParams_8_list) NewElement() protoreflect.Value {
+	v := uint64(0)
+	return protoreflect.ValueOfUint64(v)
+}
+
+func (x *_ZenBTCParams_8_list) IsValid() bool {
+	return x.list != nil
+}
+
+var _ protoreflect.List = (*_ZenBTCParams_11_list)(nil)
+
+type _ZenBTCParams_11_list struct {
+	list *[]*AssetData
+}
+
+func (x *_ZenBTCParams_11_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_ZenBTCParams_11_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_ZenBTCParams_11_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*AssetData)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_ZenBTCParams_8_list) Append(value protoreflect.Value) {
+func (x *_ZenBTCParams_11_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*AssetData)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_ZenBTCParams_8_list) AppendMutable() protoreflect.Value {
+func (x *_ZenBTCParams_11_list) AppendMutable() protoreflect.Value {
 	v := new(AssetData)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_ZenBTCParams_8_list) Truncate(n int) {
+func (x *_ZenBTCParams_11_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_ZenBTCParams_8_list) NewElement() protoreflect.Value {
+func (x *_ZenBTCParams_11_list) NewElement() protoreflect.Value {
 	v := new(AssetData)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_ZenBTCParams_8_list) IsValid() bool {
+func (x *_ZenBTCParams_11_list) IsValid() bool {
 	return x.list != nil
 }
 
@@ -3271,8 +3271,11 @@ var (
 	fd_ZenBTCParams_zenBTCDepositKeyringAddr  protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCMinterKeyID         protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCWithdrawerKeyID     protoreflect.FieldDescriptor
+	fd_ZenBTCParams_zenBTCUnstakerKeyID       protoreflect.FieldDescriptor
+	fd_ZenBTCParams_zenBTCBurnerKeyID         protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCRewardsDepositKeyID protoreflect.FieldDescriptor
 	fd_ZenBTCParams_zenBTCChangeAddressKeyIDs protoreflect.FieldDescriptor
+	fd_ZenBTCParams_zenBTCStrategyAddr        protoreflect.FieldDescriptor
 	fd_ZenBTCParams_bitcoinProxyCreatorID     protoreflect.FieldDescriptor
 	fd_ZenBTCParams_stakeableAssets           protoreflect.FieldDescriptor
 )
@@ -3284,8 +3287,11 @@ func init() {
 	fd_ZenBTCParams_zenBTCDepositKeyringAddr = md_ZenBTCParams.Fields().ByName("zenBTCDepositKeyringAddr")
 	fd_ZenBTCParams_zenBTCMinterKeyID = md_ZenBTCParams.Fields().ByName("zenBTCMinterKeyID")
 	fd_ZenBTCParams_zenBTCWithdrawerKeyID = md_ZenBTCParams.Fields().ByName("zenBTCWithdrawerKeyID")
+	fd_ZenBTCParams_zenBTCUnstakerKeyID = md_ZenBTCParams.Fields().ByName("zenBTCUnstakerKeyID")
+	fd_ZenBTCParams_zenBTCBurnerKeyID = md_ZenBTCParams.Fields().ByName("zenBTCBurnerKeyID")
 	fd_ZenBTCParams_zenBTCRewardsDepositKeyID = md_ZenBTCParams.Fields().ByName("zenBTCRewardsDepositKeyID")
 	fd_ZenBTCParams_zenBTCChangeAddressKeyIDs = md_ZenBTCParams.Fields().ByName("zenBTCChangeAddressKeyIDs")
+	fd_ZenBTCParams_zenBTCStrategyAddr = md_ZenBTCParams.Fields().ByName("zenBTCStrategyAddr")
 	fd_ZenBTCParams_bitcoinProxyCreatorID = md_ZenBTCParams.Fields().ByName("bitcoinProxyCreatorID")
 	fd_ZenBTCParams_stakeableAssets = md_ZenBTCParams.Fields().ByName("stakeableAssets")
 }
@@ -3379,6 +3385,18 @@ func (x *fastReflection_ZenBTCParams) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if x.ZenBTCUnstakerKeyID != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ZenBTCUnstakerKeyID)
+		if !f(fd_ZenBTCParams_zenBTCUnstakerKeyID, value) {
+			return
+		}
+	}
+	if x.ZenBTCBurnerKeyID != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ZenBTCBurnerKeyID)
+		if !f(fd_ZenBTCParams_zenBTCBurnerKeyID, value) {
+			return
+		}
+	}
 	if x.ZenBTCRewardsDepositKeyID != uint64(0) {
 		value := protoreflect.ValueOfUint64(x.ZenBTCRewardsDepositKeyID)
 		if !f(fd_ZenBTCParams_zenBTCRewardsDepositKeyID, value) {
@@ -3386,8 +3404,14 @@ func (x *fastReflection_ZenBTCParams) Range(f func(protoreflect.FieldDescriptor,
 		}
 	}
 	if len(x.ZenBTCChangeAddressKeyIDs) != 0 {
-		value := protoreflect.ValueOfList(&_ZenBTCParams_6_list{list: &x.ZenBTCChangeAddressKeyIDs})
+		value := protoreflect.ValueOfList(&_ZenBTCParams_8_list{list: &x.ZenBTCChangeAddressKeyIDs})
 		if !f(fd_ZenBTCParams_zenBTCChangeAddressKeyIDs, value) {
+			return
+		}
+	}
+	if x.ZenBTCStrategyAddr != "" {
+		value := protoreflect.ValueOfString(x.ZenBTCStrategyAddr)
+		if !f(fd_ZenBTCParams_zenBTCStrategyAddr, value) {
 			return
 		}
 	}
@@ -3398,7 +3422,7 @@ func (x *fastReflection_ZenBTCParams) Range(f func(protoreflect.FieldDescriptor,
 		}
 	}
 	if len(x.StakeableAssets) != 0 {
-		value := protoreflect.ValueOfList(&_ZenBTCParams_8_list{list: &x.StakeableAssets})
+		value := protoreflect.ValueOfList(&_ZenBTCParams_11_list{list: &x.StakeableAssets})
 		if !f(fd_ZenBTCParams_stakeableAssets, value) {
 			return
 		}
@@ -3426,10 +3450,16 @@ func (x *fastReflection_ZenBTCParams) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.ZenBTCMinterKeyID != uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		return x.ZenBTCWithdrawerKeyID != uint64(0)
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		return x.ZenBTCUnstakerKeyID != uint64(0)
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		return x.ZenBTCBurnerKeyID != uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		return x.ZenBTCRewardsDepositKeyID != uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		return len(x.ZenBTCChangeAddressKeyIDs) != 0
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		return x.ZenBTCStrategyAddr != ""
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		return x.BitcoinProxyCreatorID != ""
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
@@ -3458,10 +3488,16 @@ func (x *fastReflection_ZenBTCParams) Clear(fd protoreflect.FieldDescriptor) {
 		x.ZenBTCMinterKeyID = uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		x.ZenBTCWithdrawerKeyID = uint64(0)
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		x.ZenBTCUnstakerKeyID = uint64(0)
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		x.ZenBTCBurnerKeyID = uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		x.ZenBTCRewardsDepositKeyID = uint64(0)
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		x.ZenBTCChangeAddressKeyIDs = nil
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		x.ZenBTCStrategyAddr = ""
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		x.BitcoinProxyCreatorID = ""
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
@@ -3494,23 +3530,32 @@ func (x *fastReflection_ZenBTCParams) Get(descriptor protoreflect.FieldDescripto
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		value := x.ZenBTCWithdrawerKeyID
 		return protoreflect.ValueOfUint64(value)
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		value := x.ZenBTCUnstakerKeyID
+		return protoreflect.ValueOfUint64(value)
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		value := x.ZenBTCBurnerKeyID
+		return protoreflect.ValueOfUint64(value)
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		value := x.ZenBTCRewardsDepositKeyID
 		return protoreflect.ValueOfUint64(value)
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		if len(x.ZenBTCChangeAddressKeyIDs) == 0 {
-			return protoreflect.ValueOfList(&_ZenBTCParams_6_list{})
+			return protoreflect.ValueOfList(&_ZenBTCParams_8_list{})
 		}
-		listValue := &_ZenBTCParams_6_list{list: &x.ZenBTCChangeAddressKeyIDs}
+		listValue := &_ZenBTCParams_8_list{list: &x.ZenBTCChangeAddressKeyIDs}
 		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		value := x.ZenBTCStrategyAddr
+		return protoreflect.ValueOfString(value)
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		value := x.BitcoinProxyCreatorID
 		return protoreflect.ValueOfString(value)
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		if len(x.StakeableAssets) == 0 {
-			return protoreflect.ValueOfList(&_ZenBTCParams_8_list{})
+			return protoreflect.ValueOfList(&_ZenBTCParams_11_list{})
 		}
-		listValue := &_ZenBTCParams_8_list{list: &x.StakeableAssets}
+		listValue := &_ZenBTCParams_11_list{list: &x.StakeableAssets}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -3540,17 +3585,23 @@ func (x *fastReflection_ZenBTCParams) Set(fd protoreflect.FieldDescriptor, value
 		x.ZenBTCMinterKeyID = value.Uint()
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		x.ZenBTCWithdrawerKeyID = value.Uint()
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		x.ZenBTCUnstakerKeyID = value.Uint()
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		x.ZenBTCBurnerKeyID = value.Uint()
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		x.ZenBTCRewardsDepositKeyID = value.Uint()
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		lv := value.List()
-		clv := lv.(*_ZenBTCParams_6_list)
+		clv := lv.(*_ZenBTCParams_8_list)
 		x.ZenBTCChangeAddressKeyIDs = *clv.list
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		x.ZenBTCStrategyAddr = value.Interface().(string)
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		x.BitcoinProxyCreatorID = value.Interface().(string)
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		lv := value.List()
-		clv := lv.(*_ZenBTCParams_8_list)
+		clv := lv.(*_ZenBTCParams_11_list)
 		x.StakeableAssets = *clv.list
 	default:
 		if fd.IsExtension() {
@@ -3576,13 +3627,13 @@ func (x *fastReflection_ZenBTCParams) Mutable(fd protoreflect.FieldDescriptor) p
 		if x.ZenBTCChangeAddressKeyIDs == nil {
 			x.ZenBTCChangeAddressKeyIDs = []uint64{}
 		}
-		value := &_ZenBTCParams_6_list{list: &x.ZenBTCChangeAddressKeyIDs}
+		value := &_ZenBTCParams_8_list{list: &x.ZenBTCChangeAddressKeyIDs}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		if x.StakeableAssets == nil {
 			x.StakeableAssets = []*AssetData{}
 		}
-		value := &_ZenBTCParams_8_list{list: &x.StakeableAssets}
+		value := &_ZenBTCParams_11_list{list: &x.StakeableAssets}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.ZenBTCParams.zenBTCEthBatcherAddr":
 		panic(fmt.Errorf("field zenBTCEthBatcherAddr of message zrchain.validation.ZenBTCParams is not mutable"))
@@ -3592,8 +3643,14 @@ func (x *fastReflection_ZenBTCParams) Mutable(fd protoreflect.FieldDescriptor) p
 		panic(fmt.Errorf("field zenBTCMinterKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		panic(fmt.Errorf("field zenBTCWithdrawerKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		panic(fmt.Errorf("field zenBTCUnstakerKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		panic(fmt.Errorf("field zenBTCBurnerKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		panic(fmt.Errorf("field zenBTCRewardsDepositKeyID of message zrchain.validation.ZenBTCParams is not mutable"))
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		panic(fmt.Errorf("field zenBTCStrategyAddr of message zrchain.validation.ZenBTCParams is not mutable"))
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		panic(fmt.Errorf("field bitcoinProxyCreatorID of message zrchain.validation.ZenBTCParams is not mutable"))
 	default:
@@ -3617,16 +3674,22 @@ func (x *fastReflection_ZenBTCParams) NewField(fd protoreflect.FieldDescriptor) 
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.validation.ZenBTCParams.zenBTCWithdrawerKeyID":
 		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.validation.ZenBTCParams.zenBTCUnstakerKeyID":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.validation.ZenBTCParams.zenBTCBurnerKeyID":
+		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.validation.ZenBTCParams.zenBTCRewardsDepositKeyID":
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.validation.ZenBTCParams.zenBTCChangeAddressKeyIDs":
 		list := []uint64{}
-		return protoreflect.ValueOfList(&_ZenBTCParams_6_list{list: &list})
+		return protoreflect.ValueOfList(&_ZenBTCParams_8_list{list: &list})
+	case "zrchain.validation.ZenBTCParams.zenBTCStrategyAddr":
+		return protoreflect.ValueOfString("")
 	case "zrchain.validation.ZenBTCParams.bitcoinProxyCreatorID":
 		return protoreflect.ValueOfString("")
 	case "zrchain.validation.ZenBTCParams.stakeableAssets":
 		list := []*AssetData{}
-		return protoreflect.ValueOfList(&_ZenBTCParams_8_list{list: &list})
+		return protoreflect.ValueOfList(&_ZenBTCParams_11_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ZenBTCParams"))
@@ -3710,6 +3773,12 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 		if x.ZenBTCWithdrawerKeyID != 0 {
 			n += 1 + runtime.Sov(uint64(x.ZenBTCWithdrawerKeyID))
 		}
+		if x.ZenBTCUnstakerKeyID != 0 {
+			n += 1 + runtime.Sov(uint64(x.ZenBTCUnstakerKeyID))
+		}
+		if x.ZenBTCBurnerKeyID != 0 {
+			n += 1 + runtime.Sov(uint64(x.ZenBTCBurnerKeyID))
+		}
 		if x.ZenBTCRewardsDepositKeyID != 0 {
 			n += 1 + runtime.Sov(uint64(x.ZenBTCRewardsDepositKeyID))
 		}
@@ -3719,6 +3788,10 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				l += runtime.Sov(uint64(e))
 			}
 			n += 1 + runtime.Sov(uint64(l)) + l
+		}
+		l = len(x.ZenBTCStrategyAddr)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		l = len(x.BitcoinProxyCreatorID)
 		if l > 0 {
@@ -3772,7 +3845,7 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], encoded)
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
-				dAtA[i] = 0x42
+				dAtA[i] = 0x5a
 			}
 		}
 		if len(x.BitcoinProxyCreatorID) > 0 {
@@ -3780,7 +3853,14 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], x.BitcoinProxyCreatorID)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BitcoinProxyCreatorID)))
 			i--
-			dAtA[i] = 0x3a
+			dAtA[i] = 0x52
+		}
+		if len(x.ZenBTCStrategyAddr) > 0 {
+			i -= len(x.ZenBTCStrategyAddr)
+			copy(dAtA[i:], x.ZenBTCStrategyAddr)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ZenBTCStrategyAddr)))
+			i--
+			dAtA[i] = 0x4a
 		}
 		if len(x.ZenBTCChangeAddressKeyIDs) > 0 {
 			var pksize2 int
@@ -3800,10 +3880,20 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 			}
 			i = runtime.EncodeVarint(dAtA, i, uint64(pksize2))
 			i--
-			dAtA[i] = 0x32
+			dAtA[i] = 0x42
 		}
 		if x.ZenBTCRewardsDepositKeyID != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.ZenBTCRewardsDepositKeyID))
+			i--
+			dAtA[i] = 0x38
+		}
+		if x.ZenBTCBurnerKeyID != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ZenBTCBurnerKeyID))
+			i--
+			dAtA[i] = 0x30
+		}
+		if x.ZenBTCUnstakerKeyID != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ZenBTCUnstakerKeyID))
 			i--
 			dAtA[i] = 0x28
 		}
@@ -3984,6 +4074,44 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				}
 			case 5:
 				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCUnstakerKeyID", wireType)
+				}
+				x.ZenBTCUnstakerKeyID = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ZenBTCUnstakerKeyID |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCBurnerKeyID", wireType)
+				}
+				x.ZenBTCBurnerKeyID = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ZenBTCBurnerKeyID |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 7:
+				if wireType != 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCRewardsDepositKeyID", wireType)
 				}
 				x.ZenBTCRewardsDepositKeyID = 0
@@ -4001,7 +4129,7 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
-			case 6:
+			case 8:
 				if wireType == 0 {
 					var v uint64
 					for shift := uint(0); ; shift += 7 {
@@ -4077,7 +4205,39 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				} else {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCChangeAddressKeyIDs", wireType)
 				}
-			case 7:
+			case 9:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenBTCStrategyAddr", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ZenBTCStrategyAddr = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 10:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BitcoinProxyCreatorID", wireType)
 				}
@@ -4109,7 +4269,7 @@ func (x *fastReflection_ZenBTCParams) ProtoMethods() *protoiface.Methods {
 				}
 				x.BitcoinProxyCreatorID = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 8:
+			case 11:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field StakeableAssets", wireType)
 				}
@@ -4782,522 +4942,6 @@ func (x *fastReflection_ValidationInfo) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var (
-	md_WithdrawalInfo                    protoreflect.MessageDescriptor
-	fd_WithdrawalInfo_withdrawal_address protoreflect.FieldDescriptor
-	fd_WithdrawalInfo_amount             protoreflect.FieldDescriptor
-	fd_WithdrawalInfo_retry_count        protoreflect.FieldDescriptor
-)
-
-func init() {
-	file_zrchain_validation_hybrid_validation_proto_init()
-	md_WithdrawalInfo = File_zrchain_validation_hybrid_validation_proto.Messages().ByName("WithdrawalInfo")
-	fd_WithdrawalInfo_withdrawal_address = md_WithdrawalInfo.Fields().ByName("withdrawal_address")
-	fd_WithdrawalInfo_amount = md_WithdrawalInfo.Fields().ByName("amount")
-	fd_WithdrawalInfo_retry_count = md_WithdrawalInfo.Fields().ByName("retry_count")
-}
-
-var _ protoreflect.Message = (*fastReflection_WithdrawalInfo)(nil)
-
-type fastReflection_WithdrawalInfo WithdrawalInfo
-
-func (x *WithdrawalInfo) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_WithdrawalInfo)(x)
-}
-
-func (x *WithdrawalInfo) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-var _fastReflection_WithdrawalInfo_messageType fastReflection_WithdrawalInfo_messageType
-var _ protoreflect.MessageType = fastReflection_WithdrawalInfo_messageType{}
-
-type fastReflection_WithdrawalInfo_messageType struct{}
-
-func (x fastReflection_WithdrawalInfo_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_WithdrawalInfo)(nil)
-}
-func (x fastReflection_WithdrawalInfo_messageType) New() protoreflect.Message {
-	return new(fastReflection_WithdrawalInfo)
-}
-func (x fastReflection_WithdrawalInfo_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_WithdrawalInfo
-}
-
-// Descriptor returns message descriptor, which contains only the protobuf
-// type information for the message.
-func (x *fastReflection_WithdrawalInfo) Descriptor() protoreflect.MessageDescriptor {
-	return md_WithdrawalInfo
-}
-
-// Type returns the message type, which encapsulates both Go and protobuf
-// type information. If the Go type information is not needed,
-// it is recommended that the message descriptor be used instead.
-func (x *fastReflection_WithdrawalInfo) Type() protoreflect.MessageType {
-	return _fastReflection_WithdrawalInfo_messageType
-}
-
-// New returns a newly allocated and mutable empty message.
-func (x *fastReflection_WithdrawalInfo) New() protoreflect.Message {
-	return new(fastReflection_WithdrawalInfo)
-}
-
-// Interface unwraps the message reflection interface and
-// returns the underlying ProtoMessage interface.
-func (x *fastReflection_WithdrawalInfo) Interface() protoreflect.ProtoMessage {
-	return (*WithdrawalInfo)(x)
-}
-
-// Range iterates over every populated field in an undefined order,
-// calling f for each field descriptor and value encountered.
-// Range returns immediately if f returns false.
-// While iterating, mutating operations may only be performed
-// on the current field descriptor.
-func (x *fastReflection_WithdrawalInfo) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.WithdrawalAddress != "" {
-		value := protoreflect.ValueOfString(x.WithdrawalAddress)
-		if !f(fd_WithdrawalInfo_withdrawal_address, value) {
-			return
-		}
-	}
-	if x.Amount != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.Amount)
-		if !f(fd_WithdrawalInfo_amount, value) {
-			return
-		}
-	}
-	if x.RetryCount != uint32(0) {
-		value := protoreflect.ValueOfUint32(x.RetryCount)
-		if !f(fd_WithdrawalInfo_retry_count, value) {
-			return
-		}
-	}
-}
-
-// Has reports whether a field is populated.
-//
-// Some fields have the property of nullability where it is possible to
-// distinguish between the default value of a field and whether the field
-// was explicitly populated with the default value. Singular message fields,
-// member fields of a oneof, and proto2 scalar fields are nullable. Such
-// fields are populated only if explicitly set.
-//
-// In other cases (aside from the nullable cases above),
-// a proto3 scalar field is populated if it contains a non-zero value, and
-// a repeated field is populated if it is non-empty.
-func (x *fastReflection_WithdrawalInfo) Has(fd protoreflect.FieldDescriptor) bool {
-	switch fd.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		return x.WithdrawalAddress != ""
-	case "zrchain.validation.WithdrawalInfo.amount":
-		return x.Amount != uint64(0)
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		return x.RetryCount != uint32(0)
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", fd.FullName()))
-	}
-}
-
-// Clear clears the field such that a subsequent Has call reports false.
-//
-// Clearing an extension field clears both the extension type and value
-// associated with the given field number.
-//
-// Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_WithdrawalInfo) Clear(fd protoreflect.FieldDescriptor) {
-	switch fd.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		x.WithdrawalAddress = ""
-	case "zrchain.validation.WithdrawalInfo.amount":
-		x.Amount = uint64(0)
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		x.RetryCount = uint32(0)
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", fd.FullName()))
-	}
-}
-
-// Get retrieves the value for a field.
-//
-// For unpopulated scalars, it returns the default value, where
-// the default value of a bytes scalar is guaranteed to be a copy.
-// For unpopulated composite types, it returns an empty, read-only view
-// of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_WithdrawalInfo) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
-	switch descriptor.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		value := x.WithdrawalAddress
-		return protoreflect.ValueOfString(value)
-	case "zrchain.validation.WithdrawalInfo.amount":
-		value := x.Amount
-		return protoreflect.ValueOfUint64(value)
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		value := x.RetryCount
-		return protoreflect.ValueOfUint32(value)
-	default:
-		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", descriptor.FullName()))
-	}
-}
-
-// Set stores the value for a field.
-//
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType.
-// When setting a composite type, it is unspecified whether the stored value
-// aliases the source's memory in any way. If the composite value is an
-// empty, read-only value, then it panics.
-//
-// Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_WithdrawalInfo) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
-	switch fd.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		x.WithdrawalAddress = value.Interface().(string)
-	case "zrchain.validation.WithdrawalInfo.amount":
-		x.Amount = value.Uint()
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		x.RetryCount = uint32(value.Uint())
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", fd.FullName()))
-	}
-}
-
-// Mutable returns a mutable reference to a composite type.
-//
-// If the field is unpopulated, it may allocate a composite value.
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType
-// if not already stored.
-// It panics if the field does not contain a composite type.
-//
-// Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_WithdrawalInfo) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		panic(fmt.Errorf("field withdrawal_address of message zrchain.validation.WithdrawalInfo is not mutable"))
-	case "zrchain.validation.WithdrawalInfo.amount":
-		panic(fmt.Errorf("field amount of message zrchain.validation.WithdrawalInfo is not mutable"))
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		panic(fmt.Errorf("field retry_count of message zrchain.validation.WithdrawalInfo is not mutable"))
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", fd.FullName()))
-	}
-}
-
-// NewField returns a new value that is assignable to the field
-// for the given descriptor. For scalars, this returns the default value.
-// For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_WithdrawalInfo) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "zrchain.validation.WithdrawalInfo.withdrawal_address":
-		return protoreflect.ValueOfString("")
-	case "zrchain.validation.WithdrawalInfo.amount":
-		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.validation.WithdrawalInfo.retry_count":
-		return protoreflect.ValueOfUint32(uint32(0))
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.WithdrawalInfo"))
-		}
-		panic(fmt.Errorf("message zrchain.validation.WithdrawalInfo does not contain field %s", fd.FullName()))
-	}
-}
-
-// WhichOneof reports which field within the oneof is populated,
-// returning nil if none are populated.
-// It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_WithdrawalInfo) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
-	switch d.FullName() {
-	default:
-		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.WithdrawalInfo", d.FullName()))
-	}
-	panic("unreachable")
-}
-
-// GetUnknown retrieves the entire list of unknown fields.
-// The caller may only mutate the contents of the RawFields
-// if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_WithdrawalInfo) GetUnknown() protoreflect.RawFields {
-	return x.unknownFields
-}
-
-// SetUnknown stores an entire list of unknown fields.
-// The raw fields must be syntactically valid according to the wire format.
-// An implementation may panic if this is not the case.
-// Once stored, the caller must not mutate the content of the RawFields.
-// An empty RawFields may be passed to clear the fields.
-//
-// SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_WithdrawalInfo) SetUnknown(fields protoreflect.RawFields) {
-	x.unknownFields = fields
-}
-
-// IsValid reports whether the message is valid.
-//
-// An invalid message is an empty, read-only value.
-//
-// An invalid message often corresponds to a nil pointer of the concrete
-// message type, but the details are implementation dependent.
-// Validity is not part of the protobuf data model, and may not
-// be preserved in marshaling or other operations.
-func (x *fastReflection_WithdrawalInfo) IsValid() bool {
-	return x != nil
-}
-
-// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
-// This method may return nil.
-//
-// The returned methods type is identical to
-// "google.golang.org/protobuf/runtime/protoiface".Methods.
-// Consult the protoiface package documentation for details.
-func (x *fastReflection_WithdrawalInfo) ProtoMethods() *protoiface.Methods {
-	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*WithdrawalInfo)
-		if x == nil {
-			return protoiface.SizeOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Size:              0,
-			}
-		}
-		options := runtime.SizeInputToOptions(input)
-		_ = options
-		var n int
-		var l int
-		_ = l
-		l = len(x.WithdrawalAddress)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		if x.Amount != 0 {
-			n += 1 + runtime.Sov(uint64(x.Amount))
-		}
-		if x.RetryCount != 0 {
-			n += 1 + runtime.Sov(uint64(x.RetryCount))
-		}
-		if x.unknownFields != nil {
-			n += len(x.unknownFields)
-		}
-		return protoiface.SizeOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Size:              n,
-		}
-	}
-
-	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*WithdrawalInfo)
-		if x == nil {
-			return protoiface.MarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Buf:               input.Buf,
-			}, nil
-		}
-		options := runtime.MarshalInputToOptions(input)
-		_ = options
-		size := options.Size(x)
-		dAtA := make([]byte, size)
-		i := len(dAtA)
-		_ = i
-		var l int
-		_ = l
-		if x.unknownFields != nil {
-			i -= len(x.unknownFields)
-			copy(dAtA[i:], x.unknownFields)
-		}
-		if x.RetryCount != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.RetryCount))
-			i--
-			dAtA[i] = 0x18
-		}
-		if x.Amount != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.Amount))
-			i--
-			dAtA[i] = 0x10
-		}
-		if len(x.WithdrawalAddress) > 0 {
-			i -= len(x.WithdrawalAddress)
-			copy(dAtA[i:], x.WithdrawalAddress)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.WithdrawalAddress)))
-			i--
-			dAtA[i] = 0xa
-		}
-		if input.Buf != nil {
-			input.Buf = append(input.Buf, dAtA...)
-		} else {
-			input.Buf = dAtA
-		}
-		return protoiface.MarshalOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Buf:               input.Buf,
-		}, nil
-	}
-	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*WithdrawalInfo)
-		if x == nil {
-			return protoiface.UnmarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Flags:             input.Flags,
-			}, nil
-		}
-		options := runtime.UnmarshalInputToOptions(input)
-		_ = options
-		dAtA := input.Buf
-		l := len(dAtA)
-		iNdEx := 0
-		for iNdEx < l {
-			preIndex := iNdEx
-			var wire uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				wire |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			fieldNum := int32(wire >> 3)
-			wireType := int(wire & 0x7)
-			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: WithdrawalInfo: wiretype end group for non-group")
-			}
-			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: WithdrawalInfo: illegal tag %d (wire type %d)", fieldNum, wire)
-			}
-			switch fieldNum {
-			case 1:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field WithdrawalAddress", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.WithdrawalAddress = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 2:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
-				}
-				x.Amount = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.Amount |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 3:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RetryCount", wireType)
-				}
-				x.RetryCount = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.RetryCount |= uint32(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			default:
-				iNdEx = preIndex
-				skippy, err := runtime.Skip(dAtA[iNdEx:])
-				if err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
-				if (skippy < 0) || (iNdEx+skippy) < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if (iNdEx + skippy) > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				if !options.DiscardUnknown {
-					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-				}
-				iNdEx += skippy
-			}
-		}
-
-		if iNdEx > l {
-			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-		}
-		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
-	}
-	return &protoiface.Methods{
-		NoUnkeyedLiterals: struct{}{},
-		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
-		Size:              size,
-		Marshal:           marshal,
-		Unmarshal:         unmarshal,
-		Merge:             nil,
-		CheckInitialized:  nil,
-	}
-}
-
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 // 	protoc-gen-go v1.27.0
@@ -5653,10 +5297,13 @@ type ZenBTCParams struct {
 	ZenBTCDepositKeyringAddr  string       `protobuf:"bytes,2,opt,name=zenBTCDepositKeyringAddr,proto3" json:"zenBTCDepositKeyringAddr,omitempty"`
 	ZenBTCMinterKeyID         uint64       `protobuf:"varint,3,opt,name=zenBTCMinterKeyID,proto3" json:"zenBTCMinterKeyID,omitempty"`
 	ZenBTCWithdrawerKeyID     uint64       `protobuf:"varint,4,opt,name=zenBTCWithdrawerKeyID,proto3" json:"zenBTCWithdrawerKeyID,omitempty"`
-	ZenBTCRewardsDepositKeyID uint64       `protobuf:"varint,5,opt,name=zenBTCRewardsDepositKeyID,proto3" json:"zenBTCRewardsDepositKeyID,omitempty"`
-	ZenBTCChangeAddressKeyIDs []uint64     `protobuf:"varint,6,rep,packed,name=zenBTCChangeAddressKeyIDs,proto3" json:"zenBTCChangeAddressKeyIDs,omitempty"`
-	BitcoinProxyCreatorID     string       `protobuf:"bytes,7,opt,name=bitcoinProxyCreatorID,proto3" json:"bitcoinProxyCreatorID,omitempty"`
-	StakeableAssets           []*AssetData `protobuf:"bytes,8,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
+	ZenBTCUnstakerKeyID       uint64       `protobuf:"varint,5,opt,name=zenBTCUnstakerKeyID,proto3" json:"zenBTCUnstakerKeyID,omitempty"`
+	ZenBTCBurnerKeyID         uint64       `protobuf:"varint,6,opt,name=zenBTCBurnerKeyID,proto3" json:"zenBTCBurnerKeyID,omitempty"`
+	ZenBTCRewardsDepositKeyID uint64       `protobuf:"varint,7,opt,name=zenBTCRewardsDepositKeyID,proto3" json:"zenBTCRewardsDepositKeyID,omitempty"`
+	ZenBTCChangeAddressKeyIDs []uint64     `protobuf:"varint,8,rep,packed,name=zenBTCChangeAddressKeyIDs,proto3" json:"zenBTCChangeAddressKeyIDs,omitempty"`
+	ZenBTCStrategyAddr        string       `protobuf:"bytes,9,opt,name=zenBTCStrategyAddr,proto3" json:"zenBTCStrategyAddr,omitempty"`
+	BitcoinProxyCreatorID     string       `protobuf:"bytes,10,opt,name=bitcoinProxyCreatorID,proto3" json:"bitcoinProxyCreatorID,omitempty"`
+	StakeableAssets           []*AssetData `protobuf:"bytes,11,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
 }
 
 func (x *ZenBTCParams) Reset() {
@@ -5707,6 +5354,20 @@ func (x *ZenBTCParams) GetZenBTCWithdrawerKeyID() uint64 {
 	return 0
 }
 
+func (x *ZenBTCParams) GetZenBTCUnstakerKeyID() uint64 {
+	if x != nil {
+		return x.ZenBTCUnstakerKeyID
+	}
+	return 0
+}
+
+func (x *ZenBTCParams) GetZenBTCBurnerKeyID() uint64 {
+	if x != nil {
+		return x.ZenBTCBurnerKeyID
+	}
+	return 0
+}
+
 func (x *ZenBTCParams) GetZenBTCRewardsDepositKeyID() uint64 {
 	if x != nil {
 		return x.ZenBTCRewardsDepositKeyID
@@ -5719,6 +5380,13 @@ func (x *ZenBTCParams) GetZenBTCChangeAddressKeyIDs() []uint64 {
 		return x.ZenBTCChangeAddressKeyIDs
 	}
 	return nil
+}
+
+func (x *ZenBTCParams) GetZenBTCStrategyAddr() string {
+	if x != nil {
+		return x.ZenBTCStrategyAddr
+	}
+	return ""
 }
 
 func (x *ZenBTCParams) GetBitcoinProxyCreatorID() string {
@@ -5776,57 +5444,6 @@ func (x *ValidationInfo) GetMismatchedVoteExtensions() []string {
 		return x.MismatchedVoteExtensions
 	}
 	return nil
-}
-
-type WithdrawalInfo struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	WithdrawalAddress string `protobuf:"bytes,1,opt,name=withdrawal_address,json=withdrawalAddress,proto3" json:"withdrawal_address,omitempty"`
-	Amount            uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	RetryCount        uint32 `protobuf:"varint,3,opt,name=retry_count,json=retryCount,proto3" json:"retry_count,omitempty"`
-}
-
-func (x *WithdrawalInfo) Reset() {
-	*x = WithdrawalInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *WithdrawalInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*WithdrawalInfo) ProtoMessage() {}
-
-// Deprecated: Use WithdrawalInfo.ProtoReflect.Descriptor instead.
-func (*WithdrawalInfo) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *WithdrawalInfo) GetWithdrawalAddress() string {
-	if x != nil {
-		return x.WithdrawalAddress
-	}
-	return ""
-}
-
-func (x *WithdrawalInfo) GetAmount() uint64 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
-func (x *WithdrawalInfo) GetRetryCount() uint32 {
-	if x != nil {
-		return x.RetryCount
-	}
-	return 0
 }
 
 var File_zrchain_validation_hybrid_validation_proto protoreflect.FileDescriptor
@@ -5957,7 +5574,7 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
 	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72,
 	0x61, 0x6d, 0x73, 0x52, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x22, 0xdd, 0x03, 0x0a, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61,
+	0x73, 0x22, 0xed, 0x04, 0x0a, 0x0c, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x50, 0x61, 0x72, 0x61,
 	0x6d, 0x73, 0x12, 0x32, 0x0a, 0x14, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x45, 0x74, 0x68, 0x42,
 	0x61, 0x74, 0x63, 0x68, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x14, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x45, 0x74, 0x68, 0x42, 0x61, 0x74, 0x63, 0x68,
@@ -5971,19 +5588,28 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x12, 0x34, 0x0a, 0x15, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72,
 	0x61, 0x77, 0x65, 0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52,
 	0x15, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x65,
+	0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x12, 0x30, 0x0a, 0x13, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43,
+	0x55, 0x6e, 0x73, 0x74, 0x61, 0x6b, 0x65, 0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x18, 0x05, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x13, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x55, 0x6e, 0x73, 0x74, 0x61,
+	0x6b, 0x65, 0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x12, 0x2c, 0x0a, 0x11, 0x7a, 0x65, 0x6e, 0x42,
+	0x54, 0x43, 0x42, 0x75, 0x72, 0x6e, 0x65, 0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x18, 0x06, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x11, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x42, 0x75, 0x72, 0x6e, 0x65,
 	0x72, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x12, 0x3c, 0x0a, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43,
 	0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x4b, 0x65,
-	0x79, 0x49, 0x44, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54,
+	0x79, 0x49, 0x44, 0x18, 0x07, 0x20, 0x01, 0x28, 0x04, 0x52, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54,
 	0x43, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x4b,
 	0x65, 0x79, 0x49, 0x44, 0x12, 0x3c, 0x0a, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x43, 0x68,
 	0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x4b, 0x65, 0x79, 0x49, 0x44,
-	0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x04, 0x52, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x43,
+	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x04, 0x52, 0x19, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x43,
 	0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x4b, 0x65, 0x79, 0x49,
-	0x44, 0x73, 0x12, 0x34, 0x0a, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f,
-	0x78, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x18, 0x07, 0x20, 0x01, 0x28,
+	0x44, 0x73, 0x12, 0x2e, 0x0a, 0x12, 0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x53, 0x74, 0x72, 0x61,
+	0x74, 0x65, 0x67, 0x79, 0x41, 0x64, 0x64, 0x72, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12,
+	0x7a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x41, 0x64,
+	0x64, 0x72, 0x12, 0x34, 0x0a, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f,
+	0x78, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x18, 0x0a, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x15, 0x62, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x50, 0x72, 0x6f, 0x78, 0x79, 0x43,
 	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x49, 0x44, 0x12, 0x47, 0x0a, 0x0f, 0x73, 0x74, 0x61, 0x6b,
-	0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28,
+	0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x0b, 0x20, 0x03, 0x28,
 	0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
 	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61,
 	0x52, 0x0f, 0x73, 0x74, 0x61, 0x6b, 0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74,
@@ -5995,27 +5621,19 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x5f, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x74, 0x65,
 	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x18, 0x6d, 0x69,
 	0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65,
-	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x78, 0x0a, 0x0e, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72,
-	0x61, 0x77, 0x61, 0x6c, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x2d, 0x0a, 0x12, 0x77, 0x69, 0x74, 0x68,
-	0x64, 0x72, 0x61, 0x77, 0x61, 0x6c, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x11, 0x77, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x61, 0x6c,
-	0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e,
-	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12,
-	0x1f, 0x0a, 0x0b, 0x72, 0x65, 0x74, 0x72, 0x79, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x72, 0x65, 0x74, 0x72, 0x79, 0x43, 0x6f, 0x75, 0x6e, 0x74,
-	0x42, 0xbd, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x15, 0x48, 0x79, 0x62,
-	0x72, 0x69, 0x64, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e,
-	0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa,
-	0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47,
-	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63,
-	0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0xbd, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x42, 0x15, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2,
+	0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2,
+	0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -6030,7 +5648,7 @@ func file_zrchain_validation_hybrid_validation_proto_rawDescGZIP() []byte {
 	return file_zrchain_validation_hybrid_validation_proto_rawDescData
 }
 
-var file_zrchain_validation_hybrid_validation_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_zrchain_validation_hybrid_validation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_zrchain_validation_hybrid_validation_proto_goTypes = []interface{}{
 	(*ValidatorHV)(nil),           // 0: zrchain.validation.ValidatorHV
 	(*HistoricalInfoHV)(nil),      // 1: zrchain.validation.HistoricalInfoHV
@@ -6038,25 +5656,24 @@ var file_zrchain_validation_hybrid_validation_proto_goTypes = []interface{}{
 	(*HVParams)(nil),              // 3: zrchain.validation.HVParams
 	(*ZenBTCParams)(nil),          // 4: zrchain.validation.ZenBTCParams
 	(*ValidationInfo)(nil),        // 5: zrchain.validation.ValidationInfo
-	(*WithdrawalInfo)(nil),        // 6: zrchain.validation.WithdrawalInfo
-	(*anypb.Any)(nil),             // 7: google.protobuf.Any
-	(BondStatus)(0),               // 8: zrchain.validation.BondStatus
-	(*Description)(nil),           // 9: zrchain.validation.Description
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
-	(*Commission)(nil),            // 11: zrchain.validation.Commission
-	(*types.Header)(nil),          // 12: tendermint.types.Header
-	(*AssetData)(nil),             // 13: zrchain.validation.AssetData
+	(*anypb.Any)(nil),             // 6: google.protobuf.Any
+	(BondStatus)(0),               // 7: zrchain.validation.BondStatus
+	(*Description)(nil),           // 8: zrchain.validation.Description
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*Commission)(nil),            // 10: zrchain.validation.Commission
+	(*types.Header)(nil),          // 11: tendermint.types.Header
+	(*AssetData)(nil),             // 12: zrchain.validation.AssetData
 }
 var file_zrchain_validation_hybrid_validation_proto_depIdxs = []int32{
-	7,  // 0: zrchain.validation.ValidatorHV.consensus_pubkey:type_name -> google.protobuf.Any
-	8,  // 1: zrchain.validation.ValidatorHV.status:type_name -> zrchain.validation.BondStatus
-	9,  // 2: zrchain.validation.ValidatorHV.description:type_name -> zrchain.validation.Description
-	10, // 3: zrchain.validation.ValidatorHV.unbonding_time:type_name -> google.protobuf.Timestamp
-	11, // 4: zrchain.validation.ValidatorHV.commission:type_name -> zrchain.validation.Commission
-	12, // 5: zrchain.validation.HistoricalInfoHV.header:type_name -> tendermint.types.Header
+	6,  // 0: zrchain.validation.ValidatorHV.consensus_pubkey:type_name -> google.protobuf.Any
+	7,  // 1: zrchain.validation.ValidatorHV.status:type_name -> zrchain.validation.BondStatus
+	8,  // 2: zrchain.validation.ValidatorHV.description:type_name -> zrchain.validation.Description
+	9,  // 3: zrchain.validation.ValidatorHV.unbonding_time:type_name -> google.protobuf.Timestamp
+	10, // 4: zrchain.validation.ValidatorHV.commission:type_name -> zrchain.validation.Commission
+	11, // 5: zrchain.validation.HistoricalInfoHV.header:type_name -> tendermint.types.Header
 	0,  // 6: zrchain.validation.HistoricalInfoHV.valset:type_name -> zrchain.validation.ValidatorHV
 	4,  // 7: zrchain.validation.HVParams.ZenBTCParams:type_name -> zrchain.validation.ZenBTCParams
-	13, // 8: zrchain.validation.ZenBTCParams.stakeableAssets:type_name -> zrchain.validation.AssetData
+	12, // 8: zrchain.validation.ZenBTCParams.stakeableAssets:type_name -> zrchain.validation.AssetData
 	9,  // [9:9] is the sub-list for method output_type
 	9,  // [9:9] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
@@ -6144,18 +5761,6 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 				return nil
 			}
 		}
-		file_zrchain_validation_hybrid_validation_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WithdrawalInfo); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -6163,7 +5768,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_validation_hybrid_validation_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

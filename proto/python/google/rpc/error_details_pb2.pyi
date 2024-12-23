@@ -68,12 +68,16 @@ class PreconditionFailure(_message.Message):
 class BadRequest(_message.Message):
     __slots__ = ("field_violations",)
     class FieldViolation(_message.Message):
-        __slots__ = ("field", "description")
+        __slots__ = ("field", "description", "reason", "localized_message")
         FIELD_FIELD_NUMBER: _ClassVar[int]
         DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+        REASON_FIELD_NUMBER: _ClassVar[int]
+        LOCALIZED_MESSAGE_FIELD_NUMBER: _ClassVar[int]
         field: str
         description: str
-        def __init__(self, field: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
+        reason: str
+        localized_message: LocalizedMessage
+        def __init__(self, field: _Optional[str] = ..., description: _Optional[str] = ..., reason: _Optional[str] = ..., localized_message: _Optional[_Union[LocalizedMessage, _Mapping]] = ...) -> None: ...
     FIELD_VIOLATIONS_FIELD_NUMBER: _ClassVar[int]
     field_violations: _containers.RepeatedCompositeFieldContainer[BadRequest.FieldViolation]
     def __init__(self, field_violations: _Optional[_Iterable[_Union[BadRequest.FieldViolation, _Mapping]]] = ...) -> None: ...
