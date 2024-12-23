@@ -23,7 +23,7 @@ type validationKeeperMock struct {
 	rockPrice string
 }
 
-func (vk validationKeeperMock) GetAssetPrice(asset string) (sdkmath.LegacyDec, error) {
+func (vk validationKeeperMock) GetAssetPrice(ctx sdk.Context, asset string) (sdkmath.LegacyDec, error) {
 	return sdkmath.LegacyMustNewDecFromStr(vk.rockPrice), nil
 }
 

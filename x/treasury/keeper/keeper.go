@@ -268,7 +268,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 	}
 
 	fee, err := k.KeyFeeInRock(ctx, &keyring)
-
+	fmt.Printf("new-key fee: %d", fee)
 	if fee > 0 {
 		feeRecipient := keyring.Address
 		if keyring.DelegateFees {
@@ -524,12 +524,15 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 func (k *Keeper) SignatureFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint64, error) {
 	if kr.Fees != nil && kr.Fees.Signature != nil {
 		if kr.Fees.Signature.UsdAmount > 0 {
-			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
+			if ap, err := k.validationKeeper.GetAssetPrice(ctx, "rock"); err == nil {
 				urockPrice := ap.Mul(sdkmath.LegacyNewDec(1000000))
-				sigPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Signature.UsdAmount)).Mul(urockPrice).RoundInt64()
-				return uint64(sigPrice), nil
+				if urockPrice.TruncateInt64() >= 1 {
+					sigPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Signature.UsdAmount)).Mul(urockPrice).RoundInt64()
+					return uint64(sigPrice), nil
+				}
 			}
-		} else if kr.Fees.Signature.RockAmount > 0 {
+		}
+		if kr.Fees.Signature.RockAmount > 0 {
 			return kr.Fees.Signature.RockAmount, nil
 		}
 	}
@@ -540,14 +543,15 @@ func (k *Keeper) SignatureFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint6
 func (k *Keeper) KeyFeeInRock(ctx sdk.Context, kr *idtypes.Keyring) (uint64, error) {
 	if kr.Fees != nil && kr.Fees.Key != nil {
 		if kr.Fees.Key.UsdAmount > 0 {
-			if ap, err := k.validationKeeper.GetAssetPrice("rock"); err == nil {
+			if ap, err := k.validationKeeper.GetAssetPrice(ctx, "rock"); err == nil {
 				urockPrice := ap.Mul(sdkmath.LegacyNewDec(1000000))
-				if urockPrice.GT(sdkmath.LegacyNewDec(0)) {
+				if urockPrice.TruncateInt64() >= 1 {
 					keyPrice := sdkmath.LegacyNewDec(int64(kr.Fees.Key.UsdAmount)).Mul(urockPrice).RoundInt64()
 					return uint64(keyPrice), nil
 				}
 			}
-		} else if kr.Fees.Key.RockAmount > 0 {
+		}
+		if kr.Fees.Key.RockAmount > 0 {
 			return kr.Fees.Key.RockAmount, nil
 		}
 	}

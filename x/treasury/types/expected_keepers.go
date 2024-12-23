@@ -39,5 +39,5 @@ type PolicyKeeper interface {
 }
 
 type ValidationKeeper interface {
-	GetAssetPrice(string) (math.LegacyDec, error)
+	GetAssetPrice(sdk.Context, string) (math.LegacyDec, error)
 }
