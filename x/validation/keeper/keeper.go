@@ -258,3 +258,7 @@ func (k Keeper) GetZenBTCExchangeRate(ctx sdk.Context) (float64, error) {
 
 	return float64(supply.CustodiedBTC) / float64(supply.MintedZenBTC), nil
 }
+
+func (k Keeper) GetAssetPrice(ctx sdk.Context, asset string) (math.LegacyDec, error) {
+	return k.AssetPrices.Get(ctx, types.Asset_ROCK)
+}
