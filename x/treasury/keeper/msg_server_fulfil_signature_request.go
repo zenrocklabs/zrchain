@@ -73,6 +73,12 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("key not found")
 	}
 
+	if key.KeyringAddr == k.validationKeeper.GetZenBTCDepositKeyringAddr(ctx) &&
+		key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
+		req.Creator != k.validationKeeper.GetBitcoinProxyCreatorID(ctx) {
+		return nil, nil, fmt.Errorf("only the bitcoin proxy can sign with zenBTC deposit keys")
+	}
+
 	return &req, &key, nil
 }
 
