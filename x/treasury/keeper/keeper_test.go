@@ -153,7 +153,7 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 			bkmock := newBankKeeperMock()
 			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
 			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
-			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore)
+			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, nil, bkmock, db, stateStore)
 
 			tkGenesis := types.GenesisState{
 				Params: types.DefaultParams(),
