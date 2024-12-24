@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
+	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
@@ -549,6 +550,13 @@ func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType
 	return q.Wallets[0].Address, nil
 }
 
+func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
+	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
+		return "mainnet"
+	}
+	return "testnet4"
+}
+
 func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
@@ -562,10 +570,10 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 	}
 
 	if len(requestedBitcoinHeaders.Heights) == 0 {
-		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: k.bitcoinNetwork(ctx)})
 	}
 
-	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
+	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: requestedBitcoinHeaders.Heights[0]})
 }
 
 func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
