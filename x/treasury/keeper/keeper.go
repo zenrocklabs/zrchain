@@ -33,11 +33,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
-type ValidationKeeper interface {
-	GetZenBTCDepositKeyringAddr(ctx context.Context) string
-	GetBitcoinProxyCreatorID(ctx context.Context) string
-}
-
 type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
@@ -65,7 +60,6 @@ type Keeper struct {
 	bankKeeper         types.BankKeeper
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
-	validationKeeper   ValidationKeeper
 }
 
 func NewKeeper(
@@ -76,7 +70,6 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	identityKeeper identity.Keeper,
 	policyKeeper policy.Keeper,
-	validationKeeper ValidationKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -85,14 +78,13 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:              cdc,
-		storeService:     storeService,
-		authority:        authority,
-		logger:           logger,
-		bankKeeper:       bankKeeper,
-		identityKeeper:   identityKeeper,
-		policyKeeper:     policyKeeper,
-		validationKeeper: validationKeeper,
+		cdc:            cdc,
+		storeService:   storeService,
+		authority:      authority,
+		logger:         logger,
+		bankKeeper:     bankKeeper,
+		identityKeeper: identityKeeper,
+		policyKeeper:   policyKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),

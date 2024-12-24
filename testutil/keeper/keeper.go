@@ -27,7 +27,7 @@ func NewTest(t testing.TB) *KeeperTest {
 
 	policyKeeper, ctx := PolicyKeeper(t, db, stateStore, nil)
 	identityKeeper, _ := IdentityKeeper(t, &policyKeeper, db, stateStore)
-	treasuryKeeper, _ := TreasuryKeeper(t, &policyKeeper, &identityKeeper, nil, nil, db, stateStore)
+	treasuryKeeper, _ := TreasuryKeeper(t, &policyKeeper, &identityKeeper, nil, db, stateStore)
 
 	return &KeeperTest{
 		Ctx:            ctx,

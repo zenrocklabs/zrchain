@@ -19,10 +19,9 @@ import (
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
 )
 
-func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, validationKeeper *validationkeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
+func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -42,7 +41,6 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		bankKeeper,
 		*identityKeeper,
 		*policyKeeper,
-		*validationKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
