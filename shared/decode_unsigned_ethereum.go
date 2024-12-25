@@ -19,6 +19,9 @@ type DynamicFeeTxWithoutSignature struct {
 	Value      *big.Int
 	Data       []byte
 	AccessList types.AccessList
+	V          *big.Int
+	R          *big.Int
+	S          *big.Int
 }
 
 type AccessListTxWithoutSignature struct {
@@ -72,6 +75,9 @@ func DecodeUnsignedPayload(msg []byte) (types.TxData, error) {
 			Value:      res.Value,
 			Data:       res.Data,
 			AccessList: res.AccessList,
+			V:          new(big.Int),
+			R:          new(big.Int),
+			S:          new(big.Int),
 		}, err
 	default:
 		return nil, fmt.Errorf("unsupported transaction type: %v", msg[0])
