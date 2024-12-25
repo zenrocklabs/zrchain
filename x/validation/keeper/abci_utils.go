@@ -379,43 +379,14 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 	return nonceResp.Nonce, nil
 }
 
-// func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-// 	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	chainID := big.NewInt(17000)
-// 	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
-// 	gasTipCap := new(big.Int).SetUint64(tipCap)
-// 	gasFeeCap := new(big.Int).Mul(new(big.Int).SetUint64(baseFee), big.NewInt(2))
-// 	gasFeeCap.Add(gasFeeCap, gasTipCap)
-
-// 	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
-// 		ChainID:    chainID,
-// 		Nonce:      nonce,
-// 		GasTipCap:  gasTipCap,
-// 		GasFeeCap:  gasFeeCap,
-// 		Gas:        gasLimit,
-// 		To:         &addr,
-// 		Value:      big.NewInt(0), // we shouldn't send any ETH
-// 		Data:       encodedMintData,
-// 		AccessList: nil,
-// 	})
-
-// 	unsignedTxBz, err := unsignedTx.MarshalBinary()
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-// 	signer := ethtypes.LatestSignerForChainID(chainID)
-
-// 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
-// }
-
-// TODO: use above function instead of this one if possible
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
+	}
+	chainIDBigInt := big.NewInt(int64(chainID))
+
+	if gasLimit > 300000 {
+		gasLimit = 300000
 	}
 
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
@@ -425,35 +396,91 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
-	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
+	// Set minimum priority fee of 0.05 Gwei
+	minTipCap := new(big.Int).SetUint64(50000000)
+	gasTipCap := new(big.Int).SetUint64(tipCap)
+	if gasTipCap.Cmp(minTipCap) < 0 {
+		gasTipCap = minTipCap
+	}
 
-	// Buffer the base fee a little to allow for fluctuations
-	baseFeeBuffered := new(big.Int).Mul(
+	// Add 10% buffer to base fee to account for increases
+	baseFeeWithBuffer := new(big.Int).Mul(
 		new(big.Int).SetUint64(baseFee),
-		big.NewInt(12),
+		new(big.Int).SetUint64(11),
 	)
-	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+	baseFeeWithBuffer.Div(baseFeeWithBuffer, big.NewInt(10))
 
-	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
+	// Set max fee to 2.5x buffered base fee + tip
+	gasFeeCap := new(big.Int).Mul(baseFeeWithBuffer, big.NewInt(25))
+	gasFeeCap.Div(gasFeeCap, big.NewInt(10))
+	gasFeeCap.Add(gasFeeCap, gasTipCap)
 
-	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
-		Nonce:    nonce,
-		GasPrice: gasPrice,
-		Gas:      gasLimit,
-		To:       &addr,
-		Value:    big.NewInt(0), // we shouldn't send any ETH
-		Data:     encodedMintData,
+	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+		ChainID:    chainIDBigInt,
+		Nonce:      nonce,
+		GasTipCap:  gasTipCap,
+		GasFeeCap:  gasFeeCap,
+		Gas:        gasLimit,
+		To:         &addr,
+		Value:      big.NewInt(0),
+		Data:       encodedMintData,
+		AccessList: nil,
+		V:          big.NewInt(0),
+		R:          big.NewInt(0),
+		S:          big.NewInt(0),
 	})
 
 	unsignedTxBz, err := unsignedTx.MarshalBinary()
 	if err != nil {
 		return nil, nil, err
 	}
-	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(chainID))
+	signer := ethtypes.LatestSignerForChainID(chainIDBigInt)
 
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
+
+// TODO: use above function instead of this one if possible
+// func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+// 	if chainID != 17000 {
+// 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
+// 	}
+
+// 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
+
+// 	// For Holesky, use a high priority fee
+// 	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
+
+// 	// Buffer the base fee a little to allow for fluctuations
+// 	baseFeeBuffered := new(big.Int).Mul(
+// 		new(big.Int).SetUint64(baseFee),
+// 		big.NewInt(12),
+// 	)
+// 	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+
+// 	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
+
+// 	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
+// 		Nonce:    nonce,
+// 		GasPrice: gasPrice,
+// 		Gas:      gasLimit,
+// 		To:       &addr,
+// 		Value:    big.NewInt(0), // we shouldn't send any ETH
+// 		Data:     encodedMintData,
+// 	})
+
+// 	unsignedTxBz, err := unsignedTx.MarshalBinary()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(chainID))
+
+// 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+// }
 
 func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
 	if !amount.IsUint64() {
