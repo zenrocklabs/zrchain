@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
+	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
@@ -378,80 +379,75 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 	return nonceResp.Nonce, nil
 }
 
-// func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-// 	encodedMintData, err := encodeMintData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	chainID := big.NewInt(17000)
-// 	addr := common.HexToAddress(k.GetZenBTCEthContractAddr(ctx))
-// 	gasTipCap := new(big.Int).SetUint64(tipCap)
-// 	gasFeeCap := new(big.Int).Mul(new(big.Int).SetUint64(baseFee), big.NewInt(2))
-// 	gasFeeCap.Add(gasFeeCap, gasTipCap)
-
-// 	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
-// 		ChainID:    chainID,
-// 		Nonce:      nonce,
-// 		GasTipCap:  gasTipCap,
-// 		GasFeeCap:  gasFeeCap,
-// 		Gas:        gasLimit,
-// 		To:         &addr,
-// 		Value:      big.NewInt(0), // we shouldn't send any ETH
-// 		Data:       encodedMintData,
-// 		AccessList: nil,
-// 	})
-
-// 	unsignedTxBz, err := unsignedTx.MarshalBinary()
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-// 	signer := ethtypes.LatestSignerForChainID(chainID)
-
-// 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
-// }
-
-// TODO: use above function instead of this one if possible
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
+	chainIDBigInt := big.NewInt(int64(chainID))
 
-	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
-	if err != nil {
-		return nil, nil, err
+	if gasLimit > 300000 {
+		gasLimit = 300000
 	}
 
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
-	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
+	// Set minimum priority fee of 0.05 Gwei
+	minTipCap := new(big.Int).SetUint64(50000000)
+	gasTipCap := new(big.Int).SetUint64(tipCap)
+	if gasTipCap.Cmp(minTipCap) < 0 {
+		gasTipCap = minTipCap
+	}
 
-	// Buffer the base fee a little to allow for fluctuations
-	baseFeeBuffered := new(big.Int).Mul(
+	// Add 10% buffer to base fee to account for increases
+	baseFeeWithBuffer := new(big.Int).Mul(
 		new(big.Int).SetUint64(baseFee),
-		big.NewInt(12),
+		new(big.Int).SetUint64(11),
 	)
-	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
+	baseFeeWithBuffer.Div(baseFeeWithBuffer, big.NewInt(10))
 
-	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
+	// Set max fee to 2.5x buffered base fee + tip
+	gasFeeCap := new(big.Int).Mul(baseFeeWithBuffer, big.NewInt(25))
+	gasFeeCap.Div(gasFeeCap, big.NewInt(10))
+	gasFeeCap.Add(gasFeeCap, gasTipCap)
 
-	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
-		Nonce:    nonce,
-		GasPrice: gasPrice,
-		Gas:      gasLimit,
-		To:       &addr,
-		Value:    big.NewInt(0), // we shouldn't send any ETH
-		Data:     encodedMintData,
+	unsignedTx := ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+		ChainID:    chainIDBigInt,
+		Nonce:      nonce,
+		GasTipCap:  gasTipCap,
+		GasFeeCap:  gasFeeCap,
+		Gas:        gasLimit,
+		To:         &addr,
+		Value:      big.NewInt(0),
+		Data:       data,
+		AccessList: nil,
+		V:          big.NewInt(0),
+		R:          big.NewInt(0),
+		S:          big.NewInt(0),
 	})
 
 	unsignedTxBz, err := unsignedTx.MarshalBinary()
 	if err != nil {
 		return nil, nil, err
 	}
-	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(chainID))
+	signer := ethtypes.LatestSignerForChainID(chainIDBigInt)
 
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
+}
+
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
+	if err != nil {
+		return nil, nil, err
+	}
+	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+}
+
+func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, gasLimit, baseFee, tipCap)
 }
 
 func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
@@ -478,44 +474,6 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	}
 
 	return data, nil
-}
-
-func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
-
-	// For Holesky, use a high priority fee
-	priorityFee := new(big.Int).SetUint64(3_000_000_000) // 3 gwei
-
-	// Buffer the base fee a little to allow for fluctuations
-	baseFeeBuffered := new(big.Int).Mul(
-		new(big.Int).SetUint64(baseFee),
-		big.NewInt(12),
-	)
-	baseFeeBuffered = baseFeeBuffered.Div(baseFeeBuffered, big.NewInt(10))
-
-	gasPrice := new(big.Int).Add(baseFeeBuffered, priorityFee)
-
-	unsignedTx := ethtypes.NewTx(&ethtypes.LegacyTx{
-		Nonce:    ethNonce,
-		GasPrice: gasPrice,
-		Gas:      gasLimit,
-		To:       &addr,
-		Value:    big.NewInt(0), // we shouldn't send any ETH
-		Data:     encodedUnstakeData,
-	})
-
-	unsignedTxBz, err := unsignedTx.MarshalBinary()
-	if err != nil {
-		return nil, nil, err
-	}
-	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(17000))
-
-	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
 func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
@@ -549,6 +507,13 @@ func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType
 	return q.Wallets[0].Address, nil
 }
 
+func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
+	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
+		return "mainnet"
+	}
+	return "testnet4"
+}
+
 func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
@@ -562,10 +527,10 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 	}
 
 	if len(requestedBitcoinHeaders.Heights) == 0 {
-		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: "testnet4"}) // TODO: use config
+		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: k.bitcoinNetwork(ctx)})
 	}
 
-	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: requestedBitcoinHeaders.Heights[0]})
+	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: requestedBitcoinHeaders.Heights[0]})
 }
 
 func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {

@@ -345,7 +345,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	}
 
 	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: "testnet4", BlockHeight: voteExt.BtcBlockHeight}, // TODO: make configurable
+		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: voteExt.BtcBlockHeight},
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
@@ -792,6 +792,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 		ctx,
 		redemption.Data.Id,
+		17000, // TODO: make this dynamic
 		oracleData.RequestedEthUnstakerNonce,
 		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,

@@ -22,9 +22,9 @@ var (
 	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
 	// DefaultZenBTCStrategyAddr               = "0x0000000000000000000000000000000000000000"
 	DefaultStakeableAssets = []*types.AssetData{
-		{Asset: types.Asset_ROCK, Precision: 6},
-		{Asset: types.Asset_zenBTC, Precision: 8},
-		{Asset: types.Asset_stETH, Precision: 18},
+		{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+		{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 	}
 )
 
