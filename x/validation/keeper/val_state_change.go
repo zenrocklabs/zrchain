@@ -157,6 +157,9 @@ func (k Keeper) provisionAVSDelegatorRewardsAndCommissions(ctx sdk.Context) erro
 		}
 
 		rewardsPerBlock := k.calculateRewardsPerBlock(ctx, delegated)
+		if rewardsPerBlock.IsZero() {
+			return false, nil
+		}
 		commission := rewardsPerBlock.Mul(validator.Commission.Rate).TruncateInt()
 		delegatorReward := rewardsPerBlock.Sub(commission.ToLegacyDec()).TruncateInt()
 
@@ -177,6 +180,9 @@ func (k Keeper) provisionAVSDelegatorRewardsAndCommissions(ctx sdk.Context) erro
 func (k Keeper) calculateRewardsPerBlock(ctx sdk.Context, tokens math.Int) math.LegacyDec {
 	secondsPerYear := math.LegacyNewDec(365 * 24 * 60 * 60)
 	blockTime := math.LegacyNewDec(k.GetBlockTime(ctx))
+	if blockTime.IsZero() {
+		return math.LegacyZeroDec()
+	}
 	blocksPerYear := secondsPerYear.Quo(blockTime)
 	rewardsPerYear := k.GetAVSRewardsRate(ctx).Mul(tokens.ToLegacyDec())
 	return rewardsPerYear.Quo(blocksPerYear)
