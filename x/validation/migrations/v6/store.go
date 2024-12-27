@@ -17,8 +17,15 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 
 	currParams := oldParams
 
+	DefaultAVSRewardsRate, err := math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
+	if err != nil {
+		return err
+	}
+
 	paramsMap := map[string]types.HVParams{
 		"zenrock": {
+			AVSRewardsRate: DefaultAVSRewardsRate,
+			BlockTime:      5,
 			ZenBTCParams: &types.ZenBTCParams{
 				ZenBTCEthBatcherAddr:      "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA",
 				ZenBTCDepositKeyringAddr:  "keyring1hpyh7xqr2w7h4eas5y8twnsg",
@@ -36,6 +43,8 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 			},
 		},
 		"amber": {
+			AVSRewardsRate: DefaultAVSRewardsRate,
+			BlockTime:      5,
 			ZenBTCParams: &types.ZenBTCParams{
 				ZenBTCEthBatcherAddr:      "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA",
 				ZenBTCDepositKeyringAddr:  "keyring1hpyh7xqr2w7h4eas5y8twnsg",
@@ -53,6 +62,8 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 			},
 		},
 		"gardia": {
+			AVSRewardsRate: DefaultAVSRewardsRate,
+			BlockTime:      5,
 			ZenBTCParams: &types.ZenBTCParams{
 				ZenBTCEthBatcherAddr:      "0xbd903A8D04d98bCA97eD091C87e7A00b7b8F3629",
 				ZenBTCDepositKeyringAddr:  "keyring1w887ucurq2nmnj5mq5uaju6a",
@@ -70,6 +81,8 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 			},
 		},
 		"diamond": {
+			AVSRewardsRate: DefaultAVSRewardsRate,
+			BlockTime:      5,
 			ZenBTCParams: &types.ZenBTCParams{
 				ZenBTCEthBatcherAddr:      "",
 				ZenBTCDepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
