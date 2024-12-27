@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
@@ -46,4 +47,9 @@ func (m Migrator) Migrate3to4(ctx sdk.Context) error {
 func (m Migrator) Migrate4to5(ctx sdk.Context) error {
 	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
 	return v5.MigrateStore(ctx, store, m.keeper.cdc)
+}
+
+// Migrate5to6 migrates x/staking state from consensus version 5 to 6.
+func (m Migrator) Migrate5to6(ctx sdk.Context) error {
+	return v6.UpdateParams(ctx, m.keeper.HVParams)
 }
