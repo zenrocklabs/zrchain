@@ -29,5 +29,7 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 		}
 	}
 
+	params.Set(ctx, currParams)
+
 	return nil
 }
