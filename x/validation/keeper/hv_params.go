@@ -78,12 +78,18 @@ func (k Keeper) GetZenBTCEthBatcherAddr(ctx context.Context) string {
 	if err != nil {
 		return DefaultZenBTCEthBatcherAddr
 	}
+	if params.ZenBTCParams == nil {
+		return DefaultZenBTCEthBatcherAddr
+	}
 	return params.ZenBTCParams.ZenBTCEthBatcherAddr
 }
 
 func (k Keeper) GetZenBTCDepositKeyringAddr(ctx context.Context) string {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
+		return DefaultZenBTCDepositKeyringAddr
+	}
+	if params.ZenBTCParams == nil {
 		return DefaultZenBTCDepositKeyringAddr
 	}
 	return params.ZenBTCParams.ZenBTCDepositKeyringAddr
@@ -94,12 +100,18 @@ func (k Keeper) GetZenBTCMinterKeyID(ctx context.Context) uint64 {
 	if err != nil {
 		return DefaultZenBTCMinterKeyID
 	}
+	if params.ZenBTCParams == nil {
+		return DefaultZenBTCMinterKeyID
+	}
 	return params.ZenBTCParams.ZenBTCMinterKeyID
 }
 
 func (k Keeper) GetZenBTCUnstakerKeyID(ctx context.Context) uint64 {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
+		return DefaultZenBTCUnstakerKeyID
+	}
+	if params.ZenBTCParams == nil {
 		return DefaultZenBTCUnstakerKeyID
 	}
 	return params.ZenBTCParams.ZenBTCUnstakerKeyID
@@ -118,12 +130,18 @@ func (k Keeper) GetZenBTCWithdrawerKeyID(ctx context.Context) uint64 {
 	if err != nil {
 		return DefaultZenBTCWithdrawerKeyID
 	}
+	if params.ZenBTCParams == nil {
+		return DefaultZenBTCWithdrawerKeyID
+	}
 	return params.ZenBTCParams.ZenBTCWithdrawerKeyID
 }
 
 func (k Keeper) GetBitcoinProxyCreatorID(ctx context.Context) string {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
+		return DefaultBitcoinProxyCreatorID
+	}
+	if params.ZenBTCParams == nil {
 		return DefaultBitcoinProxyCreatorID
 	}
 	return params.ZenBTCParams.BitcoinProxyCreatorID
@@ -134,6 +152,9 @@ func (k Keeper) GetZenBTCChangeAddressKeyIDs(ctx context.Context) []uint64 {
 	if err != nil {
 		return DefaultZenBTCChangeAddressKeyIDs
 	}
+	if params.ZenBTCParams == nil {
+		return DefaultZenBTCChangeAddressKeyIDs
+	}
 	return params.ZenBTCParams.ZenBTCChangeAddressKeyIDs
 }
 
@@ -142,12 +163,18 @@ func (k Keeper) GetZenBTCRewardsDepositKeyID(ctx context.Context) uint64 {
 	if err != nil {
 		return DefaultZenBTCRewardsDepositKeyID
 	}
+	if params.ZenBTCParams == nil {
+		return DefaultZenBTCRewardsDepositKeyID
+	}
 	return params.ZenBTCParams.ZenBTCRewardsDepositKeyID
 }
 
 func (k Keeper) GetStakeableAssets(ctx context.Context) []*types.AssetData {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
+		return DefaultStakeableAssets
+	}
+	if params.ZenBTCParams == nil {
 		return DefaultStakeableAssets
 	}
 	return params.ZenBTCParams.StakeableAssets
