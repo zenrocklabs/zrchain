@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -28,9 +29,9 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 				ZenBTCRewardsDepositKeyID: 5,
 				BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				StakeableAssets: []*types.AssetData{
-					{Asset: types.Asset_ROCK, Precision: 6},
-					{Asset: types.Asset_zenBTC, Precision: 8},
-					{Asset: types.Asset_stETH, Precision: 18},
+					{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 				},
 			},
 		},
@@ -45,9 +46,9 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 				ZenBTCRewardsDepositKeyID: 33,
 				BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				StakeableAssets: []*types.AssetData{
-					{Asset: types.Asset_ROCK, Precision: 6},
-					{Asset: types.Asset_zenBTC, Precision: 8},
-					{Asset: types.Asset_stETH, Precision: 18},
+					{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 				},
 			},
 		},
@@ -62,9 +63,9 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 				ZenBTCRewardsDepositKeyID: 1276,
 				BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				StakeableAssets: []*types.AssetData{
-					{Asset: types.Asset_ROCK, Precision: 6},
-					{Asset: types.Asset_zenBTC, Precision: 8},
-					{Asset: types.Asset_stETH, Precision: 18},
+					{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 				},
 			},
 		},
@@ -79,15 +80,20 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 				ZenBTCRewardsDepositKeyID: 20,
 				BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				StakeableAssets: []*types.AssetData{
-					{Asset: types.Asset_ROCK, Precision: 6},
-					{Asset: types.Asset_zenBTC, Precision: 8},
+					{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+					{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
 				},
 			},
 		},
 	}
 
+	chainID := ctx.ChainID()
+	if chainID == "" {
+		chainID = "zenrock"
+	}
+
 	for prefix, params := range paramsMap {
-		if strings.HasPrefix(ctx.ChainID(), prefix) {
+		if strings.HasPrefix(chainID, prefix) {
 			currParams = params
 			break
 		}

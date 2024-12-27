@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
 	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -28,9 +29,9 @@ var (
 		ZenBTCRewardsDepositKeyID: 5,
 		BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		StakeableAssets: []*types.AssetData{
-			{Asset: types.Asset_ROCK, Precision: 6},
-			{Asset: types.Asset_zenBTC, Precision: 8},
-			{Asset: types.Asset_stETH, Precision: 18},
+			{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+			{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+			{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 		},
 	}
 )
