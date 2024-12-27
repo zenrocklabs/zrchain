@@ -39,11 +39,11 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) erro
 			ZenBTCParams: &types.ZenBTCParams{
 				ZenBTCEthBatcherAddr:      "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA",
 				ZenBTCDepositKeyringAddr:  "keyring1hpyh7xqr2w7h4eas5y8twnsg",
-				ZenBTCWithdrawerKeyID:     29,
-				ZenBTCMinterKeyID:         30,
-				ZenBTCChangeAddressKeyIDs: []uint64{31},
-				ZenBTCUnstakerKeyID:       32,
-				ZenBTCRewardsDepositKeyID: 33,
+				ZenBTCWithdrawerKeyID:     25,
+				ZenBTCMinterKeyID:         27,
+				ZenBTCChangeAddressKeyIDs: []uint64{26},
+				ZenBTCUnstakerKeyID:       28,
+				ZenBTCRewardsDepositKeyID: 29,
 				BitcoinProxyCreatorID:     "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				StakeableAssets: []*types.AssetData{
 					{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
