@@ -182,9 +182,6 @@ else
     cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json
 fi
 
-# Set block time to 1s
-ssed -i 's|timeout_commit = "5s"|timeout_commit = "1s"|g' $HOME_DIR/config/config.toml
-
 # Adjust ports if alternate ports are specified
 if [[ -n "$ALTERNATE_PORTS" ]]; then
     # Change ports to avoid conflicts with other chains running locally
