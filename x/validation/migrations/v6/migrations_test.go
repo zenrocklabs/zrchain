@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/collections"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v3"
 	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
 	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -47,7 +46,7 @@ func TestMigrate(t *testing.T) {
 	kvStoreService := runtime.NewKVStoreService(storeKey)
 	store := kvStoreService.OpenKVStore(ctx)
 	sb := collections.NewSchemaBuilder(kvStoreService)
-	params := collections.NewItem(sb, types.ParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc))
+	params := collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc))
 	err := params.Set(ctx, types.HVParams{})
 	require.NoError(t, err)
 	require.NoError(t, v6.UpdateParams(ctx, params))
@@ -57,14 +56,14 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, cdc.Unmarshal(bz, &res))
 
-	require.Equal(t, res.ZenBTCParams, ZenBTCParams)
+	require.Equal(t, ZenBTCParams, res.ZenBTCParams)
 }
 
 func TestMigrateFail(t *testing.T) {
 	encCfg := moduletestutil.MakeTestEncodingConfig(validation.AppModuleBasic{})
 	cdc := encCfg.Codec
 
-	storeKey := storetypes.NewKVStoreKey(v3.ModuleName)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
 	tKey := storetypes.NewTransientStoreKey("transient_test")
 	ctx := testutil.DefaultContext(storeKey, tKey)
 
