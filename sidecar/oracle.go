@@ -15,12 +15,14 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
@@ -104,22 +106,25 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
 
-	// mintCallData, err := validationkeeper.EncodeWrapCallData(
-	// 	common.HexToAddress("0x0000000000000000000000000000000000000000"),
-	// 	big.NewInt(1000000000000000000),
-	// 	10000000000,
-	// )
-	// if err != nil {
-	// 	return fmt.Errorf("failed to encode wrap call data: %w", err)
-	// }
-	// addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.Batcher.EthHolesky)
-	// estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-	// 	To:   &addr,
-	// 	Data: mintCallData,
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("failed to estimate gas: %w", err)
-	// }
+	mintCallData, err := validationkeeper.EncodeWrapCallData(
+		common.HexToAddress("0xb046e4829ff6CD0a171b8B5ce140BC48f0a1dD2F"),
+		big.NewInt(1000000000),
+		1000000,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to encode wrap call data: %w", err)
+	}
+	addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTCController.Ethereum[o.Config.Network])
+	estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
+		From: common.HexToAddress("0x2Ee490E6A1A1b382AfF14d04FD1e2bf479041D81"),
+		To:   &addr,
+		Data: mintCallData,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to estimate gas: %w", err)
+	}
+	incrementedGasLimit := (estimatedGas * 110) / 100
+	fmt.Printf("estimated gas limit: %v | incremented gas limit %v\n", estimatedGas, incrementedGasLimit)
 
 	// We only need 1 signature for minting, so we can use an empty message
 	// Message should contain your tx setup
@@ -168,10 +173,10 @@ func (o *Oracle) fetchAndProcessState(
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
-		// EthGasLimit:      estimatedGas,
-		EthGasLimit: latestHeader.GasLimit, // TODO: update me
-		EthBaseFee:  latestHeader.BaseFee.Uint64(),
-		EthTipCap:   suggestedTip.Uint64(),
+		EthGasLimit:      incrementedGasLimit,
+		// EthGasLimit: latestHeader.GasLimit, // TODO: update me
+		EthBaseFee: latestHeader.BaseFee.Uint64(),
+		EthTipCap:  suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		RedemptionsEthereum:        redemptionsEthereum,
