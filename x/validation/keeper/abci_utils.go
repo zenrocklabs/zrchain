@@ -385,10 +385,6 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	}
 	chainIDBigInt := big.NewInt(int64(chainID))
 
-	if gasLimit > 300000 {
-		gasLimit = 300000
-	}
-
 	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
 
 	// Set minimum priority fee of 0.05 Gwei
@@ -417,7 +413,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 		GasFeeCap:  gasFeeCap,
 		Gas:        gasLimit,
 		To:         &addr,
-		Value:      big.NewInt(0),
+		Value:      big.NewInt(0), // we shouldn't send any ETH
 		Data:       data,
 		AccessList: nil,
 		V:          big.NewInt(0),
@@ -442,12 +438,12 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
 	if err != nil {
 		return nil, nil, err
 	}
-	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, gasLimit, baseFee, tipCap)
+	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
 func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
