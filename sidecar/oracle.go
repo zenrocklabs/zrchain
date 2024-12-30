@@ -124,7 +124,6 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to estimate gas: %w", err)
 	}
 	incrementedGasLimit := (estimatedGas * 110) / 100
-	fmt.Printf("estimated gas limit: %v | incremented gas limit %v\n", estimatedGas, incrementedGasLimit)
 
 	// We only need 1 signature for minting, so we can use an empty message
 	// Message should contain your tx setup
