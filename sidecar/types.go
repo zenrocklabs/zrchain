@@ -25,9 +25,10 @@ var (
 	EmptyOracleState = sidecartypes.OracleState{
 		EigenDelegations:           make(map[string]map[string]*big.Int),
 		EthBlockHeight:             0,
-		EthGasLimit:                0,
 		EthBaseFee:                 0,
 		EthTipCap:                  0,
+		EthWrapGasLimit:            0,
+		EthUnstakeGasLimit:         0,
 		SolanaLamportsPerSignature: 0,
 		RedemptionsEthereum:        []api.Redemption{},
 		RedemptionsSolana:          []api.Redemption{},

@@ -9,9 +9,10 @@ import (
 type OracleState struct {
 	EigenDelegations           map[string]map[string]*big.Int `json:"eigenDelegations"`
 	EthBlockHeight             uint64                         `json:"ethBlockHeight"`
-	EthGasLimit                uint64                         `json:"ethGasLimit"`
 	EthBaseFee                 uint64                         `json:"ethBaseFee"`
 	EthTipCap                  uint64                         `json:"ethTipCap"`
+	EthWrapGasLimit            uint64                         `json:"ethWrapGasLimit"`
+	EthUnstakeGasLimit         uint64                         `json:"ethUnstakeGasLimit"`
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
 	RedemptionsEthereum        []api.Redemption               `json:"RedemptionsEthereum"`
 	RedemptionsSolana          []api.Redemption               `json:"RedemptionsSolana"`

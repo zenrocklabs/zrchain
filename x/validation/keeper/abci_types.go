@@ -35,9 +35,10 @@ type (
 		BtcBlockHeight            int64
 		BtcHeaderHash             []byte
 		EthBlockHeight            uint64
-		EthGasLimit               uint64
 		EthBaseFee                uint64
 		EthTipCap                 uint64
+		EthWrapGasLimit           uint64
+		EthUnstakeGasLimit        uint64
 		RequestedEthMinterNonce   uint64
 		RequestedEthUnstakerNonce uint64
 		// RequestedEthBurnerNonce    uint64
@@ -60,9 +61,10 @@ type (
 		BtcBlockHeight            int64
 		BtcBlockHeader            sidecar.BTCBlockHeader
 		EthBlockHeight            uint64
-		EthGasLimit               uint64
 		EthBaseFee                uint64
 		EthTipCap                 uint64
+		EthWrapGasLimit           uint64
+		EthUnstakeGasLimit        uint64
 		RequestedEthMinterNonce   uint64
 		RequestedEthUnstakerNonce uint64
 		// RequestedEthBurnerNonce    uint64
@@ -141,8 +143,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthTipCap is 0")
 		invalid = true
 	}
-	if ve.EthGasLimit == 0 {
-		logger.Error("invalid vote extension: EthGasLimit is 0")
+	if ve.EthWrapGasLimit == 0 {
+		logger.Error("invalid vote extension: EthWrapGasLimit is 0")
+		invalid = true
+	}
+	if ve.EthUnstakeGasLimit == 0 {
+		logger.Error("invalid vote extension: EthUnstakeGasLimit is 0")
 		invalid = true
 	}
 	if ve.BtcBlockHeight == 0 {

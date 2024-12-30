@@ -33,9 +33,10 @@ func (o *Oracle) LoadFromFile(filename string) error {
 		o.updateChan <- sidecartypes.OracleState{
 			EigenDelegations:           latestState.EigenDelegations,
 			EthBlockHeight:             latestState.EthBlockHeight,
-			EthGasLimit:                latestState.EthGasLimit,
 			EthBaseFee:                 latestState.EthBaseFee,
 			EthTipCap:                  latestState.EthTipCap,
+			EthWrapGasLimit:            latestState.EthWrapGasLimit,
+			EthUnstakeGasLimit:         latestState.EthUnstakeGasLimit,
 			SolanaLamportsPerSignature: latestState.SolanaLamportsPerSignature,
 			RedemptionsEthereum:        latestState.RedemptionsEthereum,
 			RedemptionsSolana:          latestState.RedemptionsSolana,

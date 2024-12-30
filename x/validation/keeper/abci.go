@@ -113,9 +113,10 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		BtcBlockHeight:             neutrinoResponse.BlockHeight,
 		BtcHeaderHash:              bitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
-		EthGasLimit:                oracleData.EthGasLimit,
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
+		EthWrapGasLimit:            oracleData.EthWrapGasLimit,
+		EthUnstakeGasLimit:         oracleData.EthUnstakeGasLimit,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
 		RequestedEthMinterNonce:    nonces[k.GetZenBTCMinterKeyID(ctx)],
 		RequestedEthUnstakerNonce:  nonces[k.GetZenBTCUnstakerKeyID(ctx)],
@@ -647,7 +648,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		// feeBTC,
 		0,
 		oracleData.RequestedEthMinterNonce,
-		oracleData.EthGasLimit,
+		oracleData.EthWrapGasLimit,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
 	)
@@ -794,7 +795,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		redemption.Data.Id,
 		17000, // TODO: make this dynamic
 		oracleData.RequestedEthUnstakerNonce,
-		oracleData.EthGasLimit,
+		oracleData.EthUnstakeGasLimit,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
 	)
@@ -860,16 +861,20 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("ethereum block height mismatch, expected %d, got %d", voteExt.EthBlockHeight, oracleData.EthBlockHeight)
 	}
 
-	if voteExt.EthGasLimit != oracleData.EthGasLimit {
-		return fmt.Errorf("ethereum gas limit mismatch, expected %d, got %d", voteExt.EthGasLimit, oracleData.EthGasLimit)
-	}
-
 	if voteExt.EthBaseFee != oracleData.EthBaseFee {
 		return fmt.Errorf("ethereum base fee mismatch, expected %d, got %d", voteExt.EthBaseFee, oracleData.EthBaseFee)
 	}
 
 	if voteExt.EthTipCap != oracleData.EthTipCap {
 		return fmt.Errorf("ethereum tip cap mismatch, expected %d, got %d", voteExt.EthTipCap, oracleData.EthTipCap)
+	}
+
+	if voteExt.EthWrapGasLimit != oracleData.EthWrapGasLimit {
+		return fmt.Errorf("ethereum wrap gas limit mismatch, expected %d, got %d", voteExt.EthWrapGasLimit, oracleData.EthWrapGasLimit)
+	}
+
+	if voteExt.EthUnstakeGasLimit != oracleData.EthUnstakeGasLimit {
+		return fmt.Errorf("ethereum unstake gas limit mismatch, expected %d, got %d", voteExt.EthUnstakeGasLimit, oracleData.EthUnstakeGasLimit)
 	}
 
 	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {

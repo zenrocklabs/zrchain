@@ -86,9 +86,10 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		EigenDelegationsMap:        delegations,
 		ValidatorDelegations:       validatorDelegations,
 		EthBlockHeight:             resp.EthBlockHeight,
-		EthGasLimit:                resp.EthGasLimit,
 		EthBaseFee:                 resp.EthBaseFee,
 		EthTipCap:                  resp.EthTipCap,
+		EthWrapGasLimit:            resp.EthWrapGasLimit,
+		EthUnstakeGasLimit:         resp.EthUnstakeGasLimit,
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
 		EthereumRedemptions:        resp.RedemptionsEthereum,
 		SolanaRedemptions:          resp.RedemptionsSolana,
@@ -178,7 +179,8 @@ func getVESubset(ve VoteExtension) VoteExtension {
 	ve.EthBlockHeight = 0
 	ve.EthBaseFee = 0
 	ve.EthTipCap = 0
-	ve.EthGasLimit = 0
+	ve.EthWrapGasLimit = 0
+	ve.EthUnstakeGasLimit = 0
 	return ve
 }
 
@@ -443,7 +445,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 }
 
 func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
+	encodedUnstakeData, err := EncodeUnstakeCallData(ctx, redemptionID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -476,7 +478,7 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+func EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
 	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)

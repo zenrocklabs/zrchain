@@ -49,9 +49,10 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 	return &api.SidecarStateResponse{
 		EigenDelegations:           contractState,
 		EthBlockHeight:             currentState.EthBlockHeight,
-		EthGasLimit:                currentState.EthGasLimit,
 		EthBaseFee:                 currentState.EthBaseFee,
 		EthTipCap:                  currentState.EthTipCap,
+		EthWrapGasLimit:            currentState.EthWrapGasLimit,
+		EthUnstakeGasLimit:         currentState.EthUnstakeGasLimit,
 		SolanaLamportsPerSignature: currentState.SolanaLamportsPerSignature,
 		RedemptionsEthereum:        currentState.RedemptionsEthereum,
 		RedemptionsSolana:          currentState.RedemptionsSolana,
@@ -75,9 +76,10 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 	return &api.SidecarStateResponse{
 		EigenDelegations:           contractState,
 		EthBlockHeight:             state.EthBlockHeight,
-		EthGasLimit:                state.EthGasLimit,
 		EthBaseFee:                 state.EthBaseFee,
 		EthTipCap:                  state.EthTipCap,
+		EthWrapGasLimit:            state.EthWrapGasLimit,
+		EthUnstakeGasLimit:         state.EthUnstakeGasLimit,
 		SolanaLamportsPerSignature: state.SolanaLamportsPerSignature,
 		RedemptionsEthereum:        state.RedemptionsEthereum,
 		RedemptionsSolana:          state.RedemptionsSolana,

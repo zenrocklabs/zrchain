@@ -102,9 +102,10 @@ func (o *Oracle) processUpdates() {
 
 		newState.EigenDelegations = update.EigenDelegations
 		newState.EthBlockHeight = update.EthBlockHeight
-		newState.EthGasLimit = update.EthGasLimit
 		newState.EthBaseFee = update.EthBaseFee
 		newState.EthTipCap = update.EthTipCap
+		newState.EthWrapGasLimit = update.EthWrapGasLimit
+		newState.EthUnstakeGasLimit = update.EthUnstakeGasLimit
 		newState.SolanaLamportsPerSignature = update.SolanaLamportsPerSignature
 		newState.RedemptionsEthereum = update.RedemptionsEthereum
 		newState.RedemptionsSolana = update.RedemptionsSolana
