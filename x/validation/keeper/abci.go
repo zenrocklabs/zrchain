@@ -794,7 +794,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		redemption.Data.Id,
 		17000, // TODO: make this dynamic
 		oracleData.RequestedEthUnstakerNonce,
-		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
 	)
