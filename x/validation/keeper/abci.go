@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
@@ -481,12 +482,26 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		}
 	}
 
-	// If it's a requested header, just store it and return
+	// If it's a requested header, store it, remove it from the requested list, and return
 	if isRequestedHeader {
 		k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
 		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 			k.Logger(ctx).Error("error storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+			return
 		}
+
+		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
+			return height == oracleData.BtcBlockHeight
+		})
+
+		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "err", err)
+			return
+		}
+
+		k.Logger(ctx).Info("successfully processed and removed historical Bitcoin header request",
+			"height", oracleData.BtcBlockHeight,
+			"remaining_requests", len(requestedHeaders.Heights))
 		return
 	}
 
