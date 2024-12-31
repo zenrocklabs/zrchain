@@ -534,7 +534,7 @@ func (k *Keeper) checkForBitcoinReorg(
 	}
 
 	if len(prevHeights) == 0 {
-		k.Logger(ctx).Error("no previous heights to request (this should never happen)", "height", oracleData.BtcBlockHeight)
+		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", oracleData.BtcBlockHeight)
 		return nil
 	}
 

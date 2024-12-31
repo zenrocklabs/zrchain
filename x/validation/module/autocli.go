@@ -187,10 +187,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "UpdateParams",
-					Use:       "update-params [params] [hv-params]",
+					Use:       "update-params [params]",
 					Short:     "Update x/validation params",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "Params"},
+					},
+				},
+				{
+					RpcMethod: "UpdateHVParams",
+					Use:       "update-hv-params [hv-params]",
+					Short:     "Update x/validation hybrid validation params",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "HVParams"},
 					},
 				},

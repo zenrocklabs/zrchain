@@ -120,12 +120,14 @@ class MsgCancelUnbondingDelegationResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgUpdateParams(_message.Message):
-    __slots__ = ("authority", "Params")
+    __slots__ = ("authority", "Params", "HVParams")
     AUTHORITY_FIELD_NUMBER: _ClassVar[int]
     PARAMS_FIELD_NUMBER: _ClassVar[int]
+    HVPARAMS_FIELD_NUMBER: _ClassVar[int]
     authority: str
     Params: _staking_pb2.Params
-    def __init__(self, authority: _Optional[str] = ..., Params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ...) -> None: ...
+    HVParams: _hybrid_validation_pb2.HVParams
+    def __init__(self, authority: _Optional[str] = ..., Params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
 
 class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()

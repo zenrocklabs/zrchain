@@ -240,6 +240,12 @@ message MsgUpdateParams {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+
+  HVParams HVParams = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    deprecated = true // use MsgUpdateHVParams instead
+  ];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
