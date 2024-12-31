@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
@@ -551,6 +553,9 @@ func (k Querier) Params(ctx context.Context, _ *types.QueryParamsRequest) (*type
 func (k Querier) GetPendingMintTransactions(ctx context.Context, req *types.QueryPendingMintTransactionsRequest) (*types.QueryPendingMintTransactionsResponse, error) {
 	pendingMints, err := k.PendingMintTransactions.Get(ctx)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryPendingMintTransactionsResponse{PendingMintTransactions: []*types.PendingMintTransactionResponse{}}, nil
+		}
 		return nil, err
 	}
 	pendingMintResponses := make([]*types.PendingMintTransactionResponse, 0, len(pendingMints.Txs))
