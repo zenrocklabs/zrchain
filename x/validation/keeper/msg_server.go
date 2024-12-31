@@ -594,9 +594,17 @@ func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams)
 		return nil, err
 	}
 
+	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+func (k msgServer) UpdateHVParams(ctx context.Context, msg *types.MsgUpdateHVParams) (*types.MsgUpdateHVParamsResponse, error) {
+	if k.GetHVParamsAuthority(ctx) != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.GetHVParamsAuthority(ctx), msg.Authority)
+	}
+
 	if err := k.HVParams.Set(ctx, msg.HVParams); err != nil {
 		return nil, err
 	}
 
-	return &types.MsgUpdateParamsResponse{}, nil
+	return &types.MsgUpdateHVParamsResponse{}, nil
 }
