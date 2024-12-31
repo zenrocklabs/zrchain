@@ -472,12 +472,18 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 
 	// Check if this is a requested historical header
-	isRequestedHistoricalHeader := false
+	isHistoricalHeader := false
 	for _, height := range requestedHeaders.Heights {
 		if height == oracleData.BtcBlockHeight {
-			isRequestedHistoricalHeader = true
+			isHistoricalHeader = true
 			break
 		}
+	}
+
+	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+	if err != nil {
+		k.Logger(ctx).Error("error checking if Bitcoin header is already stored", "height", oracleData.BtcBlockHeight, "err", err)
+		return
 	}
 
 	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
@@ -485,8 +491,8 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		return
 	}
 
-	// If it's a requested historical header, remove it from the requested list and return early
-	if isRequestedHistoricalHeader {
+	// If it's a historical header, remove it from the requested list and return early
+	if isHistoricalHeader {
 		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
 			return height == oracleData.BtcBlockHeight
 		})
@@ -499,6 +505,11 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		k.Logger(ctx).Debug("successfully stored historical Bitcoin header and removed request",
 			"height", oracleData.BtcBlockHeight,
 			"remaining_requests", len(requestedHeaders.Heights))
+		return
+	}
+
+	if headerPreviouslySeen {
+		k.Logger(ctx).Debug("bitcoin header previously seen; skipping reorg check", "height", oracleData.BtcBlockHeight)
 		return
 	}
 
@@ -626,6 +637,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	// feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
 	// feeBTCInt, _ := feeBTCFloat.Int(nil)
 	// feeBTC := feeBTCInt.Uint64()
+
+	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
@@ -775,6 +788,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		}
 		return
 	}
+
+	k.Logger(ctx).Warn("processing zenBTC unstake", "id", redemption.Data.Id, "nonce", oracleData.RequestedEthUnstakerNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(

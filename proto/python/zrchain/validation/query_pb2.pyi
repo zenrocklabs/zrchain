@@ -1,11 +1,11 @@
+from amino import amino_pb2 as _amino_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
+from cosmos.query.v1 import query_pb2 as _query_pb2
+from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
-from zrchain.validation import staking_pb2 as _staking_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
-from cosmos_proto import cosmos_pb2 as _cosmos_pb2
-from cosmos.query.v1 import query_pb2 as _query_pb2
-from amino import amino_pb2 as _amino_pb2
+from zrchain.validation import staking_pb2 as _staking_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -244,3 +244,29 @@ class QueryPowerResponse(_message.Message):
     total_power: int
     height: int
     def __init__(self, validator_power: _Optional[_Iterable[_Union[ValidatorPower, _Mapping]]] = ..., total_power: _Optional[int] = ..., height: _Optional[int] = ...) -> None: ...
+
+class QueryPendingMintTransactionsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryPendingMintTransactionsResponse(_message.Message):
+    __slots__ = ("pending_mint_transactions",)
+    PENDING_MINT_TRANSACTIONS_FIELD_NUMBER: _ClassVar[int]
+    pending_mint_transactions: _containers.RepeatedCompositeFieldContainer[PendingMintTransactionResponse]
+    def __init__(self, pending_mint_transactions: _Optional[_Iterable[_Union[PendingMintTransactionResponse, _Mapping]]] = ...) -> None: ...
+
+class PendingMintTransactionResponse(_message.Message):
+    __slots__ = ("chain_id", "chain_type", "recipient_address", "amount", "creator", "key_id")
+    CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    chain_id: int
+    chain_type: str
+    recipient_address: str
+    amount: int
+    creator: str
+    key_id: int
+    def __init__(self, chain_id: _Optional[int] = ..., chain_type: _Optional[str] = ..., recipient_address: _Optional[str] = ..., amount: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ...) -> None: ...
