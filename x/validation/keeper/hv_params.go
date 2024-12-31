@@ -15,11 +15,11 @@ var (
 	DefaultZenBTCDepositKeyringAddr         = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 	DefaultZenBTCWithdrawerKeyID     uint64 = 1
 	DefaultZenBTCMinterKeyID         uint64 = 2
-	DefaultZenBTCChangeAddressKeyIDs        = []uint64{3}
+	DefaultZenBTCChangeAddressKeyIDs        = []uint64{34}
 	DefaultZenBTCUnstakerKeyID       uint64 = 4
 	// DefaultZenBTCBurnerKeyID         uint64 = 5
 	DefaultZenBTCRewardsDepositKeyID uint64 = 5
-	DefaultBitcoinProxyCreatorID            = "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
+	DefaultBitcoinProxyCreatorID            = "zen1auxnzzkmn89u3j2n86gmkj8e509x9h4fd6qd7q"
 	// DefaultZenBTCStrategyAddr               = "0x0000000000000000000000000000000000000000"
 	DefaultStakeableAssets = []*types.AssetData{
 		{Asset: types.Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
