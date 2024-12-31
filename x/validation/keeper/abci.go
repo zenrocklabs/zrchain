@@ -482,6 +482,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 
 	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+		return
 	}
 
 	// If it's a requested historical header, remove it from the requested list and return early
@@ -506,7 +507,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 }
 
-// checkForBitcoinReorg detects reorgs by requesting previous blocks when a new header is received
+// checkForBitcoinReorg detects reorgs by requesting previous headers when a new one is received
 func (k *Keeper) checkForBitcoinReorg(
 	ctx sdk.Context,
 	oracleData OracleData,
