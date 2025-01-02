@@ -1,14 +1,14 @@
 syntax = "proto3";
 package zrchain.validation;
 
+import "amino/amino.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "zrchain/validation/staking.proto";
 import "zrchain/validation/hybrid_validation.proto";
-import "cosmos_proto/cosmos.proto";
-import "cosmos/query/v1/query.proto";
-import "amino/amino.proto";
+import "zrchain/validation/staking.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
 
@@ -26,59 +26,53 @@ service Query {
   // Validator queries validator info for given validator address.
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/validators/{validator_addr}";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/validators/{validator_addr}";
   }
 
   // ValidatorDelegations queries delegate info for given validator.
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc ValidatorDelegations(QueryValidatorDelegationsRequest)
-      returns (QueryValidatorDelegationsResponse) {
+  rpc ValidatorDelegations(QueryValidatorDelegationsRequest) returns (QueryValidatorDelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations";
   }
 
   // ValidatorUnbondingDelegations queries unbonding delegations of a validator.
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc ValidatorUnbondingDelegations(QueryValidatorUnbondingDelegationsRequest)
-      returns (QueryValidatorUnbondingDelegationsResponse) {
+  rpc ValidatorUnbondingDelegations(QueryValidatorUnbondingDelegationsRequest) returns (QueryValidatorUnbondingDelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmos/staking/v1beta1/validators/"
-                                   "{validator_addr}/unbonding_delegations";
+    option (google.api.http).get =
+      "/cosmos/staking/v1beta1/validators/"
+      "{validator_addr}/unbonding_delegations";
   }
 
   // Delegation queries delegate info for given validator delegator pair.
   rpc Delegation(QueryDelegationRequest) returns (QueryDelegationResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
-        "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations/"
-        "{delegator_addr}";
+      "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations/"
+      "{delegator_addr}";
   }
 
   // UnbondingDelegation queries unbonding info for given validator delegator
   // pair.
-  rpc UnbondingDelegation(QueryUnbondingDelegationRequest)
-      returns (QueryUnbondingDelegationResponse) {
+  rpc UnbondingDelegation(QueryUnbondingDelegationRequest) returns (QueryUnbondingDelegationResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
-        "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations/"
-        "{delegator_addr}/unbonding_delegation";
+      "/cosmos/staking/v1beta1/validators/{validator_addr}/delegations/"
+      "{delegator_addr}/unbonding_delegation";
   }
 
   // DelegatorDelegations queries all delegations of a given delegator address.
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc DelegatorDelegations(QueryDelegatorDelegationsRequest)
-      returns (QueryDelegatorDelegationsResponse) {
+  rpc DelegatorDelegations(QueryDelegatorDelegationsRequest) returns (QueryDelegatorDelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/delegations/{delegator_addr}";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/delegations/{delegator_addr}";
   }
 
   // DelegatorUnbondingDelegations queries all unbonding delegations of a given
@@ -86,22 +80,20 @@ service Query {
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc DelegatorUnbondingDelegations(QueryDelegatorUnbondingDelegationsRequest)
-      returns (QueryDelegatorUnbondingDelegationsResponse) {
+  rpc DelegatorUnbondingDelegations(QueryDelegatorUnbondingDelegationsRequest) returns (QueryDelegatorUnbondingDelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmos/staking/v1beta1/delegators/"
-                                   "{delegator_addr}/unbonding_delegations";
+    option (google.api.http).get =
+      "/cosmos/staking/v1beta1/delegators/"
+      "{delegator_addr}/unbonding_delegations";
   }
 
   // Redelegations queries redelegations of given address.
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc Redelegations(QueryRedelegationsRequest)
-      returns (QueryRedelegationsResponse) {
+  rpc Redelegations(QueryRedelegationsRequest) returns (QueryRedelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/delegators/{delegator_addr}/redelegations";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/delegators/{delegator_addr}/redelegations";
   }
 
   // DelegatorValidators queries all validators info for given delegator
@@ -109,29 +101,24 @@ service Query {
   //
   // When called from another module, this query might consume a high amount of
   // gas if the pagination field is incorrectly set.
-  rpc DelegatorValidators(QueryDelegatorValidatorsRequest)
-      returns (QueryDelegatorValidatorsResponse) {
+  rpc DelegatorValidators(QueryDelegatorValidatorsRequest) returns (QueryDelegatorValidatorsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/delegators/{delegator_addr}/validators";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/delegators/{delegator_addr}/validators";
   }
 
   // DelegatorValidator queries validator info for given delegator validator
   // pair.
-  rpc DelegatorValidator(QueryDelegatorValidatorRequest)
-      returns (QueryDelegatorValidatorResponse) {
+  rpc DelegatorValidator(QueryDelegatorValidatorRequest) returns (QueryDelegatorValidatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
-        "/cosmos/staking/v1beta1/delegators/{delegator_addr}/validators/"
-        "{validator_addr}";
+      "/cosmos/staking/v1beta1/delegators/{delegator_addr}/validators/"
+      "{validator_addr}";
   }
 
   // HistoricalInfo queries the historical info for given height.
-  rpc HistoricalInfo(QueryHistoricalInfoRequest)
-      returns (QueryHistoricalInfoResponse) {
+  rpc HistoricalInfo(QueryHistoricalInfoRequest) returns (QueryHistoricalInfoResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get =
-        "/cosmos/staking/v1beta1/historical_info/{height}";
+    option (google.api.http).get = "/cosmos/staking/v1beta1/historical_info/{height}";
   }
 
   // Pool queries the pool info.
@@ -150,6 +137,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmos/staking/v1beta1/validator_power";
   }
+
+  rpc GetPendingMintTransactions(QueryPendingMintTransactionsRequest) returns (QueryPendingMintTransactionsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/cosmos/staking/v1beta1/pending_mint_transactions";
+  }
 }
 
 // QueryValidatorsRequest is request type for Query/Validators RPC method.
@@ -164,8 +156,10 @@ message QueryValidatorsRequest {
 // QueryValidatorsResponse is response type for the Query/Validators RPC method
 message QueryValidatorsResponse {
   // validators contains all the queried validators.
-  repeated ValidatorHV validators = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated ValidatorHV validators = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -174,23 +168,23 @@ message QueryValidatorsResponse {
 // QueryValidatorRequest is response type for the Query/Validator RPC method
 message QueryValidatorRequest {
   // validator_addr defines the validator address to query for.
-  string validator_addr = 1
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
 // QueryValidatorResponse is response type for the Query/Validator RPC method
 message QueryValidatorResponse {
   // validator defines the validator info.
-  ValidatorHV validator = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  ValidatorHV validator = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryValidatorDelegationsRequest is request type for the
 // Query/ValidatorDelegations RPC method
 message QueryValidatorDelegationsRequest {
   // validator_addr defines the validator address to query for.
-  string validator_addr = 1
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -213,8 +207,7 @@ message QueryValidatorDelegationsResponse {
 // Query/ValidatorUnbondingDelegations RPC method
 message QueryValidatorUnbondingDelegationsRequest {
   // validator_addr defines the validator address to query for.
-  string validator_addr = 1
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -223,8 +216,10 @@ message QueryValidatorUnbondingDelegationsRequest {
 // QueryValidatorUnbondingDelegationsResponse is response type for the
 // Query/ValidatorUnbondingDelegations RPC method.
 message QueryValidatorUnbondingDelegationsResponse {
-  repeated UnbondingDelegation unbonding_responses = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated UnbondingDelegation unbonding_responses = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -236,11 +231,10 @@ message QueryDelegationRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // validator_addr defines the validator address to query for.
-  string validator_addr = 2
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 2 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
 // QueryDelegationResponse is response type for the Query/Delegation RPC method.
@@ -256,19 +250,20 @@ message QueryUnbondingDelegationRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // validator_addr defines the validator address to query for.
-  string validator_addr = 2
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 2 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
 // QueryDelegationResponse is response type for the Query/UnbondingDelegation
 // RPC method.
 message QueryUnbondingDelegationResponse {
   // unbond defines the unbonding information of a delegation.
-  UnbondingDelegation unbond = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  UnbondingDelegation unbond = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryDelegatorDelegationsRequest is request type for the
@@ -278,7 +273,7 @@ message QueryDelegatorDelegationsRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -288,8 +283,10 @@ message QueryDelegatorDelegationsRequest {
 // Query/DelegatorDelegations RPC method.
 message QueryDelegatorDelegationsResponse {
   // delegation_responses defines all the delegations' info of a delegator.
-  repeated DelegationResponse delegation_responses = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated DelegationResponse delegation_responses = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -302,7 +299,7 @@ message QueryDelegatorUnbondingDelegationsRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -311,8 +308,10 @@ message QueryDelegatorUnbondingDelegationsRequest {
 // QueryUnbondingDelegatorDelegationsResponse is response type for the
 // Query/UnbondingDelegatorDelegations RPC method.
 message QueryDelegatorUnbondingDelegationsResponse {
-  repeated UnbondingDelegation unbonding_responses = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated UnbondingDelegation unbonding_responses = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -325,15 +324,13 @@ message QueryRedelegationsRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // src_validator_addr defines the validator address to redelegate from.
-  string src_validator_addr = 2
-      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string src_validator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // dst_validator_addr defines the validator address to redelegate to.
-  string dst_validator_addr = 3
-      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string dst_validator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 4;
@@ -342,8 +339,10 @@ message QueryRedelegationsRequest {
 // QueryRedelegationsResponse is response type for the Query/Redelegations RPC
 // method.
 message QueryRedelegationsResponse {
-  repeated RedelegationResponse redelegation_responses = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated RedelegationResponse redelegation_responses = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -356,7 +355,7 @@ message QueryDelegatorValidatorsRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -366,8 +365,10 @@ message QueryDelegatorValidatorsRequest {
 // Query/DelegatorValidators RPC method.
 message QueryDelegatorValidatorsResponse {
   // validators defines the validators' info of a delegator.
-  repeated ValidatorHV validators = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated ValidatorHV validators = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -380,19 +381,20 @@ message QueryDelegatorValidatorRequest {
   option (gogoproto.goproto_getters) = false;
 
   // delegator_addr defines the delegator address to query for.
-  string delegator_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string delegator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // validator_addr defines the validator address to query for.
-  string validator_addr = 2
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 2 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
 // QueryDelegatorValidatorResponse response type for the
 // Query/DelegatorValidator RPC method.
 message QueryDelegatorValidatorResponse {
   // validator defines the validator info.
-  ValidatorHV validator = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  ValidatorHV validator = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryHistoricalInfoRequest is request type for the Query/HistoricalInfo RPC
@@ -415,7 +417,10 @@ message QueryPoolRequest {}
 // QueryPoolResponse is response type for the Query/Pool RPC method.
 message QueryPoolResponse {
   // pool defines the pool info.
-  Pool pool = 1 [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  Pool pool = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -424,10 +429,14 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params Params = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-  HVParams HVParams = 2
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  Params Params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  HVParams HVParams = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 message QueryPowerRequest {}
@@ -444,4 +453,20 @@ message QueryPowerResponse {
   repeated ValidatorPower validator_power = 1;
   int64 total_power = 2;
   int64 height = 3;
+}
+
+message QueryPendingMintTransactionsRequest {}
+
+message QueryPendingMintTransactionsResponse {
+  repeated PendingMintTransactionResponse pending_mint_transactions = 1;
+}
+
+// PendingMintTransaction is the metadata for a pending zenBTC mint transaction.
+message PendingMintTransactionResponse {
+  uint64 chain_id = 1;
+  string chain_type = 2;
+  string recipient_address = 3;
+  uint64 amount = 4;
+  string creator = 5;
+  uint64 key_id = 6;
 }

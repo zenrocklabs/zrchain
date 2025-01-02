@@ -150,6 +150,7 @@ message ZenBTCParams {
   string zenBTCStrategyAddr = 9;
   string bitcoinProxyCreatorID = 10;
   repeated AssetData stakeableAssets = 11;
+  string authority = 12;
 }
 
 message ValidationInfo {

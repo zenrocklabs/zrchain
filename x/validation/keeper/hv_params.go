@@ -26,6 +26,7 @@ var (
 		{Asset: types.Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
 		{Asset: types.Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 	}
+	DefaultHVParamsAuthority = "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3"
 )
 
 // NewParams creates a new Params instance
@@ -53,6 +54,7 @@ func DefaultHVParams() *types.HVParams {
 			BitcoinProxyCreatorID:     DefaultBitcoinProxyCreatorID,
 			ZenBTCChangeAddressKeyIDs: DefaultZenBTCChangeAddressKeyIDs,
 			StakeableAssets:           DefaultStakeableAssets,
+			Authority:                 DefaultHVParamsAuthority,
 		},
 	)
 }
@@ -178,6 +180,14 @@ func (k Keeper) GetStakeableAssets(ctx context.Context) []*types.AssetData {
 		return DefaultStakeableAssets
 	}
 	return params.ZenBTCParams.StakeableAssets
+}
+
+func (k Keeper) GetHVParamsAuthority(ctx context.Context) string {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil || params.ZenBTCParams == nil || params.ZenBTCParams.Authority == "" {
+		return DefaultHVParamsAuthority
+	}
+	return params.ZenBTCParams.Authority
 }
 
 // func (k Keeper) GetZenBTCStrategyAddr(ctx context.Context) common.Address {
