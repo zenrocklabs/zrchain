@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
@@ -119,7 +120,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
 		RequestedEthMinterNonce:    nonces[k.GetZenBTCMinterKeyID(ctx)],
 		RequestedEthUnstakerNonce:  nonces[k.GetZenBTCUnstakerKeyID(ctx)],
-		// RequestedEthBurnerNonce:    nonces[k.GetZenBTCBurnerKeyID(ctx)],
 	}
 
 	return voteExt, nil
@@ -355,7 +355,6 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
 	oracleData.RequestedEthUnstakerNonce = voteExt.RequestedEthUnstakerNonce
-	// oracleData.RequestedEthBurnerNonce = voteExt.RequestedEthBurnerNonce
 
 	if err := k.validateOracleData(voteExt, oracleData); err != nil {
 		return nil, nil, err
@@ -473,51 +472,56 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 
 	// Check if this is a requested historical header
-	isRequestedHeader := false
+	isHistoricalHeader := false
 	for _, height := range requestedHeaders.Heights {
 		if height == oracleData.BtcBlockHeight {
-			isRequestedHeader = true
+			isHistoricalHeader = true
 			break
 		}
 	}
 
-	// If it's a requested header, just store it and return
-	if isRequestedHeader {
-		k.Logger(ctx).Info("storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight)
-		if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
-			k.Logger(ctx).Error("error storing requested historical Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-		}
+	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+	if err != nil {
+		k.Logger(ctx).Error("error checking if Bitcoin header is already stored", "height", oracleData.BtcBlockHeight, "err", err)
 		return
 	}
 
-	// Check for existing header (potential fork)
-	existingHeader, err := k.BtcBlockHeaders.Get(ctx, oracleData.BtcBlockHeight)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error checking existing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
-			return
-		}
-		existingHeader = sidecar.BTCBlockHeader{}
-	}
-
-	// If we have a different header for this height, handle potential fork
-	if existingHeader.BlockHash != "" && existingHeader.BlockHash != oracleData.BtcBlockHeader.BlockHash {
-		if err := k.handlePotentialBitcoinFork(ctx, oracleData, existingHeader, requestedHeaders); err != nil {
-			k.Logger(ctx).Error("error handling potential Bitcoin fork", "height", oracleData.BtcBlockHeight, "err", err)
-		}
-	}
-
-	// Store the new header
 	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "err", err)
+		return
+	}
+
+	// If it's a historical header, remove it from the requested list and return early
+	if isHistoricalHeader {
+		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
+			return height == oracleData.BtcBlockHeight
+		})
+
+		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "err", err)
+			return
+		}
+
+		k.Logger(ctx).Debug("successfully stored historical Bitcoin header and removed request",
+			"height", oracleData.BtcBlockHeight,
+			"remaining_requests", len(requestedHeaders.Heights))
+		return
+	}
+
+	if headerPreviouslySeen {
+		k.Logger(ctx).Debug("bitcoin header previously seen; skipping reorg check", "height", oracleData.BtcBlockHeight)
+		return
+	}
+
+	if err := k.checkForBitcoinReorg(ctx, oracleData, requestedHeaders); err != nil {
+		k.Logger(ctx).Error("error handling potential Bitcoin fork", "height", oracleData.BtcBlockHeight, "err", err)
 	}
 }
 
-// handlePotentialBitcoinFork handles the case where we detect a potential fork by requesting previous blocks
-func (k *Keeper) handlePotentialBitcoinFork(
+// checkForBitcoinReorg detects reorgs by requesting previous headers when a new one is received
+func (k *Keeper) checkForBitcoinReorg(
 	ctx sdk.Context,
 	oracleData OracleData,
-	existingHeader sidecar.BTCBlockHeader,
 	requestedHeaders zenbtctypes.RequestedBitcoinHeaders,
 ) error {
 	prevHeights := make([]int64, 0, 6)
@@ -530,6 +534,7 @@ func (k *Keeper) handlePotentialBitcoinFork(
 	}
 
 	if len(prevHeights) == 0 {
+		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", oracleData.BtcBlockHeight)
 		return nil
 	}
 
@@ -539,12 +544,6 @@ func (k *Keeper) handlePotentialBitcoinFork(
 		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
 		return err
 	}
-
-	k.Logger(ctx).Info("detected potential fork, requesting verification of previous blocks",
-		"height", oracleData.BtcBlockHeight,
-		"existing_hash", existingHeader.BlockHash,
-		"new_hash", oracleData.BtcBlockHeader.BlockHash,
-		"requested_heights", prevHeights)
 
 	return nil
 }
@@ -638,6 +637,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	// feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
 	// feeBTCInt, _ := feeBTCFloat.Int(nil)
 	// feeBTC := feeBTCInt.Uint64()
+
+	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
@@ -787,6 +788,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		}
 		return
 	}
+
+	k.Logger(ctx).Warn("processing zenBTC unstake", "id", redemption.Data.Id, "nonce", oracleData.RequestedEthUnstakerNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(

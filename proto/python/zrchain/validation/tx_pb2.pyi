@@ -1,14 +1,14 @@
 from amino import amino_pb2 as _amino_pb2
-from google.api import annotations_pb2 as _annotations_pb2
-from gogoproto import gogo_pb2 as _gogo_pb2
-from cosmos_proto import cosmos_pb2 as _cosmos_pb2
+from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from cosmos.msg.v1 import msg_pb2 as _msg_pb2
-from tendermint.abci import types_pb2 as _types_pb2
+from cosmos_proto import cosmos_pb2 as _cosmos_pb2
+from gogoproto import gogo_pb2 as _gogo_pb2
+from google.api import annotations_pb2 as _annotations_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
-from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
-from zrchain.validation import staking_pb2 as _staking_pb2
+from tendermint.abci import types_pb2 as _types_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
+from zrchain.validation import staking_pb2 as _staking_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
@@ -130,5 +130,17 @@ class MsgUpdateParams(_message.Message):
     def __init__(self, authority: _Optional[str] = ..., Params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
 
 class MsgUpdateParamsResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgUpdateHVParams(_message.Message):
+    __slots__ = ("authority", "HVParams")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    HVPARAMS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    HVParams: _hybrid_validation_pb2.HVParams
+    def __init__(self, authority: _Optional[str] = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
+
+class MsgUpdateHVParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

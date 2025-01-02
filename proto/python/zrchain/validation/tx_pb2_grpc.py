@@ -50,6 +50,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateParams.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
+        self.UpdateHVParams = channel.unary_unary(
+                '/zrchain.validation.Msg/UpdateHVParams',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParams.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParamsResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -113,6 +118,12 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateHVParams(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -150,6 +161,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.UpdateParams,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateParams.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
+            ),
+            'UpdateHVParams': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateHVParams,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParams.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParamsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -278,5 +294,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/UpdateParams',
             zrchain_dot_validation_dot_tx__pb2.MsgUpdateParams.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateHVParams(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/UpdateHVParams',
+            zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParams.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParamsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
