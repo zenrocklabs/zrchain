@@ -276,9 +276,11 @@ class QueryZenBTCSupplyRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class QueryZenBTCSupplyResponse(_message.Message):
-    __slots__ = ("custodied_BTC", "minted_zenBTC")
-    CUSTODIED_BTC_FIELD_NUMBER: _ClassVar[int]
-    MINTED_ZENBTC_FIELD_NUMBER: _ClassVar[int]
-    custodied_BTC: int
-    minted_zenBTC: int
-    def __init__(self, custodied_BTC: _Optional[int] = ..., minted_zenBTC: _Optional[int] = ...) -> None: ...
+    __slots__ = ("custodiedBTC", "mintedZenBTC", "exchangeRate")
+    CUSTODIEDBTC_FIELD_NUMBER: _ClassVar[int]
+    MINTEDZENBTC_FIELD_NUMBER: _ClassVar[int]
+    EXCHANGERATE_FIELD_NUMBER: _ClassVar[int]
+    custodiedBTC: int
+    mintedZenBTC: int
+    exchangeRate: float
+    def __init__(self, custodiedBTC: _Optional[int] = ..., mintedZenBTC: _Optional[int] = ..., exchangeRate: _Optional[float] = ...) -> None: ...
