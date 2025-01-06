@@ -481,4 +481,5 @@ message QueryZenBTCSupplyRequest {}
 message QueryZenBTCSupplyResponse {
   uint64 custodiedBTC = 1;
   uint64 mintedZenBTC = 2;
+  double exchangeRate = 3;
 }

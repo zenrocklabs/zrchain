@@ -580,7 +580,14 @@ func (k Querier) GetZenBTCSupply(ctx context.Context, req *types.QueryZenBTCSupp
 		}
 		return nil, err
 	}
-	return &types.QueryZenBTCSupplyResponse{CustodiedBTC: supply.CustodiedBTC, MintedZenBTC: supply.MintedZenBTC}, nil
+	exchangeRate, err := k.GetZenBTCExchangeRate(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryZenBTCSupplyResponse{CustodiedBTC: 0, MintedZenBTC: 0}, nil
+		}
+		return nil, err
+	}
+	return &types.QueryZenBTCSupplyResponse{CustodiedBTC: supply.CustodiedBTC, MintedZenBTC: supply.MintedZenBTC, ExchangeRate: exchangeRate}, nil
 }
 
 func queryRedelegation(ctx context.Context, k Querier, req *types.QueryRedelegationsRequest) (redels types.Redelegations, err error) {
