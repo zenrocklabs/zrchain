@@ -270,3 +270,15 @@ class PendingMintTransactionResponse(_message.Message):
     creator: str
     key_id: int
     def __init__(self, chain_id: _Optional[int] = ..., chain_type: _Optional[str] = ..., recipient_address: _Optional[str] = ..., amount: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ...) -> None: ...
+
+class QueryZenBTCSupplyRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryZenBTCSupplyResponse(_message.Message):
+    __slots__ = ("custodied_BTC", "minted_zenBTC")
+    CUSTODIED_BTC_FIELD_NUMBER: _ClassVar[int]
+    MINTED_ZENBTC_FIELD_NUMBER: _ClassVar[int]
+    custodied_BTC: int
+    minted_zenBTC: int
+    def __init__(self, custodied_BTC: _Optional[int] = ..., minted_zenBTC: _Optional[int] = ...) -> None: ...
