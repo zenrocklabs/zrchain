@@ -678,6 +678,42 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 }
 
 func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
+	// First, find the first INITIATED redemption
+	var firstInitiatedRedemption zenbtctypes.Redemption
+	var found bool
+
+	if err := k.ZenBTCRedemptions.Walk(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
+			firstInitiatedRedemption = r
+			found = true
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		k.Logger(ctx).Error("error finding first initiated redemption", "err", err)
+		return
+	}
+
+	// If we found an INITIATED redemption, check if it exists in oracleData
+	if found {
+		redemptionExists := false
+		for _, redemption := range oracleData.EthereumRedemptions {
+			if redemption.Id == firstInitiatedRedemption.Data.Id {
+				redemptionExists = true
+				break
+			}
+		}
+
+		// If the redemption is not in oracleData, mark it as unstaked
+		if !redemptionExists {
+			firstInitiatedRedemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+			if err := k.ZenBTCRedemptions.Set(ctx, firstInitiatedRedemption.Data.Id, firstInitiatedRedemption); err != nil {
+				k.Logger(ctx).Error("error updating redemption status to unstaked", "err", err)
+				return
+			}
+		}
+	}
+
 	if len(oracleData.EthereumRedemptions) == 0 {
 		return
 	}

@@ -572,6 +572,24 @@ func (k Querier) GetPendingMintTransactions(ctx context.Context, req *types.Quer
 	return &types.QueryPendingMintTransactionsResponse{PendingMintTransactions: pendingMintResponses}, nil
 }
 
+func (k Querier) GetZenBTCSupply(ctx context.Context, req *types.QueryZenBTCSupplyRequest) (*types.QueryZenBTCSupplyResponse, error) {
+	supply, err := k.ZenBTCSupply.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryZenBTCSupplyResponse{CustodiedBTC: 0, MintedZenBTC: 0}, nil
+		}
+		return nil, err
+	}
+	exchangeRate, err := k.GetZenBTCExchangeRate(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryZenBTCSupplyResponse{CustodiedBTC: 0, MintedZenBTC: 0}, nil
+		}
+		return nil, err
+	}
+	return &types.QueryZenBTCSupplyResponse{CustodiedBTC: supply.CustodiedBTC, MintedZenBTC: supply.MintedZenBTC, ExchangeRate: exchangeRate}, nil
+}
+
 func queryRedelegation(ctx context.Context, k Querier, req *types.QueryRedelegationsRequest) (redels types.Redelegations, err error) {
 	delAddr, err := k.authKeeper.AddressCodec().StringToBytes(req.DelegatorAddr)
 	if err != nil {
