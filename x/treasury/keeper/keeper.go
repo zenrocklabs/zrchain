@@ -60,6 +60,11 @@ type Keeper struct {
 	bankKeeper         types.BankKeeper
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
+	validationKeeper   ValidationKeeper
+}
+
+type ValidationKeeper interface {
+	GetBitcoinProxyCreatorID(ctx context.Context) string
 }
 
 func NewKeeper(
@@ -70,6 +75,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	identityKeeper identity.Keeper,
 	policyKeeper policy.Keeper,
+	validationKeeper ValidationKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -78,13 +84,14 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:            cdc,
-		storeService:   storeService,
-		authority:      authority,
-		logger:         logger,
-		bankKeeper:     bankKeeper,
-		identityKeeper: identityKeeper,
-		policyKeeper:   policyKeeper,
+		cdc:              cdc,
+		storeService:     storeService,
+		authority:        authority,
+		logger:           logger,
+		bankKeeper:       bankKeeper,
+		identityKeeper:   identityKeeper,
+		policyKeeper:     policyKeeper,
+		validationKeeper: validationKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),
@@ -366,6 +373,10 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("key %v not found", keyID)
 		}
 
+		if err := k.validateZenBTCSignRequest(ctx, *req, key); err != nil {
+			return 0, err
+		}
+
 		keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
@@ -460,6 +471,14 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		),
 	})
 	return &types.MsgNewSignTransactionRequestResponse{Id: id, SignatureRequestId: id}, nil
+}
+
+func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
+	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
+		req.Creator != k.validationKeeper.GetBitcoinProxyCreatorID(ctx) {
+		return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+	}
+	return nil
 }
 
 func dataForSigning(data string) ([][]byte, error) {

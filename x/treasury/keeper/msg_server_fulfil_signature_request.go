@@ -73,8 +73,8 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("key not found")
 	}
 
-	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" {
-		return nil, nil, fmt.Errorf("zenBTC deposit keys cannot be used to sign transactions manually")
+	if err := k.validateZenBTCSignRequest(ctx, req, key); err != nil {
+		return nil, nil, err
 	}
 
 	return &req, &key, nil
