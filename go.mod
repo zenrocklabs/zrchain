@@ -71,7 +71,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zenrocklabs/zenbtc v1.7.2
-	github.com/zenrocklabs/zenrock-avs v1.4.12
+	github.com/zenrocklabs/zenrock-avs v1.4.14
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/tools v0.26.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697
