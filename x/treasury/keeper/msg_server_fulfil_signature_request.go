@@ -93,11 +93,11 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 	}
 
 	if req.KeyType == types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
-		sigDataHex, err := bitcoinutils.ConvertECDSASigtoBitcoinSig(hex.EncodeToString(sigData))
+		sigDataBitcoin, err := bitcoinutils.ConvertECDSASigtoBitcoinSig(hex.EncodeToString(sigData))
 		if err != nil {
 			return err
 		}
-		sigData, err = hex.DecodeString(sigDataHex)
+		sigData, err = hex.DecodeString(sigDataBitcoin)
 		if err != nil {
 			return err
 		}
