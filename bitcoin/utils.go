@@ -5,7 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2"
+	bitcoinecdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"log"
+	"math/big"
 	"strings"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -154,4 +157,32 @@ func ChainFromString(chainName string) *chaincfg.Params {
 	default:
 		return nil
 	}
+}
+
+func ConvertBigIntToModNScalar(b *big.Int) *btcec.ModNScalar {
+	modNScalar := new(btcec.ModNScalar)
+	bytes := b.Bytes()
+	if len(bytes) > 32 {
+		bytes = bytes[:32] // Truncate if necessary
+	}
+	modNScalar.SetBytes(padTo32Bytes(bytes))
+	return modNScalar
+}
+
+func padTo32Bytes(b []byte) *[32]byte {
+	var padded [32]byte
+	copy(padded[32-len(b):], b)
+	return &padded
+}
+
+func ConvertECDSASigtoBitcoinSig(ecdsaSig string) (string, error) {
+	if len(ecdsaSig) >= 128 {
+		return "", fmt.Errorf("ConvertECDSASigtoBitcoinSig - invalid ecdsa signature")
+	}
+	r := ecdsaSig[:64]
+	s := ecdsaSig[64:128]
+	rBig, _ := new(big.Int).SetString(r, 16)
+	sBig, _ := new(big.Int).SetString(s, 16)
+	rawsig := bitcoinecdsa.NewSignature(ConvertBigIntToModNScalar(rBig), ConvertBigIntToModNScalar(sBig))
+	return hex.EncodeToString(rawsig.Serialize()), nil
 }
