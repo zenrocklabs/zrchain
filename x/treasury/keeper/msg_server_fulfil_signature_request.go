@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	bitcoinutils "github.com/Zenrock-Foundation/zrchain/v5/bitcoin"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
@@ -88,6 +90,17 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 
 	if msg.KeyringPartySignature == nil || len(msg.KeyringPartySignature) != 64 {
 		return fmt.Errorf("invalid mpc party signature")
+	}
+
+	if req.KeyType == types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
+		sigDataHex, err := bitcoinutils.ConvertECDSASigtoBitcoinSig(hex.EncodeToString(sigData))
+		if err != nil {
+			return err
+		}
+		sigData, err = hex.DecodeString(sigDataHex)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(req.DataForSigning) == 1 {

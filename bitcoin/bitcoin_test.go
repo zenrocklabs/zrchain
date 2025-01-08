@@ -1,8 +1,9 @@
 package bitcoin
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ECDSA_convert_to_Bitcoin_SigdeECDSA(t *testing.T) {
@@ -17,5 +18,4 @@ func Test_ECDSA_convert_to_Bitcoin_SigdeECDSA(t *testing.T) {
 	calculatedBitcoinSig2, err := ConvertECDSASigtoBitcoinSig(ecdsaSig2)
 	require.NoError(t, err)
 	require.Equal(t, calculatedBitcoinSig2, bitcoinSig2)
-
 }
