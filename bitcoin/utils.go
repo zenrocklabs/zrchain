@@ -176,7 +176,7 @@ func padTo32Bytes(b []byte) *[32]byte {
 }
 
 func ConvertECDSASigtoBitcoinSig(ecdsaSig string) (string, error) {
-	if len(ecdsaSig) >= 128 {
+	if len(ecdsaSig) >= 132 {
 		return "", fmt.Errorf("ConvertECDSASigtoBitcoinSig - invalid ecdsa signature")
 	}
 	r := ecdsaSig[:64]
