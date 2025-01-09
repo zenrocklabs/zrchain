@@ -613,10 +613,15 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			k.Logger(ctx).Error("error setting pending mint transactions", "err", err)
 		}
 
+		k.Logger(ctx).Warn("removed mint transaction", "tx", fmt.Sprintf("%+v", lastMintTx))
+
 		if len(pendingMints.Txs) == 0 {
 			if err := k.EthereumNonceRequested.Set(ctx, k.GetZenBTCMinterKeyID(ctx), false); err != nil {
 				k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
 			}
+
+			k.Logger(ctx).Warn("set EthereumNonceRequested state to false")
+
 			return
 		}
 	}
