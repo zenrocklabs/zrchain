@@ -62,6 +62,8 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 					RejectReason:           signReq.RejectReason,
 					Metadata:               signReq.Metadata,
 					CacheId:                signReq.CacheId,
+					ParentReqId:            signReq.ParentReqId,
+					ChildReqIds:            signReq.ChildReqIds,
 				},
 			}, nil
 		},
@@ -70,8 +72,5 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 		return nil, err
 	}
 
-	return &types.QuerySignTransactionRequestsResponse{
-		SignTransactionRequests: requests,
-		Pagination:              pageRes,
-	}, nil
+	return &types.QuerySignTransactionRequestsResponse{SignTransactionRequests: requests, Pagination: pageRes}, nil
 }
