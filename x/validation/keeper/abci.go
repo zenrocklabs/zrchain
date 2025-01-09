@@ -583,6 +583,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
+	k.Logger(ctx).Info("lastUsedNonce", "nonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "requested_nonce", oracleData.RequestedEthMinterNonce)
+
 	if lastUsedNonce.Nonce != 0 && oracleData.RequestedEthMinterNonce == 0 {
 		return
 	}
@@ -591,6 +593,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
 	if oracleData.RequestedEthMinterNonce != lastUsedNonce.Nonce {
+		k.Logger(ctx).Warn("nonce updated", "nonce", oracleData.RequestedEthMinterNonce, "last_used_nonce", lastUsedNonce.Nonce)
+
 		supply, err := k.ZenBTCSupply.Get(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("error getting zenBTC supply", "err", err)
