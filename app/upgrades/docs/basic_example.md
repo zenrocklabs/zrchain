@@ -19,13 +19,13 @@ func (app ZenrockApp) RegisterUpgradeHandlers() {
 build the binary:
 
 ```
-ignite chain build -o ./zenrock-100
+go build -o ./zenrock-100
 ```
 
-now we need to init the initial data directory:
+Now we need to init the initial data directory. For this example checkout the base directory and run the build script. Make sure to set the alternate-home in the build script and change it if you want to redo the upgrade:
 
 ```
-ignite chain init --home /tmp/node1-data   
+./init.sh --build-only --alternate-home --no-vote-extensions   
 ```
 
 next we need to build a binary that contains a handler for the upgrade name that will be requested through governance
@@ -46,7 +46,7 @@ func (app ZenrockApp) RegisterUpgradeHandlers() {
 build the binary:
 
 ```
-ignite chain build -o ./zenrock-101
+go build -o ./zenrock-101
 ```
 
 for testing purposes we want to set the gov voting period to a low value, 
