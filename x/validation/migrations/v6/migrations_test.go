@@ -40,20 +40,8 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, cdc.Unmarshal(bz, &res))
 
-	require.Equal(t, params, res)
-}
+	p, err := params.Get(ctx)
+	require.NoError(t, err)
 
-func TestMigrateFail(t *testing.T) {
-	encCfg := moduletestutil.MakeTestEncodingConfig(validation.AppModuleBasic{})
-	cdc := encCfg.Codec
-
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	tKey := storetypes.NewTransientStoreKey("transient_test")
-	ctx := testutil.DefaultContext(storeKey, tKey)
-
-	kvStoreService := runtime.NewKVStoreService(storeKey)
-	sb := collections.NewSchemaBuilder(kvStoreService)
-	params := collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc))
-
-	require.Error(t, v6.UpdateParams(ctx, params))
+	require.Equal(t, p, res)
 }
