@@ -53,7 +53,7 @@ func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
 		Amount:      amount,
 	}
 
-	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, DefaultFees, msg)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, hash
 		RedemptionIndexes: redemptionIndexes,
 	}
 
-	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, DefaultFees, msg)
 	if err != nil {
 		return "", err
 	}

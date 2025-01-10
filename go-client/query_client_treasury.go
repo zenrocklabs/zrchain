@@ -158,6 +158,27 @@ func (t *TreasuryQueryClient) PendingSignatureRequests(ctx context.Context, page
 	return res.SignRequests, nil
 }
 
+// SignatureRequests retrieves a paginated list of fulfilled signature requests.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - offset: Starting position in the list
+//   - pagesize: Number of items to return
+//
+// Returns:
+//   - *types.QuerySignatureRequestsResponse: Contains the list of fulfilled requests
+//   - error: An error if the query fails
+func (t *TreasuryQueryClient) SignatureRequests(ctx context.Context, offset uint64, pagesize uint64) (*types.QuerySignatureRequestsResponse, error) {
+	res, err := t.client.SignatureRequests(ctx, &types.QuerySignatureRequestsRequest{
+		Pagination: &query.PageRequest{Offset: offset, Limit: pagesize},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // FulfilledSignatureRequests retrieves a paginated list of fulfilled signature requests.
 //
 // Parameters:
