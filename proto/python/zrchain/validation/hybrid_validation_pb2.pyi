@@ -68,42 +68,16 @@ class SlashEvent(_message.Message):
     def __init__(self, blockHeight: _Optional[int] = ..., validatorAddr: _Optional[str] = ..., percentageSlashed: _Optional[str] = ..., tokensSlashedNative: _Optional[str] = ..., tokensSlashedAVS: _Optional[str] = ...) -> None: ...
 
 class HVParams(_message.Message):
-    __slots__ = ("AVSRewardsRate", "BlockTime", "ZenBTCParams")
+    __slots__ = ("AVSRewardsRate", "BlockTime", "stakeableAssets", "authority")
     AVSREWARDSRATE_FIELD_NUMBER: _ClassVar[int]
     BLOCKTIME_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCPARAMS_FIELD_NUMBER: _ClassVar[int]
-    AVSRewardsRate: str
-    BlockTime: int
-    ZenBTCParams: ZenBTCParams
-    def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., ZenBTCParams: _Optional[_Union[ZenBTCParams, _Mapping]] = ...) -> None: ...
-
-class ZenBTCParams(_message.Message):
-    __slots__ = ("zenBTCEthBatcherAddr", "zenBTCDepositKeyringAddr", "zenBTCMinterKeyID", "zenBTCWithdrawerKeyID", "zenBTCUnstakerKeyID", "zenBTCBurnerKeyID", "zenBTCRewardsDepositKeyID", "zenBTCChangeAddressKeyIDs", "zenBTCStrategyAddr", "bitcoinProxyCreatorID", "stakeableAssets", "authority")
-    ZENBTCETHBATCHERADDR_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCDEPOSITKEYRINGADDR_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCMINTERKEYID_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCWITHDRAWERKEYID_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCUNSTAKERKEYID_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCBURNERKEYID_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCREWARDSDEPOSITKEYID_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCCHANGEADDRESSKEYIDS_FIELD_NUMBER: _ClassVar[int]
-    ZENBTCSTRATEGYADDR_FIELD_NUMBER: _ClassVar[int]
-    BITCOINPROXYCREATORID_FIELD_NUMBER: _ClassVar[int]
     STAKEABLEASSETS_FIELD_NUMBER: _ClassVar[int]
     AUTHORITY_FIELD_NUMBER: _ClassVar[int]
-    zenBTCEthBatcherAddr: str
-    zenBTCDepositKeyringAddr: str
-    zenBTCMinterKeyID: int
-    zenBTCWithdrawerKeyID: int
-    zenBTCUnstakerKeyID: int
-    zenBTCBurnerKeyID: int
-    zenBTCRewardsDepositKeyID: int
-    zenBTCChangeAddressKeyIDs: _containers.RepeatedScalarFieldContainer[int]
-    zenBTCStrategyAddr: str
-    bitcoinProxyCreatorID: str
+    AVSRewardsRate: str
+    BlockTime: int
     stakeableAssets: _containers.RepeatedCompositeFieldContainer[_asset_data_pb2.AssetData]
     authority: str
-    def __init__(self, zenBTCEthBatcherAddr: _Optional[str] = ..., zenBTCDepositKeyringAddr: _Optional[str] = ..., zenBTCMinterKeyID: _Optional[int] = ..., zenBTCWithdrawerKeyID: _Optional[int] = ..., zenBTCUnstakerKeyID: _Optional[int] = ..., zenBTCBurnerKeyID: _Optional[int] = ..., zenBTCRewardsDepositKeyID: _Optional[int] = ..., zenBTCChangeAddressKeyIDs: _Optional[_Iterable[int]] = ..., zenBTCStrategyAddr: _Optional[str] = ..., bitcoinProxyCreatorID: _Optional[str] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., authority: _Optional[str] = ...) -> None: ...
+    def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., authority: _Optional[str] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions")
