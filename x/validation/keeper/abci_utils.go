@@ -385,7 +385,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	}
 	chainIDBigInt := big.NewInt(int64(chainID))
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetZenBTCEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)

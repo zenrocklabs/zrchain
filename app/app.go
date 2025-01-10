@@ -252,7 +252,7 @@ type ZenrockApp struct {
 	IdentityKeeper identitykeeper.Keeper
 	TreasuryKeeper treasurykeeper.Keeper
 	PolicyKeeper   policykeeper.Keeper
-	ZenBTCKeeper   zenbtckeeper.Keeper
+	ZenBTCKeeper   *zenbtckeeper.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -457,6 +457,7 @@ func NewZenrockApp(
 		txConfig.TxDecoder(),
 		zrConfig,
 		&app.TreasuryKeeper,
+		app.ZenBTCKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -693,7 +694,7 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.IdentityKeeper,
 		app.PolicyKeeper,
-		app.ValidationKeeper,
+		app.ZenBTCKeeper,
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 
@@ -701,11 +702,10 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
 		logger,
-		authAddr,
 		app.ValidationKeeper,
 		&app.TreasuryKeeper,
 	)
-	zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+	zenBTCModule := zenbtc.NewAppModule(appCodec, *app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
