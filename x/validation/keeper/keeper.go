@@ -32,6 +32,7 @@ type Keeper struct {
 	hooks                 types.StakingHooks
 	authority             string
 	treasuryKeeper        *treasury.Keeper
+	zenBTCKeeper          zenBTCKeeper
 	validatorAddressCodec addresscodec.Codec
 	consensusAddressCodec addresscodec.Codec
 	txDecoder             sdk.TxDecoder
@@ -70,6 +71,12 @@ type Keeper struct {
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
 
+type zenBTCKeeper interface {
+	GetZenBTCMinterKeyID(ctx context.Context) uint64
+	GetZenBTCUnstakerKeyID(ctx context.Context) uint64
+	GetZenBTCEthBatcherAddr(ctx context.Context) string
+}
+
 // NewKeeper creates a new staking Keeper instance
 func NewKeeper(
 	cdc codec.BinaryCodec,
@@ -80,6 +87,7 @@ func NewKeeper(
 	txDecoder sdk.TxDecoder,
 	zrConfig *params.ZRConfig,
 	treasuryKeeper *treasury.Keeper,
+	zenBTCKeeper zenBTCKeeper,
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
@@ -124,6 +132,7 @@ func NewKeeper(
 		zrConfig:              zrConfig,
 		sidecarClient:         oracleClient,
 		treasuryKeeper:        treasuryKeeper,
+		zenBTCKeeper:          zenBTCKeeper,
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 
