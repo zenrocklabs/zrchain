@@ -241,10 +241,11 @@ message MsgUpdateParams {
     (amino.dont_omitempty) = true
   ];
 
+  // use MsgUpdateHVParams instead
   HVParams HVParams = 3 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    deprecated = true // use MsgUpdateHVParams instead
+    deprecated = true
   ];
 }
 
