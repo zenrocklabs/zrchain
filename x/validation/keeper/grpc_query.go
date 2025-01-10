@@ -2,13 +2,11 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
@@ -548,46 +546,6 @@ func (k Querier) Params(ctx context.Context, _ *types.QueryParamsRequest) (*type
 		return nil, err
 	}
 	return &types.QueryParamsResponse{Params: types.Params(params), HVParams: hvParams}, nil
-}
-
-func (k Querier) GetPendingMintTransactions(ctx context.Context, req *types.QueryPendingMintTransactionsRequest) (*types.QueryPendingMintTransactionsResponse, error) {
-	pendingMints, err := k.PendingMintTransactions.Get(ctx)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			return &types.QueryPendingMintTransactionsResponse{PendingMintTransactions: []*types.PendingMintTransactionResponse{}}, nil
-		}
-		return nil, err
-	}
-	pendingMintResponses := make([]*types.PendingMintTransactionResponse, 0, len(pendingMints.Txs))
-	for _, mint := range pendingMints.Txs {
-		pendingMintResponses = append(pendingMintResponses, &types.PendingMintTransactionResponse{
-			ChainId:          mint.ChainId,
-			ChainType:        mint.ChainType.String(),
-			RecipientAddress: mint.RecipientAddress,
-			Amount:           mint.Amount,
-			Creator:          mint.Creator,
-			KeyId:            mint.KeyId,
-		})
-	}
-	return &types.QueryPendingMintTransactionsResponse{PendingMintTransactions: pendingMintResponses}, nil
-}
-
-func (k Querier) GetZenBTCSupply(ctx context.Context, req *types.QueryZenBTCSupplyRequest) (*types.QueryZenBTCSupplyResponse, error) {
-	supply, err := k.ZenBTCSupply.Get(ctx)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			return &types.QueryZenBTCSupplyResponse{CustodiedBTC: 0, MintedZenBTC: 0}, nil
-		}
-		return nil, err
-	}
-	exchangeRate, err := k.GetZenBTCExchangeRate(sdk.UnwrapSDKContext(ctx))
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			return &types.QueryZenBTCSupplyResponse{CustodiedBTC: 0, MintedZenBTC: 0}, nil
-		}
-		return nil, err
-	}
-	return &types.QueryZenBTCSupplyResponse{CustodiedBTC: supply.CustodiedBTC, MintedZenBTC: supply.MintedZenBTC, ExchangeRate: exchangeRate}, nil
 }
 
 func queryRedelegation(ctx context.Context, k Querier, req *types.QueryRedelegationsRequest) (redels types.Redelegations, err error) {

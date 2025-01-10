@@ -135,22 +135,8 @@ message HVParams {
     (gogoproto.nullable) = false
   ]; // % APR
   int64 BlockTime = 2; // seconds
-  ZenBTCParams ZenBTCParams = 3;
-}
-
-message ZenBTCParams {
-  string zenBTCEthBatcherAddr = 1;
-  string zenBTCDepositKeyringAddr = 2;
-  uint64 zenBTCMinterKeyID = 3;
-  uint64 zenBTCWithdrawerKeyID = 4;
-  uint64 zenBTCUnstakerKeyID = 5;
-  uint64 zenBTCBurnerKeyID = 6;
-  uint64 zenBTCRewardsDepositKeyID = 7;
-  repeated uint64 zenBTCChangeAddressKeyIDs = 8;
-  string zenBTCStrategyAddr = 9;
-  string bitcoinProxyCreatorID = 10;
-  repeated AssetData stakeableAssets = 11;
-  string authority = 12;
+  repeated AssetData stakeableAssets = 3;
+  string authority = 4;
 }
 
 message ValidationInfo {
