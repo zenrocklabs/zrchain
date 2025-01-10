@@ -563,7 +563,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	pendingMints, err := k.PendingMintTransactions.Get(ctx)
+	pendingMints, err := k.zenBTCKeeper.GetPendingMintTransactions(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending mint transactions", "err", err)
 		return
@@ -591,14 +591,14 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
 	if oracleData.RequestedEthMinterNonce != lastUsedNonce.Nonce {
-		supply, err := k.ZenBTCSupply.Get(ctx)
+		supply, err := k.zenBTCKeeper.GetZenBTCSupply(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("error getting zenBTC supply", "err", err)
 		}
 
 		supply.MintedZenBTC += lastMintTx.Amount
 
-		if err := k.ZenBTCSupply.Set(ctx, supply); err != nil {
+		if err := k.zenBTCKeeper.SetZenBTCSupply(ctx, supply); err != nil {
 			k.Logger(ctx).Error("error updating zenBTC supply", "err", err)
 		}
 
@@ -609,7 +609,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		pendingMints.Txs = pendingMints.Txs[1:]
-		if err := k.PendingMintTransactions.Set(ctx, pendingMints); err != nil {
+		if err := k.zenBTCKeeper.SetPendingMintTransactions(ctx, pendingMints); err != nil {
 			k.Logger(ctx).Error("error setting pending mint transactions", "err", err)
 		}
 
@@ -671,7 +671,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             pendingMintTx.Creator,
 			KeyId:               pendingMintTx.KeyId,
-			WalletType:          pendingMintTx.ChainType,
+			WalletType:          treasurytypes.WalletType(pendingMintTx.ChainType),
 			UnsignedTransaction: unsignedMintTx,
 			Metadata:            metadata,
 			NoBroadcast:         false,
@@ -687,7 +687,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	var firstInitiatedRedemption zenbtctypes.Redemption
 	var found bool
 
-	if err := k.ZenBTCRedemptions.Walk(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+	if err := k.zenBTCKeeper.WalkRedemptions(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
 		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
 			firstInitiatedRedemption = r
 			found = true
@@ -712,7 +712,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		// If the redemption is not in oracleData, mark it as unstaked
 		if !redemptionExists {
 			firstInitiatedRedemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-			if err := k.ZenBTCRedemptions.Set(ctx, firstInitiatedRedemption.Data.Id, firstInitiatedRedemption); err != nil {
+			if err := k.zenBTCKeeper.SetRedemptions(ctx, firstInitiatedRedemption.Data.Id, firstInitiatedRedemption); err != nil {
 				k.Logger(ctx).Error("error updating redemption status to unstaked", "err", err)
 				return
 			}
@@ -724,7 +724,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	}
 
 	// Get current exchange rate for conversion
-	exchangeRate, err := k.GetZenBTCExchangeRate(ctx)
+	exchangeRate, err := k.zenBTCKeeper.GetZenBTCExchangeRate(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
 		return
@@ -733,7 +733,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	foundNewRedemption := false
 
 	for _, redemption := range oracleData.EthereumRedemptions {
-		redemptionExists, err := k.ZenBTCRedemptions.Has(ctx, redemption.Id)
+		redemptionExists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id)
 		if err != nil {
 			k.Logger(ctx).Error("error checking redemption existence", "err", err)
 			continue
@@ -749,7 +749,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
 		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
 
-		if err := k.ZenBTCRedemptions.Set(ctx, redemption.Id, zenbtctypes.Redemption{
+		if err := k.zenBTCKeeper.SetRedemptions(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
 				Id:                 redemption.Id,
 				DestinationAddress: redemption.DestinationAddress,
@@ -796,7 +796,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	var redemptionID uint64
 	var found bool
 
-	if err := k.ZenBTCRedemptions.Walk(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+	if err := k.zenBTCKeeper.WalkRedemptions(ctx, nil, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
 		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
 			redemption = r
 			redemptionID = id
@@ -818,7 +818,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	// If nonce changed, previous unstake succeeded - update status
 	if oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce {
 		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-		if err := k.ZenBTCRedemptions.Set(ctx, redemptionID, redemption); err != nil {
+		if err := k.zenBTCKeeper.SetRedemptions(ctx, redemptionID, redemption); err != nil {
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
 			return
 		}

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -20,7 +19,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/shared"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
@@ -62,12 +60,6 @@ type Keeper struct {
 	EthereumNonceRequested collections.Map[uint64, bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
-	// PendingMintTransactions - key: pending zenBTC mint transaction
-	PendingMintTransactions collections.Item[treasurytypes.PendingMintTransactions]
-	// ZenBTCRedemptions - key: redemption index | value: redemption data
-	ZenBTCRedemptions collections.Map[uint64, zenbtctypes.Redemption]
-	// ZenBTCSupply - value: zenBTC supply data
-	ZenBTCSupply collections.Item[zenbtctypes.Supply]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -142,9 +134,6 @@ func NewKeeper(
 		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
-		PendingMintTransactions:           collections.NewItem(sb, types.PendingMintTransactionsKey, types.PendingMintTransactionsIndex, codec.CollValue[treasurytypes.PendingMintTransactions](cdc)),
-		ZenBTCRedemptions:                 collections.NewMap(sb, types.ZenBTCRedemptionsKey, types.ZenBTCRedemptionsIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.Redemption](cdc)),
-		ZenBTCSupply:                      collections.NewItem(sb, types.ZenBTCSupplyKey, types.ZenBTCSupplyIndex, codec.CollValue[zenbtctypes.Supply](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 	}
 }
@@ -243,22 +232,4 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 	}
 
 	return valUpdates.Updates, nil
-}
-
-// GetZenBTCExchangeRate returns the current exchange rate between BTC and zenBTC
-// Returns the number of BTC represented by 1 zenBTC
-func (k Keeper) GetZenBTCExchangeRate(ctx sdk.Context) (float64, error) {
-	supply, err := k.ZenBTCSupply.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return 0, err
-		}
-		return 1.0, nil // Initial exchange rate of 1:1
-	}
-
-	if supply.MintedZenBTC == 0 {
-		return 1.0, nil // If no zenBTC minted yet, use 1:1 rate
-	}
-
-	return float64(supply.CustodiedBTC) / float64(supply.MintedZenBTC), nil
 }
