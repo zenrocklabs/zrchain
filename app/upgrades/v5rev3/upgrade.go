@@ -1,4 +1,4 @@
-package v5beta6
+package v5rev3
 
 import (
 	"context"
@@ -13,6 +13,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator) 
 		ctx := sdk.UnwrapSDKContext(context)
 		logger := ctx.Logger().With("upgrade", UpgradeName)
 		logger.Debug("starting upgrade")
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }

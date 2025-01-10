@@ -137,16 +137,6 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmos/staking/v1beta1/validator_power";
   }
-
-  rpc GetPendingMintTransactions(QueryPendingMintTransactionsRequest) returns (QueryPendingMintTransactionsResponse) {
-    option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmos/staking/v1beta1/pending_mint_transactions";
-  }
-
-  rpc GetZenBTCSupply(QueryZenBTCSupplyRequest) returns (QueryZenBTCSupplyResponse) {
-    option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmos/staking/v1beta1/zenbtc_supply";
-  }
 }
 
 // QueryValidatorsRequest is request type for Query/Validators RPC method.
@@ -458,28 +448,4 @@ message QueryPowerResponse {
   repeated ValidatorPower validator_power = 1;
   int64 total_power = 2;
   int64 height = 3;
-}
-
-message QueryPendingMintTransactionsRequest {}
-
-message QueryPendingMintTransactionsResponse {
-  repeated PendingMintTransactionResponse pending_mint_transactions = 1;
-}
-
-// PendingMintTransaction is the metadata for a pending zenBTC mint transaction.
-message PendingMintTransactionResponse {
-  uint64 chain_id = 1;
-  string chain_type = 2;
-  string recipient_address = 3;
-  uint64 amount = 4;
-  string creator = 5;
-  uint64 key_id = 6;
-}
-
-message QueryZenBTCSupplyRequest {}
-
-message QueryZenBTCSupplyResponse {
-  uint64 custodiedBTC = 1;
-  uint64 mintedZenBTC = 2;
-  double exchangeRate = 3;
 }

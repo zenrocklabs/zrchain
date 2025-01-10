@@ -457,6 +457,7 @@ func NewZenrockApp(
 		txConfig.TxDecoder(),
 		zrConfig,
 		&app.TreasuryKeeper,
+		&app.ZenBTCKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -693,15 +694,14 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.IdentityKeeper,
 		app.PolicyKeeper,
-		app.ValidationKeeper,
+		app.ZenBTCKeeper,
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 
-	app.ZenBTCKeeper = zenbtckeeper.NewKeeper(
+	app.ZenBTCKeeper = *zenbtckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
 		logger,
-		authAddr,
 		app.ValidationKeeper,
 		&app.TreasuryKeeper,
 	)

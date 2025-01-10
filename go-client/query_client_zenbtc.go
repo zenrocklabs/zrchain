@@ -49,5 +49,5 @@ func (c *ZenBTCQueryClient) LockTransactions(ctx context.Context) (*types.QueryL
 }
 
 func (c *ZenBTCQueryClient) Redemptions(ctx context.Context, startIndex uint64, status types.RedemptionStatus) (*types.QueryRedemptionsResponse, error) {
-	return c.client.Redemptions(ctx, &types.QueryRedemptionsRequest{StartIndex: startIndex, Status: status})
+	return c.client.GetRedemptions(ctx, &types.QueryRedemptionsRequest{StartIndex: startIndex, Status: status})
 }
