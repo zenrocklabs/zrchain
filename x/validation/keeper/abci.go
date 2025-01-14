@@ -548,13 +548,8 @@ func (k *Keeper) checkForBitcoinReorg(
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx))
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
-		}
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), false); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
-		}
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
 		return
 	}
 	if !requested {
