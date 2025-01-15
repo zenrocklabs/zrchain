@@ -251,12 +251,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	// Toggle minting + unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency
 	if ctx.BlockHeight()%2 == 0 {
+		k.updateNonces(ctx, oracleData)
 
 		k.processZenBTCMints(ctx, oracleData)
 
 		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
-
-		k.updateNonces(ctx, oracleData)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -329,6 +328,12 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 			currentNonce = oracleData.RequestedEthUnstakerNonce
 		default:
 			k.Logger(ctx).Error("invalid key ID", "keyID", keyID)
+			continue
+		}
+
+		// Don't set nonce to zero value erroneously if we already have a non-zero nonce
+		lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+		if err == nil && lastUsedNonce.Nonce != 0 && currentNonce == 0 {
 			continue
 		}
 
@@ -459,16 +464,9 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
-			return
-		}
-		requestedHeaders = zenbtctypes.RequestedBitcoinHeaders{}
-		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
-			k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "err", err)
-			return
-		}
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "err", err)
+		return
 	}
 
 	// Check if this is a requested historical header
@@ -550,14 +548,9 @@ func (k *Keeper) checkForBitcoinReorg(
 
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx))
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
-		}
-		requested = false
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), requested); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
-		}
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
+		return
 	}
 	if !requested {
 		return
@@ -574,13 +567,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx))
 	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
-		}
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: oracleData.RequestedEthMinterNonce, Counter: 0, Skip: true}
-		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), lastUsedNonce); err != nil {
-			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
-		}
+		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
+		return
 	}
 
 	k.Logger(ctx).Info("lastUsedNonce", "nonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "requested_nonce", oracleData.RequestedEthMinterNonce)
@@ -605,12 +593,6 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 		if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
 			k.Logger(ctx).Error("error updating zenBTC supply", "err", err)
-		}
-
-		lastUsedNonce.Nonce = oracleData.RequestedEthMinterNonce
-		lastUsedNonce.Counter = 0
-		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), lastUsedNonce); err != nil {
-			k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
 		}
 
 		pendingMints.Txs = pendingMints.Txs[1:]
@@ -787,7 +769,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 
 	// Get last used nonce state
 	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx))
-	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+	if err != nil {
 		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
 		return
 	}
@@ -826,11 +808,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemptionID, redemption); err != nil {
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
 			return
-		}
-		lastUsedNonce.Nonce = oracleData.RequestedEthUnstakerNonce
-		lastUsedNonce.Counter = 0
-		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), lastUsedNonce); err != nil {
-			k.Logger(ctx).Error("error updating nonce state", "err", err)
 		}
 		return
 	}
