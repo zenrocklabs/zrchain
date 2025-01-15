@@ -580,7 +580,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	lastMintTx := pendingMints.Txs[0]
 
 	// remove last pending tx + update supply (after nonce updated indicating successful mint)
-	if oracleData.RequestedEthMinterNonce != lastUsedNonce.Nonce {
+	if oracleData.RequestedEthMinterNonce != lastUsedNonce.PrevNonce {
 		k.Logger(ctx).Warn("nonce updated", "nonce", oracleData.RequestedEthMinterNonce, "last_used_nonce", lastUsedNonce.Nonce)
 
 		supply, err := k.zenBTCKeeper.GetSupply(ctx)
@@ -601,6 +601,11 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		k.Logger(ctx).Warn("removed mint transaction", "tx", fmt.Sprintf("%+v", lastMintTx))
+
+		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "err", err)
+		}
 
 		if len(pendingMints.Txs) == 0 {
 			if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetMinterKeyID(ctx), false); err != nil {
@@ -803,11 +808,16 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	}
 
 	// If nonce changed, previous unstake succeeded - update status
-	if oracleData.RequestedEthUnstakerNonce != lastUsedNonce.Nonce {
+	if oracleData.RequestedEthUnstakerNonce != lastUsedNonce.PrevNonce {
 		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemptionID, redemption); err != nil {
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
 			return
+		}
+
+		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "err", err)
 		}
 		return
 	}
