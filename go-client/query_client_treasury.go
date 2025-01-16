@@ -135,6 +135,17 @@ func (t *TreasuryQueryClient) GetKeyRequest(ctx context.Context, requestID uint6
 	return res.KeyRequest, nil
 }
 
+func (t *TreasuryQueryClient) GetKeyByID(ctx context.Context, requestID uint64) (*types.QueryKeyByIDResponse, error) {
+	res, err := t.client.KeyByID(ctx, &types.QueryKeyByIDRequest{
+		Id: requestID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // PendingSignatureRequests retrieves a paginated list of pending signature requests for a specific keyring address.
 //
 // Parameters:
