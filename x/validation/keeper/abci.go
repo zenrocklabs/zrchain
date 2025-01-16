@@ -588,12 +588,15 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			k.Logger(ctx).Error("error getting zenBTC supply", "err", err)
 		}
 
+		supply.PendingZenBTC -= lastMintTx.Amount
 		supply.MintedZenBTC += lastMintTx.Amount
-		k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC-lastMintTx.Amount, "minted_new", supply.MintedZenBTC)
 
 		if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
 			k.Logger(ctx).Error("error updating zenBTC supply", "err", err)
 		}
+
+		k.Logger(ctx).Warn("pending mint supply updated", "pending_mint_old", supply.PendingZenBTC+lastMintTx.Amount, "pending_mint_new", supply.PendingZenBTC)
+		k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC-lastMintTx.Amount, "minted_new", supply.MintedZenBTC)
 
 		pendingMints.Txs = pendingMints.Txs[1:]
 		if err := k.zenBTCKeeper.SetPendingMintTransactions(ctx, pendingMints); err != nil {
