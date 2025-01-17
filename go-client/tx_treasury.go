@@ -68,20 +68,21 @@ func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, 
 //   - keyType: The type of key to request
 //   - recipient_addr: The recipient's address
 //   - chain_type: The type of blockchain
-//   - chain_id: The chain identifier
+//   - caip2_chain_id: The chain identifier in CAIP-2 format.
 //   - return_address: The return address
 //
 // Returns:
 //   - string: The transaction hash if successful
 //   - error: An error if the request fails
 func (c *TreasuryTxClient) NewZenBTCKeyRequest(ctx context.Context, workspace string, keyring string, keyType string,
-	recipient_addr string, chain_type types.WalletType, chain_meta *cosmos_types.Any, return_address string) (string, error) {
+	recipient_addr string, chain_type types.WalletType, caip2_chain_id string, return_address string) (string, error) {
+
+	// TODO: Validate CAIP-2 format. Empty value expected (used by btc proxy for exampel) ???
 
 	metadata := &types.ZenBTCMetadata{
 		RecipientAddr: recipient_addr,
 		ChainType:     chain_type,
-		ChainMetadata: chain_meta,
-		// ChainId:       chain_id,
+		Caip2ChainId:  caip2_chain_id,
 		ReturnAddress: return_address,
 	}
 

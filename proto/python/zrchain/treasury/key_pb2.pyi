@@ -125,15 +125,15 @@ class KeyResponse(_message.Message):
     def __init__(self, id: _Optional[int] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., type: _Optional[str] = ..., public_key: _Optional[bytes] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ...) -> None: ...
 
 class ZenBTCMetadata(_message.Message):
-    __slots__ = ("recipient_addr", "chain_type", "chain_id", "return_address", "chain_metadata")
+    __slots__ = ("recipient_addr", "chain_type", "chain_id", "return_address", "caip2_chain_id")
     RECIPIENT_ADDR_FIELD_NUMBER: _ClassVar[int]
     CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]
     CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
     RETURN_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    CHAIN_METADATA_FIELD_NUMBER: _ClassVar[int]
+    CAIP2_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
     recipient_addr: str
     chain_type: _wallet_pb2.WalletType
     chain_id: int
     return_address: str
-    chain_metadata: _any_pb2.Any
-    def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., chain_id: _Optional[int] = ..., return_address: _Optional[str] = ..., chain_metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ...) -> None: ...
+    caip2_chain_id: str
+    def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., chain_id: _Optional[int] = ..., return_address: _Optional[str] = ..., caip2_chain_id: _Optional[str] = ...) -> None: ...
