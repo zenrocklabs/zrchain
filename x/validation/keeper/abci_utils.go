@@ -590,14 +590,16 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 			return err
 		}
 		lastUsedNonce = zenbtctypes.NonceData{
-			Nonce:   currentNonce,
-			Counter: 0,
-			Skip:    true,
+			Nonce:     currentNonce,
+			PrevNonce: currentNonce,
+			Counter:   0,
+			Skip:      true,
 		}
 	} else {
 		if currentNonce == lastUsedNonce.Nonce {
 			lastUsedNonce.Counter++
 		} else {
+			lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
 			lastUsedNonce.Nonce = currentNonce
 			lastUsedNonce.Counter = 0
 		}
