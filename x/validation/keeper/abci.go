@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"reflect"
 	"slices"
 
@@ -631,23 +630,24 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	pendingMintTx := pendingMints.Txs[0]
 
-	baseFeePlusTip := new(big.Int).Add(new(big.Int).SetUint64(oracleData.EthBaseFee), new(big.Int).SetUint64(oracleData.EthTipCap))
-	feeETH := new(big.Int).Mul(baseFeePlusTip, new(big.Int).SetUint64(oracleData.EthGasLimit))
-
-	if oracleData.BTCUSDPrice.IsZero() {
-		return
-	}
-	ethToBTC := oracleData.ETHUSDPrice.Quo(oracleData.BTCUSDPrice)
-	feeBTCFloat := new(big.Float).Mul(new(big.Float).SetInt(feeETH), new(big.Float).SetFloat64(ethToBTC.MustFloat64()))
-	feeBTCInt, _ := feeBTCFloat.Int(nil)
-	feeBTC := feeBTCInt.Uint64()
-
 	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
 		return
 	}
-	feeZenBTC := uint64(float64(feeBTC) / exchangeRate)
+
+	feeZenBTC := k.CalculateZenBTCMintFee(
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+		oracleData.EthGasLimit,
+		oracleData.BTCUSDPrice,
+		oracleData.ETHUSDPrice,
+		exchangeRate,
+	)
+
+	if oracleData.BTCUSDPrice.IsZero() {
+		return
+	}
 
 	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
