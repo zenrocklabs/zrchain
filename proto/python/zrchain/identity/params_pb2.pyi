@@ -7,7 +7,9 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Params(_message.Message):
-    __slots__ = ("keyring_creation_fee",)
+    __slots__ = ("keyring_creation_fee", "mpc_minimum_timeout")
     KEYRING_CREATION_FEE_FIELD_NUMBER: _ClassVar[int]
+    MPC_MINIMUM_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     keyring_creation_fee: int
-    def __init__(self, keyring_creation_fee: _Optional[int] = ...) -> None: ...
+    mpc_minimum_timeout: int
+    def __init__(self, keyring_creation_fee: _Optional[int] = ..., mpc_minimum_timeout: _Optional[int] = ...) -> None: ...

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -21,7 +22,14 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
-func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
+type mintKeeperMock struct{}
+
+func NewMintKeeperMock() *mintKeeperMock { return &mintKeeperMock{} }
+func (mk mintKeeperMock) GetDefaultBlockTime(ctx context.Context) (uint64, error) {
+	return uint64(5), nil
+}
+
+func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore, mintKeeper types.MintKeeper) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -41,6 +49,8 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		bankKeeper,
 		*identityKeeper,
 		*policyKeeper,
+		mintKeeper,
+		runtime.NewMemStoreService(memStoreKey),
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

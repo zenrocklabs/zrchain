@@ -46,7 +46,7 @@ class MsgUpdateParamsResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgNewKeyRequest(_message.Message):
-    __slots__ = ("creator", "workspace_addr", "keyring_addr", "key_type", "btl", "index", "ext_requester", "ext_key_type", "sign_policy_id", "zenbtc_metadata")
+    __slots__ = ("creator", "workspace_addr", "keyring_addr", "key_type", "btl", "index", "ext_requester", "ext_key_type", "sign_policy_id", "zenbtc_metadata", "mpc_timeout")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_ADDR_FIELD_NUMBER: _ClassVar[int]
     KEYRING_ADDR_FIELD_NUMBER: _ClassVar[int]
@@ -57,6 +57,7 @@ class MsgNewKeyRequest(_message.Message):
     EXT_KEY_TYPE_FIELD_NUMBER: _ClassVar[int]
     SIGN_POLICY_ID_FIELD_NUMBER: _ClassVar[int]
     ZENBTC_METADATA_FIELD_NUMBER: _ClassVar[int]
+    MPC_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     creator: str
     workspace_addr: str
     keyring_addr: str
@@ -67,7 +68,8 @@ class MsgNewKeyRequest(_message.Message):
     ext_key_type: int
     sign_policy_id: int
     zenbtc_metadata: _key_pb2.ZenBTCMetadata
-    def __init__(self, creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., btl: _Optional[int] = ..., index: _Optional[int] = ..., ext_requester: _Optional[str] = ..., ext_key_type: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[_key_pb2.ZenBTCMetadata, _Mapping]] = ...) -> None: ...
+    mpc_timeout: int
+    def __init__(self, creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[str] = ..., btl: _Optional[int] = ..., index: _Optional[int] = ..., ext_requester: _Optional[str] = ..., ext_key_type: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[_key_pb2.ZenBTCMetadata, _Mapping]] = ..., mpc_timeout: _Optional[int] = ...) -> None: ...
 
 class MsgNewKeyRequestResponse(_message.Message):
     __slots__ = ("key_req_id",)
@@ -102,7 +104,7 @@ class MsgFulfilKeyRequestResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgNewSignatureRequest(_message.Message):
-    __slots__ = ("creator", "key_ids", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version")
+    __slots__ = ("creator", "key_ids", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version", "mpc_timeout")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
@@ -110,6 +112,7 @@ class MsgNewSignatureRequest(_message.Message):
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
     VERIFY_SIGNING_DATA_FIELD_NUMBER: _ClassVar[int]
     VERIFY_SIGNING_DATA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    MPC_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     creator: str
     key_ids: _containers.RepeatedScalarFieldContainer[int]
     data_for_signing: str
@@ -117,7 +120,8 @@ class MsgNewSignatureRequest(_message.Message):
     cache_id: bytes
     verify_signing_data: bytes
     verify_signing_data_version: VerificationVersion
-    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ...) -> None: ...
+    mpc_timeout: int
+    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ..., mpc_timeout: _Optional[int] = ...) -> None: ...
 
 class MsgNewSignatureRequestResponse(_message.Message):
     __slots__ = ("sig_req_id",)

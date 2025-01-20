@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	keeperTest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
 	treasuryModule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
@@ -54,6 +55,20 @@ func (b *bankKeeperMock) SendCoinsFromAccountToModule(ctx context.Context, fromA
 		toModule string
 		amount   sdk.Coins
 	}{fromAddr, sdk.AccAddress{}, toModule, amt})
+	return nil
+}
+
+func (b *bankKeeperMock) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	from, err := sdk.AccAddressFromBech32(senderModule)
+	if err != nil {
+		return err
+	}
+	b.transactions = append(b.transactions, struct {
+		fromAddr sdk.AccAddress
+		toAddr   sdk.AccAddress
+		toModule string
+		amount   sdk.Coins
+	}{from, sdk.AccAddress{}, recipientAddr.String(), amt})
 	return nil
 }
 
@@ -153,7 +168,7 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 			bkmock := newBankKeeperMock()
 			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
 			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
-			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore)
+			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore, keeperTest.NewMintKeeperMock())
 
 			tkGenesis := types.GenesisState{
 				Params: types.DefaultParams(),

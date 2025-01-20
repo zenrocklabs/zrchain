@@ -101,6 +101,7 @@ message MsgNewKeyRequest {
   uint64 ext_key_type = 8;
   uint64 sign_policy_id = 9;
   ZenBTCMetadata zenbtc_metadata = 10; // Optional
+  uint64 mpc_timeout = 11;
 }
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
@@ -142,6 +143,7 @@ message MsgNewSignatureRequest {
   bytes cache_id = 5;
   bytes verify_signing_data = 6;
   VerificationVersion verify_signing_data_version = 7;
+  uint64 mpc_timeout = 8;
 }
 
 // Verification contains any data required to verify the incoming

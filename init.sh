@@ -249,6 +249,8 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         jq '.consensus.params.abci.vote_extensions_enable_height = "1"' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     fi
 
+    jq '.app_state.identity.params.mpc_minimum_timeout = "60"'  $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
     # Apply other necessary modifications from your original script
     jq '.app_state.identity.keyrings = [
       {
@@ -259,7 +261,8 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "is_active": true,
         "key_req_fee": 75,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-        "sig_req_fee": 50
+        "sig_req_fee": 50,
+        "mpc_minimum_timeout": 60
       },
       {
         "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",
@@ -269,7 +272,8 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "is_active": true,
         "key_req_fee": 2,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-        "sig_req_fee": 2
+        "sig_req_fee": 2,
+        "mpc_minimum_timeout": 60
       },
       {
         "address": "keyring1w887ucurq2nmnj5mq5uaju6a",
@@ -279,7 +283,8 @@ if [ "$NON_VALIDATOR" = false ] && ( [ "$LOCALNET" = "1" ] || [ -z "$LOCALNET" ]
         "is_active": true,
         "key_req_fee": 0,
         "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts", "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
-        "sig_req_fee": 0
+        "sig_req_fee": 0,
+        "mpc_minimum_timeout": 60
       }
     ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 

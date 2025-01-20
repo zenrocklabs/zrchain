@@ -40,6 +40,8 @@ message KeyRequest {
   uint64 index = 9;
   uint64 sign_policy_id = 10;
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
+  uint64 btl = 12;
+  uint64 fee = 13;
 }
 
 // format of a key request response
@@ -55,6 +57,8 @@ message KeyReqResponse {
   uint64 index = 9;
   uint64 sign_policy_id = 10;
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
+  uint64 btl = 12;
+  uint64 fee = 13;
 }
 
 // KeyType indicates what crypto key algo will be used by this key (e.g. ECDSA

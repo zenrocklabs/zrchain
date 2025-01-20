@@ -66,3 +66,11 @@ func (k *Keyring) RemoveParty(address string) {
 func (k *Keyring) SetPartyThreshold(threshold uint32) {
 	k.PartyThreshold = threshold
 }
+
+func (k *Keyring) SetMpcDefaultTimeout(timeout uint64) {
+	k.MpcDefaultTimeout = timeout
+}
+
+func (k *Keyring) SetMpcMinimumTimeout(timeout uint64) {
+	k.MpcMinimumTimeout = timeout
+}

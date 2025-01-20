@@ -25,6 +25,8 @@ func (k msgServer) UpdateKeyring(goCtx context.Context, msg *types.MsgUpdateKeyr
 	kr.SetSigReqFee(msg.SigReqFee)
 	kr.SetStatus(msg.IsActive)
 	kr.SetDescription(msg.Description)
+	kr.SetMpcMinimumTimeout(msg.MpcMinimumTimeout)
+	kr.SetMpcDefaultTimeout(msg.MpcDefaultTimeout)
 
 	if msg.PartyThreshold > 0 && msg.PartyThreshold <= uint32(len(kr.Parties)) {
 		kr.SetPartyThreshold(msg.PartyThreshold)

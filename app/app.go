@@ -202,6 +202,7 @@ var maccPerms = map[string][]string{
 	wasmtypes.ModuleName:               {authtypes.Burner},
 	identitytypes.ModuleName:           nil,
 	treasurytypes.KeyringCollectorName: nil,
+	treasurytypes.KeyringEscrowName:    nil,
 }
 
 var (
@@ -360,7 +361,7 @@ func NewZenrockApp(
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, treasurytypes.MemStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -693,6 +694,8 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.IdentityKeeper,
 		app.PolicyKeeper,
+		app.MintKeeper,
+		runtime.NewMemStoreService(memKeys[treasurytypes.MemStoreKey]),
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 

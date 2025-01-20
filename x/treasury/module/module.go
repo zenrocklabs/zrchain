@@ -30,7 +30,7 @@ var (
 	_ module.HasConsensusVersion = (*AppModule)(nil)
 
 	_ appmodule.AppModule       = (*AppModule)(nil)
-	_ appmodule.HasBeginBlocker = (*AppModule)(nil)
+	_ appmodule.HasBeginBlocker = AppModule{}
 	_ appmodule.HasEndBlocker   = (*AppModule)(nil)
 	_ porttypes.IBCModule       = IBCModule{}
 )
@@ -156,8 +156,8 @@ func (AppModule) ConsensusVersion() uint64 { return consensusVersion }
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block.
 // The begin block implementation is optional.
-func (am AppModule) BeginBlock(_ context.Context) error {
-	return nil
+func (am AppModule) BeginBlock(ctx context.Context) error {
+	return am.keeper.BeginBlock(ctx)
 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block.

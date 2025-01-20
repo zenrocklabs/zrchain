@@ -26,6 +26,7 @@ type IdentityKeeper interface {
 type BankKeeper interface {
 	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.
@@ -36,4 +37,8 @@ type ParamSubspace interface {
 
 type PolicyKeeper interface {
 	policykeeper.ExportedKeeper
+}
+
+type MintKeeper interface {
+	GetDefaultBlockTime(ctx context.Context) (uint64, error)
 }
