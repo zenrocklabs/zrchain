@@ -455,7 +455,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		Metadata:       msg.Metadata,
 		CacheId:        msg.CacheId,
-	}, 0)
+	}, msg.MpcTimeout)
 	if err != nil {
 		return nil, err
 	}

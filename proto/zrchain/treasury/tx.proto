@@ -204,6 +204,7 @@ message MsgNewSignTransactionRequest {
   uint64 btl = 6;
   bytes cache_id = 7;
   bool no_broadcast = 8;
+  uint64 mpc_timeout = 9;
 }
 
 // MsgNewSignTransactionRequestResponse defines the response structure for

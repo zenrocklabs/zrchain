@@ -164,7 +164,7 @@ class MetadataSolana(_message.Message):
     def __init__(self, network: _Optional[_Union[SolanaNetworkType, str]] = ..., mintAddress: _Optional[str] = ...) -> None: ...
 
 class MsgNewSignTransactionRequest(_message.Message):
-    __slots__ = ("creator", "key_id", "wallet_type", "unsigned_transaction", "metadata", "btl", "cache_id", "no_broadcast")
+    __slots__ = ("creator", "key_id", "wallet_type", "unsigned_transaction", "metadata", "btl", "cache_id", "no_broadcast", "mpc_timeout")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WALLET_TYPE_FIELD_NUMBER: _ClassVar[int]
@@ -173,6 +173,7 @@ class MsgNewSignTransactionRequest(_message.Message):
     BTL_FIELD_NUMBER: _ClassVar[int]
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
     NO_BROADCAST_FIELD_NUMBER: _ClassVar[int]
+    MPC_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     creator: str
     key_id: int
     wallet_type: _wallet_pb2.WalletType
@@ -181,7 +182,8 @@ class MsgNewSignTransactionRequest(_message.Message):
     btl: int
     cache_id: bytes
     no_broadcast: bool
-    def __init__(self, creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., no_broadcast: bool = ...) -> None: ...
+    mpc_timeout: int
+    def __init__(self, creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., no_broadcast: bool = ..., mpc_timeout: _Optional[int] = ...) -> None: ...
 
 class MsgNewSignTransactionRequestResponse(_message.Message):
     __slots__ = ("id", "signature_request_id")
