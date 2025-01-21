@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	bitcoinutils "github.com/Zenrock-Foundation/zrchain/v5/bitcoin"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
@@ -89,8 +91,8 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("key not found")
 	}
 
-	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" {
-		return nil, nil, fmt.Errorf("zenBTC deposit keys cannot be used to sign transactions manually")
+	if err := k.validateZenBTCSignRequest(ctx, req, key); err != nil {
+		return nil, nil, err
 	}
 
 	return &req, &key, nil
@@ -104,6 +106,17 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 
 	if msg.KeyringPartySignature == nil || len(msg.KeyringPartySignature) != 64 {
 		return fmt.Errorf("invalid mpc party signature")
+	}
+
+	if req.KeyType == types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
+		sigDataBitcoin, err := bitcoinutils.ConvertECDSASigtoBitcoinSig(hex.EncodeToString(sigData))
+		if err != nil {
+			return err
+		}
+		sigData, err = hex.DecodeString(sigDataBitcoin)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(req.DataForSigning) == 1 {

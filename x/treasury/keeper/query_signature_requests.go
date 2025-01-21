@@ -47,6 +47,8 @@ func (k Keeper) SignatureRequests(goCtx context.Context, req *types.QuerySignatu
 				Metadata:               value.Metadata,
 				CacheId:                value.CacheId,
 				Btl:                    value.Btl,
+				ParentReqId:            value.ParentReqId,
+				ChildReqIds:            value.ChildReqIds,
 			}, nil
 		},
 	)

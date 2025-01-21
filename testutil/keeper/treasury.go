@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -51,6 +50,7 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		*policyKeeper,
 		mintKeeper,
 		runtime.NewMemStoreService(memStoreKey),
+		nil,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

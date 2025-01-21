@@ -38,7 +38,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 
 	hvParams := data.HVParams
 	if hvParams == nil {
-		hvParams = DefaultHVParams()
+		hvParams = types.DefaultHVParams()
 	}
 	if err := k.HVParams.Set(ctx, *hvParams); err != nil {
 		panic(err)

@@ -244,29 +244,3 @@ class QueryPowerResponse(_message.Message):
     total_power: int
     height: int
     def __init__(self, validator_power: _Optional[_Iterable[_Union[ValidatorPower, _Mapping]]] = ..., total_power: _Optional[int] = ..., height: _Optional[int] = ...) -> None: ...
-
-class QueryPendingMintTransactionsRequest(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
-
-class QueryPendingMintTransactionsResponse(_message.Message):
-    __slots__ = ("pending_mint_transactions",)
-    PENDING_MINT_TRANSACTIONS_FIELD_NUMBER: _ClassVar[int]
-    pending_mint_transactions: _containers.RepeatedCompositeFieldContainer[PendingMintTransactionResponse]
-    def __init__(self, pending_mint_transactions: _Optional[_Iterable[_Union[PendingMintTransactionResponse, _Mapping]]] = ...) -> None: ...
-
-class PendingMintTransactionResponse(_message.Message):
-    __slots__ = ("chain_id", "chain_type", "recipient_address", "amount", "creator", "key_id")
-    CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
-    CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    CREATOR_FIELD_NUMBER: _ClassVar[int]
-    KEY_ID_FIELD_NUMBER: _ClassVar[int]
-    chain_id: int
-    chain_type: str
-    recipient_address: str
-    amount: int
-    creator: str
-    key_id: int
-    def __init__(self, chain_id: _Optional[int] = ..., chain_type: _Optional[str] = ..., recipient_address: _Optional[str] = ..., amount: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ...) -> None: ...

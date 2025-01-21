@@ -63,6 +63,11 @@ type Keeper struct {
 	policyKeeper       policy.Keeper
 	mintKeeper         types.MintKeeper
 	memStore           store.MemoryStoreService
+	zenBTCKeeper       shared.ZenBTCKeeper
+}
+
+type ValidationKeeper interface {
+	GetBitcoinProxyCreatorID(ctx context.Context) string
 }
 
 func NewKeeper(
@@ -75,6 +80,7 @@ func NewKeeper(
 	policyKeeper policy.Keeper,
 	mintKeeper types.MintKeeper,
 	memStore store.MemoryStoreService,
+	zenBTCKeeper shared.ZenBTCKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -91,6 +97,7 @@ func NewKeeper(
 		identityKeeper: identityKeeper,
 		policyKeeper:   policyKeeper,
 		mintKeeper:     mintKeeper,
+		zenBTCKeeper:   zenBTCKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),
@@ -379,6 +386,10 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("key %v not found", keyID)
 		}
 
+		if err := k.validateZenBTCSignRequest(ctx, *req, key); err != nil {
+			return 0, err
+		}
+
 		keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
@@ -479,6 +490,14 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		),
 	})
 	return &types.MsgNewSignTransactionRequestResponse{Id: id, SignatureRequestId: id}, nil
+}
+
+func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
+	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
+		req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) {
+		return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+	}
+	return nil
 }
 
 func dataForSigning(data string) ([][]byte, error) {

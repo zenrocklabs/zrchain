@@ -142,12 +142,6 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Query the current staking parameters information",
 					Long:      "Query values set as staking parameters.",
 				},
-				{
-					RpcMethod: "GetPendingMintTransactions",
-					Use:       "pending-mint-transactions",
-					Short:     "Query the pending zenBTC mint transactions",
-					Long:      "Query the current pending zenBTC mint transactions.",
-				},
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},

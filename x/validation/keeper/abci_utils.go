@@ -385,7 +385,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	}
 	chainIDBigInt := big.NewInt(int64(chainID))
 
-	addr := common.HexToAddress(k.GetZenBTCEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -529,50 +529,6 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: requestedBitcoinHeaders.Heights[0]})
 }
 
-func (k *Keeper) getNextEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
-	nonce, err := k.lookupEthereumNonce(ctx, keyID)
-	if err != nil {
-		return 0, err
-	}
-
-	firstRun := false
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return 0, err
-		}
-		k.Logger(ctx).Warn("first run", "err", err)
-		lastUsedNonce = zenbtctypes.NonceData{Nonce: nonce, Counter: 0}
-		firstRun = true
-	}
-
-	if !firstRun {
-		if nonce == lastUsedNonce.Nonce {
-			k.Logger(ctx).Warn("incrementing counter")
-			lastUsedNonce.Counter++
-		} else {
-			k.Logger(ctx).Warn("resetting counter")
-			lastUsedNonce.Nonce = nonce
-			lastUsedNonce.Counter = 0
-		}
-	}
-
-	skip := false
-	if lastUsedNonce.Counter%8 != 0 { // only retry mint using same nonce every 8 blocks
-		skip = true
-	}
-	lastUsedNonce.Skip = skip
-
-	k.Logger(ctx).Warn("foo", "nonce1", nonce, "nonce2", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "keyID", keyID)
-
-	if err = k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
-		k.Logger(ctx).Error("error setting last used Ethereum nonce", "err", err)
-		return 0, err
-	}
-
-	return nonce, nil
-}
-
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
 	oracleDataBz, err := json.Marshal(oracleData)
 	if err != nil {
@@ -622,14 +578,16 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 			return err
 		}
 		lastUsedNonce = zenbtctypes.NonceData{
-			Nonce:   currentNonce,
-			Counter: 0,
-			Skip:    true,
+			Nonce:     currentNonce,
+			PrevNonce: currentNonce,
+			Counter:   0,
+			Skip:      true,
 		}
 	} else {
 		if currentNonce == lastUsedNonce.Nonce {
 			lastUsedNonce.Counter++
 		} else {
+			lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
 			lastUsedNonce.Nonce = currentNonce
 			lastUsedNonce.Counter = 0
 		}

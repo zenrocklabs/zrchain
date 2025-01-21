@@ -26,11 +26,8 @@ var (
 	ValidationInfosKey                   = collections.NewPrefix(7)
 	BtcBlockHeadersKey                   = collections.NewPrefix(8)
 	EthereumNonceRequestedKey            = collections.NewPrefix(9)
-	PendingMintTransactionsKey           = collections.NewPrefix(10)
-	ZenBTCRedemptionsKey                 = collections.NewPrefix(11)
-	ZenBTCSupplyKey                      = collections.NewPrefix(12)
-	LastUsedEthereumNonceKey             = collections.NewPrefix(13)
-	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(14)
+	LastUsedEthereumNonceKey             = collections.NewPrefix(10)
+	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(11)
 
 	AssetPricesIndex                       = "asset_prices"
 	SlashEventsIndex                       = "slash_events"
@@ -42,9 +39,6 @@ var (
 	ValidationInfosIndex                   = "validation_infos"
 	BtcBlockHeadersIndex                   = "btc_block_headers"
 	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
-	PendingMintTransactionsIndex           = "pending_mint_transactions"
-	ZenBTCRedemptionsIndex                 = "zenbtc_redemptions"
-	ZenBTCSupplyIndex                      = "zenbtc_supply"
 	LastUsedEthereumNonceIndex             = "last_used_ethereum_nonce"
 	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
 )
