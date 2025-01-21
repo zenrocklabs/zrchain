@@ -458,6 +458,7 @@ func NewZenrockApp(
 		txConfig.TxDecoder(),
 		zrConfig,
 		&app.TreasuryKeeper,
+		&app.ZenBTCKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -694,6 +695,9 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.IdentityKeeper,
 		app.PolicyKeeper,
+		app.MintKeeper,
+		runtime.NewMemStoreService(memKeys[treasurytypes.MemStoreKey]),
+		app.ZenBTCKeeper,
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 

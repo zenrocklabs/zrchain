@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
 	"strconv"
 
 	"time"
@@ -92,7 +91,6 @@ func (k Keeper) AddBlockTime(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Printf("avg block time: %f\n", k.AverageBlockTime(ctx))
 	return nil
 }
 
