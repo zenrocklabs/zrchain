@@ -299,12 +299,24 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		nativePower := math.LegacyZeroDec()
 		avsPower := math.LegacyZeroDec()
 
+		pricesAreValid := false
+		for _, asset := range stakeableAssets {
+			if !asset.PriceUSD.IsZero() {
+				pricesAreValid = true
+				break
+			}
+		}
+
 		for _, asset := range stakeableAssets {
 			switch asset.Asset {
 			case types.Asset_zenBTC:
 				continue
 			case types.Asset_ROCK:
-				nativePower = asset.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
+				if pricesAreValid {
+					nativePower = asset.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
+				} else {
+					nativePower = math.LegacyNewDec(validator.ConsensusPower(powerReduction))
+				}
 			case types.Asset_stETH:
 				avsPower = asset.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
 			}
@@ -412,7 +424,7 @@ func (k Keeper) GetStakeableAssetPrices(ctx context.Context) ([]*types.AssetData
 			if !errors.Is(err, collections.ErrNotFound) {
 				return nil, err
 			}
-			asset.PriceUSD = math.LegacySmallestDec()
+			asset.PriceUSD = math.LegacyZeroDec()
 			if err := k.AssetPrices.Set(ctx, asset.Asset, asset.PriceUSD); err != nil {
 				return nil, err
 			}
