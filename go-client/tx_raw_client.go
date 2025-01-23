@@ -25,8 +25,10 @@ import (
 )
 
 var (
-	DefaultGasLimit = uint64(300000)
-	DefaultFees     = types.NewCoins(types.NewCoin("urock", math.NewInt(750000)))
+	DefaultGasLimit   = uint64(300000)
+	ZenBTCGasLimit    = uint64(3000000)
+	DefaultFees       = types.NewCoins(types.NewCoin("urock", math.NewInt(750000)))
+	ZenBTCDefaultFees = types.NewCoins(types.NewCoin("urock", math.NewInt(7500000)))
 
 	queryTimeout = 250 * time.Millisecond
 )

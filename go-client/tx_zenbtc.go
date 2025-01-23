@@ -40,7 +40,7 @@ func NewZenBTCTxClient(c *RawTxClient) *ZenBTCTxClient {
 //   - string: The transaction hash if verification is successful
 //   - error: An error if verification fails or transaction submission fails
 func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
-	ctx context.Context, chainName string, blockHeight int64, rawTX string, index int32, proof []string, depositAddr string, amount uint64,
+	ctx context.Context, chainName string, blockHeight int64, rawTX string, index int32, vout uint64, proof []string, depositAddr string, amount uint64,
 ) (string, error) {
 	msg := &types.MsgVerifyDepositBlockInclusion{
 		Creator:     c.c.Identity.Address.String(),
@@ -51,9 +51,10 @@ func (c *ZenBTCTxClient) NewVerifyDepositBlockInclusion(
 		Proof:       proof,
 		DepositAddr: depositAddr,
 		Amount:      amount,
+		Vout:        vout,
 	}
 
-	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +77,7 @@ func (c *ZenBTCTxClient) NewSubmitUnsignedRedemptionTx(ctx context.Context, hash
 		RedemptionIndexes: redemptionIndexes,
 	}
 
-	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
 	if err != nil {
 		return "", err
 	}

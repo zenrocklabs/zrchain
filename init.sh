@@ -73,7 +73,7 @@ if [ "$BUILD_ONLY" = true ] && [ "$START_ONLY" = true ]; then
     exit 1
 fi
 
-# Adjust settings based on LOCALNET flag
+# Adjust settings based on LOCALNET flag.
 if [ -n "$LOCALNET" ]; then
     if [ "$LOCALNET" -eq 1 ]; then
         # Validator 1: Normal flow but waits for gentx
