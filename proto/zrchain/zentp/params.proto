@@ -1,0 +1,15 @@
+syntax = "proto3";
+package zrchain.zentp;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/zentp/Params";
+  option (gogoproto.equal) = true;
+
+  
+}

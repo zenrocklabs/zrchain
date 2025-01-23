@@ -8641,6 +8641,8 @@ type MsgUpdateParams struct {
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// NOTE: All parameters must be supplied.
 	Params *Params `protobuf:"bytes,2,opt,name=Params,proto3" json:"Params,omitempty"`
+	// use MsgUpdateHVParams instead
+	//
 	// Deprecated: Do not use.
 	HVParams *HVParams `protobuf:"bytes,3,opt,name=HVParams,proto3" json:"HVParams,omitempty"`
 }
