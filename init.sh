@@ -325,6 +325,9 @@ if [ "$START_ONLY" = false ]; then
 
         # Distribute the updated genesis.json to all nodes
         cp $HOME_DIR/config/genesis.json ./genesis.json
+
+        # set the minimum gas price on validator node
+        sed -i '' 's/minimum-gas-prices = ""/minimum-gas-prices = "0.0001urock"/g' $HOME_DIR/config/app.toml
     fi
 
     # Wait for the genesis.json file to be finalized
