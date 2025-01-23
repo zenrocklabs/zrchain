@@ -299,11 +299,10 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("unknown key type: %s", msg.KeyType)
 	}
 
-	timeout := keyring.MpcDefaultTimeout
-	if msg.MpcTimeout > keyring.MpcMinimumTimeout {
-		timeout = msg.MpcTimeout
+	btl := keyring.MpcDefaultBtl
+	if msg.MpcBtl > keyring.MpcMinimumBtl {
+		btl = msg.MpcBtl
 	}
-	btl := k.secondsToBTL(ctx, timeout)
 
 	req := &types.KeyRequest{
 		Creator:        msg.Creator,
@@ -361,7 +360,7 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 		KeyIds:         msg.KeyIds,
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		CacheId:        msg.CacheId,
-	}, msg.MpcTimeout)
+	}, msg.Btl)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "processSignatureRequests")
 	}
@@ -376,7 +375,7 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 	return &types.MsgNewSignatureRequestResponse{SigReqId: id}, nil
 }
 
-func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, keyIds []uint64, req *types.SignRequest, mpcTimeout uint64) (uint64, error) {
+func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, keyIds []uint64, req *types.SignRequest, mpcBtl uint64) (uint64, error) {
 	// Verify all keys exist and collect keyring fees
 	bh := ctx.BlockHeight()
 	var sigReqs []*types.SignRequest
@@ -394,13 +393,13 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
-		timeout := keyring.MpcDefaultTimeout
-		if mpcTimeout > keyring.MpcMinimumTimeout {
-			timeout = mpcTimeout
+		btl := keyring.MpcDefaultBtl
+		if mpcBtl > keyring.MpcMinimumBtl {
+			btl = mpcBtl
 		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
-			Btl: uint64(bh) + k.secondsToBTL(ctx, timeout),
+			Btl: uint64(bh) + btl,
 			Fee: keyring.SigReqFee,
 		})
 
@@ -466,7 +465,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		Metadata:       msg.Metadata,
 		CacheId:        msg.CacheId,
-	}, msg.MpcTimeout)
+	}, msg.MpcBtl)
 	if err != nil {
 		return nil, err
 	}
@@ -673,14 +672,4 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 	}
 
 	return nil
-}
-
-func (k Keeper) secondsToBTL(ctx sdk.Context, seconds uint64) uint64 {
-	avgBT := uint64(k.AverageBlockTime(ctx))
-
-	if seconds <= avgBT {
-		return 1
-	}
-
-	return seconds / avgBT
 }

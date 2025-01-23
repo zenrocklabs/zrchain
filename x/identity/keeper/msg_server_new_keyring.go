@@ -13,16 +13,16 @@ import (
 
 func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (*types.MsgNewKeyringResponse, error) {
 	keyring := &types.Keyring{
-		Creator:           msg.Creator,
-		Description:       msg.Description,
-		Admins:            []string{msg.Creator},
-		PartyThreshold:    msg.PartyThreshold,
-		KeyReqFee:         msg.KeyReqFee,
-		SigReqFee:         msg.SigReqFee,
-		IsActive:          true,
-		DelegateFees:      msg.DelegateFees,
-		MpcDefaultTimeout: msg.MpcDefaultTimeout,
-		MpcMinimumTimeout: msg.MpcMinimumTimeout,
+		Creator:        msg.Creator,
+		Description:    msg.Description,
+		Admins:         []string{msg.Creator},
+		PartyThreshold: msg.PartyThreshold,
+		KeyReqFee:      msg.KeyReqFee,
+		SigReqFee:      msg.SigReqFee,
+		IsActive:       true,
+		DelegateFees:   msg.DelegateFees,
+		MpcDefaultBtl:  msg.MpcDefaultTimeout,
+		MpcMinimumBtl:  msg.MpcMinimumTimeout,
 	}
 
 	params, err := k.ParamStore.Get(goCtx)
@@ -41,14 +41,14 @@ func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (
 		}
 	}
 
-	if keyring.MpcMinimumTimeout == 0 {
-		keyring.MpcMinimumTimeout = params.MpcMinimumTimeout
+	if keyring.MpcMinimumBtl == 0 {
+		keyring.MpcMinimumBtl = params.MpcMinimumBtl
 	}
-	if keyring.MpcDefaultTimeout == 0 {
-		keyring.MpcDefaultTimeout = params.MpcMinimumTimeout
+	if keyring.MpcDefaultBtl == 0 {
+		keyring.MpcDefaultBtl = params.MpcMinimumBtl
 	}
-	if keyring.MpcDefaultTimeout > 0 && keyring.MpcDefaultTimeout < keyring.MpcMinimumTimeout {
-		return nil, fmt.Errorf("mpc default timeout must be greater than mpc minimum timeout")
+	if keyring.MpcDefaultBtl > 0 && keyring.MpcDefaultBtl < keyring.MpcMinimumBtl {
+		return nil, fmt.Errorf("mpc default btl must be greater than mpc minimum btl")
 	}
 
 	address, err := k.CreateKeyring(sdk.UnwrapSDKContext(goCtx), keyring)

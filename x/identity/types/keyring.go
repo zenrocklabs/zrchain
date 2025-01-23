@@ -67,10 +67,10 @@ func (k *Keyring) SetPartyThreshold(threshold uint32) {
 	k.PartyThreshold = threshold
 }
 
-func (k *Keyring) SetMpcDefaultTimeout(timeout uint64) {
-	k.MpcDefaultTimeout = timeout
+func (k *Keyring) SetMpcDefaultBtl(btl uint64) {
+	k.MpcDefaultBtl = btl
 }
 
-func (k *Keyring) SetMpcMinimumTimeout(timeout uint64) {
-	k.MpcMinimumTimeout = timeout
+func (k *Keyring) SetMpcMinimumBtl(btl uint64) {
+	k.MpcMinimumBtl = btl
 }

@@ -17,6 +17,6 @@ message Keyring {
   uint64 sig_req_fee = 8;
   bool is_active = 9;
   bool delegate_fees = 10;
-  uint64 mpc_default_timeout = 11;
-  uint64 mpc_minimum_timeout = 12;
+  uint64 mpc_default_btl = 11;
+  uint64 mpc_minimum_btl = 12;
 }

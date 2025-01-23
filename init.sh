@@ -276,7 +276,8 @@ if [ "$START_ONLY" = false ]; then
             "key_req_fee": 75,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
             "sig_req_fee": 50,
-            "mpc_minimum_timeout": 60
+            "mpc_minimum_btl": 20,
+            "mpc_default_btl": 20
           },
           {
             "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",
@@ -287,7 +288,8 @@ if [ "$START_ONLY" = false ]; then
             "key_req_fee": 2,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
             "sig_req_fee": 2,
-            "mpc_minimum_timeout": 60
+            "mpc_minimum_btl": 20,
+            "mpc_default_btl": 20
           },
           {
             "address": "keyring1w887ucurq2nmnj5mq5uaju6a",
@@ -298,7 +300,8 @@ if [ "$START_ONLY" = false ]; then
             "key_req_fee": 0,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts", "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
             "sig_req_fee": 0,
-            "mpc_minimum_timeout": 60
+            "mpc_minimum_btl": 20,
+            "mpc_default_btl": 20
           }
         ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
@@ -317,7 +320,7 @@ if [ "$START_ONLY" = false ]; then
           "zr_sign_address": "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq",
           "keyring_commission": 10,
           "keyring_commission_destination": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
-          "min_gas_fee": "0.0001urock"
+          "min_gas_fee": "0.0001urock",
         }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
         jq '.app_state.gov.params.voting_period = "60s"' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json

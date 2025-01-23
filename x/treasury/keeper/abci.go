@@ -2,15 +2,16 @@ package keeper
 
 import (
 	"context"
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) BeginBlock(goCtx context.Context) error {
-	err := k.AddBlockTime(goCtx)
-	if err != nil {
-		return err
-	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	fmt.Println(ctx.BlockHeight())
 
-	err = k.CheckForKeyMPCTimeouts(goCtx)
+	err := k.CheckForKeyMPCTimeouts(goCtx)
 	if err != nil {
 		return err
 	}

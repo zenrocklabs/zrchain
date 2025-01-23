@@ -7896,16 +7896,16 @@ func (x *fastReflection_MsgAddKeyringPartyResponse) ProtoMethods() *protoiface.M
 }
 
 var (
-	md_MsgUpdateKeyring                     protoreflect.MessageDescriptor
-	fd_MsgUpdateKeyring_creator             protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_keyring_addr        protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_party_threshold     protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_key_req_fee         protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_sig_req_fee         protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_description         protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_is_active           protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_mpc_minimum_timeout protoreflect.FieldDescriptor
-	fd_MsgUpdateKeyring_mpc_default_timeout protoreflect.FieldDescriptor
+	md_MsgUpdateKeyring                 protoreflect.MessageDescriptor
+	fd_MsgUpdateKeyring_creator         protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_keyring_addr    protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_party_threshold protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_key_req_fee     protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_sig_req_fee     protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_description     protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_is_active       protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_mpc_minimum_btl protoreflect.FieldDescriptor
+	fd_MsgUpdateKeyring_mpc_default_btl protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -7918,8 +7918,8 @@ func init() {
 	fd_MsgUpdateKeyring_sig_req_fee = md_MsgUpdateKeyring.Fields().ByName("sig_req_fee")
 	fd_MsgUpdateKeyring_description = md_MsgUpdateKeyring.Fields().ByName("description")
 	fd_MsgUpdateKeyring_is_active = md_MsgUpdateKeyring.Fields().ByName("is_active")
-	fd_MsgUpdateKeyring_mpc_minimum_timeout = md_MsgUpdateKeyring.Fields().ByName("mpc_minimum_timeout")
-	fd_MsgUpdateKeyring_mpc_default_timeout = md_MsgUpdateKeyring.Fields().ByName("mpc_default_timeout")
+	fd_MsgUpdateKeyring_mpc_minimum_btl = md_MsgUpdateKeyring.Fields().ByName("mpc_minimum_btl")
+	fd_MsgUpdateKeyring_mpc_default_btl = md_MsgUpdateKeyring.Fields().ByName("mpc_default_btl")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgUpdateKeyring)(nil)
@@ -8029,15 +8029,15 @@ func (x *fastReflection_MsgUpdateKeyring) Range(f func(protoreflect.FieldDescrip
 			return
 		}
 	}
-	if x.MpcMinimumTimeout != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.MpcMinimumTimeout)
-		if !f(fd_MsgUpdateKeyring_mpc_minimum_timeout, value) {
+	if x.MpcMinimumBtl != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.MpcMinimumBtl)
+		if !f(fd_MsgUpdateKeyring_mpc_minimum_btl, value) {
 			return
 		}
 	}
-	if x.MpcDefaultTimeout != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.MpcDefaultTimeout)
-		if !f(fd_MsgUpdateKeyring_mpc_default_timeout, value) {
+	if x.MpcDefaultBtl != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.MpcDefaultBtl)
+		if !f(fd_MsgUpdateKeyring_mpc_default_btl, value) {
 			return
 		}
 	}
@@ -8070,10 +8070,10 @@ func (x *fastReflection_MsgUpdateKeyring) Has(fd protoreflect.FieldDescriptor) b
 		return x.Description != ""
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		return x.IsActive != false
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
-		return x.MpcMinimumTimeout != uint64(0)
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
-		return x.MpcDefaultTimeout != uint64(0)
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
+		return x.MpcMinimumBtl != uint64(0)
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
+		return x.MpcDefaultBtl != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.identity.MsgUpdateKeyring"))
@@ -8104,10 +8104,10 @@ func (x *fastReflection_MsgUpdateKeyring) Clear(fd protoreflect.FieldDescriptor)
 		x.Description = ""
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		x.IsActive = false
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
-		x.MpcMinimumTimeout = uint64(0)
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
-		x.MpcDefaultTimeout = uint64(0)
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
+		x.MpcMinimumBtl = uint64(0)
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
+		x.MpcDefaultBtl = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.identity.MsgUpdateKeyring"))
@@ -8145,11 +8145,11 @@ func (x *fastReflection_MsgUpdateKeyring) Get(descriptor protoreflect.FieldDescr
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		value := x.IsActive
 		return protoreflect.ValueOfBool(value)
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
-		value := x.MpcMinimumTimeout
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
+		value := x.MpcMinimumBtl
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
-		value := x.MpcDefaultTimeout
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
+		value := x.MpcDefaultBtl
 		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
@@ -8185,10 +8185,10 @@ func (x *fastReflection_MsgUpdateKeyring) Set(fd protoreflect.FieldDescriptor, v
 		x.Description = value.Interface().(string)
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		x.IsActive = value.Bool()
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
-		x.MpcMinimumTimeout = value.Uint()
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
-		x.MpcDefaultTimeout = value.Uint()
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
+		x.MpcMinimumBtl = value.Uint()
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
+		x.MpcDefaultBtl = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.identity.MsgUpdateKeyring"))
@@ -8223,10 +8223,10 @@ func (x *fastReflection_MsgUpdateKeyring) Mutable(fd protoreflect.FieldDescripto
 		panic(fmt.Errorf("field description of message zrchain.identity.MsgUpdateKeyring is not mutable"))
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		panic(fmt.Errorf("field is_active of message zrchain.identity.MsgUpdateKeyring is not mutable"))
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
-		panic(fmt.Errorf("field mpc_minimum_timeout of message zrchain.identity.MsgUpdateKeyring is not mutable"))
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
-		panic(fmt.Errorf("field mpc_default_timeout of message zrchain.identity.MsgUpdateKeyring is not mutable"))
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
+		panic(fmt.Errorf("field mpc_minimum_btl of message zrchain.identity.MsgUpdateKeyring is not mutable"))
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
+		panic(fmt.Errorf("field mpc_default_btl of message zrchain.identity.MsgUpdateKeyring is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.identity.MsgUpdateKeyring"))
@@ -8254,9 +8254,9 @@ func (x *fastReflection_MsgUpdateKeyring) NewField(fd protoreflect.FieldDescript
 		return protoreflect.ValueOfString("")
 	case "zrchain.identity.MsgUpdateKeyring.is_active":
 		return protoreflect.ValueOfBool(false)
-	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_timeout":
+	case "zrchain.identity.MsgUpdateKeyring.mpc_minimum_btl":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.identity.MsgUpdateKeyring.mpc_default_timeout":
+	case "zrchain.identity.MsgUpdateKeyring.mpc_default_btl":
 		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
@@ -8351,11 +8351,11 @@ func (x *fastReflection_MsgUpdateKeyring) ProtoMethods() *protoiface.Methods {
 		if x.IsActive {
 			n += 2
 		}
-		if x.MpcMinimumTimeout != 0 {
-			n += 1 + runtime.Sov(uint64(x.MpcMinimumTimeout))
+		if x.MpcMinimumBtl != 0 {
+			n += 1 + runtime.Sov(uint64(x.MpcMinimumBtl))
 		}
-		if x.MpcDefaultTimeout != 0 {
-			n += 1 + runtime.Sov(uint64(x.MpcDefaultTimeout))
+		if x.MpcDefaultBtl != 0 {
+			n += 1 + runtime.Sov(uint64(x.MpcDefaultBtl))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -8386,13 +8386,13 @@ func (x *fastReflection_MsgUpdateKeyring) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.MpcDefaultTimeout != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.MpcDefaultTimeout))
+		if x.MpcDefaultBtl != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MpcDefaultBtl))
 			i--
 			dAtA[i] = 0x48
 		}
-		if x.MpcMinimumTimeout != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.MpcMinimumTimeout))
+		if x.MpcMinimumBtl != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MpcMinimumBtl))
 			i--
 			dAtA[i] = 0x40
 		}
@@ -8666,9 +8666,9 @@ func (x *fastReflection_MsgUpdateKeyring) ProtoMethods() *protoiface.Methods {
 				x.IsActive = bool(v != 0)
 			case 8:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MpcMinimumTimeout", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MpcMinimumBtl", wireType)
 				}
-				x.MpcMinimumTimeout = 0
+				x.MpcMinimumBtl = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -8678,16 +8678,16 @@ func (x *fastReflection_MsgUpdateKeyring) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.MpcMinimumTimeout |= uint64(b&0x7F) << shift
+					x.MpcMinimumBtl |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
 			case 9:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MpcDefaultTimeout", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MpcDefaultBtl", wireType)
 				}
-				x.MpcDefaultTimeout = 0
+				x.MpcDefaultBtl = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -8697,7 +8697,7 @@ func (x *fastReflection_MsgUpdateKeyring) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.MpcDefaultTimeout |= uint64(b&0x7F) << shift
+					x.MpcDefaultBtl |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -14442,15 +14442,15 @@ type MsgUpdateKeyring struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Creator           string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	KeyringAddr       string `protobuf:"bytes,2,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	PartyThreshold    uint32 `protobuf:"varint,3,opt,name=party_threshold,json=partyThreshold,proto3" json:"party_threshold,omitempty"`
-	KeyReqFee         uint64 `protobuf:"varint,4,opt,name=key_req_fee,json=keyReqFee,proto3" json:"key_req_fee,omitempty"`
-	SigReqFee         uint64 `protobuf:"varint,5,opt,name=sig_req_fee,json=sigReqFee,proto3" json:"sig_req_fee,omitempty"`
-	Description       string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	IsActive          bool   `protobuf:"varint,7,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	MpcMinimumTimeout uint64 `protobuf:"varint,8,opt,name=mpc_minimum_timeout,json=mpcMinimumTimeout,proto3" json:"mpc_minimum_timeout,omitempty"`
-	MpcDefaultTimeout uint64 `protobuf:"varint,9,opt,name=mpc_default_timeout,json=mpcDefaultTimeout,proto3" json:"mpc_default_timeout,omitempty"`
+	Creator        string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	KeyringAddr    string `protobuf:"bytes,2,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	PartyThreshold uint32 `protobuf:"varint,3,opt,name=party_threshold,json=partyThreshold,proto3" json:"party_threshold,omitempty"`
+	KeyReqFee      uint64 `protobuf:"varint,4,opt,name=key_req_fee,json=keyReqFee,proto3" json:"key_req_fee,omitempty"`
+	SigReqFee      uint64 `protobuf:"varint,5,opt,name=sig_req_fee,json=sigReqFee,proto3" json:"sig_req_fee,omitempty"`
+	Description    string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	IsActive       bool   `protobuf:"varint,7,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	MpcMinimumBtl  uint64 `protobuf:"varint,8,opt,name=mpc_minimum_btl,json=mpcMinimumBtl,proto3" json:"mpc_minimum_btl,omitempty"`
+	MpcDefaultBtl  uint64 `protobuf:"varint,9,opt,name=mpc_default_btl,json=mpcDefaultBtl,proto3" json:"mpc_default_btl,omitempty"`
 }
 
 func (x *MsgUpdateKeyring) Reset() {
@@ -14522,16 +14522,16 @@ func (x *MsgUpdateKeyring) GetIsActive() bool {
 	return false
 }
 
-func (x *MsgUpdateKeyring) GetMpcMinimumTimeout() uint64 {
+func (x *MsgUpdateKeyring) GetMpcMinimumBtl() uint64 {
 	if x != nil {
-		return x.MpcMinimumTimeout
+		return x.MpcMinimumBtl
 	}
 	return 0
 }
 
-func (x *MsgUpdateKeyring) GetMpcDefaultTimeout() uint64 {
+func (x *MsgUpdateKeyring) GetMpcDefaultBtl() uint64 {
 	if x != nil {
-		return x.MpcDefaultTimeout
+		return x.MpcDefaultBtl
 	}
 	return 0
 }
@@ -15105,7 +15105,7 @@ var file_zrchain_identity_tx_proto_rawDesc = []byte{
 	0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x3a, 0x0c, 0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63,
 	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x1c, 0x0a, 0x1a, 0x4d, 0x73, 0x67, 0x41, 0x64, 0x64,
 	0x4b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xe5, 0x02, 0x0a, 0x10, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd5, 0x02, 0x0a, 0x10, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61,
 	0x74, 0x65, 0x4b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65,
 	0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61,
 	0x74, 0x6f, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x61,
@@ -15120,13 +15120,12 @@ var file_zrchain_identity_tx_proto_rawDesc = []byte{
 	0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
 	0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x69, 0x73, 0x5f, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x07,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x69, 0x73, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x2e,
-	0x0a, 0x13, 0x6d, 0x70, 0x63, 0x5f, 0x6d, 0x69, 0x6e, 0x69, 0x6d, 0x75, 0x6d, 0x5f, 0x74, 0x69,
-	0x6d, 0x65, 0x6f, 0x75, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x04, 0x52, 0x11, 0x6d, 0x70, 0x63,
-	0x4d, 0x69, 0x6e, 0x69, 0x6d, 0x75, 0x6d, 0x54, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x12, 0x2e,
-	0x0a, 0x13, 0x6d, 0x70, 0x63, 0x5f, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x74, 0x69,
-	0x6d, 0x65, 0x6f, 0x75, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x04, 0x52, 0x11, 0x6d, 0x70, 0x63,
-	0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x3a, 0x0c,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x69, 0x73, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x26,
+	0x0a, 0x0f, 0x6d, 0x70, 0x63, 0x5f, 0x6d, 0x69, 0x6e, 0x69, 0x6d, 0x75, 0x6d, 0x5f, 0x62, 0x74,
+	0x6c, 0x18, 0x08, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0d, 0x6d, 0x70, 0x63, 0x4d, 0x69, 0x6e, 0x69,
+	0x6d, 0x75, 0x6d, 0x42, 0x74, 0x6c, 0x12, 0x26, 0x0a, 0x0f, 0x6d, 0x70, 0x63, 0x5f, 0x64, 0x65,
+	0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x62, 0x74, 0x6c, 0x18, 0x09, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x0d, 0x6d, 0x70, 0x63, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x42, 0x74, 0x6c, 0x3a, 0x0c,
 	0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x1a, 0x0a, 0x18,
 	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67,
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa7, 0x01, 0x0a, 0x15, 0x4d, 0x73, 0x67,

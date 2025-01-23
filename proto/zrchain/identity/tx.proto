@@ -188,8 +188,8 @@ message MsgUpdateKeyring {
   uint64 sig_req_fee = 5;
   string description = 6;
   bool is_active = 7;
-  uint64 mpc_minimum_timeout = 8;
-  uint64 mpc_default_timeout = 9;
+  uint64 mpc_minimum_btl = 8;
+  uint64 mpc_default_btl = 9;
 }
 
 // MsgUpdateKeyringResponse is the Msg/UpdateKeyringResponse response type
