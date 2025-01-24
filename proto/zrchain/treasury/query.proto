@@ -84,7 +84,7 @@ service Query {
   
   // Queries a list of ZenbtcWallets items.
   rpc ZenbtcWallets (QueryZenbtcWalletsRequest) returns (QueryZenbtcWalletsResponse) {
-    option (google.api.http).get = "/zrchain/v5/treasury/zenbtc_wallets/{recipientAddr}/{chainType}/{chainId}/{returnAddr}";
+    option (google.api.http).get = "/zrchain/v5/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/{mint_chain_id}/{return_addr}";
   
   }
 }
