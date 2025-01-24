@@ -1,5 +1,5 @@
 syntax = "proto3";
-package zrchain.treasury.module;
+package zrchain.identity.module;
 
 import "cosmos/app/v1alpha1/module.proto";
 

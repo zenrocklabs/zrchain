@@ -1,5 +1,5 @@
 syntax = "proto3";
-package zchain.zentp;
+package zrchain.zentp;
 
 import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
