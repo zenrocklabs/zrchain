@@ -725,6 +725,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		return
 	}
 
+	k.Logger(ctx).Warn("oracle redemptions", "redemptions", fmt.Sprintf("%+v", oracleData.EthereumRedemptions))
+
 	foundNewRedemption := false
 
 	for _, redemption := range oracleData.EthereumRedemptions {
@@ -755,6 +757,8 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 			k.Logger(ctx).Error("error adding redemption to store", "err", err)
 			continue
 		}
+
+		k.Logger(ctx).Warn("added redemption to store", "id", redemption.Id, "amount", btcAmount)
 	}
 
 	if foundNewRedemption {
