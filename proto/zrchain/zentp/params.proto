@@ -11,6 +11,6 @@ message Params {
   option (amino.name) = "zrchain/x/zentp/Params";
   option (gogoproto.equal) = true;
 
-  uint64 solrock_mint_key_id = 1;
-  uint64 rock_mint_key_id = 2;
+  uint64 solana_relayer_key_id = 1;
+  uint64 zrchain_relayer_key_id = 2;
 }
