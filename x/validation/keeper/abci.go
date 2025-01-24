@@ -715,6 +715,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	}
 
 	if len(oracleData.EthereumRedemptions) == 0 {
+		k.Logger(ctx).Warn("no redemptions in oracle data")
 		return
 	}
 
