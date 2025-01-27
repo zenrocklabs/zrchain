@@ -609,6 +609,58 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
 }
 
+// CalculateZenBTCMintFee calculates the zenBTC fee required for minting
+// Returns 0 if BTCUSDPrice is zero
+func (k Keeper) CalculateZenBTCMintFee(
+	ethBaseFee uint64,
+	ethTipCap uint64,
+	ethGasLimit uint64,
+	btcUSDPrice sdkmath.LegacyDec,
+	ethUSDPrice sdkmath.LegacyDec,
+	exchangeRate float64,
+) uint64 {
+	if btcUSDPrice.IsZero() {
+		return 0
+	}
+
+	// Calculate total ETH gas fee in wei (base fee + tip)
+	baseFeePlusTip := new(big.Int).Add(
+		new(big.Int).SetUint64(ethBaseFee),
+		new(big.Int).SetUint64(ethTipCap),
+	)
+	feeInWei := new(big.Int).Mul(
+		baseFeePlusTip,
+		new(big.Int).SetUint64(ethGasLimit),
+	)
+
+	// Convert wei to ETH (divide by 1e18)
+	feeInETH := new(big.Float).Quo(
+		new(big.Float).SetInt(feeInWei),
+		new(big.Float).SetInt64(1e18),
+	)
+
+	// Convert ETH fee to BTC
+	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
+	feeBTCFloat := new(big.Float).Mul(
+		feeInETH,
+		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+	)
+
+	// Convert to satoshis (multiply by 1e8)
+	satoshisFloat := new(big.Float).Mul(
+		feeBTCFloat,
+		new(big.Float).SetInt64(1e8),
+	)
+
+	satoshisInt, _ := satoshisFloat.Int(nil)
+	satoshis := satoshisInt.Uint64()
+
+	// Convert BTC fee to zenBTC using exchange rate
+	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
+
+	return feeZenBTC
+}
+
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
 	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {
