@@ -47,7 +47,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
 	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTCController.Ethereum[o.Config.Network]), o.EthClient,
+		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]), o.EthClient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
@@ -114,7 +114,7 @@ func (o *Oracle) fetchAndProcessState(
 	if err != nil {
 		return fmt.Errorf("failed to encode wrap call data: %w", err)
 	}
-	addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTCController.Ethereum[o.Config.Network])
+	addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
 	estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
 		From: common.HexToAddress("0x2Ee490E6A1A1b382AfF14d04FD1e2bf479041D81"),
 		To:   &addr,
