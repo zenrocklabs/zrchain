@@ -230,3 +230,25 @@ class QueryKeyByAddressResponse(_message.Message):
     RESPONSE_FIELD_NUMBER: _ClassVar[int]
     response: KeyAndWalletResponse
     def __init__(self, response: _Optional[_Union[KeyAndWalletResponse, _Mapping]] = ...) -> None: ...
+
+class QueryZenbtcWalletsRequest(_message.Message):
+    __slots__ = ("recipient_addr", "chain_type", "mint_chain_id", "return_addr", "pagination")
+    RECIPIENT_ADDR_FIELD_NUMBER: _ClassVar[int]
+    CHAIN_TYPE_FIELD_NUMBER: _ClassVar[int]
+    MINT_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    RETURN_ADDR_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    recipient_addr: str
+    chain_type: _wallet_pb2.WalletType
+    mint_chain_id: int
+    return_addr: str
+    pagination: _pagination_pb2.PageRequest
+    def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., mint_chain_id: _Optional[int] = ..., return_addr: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
+
+class QueryZenbtcWalletsResponse(_message.Message):
+    __slots__ = ("zenbtc_wallets", "pagination")
+    ZENBTC_WALLETS_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    zenbtc_wallets: _containers.RepeatedCompositeFieldContainer[KeyAndWalletResponse]
+    pagination: _pagination_pb2.PageResponse
+    def __init__(self, zenbtc_wallets: _Optional[_Iterable[_Union[KeyAndWalletResponse, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...

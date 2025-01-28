@@ -299,9 +299,11 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("unknown key type: %s", msg.KeyType)
 	}
 
-	btl := keyring.MpcDefaultBtl
-	if msg.MpcBtl > keyring.MpcMinimumBtl {
-		btl = msg.MpcBtl
+	btl := uint64(0)
+	if keyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
+		if msg.MpcBtl > 0 {
+			btl = uint64(ctx.BlockHeight()) + msg.MpcBtl
+		}
 	}
 
 	req := &types.KeyRequest{
@@ -313,7 +315,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		Index:          msg.Index,
 		SignPolicyId:   msg.SignPolicyId,
 		ZenbtcMetadata: msg.ZenbtcMetadata,
-		Btl:            uint64(ctx.BlockHeight()) + btl,
+		Btl:            btl,
 		Fee:            keyring.KeyReqFee,
 	}
 
@@ -360,7 +362,7 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 		KeyIds:         msg.KeyIds,
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		CacheId:        msg.CacheId,
-	}, msg.Btl)
+	}, msg.MpcBtl)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "processSignatureRequests")
 	}
@@ -393,13 +395,13 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
-		btl := keyring.MpcDefaultBtl
-		if mpcBtl > keyring.MpcMinimumBtl {
-			btl = mpcBtl
+		btl := uint64(0)
+		if mpcBtl > 0 {
+			btl = uint64(bh) + btl
 		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
-			Btl: uint64(bh) + btl,
+			Btl: btl,
 			Fee: keyring.SigReqFee,
 		})
 
@@ -561,12 +563,16 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 
 func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	blockHeight := ctx.BlockHeight()
 	requests, _, err := query.CollectionFilteredPaginate[uint64, types.KeyRequest, collections.Map[uint64, types.KeyRequest], *types.KeyRequest](
 		goCtx,
 		k.KeyRequestStore,
 		nil,
 		func(key uint64, value types.KeyRequest) (bool, error) {
-			return value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING, nil
+			return value.Btl > 0 &&
+				value.Btl < uint64(blockHeight) &&
+				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
+				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING, nil
 		},
 		func(key uint64, value types.KeyRequest) (*types.KeyRequest, error) {
 			return &value, nil
@@ -576,31 +582,28 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 		return err
 	}
 
-	blockHeight := ctx.BlockHeight()
 	for _, req := range requests {
-		if req.Btl < uint64(blockHeight) {
-			if req.Fee > 0 {
-				err = k.bankKeeper.SendCoinsFromModuleToAccount(
-					goCtx,
-					types.KeyringEscrowName,
-					sdk.MustAccAddressFromBech32(req.Creator),
-					sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
-				)
-				if err != nil {
-					return err
-				}
-			}
-			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
-			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
+		if req.Fee > 0 {
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(
+				goCtx,
+				types.KeyringEscrowName,
+				sdk.MustAccAddressFromBech32(req.Creator),
+				sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
+			)
+			if err != nil {
 				return err
 			}
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					types.EventKeyRequestRejected,
-					sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(req.GetId(), 10)),
-				),
-			})
 		}
+		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
+		if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
+			return err
+		}
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventKeyRequestRejected,
+				sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(req.GetId(), 10)),
+			),
+		})
 	}
 
 	return nil
@@ -609,12 +612,16 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	keyrings := map[string]*idtypes.Keyring{}
+	blockHeight := ctx.BlockHeight()
 	requests, _, err := query.CollectionFilteredPaginate[uint64, types.SignRequest, collections.Map[uint64, types.SignRequest], *types.SignRequest](
 		goCtx,
 		k.SignRequestStore,
 		nil,
 		func(key uint64, value types.SignRequest) (bool, error) {
-			return value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING, nil
+			return value.Btl > 0 &&
+				value.Btl < uint64(blockHeight) &&
+				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
+				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING, nil
 		},
 		func(key uint64, value types.SignRequest) (*types.SignRequest, error) {
 			return &value, nil
@@ -624,51 +631,48 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 		return err
 	}
 
-	blockHeight := ctx.BlockHeight()
 	for _, req := range requests {
-		if req.Btl < uint64(blockHeight) {
-			var keyring idtypes.Keyring
-			keyID := req.KeyId
-			if len(req.KeyIds) > 0 {
-				keyID = req.KeyIds[0]
-			}
-			key, err := k.KeyStore.Get(goCtx, keyID)
-			if err != nil {
-				return fmt.Errorf("key %v not found", keyID)
-			}
-			if kr, ok := keyrings[key.KeyringAddr]; ok {
-				keyring = *kr
-			} else {
+		var keyring idtypes.Keyring
+		keyID := req.KeyId
+		if len(req.KeyIds) > 0 {
+			keyID = req.KeyIds[0]
+		}
+		key, err := k.KeyStore.Get(goCtx, keyID)
+		if err != nil {
+			return fmt.Errorf("key %v not found", keyID)
+		}
+		if kr, ok := keyrings[key.KeyringAddr]; ok {
+			keyring = *kr
+		} else {
 
-				kr, err := k.identityKeeper.KeyringStore.Get(goCtx, key.KeyringAddr)
-				if err != nil {
-					return fmt.Errorf("keyring %s not found", key.KeyringAddr)
-				}
-				keyring = kr
-				keyrings[key.KeyringAddr] = &kr
+			kr, err := k.identityKeeper.KeyringStore.Get(goCtx, key.KeyringAddr)
+			if err != nil {
+				return fmt.Errorf("keyring %s not found", key.KeyringAddr)
 			}
-			if keyring.SigReqFee > 0 {
-				err = k.bankKeeper.SendCoinsFromModuleToAccount(
-					goCtx,
-					types.KeyringEscrowName,
-					sdk.MustAccAddressFromBech32(req.Creator),
-					sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
-				)
-				if err != nil {
-					return err
-				}
-			}
-			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-			if err := k.SignRequestStore.Set(ctx, req.Id, *req); err != nil {
+			keyring = kr
+			keyrings[key.KeyringAddr] = &kr
+		}
+		if keyring.SigReqFee > 0 {
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(
+				goCtx,
+				types.KeyringEscrowName,
+				sdk.MustAccAddressFromBech32(req.Creator),
+				sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
+			)
+			if err != nil {
 				return err
 			}
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					types.EventSignRequestRejected,
-					sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(req.GetId(), 10)),
-				),
-			})
 		}
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		if err := k.SignRequestStore.Set(ctx, req.Id, *req); err != nil {
+			return err
+		}
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventSignRequestRejected,
+				sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(req.GetId(), 10)),
+			),
+		})
 	}
 
 	return nil

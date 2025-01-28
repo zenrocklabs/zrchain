@@ -275,9 +275,7 @@ if [ "$START_ONLY" = false ]; then
             "is_active": true,
             "key_req_fee": 75,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-            "sig_req_fee": 50,
-            "mpc_minimum_btl": 20,
-            "mpc_default_btl": 20
+            "sig_req_fee": 50
           },
           {
             "address": "keyring1k6vc6vhp6e6l3rxalue9v4ux",
@@ -287,9 +285,7 @@ if [ "$START_ONLY" = false ]; then
             "is_active": true,
             "key_req_fee": 2,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts"],
-            "sig_req_fee": 2,
-            "mpc_minimum_btl": 20,
-            "mpc_default_btl": 20
+            "sig_req_fee": 2
           },
           {
             "address": "keyring1w887ucurq2nmnj5mq5uaju6a",
@@ -299,9 +295,7 @@ if [ "$START_ONLY" = false ]; then
             "is_active": true,
             "key_req_fee": 0,
             "parties": ["zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts", "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"],
-            "sig_req_fee": 0,
-            "mpc_minimum_btl": 20,
-            "mpc_default_btl": 20
+            "sig_req_fee": 0
           }
         ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 

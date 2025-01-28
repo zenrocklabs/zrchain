@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
@@ -21,8 +20,6 @@ func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (
 		SigReqFee:      msg.SigReqFee,
 		IsActive:       true,
 		DelegateFees:   msg.DelegateFees,
-		MpcDefaultBtl:  msg.MpcDefaultTimeout,
-		MpcMinimumBtl:  msg.MpcMinimumTimeout,
 	}
 
 	params, err := k.ParamStore.Get(goCtx)
@@ -39,16 +36,6 @@ func (k msgServer) NewKeyring(goCtx context.Context, msg *types.MsgNewKeyring) (
 		); err != nil {
 			return nil, err
 		}
-	}
-
-	if keyring.MpcMinimumBtl == 0 {
-		keyring.MpcMinimumBtl = params.MpcMinimumBtl
-	}
-	if keyring.MpcDefaultBtl == 0 {
-		keyring.MpcDefaultBtl = params.MpcMinimumBtl
-	}
-	if keyring.MpcDefaultBtl > 0 && keyring.MpcDefaultBtl < keyring.MpcMinimumBtl {
-		return nil, fmt.Errorf("mpc default btl must be greater than mpc minimum btl")
 	}
 
 	address, err := k.CreateKeyring(sdk.UnwrapSDKContext(goCtx), keyring)

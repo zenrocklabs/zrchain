@@ -66,11 +66,3 @@ func (k *Keyring) RemoveParty(address string) {
 func (k *Keyring) SetPartyThreshold(threshold uint32) {
 	k.PartyThreshold = threshold
 }
-
-func (k *Keyring) SetMpcDefaultBtl(btl uint64) {
-	k.MpcDefaultBtl = btl
-}
-
-func (k *Keyring) SetMpcMinimumBtl(btl uint64) {
-	k.MpcMinimumBtl = btl
-}
