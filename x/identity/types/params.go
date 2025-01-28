@@ -12,16 +12,15 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(keyringCreationFee, minimumBtl, defaultBtl, minMPCbtl uint64) Params {
+func NewParams(keyringCreationFee, minimumBtl, defaultBtl uint64) Params {
 	return Params{
 		KeyringCreationFee: keyringCreationFee,
-		MpcMinimumBtl:      minMPCbtl,
 	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return NewParams(10000000000, 10, 1000, 20)
+	return NewParams(10000000000, 10, 1000)
 }
 
 // ParamSetPairs get the params.ParamSet

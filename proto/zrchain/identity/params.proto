@@ -13,6 +13,4 @@ message Params {
   option (gogoproto.equal) = true;
 
   uint64 keyring_creation_fee = 1;
-  // the default minimum timeout for keyring key and signature requests
-  uint64 mpc_minimum_btl = 2;
 }

@@ -314,7 +314,7 @@ if [ "$START_ONLY" = false ]; then
           "zr_sign_address": "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq",
           "keyring_commission": 10,
           "keyring_commission_destination": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
-          "min_gas_fee": "0.0001urock",
+          "min_gas_fee": "0.0001urock"
         }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
         jq '.app_state.gov.params.voting_period = "60s"' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
