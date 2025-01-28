@@ -29,7 +29,7 @@ func (mk mintKeeperMock) GetDefaultBlockTime(ctx context.Context) (uint64, error
 	return uint64(5), nil
 }
 
-func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore, mintKeeper types.MintKeeper) (keeper.Keeper, sdk.Context) {
+func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -49,8 +49,7 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		bankKeeper,
 		*identityKeeper,
 		*policyKeeper,
-		mintKeeper,
-		runtime.NewMemStoreService(memStoreKey),
+
 		nil,
 	)
 

@@ -61,7 +61,6 @@ type Keeper struct {
 	bankKeeper         types.BankKeeper
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
-	mintKeeper         types.MintKeeper
 	zenBTCKeeper       shared.ZenBTCKeeper
 }
 
