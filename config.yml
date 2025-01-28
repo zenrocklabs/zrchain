@@ -75,8 +75,6 @@ genesis:
           parties:
             - zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts
           sig_req_fee: 0
-          mpc_minimum_btl: 20
-          mpc_default_btl: 20
         - address: keyring1k6vc6vhp6e6l3rxalue9v4ux
           admins:
             - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
@@ -87,8 +85,6 @@ genesis:
           parties:
             - zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts
           sig_req_fee: 2
-          mpc_minimum_btl: 20
-          mpc_default_btl: 20
         - address: keyring1k6vc6vhp6e6l3rxaard6fd
           admins:
             - zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
@@ -99,8 +95,6 @@ genesis:
           parties:
             - zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn
           sig_req_fee: 55
-          mpc_minimum_btl: 20
-          mpc_default_btl: 20
       workspaces:
         - address: workspace14a2hpadpsy9h4auve2z8lw
           creator: zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty
@@ -109,7 +103,6 @@ genesis:
     staking:
       params:
         bond_denom: urock
-        mpc_minimum_btl: 20
     mint:
       params:
         mint_denom: urock

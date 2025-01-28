@@ -62,7 +62,6 @@ type Keeper struct {
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
 	mintKeeper         types.MintKeeper
-	memStore           store.MemoryStoreService
 	zenBTCKeeper       shared.ZenBTCKeeper
 }
 
@@ -78,8 +77,6 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	identityKeeper identity.Keeper,
 	policyKeeper policy.Keeper,
-	mintKeeper types.MintKeeper,
-	memStore store.MemoryStoreService,
 	zenBTCKeeper shared.ZenBTCKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
@@ -96,7 +93,6 @@ func NewKeeper(
 		bankKeeper:     bankKeeper,
 		identityKeeper: identityKeeper,
 		policyKeeper:   policyKeeper,
-		mintKeeper:     mintKeeper,
 		zenBTCKeeper:   zenBTCKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
@@ -109,7 +105,6 @@ func NewKeeper(
 		SignTransactionRequestCount: collections.NewItem(sb, types.SignTransactionRequestCountKey, types.SignTransactionRequestCountIndex, collections.Uint64Value),
 		ICATransactionRequestStore:  collections.NewMap(sb, types.ICATransactionRequestsKey, types.ICATransactionRequestsIndex, collections.Uint64Key, codec.CollValue[types.ICATransactionRequest](cdc)),
 		ICATransactionRequestCount:  collections.NewItem(sb, types.ICATransactionRequestCountKey, types.ICATransactionRequestCountIndex, collections.Uint64Value),
-		memStore:                    memStore,
 	}
 
 	schema, err := sb.Build()
