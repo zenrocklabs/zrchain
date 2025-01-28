@@ -430,19 +430,31 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainID string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
@@ -595,6 +607,58 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 	}
 
 	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
+}
+
+// CalculateZenBTCMintFee calculates the zenBTC fee required for minting
+// Returns 0 if BTCUSDPrice is zero
+func (k Keeper) CalculateZenBTCMintFee(
+	ethBaseFee uint64,
+	ethTipCap uint64,
+	ethGasLimit uint64,
+	btcUSDPrice sdkmath.LegacyDec,
+	ethUSDPrice sdkmath.LegacyDec,
+	exchangeRate float64,
+) uint64 {
+	if btcUSDPrice.IsZero() {
+		return 0
+	}
+
+	// Calculate total ETH gas fee in wei (base fee + tip)
+	baseFeePlusTip := new(big.Int).Add(
+		new(big.Int).SetUint64(ethBaseFee),
+		new(big.Int).SetUint64(ethTipCap),
+	)
+	feeInWei := new(big.Int).Mul(
+		baseFeePlusTip,
+		new(big.Int).SetUint64(ethGasLimit),
+	)
+
+	// Convert wei to ETH (divide by 1e18)
+	feeInETH := new(big.Float).Quo(
+		new(big.Float).SetInt(feeInWei),
+		new(big.Float).SetInt64(1e18),
+	)
+
+	// Convert ETH fee to BTC
+	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
+	feeBTCFloat := new(big.Float).Mul(
+		feeInETH,
+		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+	)
+
+	// Convert to satoshis (multiply by 1e8)
+	satoshisFloat := new(big.Float).Mul(
+		feeBTCFloat,
+		new(big.Float).SetInt64(1e8),
+	)
+
+	satoshisInt, _ := satoshisFloat.Int(nil)
+	satoshis := satoshisInt.Uint64()
+
+	// Convert BTC fee to zenBTC using exchange rate
+	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
+
+	return feeZenBTC
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {

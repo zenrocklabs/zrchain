@@ -2,6 +2,7 @@ syntax = "proto3";
 package zrchain.treasury;
 
 import "zrchain/treasury/wallet.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 
@@ -105,6 +106,7 @@ message KeyResponse {
 message ZenBTCMetadata {
   string recipient_addr = 1; // Optional
   WalletType chain_type = 2; // Optional
-  uint64 chain_id = 3; // Optional
+  uint64 chain_id = 3 [deprecated=true]; // Optional - REMOVE IN FAVOR OF CHAIN_METADATA
   string return_address = 4; // Optional
+  string caip2_chain_id = 5; // Optional
 }
