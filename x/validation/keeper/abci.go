@@ -629,20 +629,20 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	pendingMintTx := pendingMints.Txs[0]
 
-	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
-		return
-	}
+	// exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
+	// 	return
+	// }
 
-	feeZenBTC := k.CalculateZenBTCMintFee(
-		oracleData.EthBaseFee,
-		oracleData.EthTipCap,
-		oracleData.EthGasLimit,
-		oracleData.BTCUSDPrice,
-		oracleData.ETHUSDPrice,
-		exchangeRate,
-	)
+	// feeZenBTC := k.CalculateZenBTCMintFee(
+	// 	oracleData.EthBaseFee,
+	// 	oracleData.EthTipCap,
+	// 	oracleData.EthGasLimit,
+	// 	oracleData.BTCUSDPrice,
+	// 	oracleData.ETHUSDPrice,
+	// 	exchangeRate,
+	// )
 
 	if oracleData.BTCUSDPrice.IsZero() {
 		return
@@ -652,10 +652,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
-		pendingMintTx.RecipientAddress,
 		pendingMintTx.Caip2ChainId,
 		pendingMintTx.Amount,
-		feeZenBTC,
 		oracleData.RequestedEthMinterNonce,
 		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,

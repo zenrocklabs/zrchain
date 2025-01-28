@@ -106,19 +106,15 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get suggested priority fee: %w", err)
 	}
 
-	mintCallData, err := validationkeeper.EncodeWrapCallData(
-		common.HexToAddress("0xb046e4829ff6CD0a171b8B5ce140BC48f0a1dD2F"),
-		big.NewInt(1000000000),
-		1000000,
-	)
+	stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(1000000000))
 	if err != nil {
-		return fmt.Errorf("failed to encode wrap call data: %w", err)
+		return fmt.Errorf("failed to encode stake call data: %w", err)
 	}
 	addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
 	estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
 		From: common.HexToAddress("0x2Ee490E6A1A1b382AfF14d04FD1e2bf479041D81"),
 		To:   &addr,
-		Data: mintCallData,
+		Data: stakeCallData,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to estimate gas: %w", err)

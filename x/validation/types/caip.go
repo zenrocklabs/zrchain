@@ -27,19 +27,19 @@ func ExtractCAIP2Parts(input string) (string, string, error) {
 
 // ExtractEVMChainID Checks if a CAIP-2 string is EVM based and extracts the chain ID.
 func ExtractEVMChainID(input string) (uint64, error) {
-	ns, id, err := ExtractCAIP2Parts(input)
+	namespace, id, err := ExtractCAIP2Parts(input)
 	if err != nil {
 		return 0, err
 	}
 
-	if ns != "eip155" {
+	if namespace != "eip155" {
 		return 0, errors.New("CAIP-2 is not of EVM type")
 	}
 
-	chainId, err := strconv.ParseUint(string(id), 10, 64)
+	chainID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return 0, err
 	}
 
-	return chainId, nil
+	return chainID, nil
 }
