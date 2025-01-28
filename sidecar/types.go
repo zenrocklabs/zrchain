@@ -79,18 +79,23 @@ type EthOracleConfig struct {
 }
 
 type ContractAddrs struct {
-	ServiceManager   string     `yaml:"service_manager"`
-	PriceFeeds       PriceFeeds `yaml:"price_feeds"`
-	ZenBTCController EVMChains  `yaml:"zenbtc_controller"`
+	ServiceManager string     `yaml:"service_manager"`
+	PriceFeeds     PriceFeeds `yaml:"price_feeds"`
+	ZenBTC         ZenBTC     `yaml:"zenbtc"`
+}
+
+type ZenBTC struct {
+	Controller map[string]string `yaml:"controller"`
+	Token      Networks          `yaml:"token"`
+}
+
+type Networks struct {
+	Ethereum map[string]string `yaml:"ethereum"`
 }
 
 type PriceFeeds struct {
 	BTC string `yaml:"btc"`
 	ETH string `yaml:"eth"`
-}
-
-type EVMChains struct {
-	Ethereum map[string]string `yaml:"ethereum"`
 }
 
 type PriceData struct {

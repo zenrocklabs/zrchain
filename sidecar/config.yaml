@@ -13,9 +13,12 @@ eth_oracle:
     price_feeds:
       btc: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
       eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-    zenbtc_controller:
-      ethereum:
-        testnet: "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA"
+    zenbtc:
+      controller:
+        testnet: "0x5b9Ea8d5486D388a158F026c337DF950866dA5e9"
+      token:
+        ethereum:
+          testnet: "0xC8CdeDd20cCb4c06884ac4C2fF952A0B7cC230a3"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"
