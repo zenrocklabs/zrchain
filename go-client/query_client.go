@@ -2,6 +2,8 @@ package client
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
@@ -62,12 +64,16 @@ func NewQueryClient(url string, insecure bool) (*QueryClient, error) {
 // Note: When using secure connections, expects a 'server.crt' file in the root directory
 func NewClientConn(url string, insecure bool) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{}
-
 	if insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecurecreds.NewCredentials()))
 	} else {
+		systemCertPool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load system cert pool: %v", err)
+		}
+		// Create the credentials and connect to server
 		config := &tls.Config{
-			InsecureSkipVerify: false, // Ensures server identity is verified
+			RootCAs: systemCertPool,
 		}
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
 	}
