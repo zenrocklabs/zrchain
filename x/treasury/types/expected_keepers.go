@@ -38,7 +38,3 @@ type ParamSubspace interface {
 type PolicyKeeper interface {
 	policykeeper.ExportedKeeper
 }
-
-type MintKeeper interface {
-	GetDefaultBlockTime(ctx context.Context) (uint64, error)
-}

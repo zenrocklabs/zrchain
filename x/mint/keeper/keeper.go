@@ -336,14 +336,3 @@ func (k Keeper) GetModuleAccountPerms(ctx context.Context) []string {
 	moduleAccount := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
 	return moduleAccount.GetPermissions()
 }
-
-func (k Keeper) GetDefaultBlockTime(ctx context.Context) (uint64, error) {
-	params, err := k.Params.Get(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	blocksPerMinute := params.BlocksPerYear / 365 / 24 / 60
-	blockTime := 60 / blocksPerMinute
-	return blockTime, nil
-}
