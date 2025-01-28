@@ -6,7 +6,7 @@ network: "testnet"
 eth_oracle:
   rpc:
     local: "http://127.0.0.1:8545"
-    testnet: "https://rpc.ankr.com/eth_holesky"
+    testnet: "https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/"
     mainnet: "https://rpc.ankr.com/eth"
   contract_addrs:
     service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
