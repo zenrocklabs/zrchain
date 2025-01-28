@@ -430,19 +430,31 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainID string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
