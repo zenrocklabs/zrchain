@@ -309,7 +309,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		Index:          msg.Index,
 		SignPolicyId:   msg.SignPolicyId,
 		ZenbtcMetadata: msg.ZenbtcMetadata,
-		Btl:            btl,
+		MpcBtl:         btl,
 		Fee:            keyring.KeyReqFee,
 	}
 
@@ -395,8 +395,8 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
-			Btl: btl,
-			Fee: keyring.SigReqFee,
+			MpcBtl: btl,
+			Fee:    keyring.SigReqFee,
 		})
 
 		// Accumulate fees per keyring
@@ -408,7 +408,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		}
 		req.KeyType = key.GetType()
 	}
-	req.Btl = sigReqs[0].Btl
+	req.MpcBtl = sigReqs[0].MpcBtl
 	req.Fee = sigReqs[0].Fee
 
 	// Create parent request
@@ -429,7 +429,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			sigReqs[i].Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING
 			sigReqs[i].ParentReqId = parentID
 			sigReqs[i].CacheId = req.CacheId
-			sigReqs[i].Btl = req.Btl
+			sigReqs[i].MpcBtl = req.MpcBtl
 			sigReqs[i].Fee = req.Fee
 
 			childID, err := k.CreateSignRequest(ctx, sigReqs[i])
@@ -563,8 +563,8 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 		k.KeyRequestStore,
 		nil,
 		func(key uint64, value types.KeyRequest) (bool, error) {
-			return value.Btl > 0 &&
-				value.Btl < uint64(blockHeight) &&
+			return value.MpcBtl > 0 &&
+				value.MpcBtl < uint64(blockHeight) &&
 				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
 				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING, nil
 		},
@@ -612,8 +612,8 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 		k.SignRequestStore,
 		nil,
 		func(key uint64, value types.SignRequest) (bool, error) {
-			return value.Btl > 0 &&
-				value.Btl < uint64(blockHeight) &&
+			return value.MpcBtl > 0 &&
+				value.MpcBtl < uint64(blockHeight) &&
 				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
 				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING, nil
 		},

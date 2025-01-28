@@ -47,7 +47,7 @@ message SignRequest {
   repeated uint64 child_req_ids = 12;
   bytes cache_id = 13;
   repeated uint64 key_ids = 14;
-  uint64 btl = 15;
+  uint64 mpc_btl = 15;
   uint64 fee = 16;
 }
 
@@ -83,7 +83,7 @@ message SignReqResponse {
   uint64 parent_req_id = 11;
   repeated uint64 child_req_ids = 12;
   bytes cache_id = 13;
-  uint64 btl = 14;
+  uint64 mpc_btl = 14;
   uint64 fee = 15;
 }
 
@@ -96,7 +96,7 @@ message SignTxReqResponse {
   bytes unsigned_transaction = 5;
   uint64 sign_request_id = 6;
   bool no_broadcast = 7;
-  uint64 mpc_timeout = 8;
+  uint64 mpc_btl = 8;
 }
 
 // format of a sign transaction request for an InterChain Account transaction
