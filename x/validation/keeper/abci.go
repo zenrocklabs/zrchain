@@ -596,7 +596,6 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			k.Logger(ctx).Error("error updating zenBTC supply", "err", err)
 			return
 		}
-
 		k.Logger(ctx).Warn("pending mint supply updated", "pending_mint_old", supply.PendingZenBTC+lastMintTx.Amount, "pending_mint_new", supply.PendingZenBTC)
 		k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC-lastMintTx.Amount, "minted_new", supply.MintedZenBTC)
 
@@ -654,7 +653,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,
-		pendingMintTx.ChainId,
+		pendingMintTx.Caip2ChainId,
 		pendingMintTx.Amount,
 		feeZenBTC,
 		oracleData.RequestedEthMinterNonce,
@@ -667,7 +666,12 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
+	chainId, err := types.ExtractEVMChainID(pendingMintTx.Caip2ChainId)
+	if err != nil {
+		k.Logger(ctx).Error("error extracting chainId from CAIP-2", "err", err)
+	}
+
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainId})
 	if err != nil {
 		k.Logger(ctx).Error("error creating metadata", "err", err)
 		return
@@ -829,7 +833,6 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
 			return
 		}
-
 		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
 		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), lastUsedNonce); err != nil {
 			k.Logger(ctx).Error("error updating nonce state", "err", err)
@@ -842,8 +845,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 		ctx,
+		"eip155:17000", // TODO: make this dynamic
 		redemption.Data.Id,
-		17000, // TODO: make this dynamic
 		oracleData.RequestedEthUnstakerNonce,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
