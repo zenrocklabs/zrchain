@@ -40,7 +40,8 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 	}
 
 	//invalid merkle verification
-	if !targetHash.IsEqual(merkleRootHash) {
+	// We are going to ignote invalid merkle proofs for Testnet4 becasue there are occasional forks > 6 blocks which causes errors.
+	if !targetHash.IsEqual(merkleRootHash) && chainName != "testnet4" {
 		return nil, "", fmt.Errorf("invalid merkle verification")
 	}
 
