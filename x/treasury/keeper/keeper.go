@@ -293,10 +293,10 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("unknown key type: %s", msg.KeyType)
 	}
 
-	btl := uint64(0)
+	mpcBtl := uint64(0)
 	if keyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
 		if msg.MpcBtl > 0 {
-			btl = uint64(ctx.BlockHeight()) + msg.MpcBtl
+			mpcBtl = uint64(ctx.BlockHeight()) + msg.MpcBtl
 		}
 	}
 
@@ -309,7 +309,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		Index:          msg.Index,
 		SignPolicyId:   msg.SignPolicyId,
 		ZenbtcMetadata: msg.ZenbtcMetadata,
-		MpcBtl:         btl,
+		MpcBtl:         mpcBtl,
 		Fee:            keyring.KeyReqFee,
 	}
 
@@ -390,8 +390,8 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
 		btl := uint64(0)
-		if mpcBtl > 0 {
-			btl = uint64(bh) + btl
+		if mpcBtl > 0 && key.GetType() != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
+			btl = uint64(bh) + mpcBtl
 		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
