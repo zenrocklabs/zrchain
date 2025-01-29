@@ -653,7 +653,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,
-		pendingMintTx.Caip2ChainId,
+		pendingMintTx.ChainId,
 		pendingMintTx.Amount,
 		feeZenBTC,
 		oracleData.RequestedEthMinterNonce,
@@ -666,12 +666,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	chainId, err := types.ExtractEVMChainID(pendingMintTx.Caip2ChainId)
-	if err != nil {
-		k.Logger(ctx).Error("error extracting chainId from CAIP-2", "err", err)
-	}
-
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainId})
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
 	if err != nil {
 		k.Logger(ctx).Error("error creating metadata", "err", err)
 		return
@@ -845,8 +840,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 		ctx,
-		"eip155:17000", // TODO: make this dynamic
 		redemption.Data.Id,
+		17000, // TODO: make this dynamic
 		oracleData.RequestedEthUnstakerNonce,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
