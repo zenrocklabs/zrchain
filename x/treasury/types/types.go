@@ -25,4 +25,7 @@ const (
 
 var ValidKeyTypes = []string{"ecdsa", "ed25519", "eddsa", "bitcoin", "btc"}
 
-const KeyringCollectorName = "keyring_collector"
+const (
+	KeyringCollectorName = "keyring_collector"
+	KeyringEscrowName    = "keyring_escrow"
+)
