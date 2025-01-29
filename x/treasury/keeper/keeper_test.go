@@ -57,6 +57,20 @@ func (b *bankKeeperMock) SendCoinsFromAccountToModule(ctx context.Context, fromA
 	return nil
 }
 
+func (b *bankKeeperMock) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	from, err := sdk.AccAddressFromBech32(senderModule)
+	if err != nil {
+		return err
+	}
+	b.transactions = append(b.transactions, struct {
+		fromAddr sdk.AccAddress
+		toAddr   sdk.AccAddress
+		toModule string
+		amount   sdk.Coins
+	}{from, sdk.AccAddress{}, recipientAddr.String(), amt})
+	return nil
+}
+
 func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 	type args struct {
 		feeAddr    string

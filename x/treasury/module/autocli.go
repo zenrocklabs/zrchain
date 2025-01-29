@@ -104,7 +104,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewKeyRequest",
-					Use:       `new-key-request [workspace-addr] [keyring-addr] [secp256k1|ed25519|bitcoin] --btl [btl] --sign-policy-id [policy_id] --zenbtc-metadata [zenbtc-metadata]`,
+					Use:       `new-key-request [workspace-addr] [keyring-addr] [secp256k1|ed25519|bitcoin] --btl [btl] --sign-policy-id [policy_id] --zenbtc-metadata [zenbtc-metadata] --mpc-btl [mpc_btl]`,
 					Short:     "Broadcast message NewKeyRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "workspace_addr"},
@@ -124,7 +124,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewSignatureRequest",
-					Use:       "new-signature-request [key-ids] [data-for-signing] --btl [btl] --cache-id [cache-id]",
+					Use:       "new-signature-request [key-ids] [data-for-signing] --btl [btl] --cache-id [cache-id] --mpc-btl [mpc_btl]",
 					Short:     "Broadcast message NewSignatureRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "key_ids"},
@@ -143,7 +143,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewSignTransactionRequest",
-					Use:       "new-sign-transaction-request [key-id] [wallet-type] [unsigned-tx] --metadata [metadata] --btl [btl] --cache-id [cache-id]",
+					Use:       "new-sign-transaction-request [key-id] [wallet-type] [unsigned-tx] --metadata [metadata] --btl [btl] --cache-id [cache-id] --mpc-btl [mpc_btl]",
 					Short:     "Broadcast message NewSignTransactionRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "key_id"},
