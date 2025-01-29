@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
 	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 
@@ -105,6 +107,17 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		return nil, err
 	}
 
+	if req.Fee > 0 {
+		feeRecipient := keyring.Address
+		if keyring.DelegateFees {
+			feeRecipient = types.KeyringCollectorName
+		}
+		err := k.SplitKeyringFee(ctx, msg.Creator, feeRecipient, req.Fee)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventKeyRequestFulfilled,
@@ -121,6 +134,18 @@ func (k msgServer) handleKeyRequestRejection(ctx sdk.Context, msg *types.MsgFulf
 
 	if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 		return nil, err
+	}
+
+	if req.Fee > 0 {
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(
+			ctx,
+			types.KeyringEscrowName,
+			sdk.MustAccAddressFromBech32(req.Creator),
+			sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{

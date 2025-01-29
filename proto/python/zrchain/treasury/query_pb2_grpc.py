@@ -70,6 +70,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressRequest.SerializeToString,
                 response_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressResponse.FromString,
                 )
+        self.ZenbtcWallets = channel.unary_unary(
+                '/zrchain.treasury.Query/ZenbtcWallets',
+                request_serializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -153,6 +158,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ZenbtcWallets(self, request, context):
+        """Queries a list of ZenbtcWallets items.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -210,6 +222,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.KeyByAddress,
                     request_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressRequest.FromString,
                     response_serializer=zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressResponse.SerializeToString,
+            ),
+            'ZenbtcWallets': grpc.unary_unary_rpc_method_handler(
+                    servicer.ZenbtcWallets,
+                    request_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.FromString,
+                    response_serializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -406,5 +423,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.treasury.Query/KeyByAddress',
             zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressRequest.SerializeToString,
             zrchain_dot_treasury_dot_query__pb2.QueryKeyByAddressResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ZenbtcWallets(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.treasury.Query/ZenbtcWallets',
+            zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.SerializeToString,
+            zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -47,7 +47,7 @@ func NewTreasuryTxClient(c *RawTxClient) *TreasuryTxClient {
 // CLI equivalent:
 // zenrockd tx treasury new-key-request workspace14a2hpadpsy9h4auve2z8lw keyring1pfnq7r04rept47gaf5cpdew2 bitcoin --from alice --chain-id zenrock -y
 func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, keyring string, keyType string) (string, error) {
-	msg := types.NewMsgNewKeyRequest(c.c.Identity.Address.String(), workspace, keyring, keyType, 0, 0)
+	msg := types.NewMsgNewKeyRequest(c.c.Identity.Address.String(), workspace, keyring, keyType, 0, 0, 0)
 	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
 	if err != nil {
 		return "", err

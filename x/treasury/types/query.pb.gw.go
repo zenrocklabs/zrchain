@@ -918,7 +918,7 @@ func local_request_Query_KeyByAddress_0(ctx context.Context, marshaler runtime.M
 }
 
 var (
-	filter_Query_ZenbtcWallets_0 = &utilities.DoubleArray{Encoding: map[string]int{"recipientAddr": 0, "chainType": 1, "chainId": 2, "returnAddr": 3}, Base: []int{1, 1, 2, 3, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 2, 3, 4, 5}}
+	filter_Query_ZenbtcWallets_0 = &utilities.DoubleArray{Encoding: map[string]int{"recipient_addr": 0, "chain_type": 1, "mint_chain_id": 2, "return_addr": 3}, Base: []int{1, 1, 2, 3, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 2, 3, 4, 5}}
 )
 
 func request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -933,50 +933,50 @@ func request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marsha
 		_   = err
 	)
 
-	val, ok = pathParams["recipientAddr"]
+	val, ok = pathParams["recipient_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipientAddr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipient_addr")
 	}
 
 	protoReq.RecipientAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipientAddr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipient_addr", err)
 	}
 
-	val, ok = pathParams["chainType"]
+	val, ok = pathParams["chain_type"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainType")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_type")
 	}
 
 	e, err = runtime.Enum(val, WalletType_value)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainType", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_type", err)
 	}
 
 	protoReq.ChainType = WalletType(e)
 
-	val, ok = pathParams["chainId"]
+	val, ok = pathParams["mint_chain_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "mint_chain_id")
 	}
 
 	protoReq.MintChainId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "mint_chain_id", err)
 	}
 
-	val, ok = pathParams["returnAddr"]
+	val, ok = pathParams["return_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "returnAddr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "return_addr")
 	}
 
 	protoReq.ReturnAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "returnAddr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "return_addr", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -1003,50 +1003,50 @@ func local_request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.
 		_   = err
 	)
 
-	val, ok = pathParams["recipientAddr"]
+	val, ok = pathParams["recipient_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipientAddr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipient_addr")
 	}
 
 	protoReq.RecipientAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipientAddr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipient_addr", err)
 	}
 
-	val, ok = pathParams["chainType"]
+	val, ok = pathParams["chain_type"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainType")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_type")
 	}
 
 	e, err = runtime.Enum(val, WalletType_value)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainType", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_type", err)
 	}
 
 	protoReq.ChainType = WalletType(e)
 
-	val, ok = pathParams["chainId"]
+	val, ok = pathParams["mint_chain_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chainId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "mint_chain_id")
 	}
 
 	protoReq.MintChainId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chainId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "mint_chain_id", err)
 	}
 
-	val, ok = pathParams["returnAddr"]
+	val, ok = pathParams["return_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "returnAddr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "return_addr")
 	}
 
 	protoReq.ReturnAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "returnAddr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "return_addr", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -1650,7 +1650,7 @@ var (
 
 	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"zrchain", "v4", "treasury", "key_by_address"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v5", "treasury", "zenbtc_wallets", "recipientAddr", "chainType", "chainId", "returnAddr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v5", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
