@@ -604,6 +604,15 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
+func (k *Keeper) getZenBTCKeyIDs(ctx context.Context) []uint64 {
+	return []uint64{
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+	}
+}
+
 func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce uint64) error {
 	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
