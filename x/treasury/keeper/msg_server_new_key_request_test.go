@@ -74,7 +74,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
 				KeyType:       types.KeyType_KEY_TYPE_EDDSA_ED25519,
 				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING,
-				MpcBtl:        10,
+				MpcBtl:        11,
 			},
 			want: &types.MsgNewKeyRequestResponse{KeyReqId: 1},
 		},
