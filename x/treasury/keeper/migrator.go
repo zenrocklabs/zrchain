@@ -20,8 +20,7 @@ func NewMigrator(keeper Keeper) *Migrator {
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	ctx.Logger().With("module", types.ModuleName).Info("starting migration to v2")
 
-	err := v2.ChangeKeyIdtoKeyIds(ctx, m.keeper.SignRequestStore, m.keeper.cdc)
-	if err != nil {
+	if err := v2.ChangeKeyIdtoKeyIds(ctx, m.keeper.SignRequestStore, m.keeper.cdc); err != nil {
 		ctx.Logger().With("error", err).Error("failed to migrate treasury module")
 		return err
 	}
@@ -32,8 +31,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	ctx.Logger().With("module", types.ModuleName).Info("starting migration to v3")
 
-	err := v3.ChangeZenBtcMetadataChainIdtoCaip2Id(ctx, m.keeper.KeyStore, m.keeper.KeyRequestStore, m.keeper.cdc)
-	if err != nil {
+	if err := v3.RejectBadTestnetRequests(ctx, m.keeper.SignRequestStore, m.keeper.cdc); err != nil {
 		ctx.Logger().With("error", err).Error("failed to migrate treasury module")
 		return err
 	}
