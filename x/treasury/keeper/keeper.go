@@ -448,9 +448,17 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 }
 
 func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNewSignTransactionRequest, data []byte) (*types.MsgNewSignTransactionRequestResponse, error) {
+	if data == nil {
+		return nil, fmt.Errorf("data for signing is empty")
+	}
+
 	dataForSigning, err := dataForSigning(string(data))
 	if err != nil {
 		return nil, err
+	}
+
+	if len(dataForSigning) == 0 || dataForSigning[0] == nil {
+		return nil, fmt.Errorf("data for signing is empty")
 	}
 
 	keyIDs := []uint64{msg.KeyId}
