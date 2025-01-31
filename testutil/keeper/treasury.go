@@ -15,13 +15,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
-func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
+func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper types.IdentityKeeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -39,7 +38,7 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		log.NewNopLogger(),
 		authority.String(),
 		bankKeeper,
-		*identityKeeper,
+		identityKeeper,
 		*policyKeeper,
 		nil,
 	)

@@ -11,9 +11,11 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
 	treasuryModule "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	testutil "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -147,13 +149,18 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			db := dbm.NewMemDB()
 			stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
 
 			bkmock := newBankKeeperMock()
+			ikmock := testutil.NewMockIdentityKeeper(ctrl)
 			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
-			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
-			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore)
+			// identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
+			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, ikmock, bkmock, db, stateStore)
 
 			tkGenesis := types.GenesisState{
 				Params: types.DefaultParams(),

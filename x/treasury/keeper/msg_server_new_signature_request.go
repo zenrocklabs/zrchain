@@ -31,15 +31,15 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	signPolicyID := key.SignPolicyId
 
 	if signPolicyID == 0 {
-		ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
-		if err != nil {
-			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, err)
+		ws := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
+		if ws == nil {
+			return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 		}
 		signPolicyID = ws.SignPolicyId
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
-	if err != nil || !keyring.IsActive {
+	keyring := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
+	if keyring == nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
@@ -73,8 +73,8 @@ func (k msgServer) NewSignatureRequestPolicyGenerator(ctx sdk.Context, msg *type
 		return nil, fmt.Errorf("key %v not found", msg.KeyIds[0])
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
-	if err != nil {
+	ws := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
+	if ws == nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
 

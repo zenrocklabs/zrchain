@@ -13,8 +13,8 @@ import (
 func (k msgServer) TransferFromKeyring(goCtx context.Context, msg *types.MsgTransferFromKeyring) (*types.MsgTransferFromKeyringResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, msg.Keyring)
-	if err != nil {
+	keyring := k.identityKeeper.GetKeyring(ctx, msg.Keyring)
+	if keyring == nil {
 		return nil, fmt.Errorf("keyring %s is nil", msg.Keyring)
 	}
 
@@ -26,7 +26,7 @@ func (k msgServer) TransferFromKeyring(goCtx context.Context, msg *types.MsgTran
 		return nil, fmt.Errorf("recipient %s should be admin", msg.Recipient)
 	}
 
-	if err = k.bankKeeper.SendCoins(
+	if err := k.bankKeeper.SendCoins(
 		ctx,
 		sdk.MustAccAddressFromBech32(keyring.Address),
 		sdk.MustAccAddressFromBech32(msg.Recipient),

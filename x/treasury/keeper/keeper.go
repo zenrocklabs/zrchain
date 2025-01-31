@@ -28,7 +28,6 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
@@ -58,7 +57,7 @@ type Keeper struct {
 	capabilityScopedFn func(string) capabilitykeeper.ScopedKeeper
 	scopedKeeper       exported.ScopedKeeper
 	bankKeeper         types.BankKeeper
-	identityKeeper     identity.Keeper
+	identityKeeper     types.IdentityKeeper
 	policyKeeper       policy.Keeper
 	zenBTCKeeper       shared.ZenBTCKeeper
 }
@@ -73,7 +72,7 @@ func NewKeeper(
 	logger log.Logger,
 	authority string,
 	bankKeeper types.BankKeeper,
-	identityKeeper identity.Keeper,
+	identityKeeper types.IdentityKeeper,
 	policyKeeper policy.Keeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 ) Keeper {
@@ -201,7 +200,9 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 		return nil, errorsmod.Wrap(err, "covert wallet type to key type")
 	}
 
-	workspace, err := k.identityKeeper.GetZrSignWorkspace(goCtx, msg.ExtRequester, msg.ExtKeyType)
+	walletType := strconv.FormatUint(msg.ExtKeyType, 10)
+
+	workspace, err := k.identityKeeper.GetZrSignWorkspace(goCtx, msg.ExtRequester, walletType)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "get zr sign workspaces")
 	}
@@ -261,12 +262,12 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 }
 
 func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*types.MsgNewKeyRequestResponse, error) {
-	if _, err := k.identityKeeper.WorkspaceStore.Get(ctx, msg.WorkspaceAddr); err != nil {
+	if workspace := k.identityKeeper.GetWorkspace(ctx, msg.WorkspaceAddr); workspace == nil {
 		return nil, fmt.Errorf("workspace %s not found", msg.WorkspaceAddr)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, msg.KeyringAddr)
-	if err != nil {
+	keyring := k.identityKeeper.GetKeyring(ctx, msg.KeyringAddr)
+	if keyring == nil {
 		return nil, fmt.Errorf("keyring %s not found", msg.KeyringAddr)
 	}
 
@@ -377,8 +378,8 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, err
 		}
 
-		keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
-		if err != nil {
+		keyring := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
+		if keyring == nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
 

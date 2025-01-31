@@ -8,7 +8,9 @@ import (
 	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
+	testutil "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -527,6 +529,13 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 			keepers := keepertest.NewTest(t)
 			ik := keepers.IdentityKeeper
 			ctx := keepers.Ctx
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockIdentityKeeper := testutil.NewMockIdentityKeeper(ctrl)
+			mockIdentityKeeper.EXPECT().GetWorkspace(ctx, tt.args.workspace.Address).Return(tt.args.workspace)
+			mockIdentityKeeper.EXPECT().GetKeyring(ctx, tt.args.keyring.Address).Return(tt.args.keyring)
 
 			genesis := idTypes.GenesisState{
 				PortId:     idTypes.PortID,

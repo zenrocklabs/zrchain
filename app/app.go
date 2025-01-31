@@ -698,7 +698,7 @@ func NewZenrockApp(
 		logger,
 		authAddr,
 		app.BankKeeper,
-		app.IdentityKeeper,
+		nil,
 		app.PolicyKeeper,
 		app.ZenBTCKeeper,
 	)
