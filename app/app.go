@@ -1327,6 +1327,7 @@ func BlockedAddresses() map[string]bool {
 	// allow the following addresses to receive funds
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	delete(modAccAddrs, authtypes.NewModuleAddress(minttypes.ModuleName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(zentptypes.ModuleName).String())
 
 	return modAccAddrs
 }
