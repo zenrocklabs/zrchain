@@ -29,7 +29,7 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.zentp import params_pb2 as zrchain_dot_zentp_dot_params__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zentp/tx.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zentp/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zentp/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse2d\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zentp.MsgUpdateParams\x1a&.zrchain.zentp.MsgUpdateParamsResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v5/x/zentp/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zentp/tx.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zentp/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zentp/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\xf1\x01\n\x0bMsgMintRock\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x16\n\x06\x61mount\x18\x02 \x01(\x04R\x06\x61mount\x12\"\n\rsource_key_id\x18\x03 \x01(\x04R\x0bsourceKeyId\x12 \n\x0b\x64\x65stination\x18\x04 \x01(\tR\x0b\x64\x65stination\x12\x1c\n\trecipient\x18\x05 \x01(\x04R\trecipient:.\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1bzrchain/x/zentp/MsgMintRock\"\x15\n\x13MsgMintRockResponse2\xb0\x01\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zentp.MsgUpdateParams\x1a&.zrchain.zentp.MsgUpdateParamsResponse\x12J\n\x08MintRock\x12\x1a.zrchain.zentp.MsgMintRock\x1a\".zrchain.zentp.MsgMintRockResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v5/x/zentp/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,12 +43,20 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MSGUPDATEPARAMS'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_MSGUPDATEPARAMS']._loaded_options = None
   _globals['_MSGUPDATEPARAMS']._serialized_options = b'\202\347\260*\tauthority\212\347\260*\037zrchain/x/zentp/MsgUpdateParams'
+  _globals['_MSGMINTROCK'].fields_by_name['authority']._loaded_options = None
+  _globals['_MSGMINTROCK'].fields_by_name['authority']._serialized_options = b'\322\264-\024cosmos.AddressString'
+  _globals['_MSGMINTROCK']._loaded_options = None
+  _globals['_MSGMINTROCK']._serialized_options = b'\202\347\260*\tauthority\212\347\260*\033zrchain/x/zentp/MsgMintRock'
   _globals['_MSG']._loaded_options = None
   _globals['_MSG']._serialized_options = b'\200\347\260*\001'
   _globals['_MSGUPDATEPARAMS']._serialized_start=163
   _globals['_MSGUPDATEPARAMS']._serialized_end=346
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_start=348
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_end=373
-  _globals['_MSG']._serialized_start=375
-  _globals['_MSG']._serialized_end=475
+  _globals['_MSGMINTROCK']._serialized_start=376
+  _globals['_MSGMINTROCK']._serialized_end=617
+  _globals['_MSGMINTROCKRESPONSE']._serialized_start=619
+  _globals['_MSGMINTROCKRESPONSE']._serialized_end=640
+  _globals['_MSG']._serialized_start=643
+  _globals['_MSG']._serialized_end=819
 # @@protoc_insertion_point(module_scope)

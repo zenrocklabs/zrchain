@@ -530,3 +530,11 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 
 	return err
 }
+
+func (k Keeper) GetKey(ctx sdk.Context, keyID uint64) (*types.Key, error) {
+	key, err := k.KeyStore.Get(ctx, keyID)
+	if err != nil {
+		return nil, fmt.Errorf("key with ID %d not found: %w", keyID, err)
+	}
+	return &key, nil
+}

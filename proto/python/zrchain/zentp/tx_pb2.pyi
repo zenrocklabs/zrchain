@@ -20,3 +20,21 @@ class MsgUpdateParams(_message.Message):
 class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgMintRock(_message.Message):
+    __slots__ = ("authority", "amount", "source_key_id", "destination", "recipient")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    DESTINATION_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    amount: int
+    source_key_id: int
+    destination: str
+    recipient: int
+    def __init__(self, authority: _Optional[str] = ..., amount: _Optional[int] = ..., source_key_id: _Optional[int] = ..., destination: _Optional[str] = ..., recipient: _Optional[int] = ...) -> None: ...
+
+class MsgMintRockResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

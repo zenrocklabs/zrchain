@@ -718,6 +718,8 @@ func NewZenrockApp(
 		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
 		logger,
 		authAddr,
+		app.TreasuryKeeper,
+		app.BankKeeper,
 	)
 
 	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)

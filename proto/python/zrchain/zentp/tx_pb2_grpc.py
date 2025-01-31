@@ -20,6 +20,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
+        self.MintRock = channel.unary_unary(
+                '/zrchain.zentp.Msg/MintRock',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -34,6 +39,12 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def MintRock(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -41,6 +52,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.UpdateParams,
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
+            ),
+            'MintRock': grpc.unary_unary_rpc_method_handler(
+                    servicer.MintRock,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -67,5 +83,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/UpdateParams',
             zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.SerializeToString,
             zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def MintRock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/MintRock',
+            zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
