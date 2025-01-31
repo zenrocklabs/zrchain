@@ -21,7 +21,10 @@ type MsgClient interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// MintRock defines an operation for creating a mint request of Rock
+	// on a destination chain
 	MintRock(ctx context.Context, in *MsgMintRock, opts ...grpc.CallOption) (*MsgMintRockResponse, error)
+	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
 }
 
@@ -67,7 +70,10 @@ type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// MintRock defines an operation for creating a mint request of Rock
+	// on a destination chain
 	MintRock(context.Context, *MsgMintRock) (*MsgMintRockResponse, error)
+	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }

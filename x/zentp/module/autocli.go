@@ -39,10 +39,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod:      "Burn",
-					Use:            "burn [address] [denom] [amount]",
-					Short:          "Send a burn tx",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "address"}, {ProtoField: "denom"}, {ProtoField: "amount"}},
+					RpcMethod: "Burn",
+					Skip:      true, // skipped because authority gated
 				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},

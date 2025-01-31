@@ -873,7 +873,7 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 
 var (
 	md_MsgMintRock               protoreflect.MessageDescriptor
-	fd_MsgMintRock_authority     protoreflect.FieldDescriptor
+	fd_MsgMintRock_creator       protoreflect.FieldDescriptor
 	fd_MsgMintRock_amount        protoreflect.FieldDescriptor
 	fd_MsgMintRock_source_key_id protoreflect.FieldDescriptor
 	fd_MsgMintRock_destination   protoreflect.FieldDescriptor
@@ -883,7 +883,7 @@ var (
 func init() {
 	file_zrchain_zentp_tx_proto_init()
 	md_MsgMintRock = File_zrchain_zentp_tx_proto.Messages().ByName("MsgMintRock")
-	fd_MsgMintRock_authority = md_MsgMintRock.Fields().ByName("authority")
+	fd_MsgMintRock_creator = md_MsgMintRock.Fields().ByName("creator")
 	fd_MsgMintRock_amount = md_MsgMintRock.Fields().ByName("amount")
 	fd_MsgMintRock_source_key_id = md_MsgMintRock.Fields().ByName("source_key_id")
 	fd_MsgMintRock_destination = md_MsgMintRock.Fields().ByName("destination")
@@ -955,9 +955,9 @@ func (x *fastReflection_MsgMintRock) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_MsgMintRock) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Authority != "" {
-		value := protoreflect.ValueOfString(x.Authority)
-		if !f(fd_MsgMintRock_authority, value) {
+	if x.Creator != "" {
+		value := protoreflect.ValueOfString(x.Creator)
+		if !f(fd_MsgMintRock_creator, value) {
 			return
 		}
 	}
@@ -1000,8 +1000,8 @@ func (x *fastReflection_MsgMintRock) Range(f func(protoreflect.FieldDescriptor, 
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_MsgMintRock) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
-		return x.Authority != ""
+	case "zrchain.zentp.MsgMintRock.creator":
+		return x.Creator != ""
 	case "zrchain.zentp.MsgMintRock.amount":
 		return x.Amount != uint64(0)
 	case "zrchain.zentp.MsgMintRock.source_key_id":
@@ -1026,8 +1026,8 @@ func (x *fastReflection_MsgMintRock) Has(fd protoreflect.FieldDescriptor) bool {
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgMintRock) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
-		x.Authority = ""
+	case "zrchain.zentp.MsgMintRock.creator":
+		x.Creator = ""
 	case "zrchain.zentp.MsgMintRock.amount":
 		x.Amount = uint64(0)
 	case "zrchain.zentp.MsgMintRock.source_key_id":
@@ -1052,8 +1052,8 @@ func (x *fastReflection_MsgMintRock) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_MsgMintRock) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
-		value := x.Authority
+	case "zrchain.zentp.MsgMintRock.creator":
+		value := x.Creator
 		return protoreflect.ValueOfString(value)
 	case "zrchain.zentp.MsgMintRock.amount":
 		value := x.Amount
@@ -1087,8 +1087,8 @@ func (x *fastReflection_MsgMintRock) Get(descriptor protoreflect.FieldDescriptor
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgMintRock) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
-		x.Authority = value.Interface().(string)
+	case "zrchain.zentp.MsgMintRock.creator":
+		x.Creator = value.Interface().(string)
 	case "zrchain.zentp.MsgMintRock.amount":
 		x.Amount = value.Uint()
 	case "zrchain.zentp.MsgMintRock.source_key_id":
@@ -1117,8 +1117,8 @@ func (x *fastReflection_MsgMintRock) Set(fd protoreflect.FieldDescriptor, value 
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgMintRock) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
-		panic(fmt.Errorf("field authority of message zrchain.zentp.MsgMintRock is not mutable"))
+	case "zrchain.zentp.MsgMintRock.creator":
+		panic(fmt.Errorf("field creator of message zrchain.zentp.MsgMintRock is not mutable"))
 	case "zrchain.zentp.MsgMintRock.amount":
 		panic(fmt.Errorf("field amount of message zrchain.zentp.MsgMintRock is not mutable"))
 	case "zrchain.zentp.MsgMintRock.source_key_id":
@@ -1140,7 +1140,7 @@ func (x *fastReflection_MsgMintRock) Mutable(fd protoreflect.FieldDescriptor) pr
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_MsgMintRock) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgMintRock.authority":
+	case "zrchain.zentp.MsgMintRock.creator":
 		return protoreflect.ValueOfString("")
 	case "zrchain.zentp.MsgMintRock.amount":
 		return protoreflect.ValueOfUint64(uint64(0))
@@ -1219,7 +1219,7 @@ func (x *fastReflection_MsgMintRock) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.Authority)
+		l = len(x.Creator)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -1287,10 +1287,10 @@ func (x *fastReflection_MsgMintRock) ProtoMethods() *protoiface.Methods {
 			i--
 			dAtA[i] = 0x10
 		}
-		if len(x.Authority) > 0 {
-			i -= len(x.Authority)
-			copy(dAtA[i:], x.Authority)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+		if len(x.Creator) > 0 {
+			i -= len(x.Creator)
+			copy(dAtA[i:], x.Creator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Creator)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1345,7 +1345,7 @@ func (x *fastReflection_MsgMintRock) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1373,7 +1373,7 @@ func (x *fastReflection_MsgMintRock) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Authority = string(dAtA[iNdEx:postIndex])
+				x.Creator = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 0 {
@@ -2900,8 +2900,7 @@ type MsgMintRock struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
-	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	// amount is the amount to mint  on the destination chain
 	Amount      uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
 	SourceKeyId uint64 `protobuf:"varint,3,opt,name=source_key_id,json=sourceKeyId,proto3" json:"source_key_id,omitempty"`
@@ -2931,9 +2930,9 @@ func (*MsgMintRock) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_tx_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MsgMintRock) GetAuthority() string {
+func (x *MsgMintRock) GetCreator() string {
 	if x != nil {
-		return x.Authority
+		return x.Creator
 	}
 	return ""
 }
@@ -2994,6 +2993,7 @@ func (*MsgMintRockResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_tx_proto_rawDescGZIP(), []int{3}
 }
 
+// MsgBurn is the Msg/Burn request type and gated through governance
 type MsgBurn struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3054,6 +3054,8 @@ func (x *MsgBurn) GetAmount() int64 {
 	return 0
 }
 
+// MsgBurnResponse defines the response structure for executing a
+// MsgBurn message.
 type MsgBurnResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3106,22 +3108,18 @@ var file_zrchain_zentp_tx_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x4d, 0x73, 0x67, 0x55, 0x70,
 	0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73,
 	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf1, 0x01, 0x0a, 0x0b, 0x4d, 0x73, 0x67, 0x4d, 0x69, 0x6e,
-	0x74, 0x52, 0x6f, 0x63, 0x6b, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69,
-	0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69,
-	0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x16, 0x0a,
-	0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x22, 0x0a, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f,
-	0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73,
-	0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
-	0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1c, 0x0a, 0x09, 0x72,
-	0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09,
-	0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x3a, 0x2e, 0x82, 0xe7, 0xb0, 0x2a, 0x09,
-	0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x1b, 0x7a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x4d, 0x73,
-	0x67, 0x4d, 0x69, 0x6e, 0x74, 0x52, 0x6f, 0x63, 0x6b, 0x22, 0x15, 0x0a, 0x13, 0x4d, 0x73, 0x67,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xb1, 0x01, 0x0a, 0x0b, 0x4d, 0x73, 0x67, 0x4d, 0x69, 0x6e,
+	0x74, 0x52, 0x6f, 0x63, 0x6b, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12,
+	0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x22, 0x0a, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x64,
+	0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1c, 0x0a,
+	0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x3a, 0x0c, 0x82, 0xe7, 0xb0,
+	0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x15, 0x0a, 0x13, 0x4d, 0x73, 0x67,
 	0x4d, 0x69, 0x6e, 0x74, 0x52, 0x6f, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x22, 0xc6, 0x01, 0x0a, 0x07, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x36, 0x0a, 0x09,
 	0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
