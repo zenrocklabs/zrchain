@@ -38,6 +38,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "recipient"},
 					},
 				},
+				{
+					RpcMethod: "Burn",
+					Skip:      true, // skipped because authority gated
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},

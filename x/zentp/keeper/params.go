@@ -5,9 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 
-    "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
 )
-
 
 // GetParams get all parameters as types.Params
 func (k Keeper) GetParams(ctx context.Context) (params types.Params) {
