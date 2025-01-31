@@ -62,7 +62,15 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", msg.KeyringAddr)
 	}
 
-	k.policyKeeper.PolicyStore.Get(ctx, ws.SignPolicyId)
+	if msg.ZenbtcMetadata != nil && msg.ZenbtcMetadata.ChainId != 17000 { // TODO: add other chainIDs before zenBTC mainnet upgrade
+		return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
+	}
+
+	// TODO: do we want to have this check below?
+	// if _, err := k.policyKeeper.PolicyStore.Get(ctx, ws.SignPolicyId); err != nil {
+	// 	return nil, err
+	// }
+
 	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.SignPolicyId, msg.Btl, nil)
 	if err != nil {
 		return nil, err
