@@ -38,6 +38,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "recipient"},
 					},
 				},
+				{
+					RpcMethod:      "Burn",
+					Use:            "burn [address] [denom] [amount]",
+					Short:          "Send a burn tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "address"}, {ProtoField: "denom"}, {ProtoField: "amount"}},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},

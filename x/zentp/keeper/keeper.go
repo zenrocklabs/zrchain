@@ -22,6 +22,7 @@ type (
 		authority      string
 		treasuryKeeper types.TreasuryKeeper
 		bankKeeper     types.BankKeeper
+		accountKeeper  types.AccountKeeper
 	}
 )
 
@@ -32,10 +33,14 @@ func NewKeeper(
 	authority string,
 	treasuryKeeper types.TreasuryKeeper,
 	bankKeeper types.BankKeeper,
-
+	accountKeeper types.AccountKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
+	}
+	// ensure mint module account is set
+	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("the x/%s module account has not been set", types.ModuleName))
 	}
 
 	return Keeper{
@@ -45,6 +50,7 @@ func NewKeeper(
 		logger:         logger,
 		treasuryKeeper: treasuryKeeper,
 		bankKeeper:     bankKeeper,
+		accountKeeper:  accountKeeper,
 	}
 }
 

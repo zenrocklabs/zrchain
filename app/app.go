@@ -720,6 +720,7 @@ func NewZenrockApp(
 		authAddr,
 		app.TreasuryKeeper,
 		app.BankKeeper,
+		app.AccountKeeper,
 	)
 
 	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)
