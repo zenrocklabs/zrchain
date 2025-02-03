@@ -254,6 +254,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
 
+		k.processZenBTCStaking(ctx, oracleData)
+
 		k.processZenBTCMints(ctx, oracleData)
 
 		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
@@ -552,6 +554,123 @@ func (k *Keeper) checkForBitcoinReorg(
 	return nil
 }
 
+func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx))
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx))
+	if err != nil {
+		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
+		return
+	}
+
+	k.Logger(ctx).Info("lastUsedNonce", "nonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "requested_nonce", oracleData.RequestedStakerNonce)
+
+	if lastUsedNonce.Nonce != 0 && oracleData.RequestedStakerNonce == 0 {
+		return
+	}
+
+	var lastMintTx zenbtctypes.PendingMintTransaction
+	var pendingMintTx zenbtctypes.PendingMintTransaction
+	foundFirstDeposited := false
+
+	if err := k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, pendingMintTransaction zenbtctypes.PendingMintTransaction) (stop bool, err error) {
+		if pendingMintTransaction.Status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
+			if !foundFirstDeposited {
+				lastMintTx = pendingMintTransaction
+				foundFirstDeposited = true
+			} else {
+				pendingMintTx = pendingMintTransaction
+				return true, nil
+			}
+		}
+		return false, nil
+	}); err != nil {
+		k.Logger(ctx).Error("error walking pending mint transactions", "err", err)
+		return
+	}
+
+	// remove last pending tx + update supply (after nonce updated indicating successful mint)
+	if oracleData.RequestedStakerNonce != lastUsedNonce.PrevNonce {
+		k.Logger(ctx).Warn("nonce updated", "nonce", oracleData.RequestedStakerNonce, "last_used_nonce", lastUsedNonce.Nonce)
+
+		lastMintTx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
+		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, lastMintTx); err != nil {
+			k.Logger(ctx).Error("error setting pending stake transactions", "err", err)
+			return
+		}
+
+		k.Logger(ctx).Warn("updated stake transaction", "tx", fmt.Sprintf("%+v", lastMintTx))
+
+		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "err", err)
+			return
+		}
+
+		if reflect.DeepEqual(pendingMintTx, zenbtctypes.PendingMintTransaction{}) {
+			if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), false); err != nil {
+				k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
+			} else {
+				k.Logger(ctx).Warn("set EthereumNonceRequested state to false")
+			}
+			return
+		}
+	}
+
+	if lastUsedNonce.Skip {
+		return
+	}
+
+	k.Logger(ctx).Warn("processing zenBTC stake", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedStakerNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+
+	unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
+		ctx,
+		pendingMintTx.Caip2ChainId,
+		pendingMintTx.Amount,
+		oracleData.RequestedStakerNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing stake transaction", "err", err)
+		return
+	}
+
+	chainId, err := types.ExtractEVMChainID(pendingMintTx.Caip2ChainId)
+	if err != nil {
+		k.Logger(ctx).Error("error extracting chainId from CAIP-2", "err", err)
+	}
+
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainId})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "err", err)
+		return
+	}
+
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             pendingMintTx.Creator,
+			KeyId:               pendingMintTx.KeyId,
+			WalletType:          treasurytypes.WalletType(pendingMintTx.ChainType),
+			UnsignedTransaction: unsignedStakeTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedStakeTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating stake transaction", "err", err)
+	}
+}
+
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx))
 	if err != nil && !errors.Is(err, collections.ErrNotFound) {
@@ -576,13 +695,13 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	var lastMintTx zenbtctypes.PendingMintTransaction
 	var pendingMintTx zenbtctypes.PendingMintTransaction
-	foundFirstDeposited := false
+	foundFirstStaked := false
 
 	if err := k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, pendingMintTransaction zenbtctypes.PendingMintTransaction) (stop bool, err error) {
-		if pendingMintTransaction.Status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
-			if !foundFirstDeposited {
+		if pendingMintTransaction.Status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
+			if !foundFirstStaked {
 				lastMintTx = pendingMintTransaction
-				foundFirstDeposited = true
+				foundFirstStaked = true
 			} else {
 				pendingMintTx = pendingMintTransaction
 				return true, nil
@@ -614,13 +733,13 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		k.Logger(ctx).Warn("pending mint supply updated", "pending_mint_old", supply.PendingZenBTC+lastMintTx.Amount, "pending_mint_new", supply.PendingZenBTC)
 		k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC-lastMintTx.Amount, "minted_new", supply.MintedZenBTC)
 
-		lastMintTx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
+		lastMintTx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
 		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, lastMintTx); err != nil {
 			k.Logger(ctx).Error("error setting pending mint transactions", "err", err)
 			return
 		}
 
-		k.Logger(ctx).Warn("removed mint transaction", "tx", fmt.Sprintf("%+v", lastMintTx))
+		k.Logger(ctx).Warn("updated mint transaction", "tx", fmt.Sprintf("%+v", lastMintTx))
 
 		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
 		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), lastUsedNonce); err != nil {
@@ -642,20 +761,20 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	// exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
-	// 	return
-	// }
+	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
+		return
+	}
 
-	// feeZenBTC := k.CalculateZenBTCMintFee(
-	// 	oracleData.EthBaseFee,
-	// 	oracleData.EthTipCap,
-	// 	oracleData.EthGasLimit,
-	// 	oracleData.BTCUSDPrice,
-	// 	oracleData.ETHUSDPrice,
-	// 	exchangeRate,
-	// )
+	feeZenBTC := k.CalculateZenBTCMintFee(
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+		oracleData.EthGasLimit,
+		oracleData.BTCUSDPrice,
+		oracleData.ETHUSDPrice,
+		exchangeRate,
+	)
 
 	if oracleData.BTCUSDPrice.IsZero() {
 		return
@@ -665,9 +784,11 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
+		pendingMintTx.RecipientAddress,
 		pendingMintTx.Caip2ChainId,
 		pendingMintTx.Amount,
-		oracleData.RequestedEthMinterNonce,
+		feeZenBTC,
+		oracleData.RequestedStakerNonce,
 		oracleData.EthGasLimit,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,

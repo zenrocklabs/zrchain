@@ -430,8 +430,22 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func (k *Keeper) constructMintTx(ctx context.Context, caip2ChainID string, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructStakeTx(ctx context.Context, caip2ChainID string, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeStakeCallData(new(big.Int).SetUint64(amount))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+}
+
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainID string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -481,29 +495,29 @@ func EncodeStakeCallData(amount *big.Int) ([]byte, error) {
 	return data, nil
 }
 
-// func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
-// 	if !amount.IsUint64() {
-// 		return nil, fmt.Errorf("amount exceeds uint64 max value")
-// 	}
+func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+	if !amount.IsUint64() {
+		return nil, fmt.Errorf("amount exceeds uint64 max value")
+	}
 
-// 	parsed, err := bindings.ZenBTCMetaData.GetAbi()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to get ABI: %v", err)
-// 	}
+	parsed, err := bindings.ZenBTCMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
 
-// 	// Pack using the contract binding's ABI for the wrap function
-// 	data, err := parsed.Pack(
-// 		"wrap",
-// 		recipientAddr,
-// 		amount.Uint64(),
-// 		fee,
-// 	)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
-// 	}
+	// Pack using the contract binding's ABI for the wrap function
+	data, err := parsed.Pack(
+		"wrap",
+		recipientAddr,
+		amount.Uint64(),
+		fee,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
+	}
 
-// 	return data, nil
-// }
+	return data, nil
+}
 
 func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
 	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
