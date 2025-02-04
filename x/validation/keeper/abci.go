@@ -654,18 +654,18 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap, "chain_id", pendingMintTx.ChainId)
+	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap, "chain_id", pendingMintTx.Caip2ChainId)
 
 	// TODO: whitelist more chain IDs before mainnet upgrade
-	if pendingMintTx.ChainId != 17000 {
-		k.Logger(ctx).Error("invalid chain ID", "chain_id", pendingMintTx.ChainId)
+	if pendingMintTx.Caip2ChainId != "eip155:17000" {
+		k.Logger(ctx).Error("invalid chain ID", "chain_id", pendingMintTx.Caip2ChainId)
 		return
 	}
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
 		pendingMintTx.RecipientAddress,
-		pendingMintTx.ChainId,
+		pendingMintTx.Caip2ChainId,
 		pendingMintTx.Amount,
 		// feeZenBTC,
 		0, // TODO: replace with feeZenBTC before mainnet upgrade
@@ -679,7 +679,12 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: pendingMintTx.ChainId})
+	chainId, err := types.ExtractEVMChainID(pendingMintTx.Caip2ChainId)
+	if err != nil {
+		k.Logger(ctx).Error("error extracting chainId from CAIP-2", "err", err)
+	}
+
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainId})
 	if err != nil {
 		k.Logger(ctx).Error("error creating metadata", "err", err)
 		return
@@ -853,8 +858,8 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	// Create and sign new unstake transaction
 	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 		ctx,
+		"eip155:17000", // TODO: make this dynamic with a switch based on ctx.ChainID() before mainnet upgrade
 		redemption.Data.Id,
-		17000, // TODO: make this dynamic with a switch based on ctx.ChainID() before mainnet upgrade
 		oracleData.RequestedEthUnstakerNonce,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
