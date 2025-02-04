@@ -8,7 +8,7 @@ import (
 
 var _ sdk.Msg = &MsgBurnRock{}
 
-func NewMsgBurnRock(creator string, chainId string, keyId int32, amount int32, recipient string) *MsgBurnRock {
+func NewMsgBurnRock(creator string, chainId string, keyId uint64, amount uint64, recipient string) *MsgBurnRock {
 	return &MsgBurnRock{
 		Creator:   creator,
 		ChainId:   chainId,
