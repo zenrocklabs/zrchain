@@ -984,7 +984,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return
 	}
 	if !found {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), false); err != nil {
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), false); err != nil {
 			k.Logger(ctx).Error("error updating nonce request state", "err", err)
 		}
 		return
@@ -998,7 +998,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			return
 		}
 		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
-		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), lastUsedNonce); err != nil {
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), lastUsedNonce); err != nil {
 			k.Logger(ctx).Error("error updating nonce state", "err", err)
 		}
 		return
@@ -1026,7 +1026,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return
 	}
 
-	creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 	if err != nil {
 		k.Logger(ctx).Error("error getting creator address", "err", err)
 		return
@@ -1036,7 +1036,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             creator,
-			KeyId:               k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+			KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
 			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
 			UnsignedTransaction: unsignedTx,
 			Metadata:            metadata,
