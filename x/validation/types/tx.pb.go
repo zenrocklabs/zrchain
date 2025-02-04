@@ -1170,6 +1170,7 @@ func _Msg_UpdateHVParams_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.validation.Msg",
 	HandlerType: (*MsgServer)(nil),

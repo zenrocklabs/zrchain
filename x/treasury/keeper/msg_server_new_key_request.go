@@ -12,6 +12,7 @@ import (
 	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -62,8 +63,18 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", msg.KeyringAddr)
 	}
 
-	if msg.ZenbtcMetadata != nil && msg.ZenbtcMetadata.ChainId != 17000 { // TODO: add other chainIDs before zenBTC mainnet upgrade
-		return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
+	if metadata := msg.ZenbtcMetadata; metadata != nil {
+		// TODO: add other chainIDs before zenBTC mainnet upgrade
+		if metadata.ChainId != 17000 {
+			return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
+		}
+		// TODO: add alternate check for Solana address format
+		if metadata.RecipientAddr == "" || !common.IsHexAddress(metadata.RecipientAddr) {
+			return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
+		}
+		if metadata.ChainType == types.WalletType_WALLET_TYPE_UNSPECIFIED {
+			return nil, fmt.Errorf("unsupported chain type for zenBTC deposit key")
+		}
 	}
 
 	// TODO: do we want to have this check below?
