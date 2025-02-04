@@ -61,25 +61,25 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 }
 
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
-	avsDelegationsHash, err := deriveAVSContractStateHash(oracleData.EigenDelegationsMap)
+	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
 
-	ethereumRedemptionsHash, err := deriveRedemptionsHash(oracleData.EthereumRedemptions)
+	ethBurnEventsHash, err := deriveHash(oracleData.EthBurnEvents)
 	if err != nil {
-		return VoteExtension{}, fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
+		return VoteExtension{}, fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-	solanaRedemptionsHash, err := deriveRedemptionsHash(oracleData.SolanaRedemptions)
+	ethereumRedemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
-		return VoteExtension{}, fmt.Errorf("error deriving solana redemptions hash: %w", err)
+		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
 
 	neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	bitcoinHeaderHash, err := deriveBitcoinHeaderHash(neutrinoResponse.BlockHeader)
+	bitcoinHeaderHash, err := deriveHash(neutrinoResponse.BlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
 	}
@@ -108,8 +108,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		BTCUSDPrice:                oracleData.BTCUSDPrice,
 		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
-		EthereumRedemptionsHash:    ethereumRedemptionsHash[:],
-		SolanaRedemptionsHash:      solanaRedemptionsHash[:],
+		EthBurnEventsHash:          ethBurnEventsHash[:],
+		RedemptionsHash:            ethereumRedemptionsHash[:],
 		BtcBlockHeight:             neutrinoResponse.BlockHeight,
 		BtcHeaderHash:              bitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
@@ -248,7 +248,9 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 
-	k.storeNewZenBTCRedemptionsEthereum(ctx, oracleData)
+	k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
+
+	k.storeNewZenBTCRedemptions(ctx, oracleData)
 
 	// Toggle minting + unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency
 	if ctx.BlockHeight()%2 == 0 {
@@ -258,7 +260,9 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 		k.processZenBTCMints(ctx, oracleData)
 
-		k.processZenBTCRedemptionsEthereum(ctx, oracleData)
+		k.processZenBTCBurnEvents(ctx, oracleData)
+
+		k.processZenBTCRedemptions(ctx, oracleData)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -825,7 +829,35 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
-func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
+	// Retrieve the current burn events from the store
+	burnEvents, err := k.zenBTCKeeper.GetBurnEvents(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		return
+	}
+
+	// Loop over each burn event from oracle to check for new ones
+	for _, burn := range oracleData.EthBurnEvents {
+		exists := false
+		newBurn := zenbtctypes.BurnEvent(burn)
+		for _, existingBurn := range burnEvents.Events {
+			if reflect.DeepEqual(newBurn, *existingBurn) {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			burnEvents.Events = append(burnEvents.Events, &newBurn)
+		}
+	}
+
+	if err := k.zenBTCKeeper.SetBurnEvents(ctx, burnEvents); err != nil {
+		k.Logger(ctx).Error("error setting burn events", "err", err)
+	}
+}
+
+func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
 	// First, find the first INITIATED redemption
 	var firstInitiatedRedemption zenbtctypes.Redemption
 	var found bool
@@ -845,7 +877,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	// If we found an INITIATED redemption, check if it exists in oracleData
 	if found {
 		redemptionExists := false
-		for _, redemption := range oracleData.EthereumRedemptions {
+		for _, redemption := range oracleData.Redemptions {
 			if redemption.Id == firstInitiatedRedemption.Data.Id {
 				redemptionExists = true
 				break
@@ -862,7 +894,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 		}
 	}
 
-	if len(oracleData.EthereumRedemptions) == 0 {
+	if len(oracleData.Redemptions) == 0 {
 		return
 	}
 
@@ -875,7 +907,7 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 
 	foundNewRedemption := false
 
-	for _, redemption := range oracleData.EthereumRedemptions {
+	for _, redemption := range oracleData.Redemptions {
 		redemptionExists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id)
 		if err != nil {
 			k.Logger(ctx).Error("error checking redemption existence", "err", err)
@@ -906,15 +938,15 @@ func (k *Keeper) storeNewZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData O
 	}
 
 	if foundNewRedemption {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), true); err != nil {
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
 			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
 		}
 	}
 }
 
-func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
 	// Check if we should process redemptions
-	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx))
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
 	if err != nil && !errors.Is(err, collections.ErrNotFound) {
 		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
 		return
@@ -924,7 +956,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	}
 
 	// Get last used nonce state
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx))
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
 	if err != nil {
 		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
 		return
@@ -975,7 +1007,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 	k.Logger(ctx).Warn("processing zenBTC unstake", "id", redemption.Data.Id, "nonce", oracleData.RequestedUnstakerNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
 	// Create and sign new unstake transaction
-	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
 		ctx,
 		"eip155:17000", // TODO: make this dynamic
 		redemption.Data.Id,
@@ -1017,7 +1049,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 }
 
 func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
-	eigenDelegationsHash, err := deriveAVSContractStateHash(oracleData.EigenDelegationsMap)
+	eigenDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
@@ -1025,20 +1057,20 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("AVS contract delegation state hash mismatch, expected %x, got %x", voteExt.EigenDelegationsHash, eigenDelegationsHash)
 	}
 
-	ethereumRedemptionsHash, err := deriveRedemptionsHash(oracleData.EthereumRedemptions)
+	ethBurnEventsHash, err := deriveHash(oracleData.EthBurnEvents)
 	if err != nil {
-		return fmt.Errorf("error deriving ethereum redemptions hash: %w", err)
+		return fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-	if !bytes.Equal(voteExt.EthereumRedemptionsHash, ethereumRedemptionsHash[:]) {
-		return fmt.Errorf("ethereum redemptions hash mismatch, expected %x, got %x", voteExt.EthereumRedemptionsHash, ethereumRedemptionsHash)
+	if !bytes.Equal(voteExt.EthBurnEventsHash, ethBurnEventsHash[:]) {
+		return fmt.Errorf("ethereum burn events hash mismatch, expected %x, got %x", voteExt.EthBurnEventsHash, ethBurnEventsHash)
 	}
 
-	solanaRedemptionsHash, err := deriveRedemptionsHash(oracleData.SolanaRedemptions)
+	ethereumRedemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
-		return fmt.Errorf("error deriving solana redemptions hash: %w", err)
+		return fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
-	if !bytes.Equal(voteExt.SolanaRedemptionsHash, solanaRedemptionsHash[:]) {
-		return fmt.Errorf("solana redemptions hash mismatch, expected %x, got %x", voteExt.SolanaRedemptionsHash, solanaRedemptionsHash)
+	if !bytes.Equal(voteExt.RedemptionsHash, ethereumRedemptionsHash[:]) {
+		return fmt.Errorf("ethereum redemptions hash mismatch, expected %x, got %x", voteExt.RedemptionsHash, ethereumRedemptionsHash)
 	}
 
 	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
@@ -1061,7 +1093,7 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
 	}
 
-	bitcoinHeaderHash, err := deriveBitcoinHeaderHash(&oracleData.BtcBlockHeader)
+	bitcoinHeaderHash, err := deriveHash(&oracleData.BtcBlockHeader)
 	if err != nil {
 		return fmt.Errorf("error deriving bitcoin header hash: %w", err)
 	}

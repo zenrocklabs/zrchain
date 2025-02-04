@@ -46,6 +46,14 @@ message Redemption {
   uint64 amount = 3;
 }
 
+message BurnEvent {
+  string txID = 1;
+  uint64 logIndex = 2;
+  string chainID = 3;
+  string destinationAddr = 4;
+  uint64 amount = 5;
+}
+
 message SidecarStateRequest {}
 
 message SidecarStateResponse {
@@ -55,8 +63,8 @@ message SidecarStateResponse {
   uint64 EthBaseFee = 4;
   uint64 EthTipCap = 5;
   uint64 SolanaLamportsPerSignature = 6;
-  repeated Redemption RedemptionsEthereum = 7 [(gogoproto.nullable) = false];
-  repeated Redemption RedemptionsSolana = 8 [(gogoproto.nullable) = false];
+  repeated BurnEvent EthBurnEvents = 7 [(gogoproto.nullable) = false];
+  repeated Redemption Redemptions = 8 [(gogoproto.nullable) = false];
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;

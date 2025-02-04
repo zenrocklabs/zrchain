@@ -174,8 +174,8 @@ func (o *Oracle) fetchAndProcessState(
 		EthTipCap:  suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
-		RedemptionsEthereum:        redemptionsEthereum,
-		RedemptionsSolana:          nil, // TODO: update me
+		EthBurnEvents:              nil,  // TODO: update me
+		Redemptions:                redemptionsEthereum,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,

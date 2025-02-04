@@ -106,8 +106,8 @@ func (o *Oracle) processUpdates() {
 		newState.EthBaseFee = update.EthBaseFee
 		newState.EthTipCap = update.EthTipCap
 		newState.SolanaLamportsPerSignature = update.SolanaLamportsPerSignature
-		newState.RedemptionsEthereum = update.RedemptionsEthereum
-		newState.RedemptionsSolana = update.RedemptionsSolana
+		newState.Redemptions = update.Redemptions
+		newState.EthBurnEvents = update.EthBurnEvents
 
 		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
 		newState.ROCKUSDPrice = update.ROCKUSDPrice

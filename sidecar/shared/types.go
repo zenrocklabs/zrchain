@@ -13,8 +13,8 @@ type OracleState struct {
 	EthBaseFee                 uint64                         `json:"ethBaseFee"`
 	EthTipCap                  uint64                         `json:"ethTipCap"`
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
-	RedemptionsEthereum        []api.Redemption               `json:"RedemptionsEthereum"`
-	RedemptionsSolana          []api.Redemption               `json:"RedemptionsSolana"`
+	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
+	Redemptions                []api.Redemption               `json:"redemptions"`
 	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
 	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
 	ETHUSDPrice                float64                        `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
