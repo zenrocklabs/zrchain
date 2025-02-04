@@ -15,7 +15,8 @@ enum Asset {
   stETH = 3;
 }
 
-// AssetData is a struct that contains the price in USD + decimals of precision of an asset
+// AssetData is a struct that contains the price in USD + decimals of precision
+// of an asset
 message AssetData {
   Asset asset = 1;
   string priceUSD = 2 [
