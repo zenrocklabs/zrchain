@@ -230,7 +230,9 @@ class MethodSettings(_message.Message):
     def __init__(self, selector: _Optional[str] = ..., long_running: _Optional[_Union[MethodSettings.LongRunning, _Mapping]] = ..., auto_populated_fields: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class SelectiveGapicGeneration(_message.Message):
-    __slots__ = ("methods",)
+    __slots__ = ("methods", "generate_omitted_as_internal")
     METHODS_FIELD_NUMBER: _ClassVar[int]
+    GENERATE_OMITTED_AS_INTERNAL_FIELD_NUMBER: _ClassVar[int]
     methods: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, methods: _Optional[_Iterable[str]] = ...) -> None: ...
+    generate_omitted_as_internal: bool
+    def __init__(self, methods: _Optional[_Iterable[str]] = ..., generate_omitted_as_internal: bool = ...) -> None: ...

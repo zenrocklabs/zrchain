@@ -27,6 +27,7 @@ type TreasuryPacketData struct {
 	// defines contains of the packet
 	//
 	// Types that are valid to be assigned to Packet:
+	//
 	//	*TreasuryPacketData_NoData
 	Packet isTreasuryPacketData_Packet `protobuf_oneof:"packet"`
 }

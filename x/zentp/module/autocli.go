@@ -42,6 +42,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "Burn",
 					Skip:      true, // skipped because authority gated
 				},
+				{
+					RpcMethod:      "BurnRock",
+					Use:            "burn-rock [chain-id] [key-id] [amount] [recipient]",
+					Short:          "Send a burn_rock tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "chainId"}, {ProtoField: "keyId"}, {ProtoField: "amount"}, {ProtoField: "recipient"}},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},

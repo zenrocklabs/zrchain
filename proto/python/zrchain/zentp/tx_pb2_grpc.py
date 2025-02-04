@@ -25,6 +25,16 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
                 )
+        self.Burn = channel.unary_unary(
+                '/zrchain.zentp.Msg/Burn',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurn.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.FromString,
+                )
+        self.BurnRock = channel.unary_unary(
+                '/zrchain.zentp.Msg/BurnRock',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -40,7 +50,24 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def MintRock(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """MintRock defines an operation for creating a mint request of Rock
+        on a destination chain
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Burn(self, request, context):
+        """Burn defines an operation for burning Rock for a module account
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def BurnRock(self, request, context):
+        """BurnRock defines an operation for burning Rock on a destination chain
+        and minting it back to a key on zrchain
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -57,6 +84,16 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.MintRock,
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.SerializeToString,
+            ),
+            'Burn': grpc.unary_unary_rpc_method_handler(
+                    servicer.Burn,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurn.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.SerializeToString,
+            ),
+            'BurnRock': grpc.unary_unary_rpc_method_handler(
+                    servicer.BurnRock,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -100,5 +137,39 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/MintRock',
             zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
             zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Burn(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/Burn',
+            zrchain_dot_zentp_dot_tx__pb2.MsgBurn.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def BurnRock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/BurnRock',
+            zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
