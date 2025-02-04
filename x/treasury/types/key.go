@@ -123,5 +123,8 @@ func Caip2ToKeyType(caip string) (KeyType, error) {
 		"eip155:43113",     // avalanche fuji test
 		"eip155:168587773": // blast sepolia
 		return KeyType_KEY_TYPE_ECDSA_SECP256K1, nil
+	default:
+		return KeyType_KEY_TYPE_UNSPECIFIED, fmt.Errorf("invalid key type: %s", caip)
 	}
+
 }
