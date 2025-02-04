@@ -69,7 +69,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 			return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
 		}
 		// TODO: add alternate check for Solana address format
-		if metadata.RecipientAddr == "" || !common.IsHexAddress(metadata.RecipientAddr) {
+		if !common.IsHexAddress(metadata.RecipientAddr) {
 			return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
 		}
 		if metadata.ChainType == types.WalletType_WALLET_TYPE_UNSPECIFIED {
