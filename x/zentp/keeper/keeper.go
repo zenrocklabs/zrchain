@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
+	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -23,6 +25,7 @@ type (
 		treasuryKeeper types.TreasuryKeeper
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
+		identityKeeper types.IdentityKeeper
 	}
 )
 
@@ -34,6 +37,7 @@ func NewKeeper(
 	treasuryKeeper types.TreasuryKeeper,
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
+	identityKeeper types.IdentityKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -51,6 +55,7 @@ func NewKeeper(
 		treasuryKeeper: treasuryKeeper,
 		bankKeeper:     bankKeeper,
 		accountKeeper:  accountKeeper,
+		identityKeeper: identityKeeper,
 	}
 }
 
@@ -62,4 +67,20 @@ func (k Keeper) GetAuthority() string {
 // Logger returns a module-specific logger.
 func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTypes.Key) bool {
+	userWS, err := k.identityKeeper.GetWorkspaces(goCtx, user)
+	if err != nil {
+		k.Logger().Error("failed to get workspaces for user: "+user, err.Error())
+		return false
+	}
+
+	for _, ws := range userWS {
+		if key.WorkspaceAddr == ws.Address {
+			return true
+		}
+	}
+
+	return false
 }

@@ -721,6 +721,7 @@ func NewZenrockApp(
 		app.TreasuryKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
+		app.IdentityKeeper,
 	)
 
 	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)

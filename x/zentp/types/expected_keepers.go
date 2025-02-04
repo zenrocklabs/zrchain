@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -32,4 +33,8 @@ type ParamSubspace interface {
 // TreasuryKeeper defines the expected interface for the Treasury module.
 type TreasuryKeeper interface {
 	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
+}
+
+type IdentityKeeper interface {
+	GetWorkspaces(goCtx context.Context, user string) ([]*types.Workspace, error)
 }

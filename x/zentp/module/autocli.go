@@ -30,12 +30,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "MintRock",
-					Use:       `mint-rock [amount] [destination] [recipient]`,
+					Use:       `mint-rock [amount] [src-key-id] [dst-chain] [recipient-key-id]`,
 					Short:     "Mint new ROCK tokens on destination chain",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "amount"},
-						{ProtoField: "destination"},
-						{ProtoField: "recipient"},
+						{ProtoField: "source_key_id"},
+						{ProtoField: "destination_chain"},
+						{ProtoField: "recipient_key_id"},
 					},
 				},
 				{

@@ -57,10 +57,10 @@ message MsgMintRock {
   uint64 source_key_id = 3;
   
   // destination is the caip identifier for the destination chain
-  string destination = 4;
+  string destination_chain = 4;
   
   // recipient is the keyID for the destination chain
-  uint64 recipient = 5;
+  uint64 recipient_key_id = 5;
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
