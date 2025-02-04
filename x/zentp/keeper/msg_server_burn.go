@@ -40,7 +40,7 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 // returns sdk.Coins to burn from message
 func prepareBurn(msg *types.MsgBurn) (sdk.Coins, error) {
 
-	burnAmount := math.NewInt(msg.Amount)
+	burnAmount := math.NewIntFromUint64(msg.Amount)
 	coins := sdk.NewCoins(sdk.NewCoin(msg.Denom, burnAmount))
 
 	return coins, nil

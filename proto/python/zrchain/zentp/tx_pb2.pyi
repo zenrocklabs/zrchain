@@ -54,3 +54,23 @@ class MsgBurn(_message.Message):
 class MsgBurnResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgBurnRock(_message.Message):
+    __slots__ = ("creator", "chain_id", "key_id", "amount", "recipient")
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_FIELD_NUMBER: _ClassVar[int]
+    creator: str
+    chain_id: str
+    key_id: int
+    amount: int
+    recipient: str
+    def __init__(self, creator: _Optional[str] = ..., chain_id: _Optional[str] = ..., key_id: _Optional[int] = ..., amount: _Optional[int] = ..., recipient: _Optional[str] = ...) -> None: ...
+
+class MsgBurnRockResponse(_message.Message):
+    __slots__ = ("tx_hash",)
+    TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    tx_hash: str
+    def __init__(self, tx_hash: _Optional[str] = ...) -> None: ...
