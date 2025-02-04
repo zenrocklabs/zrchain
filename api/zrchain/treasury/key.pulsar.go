@@ -5288,6 +5288,7 @@ func (x *ZenBTCMetadata) GetChainId() uint64 {
 	return 0
 }
 
+// Deprecated: Do not use.
 func (x *ZenBTCMetadata) GetReturnAddress() string {
 	if x != nil {
 		return x.ReturnAddress
