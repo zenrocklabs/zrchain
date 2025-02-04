@@ -22,19 +22,35 @@ class MsgUpdateParamsResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgMintRock(_message.Message):
-    __slots__ = ("authority", "amount", "source_key_id", "destination", "recipient")
-    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("creator", "amount", "source_key_id", "destination_chain", "recipient_key_id")
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     SOURCE_KEY_ID_FIELD_NUMBER: _ClassVar[int]
-    DESTINATION_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_FIELD_NUMBER: _ClassVar[int]
-    authority: str
+    DESTINATION_CHAIN_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    creator: str
     amount: int
     source_key_id: int
-    destination: str
-    recipient: int
-    def __init__(self, authority: _Optional[str] = ..., amount: _Optional[int] = ..., source_key_id: _Optional[int] = ..., destination: _Optional[str] = ..., recipient: _Optional[int] = ...) -> None: ...
+    destination_chain: str
+    recipient_key_id: int
+    def __init__(self, creator: _Optional[str] = ..., amount: _Optional[int] = ..., source_key_id: _Optional[int] = ..., destination_chain: _Optional[str] = ..., recipient_key_id: _Optional[int] = ...) -> None: ...
 
 class MsgMintRockResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgBurn(_message.Message):
+    __slots__ = ("authority", "module_account", "denom", "amount")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    MODULE_ACCOUNT_FIELD_NUMBER: _ClassVar[int]
+    DENOM_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    module_account: str
+    denom: str
+    amount: int
+    def __init__(self, authority: _Optional[str] = ..., module_account: _Optional[str] = ..., denom: _Optional[str] = ..., amount: _Optional[int] = ...) -> None: ...
+
+class MsgBurnResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

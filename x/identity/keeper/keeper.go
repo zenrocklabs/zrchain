@@ -284,3 +284,22 @@ func (k *Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletTy
 
 	return workspaceList, nil
 }
+
+func (k Keeper) GetWorkspaces(goCtx context.Context, user string) ([]*types.Workspace, error) {
+	workspaces, _, err := query.CollectionFilteredPaginate[string, types.Workspace, collections.Map[string, types.Workspace], *types.Workspace](
+		goCtx,
+		k.WorkspaceStore,
+		nil,
+		func(key string, value types.Workspace) (bool, error) {
+			return value.IsOwner(user) || value.Creator == user, nil
+		},
+		func(key string, value types.Workspace) (*types.Workspace, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return workspaces, nil
+}
