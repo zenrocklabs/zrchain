@@ -260,7 +260,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 		k.processZenBTCMints(ctx, oracleData)
 
-		k.processZenBTCBurnEvents(ctx, oracleData)
+		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 
 		k.processZenBTCRedemptions(ctx, oracleData)
 	}
@@ -944,6 +944,129 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 	}
 }
 
+// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions.
+func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
+	// Use the unstaker key ID for processing burn events.
+	keyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
+
+	// Check if a nonce request for unstaking is currently active.
+	requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state for burn events", "err", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	// Retrieve the last used Ethereum nonce for the unstaker key.
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	if err != nil {
+		k.Logger(ctx).Error("error getting last used Ethereum nonce for burn events", "err", err)
+		return
+	}
+	if lastUsedNonce.Skip {
+		return
+	}
+
+	// Retrieve the current burn events from storage.
+	burnEvents, err := k.zenBTCKeeper.GetBurnEvents(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		return
+	}
+
+	// If there are no burn events pending, clear the nonce request state and exit.
+	if len(burnEvents.Events) == 0 {
+		if err := k.EthereumNonceRequested.Set(ctx, keyID, false); err != nil {
+			k.Logger(ctx).Error("error updating EthereumNonceRequested state for burn events", "err", err)
+		}
+		return
+	}
+
+	// Take the first burn event in the slice.
+	burnEvent := burnEvents.Events[0]
+
+	// If the unstaker nonce has changed, it indicates that the previous unstake succeeded.
+	// In that case, update the nonce state and remove the processed burn event from the slice.
+	if oracleData.RequestedUnstakerNonce != lastUsedNonce.PrevNonce {
+		k.Logger(ctx).Warn("unstaker nonce updated for burn events",
+			"nonce", oracleData.RequestedUnstakerNonce,
+			"prev_nonce", lastUsedNonce.PrevNonce)
+
+		// Update the nonce state.
+		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state for burn events", "err", err)
+			return
+		}
+
+		// Remove the first burn event from the slice.
+		newEvents := burnEvents.Events[1:]
+		burnEvents.Events = newEvents
+		if err := k.zenBTCKeeper.SetBurnEvents(ctx, burnEvents); err != nil {
+			k.Logger(ctx).Error("error setting updated burn events", "err", err)
+		}
+		return
+	}
+
+	// Otherwise, process the first burn event by constructing and signing an unstake transaction.
+	k.Logger(ctx).Warn("processing zenBTC burn unstake",
+		"burn_event", burnEvent,
+		"nonce", oracleData.RequestedUnstakerNonce,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap)
+
+	// For now, use a fixed chain identifier (Holesky).
+	chainID := "eip155:17000"
+
+	// Construct the unstake transaction using constructUnstakeTx.
+	// This function expects the destination address and amount from the burn event.
+	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+		ctx,
+		chainID,
+		burnEvent.DestinationAddr,
+		burnEvent.Amount,
+		oracleData.RequestedUnstakerNonce,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing unstake transaction for burn event", "err", err)
+		return
+	}
+
+	// Create metadata for the transaction (chain ID is hardcoded as 17000 for now).
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata for burn event unstake tx", "err", err)
+		return
+	}
+
+	// Get the creator address using the unstaker key.
+	creator, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	if err != nil {
+		k.Logger(ctx).Error("error getting creator address for burn event unstake tx", "err", err)
+		return
+	}
+
+	// Request the treasury module to sign and broadcast the unstake transaction.
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating unstake transaction for burn event", "err", err)
+	}
+}
+
 func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
 	// Check if we should process redemptions
 	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
@@ -991,7 +1114,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 	}
 
 	// If nonce changed, previous unstake succeeded - update status
-	if oracleData.RequestedUnstakerNonce != lastUsedNonce.PrevNonce {
+	if oracleData.RequestedCompleterNonce != lastUsedNonce.PrevNonce {
 		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemptionID, redemption); err != nil {
 			k.Logger(ctx).Error("error updating redemption status", "err", err)
@@ -1004,14 +1127,14 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC unstake", "id", redemption.Data.Id, "nonce", oracleData.RequestedUnstakerNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+	k.Logger(ctx).Warn("processing zenBTC complete", "id", redemption.Data.Id, "nonce", oracleData.RequestedCompleterNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
 
-	// Create and sign new unstake transaction
+	// Create and sign new complete transaction
 	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
 		ctx,
 		"eip155:17000", // TODO: make this dynamic
 		redemption.Data.Id,
-		oracleData.RequestedUnstakerNonce,
+		oracleData.RequestedCompleterNonce,
 		oracleData.EthBaseFee,
 		oracleData.EthTipCap,
 	)

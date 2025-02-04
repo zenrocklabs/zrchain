@@ -50,7 +50,7 @@ message BurnEvent {
   string txID = 1;
   uint64 logIndex = 2;
   string chainID = 3;
-  string destinationAddr = 4;
+  bytes destinationAddr = 4;
   uint64 amount = 5;
 }
 
