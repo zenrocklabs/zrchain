@@ -87,13 +87,10 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to get contract state: %w", err)
 	}
 
-	redemptionsEthereum, err := o.getRedemptionsEVM(zenBTCControllerHolesky, targetBlockNumber)
+	redemptions, err := o.getRedemptions(zenBTCControllerHolesky, targetBlockNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
 	}
-	// log.Printf("redemptionsEthereum: %+v\n", redemptionsEthereum)
-
-	// TODO: get redemptions on Solana + get BTC price
 
 	// Get base fee from latest block
 	if latestHeader.BaseFee == nil {
@@ -169,13 +166,12 @@ func (o *Oracle) fetchAndProcessState(
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
 		EthGasLimit:      incrementedGasLimit,
-		// EthGasLimit: latestHeader.GasLimit, // TODO: update me
-		EthBaseFee: latestHeader.BaseFee.Uint64(),
-		EthTipCap:  suggestedTip.Uint64(),
+		EthBaseFee:       latestHeader.BaseFee.Uint64(),
+		EthTipCap:        suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              nil,  // TODO: update me
-		Redemptions:                redemptionsEthereum,
+		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
@@ -234,7 +230,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) getRedemptionsEVM(contractInstance *zenbtc.ZenBTController, height *big.Int) ([]api.Redemption, error) {
+func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height *big.Int) ([]api.Redemption, error) {
 	callOpts := &bind.CallOpts{
 		BlockNumber: height,
 	}
