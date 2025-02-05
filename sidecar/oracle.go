@@ -166,7 +166,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Fetch burn events from the last 100 blocks and convert them to the desired format.
 	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(100))
 	toBlock := latestHeader.Number
-	burnEvents, err := o.getBurnEvents(fromBlock, toBlock)
+	ethBurnEvents, err := o.getBurnEvents(fromBlock, toBlock)
 	if err != nil {
 		return fmt.Errorf("failed to get burn events: %w", err)
 	}
@@ -174,12 +174,12 @@ func (o *Oracle) fetchAndProcessState(
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      incrementedGasLimit,
+		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit
 		EthBaseFee:       latestHeader.BaseFee.Uint64(),
 		EthTipCap:        suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
-		EthBurnEvents:              burnEvents,
+		EthBurnEvents:              ethBurnEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
