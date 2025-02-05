@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
@@ -162,6 +163,14 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch ETH price: %w", err)
 	}
 
+	// Fetch burn events from the last 100 blocks
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(100))
+	toBlock := latestHeader.Number
+	burnEvents, err := o.getBurnEvents(fromBlock, toBlock)
+	if err != nil {
+		return fmt.Errorf("failed to get burn events: %w", err)
+	}
+
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
@@ -170,7 +179,7 @@ func (o *Oracle) fetchAndProcessState(
 		EthTipCap:        suggestedTip.Uint64(),
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
-		EthBurnEvents:              nil,  // TODO: update me
+		EthBurnEvents:              burnEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
@@ -250,4 +259,42 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	}
 
 	return redemptions, nil
+}
+
+// getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range.
+func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]zenbtc.ZenBTCTokenRedemption, error) {
+	ctx := context.Background()
+	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
+
+	query := ethereum.FilterQuery{
+		FromBlock: fromBlock,
+		ToBlock:   toBlock,
+		Addresses: []common.Address{tokenAddress},
+		Topics: [][]common.Hash{
+			{crypto.Keccak256Hash([]byte("ZenBTCTokenRedemption(address,uint256,bytes,uint256)"))},
+		},
+	}
+
+	logs, err := o.EthClient.FilterLogs(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter logs: %w", err)
+	}
+
+	// Create a new instance of the ZenBTC token contract to parse logs
+	zenBTCInstance, err := zenbtc.NewZenBTC(tokenAddress, o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ZenBTC token contract instance: %w", err)
+	}
+
+	var burnEvents []zenbtc.ZenBTCTokenRedemption
+	for _, vLog := range logs {
+		event, err := zenBTCInstance.ParseTokenRedemption(vLog)
+		if err != nil {
+			log.Printf("failed to parse burn event log: %v", err)
+			continue
+		}
+		burnEvents = append(burnEvents, *event)
+	}
+
+	return burnEvents, nil
 }
