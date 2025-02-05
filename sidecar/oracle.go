@@ -163,7 +163,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch ETH price: %w", err)
 	}
 
-	// Fetch burn events from the last 100 blocks
+	// Fetch burn events from the last 100 blocks and convert them to the desired format.
 	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(100))
 	toBlock := latestHeader.Number
 	burnEvents, err := o.getBurnEvents(fromBlock, toBlock)
@@ -261,8 +261,9 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	return redemptions, nil
 }
 
-// getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range.
-func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]zenbtc.ZenBTCTokenRedemption, error) {
+// getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
+// converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
+func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
 	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
 
@@ -286,14 +287,25 @@ func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]zenbtc.ZenBTCToke
 		return nil, fmt.Errorf("failed to create ZenBTC token contract instance: %w", err)
 	}
 
-	var burnEvents []zenbtc.ZenBTCTokenRedemption
+	chainID, err := o.EthClient.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chain ID: %w", err)
+	}
+
+	var burnEvents []api.BurnEvent
 	for _, vLog := range logs {
 		event, err := zenBTCInstance.ParseTokenRedemption(vLog)
 		if err != nil {
 			log.Printf("failed to parse burn event log: %v", err)
 			continue
 		}
-		burnEvents = append(burnEvents, *event)
+		burnEvents = append(burnEvents, api.BurnEvent{
+			TxID:            event.Raw.TxHash.Hex(),
+			LogIndex:        uint64(event.Raw.Index),
+			ChainID:         fmt.Sprintf("eip155:%s", chainID.String()),
+			DestinationAddr: event.DestAddr,
+			Amount:          event.Value,
+		})
 	}
 
 	return burnEvents, nil
