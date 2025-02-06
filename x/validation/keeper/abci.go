@@ -580,7 +580,12 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	k.Logger(ctx).Info("lastUsedNonce", "nonce", lastUsedNonce.Nonce, "counter", lastUsedNonce.Counter, "skip", lastUsedNonce.Skip, "requested_nonce", oracleData.RequestedStakerNonce)
+	k.Logger(ctx).Info("lastUsedNonce",
+		"nonce", lastUsedNonce.Nonce,
+		"counter", lastUsedNonce.Counter,
+		"skip", lastUsedNonce.Skip,
+		"requested_nonce", oracleData.RequestedStakerNonce,
+	)
 
 	if lastUsedNonce.Nonce != 0 && oracleData.RequestedStakerNonce == 0 {
 		return
@@ -638,7 +643,14 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC stake", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedStakerNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+	k.Logger(ctx).Warn("processing zenBTC stake",
+		"recipient", pendingMintTx.RecipientAddress,
+		"amount", pendingMintTx.Amount,
+		"nonce", oracleData.RequestedStakerNonce,
+		"gas_limit", oracleData.EthGasLimit,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
+	)
 
 	unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
 		ctx,
@@ -790,7 +802,32 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+	k.Logger(ctx).Warn("processing zenBTC mint",
+		"recipient", pendingMintTx.RecipientAddress,
+		"amount", pendingMintTx.Amount,
+		"nonce", oracleData.RequestedEthMinterNonce,
+		"gas_limit", oracleData.EthGasLimit,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
+		"chain_id", pendingMintTx.Caip2ChainId,
+		"fee_zen_btc", feeZenBTC,
+	)
+
+	// TODO: whitelist more chain IDs before mainnet upgrade
+	if pendingMintTx.Caip2ChainId != "eip155:17000" {
+		k.Logger(ctx).Error("invalid chain ID", "chain_id", pendingMintTx.Caip2ChainId)
+		return
+	}
+
+	k.Logger(ctx).Warn("processing zenBTC mint",
+		"recipient", pendingMintTx.RecipientAddress,
+		"amount", pendingMintTx.Amount,
+		"nonce", oracleData.RequestedEthMinterNonce,
+		"gas_limit", oracleData.EthGasLimit,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
+		"fee_zen_btc", feeZenBTC,
+	)
 
 	// TODO: whitelist more chain IDs before mainnet upgrade
 	if pendingMintTx.Caip2ChainId != "eip155:17000" {
@@ -1139,7 +1176,12 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC complete", "id", redemption.Data.Id, "nonce", oracleData.RequestedCompleterNonce, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+	k.Logger(ctx).Warn("processing zenBTC complete",
+		"id", redemption.Data.Id,
+		"nonce", oracleData.RequestedCompleterNonce,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
+	)
 
 	// Create and sign new complete transaction
 	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
