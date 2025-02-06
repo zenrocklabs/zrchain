@@ -30,20 +30,21 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight        int64
-		EigenDelegationsHash      []byte
-		BtcBlockHeight            int64
-		BtcHeaderHash             []byte
-		EthBlockHeight            uint64
-		EthGasLimit               uint64
-		EthBaseFee                uint64
-		EthTipCap                 uint64
-		RequestedEthMinterNonce   uint64
-		RequestedEthUnstakerNonce uint64
-		// RequestedEthBurnerNonce    uint64
+		ZRChainBlockHeight         int64
+		EigenDelegationsHash       []byte
+		BtcBlockHeight             int64
+		BtcHeaderHash              []byte
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedStakerNonce       uint64
+		RequestedEthMinterNonce    uint64
+		RequestedUnstakerNonce     uint64
+		RequestedCompleterNonce    uint64
 		SolanaLamportsPerSignature uint64
-		EthereumRedemptionsHash    []byte
-		SolanaRedemptionsHash      []byte
+		EthBurnEventsHash          []byte
+		RedemptionsHash            []byte
 		ROCKUSDPrice               math.LegacyDec
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
@@ -55,20 +56,21 @@ type (
 	}
 
 	OracleData struct {
-		EigenDelegationsMap       map[string]map[string]*big.Int
-		ValidatorDelegations      []ValidatorDelegations
-		BtcBlockHeight            int64
-		BtcBlockHeader            sidecar.BTCBlockHeader
-		EthBlockHeight            uint64
-		EthGasLimit               uint64
-		EthBaseFee                uint64
-		EthTipCap                 uint64
-		RequestedEthMinterNonce   uint64
-		RequestedEthUnstakerNonce uint64
-		// RequestedEthBurnerNonce    uint64
+		EigenDelegationsMap        map[string]map[string]*big.Int
+		ValidatorDelegations       []ValidatorDelegations
+		BtcBlockHeight             int64
+		BtcBlockHeader             sidecar.BTCBlockHeader
+		EthBlockHeight             uint64
+		EthGasLimit                uint64
+		EthBaseFee                 uint64
+		EthTipCap                  uint64
+		RequestedStakerNonce       uint64
+		RequestedEthMinterNonce    uint64
+		RequestedUnstakerNonce     uint64
+		RequestedCompleterNonce    uint64
 		SolanaLamportsPerSignature uint64
-		EthereumRedemptions        []api.Redemption
-		SolanaRedemptions          []api.Redemption
+		EthBurnEvents              []api.BurnEvent
+		Redemptions                []api.Redemption
 		ROCKUSDPrice               math.LegacyDec
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
@@ -157,12 +159,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
 		invalid = true
 	}
-	if len(ve.EthereumRedemptionsHash) == 0 {
-		logger.Error("invalid vote extension: EthereumRedemptionsHash is empty")
+	if len(ve.EthBurnEventsHash) == 0 {
+		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
 	}
-	if len(ve.SolanaRedemptionsHash) == 0 {
-		logger.Error("invalid vote extension: SolanaRedemptionsHash is empty")
+	if len(ve.RedemptionsHash) == 0 {
+		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
 	}
 	if ve.ROCKUSDPrice.IsNil() || ve.ROCKUSDPrice.IsZero() {

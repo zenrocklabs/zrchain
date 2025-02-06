@@ -23,6 +23,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Query KeyRequests, optionally filtering by their keyring address, current status, and workspace address",
 				},
 				{
+					RpcMethod: "KeyRequestByID",
+					Use:       "key-request-by-id [id]",
+					Short:     "Query KeyRequest by ID",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "id"},
+					},
+				},
+				{
 					RpcMethod: "Keys",
 					Use:       "keys --wallet-type [wallet-type] --workspace-addr [workspace-addr] --prefixes [prefixes]",
 					Short:     "Query Keys, optionally by workspace address, deriving wallets for specified type/prefixes",

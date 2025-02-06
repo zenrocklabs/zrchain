@@ -7,16 +7,20 @@ import (
 )
 
 type ZenBTCKeeper interface {
-	GetMinterKeyID(ctx context.Context) uint64
+	GetStakerKeyID(ctx context.Context) uint64
+	GetEthMinterKeyID(ctx context.Context) uint64
 	GetUnstakerKeyID(ctx context.Context) uint64
+	GetCompleterKeyID(ctx context.Context) uint64
 	GetEthBatcherAddr(ctx context.Context) string
 	GetBitcoinProxyAddress(ctx context.Context) string
-	GetPendingMintTransactions(ctx context.Context) (types.PendingMintTransactions, error)
-	SetPendingMintTransactions(ctx context.Context, pendingMintTransactions types.PendingMintTransactions) error
+	SetPendingMintTransaction(ctx context.Context, pendingMintTransaction types.PendingMintTransaction) error
+	WalkPendingMintTransactions(ctx context.Context, fn func(id uint64, pendingMintTransaction types.PendingMintTransaction) (stop bool, err error)) error
 	GetSupply(ctx context.Context) (types.Supply, error)
 	SetSupply(ctx context.Context, supply types.Supply) error
 	HasRedemption(ctx context.Context, id uint64) (bool, error)
 	SetRedemption(ctx context.Context, id uint64, redemption types.Redemption) error
 	WalkRedemptions(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
 	GetExchangeRate(ctx context.Context) (float64, error)
+	GetBurnEvents(ctx context.Context) (types.BurnEvents, error)
+	SetBurnEvents(ctx context.Context, burnEvents types.BurnEvents) error
 }
