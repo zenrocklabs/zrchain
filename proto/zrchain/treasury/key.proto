@@ -103,8 +103,9 @@ message KeyResponse {
 
 // ZenBTCMetadata is the metadata for a key on the zenBTC keyring.
 message ZenBTCMetadata {
-  string recipient_addr = 1;
-  WalletType chain_type = 2;
-  uint64 chain_id = 3;
-  string return_address = 4 [deprecated = true];
+  string recipient_addr = 1;                       // Optional
+  WalletType chain_type = 2;                       // Optional
+  uint64 chain_id = 3 [ deprecated = true ];       // Optional
+  string return_address = 4 [ deprecated = true ]; // Optional
+  string caip2_chain_id = 5;
 }
