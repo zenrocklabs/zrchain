@@ -65,6 +65,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
+			o.cleanUpBurnEvents()
 		}
 	}
 }
@@ -189,6 +190,10 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	return nil
+}
+
+func (o *Oracle) cleanUpBurnEvents() {
+
 }
 
 func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
