@@ -869,6 +869,7 @@ func (k *Keeper) processZenBTCRedemptionsEthereum(ctx sdk.Context, oracleData Or
 		return
 	}
 
+	// Create metadata for the transaction (chain ID is hardcoded as 17000 for now).
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000})
 	if err != nil {
 		k.Logger(ctx).Error("error creating metadata", "err", err)
