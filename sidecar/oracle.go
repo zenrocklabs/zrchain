@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
@@ -27,15 +28,16 @@ import (
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-func NewOracle(config Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solana.Client, ticker *time.Ticker) *Oracle {
+func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solana.Client, zrChainQueryClient *client.QueryClient, ticker *time.Ticker) *Oracle {
 	o := &Oracle{
-		stateCache:     make([]sidecartypes.OracleState, 0),
-		Config:         config,
-		EthClient:      ethClient,
-		neutrinoServer: neutrinoServer,
-		solanaClient:   solanaClient,
-		updateChan:     make(chan sidecartypes.OracleState, 32),
-		mainLoopTicker: ticker,
+		stateCache:         make([]sidecartypes.OracleState, 0),
+		Config:             config,
+		EthClient:          ethClient,
+		neutrinoServer:     neutrinoServer,
+		solanaClient:       solanaClient,
+		zrChainQueryClient: zrChainQueryClient,
+		updateChan:         make(chan sidecartypes.OracleState, 32),
+		mainLoopTicker:     ticker,
 	}
 	o.currentState.Store(&EmptyOracleState)
 

@@ -3,7 +3,6 @@ production: true
 
 operator_address: 0xa36951D284aDdA3343653BF6Dcf0148c08B9ab2f
 operator_validator_address: zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6
-zr_chain_rpc_address: localhost:9090
 
 # EigenLayer Slasher contract address
 

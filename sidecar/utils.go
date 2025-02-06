@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"gopkg.in/yaml.v3"
 )
@@ -90,7 +91,7 @@ func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, 
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)
 }
 
-func LoadConfig() Config {
+func LoadConfig() sidecartypes.Config {
 	configFile := getConfigFile()
 	cfg, err := readConfig(configFile)
 	if err != nil {
@@ -107,16 +108,24 @@ func getConfigFile() string {
 	return configFile
 }
 
-func readConfig(configFile string) (Config, error) {
+func readConfig(configFile string) (sidecartypes.Config, error) {
 	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
-		return Config{}, fmt.Errorf("unable to read config from %s: %v", configFile, err)
+		return sidecartypes.Config{}, fmt.Errorf("unable to read config from %s: %v", configFile, err)
 	}
 
-	rootConfig := Config{}
+	rootConfig := sidecartypes.Config{}
 	if err = yaml.Unmarshal(yamlFile, &rootConfig); err != nil {
-		return Config{}, fmt.Errorf("error unmarshalling config from %s: %v", configFile, err)
+		return sidecartypes.Config{}, fmt.Errorf("error unmarshalling config from %s: %v", configFile, err)
 	}
 
 	return rootConfig, nil
+}
+
+func (o *Oracle) GetSidecarState() *sidecartypes.OracleState {
+	return o.currentState.Load().(*sidecartypes.OracleState)
+}
+
+func (o *Oracle) GetZrChainQueryClient() *client.QueryClient {
+	return o.zrChainQueryClient
 }

@@ -1,6 +1,7 @@
 enabled: true
 grpc_port: 9191
 state_file: "cache.json"
+zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
 network: "testnet"
 eth_oracle:

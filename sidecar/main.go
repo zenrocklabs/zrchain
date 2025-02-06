@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
@@ -56,6 +57,11 @@ func main() {
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
+	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
+	if err != nil {
+		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
+	}
+
 	// Align the start time to the nearest MainLoopTickerInterval
 	now := time.Now()
 	alignedStart := now.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
@@ -64,7 +70,7 @@ func main() {
 	mainLoopTicker := time.NewTicker(MainLoopTickerInterval)
 	defer mainLoopTicker.Stop()
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, mainLoopTicker)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, mainLoopTicker)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
