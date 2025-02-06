@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
@@ -40,6 +41,11 @@ func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrino
 		mainLoopTicker:     ticker,
 	}
 	o.currentState.Store(&EmptyOracleState)
+
+	// Load initial state from cache file
+	if err := o.LoadFromFile(o.Config.StateFile); err != nil {
+		log.Printf("Error loading state from file: %v", err)
+	}
 
 	return o
 }
@@ -65,7 +71,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
-			o.cleanUpBurnEvents()
+			o.cleanUpEthBurnEvents()
 		}
 	}
 }
@@ -166,21 +172,17 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch ETH price: %w", err)
 	}
 
-	// Fetch burn events from the last 100 blocks and convert them to the desired format.
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(100))
-	toBlock := latestHeader.Number
-	ethBurnEvents, err := o.getBurnEvents(fromBlock, toBlock)
+	ethBurnEvents, err := o.processEthBurnEvents(latestHeader)
 	if err != nil {
-		return fmt.Errorf("failed to get burn events: %w", err)
+		return fmt.Errorf("failed to process Ethereum burn events: %w", err)
 	}
 
 	o.updateChan <- sidecartypes.OracleState{
-		EigenDelegations: eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: *solanaFee.Value,
+		EigenDelegations:           eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                incrementedGasLimit,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
 		Redemptions:                redemptions,
@@ -190,10 +192,6 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	return nil
-}
-
-func (o *Oracle) cleanUpBurnEvents() {
-
 }
 
 func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
@@ -246,31 +244,77 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height *big.Int) ([]api.Redemption, error) {
-	callOpts := &bind.CallOpts{
-		BlockNumber: height,
-	}
-
-	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
+func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(o.Config.EthOracle.EthBurnEventsBlockRange)))
+	toBlock := latestHeader.Number
+	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
+		return nil, fmt.Errorf("failed to get Ethereum burn events: %w", err)
 	}
 
-	redemptions := make([]api.Redemption, 0)
-	for _, redemption := range redemptionData {
-		redemptions = append(redemptions, api.Redemption{
-			Id:                 redemption.Nonce.Uint64(),
-			DestinationAddress: redemption.DestinationAddress,
-			Amount:             redemption.ZenBTCValue.Uint64(),
-		})
+	// Get current state to merge with new burn events
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	// Create a map of existing events for quick lookup
+	existingEthBurnEvents := make(map[string]bool)
+	for _, event := range currentState.EthBurnEvents {
+		key := fmt.Sprintf("%s-%d", event.TxID, event.LogIndex)
+		existingEthBurnEvents[key] = true
 	}
 
-	return redemptions, nil
+	// Only add new events that aren't already in our cache
+	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
+	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
+	for _, event := range newEthBurnEvents {
+		key := fmt.Sprintf("%s-%d", event.TxID, event.LogIndex)
+		if !existingEthBurnEvents[key] {
+			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
+		}
+	}
+
+	return mergedEthBurnEvents, nil
+}
+
+func (o *Oracle) cleanUpEthBurnEvents() {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	if len(currentState.EthBurnEvents) == 0 {
+		return
+	}
+
+	ctx := context.Background()
+	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+
+	// Check each Ethereum burn event against the chain
+	for _, event := range currentState.EthBurnEvents {
+		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
+		if err != nil {
+			log.Printf("Error querying Ethereum burn event (txID: %s, logIndex: %d): %v", event.TxID, event.LogIndex, err)
+			// Keep events that we failed to query
+			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
+			continue
+		}
+
+		// If the event is not found on chain, keep it in our cache
+		if len(resp.BurnEvents) == 0 {
+			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
+		} else {
+			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
+		}
+	}
+
+	// Update the current state with remaining events if any were removed
+	if len(remainingEthBurnEvents) != len(currentState.EthBurnEvents) {
+		log.Printf("Removed %d Ethereum burn events from cache", len(currentState.EthBurnEvents)-len(remainingEthBurnEvents))
+		newState := *currentState
+		newState.EthBurnEvents = remainingEthBurnEvents
+		o.currentState.Store(&newState)
+		o.CacheState()
+	}
 }
 
 // getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
-func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
+func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
 	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
 
@@ -316,4 +360,26 @@ func (o *Oracle) getBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, er
 	}
 
 	return burnEvents, nil
+}
+
+func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height *big.Int) ([]api.Redemption, error) {
+	callOpts := &bind.CallOpts{
+		BlockNumber: height,
+	}
+
+	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
+	}
+
+	redemptions := make([]api.Redemption, 0)
+	for _, redemption := range redemptionData {
+		redemptions = append(redemptions, api.Redemption{
+			Id:                 redemption.Nonce.Uint64(),
+			DestinationAddress: redemption.DestinationAddress,
+			Amount:             redemption.ZenBTCValue.Uint64(),
+		})
+	}
+
+	return redemptions, nil
 }
