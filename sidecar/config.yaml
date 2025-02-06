@@ -1,6 +1,7 @@
 enabled: true
 grpc_port: 9191
 state_file: "cache.json"
+zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
 network: "testnet"
 eth_oracle:
@@ -8,14 +9,18 @@ eth_oracle:
     local: "http://127.0.0.1:8545"
     testnet: "https://rpc.ankr.com/eth_holesky"
     mainnet: "https://rpc.ankr.com/eth"
+  eth_burn_events_block_range: 100
   contract_addrs:
     service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
     price_feeds:
       btc: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
       eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-    zenbtc_controller:
-      ethereum:
-        testnet: "0x912D79F8d489d0d007aBE0E26fD5d2f06BA4A2AA"
+    zenbtc:
+      controller:
+        testnet: "0x5b9Ea8d5486D388a158F026c337DF950866dA5e9"
+      token:
+        ethereum:
+          testnet: "0xC8CdeDd20cCb4c06884ac4C2fF952A0B7cC230a3"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"
