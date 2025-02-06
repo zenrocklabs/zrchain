@@ -178,11 +178,12 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	o.updateChan <- sidecartypes.OracleState{
-		EigenDelegations:           eigenDelegations,
-		EthBlockHeight:             targetBlockNumber.Uint64(),
-		EthGasLimit:                incrementedGasLimit,
-		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
-		EthTipCap:                  suggestedTip.Uint64(),
+		EigenDelegations: eigenDelegations,
+		EthBlockHeight:   targetBlockNumber.Uint64(),
+		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit and add EthMintGasLimit
+		EthBaseFee:       latestHeader.BaseFee.Uint64(),
+		EthTipCap:        suggestedTip.Uint64(),
+		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
 		Redemptions:                redemptions,
