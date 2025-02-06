@@ -3,7 +3,6 @@ production: true
 
 operator_address: 0xa36951D284aDdA3343653BF6Dcf0148c08B9ab2f
 operator_validator_address: zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6
-zr_chain_rpc_address: localhost:9090
 
 # EigenLayer Slasher contract address
 
@@ -14,8 +13,8 @@ avs_registry_coordinator_address: 0x0ab7E249df09ab1CC1706dC0411268f1c180C227
 operator_state_retriever_address: 0x1e61504d75Df583c094ddc822766b5258d8Fe27F
 
 # ETH RPC URL
-eth_rpc_url:
-eth_ws_url:
+eth_rpc_url: 
+eth_ws_url: 
 
 # If you running this using eigenlayer CLI and the provided AVS packaging structure,
 # this should be /operator_keys/ecdsa_key.json as the host path will be asked while running
@@ -42,5 +41,3 @@ enable_node_api: true
 # address of token to deposit tokens into when registering on startup
 # addresses.erc20MockStrategy in tests/anvil/credible_squaring_avs_deployment_output.json
 token_strategy_addr: 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9
-
-service_manager_address: 0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
+	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
@@ -29,8 +30,8 @@ var (
 		EthBaseFee:                 0,
 		EthTipCap:                  0,
 		SolanaLamportsPerSignature: 0,
-		RedemptionsEthereum:        []api.Redemption{},
-		RedemptionsSolana:          []api.Redemption{},
+		EthBurnEvents:              []api.BurnEvent{},
+		Redemptions:                []api.Redemption{},
 		ROCKUSDPrice:               0,
 		BTCUSDPrice:                0,
 		ETHUSDPrice:                0,
@@ -40,57 +41,15 @@ var (
 )
 
 type Oracle struct {
-	currentState   atomic.Value // *types.OracleState
-	stateCache     []sidecartypes.OracleState
-	Config         Config
-	EthClient      *ethclient.Client
-	neutrinoServer *neutrino.NeutrinoServer
-	solanaClient   *solana.Client
-	updateChan     chan sidecartypes.OracleState
-	mainLoopTicker *time.Ticker
-}
-
-type Config struct {
-	Enabled        bool              `yaml:"enabled"`
-	GRPCPort       int               `yaml:"grpc_port"`
-	StateFile      string            `yaml:"state_file"`
-	OperatorConfig string            `yaml:"operator_config"`
-	Network        string            `yaml:"network"`
-	EthOracle      EthOracleConfig   `yaml:"eth_oracle"`
-	SolanaRPC      map[string]string `yaml:"solana_rpc"`
-	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
-	Neutrino       NeutrinoConfig    `yaml:"neutrino"`
-}
-
-type ProxyRPCConfig struct {
-	URL      string `yaml:"url"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-}
-
-type NeutrinoConfig struct {
-	Path string `yaml:"path"`
-}
-
-type EthOracleConfig struct {
-	RPC           map[string]string `yaml:"rpc"`
-	ContractAddrs ContractAddrs     `yaml:"contract_addrs"`
-	NetworkName   map[string]string `yaml:"network_name"`
-}
-
-type ContractAddrs struct {
-	ServiceManager   string     `yaml:"service_manager"`
-	PriceFeeds       PriceFeeds `yaml:"price_feeds"`
-	ZenBTCController EVMChains  `yaml:"zenbtc_controller"`
-}
-
-type PriceFeeds struct {
-	BTC string `yaml:"btc"`
-	ETH string `yaml:"eth"`
-}
-
-type EVMChains struct {
-	Ethereum map[string]string `yaml:"ethereum"`
+	currentState       atomic.Value // *types.OracleState
+	stateCache         []sidecartypes.OracleState
+	Config             sidecartypes.Config
+	EthClient          *ethclient.Client
+	neutrinoServer     *neutrino.NeutrinoServer
+	solanaClient       *solana.Client
+	zrChainQueryClient *client.QueryClient
+	updateChan         chan sidecartypes.OracleState
+	mainLoopTicker     *time.Ticker
 }
 
 type PriceData struct {

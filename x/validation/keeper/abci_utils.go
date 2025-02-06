@@ -26,7 +26,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
@@ -90,8 +89,8 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		EthBaseFee:                 resp.EthBaseFee,
 		EthTipCap:                  resp.EthTipCap,
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
-		EthereumRedemptions:        resp.RedemptionsEthereum,
-		SolanaRedemptions:          resp.RedemptionsSolana,
+		EthBurnEvents:              resp.EthBurnEvents,
+		Redemptions:                resp.Redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
@@ -235,18 +234,6 @@ func deriveHash[T any](data T) ([32]byte, error) {
 		return [32]byte{}, fmt.Errorf("error encoding data: %w", err)
 	}
 	return sha256.Sum256(dataBz), nil
-}
-
-func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) ([32]byte, error) {
-	return deriveHash(avsDelegations)
-}
-
-func deriveRedemptionsHash(redemptions []api.Redemption) ([32]byte, error) {
-	return deriveHash(redemptions)
-}
-
-func deriveBitcoinHeaderHash(header *sidecar.BTCBlockHeader) ([32]byte, error) {
-	return deriveHash(header)
 }
 
 // ref: https://github.com/cosmos/cosmos-sdk/blob/c64d1010800d60677cc25e2fca5b3d8c37b683cc/baseapp/abci_utils.go#L44
@@ -431,6 +418,20 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
+func (k *Keeper) constructStakeTx(ctx context.Context, caip2ChainID string, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedMintData, err := EncodeStakeCallData(new(big.Int).SetUint64(amount))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+}
+
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainID string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
@@ -445,8 +446,8 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainI
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
+func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, destinationAddr []byte, amount, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, destinationAddr, amount)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -459,7 +460,21 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, re
 	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
-func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+func (k *Keeper) constructCompleteTx(ctx context.Context, caip2ChainID string, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedCompleteData, err := k.EncodeCompleteCallData(ctx, redemptionID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainID, err := types.ExtractEVMChainID(caip2ChainID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return k.constructEthereumTx(ctx, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
+}
+
+func EncodeStakeCallData(amount *big.Int) ([]byte, error) {
 	if !amount.IsUint64() {
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
@@ -471,12 +486,33 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 
 	// Pack using the contract binding's ABI for the wrapZenBTC function
 	data, err := parsed.Pack(
-		"wrapZenBTC",
+		"stakeRockBTC",
+		amount.Uint64(),
+		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode stake call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+	if !amount.IsUint64() {
+		return nil, fmt.Errorf("amount exceeds uint64 max value")
+	}
+
+	parsed, err := bindings.ZenBTCMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	// Pack using the contract binding's ABI for the wrap function
+	data, err := parsed.Pack(
+		"wrap",
 		recipientAddr,
 		amount.Uint64(),
 		fee,
-		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
-		// The fields on the line above can be left empty as we don't need them to delegate to our operator
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
@@ -485,13 +521,34 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, destinationAddr []byte, amount uint64) ([]byte, error) {
 	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
-	data, err := parsed.Pack("unstakeRockBTComplete", new(big.Int).SetUint64(redemptionID))
+	data, err := parsed.Pack(
+		"unstakeRockBTC",
+		new(big.Int).SetUint64(amount),
+		destinationAddr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode unstakeRockBTC call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func (k *Keeper) EncodeCompleteCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	data, err := parsed.Pack(
+		"unstakeRockBTComplete",
+		new(big.Int).SetUint64(redemptionID),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
 	}
@@ -581,6 +638,15 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 
 	if err := k.AssetPrices.Set(ctx, types.Asset_stETH, oracleData.ETHUSDPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	}
+}
+
+func (k *Keeper) getZenBTCKeyIDs(ctx context.Context) []uint64 {
+	return []uint64{
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
 	}
 }
 
