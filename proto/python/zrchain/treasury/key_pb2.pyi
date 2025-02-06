@@ -1,5 +1,4 @@
 from zrchain.treasury import wallet_pb2 as _wallet_pb2
-from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor

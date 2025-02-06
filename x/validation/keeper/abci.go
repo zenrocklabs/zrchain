@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
@@ -524,7 +525,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 
 	if err := k.checkForBitcoinReorg(ctx, oracleData, requestedHeaders); err != nil {
-		k.Logger(ctx).Error("error handling potential Bitcoin fork", "height", oracleData.BtcBlockHeight, "err", err)
+		k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", oracleData.BtcBlockHeight, "err", err)
 	}
 }
 
@@ -534,8 +535,13 @@ func (k *Keeper) checkForBitcoinReorg(
 	oracleData OracleData,
 	requestedHeaders zenbtctypes.RequestedBitcoinHeaders,
 ) error {
-	prevHeights := make([]int64, 0, 6)
-	for i := int64(1); i <= 6; i++ {
+	var numHistoricalHeadersToRequest int64 = 20     // default for non-mainnet environments
+	if strings.HasPrefix(ctx.ChainID(), "diamond") { // mainnet
+		numHistoricalHeadersToRequest = 6
+	}
+
+	prevHeights := make([]int64, 0, numHistoricalHeadersToRequest)
+	for i := int64(1); i <= numHistoricalHeadersToRequest; i++ {
 		prevHeight := oracleData.BtcBlockHeight - i
 		if prevHeight <= 0 {
 			break
@@ -785,6 +791,12 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	}
 
 	k.Logger(ctx).Warn("processing zenBTC mint", "recipient", pendingMintTx.RecipientAddress, "amount", pendingMintTx.Amount, "nonce", oracleData.RequestedEthMinterNonce, "gas_limit", oracleData.EthGasLimit, "base_fee", oracleData.EthBaseFee, "tip_cap", oracleData.EthTipCap)
+
+	// TODO: whitelist more chain IDs before mainnet upgrade
+	if pendingMintTx.Caip2ChainId != "eip155:17000" {
+		k.Logger(ctx).Error("invalid chain ID", "chain_id", pendingMintTx.Caip2ChainId)
+		return
+	}
 
 	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 		ctx,
@@ -1132,7 +1144,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 	// Create and sign new complete transaction
 	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
 		ctx,
-		"eip155:17000", // TODO: make this dynamic
+		"eip155:17000", // TODO: make this dynamic with a switch based on ctx.ChainID() before mainnet upgrade
 		redemption.Data.Id,
 		oracleData.RequestedCompleterNonce,
 		oracleData.EthBaseFee,

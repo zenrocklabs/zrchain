@@ -367,6 +367,7 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 }
 
 func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	// TODO: whitelist more chain IDs before mainnet upgrade
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}

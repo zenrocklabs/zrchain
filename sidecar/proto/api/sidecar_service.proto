@@ -9,15 +9,17 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 
 service SidecarService {
   rpc GetSidecarState(SidecarStateRequest) returns (SidecarStateResponse) {}
-  rpc GetSidecarStateByEthHeight(SidecarStateByEthHeightRequest) returns (SidecarStateResponse) {}
-  rpc GetBitcoinBlockHeaderByHeight(BitcoinBlockHeaderByHeightRequest) returns (BitcoinBlockHeaderResponse) {}
-  rpc GetLatestBitcoinBlockHeader(LatestBitcoinBlockHeaderRequest) returns (BitcoinBlockHeaderResponse) {}
-  rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest) returns (LatestEthereumNonceForAccountResponse) {}
+  rpc GetSidecarStateByEthHeight(SidecarStateByEthHeightRequest)
+      returns (SidecarStateResponse) {}
+  rpc GetBitcoinBlockHeaderByHeight(BitcoinBlockHeaderByHeightRequest)
+      returns (BitcoinBlockHeaderResponse) {}
+  rpc GetLatestBitcoinBlockHeader(LatestBitcoinBlockHeaderRequest)
+      returns (BitcoinBlockHeaderResponse) {}
+  rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest)
+      returns (LatestEthereumNonceForAccountResponse) {}
 }
 
-message LatestBitcoinBlockHeaderRequest {
-  string ChainName = 1;
-}
+message LatestBitcoinBlockHeaderRequest { string ChainName = 1; }
 
 message BitcoinBlockHeaderByHeightRequest {
   int64 BlockHeight = 1;
@@ -70,14 +72,8 @@ message SidecarStateResponse {
   string ETHUSDPrice = 11;
 }
 
-message SidecarStateByEthHeightRequest {
-  uint64 EthBlockHeight = 1;
-}
+message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
 
-message LatestEthereumNonceForAccountRequest {
-  string Address = 1;
-}
+message LatestEthereumNonceForAccountRequest { string Address = 1; }
 
-message LatestEthereumNonceForAccountResponse {
-  uint64 Nonce = 1;
-}
+message LatestEthereumNonceForAccountResponse { uint64 Nonce = 1; }
