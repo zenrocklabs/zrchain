@@ -882,7 +882,9 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 	// Retrieve the current burn events from the store
 	burnEvents, err := k.zenBTCKeeper.GetBurnEvents(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		}
 		return
 	}
 
@@ -1021,7 +1023,9 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 	// Retrieve the current burn events from storage.
 	burnEvents, err := k.zenBTCKeeper.GetBurnEvents(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("failed to get current burn events", "err", err)
+		}
 		return
 	}
 
