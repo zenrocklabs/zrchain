@@ -259,7 +259,7 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 	// Create a map of existing events for quick lookup
 	existingEthBurnEvents := make(map[string]bool)
 	for _, event := range currentState.EthBurnEvents {
-		key := fmt.Sprintf("%s-%d", event.TxID, event.LogIndex)
+		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
 		existingEthBurnEvents[key] = true
 	}
 
@@ -267,7 +267,7 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
 	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
 	for _, event := range newEthBurnEvents {
-		key := fmt.Sprintf("%s-%d", event.TxID, event.LogIndex)
+		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
 		if !existingEthBurnEvents[key] {
 			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
 		}
