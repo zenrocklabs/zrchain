@@ -1302,12 +1302,12 @@ github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
-github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock h1:QKr8fWJ85qM/mcnKRQfsem6cNZ1hBmrnrv4FWt4cSmc=
-github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock/go.mod h1:6Eesrx3ZE7vxBZWpK++30H+Uc7Q4ahQWCL7JKU/LEdU=
+github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock2 h1:AdQSOWitA063FzWTXboTKYjytvfLyuPlBMYCR+/L7TQ=
+github.com/zenrocklabs/cosmos-sdk v0.50.10-zenrock2/go.mod h1:6Eesrx3ZE7vxBZWpK++30H+Uc7Q4ahQWCL7JKU/LEdU=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoqcXVA7LSXq/6ztw97Q=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
-github.com/zenrocklabs/zenbtc v1.9.3 h1:LEMuGmReXS7+7O2KmVPGZ5fGnZzeooHkegHH7eYi83o=
-github.com/zenrocklabs/zenbtc v1.9.3/go.mod h1:XXzwzMYs1p6Du6fIgBcAxUndEeVQc18qaTyBkHG8j7w=
+github.com/zenrocklabs/zenbtc v1.10.0 h1:YNQYYN8wuHen/m4/kueChn1kTb6PsxD2iRsnaNaPv9g=
+github.com/zenrocklabs/zenbtc v1.10.0/go.mod h1:iz3vGNiyNB+tiD6uOYTbeiVCF4jbFmFJPvwswmXcINE=
 github.com/zenrocklabs/zenrock-avs v1.4.14 h1:KOpx7SBk839s81+Icq4DqF84+AkP0ryBEOcNKKYubv0=
 github.com/zenrocklabs/zenrock-avs v1.4.14/go.mod h1:1TZzdlC+ZczhvS5tOc1ShRy2rwqHWhONd0dhB+GPTRE=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
