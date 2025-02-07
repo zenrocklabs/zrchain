@@ -878,7 +878,8 @@ func (m *MetadataEthereum) GetChainId() uint64 {
 	return 0
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
 type MetadataSolana struct {
 	Network     SolanaNetworkType `protobuf:"varint,1,opt,name=network,proto3,enum=zrchain.treasury.SolanaNetworkType" json:"network,omitempty"`
 	MintAddress string            `protobuf:"bytes,2,opt,name=mintAddress,proto3" json:"mintAddress,omitempty"`

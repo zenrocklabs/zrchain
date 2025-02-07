@@ -418,41 +418,26 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
-func (k *Keeper) constructStakeTx(ctx context.Context, caip2ChainID string, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeStakeCallData(new(big.Int).SetUint64(amount))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	chainID, err := types.ExtractEVMChainID(caip2ChainID)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr, caip2ChainID string, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	chainID, err := types.ExtractEVMChainID(caip2ChainID)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, destinationAddr []byte, amount, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destinationAddr []byte, amount, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, destinationAddr, amount)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	chainID, err := types.ExtractEVMChainID(caip2ChainID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -460,13 +445,8 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, caip2ChainID string, de
 	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
-func (k *Keeper) constructCompleteTx(ctx context.Context, caip2ChainID string, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedCompleteData, err := k.EncodeCompleteCallData(ctx, redemptionID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	chainID, err := types.ExtractEVMChainID(caip2ChainID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -762,4 +742,12 @@ func (k *Keeper) recordNonVotingValidators(ctx sdk.Context, req *abci.RequestFin
 			}
 		}
 	}
+}
+
+func getChainIDForEigen(ctx sdk.Context) uint64 {
+	var chainID uint64 = 17000
+	if strings.HasPrefix(ctx.ChainID(), "diamond") {
+		chainID = 1
+	}
+	return chainID
 }

@@ -14835,7 +14835,8 @@ func (x *MetadataEthereum) GetChainId() uint64 {
 	return 0
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
 type MetadataSolana struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
