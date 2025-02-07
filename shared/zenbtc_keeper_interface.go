@@ -12,6 +12,7 @@ type ZenBTCKeeper interface {
 	GetUnstakerKeyID(ctx context.Context) uint64
 	GetCompleterKeyID(ctx context.Context) uint64
 	GetEthBatcherAddr(ctx context.Context) string
+	GetEthTokenAddr(ctx context.Context) string
 	GetBitcoinProxyAddress(ctx context.Context) string
 	SetPendingMintTransaction(ctx context.Context, pendingMintTransaction types.PendingMintTransaction) error
 	WalkPendingMintTransactions(ctx context.Context, fn func(id uint64, pendingMintTransaction types.PendingMintTransaction) (stop bool, err error)) error
