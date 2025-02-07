@@ -912,131 +912,89 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 }
 
 func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	// Check if we should process redemptions
-	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
-	if err != nil && !errors.Is(err, collections.ErrNotFound) {
-		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
-		return
-	}
-	if !requested {
-		return
-	}
-
-	// Get last used nonce state
-	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
-	if err != nil {
-		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
-		return
-	}
-
-	if lastUsedNonce.Skip {
-		return
-	}
-
-	// Get the first and second INITIATED redemptions
-	var firstRedemption zenbtctypes.Redemption
-	var secondRedemption zenbtctypes.Redemption
-	var firstRedemptionID uint64
-	var redemptionCount int
+	// First, find the first INITIATED redemption
+	var firstInitiatedRedemption zenbtctypes.Redemption
+	var found bool
 
 	if err := k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
 		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
-			redemptionCount++
-			if redemptionCount == 1 {
-				firstRedemption = r
-				firstRedemptionID = id
-			} else if redemptionCount == 2 {
-				secondRedemption = r
-				return true, nil
-			}
+			firstInitiatedRedemption = r
+			found = true
+			return true, nil
 		}
 		return false, nil
 	}); err != nil {
-		k.Logger(ctx).Error("error walking redemptions", "err", err)
+		k.Logger(ctx).Error("error finding first initiated redemption", "err", err)
 		return
 	}
 
-	// If there are no initiated redemptions to process, set completer nonce request to false
-	if redemptionCount == 0 {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), false); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state for completer", "err", err)
-		}
-		return
-	}
-
-	// If nonce changed, previous unstake succeeded - update status
-	if oracleData.RequestedCompleterNonce != lastUsedNonce.PrevNonce {
-		firstRedemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-		if err := k.zenBTCKeeper.SetRedemption(ctx, firstRedemptionID, firstRedemption); err != nil {
-			k.Logger(ctx).Error("error updating redemption status", "err", err)
-			return
-		}
-		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
-		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), lastUsedNonce); err != nil {
-			k.Logger(ctx).Error("error updating nonce state", "err", err)
-		}
-
-		// Set EthereumNonceRequested to true for the staker key after successful completion
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state for staker", "err", err)
-		}
-
-		// If no more redemptions to process, set completer nonce request to false
-		if redemptionCount == 1 {
-			if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), false); err != nil {
-				k.Logger(ctx).Error("error setting EthereumNonceRequested state for completer", "err", err)
+	// If we found an INITIATED redemption, check if it exists in oracleData
+	if found {
+		redemptionExists := false
+		for _, redemption := range oracleData.Redemptions {
+			if redemption.Id == firstInitiatedRedemption.Data.Id {
+				redemptionExists = true
+				break
 			}
 		}
 
+		// If the redemption is not in oracleData, mark it as unstaked
+		if !redemptionExists {
+			firstInitiatedRedemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+			if err := k.zenBTCKeeper.SetRedemption(ctx, firstInitiatedRedemption.Data.Id, firstInitiatedRedemption); err != nil {
+				k.Logger(ctx).Error("error updating redemption status to unstaked", "err", err)
+				return
+			}
+		}
+	}
+
+	if len(oracleData.Redemptions) == 0 {
 		return
 	}
 
-	k.Logger(ctx).Warn("processing zenBTC complete",
-		"id", secondRedemption.Data.Id,
-		"nonce", oracleData.RequestedCompleterNonce,
-		"base_fee", oracleData.EthBaseFee,
-		"tip_cap", oracleData.EthTipCap,
-	)
-
-	// Create and sign new complete transaction
-	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
-		ctx,
-		getChainIDForEigen(ctx),
-		secondRedemption.Data.Id,
-		oracleData.RequestedCompleterNonce,
-		oracleData.EthBaseFee,
-		oracleData.EthTipCap,
-	)
+	// Get current exchange rate for conversion
+	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("error constructing unstake transaction", "err", err)
+		k.Logger(ctx).Error("error getting zenBTC exchange rate", "err", err)
 		return
 	}
 
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-	if err != nil {
-		k.Logger(ctx).Error("error creating metadata", "err", err)
-		return
+	foundNewRedemption := false
+
+	for _, redemption := range oracleData.Redemptions {
+		redemptionExists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id)
+		if err != nil {
+			k.Logger(ctx).Error("error checking redemption existence", "err", err)
+			continue
+		}
+		if redemptionExists {
+			k.Logger(ctx).Debug("redemption already stored", "id", redemption.Id)
+			continue
+		}
+
+		foundNewRedemption = true
+
+		// Convert zenBTC amount to BTC amount
+		// redemption.Amount is zenBTC, multiply by BTC/zenBTC rate to get BTC amount
+		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
+
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
+			Data: zenbtctypes.RedemptionData{
+				Id:                 redemption.Id,
+				DestinationAddress: redemption.DestinationAddress,
+				Amount:             btcAmount,
+			},
+			Status: zenbtctypes.RedemptionStatus_INITIATED,
+		}); err != nil {
+			k.Logger(ctx).Error("error adding redemption to store", "err", err)
+			continue
+		}
 	}
 
-	creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
-	if err != nil {
-		k.Logger(ctx).Error("error getting creator address", "err", err)
-		return
-	}
-
-	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
-		ctx,
-		&treasurytypes.MsgNewSignTransactionRequest{
-			Creator:             creator,
-			KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
-			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-			UnsignedTransaction: unsignedTx,
-			Metadata:            metadata,
-			NoBroadcast:         false,
-		},
-		[]byte(hex.EncodeToString(unsignedTxHash)),
-	); err != nil {
-		k.Logger(ctx).Error("error creating unstake transaction", "err", err)
+	if foundNewRedemption {
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "err", err)
+		}
 	}
 }
 
@@ -1166,6 +1124,142 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	); err != nil {
 		k.Logger(ctx).Error("error creating unstake transaction for burn event", "err", err)
+	}
+}
+
+func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
+	// Check if we should process redemptions
+	requested, err := k.EthereumNonceRequested.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting EthereumNonceRequested state", "err", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	// Get last used nonce state
+	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx))
+	if err != nil {
+		k.Logger(ctx).Error("error getting last used Ethereum nonce", "err", err)
+		return
+	}
+
+	if lastUsedNonce.Skip {
+		return
+	}
+
+	// Get the first INITIATED redemption
+	var redemption zenbtctypes.Redemption
+	var redemptionID uint64
+	var found bool
+
+	if err := k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
+			redemption = r
+			redemptionID = id
+			found = true
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		k.Logger(ctx).Error("error finding redemption", "err", err)
+		return
+	}
+	if !found {
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), false); err != nil {
+			k.Logger(ctx).Error("error updating nonce request state", "err", err)
+		}
+		return
+	}
+
+	// If nonce changed, previous unstake succeeded - update status
+	if oracleData.RequestedCompleterNonce != lastUsedNonce.PrevNonce {
+		redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemptionID, redemption); err != nil {
+			k.Logger(ctx).Error("error updating redemption status", "err", err)
+			return
+		}
+		lastUsedNonce.PrevNonce = lastUsedNonce.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), lastUsedNonce); err != nil {
+			k.Logger(ctx).Error("error updating nonce state", "err", err)
+		}
+
+		// Set EthereumNonceRequested to true for the staker key after successful completion
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting EthereumNonceRequested state for staker", "err", err)
+		}
+
+		// Check if there are any more redemptions to process
+		var hasMoreRedemptions bool
+		if err := k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+			if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
+				hasMoreRedemptions = true
+				return true, nil
+			}
+			return false, nil
+		}); err != nil {
+			k.Logger(ctx).Error("error checking for more redemptions", "err", err)
+			return
+		}
+
+		// If no more redemptions to process, set completer nonce request to false
+		if !hasMoreRedemptions {
+			if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), false); err != nil {
+				k.Logger(ctx).Error("error setting EthereumNonceRequested state for completer", "err", err)
+			}
+		}
+
+		return
+	}
+
+	k.Logger(ctx).Warn("processing zenBTC complete",
+		"id", redemption.Data.Id,
+		"nonce", oracleData.RequestedCompleterNonce,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
+	)
+
+	// Create and sign new complete transaction
+	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
+		ctx,
+		getChainIDForEigen(ctx),
+		redemption.Data.Id,
+		oracleData.RequestedCompleterNonce,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing unstake transaction", "err", err)
+		return
+	}
+
+	// Create metadata for the transaction (chain ID is hardcoded as 17000 for now).
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: 17000})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "err", err)
+		return
+	}
+
+	creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	if err != nil {
+		k.Logger(ctx).Error("error getting creator address", "err", err)
+		return
+	}
+
+	if _, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	); err != nil {
+		k.Logger(ctx).Error("error creating unstake transaction", "err", err)
 	}
 }
 
