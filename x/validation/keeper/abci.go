@@ -29,13 +29,13 @@ import (
 // =============================================================================
 //
 
-// BeginBlocker calls telemetry and then tracks historical info.
+// BeginBlocker calls telemetry and then tracks historical info
 func (k *Keeper) BeginBlocker(ctx context.Context) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyBeginBlocker)
 	return k.TrackHistoricalInfo(ctx)
 }
 
-// EndBlocker calls telemetry and then processes validator updates.
+// EndBlocker calls telemetry and then processes validator updates
 func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyEndBlocker)
 	return k.BlockValidatorUpdates(ctx)
@@ -47,8 +47,7 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 // =============================================================================
 //
 
-// ExtendVoteHandler is called by all validators to extend the consensus vote
-// with additional data to be voted on.
+// ExtendVoteHandler is called by all validators to extend the consensus vote with additional data to be voted on
 func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
 	oracleData, err := k.GetSidecarState(ctx, req.Height)
 	if err != nil {
@@ -76,7 +75,7 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 	return &abci.ResponseExtendVote{VoteExtension: voteExtBz}, nil
 }
 
-// constructVoteExtension builds the vote extension based on oracle data and on-chain state.
+// constructVoteExtension builds the vote extension based on oracle data and on-chain state
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
 	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
@@ -143,7 +142,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	return voteExt, nil
 }
 
-// VerifyVoteExtensionHandler is called by all validators to verify vote extension data.
+// VerifyVoteExtensionHandler is called by all validators to verify vote extension data
 func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 	if len(req.VoteExtension) == 0 {
 		return ACCEPT_VOTE, nil
@@ -179,7 +178,7 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 // =============================================================================
 //
 
-// PrepareProposal is executed only by the proposer to inject oracle data into the block.
+// PrepareProposal is executed only by the proposer to inject oracle data into the block
 func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPrepareProposal) ([]byte, error) {
 	if !VoteExtensionsEnabled(ctx) {
 		k.Logger(ctx).Debug("vote extensions disabled; not injecting oracle data", "height", req.Height)
@@ -211,7 +210,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	return k.marshalOracleData(req, oracleData)
 }
 
-// ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
+// ProcessProposal is executed by all validators to check whether the proposer prepared valid data
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 	if !k.zrConfig.IsValidator {
 		return ACCEPT_PROPOSAL, nil
@@ -253,7 +252,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 // =============================================================================
 //
 
-// PreBlocker is called before each block to process oracle data and update state.
+// PreBlocker is called before each block to process oracle data and update state
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
 	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
@@ -277,7 +276,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 	k.storeNewZenBTCRedemptions(ctx, oracleData)
 
-	// Toggle minting and unstaking every other block.
+	// Toggle minting and unstaking every other block as VEs originate from block n-1 so nonce requests have 1 block latency.
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
 		k.processZenBTCStaking(ctx, oracleData)
@@ -291,7 +290,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	return nil
 }
 
-// shouldProcessOracleData checks if oracle data should be processed for this block.
+// shouldProcessOracleData checks if oracle data should be processed for this block
 func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
 	if len(req.Txs) == 0 {
 		k.Logger(ctx).Debug("no transactions in block")
@@ -311,7 +310,7 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
+// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
 	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
 	if err != nil {
@@ -332,7 +331,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 	return voteExt, true
 }
 
-// updateNonces handles updating nonce state for keys used for minting and unstaking.
+// updateNonces handles updating nonce state for keys used for minting and unstaking
 func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -372,7 +371,7 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
-// getValidatedOracleData retrieves and validates oracle data based on a vote extension.
+// getValidatedOracleData retrieves and validates oracle data based on a vote extension
 func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtension) (*OracleData, *VoteExtension, error) {
 	oracleData, err := k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
 	if err != nil {
@@ -409,7 +408,7 @@ func (k *Keeper) getValidatedOracleData(ctx context.Context, voteExt VoteExtensi
 // =============================================================================
 //
 
-// updateValidatorStakes updates validator stake values and delegation mappings.
+// updateValidatorStakes updates validator stake values and delegation mappings
 func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
@@ -449,7 +448,7 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	k.removeStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
 }
 
-// removeStaleValidatorDelegations removes delegation entries for validators not present in the current AVS data.
+// removeStaleValidatorDelegations removes delegation entries for validators not present in the current AVS data
 func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
@@ -474,7 +473,7 @@ func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVS
 	}
 }
 
-// updateValidatorTokensAVS resets a validator's AVS tokens to zero.
+// updateValidatorTokensAVS resets a validator's AVS tokens to zero
 func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error {
 	validator, err := k.GetZenrockValidator(ctx, sdk.ValAddress(valAddr))
 	if err != nil {
@@ -490,7 +489,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 	return nil
 }
 
-// updateAVSDelegationStore updates the AVS delegation store with new delegation amounts.
+// updateAVSDelegationStore updates the AVS delegation store with new delegation amounts
 func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData) {
 	for validatorAddr, delegatorMap := range oracleData.EigenDelegationsMap {
 		for delegatorAddr, amount := range delegatorMap {
@@ -507,7 +506,7 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 // =============================================================================
 //
 
-// storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
+// storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
 		k.Logger(ctx).Error("invalid bitcoin header data", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
@@ -554,7 +553,7 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	}
 }
 
-// isHistoricalHeader checks if the given Bitcoin block height is in the list of requested historical headers.
+// isHistoricalHeader checks if the given Bitcoin block height is in the list of requested historical headers
 func (k *Keeper) isHistoricalHeader(height int64, requestedHeights []int64) bool {
 	for _, h := range requestedHeights {
 		if h == height {
@@ -564,7 +563,7 @@ func (k *Keeper) isHistoricalHeader(height int64, requestedHeights []int64) bool
 	return false
 }
 
-// checkForBitcoinReorg detects reorgs by requesting previous headers when a new one is received.
+// checkForBitcoinReorg detects reorgs by requesting previous headers when a new one is received
 func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, requestedHeaders zenbtctypes.RequestedBitcoinHeaders) error {
 	var numHistoricalHeadersToRequest int64 = 20
 	if strings.HasPrefix(ctx.ChainID(), "diamond") {
@@ -600,7 +599,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 // =============================================================================
 //
 
-// Helper: processWithNonceUpdate encapsulates the common nonce update logic.
+// Helper: processWithNonceUpdate encapsulates the common nonce update logic
 func (k *Keeper) processWithNonceUpdate(
 	ctx sdk.Context,
 	keyID uint64,
@@ -635,7 +634,7 @@ func (k *Keeper) processWithNonceUpdate(
 	}
 }
 
-// selectSecondIfAvailable returns the second element if available; otherwise the first.
+// selectSecondIfAvailable returns the second element if available, otherwise returns the first
 func selectSecondIfAvailable[T any](items []T) T {
 	if len(items) > 1 {
 		return items[1]
@@ -643,12 +642,12 @@ func selectSecondIfAvailable[T any](items []T) T {
 	return items[0]
 }
 
-// clearEthereumNonceRequest resets the nonce-request flag for a given key.
+// clearEthereumNonceRequest resets the nonce-request flag for a given key
 func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error {
 	return k.EthereumNonceRequested.Set(ctx, keyID, false)
 }
 
-// getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
+// getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status
 func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) []zenbtctypes.PendingMintTransaction {
 	var txs []zenbtctypes.PendingMintTransaction
 	_ = k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, pending zenbtctypes.PendingMintTransaction) (bool, error) {
@@ -663,7 +662,7 @@ func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenb
 	return txs
 }
 
-// getRedemptionsByStatus retrieves up to 2 redemptions matching the given status.
+// getRedemptionsByStatus retrieves up to 2 redemptions matching the given status
 func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus) []zenbtctypes.Redemption {
 	var redemptions []zenbtctypes.Redemption
 	_ = k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
@@ -678,7 +677,7 @@ func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 	return redemptions
 }
 
-// processZenBTCStaking processes pending staking transactions.
+// processZenBTCStaking processes pending staking transactions
 func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetStakerKeyID(ctx)
 	requestedNonce := oracleData.RequestedStakerNonce
@@ -758,7 +757,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 	)
 }
 
-// processZenBTCMints processes pending mint transactions.
+// processZenBTCMints processes pending mint transactions
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetEthMinterKeyID(ctx)
 	requestedNonce := oracleData.RequestedEthMinterNonce
@@ -868,7 +867,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	)
 }
 
-// storeNewZenBTCBurnEventsEthereum stores new burn events coming from Ethereum.
+// storeNewZenBTCBurnEventsEthereum stores new burn events coming from Ethereum
 func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
 	// Retrieve the current burn events from the store.
 	burnEvents, err := k.zenBTCKeeper.GetBurnEvents(ctx)
@@ -899,7 +898,7 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 	}
 }
 
-// storeNewZenBTCRedemptions processes new redemption events.
+// storeNewZenBTCRedemptions processes new redemption events
 func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
 	// Find the first INITIATED redemption.
 	var firstInitiatedRedemption zenbtctypes.Redemption
@@ -982,7 +981,7 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 	}
 }
 
-// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions.
+// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions
 func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
 
@@ -1091,7 +1090,7 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 	)
 }
 
-// processZenBTCRedemptions processes pending redemption completions.
+// processZenBTCRedemptions processes pending redemption completions
 func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetCompleterKeyID(ctx)
 
@@ -1191,7 +1190,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 // =============================================================================
 //
 
-// validateHashField derives a hash from the given data and compares it with the expected value.
+// validateHashField derives a hash from the given data and compares it with the expected value
 func validateHashField(fieldName string, expectedHash []byte, data interface{}) error {
 	derivedHash, err := deriveHash(data)
 	if err != nil {
@@ -1203,7 +1202,7 @@ func validateHashField(fieldName string, expectedHash []byte, data interface{}) 
 	return nil
 }
 
-// validateOracleData verifies that the vote extension and oracle data match.
+// validateOracleData verifies that the vote extension and oracle data match
 func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
 	if err := validateHashField("AVS contract delegation state", voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
 		return err
