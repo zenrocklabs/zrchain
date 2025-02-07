@@ -7,7 +7,7 @@ network: "testnet"
 eth_oracle:
   rpc:
     local: "http://127.0.0.1:8545"
-    testnet: "https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/"
+    testnet: "https://rpc.ankr.com/eth_holesky"
     mainnet: "https://rpc.ankr.com/eth"
   eth_burn_events_block_range: 100
   contract_addrs:
