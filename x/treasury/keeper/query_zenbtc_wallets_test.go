@@ -19,7 +19,7 @@ var defaultECDSAKeyWithZenBTCMetadata = types.Key{
 	ZenbtcMetadata: &types.ZenBTCMetadata{
 		RecipientAddr: "0x9D450478FDB879C2900Ad54A0A407B0607b20478",
 		ChainType:     types.WalletType_WALLET_TYPE_EVM,
-		ChainId:       uint64(17000),
+		Caip2ChainId:  "eip155:17000",
 		ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 	},
 }
@@ -33,7 +33,7 @@ var defaultECDSAKeyResponseWithZenBTCMetadata = types.KeyResponse{
 	ZenbtcMetadata: &types.ZenBTCMetadata{
 		RecipientAddr: "0x9D450478FDB879C2900Ad54A0A407B0607b20478",
 		ChainType:     types.WalletType_WALLET_TYPE_EVM,
-		ChainId:       uint64(17000),
+		Caip2ChainId:  "eip155:17000",
 		ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 	},
 }
@@ -132,7 +132,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "dummySolAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_SOLANA,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -171,7 +171,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "0x9704Bc96D57180B3Cf4154fEf9Ba3A7aDFfDA9Ac",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(11555111),
+							Caip2ChainId:  "eip155:11555111",
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -192,7 +192,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							ZenbtcMetadata: &types.ZenBTCMetadata{
 								RecipientAddr: "0x9704Bc96D57180B3Cf4154fEf9Ba3A7aDFfDA9Ac",
 								ChainType:     types.WalletType_WALLET_TYPE_EVM,
-								ChainId:       uint64(11555111),
+								Caip2ChainId:  "eip155:11555111",
 								ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 							},
 						},
@@ -222,7 +222,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "anotherETHAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -251,7 +251,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							ZenbtcMetadata: &types.ZenBTCMetadata{
 								RecipientAddr: "anotherETHAddress",
 								ChainType:     types.WalletType_WALLET_TYPE_EVM,
-								ChainId:       uint64(17000),
+								Caip2ChainId:  "eip155:17000",
 								ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 							},
 						},
@@ -280,7 +280,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "anotherETHAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -349,13 +349,13 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "recipient1",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(17001),
+							Caip2ChainId:  "eip155:17001",
 							ReturnAddress: "return1",
 						},
 					},
 				},
 				req: &types.QueryZenbtcWalletsRequest{
-					MintChainId: 17000,
+					MintChainId: "eip155:17000",
 					ChainType:   types.WalletType_WALLET_TYPE_EVM,
 				},
 			},
@@ -379,7 +379,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "recipient2",
 							ChainType:     types.WalletType_WALLET_TYPE_BTC_REGNET,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "return2",
 						},
 					},
@@ -408,7 +408,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "differentRecipient",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "return3",
 						},
 					},
@@ -437,7 +437,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "recipient4",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							ChainId:       uint64(17000),
+							Caip2ChainId:  "eip155:17000",
 							ReturnAddress: "differentReturn",
 						},
 					},

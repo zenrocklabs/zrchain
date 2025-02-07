@@ -240,10 +240,10 @@ class QueryZenbtcWalletsRequest(_message.Message):
     PAGINATION_FIELD_NUMBER: _ClassVar[int]
     recipient_addr: str
     chain_type: _wallet_pb2.WalletType
-    mint_chain_id: int
+    mint_chain_id: str
     return_addr: str
     pagination: _pagination_pb2.PageRequest
-    def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., mint_chain_id: _Optional[int] = ..., return_addr: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
+    def __init__(self, recipient_addr: _Optional[str] = ..., chain_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., mint_chain_id: _Optional[str] = ..., return_addr: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
 
 class QueryZenbtcWalletsResponse(_message.Message):
     __slots__ = ("zenbtc_wallets", "pagination")
