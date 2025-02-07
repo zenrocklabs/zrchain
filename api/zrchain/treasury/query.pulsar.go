@@ -13743,8 +13743,8 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) Range(f func(protoreflect.Fie
 			return
 		}
 	}
-	if x.MintChainId != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.MintChainId)
+	if x.MintChainId != "" {
+		value := protoreflect.ValueOfString(x.MintChainId)
 		if !f(fd_QueryZenbtcWalletsRequest_mint_chain_id, value) {
 			return
 		}
@@ -13781,7 +13781,7 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) Has(fd protoreflect.FieldDesc
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.chain_type":
 		return x.ChainType != 0
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.mint_chain_id":
-		return x.MintChainId != uint64(0)
+		return x.MintChainId != ""
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.return_addr":
 		return x.ReturnAddr != ""
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.pagination":
@@ -13807,7 +13807,7 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) Clear(fd protoreflect.FieldDe
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.chain_type":
 		x.ChainType = 0
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.mint_chain_id":
-		x.MintChainId = uint64(0)
+		x.MintChainId = ""
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.return_addr":
 		x.ReturnAddr = ""
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.pagination":
@@ -13836,7 +13836,7 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) Get(descriptor protoreflect.F
 		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.mint_chain_id":
 		value := x.MintChainId
-		return protoreflect.ValueOfUint64(value)
+		return protoreflect.ValueOfString(value)
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.return_addr":
 		value := x.ReturnAddr
 		return protoreflect.ValueOfString(value)
@@ -13868,7 +13868,7 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) Set(fd protoreflect.FieldDesc
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.chain_type":
 		x.ChainType = (WalletType)(value.Enum())
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.mint_chain_id":
-		x.MintChainId = value.Uint()
+		x.MintChainId = value.Interface().(string)
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.return_addr":
 		x.ReturnAddr = value.Interface().(string)
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.pagination":
@@ -13924,7 +13924,7 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) NewField(fd protoreflect.Fiel
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.chain_type":
 		return protoreflect.ValueOfEnum(0)
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.mint_chain_id":
-		return protoreflect.ValueOfUint64(uint64(0))
+		return protoreflect.ValueOfString("")
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.return_addr":
 		return protoreflect.ValueOfString("")
 	case "zrchain.treasury.QueryZenbtcWalletsRequest.pagination":
@@ -14006,8 +14006,9 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) ProtoMethods() *protoiface.Me
 		if x.ChainType != 0 {
 			n += 1 + runtime.Sov(uint64(x.ChainType))
 		}
-		if x.MintChainId != 0 {
-			n += 1 + runtime.Sov(uint64(x.MintChainId))
+		l = len(x.MintChainId)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		l = len(x.ReturnAddr)
 		if l > 0 {
@@ -14067,10 +14068,12 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) ProtoMethods() *protoiface.Me
 			i--
 			dAtA[i] = 0x22
 		}
-		if x.MintChainId != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.MintChainId))
+		if len(x.MintChainId) > 0 {
+			i -= len(x.MintChainId)
+			copy(dAtA[i:], x.MintChainId)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.MintChainId)))
 			i--
-			dAtA[i] = 0x18
+			dAtA[i] = 0x1a
 		}
 		if x.ChainType != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.ChainType))
@@ -14185,10 +14188,10 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) ProtoMethods() *protoiface.Me
 					}
 				}
 			case 3:
-				if wireType != 0 {
+				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MintChainId", wireType)
 				}
-				x.MintChainId = 0
+				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -14198,11 +14201,24 @@ func (x *fastReflection_QueryZenbtcWalletsRequest) ProtoMethods() *protoiface.Me
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.MintChainId |= uint64(b&0x7F) << shift
+					stringLen |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.MintChainId = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
 			case 4:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ReturnAddr", wireType)
@@ -16094,7 +16110,7 @@ type QueryZenbtcWalletsRequest struct {
 
 	RecipientAddr string               `protobuf:"bytes,1,opt,name=recipient_addr,json=recipientAddr,proto3" json:"recipient_addr,omitempty"`                       // Optional
 	ChainType     WalletType           `protobuf:"varint,2,opt,name=chain_type,json=chainType,proto3,enum=zrchain.treasury.WalletType" json:"chain_type,omitempty"` // Optional
-	MintChainId   uint64               `protobuf:"varint,3,opt,name=mint_chain_id,json=mintChainId,proto3" json:"mint_chain_id,omitempty"`                          // Optional
+	MintChainId   string               `protobuf:"bytes,3,opt,name=mint_chain_id,json=mintChainId,proto3" json:"mint_chain_id,omitempty"`                           // Optional
 	ReturnAddr    string               `protobuf:"bytes,4,opt,name=return_addr,json=returnAddr,proto3" json:"return_addr,omitempty"`                                // Optional
 	Pagination    *v1beta1.PageRequest `protobuf:"bytes,5,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -16133,11 +16149,11 @@ func (x *QueryZenbtcWalletsRequest) GetChainType() WalletType {
 	return WalletType_WALLET_TYPE_UNSPECIFIED
 }
 
-func (x *QueryZenbtcWalletsRequest) GetMintChainId() uint64 {
+func (x *QueryZenbtcWalletsRequest) GetMintChainId() string {
 	if x != nil {
 		return x.MintChainId
 	}
-	return 0
+	return ""
 }
 
 func (x *QueryZenbtcWalletsRequest) GetReturnAddr() string {
@@ -16461,7 +16477,7 @@ var file_zrchain_treasury_query_proto_rawDesc = []byte{
 	0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79,
 	0x70, 0x65, 0x52, 0x09, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x79, 0x70, 0x65, 0x12, 0x22, 0x0a,
 	0x0d, 0x6d, 0x69, 0x6e, 0x74, 0x5f, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x74, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x49,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x74, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x49,
 	0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72,
 	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x41, 0x64,
 	0x64, 0x72, 0x12, 0x46, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
