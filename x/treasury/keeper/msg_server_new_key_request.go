@@ -65,7 +65,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 
 	if metadata := msg.ZenbtcMetadata; metadata != nil {
 		// TODO: add other chainIDs before zenBTC mainnet upgrade
-		if metadata.ChainId != 17000 {
+		if metadata.Caip2ChainId != "eip155:17000" {
 			return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
 		}
 		// TODO: add alternate check for Solana address format

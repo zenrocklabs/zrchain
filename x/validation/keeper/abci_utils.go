@@ -371,7 +371,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
-	chainIDBigInt := big.NewInt(int64(chainID))
+	chainIDBigInt := new(big.Int).SetUint64(chainID)
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
 
