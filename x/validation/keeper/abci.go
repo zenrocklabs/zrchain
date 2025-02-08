@@ -143,7 +143,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	return voteExt, nil
 }
 
-// VerifyVoteExtensionHandler is called by all validators to verify vote extension data.
+// VerifyVoteExtensionHandler is called by all validators to verify vote extension data
 func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 	if len(req.VoteExtension) == 0 {
 		return ACCEPT_VOTE, nil
@@ -211,7 +211,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	return k.marshalOracleData(req, oracleData)
 }
 
-// ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
+// ProcessProposal is executed by all validators to check whether the proposer prepared valid data
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 	if !k.zrConfig.IsValidator {
 		return ACCEPT_PROPOSAL, nil
@@ -984,7 +984,7 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 	}
 }
 
-// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions.
+// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions
 func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
 
