@@ -648,9 +648,9 @@ func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error 
 }
 
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
-func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) []zenbtctypes.PendingMintTransaction {
+func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) ([]zenbtctypes.PendingMintTransaction, error) {
 	var txs []zenbtctypes.PendingMintTransaction
-	_ = k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, pending zenbtctypes.PendingMintTransaction) (bool, error) {
+	if err := k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, pending zenbtctypes.PendingMintTransaction) (bool, error) {
 		if pending.Status == status {
 			txs = append(txs, pending)
 			if len(txs) == 2 {
@@ -658,23 +658,27 @@ func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenb
 			}
 		}
 		return false, nil
-	})
-	return txs
+	}); err != nil {
+		return nil, fmt.Errorf("error walking pending mint transactions: %w", err)
+	}
+	return txs, nil
 }
 
 // getRedemptionsByStatus retrieves up to 2 redemptions matching the given status.
-func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus) []zenbtctypes.Redemption {
+func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus) ([]zenbtctypes.Redemption, error) {
 	var redemptions []zenbtctypes.Redemption
-	_ = k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
-		if r.Status == zenbtctypes.RedemptionStatus_INITIATED {
+	if err := k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+		if r.Status == status {
 			redemptions = append(redemptions, r)
 			if len(redemptions) == 2 {
 				return true, nil
 			}
 		}
 		return false, nil
-	})
-	return redemptions
+	}); err != nil {
+		return nil, fmt.Errorf("error walking redemptions: %w", err)
+	}
+	return redemptions, nil
 }
 
 // processZenBTCStaking processes pending staking transactions.
@@ -682,7 +686,11 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetStakerKeyID(ctx)
 	requestedNonce := oracleData.RequestedStakerNonce
 
-	depositedTxs := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED)
+	depositedTxs, err := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending mint transactions", "error", err)
+		return
+	}
 	if len(depositedTxs) == 0 {
 		if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
 			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
@@ -763,7 +771,11 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	keyID := k.zenBTCKeeper.GetEthMinterKeyID(ctx)
 	requestedNonce := oracleData.RequestedEthMinterNonce
 
-	stakedTxs := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
+	stakedTxs, err := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending mint transactions", "error", err)
+		return
+	}
 	if len(stakedTxs) == 0 {
 		if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
 			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
@@ -1114,7 +1126,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		return
 	}
 
-	initiatedRedemptions := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED)
+	initiatedRedemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED)
+	if err != nil {
+		k.Logger(ctx).Error("error getting initiated redemptions", "error", err)
+		return
+	}
 	if len(initiatedRedemptions) == 0 {
 		if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
 			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
