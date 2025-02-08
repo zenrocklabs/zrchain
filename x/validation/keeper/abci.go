@@ -572,15 +572,21 @@ func checkForUpdateAndDispatchTx[T any](
 	nonceUpdatedCallback func(nonceData zenbtctypes.NonceData, tx T) error,
 	txDispatchCallback func(tx T) error,
 ) {
+	if len(pendingTxs) == 0 {
+		return
+	}
+
 	nonceData, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
 		k.Logger(ctx).Error("error getting last used Ethereum nonce", "keyID", keyID, "error", err)
 		return
 	}
 	k.Logger(ctx).Info("Nonce info", "nonce", nonceData.Nonce, "prev", nonceData.PrevNonce, "requested", requestedNonce)
+
 	if nonceData.Nonce != 0 && requestedNonce == 0 {
 		return
 	}
+
 	nonceUpdated := false
 	if requestedNonce != nonceData.PrevNonce {
 		if err := nonceUpdatedCallback(nonceData, pendingTxs[0]); err != nil {
@@ -603,7 +609,7 @@ func checkForUpdateAndDispatchTx[T any](
 	}
 
 	txIndex := 0
-	// If tx[0] confirmed via nonce increment, dispatch tx[1]. If not then retry tx[0].
+	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
 	if nonceUpdated {
 		txIndex = 1
 	}
