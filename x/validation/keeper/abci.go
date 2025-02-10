@@ -578,7 +578,14 @@ func checkForUpdateAndDispatchTx[T any](
 
 	nonceData, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
-		k.Logger(ctx).Error("error getting last used Ethereum nonce", "keyID", keyID, "error", err)
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting last used ethereum nonce", "keyID", keyID, "error", err)
+			return
+		}
+		nonceData = zenbtctypes.NonceData{Nonce: 0, PrevNonce: 0, Counter: 0, Skip: true}
+		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, nonceData); err != nil {
+			k.Logger(ctx).Error("error setting last used ethereum nonce", "keyID", keyID, "error", err)
+		}
 		return
 	}
 	k.Logger(ctx).Info("Nonce info", "nonce", nonceData.Nonce, "prev", nonceData.PrevNonce, "requested", requestedNonce)
@@ -649,7 +656,14 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 		// Avoid erroneously setting nonce to zero if a non-zero nonce exists i.e. blocks with no consensus on VEs.
 		nonceData, err := k.LastUsedEthereumNonce.Get(ctx, key)
 		if err != nil {
-			k.Logger(ctx).Error("error getting last used ethereum nonce", "keyID", key, "error", err)
+			if !errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Error("error getting last used ethereum nonce", "keyID", key, "error", err)
+				continue
+			}
+			nonceData = zenbtctypes.NonceData{Nonce: 0, PrevNonce: 0, Counter: 0, Skip: true}
+			if err := k.LastUsedEthereumNonce.Set(ctx, key, nonceData); err != nil {
+				k.Logger(ctx).Error("error setting last used ethereum nonce", "keyID", key, "error", err)
+			}
 			continue
 		}
 		if nonceData.Nonce != 0 && currentNonce == 0 {
