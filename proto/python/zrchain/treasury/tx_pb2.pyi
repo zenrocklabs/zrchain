@@ -104,7 +104,7 @@ class MsgFulfilKeyRequestResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgNewSignatureRequest(_message.Message):
-    __slots__ = ("creator", "key_ids", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version", "mpc_btl")
+    __slots__ = ("creator", "key_ids", "data_for_signing", "btl", "cache_id", "verify_signing_data", "verify_signing_data_version", "mpc_btl", "zenbtc_tx_bytes")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
@@ -113,6 +113,7 @@ class MsgNewSignatureRequest(_message.Message):
     VERIFY_SIGNING_DATA_FIELD_NUMBER: _ClassVar[int]
     VERIFY_SIGNING_DATA_VERSION_FIELD_NUMBER: _ClassVar[int]
     MPC_BTL_FIELD_NUMBER: _ClassVar[int]
+    ZENBTC_TX_BYTES_FIELD_NUMBER: _ClassVar[int]
     creator: str
     key_ids: _containers.RepeatedScalarFieldContainer[int]
     data_for_signing: str
@@ -121,7 +122,8 @@ class MsgNewSignatureRequest(_message.Message):
     verify_signing_data: bytes
     verify_signing_data_version: VerificationVersion
     mpc_btl: int
-    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ..., mpc_btl: _Optional[int] = ...) -> None: ...
+    zenbtc_tx_bytes: bytes
+    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., data_for_signing: _Optional[str] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., verify_signing_data: _Optional[bytes] = ..., verify_signing_data_version: _Optional[_Union[VerificationVersion, str]] = ..., mpc_btl: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ...) -> None: ...
 
 class MsgNewSignatureRequestResponse(_message.Message):
     __slots__ = ("sig_req_id",)
