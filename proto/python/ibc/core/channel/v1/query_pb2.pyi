@@ -1,10 +1,10 @@
 from ibc.core.client.v1 import client_pb2 as _client_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
 from ibc.core.channel.v1 import channel_pb2 as _channel_pb2
-from ibc.core.channel.v1 import upgrade_pb2 as _upgrade_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
+from ibc.core.channel.v1 import upgrade_pb2 as _upgrade_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

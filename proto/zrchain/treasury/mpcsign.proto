@@ -49,6 +49,7 @@ message SignRequest {
   repeated uint64 key_ids = 14;
   uint64 mpc_btl = 15;
   uint64 fee = 16;
+  bytes zenbtc_tx_bytes = 17; // Optional
 }
 
 // format of a signed data with an id value used to sort the signed data
@@ -85,6 +86,7 @@ message SignReqResponse {
   bytes cache_id = 13;
   uint64 mpc_btl = 14;
   uint64 fee = 15;
+  bytes zenbtc_tx_bytes = 16; // Optional
 }
 
 // format of a sign transaction request response
