@@ -144,6 +144,7 @@ message MsgNewSignatureRequest {
   bytes verify_signing_data = 6;
   VerificationVersion verify_signing_data_version = 7;
   uint64 mpc_btl = 8;
+  bytes zenbtc_tx_bytes = 9; // Optional
 }
 
 // Verification contains any data required to verify the incoming
