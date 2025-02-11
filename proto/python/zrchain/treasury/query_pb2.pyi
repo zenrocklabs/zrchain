@@ -252,3 +252,13 @@ class QueryZenbtcWalletsResponse(_message.Message):
     zenbtc_wallets: _containers.RepeatedCompositeFieldContainer[KeyAndWalletResponse]
     pagination: _pagination_pb2.PageResponse
     def __init__(self, zenbtc_wallets: _Optional[_Iterable[_Union[KeyAndWalletResponse, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
+
+class QueryFeeExcemptsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryFeeExcemptsResponse(_message.Message):
+    __slots__ = ("no_fee_msgs",)
+    NO_FEE_MSGS_FIELD_NUMBER: _ClassVar[int]
+    no_fee_msgs: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, no_fee_msgs: _Optional[_Iterable[str]] = ...) -> None: ...

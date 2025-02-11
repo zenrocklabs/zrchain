@@ -51,5 +51,13 @@ func (k *Keeper) ExportState(ctx sdk.Context, genState *types.GenesisState) erro
 		return err
 	}
 
+	err = k.NoFeeMsgsList.Walk(ctx, nil, func(msgUrl string) (stop bool, err error) {
+		genState.NoFeeMsgs = append(genState.NoFeeMsgs, msgUrl)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

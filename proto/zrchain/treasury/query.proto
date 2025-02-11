@@ -16,7 +16,7 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 // Query defines the gRPC querier service.
 service Query {
 
-  // Parameters queries the parameters of the module.
+  // Parameters queries the parameters of the module. 
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/zrchain/treasury/params";
   }
@@ -91,6 +91,11 @@ service Query {
     option (google.api.http).get =
         "/zrchain/v5/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/"
         "{mint_chain_id}/{return_addr}";
+  }
+
+  // Queries a list of FeeExcempts items.
+  rpc FeeExcempts(QueryFeeExcemptsRequest) returns (QueryFeeExcemptsResponse) {
+    option (google.api.http).get = "/zrchain/treasury/fee_excempts";
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -225,12 +230,15 @@ message QuerySignTransactionRequestByIDResponse {
   SignTxReqResponse sign_transaction_request = 1;
 }
 
+// QueryZrSignKeysRequest is request type for the
+// Query/ZrSignKeysRequest RPC method.
 message QueryZrSignKeysRequest {
   string address = 1;
   string walletType = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
+// ZrSignKeyEntry is a single entry in the ZrSignKeys response
 message ZrSignKeyEntry {
   string walletType = 1;
   string address = 2;
@@ -238,11 +246,15 @@ message ZrSignKeyEntry {
   uint64 id = 4;
 }
 
+// QueryZrSignKeysResponse is response type for the
+// Query/ZrSignKeysResponse RPC method.
 message QueryZrSignKeysResponse {
   repeated ZrSignKeyEntry Keys = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryKeyByAddressRequest is request type for the
+// Query/KeyByAddressRequest RPC method.
 message QueryKeyByAddressRequest {
   string address = 1;
   string keyring_addr = 2; // Optional
@@ -251,6 +263,8 @@ message QueryKeyByAddressRequest {
   repeated string prefixes = 5;
 }
 
+// QueryKeyByAddressResponse is response type for the
+// Query/KeyByAddressResponse RPC method.
 message QueryKeyByAddressResponse { KeyAndWalletResponse response = 1; }
 
 // QueryZenbtcWalletsRequest is request type for the
@@ -268,4 +282,14 @@ message QueryZenbtcWalletsRequest {
 message QueryZenbtcWalletsResponse {
   repeated KeyAndWalletResponse zenbtc_wallets = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryFeeExcemptsRequest is request type for the  
+// Query/FeeExcemptsRequest RPC method.
+message QueryFeeExcemptsRequest {}
+
+// QueryFeeExcemptsResponse is response type for the
+// Query/FeeExcemptsResponse RPC method.
+message QueryFeeExcemptsResponse {
+  repeated string no_fee_msgs = 1;
 }

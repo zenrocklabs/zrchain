@@ -269,6 +269,52 @@ func (x *_GenesisState_7_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_8_list)(nil)
+
+type _GenesisState_8_list struct {
+	list *[]string
+}
+
+func (x *_GenesisState_8_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_8_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfString((*x.list)[i])
+}
+
+func (x *_GenesisState_8_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_8_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_8_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message GenesisState at list field NoFeeMsgs as it is not of Message kind"))
+}
+
+func (x *_GenesisState_8_list) Truncate(n int) {
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_8_list) NewElement() protoreflect.Value {
+	v := ""
+	return protoreflect.ValueOfString(v)
+}
+
+func (x *_GenesisState_8_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_GenesisState                  protoreflect.MessageDescriptor
 	fd_GenesisState_params           protoreflect.FieldDescriptor
@@ -278,6 +324,7 @@ var (
 	fd_GenesisState_sign_requests    protoreflect.FieldDescriptor
 	fd_GenesisState_sign_tx_requests protoreflect.FieldDescriptor
 	fd_GenesisState_ica_tx_requests  protoreflect.FieldDescriptor
+	fd_GenesisState_no_fee_msgs      protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -290,6 +337,7 @@ func init() {
 	fd_GenesisState_sign_requests = md_GenesisState.Fields().ByName("sign_requests")
 	fd_GenesisState_sign_tx_requests = md_GenesisState.Fields().ByName("sign_tx_requests")
 	fd_GenesisState_ica_tx_requests = md_GenesisState.Fields().ByName("ica_tx_requests")
+	fd_GenesisState_no_fee_msgs = md_GenesisState.Fields().ByName("no_fee_msgs")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -399,6 +447,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if len(x.NoFeeMsgs) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_8_list{list: &x.NoFeeMsgs})
+		if !f(fd_GenesisState_no_fee_msgs, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -428,6 +482,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.SignTxRequests) != 0
 	case "zrchain.treasury.GenesisState.ica_tx_requests":
 		return len(x.IcaTxRequests) != 0
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		return len(x.NoFeeMsgs) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.GenesisState"))
@@ -458,6 +514,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.SignTxRequests = nil
 	case "zrchain.treasury.GenesisState.ica_tx_requests":
 		x.IcaTxRequests = nil
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		x.NoFeeMsgs = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.GenesisState"))
@@ -510,6 +568,12 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		}
 		listValue := &_GenesisState_7_list{list: &x.IcaTxRequests}
 		return protoreflect.ValueOfList(listValue)
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		if len(x.NoFeeMsgs) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_8_list{})
+		}
+		listValue := &_GenesisState_8_list{list: &x.NoFeeMsgs}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.GenesisState"))
@@ -554,6 +618,10 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		lv := value.List()
 		clv := lv.(*_GenesisState_7_list)
 		x.IcaTxRequests = *clv.list
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		lv := value.List()
+		clv := lv.(*_GenesisState_8_list)
+		x.NoFeeMsgs = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.GenesisState"))
@@ -609,6 +677,12 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_7_list{list: &x.IcaTxRequests}
 		return protoreflect.ValueOfList(value)
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		if x.NoFeeMsgs == nil {
+			x.NoFeeMsgs = []string{}
+		}
+		value := &_GenesisState_8_list{list: &x.NoFeeMsgs}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.GenesisState.port_id":
 		panic(fmt.Errorf("field port_id of message zrchain.treasury.GenesisState is not mutable"))
 	default:
@@ -644,6 +718,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "zrchain.treasury.GenesisState.ica_tx_requests":
 		list := []*ICATransactionRequest{}
 		return protoreflect.ValueOfList(&_GenesisState_7_list{list: &list})
+	case "zrchain.treasury.GenesisState.no_fee_msgs":
+		list := []string{}
+		return protoreflect.ValueOfList(&_GenesisState_8_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.GenesisState"))
@@ -751,6 +828,12 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
+		if len(x.NoFeeMsgs) > 0 {
+			for _, s := range x.NoFeeMsgs {
+				l = len(s)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -779,6 +862,15 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.NoFeeMsgs) > 0 {
+			for iNdEx := len(x.NoFeeMsgs) - 1; iNdEx >= 0; iNdEx-- {
+				i -= len(x.NoFeeMsgs[iNdEx])
+				copy(dAtA[i:], x.NoFeeMsgs[iNdEx])
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.NoFeeMsgs[iNdEx])))
+				i--
+				dAtA[i] = 0x42
+			}
 		}
 		if len(x.IcaTxRequests) > 0 {
 			for iNdEx := len(x.IcaTxRequests) - 1; iNdEx >= 0; iNdEx-- {
@@ -1168,6 +1260,38 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 8:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field NoFeeMsgs", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.NoFeeMsgs = append(x.NoFeeMsgs, string(dAtA[iNdEx:postIndex]))
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1230,6 +1354,7 @@ type GenesisState struct {
 	SignRequests   []*SignRequest            `protobuf:"bytes,5,rep,name=sign_requests,json=signRequests,proto3" json:"sign_requests,omitempty"`
 	SignTxRequests []*SignTransactionRequest `protobuf:"bytes,6,rep,name=sign_tx_requests,json=signTxRequests,proto3" json:"sign_tx_requests,omitempty"`
 	IcaTxRequests  []*ICATransactionRequest  `protobuf:"bytes,7,rep,name=ica_tx_requests,json=icaTxRequests,proto3" json:"ica_tx_requests,omitempty"`
+	NoFeeMsgs      []string                  `protobuf:"bytes,8,rep,name=no_fee_msgs,json=noFeeMsgs,proto3" json:"no_fee_msgs,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -1301,6 +1426,13 @@ func (x *GenesisState) GetIcaTxRequests() []*ICATransactionRequest {
 	return nil
 }
 
+func (x *GenesisState) GetNoFeeMsgs() []string {
+	if x != nil {
+		return x.NoFeeMsgs
+	}
+	return nil
+}
+
 var File_zrchain_treasury_genesis_proto protoreflect.FileDescriptor
 
 var file_zrchain_treasury_genesis_proto_rawDesc = []byte{
@@ -1315,7 +1447,7 @@ var file_zrchain_treasury_genesis_proto_rawDesc = []byte{
 	0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2f, 0x6b, 0x65, 0x79,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
 	0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2f, 0x6d, 0x70, 0x63, 0x73, 0x69, 0x67, 0x6e,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xd7, 0x03, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xfd, 0x03, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73,
 	0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x3b, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d,
 	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
 	0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d,
@@ -1345,18 +1477,20 @@ var file_zrchain_treasury_genesis_proto_rawDesc = []byte{
 	0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x49, 0x43, 0x41, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63,
 	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x04, 0xc8, 0xde, 0x1f,
 	0x00, 0x52, 0x0d, 0x69, 0x63, 0x61, 0x54, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73,
-	0x42, 0xa8, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73,
-	0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x21, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
-	0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xa2, 0x02, 0x03, 0x5a,
-	0x54, 0x58, 0xaa, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x54, 0x72, 0x65,
-	0x61, 0x73, 0x75, 0x72, 0x79, 0xca, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
-	0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xe2, 0x02, 0x1c, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x5c, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x11, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x3a, 0x3a, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x12, 0x24, 0x0a, 0x0b, 0x6e, 0x6f, 0x5f, 0x66, 0x65, 0x65, 0x5f, 0x6d, 0x73, 0x67, 0x73, 0x18,
+	0x08, 0x20, 0x03, 0x28, 0x09, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x09, 0x6e, 0x6f, 0x46,
+	0x65, 0x65, 0x4d, 0x73, 0x67, 0x73, 0x42, 0xa8, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x42,
+	0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a,
+	0x21, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70,
+	0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75,
+	0x72, 0x79, 0xa2, 0x02, 0x03, 0x5a, 0x54, 0x58, 0xaa, 0x02, 0x10, 0x5a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2e, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xca, 0x02, 0x10, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0xe2, 0x02,
+	0x1c, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72,
+	0x79, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x11,
+	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x54, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72,
+	0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

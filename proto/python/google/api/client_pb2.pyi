@@ -139,12 +139,14 @@ class PhpSettings(_message.Message):
 class PythonSettings(_message.Message):
     __slots__ = ("common", "experimental_features")
     class ExperimentalFeatures(_message.Message):
-        __slots__ = ("rest_async_io_enabled", "protobuf_pythonic_types_enabled")
+        __slots__ = ("rest_async_io_enabled", "protobuf_pythonic_types_enabled", "unversioned_package_disabled")
         REST_ASYNC_IO_ENABLED_FIELD_NUMBER: _ClassVar[int]
         PROTOBUF_PYTHONIC_TYPES_ENABLED_FIELD_NUMBER: _ClassVar[int]
+        UNVERSIONED_PACKAGE_DISABLED_FIELD_NUMBER: _ClassVar[int]
         rest_async_io_enabled: bool
         protobuf_pythonic_types_enabled: bool
-        def __init__(self, rest_async_io_enabled: bool = ..., protobuf_pythonic_types_enabled: bool = ...) -> None: ...
+        unversioned_package_disabled: bool
+        def __init__(self, rest_async_io_enabled: bool = ..., protobuf_pythonic_types_enabled: bool = ..., unversioned_package_disabled: bool = ...) -> None: ...
     COMMON_FIELD_NUMBER: _ClassVar[int]
     EXPERIMENTAL_FEATURES_FIELD_NUMBER: _ClassVar[int]
     common: CommonLanguageSettings

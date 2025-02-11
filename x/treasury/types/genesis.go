@@ -13,7 +13,8 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		PortId: PortID,
 		// this line is used by starport scaffolding # genesis/types/default
-		Params: DefaultParams(),
+		Params:    DefaultParams(),
+		NoFeeMsgs: DefaultNoFeeMsgs(),
 	}
 }
 
@@ -26,4 +27,13 @@ func (gs GenesisState) Validate() error {
 	// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()
+}
+
+func DefaultNoFeeMsgs() []string {
+	return []string{
+		"/zrchain.treasury.FulfilKeyRequest",
+		"/zrchain.treasury.FulfilSignRequest",
+		"/zrchain.treasury.FulfilSignTransactionRequest",
+		"/zrchain.treasury.FulfilICATransactionRequest",
+	}
 }

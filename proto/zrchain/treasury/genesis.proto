@@ -24,4 +24,6 @@ message GenesisState {
       [ (gogoproto.nullable) = false ];
   repeated ICATransactionRequest ica_tx_requests = 7
       [ (gogoproto.nullable) = false ];
+  repeated string no_fee_msgs = 8
+      [ (gogoproto.nullable) = false ];
 }
