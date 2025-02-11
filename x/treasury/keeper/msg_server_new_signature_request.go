@@ -24,8 +24,11 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	}
 
 	payload := strings.Split(msg.DataForSigning, ",")
-	if len(payload) == 1 && len(payload[0]) != 64 {
-		return nil, fmt.Errorf("data for signing should be a have a hex-encoded length of 64, not: %d", len(payload[0]))
+	if key.Type != types.KeyType_KEY_TYPE_EDDSA_ED25519 && len(payload) == 1 && len(payload[0]) != 64 {
+		return nil, fmt.Errorf("data for signing for ecdsa key should be a have a hex-encoded length of 64, not: %d", len(payload[0]))
+	}
+	if key.Type == types.KeyType_KEY_TYPE_EDDSA_ED25519 && len(payload) == 1 && len(payload[0]) >= 400 {
+		return nil, fmt.Errorf("data for signing for eddsa key should have a hex-encoded length of smaller than 400, not: %d", len(payload[0]))
 	}
 
 	signPolicyID := key.SignPolicyId

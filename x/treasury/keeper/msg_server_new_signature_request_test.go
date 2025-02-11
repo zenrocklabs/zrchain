@@ -81,6 +81,49 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			want: &types.MsgNewSignatureRequestResponse{SigReqId: 1},
 		},
 		{
+			name: "PASS: valid eddsa signature request",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key: &types.Key{
+					Id:            1,
+					WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+					KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+					Type:          types.KeyType_KEY_TYPE_EDDSA_ED25519,
+					PublicKey:     defaultEdDSAKey.PublicKey,
+					SignPolicyId:  0,
+				},
+				msg: types.NewMsgNewSignatureRequest("testOwner", 1, "020001046ac8f20fc76e35d909f857aa01a083afe317c4f1e507670b3181e9b6a8e2c3420000000000000000000000000000000000000000000000000000000000000000fa06c50dc073d2007afead92cfa489ee7ebe9fcf44253515b3301040938dba0a06a7d517192c568ee08a845f73d29788cf035c3145b21ab344d8062ea94000001ccc1d9ff619d8b760f74d67cf000b47f71d326411b502bafd5f5bed7a3c84f40201030103010404000000010200020c020000009f3d35bf01000000", 1000, 10),
+			},
+			wantSignRequest: &types.SignRequest{
+				Id:             1,
+				Creator:        "testOwner",
+				KeyIds:         []uint64{1},
+				DataForSigning: [][]byte{{2, 0, 1, 4, 106, 200, 242, 15, 199, 110, 53, 217, 9, 248, 87, 170, 1, 160, 131, 175, 227, 23, 196, 241, 229, 7, 103, 11, 49, 129, 233, 182, 168, 226, 195, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 250, 6, 197, 13, 192, 115, 210, 0, 122, 254, 173, 146, 207, 164, 137, 238, 126, 190, 159, 207, 68, 37, 53, 21, 179, 48, 16, 64, 147, 141, 186, 10, 6, 167, 213, 23, 25, 44, 86, 142, 224, 138, 132, 95, 115, 210, 151, 136, 207, 3, 92, 49, 69, 178, 26, 179, 68, 216, 6, 46, 169, 64, 0, 0, 28, 204, 29, 159, 246, 25, 216, 183, 96, 247, 77, 103, 207, 0, 11, 71, 247, 29, 50, 100, 17, 181, 2, 186, 253, 95, 91, 237, 122, 60, 132, 244, 2, 1, 3, 1, 3, 1, 4, 4, 0, 0, 0, 1, 2, 0, 2, 12, 2, 0, 0, 0, 159, 61, 53, 191, 1, 0, 0, 0}},
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				MpcBtl:         10,
+			},
+			want: &types.MsgNewSignatureRequestResponse{SigReqId: 1},
+		},
+		{
+			name: "FAIL: eddsa dataforsigning too long",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key: &types.Key{
+					Id:            1,
+					WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+					KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+					Type:          types.KeyType_KEY_TYPE_EDDSA_ED25519,
+					PublicKey:     defaultEdDSAKey.PublicKey,
+					SignPolicyId:  0,
+				},
+				msg: types.NewMsgNewSignatureRequest("testOwner", 1, "020001046ac8f20fc76e35d909f857aa01a083afe317c4f1e507670b3181e9b6a8e2c3420000000000000000000000000000000000000000000000000000000000000000fa06c50dc073d2007afead92cfa489ee7ebe9fcf44253515b3301040938dba0a06a7d517192c568ee08a845f73d29788cf035c3145b21ab344d8062ea94000001ccc1d9ff619d8b760f74d67cf000b47f71d326411b502bafd5f5bed7a3c84f40201030103010404000000010200020c020000009f3d35bf01000000020001046ac8f20fc76e35d909f857aa01a083afe317c4f1e507670b3181e9b6a8e2c3420000000000000000000000000000000000000000000000000000000000000000fa06c50dc073d2007afead92cfa489ee7ebe9fcf44253515b3301040938dba0a06a7d517192c568ee08a845f73d29788cf035c3145b21ab344d8062ea94000001ccc1d9ff619d8b760f74d67cf000b47f71d326411b502bafd5f5bed7a3c84f40201030103010404000000010200020c020000009f3d35bf01000000", 1000, 10),
+			},
+			wantErr: true,
+		},
+		{
 			name: "PASS: valid bitcoin signature request with btl",
 			args: args{
 				keyring:   &defaultKr,
