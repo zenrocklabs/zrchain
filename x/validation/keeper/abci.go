@@ -609,8 +609,6 @@ func checkForUpdateAndDispatchTx[T any](
 		if len(pendingTxs) == 1 {
 			if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
 				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-			} else {
-				k.Logger(ctx).Warn("set EthereumNonceRequested state to false", "keyID", keyID)
 			}
 			return
 		}
@@ -685,6 +683,7 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 
 // clearEthereumNonceRequest resets the nonce-request flag for a given key.
 func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error {
+	k.Logger(ctx).Warn("set EthereumNonceRequested state to false", "keyID", keyID)
 	return k.EthereumNonceRequested.Set(ctx, keyID, false)
 }
 
