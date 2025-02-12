@@ -3,6 +3,7 @@ package shared
 import (
 	"context"
 
+	"cosmossdk.io/collections"
 	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -26,4 +27,7 @@ type ZenBTCKeeper interface {
 	SetBurnEvent(ctx context.Context, id uint64, burnEvent types.BurnEvent) error
 	CreateBurnEvent(ctx context.Context, burnEvent *types.BurnEvent) (uint64, error)
 	WalkBurnEvents(ctx context.Context, fn func(id uint64, burnEvent types.BurnEvent) (stop bool, err error)) error
+	GetPendingMintTransactionsStore() collections.Map[uint64, types.PendingMintTransaction]
+	GetBurnEventsStore() collections.Map[uint64, types.BurnEvent]
+	GetRedemptionsStore() collections.Map[uint64, types.Redemption]
 }
