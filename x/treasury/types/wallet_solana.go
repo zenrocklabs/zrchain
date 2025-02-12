@@ -62,7 +62,7 @@ func (*SolanaWallet) ParseTx(rawTx []byte, md Metadata) (Transfer, error) {
 		return Transfer{}, err
 	}
 
-	solanaTx, err := getTransferFromInstruction(tx.Message)
+	solanaTx, err := extractTransferFromMessage(tx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
@@ -89,7 +89,8 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 		return Transfer{}, err
 	}
 
-	solanaTx, err := getTransferFromInstruction(decodedTx.Message)
+	// solanaTx, err := getTransferFromInstruction(decodedTx.Message)
+	solanaTx, err := extractTransferFromMessage(decodedTx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
@@ -109,50 +110,78 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 	}, nil
 }
 
-// getTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer
-// which contains from, to, amount. This function allows nil recipient and a zero tx.amount to allow Solana
-// contract calls to be signed by the system.
-func getTransferFromInstruction(msg solana.Message) (*transfer, error) {
+// extractTransferFromMessage examines each instruction in a Solana message and
+// returns a transfer (either a system or token transfer) that contains the recipient
+// and the amount. If any transfer instruction is processed (indicated by
+// amountAndRecipientRequired being true) but both recipient and amount are empty,
+// an error is returned. This allows non-transfer transactions to pass without error.
+func extractTransferFromMessage(msg solana.Message) (*transfer, error) {
 	tx := &transfer{
 		amount: new(big.Int),
 	}
 
+	amountAndRecipientRequired := false
+
 	for _, inst := range msg.Instructions {
 		accounts, err := inst.ResolveInstructionAccounts(&msg)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to resolve instruction accounts: %w", err)
 		}
 
+		if int(inst.ProgramIDIndex) >= len(msg.AccountKeys) {
+			continue
+		}
 		programID := msg.AccountKeys[inst.ProgramIDIndex]
 
-		if programID.Equals(solana.SystemProgramID) { // instruction is possibly a SOL transfer
+		switch {
+		case programID.Equals(solana.SystemProgramID):
+			// Attempt to decode a system transfer.
 			instruction, err := system.DecodeInstruction(accounts, inst.Data)
 			if err != nil {
 				continue
 			}
 
-			st, ok := instruction.Impl.(*system.Transfer)
+			sysTransfer, ok := instruction.Impl.(*system.Transfer)
 			if !ok {
 				continue
 			}
 
-			if st.Lamports != nil {
-				tx.amount.SetUint64(*st.Lamports)
+			if sysTransfer.Lamports != nil {
+				tx.amount.SetUint64(*sysTransfer.Lamports)
 			}
-			tx.recipient = st.GetRecipientAccount().PublicKey.String()
-		} else if programID.Equals(solana.TokenProgramID) { // instruction is possibly a token transfer
+			tx.recipient = sysTransfer.GetRecipientAccount().PublicKey.String()
+			amountAndRecipientRequired = true
+
+		case programID.Equals(solana.TokenProgramID):
+			// Attempt to decode a token transfer.
 			instruction, err := token.DecodeInstruction(accounts, inst.Data)
 			if err != nil {
 				continue
 			}
-			st, ok := instruction.Impl.(*token.Transfer)
+
+			tokenTransfer, ok := instruction.Impl.(*token.Transfer)
 			if !ok {
 				continue
 			}
-			tx.amount = tx.amount.SetUint64(*st.Amount)
-			tx.recipient = msg.AccountKeys[inst.Accounts[1]].String()
-		}
 
+			tx.amount.SetUint64(*tokenTransfer.Amount)
+
+			// For token transfers, the recipient is typically found at the second account index.
+			if len(inst.Accounts) < 2 || int(inst.Accounts[1]) >= len(msg.AccountKeys) {
+				continue
+			}
+			tx.recipient = msg.AccountKeys[inst.Accounts[1]].String()
+			amountAndRecipientRequired = true
+
+		default:
+			continue
+		}
+	}
+
+	if amountAndRecipientRequired {
+		if len(tx.recipient) == 0 && tx.amount.Uint64() == 0 {
+			return nil, fmt.Errorf("this transaction is a transfer with incomplete data")
+		}
 	}
 
 	return tx, nil
