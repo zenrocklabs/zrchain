@@ -89,7 +89,6 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 		return Transfer{}, err
 	}
 
-	// solanaTx, err := getTransferFromInstruction(decodedTx.Message)
 	solanaTx, err := extractTransferFromMessage(decodedTx.Message)
 	if err != nil {
 		return Transfer{}, err
