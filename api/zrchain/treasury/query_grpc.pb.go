@@ -42,8 +42,8 @@ type QueryClient interface {
 	KeyByAddress(ctx context.Context, in *QueryKeyByAddressRequest, opts ...grpc.CallOption) (*QueryKeyByAddressResponse, error)
 	// Queries a list of ZenbtcWallets items.
 	ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsRequest, opts ...grpc.CallOption) (*QueryZenbtcWalletsResponse, error)
-	// Queries a list of FeeExcempts items.
-	FeeExcempts(ctx context.Context, in *QueryFeeExcemptsRequest, opts ...grpc.CallOption) (*QueryFeeExcemptsResponse, error)
+	// Queries a list of FeeExempts items.
+	FeeExempts(ctx context.Context, in *QueryFeeExemptsRequest, opts ...grpc.CallOption) (*QueryFeeExemptsResponse, error)
 }
 
 type queryClient struct {
@@ -162,9 +162,9 @@ func (c *queryClient) ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsR
 	return out, nil
 }
 
-func (c *queryClient) FeeExcempts(ctx context.Context, in *QueryFeeExcemptsRequest, opts ...grpc.CallOption) (*QueryFeeExcemptsResponse, error) {
-	out := new(QueryFeeExcemptsResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.treasury.Query/FeeExcempts", in, out, opts...)
+func (c *queryClient) FeeExempts(ctx context.Context, in *QueryFeeExemptsRequest, opts ...grpc.CallOption) (*QueryFeeExemptsResponse, error) {
+	out := new(QueryFeeExemptsResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.treasury.Query/FeeExempts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +199,8 @@ type QueryServer interface {
 	KeyByAddress(context.Context, *QueryKeyByAddressRequest) (*QueryKeyByAddressResponse, error)
 	// Queries a list of ZenbtcWallets items.
 	ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error)
-	// Queries a list of FeeExcempts items.
-	FeeExcempts(context.Context, *QueryFeeExcemptsRequest) (*QueryFeeExcemptsResponse, error)
+	// Queries a list of FeeExempts items.
+	FeeExempts(context.Context, *QueryFeeExemptsRequest) (*QueryFeeExemptsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -244,8 +244,8 @@ func (UnimplementedQueryServer) KeyByAddress(context.Context, *QueryKeyByAddress
 func (UnimplementedQueryServer) ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ZenbtcWallets not implemented")
 }
-func (UnimplementedQueryServer) FeeExcempts(context.Context, *QueryFeeExcemptsRequest) (*QueryFeeExcemptsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FeeExcempts not implemented")
+func (UnimplementedQueryServer) FeeExempts(context.Context, *QueryFeeExemptsRequest) (*QueryFeeExemptsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FeeExempts not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -476,20 +476,20 @@ func _Query_ZenbtcWallets_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FeeExcempts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFeeExcemptsRequest)
+func _Query_FeeExempts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFeeExemptsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FeeExcempts(ctx, in)
+		return srv.(QueryServer).FeeExempts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zrchain.treasury.Query/FeeExcempts",
+		FullMethod: "/zrchain.treasury.Query/FeeExempts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FeeExcempts(ctx, req.(*QueryFeeExcemptsRequest))
+		return srv.(QueryServer).FeeExempts(ctx, req.(*QueryFeeExemptsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -550,8 +550,8 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Query_ZenbtcWallets_Handler,
 		},
 		{
-			MethodName: "FeeExcempts",
-			Handler:    _Query_FeeExcempts_Handler,
+			MethodName: "FeeExempts",
+			Handler:    _Query_FeeExempts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

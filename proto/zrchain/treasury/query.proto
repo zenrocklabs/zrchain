@@ -93,9 +93,9 @@ service Query {
         "{mint_chain_id}/{return_addr}";
   }
 
-  // Queries a list of FeeExcempts items.
-  rpc FeeExcempts(QueryFeeExcemptsRequest) returns (QueryFeeExcemptsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/fee_excempts";
+  // Queries a list of FeeExempts items.
+  rpc FeeExempts(QueryFeeExemptsRequest) returns (QueryFeeExemptsResponse) {
+    option (google.api.http).get = "/zrchain/treasury/fee_exempts";
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -284,12 +284,12 @@ message QueryZenbtcWalletsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryFeeExcemptsRequest is request type for the  
-// Query/FeeExcemptsRequest RPC method.
-message QueryFeeExcemptsRequest {}
+// QueryFeeExemptsRequest is request type for the  
+// Query/FeeExemptsRequest RPC method.
+message QueryFeeExemptsRequest {}
 
-// QueryFeeExcemptsResponse is response type for the
-// Query/FeeExcemptsResponse RPC method.
-message QueryFeeExcemptsResponse {
+// QueryFeeExemptsResponse is response type for the
+// Query/FeeExemptsResponse RPC method.
+message QueryFeeExemptsResponse {
   repeated string no_fee_msgs = 1;
 }

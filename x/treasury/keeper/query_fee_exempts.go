@@ -7,7 +7,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
-func (k Keeper) FeeExcempts(goCtx context.Context, req *types.QueryFeeExcemptsRequest) (*types.QueryFeeExcemptsResponse, error) {
+func (k Keeper) FeeExempts(goCtx context.Context, req *types.QueryFeeExemptsRequest) (*types.QueryFeeExemptsResponse, error) {
 	if req == nil {
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "invalid arguments: request is nil")
 	}
@@ -21,5 +21,5 @@ func (k Keeper) FeeExcempts(goCtx context.Context, req *types.QueryFeeExcemptsRe
 		return nil, err
 	}
 
-	return &types.QueryFeeExcemptsResponse{NoFeeMsgs: noFeeMsgs}, nil
+	return &types.QueryFeeExemptsResponse{NoFeeMsgs: noFeeMsgs}, nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
-func TestFeeExcemptsQuery(t *testing.T) {
+func TestFeeExemptsQuery(t *testing.T) {
 	keepers := keepertest.NewTest(t)
 	tk := keepers.TreasuryKeeper
 	ctx := keepers.Ctx
@@ -18,7 +18,7 @@ func TestFeeExcemptsQuery(t *testing.T) {
 		require.NoError(t, tk.NoFeeMsgsList.Set(ctx, msg))
 	}
 
-	response, err := tk.FeeExcempts(ctx, &types.QueryFeeExcemptsRequest{})
+	response, err := tk.FeeExempts(ctx, &types.QueryFeeExemptsRequest{})
 	require.NoError(t, err)
-	require.Equal(t, &types.QueryFeeExcemptsResponse{NoFeeMsgs: noFeeMsgs}, response)
+	require.Equal(t, &types.QueryFeeExemptsResponse{NoFeeMsgs: noFeeMsgs}, response)
 }
