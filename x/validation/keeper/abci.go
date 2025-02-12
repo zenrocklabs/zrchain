@@ -645,15 +645,12 @@ func checkForUpdateAndDispatchTx[T any](
 func processZenBTCTransaction[T any](
 	k *Keeper,
 	ctx sdk.Context,
-	keyGetter func(ctx context.Context) uint64,
-	nonceGetter func(od OracleData) uint64,
+	keyID uint64,
+	requestedNonce uint64,
 	pendingGetter func(ctx sdk.Context) ([]T, error),
-	oracleData OracleData,
 	nonceUpdatedCallback func(tx T) error,
 	txDispatchCallback func(tx T) error,
 ) {
-	keyID := keyGetter(ctx)
-	requestedNonce := nonceGetter(oracleData)
 	pendingTxs, err := pendingGetter(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
@@ -772,12 +769,11 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 	processZenBTCTransaction(
 		k,
 		ctx,
-		k.zenBTCKeeper.GetStakerKeyID,
-		func(od OracleData) uint64 { return od.RequestedStakerNonce },
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		oracleData.RequestedStakerNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED)
 		},
-		oracleData,
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
@@ -832,12 +828,11 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 	processZenBTCTransaction(
 		k,
 		ctx,
-		k.zenBTCKeeper.GetEthMinterKeyID,
-		func(od OracleData) uint64 { return od.RequestedEthMinterNonce },
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		oracleData.RequestedEthMinterNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
 		},
-		oracleData,
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
@@ -968,12 +963,11 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 	processZenBTCTransaction(
 		k,
 		ctx,
-		k.zenBTCKeeper.GetUnstakerKeyID,
-		func(od OracleData) uint64 { return od.RequestedUnstakerNonce },
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		oracleData.RequestedUnstakerNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 			return k.getPendingBurnEvents(ctx)
 		},
-		oracleData,
 		func(be zenbtctypes.BurnEvent) error {
 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
@@ -1110,12 +1104,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 	processZenBTCTransaction(
 		k,
 		ctx,
-		k.zenBTCKeeper.GetCompleterKeyID,
-		func(od OracleData) uint64 { return od.RequestedCompleterNonce },
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+		oracleData.RequestedCompleterNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
 			return k.getPendingRedemptions(ctx)
 		},
-		oracleData,
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
