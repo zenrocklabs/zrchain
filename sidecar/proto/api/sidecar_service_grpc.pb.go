@@ -23,6 +23,7 @@ type SidecarServiceClient interface {
 	GetBitcoinBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error)
+	GetTransactionConfirmation(ctx context.Context, in *TransactionConfirmationRequest, opts ...grpc.CallOption) (*TransactionConfirmationResponse, error)
 }
 
 type sidecarServiceClient struct {
@@ -78,6 +79,15 @@ func (c *sidecarServiceClient) GetLatestEthereumNonceForAccount(ctx context.Cont
 	return out, nil
 }
 
+func (c *sidecarServiceClient) GetTransactionConfirmation(ctx context.Context, in *TransactionConfirmationRequest, opts ...grpc.CallOption) (*TransactionConfirmationResponse, error) {
+	out := new(TransactionConfirmationResponse)
+	err := c.cc.Invoke(ctx, "/api.SidecarService/GetTransactionConfirmation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SidecarServiceServer is the server API for SidecarService service.
 // All implementations must embed UnimplementedSidecarServiceServer
 // for forward compatibility
@@ -87,6 +97,7 @@ type SidecarServiceServer interface {
 	GetBitcoinBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error)
+	GetTransactionConfirmation(context.Context, *TransactionConfirmationRequest) (*TransactionConfirmationResponse, error)
 	mustEmbedUnimplementedSidecarServiceServer()
 }
 
@@ -108,6 +119,9 @@ func (UnimplementedSidecarServiceServer) GetLatestBitcoinBlockHeader(context.Con
 }
 func (UnimplementedSidecarServiceServer) GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestEthereumNonceForAccount not implemented")
+}
+func (UnimplementedSidecarServiceServer) GetTransactionConfirmation(context.Context, *TransactionConfirmationRequest) (*TransactionConfirmationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionConfirmation not implemented")
 }
 func (UnimplementedSidecarServiceServer) mustEmbedUnimplementedSidecarServiceServer() {}
 
@@ -212,6 +226,24 @@ func _SidecarService_GetLatestEthereumNonceForAccount_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SidecarService_GetTransactionConfirmation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransactionConfirmationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SidecarServiceServer).GetTransactionConfirmation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.SidecarService/GetTransactionConfirmation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SidecarServiceServer).GetTransactionConfirmation(ctx, req.(*TransactionConfirmationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SidecarService_ServiceDesc is the grpc.ServiceDesc for SidecarService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -238,6 +270,10 @@ var SidecarService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestEthereumNonceForAccount",
 			Handler:    _SidecarService_GetLatestEthereumNonceForAccount_Handler,
+		},
+		{
+			MethodName: "GetTransactionConfirmation",
+			Handler:    _SidecarService_GetTransactionConfirmation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

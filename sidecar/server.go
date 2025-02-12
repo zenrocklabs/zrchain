@@ -159,12 +159,13 @@ func (s *oracleService) GetTransactionConfirmation(ctx context.Context, req *api
 		return nil, fmt.Errorf("failed to get transaction receipt: %w", err)
 	}
 
-	// Transaction is confirmed if it has at least 2 block confirmations
+	// Get latest block number
 	header, err := s.oracle.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest block header: %w", err)
 	}
 
+	// Transaction is confirmed if it has at least 2 block confirmations and was successful
 	confirmed := receipt.Status == 1 && header.Number.Uint64()-receipt.BlockNumber.Uint64() >= 2
 
 	return &api.TransactionConfirmationResponse{
