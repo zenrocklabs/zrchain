@@ -562,11 +562,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 // =============================================================================
 //
 
-// --- Generic helper functions ---
-
-// checkForUpdateAndDispatchTx is a generic helper that encapsulates the common logic for tx dispatch and nonce management.
-// It receives a slice of pending transactions (or redemptions, or burn events) and passes the
-// slice to nonceUpdatedCallback. If a second tx exists, it passes that tx to txDispatchCallback.
+// checkForUpdateAndDispatchTx processes nonce updates and transaction dispatch
 func checkForUpdateAndDispatchTx[T any](
 	k *Keeper,
 	ctx sdk.Context,
@@ -580,62 +576,46 @@ func checkForUpdateAndDispatchTx[T any](
 		return
 	}
 
-	nonceData, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	nonceData, err := k.getNonceDataWithInit(ctx, keyID)
 	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting last used ethereum nonce", "keyID", keyID, "error", err)
-			return
-		}
-		nonceData = zenbtctypes.NonceData{Nonce: 0, PrevNonce: 0, Counter: 0, Skip: true}
-		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, nonceData); err != nil {
-			k.Logger(ctx).Error("error setting last used ethereum nonce", "keyID", keyID, "error", err)
-		}
+		k.Logger(ctx).Error("error getting nonce data", "keyID", keyID, "error", err)
 		return
 	}
-	k.Logger(ctx).Info("Nonce info", "nonce", nonceData.Nonce, "prev", nonceData.PrevNonce, "counter", nonceData.Counter, "skip", nonceData.Skip, "requested", requestedNonce)
+	k.Logger(ctx).Info("Nonce info",
+		"nonce", nonceData.Nonce,
+		"prev", nonceData.PrevNonce,
+		"counter", nonceData.Counter,
+		"skip", nonceData.Skip,
+		"requested", requestedNonce,
+	)
 
 	if nonceData.Nonce != 0 && requestedNonce == 0 {
 		return
 	}
 
-	requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+	nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, requestedNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
 	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting ethereum nonce request state", "keyID", keyID, "error", err)
-		}
-		return
-	}
-	if !requested {
+		k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
 		return
 	}
 
-	nonceUpdated := false
-	if requestedNonce != nonceData.PrevNonce {
-		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
-			k.Logger(ctx).Error("nonce update callback error", "keyID", keyID, "error", err)
+	if len(pendingTxs) == 1 && nonceUpdated {
+		if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
+			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
 		}
-		k.Logger(ctx).Warn("nonce updated for key", "keyID", keyID, "requestedNonce", requestedNonce, "prevNonce", nonceData.PrevNonce, "currentNonce", nonceData.Nonce)
-		nonceData.PrevNonce = nonceData.Nonce
-		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, nonceData); err != nil {
-			k.Logger(ctx).Error("error setting last used Ethereum nonce", "keyID", keyID, "error", err)
-		}
-		if len(pendingTxs) == 1 {
-			if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
-				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-			}
-			return
-		}
-		nonceUpdated = true
+		return
 	}
+
 	if nonceData.Skip {
 		return
 	}
 
-	txIndex := 0
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
+	txIndex := 0
 	if nonceUpdated {
 		txIndex = 1
 	}
+
 	if err := txDispatchCallback(pendingTxs[txIndex]); err != nil {
 		k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
 	}
@@ -651,6 +631,15 @@ func processZenBTCTransaction[T any](
 	nonceUpdatedCallback func(tx T) error,
 	txDispatchCallback func(tx T) error,
 ) {
+	isRequested, err := k.isNonceRequested(ctx, keyID)
+	if err != nil {
+		k.Logger(ctx).Error("error checking nonce request state", "keyID", keyID, "error", err)
+		return
+	}
+	if !isRequested {
+		return
+	}
+
 	pendingTxs, err := pendingGetter(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
@@ -685,17 +674,71 @@ func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64
 	return results, nil
 }
 
+// getNonceDataWithInit gets the nonce data for a key, initializing it if it doesn't exist
+func (k *Keeper) getNonceDataWithInit(ctx sdk.Context, keyID uint64) (zenbtctypes.NonceData, error) {
+	nonceData, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return zenbtctypes.NonceData{}, fmt.Errorf("error getting last used ethereum nonce: %w", err)
+		}
+		nonceData = zenbtctypes.NonceData{Nonce: 0, PrevNonce: 0, Counter: 0, Skip: true}
+		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, nonceData); err != nil {
+			return zenbtctypes.NonceData{}, fmt.Errorf("error setting last used ethereum nonce: %w", err)
+		}
+	}
+	return nonceData, nil
+}
+
+// isNonceRequested checks if a nonce has been requested for the given key
+func (k *Keeper) isNonceRequested(ctx sdk.Context, keyID uint64) (bool, error) {
+	requested, err := k.EthereumNonceRequested.Get(ctx, keyID)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("error getting ethereum nonce request state: %w", err)
+	}
+	return requested, nil
+}
+
+// handleNonceUpdate handles the nonce update logic and returns whether an update occurred
+func handleNonceUpdate[T any](
+	k *Keeper,
+	ctx sdk.Context,
+	keyID uint64,
+	requestedNonce uint64,
+	nonceData zenbtctypes.NonceData,
+	tx T,
+	nonceUpdatedCallback func(tx T) error,
+) (bool, error) {
+	if requestedNonce != nonceData.PrevNonce {
+		if err := nonceUpdatedCallback(tx); err != nil {
+			return false, fmt.Errorf("nonce update callback error: %w", err)
+		}
+		k.Logger(ctx).Warn("nonce updated for key",
+			"keyID", keyID,
+			"requestedNonce", requestedNonce,
+			"prevNonce", nonceData.PrevNonce,
+			"currentNonce", nonceData.Nonce,
+		)
+		nonceData.PrevNonce = nonceData.Nonce
+		if err := k.LastUsedEthereumNonce.Set(ctx, keyID, nonceData); err != nil {
+			return false, fmt.Errorf("error setting last used Ethereum nonce: %w", err)
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
 // updateNonces handles updating nonce state for keys used for minting and unstaking.
 func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
-		requested, err := k.EthereumNonceRequested.Get(ctx, key)
+		isRequested, err := k.isNonceRequested(ctx, key)
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				k.Logger(ctx).Error("error checking nonce request state", "keyID", key, "error", err)
-			}
+			k.Logger(ctx).Error("error checking nonce request state", "keyID", key, "error", err)
 			continue
 		}
-		if !requested {
+		if !isRequested {
 			continue
 		}
 
@@ -715,16 +758,9 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		// Avoid erroneously setting nonce to zero if a non-zero nonce exists i.e. blocks with no consensus on VEs.
-		nonceData, err := k.LastUsedEthereumNonce.Get(ctx, key)
+		nonceData, err := k.getNonceDataWithInit(ctx, key)
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				k.Logger(ctx).Error("error getting last used ethereum nonce", "keyID", key, "error", err)
-				continue
-			}
-			nonceData = zenbtctypes.NonceData{Nonce: 0, PrevNonce: 0, Counter: 0, Skip: true}
-			if err := k.LastUsedEthereumNonce.Set(ctx, key, nonceData); err != nil {
-				k.Logger(ctx).Error("error setting last used ethereum nonce", "keyID", key, "error", err)
-			}
+			k.Logger(ctx).Error("error getting nonce data", "keyID", key, "error", err)
 			continue
 		}
 		if nonceData.Nonce != 0 && currentNonce == 0 {
