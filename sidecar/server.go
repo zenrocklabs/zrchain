@@ -58,6 +58,10 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ROCKUSDPrice:               fmt.Sprint(currentState.ROCKUSDPrice),
 		BTCUSDPrice:                fmt.Sprint(currentState.BTCUSDPrice),
 		ETHUSDPrice:                fmt.Sprint(currentState.ETHUSDPrice),
+		StakerTxConfirmed:          currentState.StakerTxConfirmed,
+		EthMinterTxConfirmed:       currentState.EthMinterTxConfirmed,
+		UnstakerTxConfirmed:        currentState.UnstakerTxConfirmed,
+		CompleterTxConfirmed:       currentState.CompleterTxConfirmed,
 	}, nil
 }
 
@@ -84,6 +88,10 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		ROCKUSDPrice:               fmt.Sprint(state.ROCKUSDPrice),
 		BTCUSDPrice:                fmt.Sprint(state.BTCUSDPrice),
 		ETHUSDPrice:                fmt.Sprint(state.ETHUSDPrice),
+		StakerTxConfirmed:          state.StakerTxConfirmed,
+		EthMinterTxConfirmed:       state.EthMinterTxConfirmed,
+		UnstakerTxConfirmed:        state.UnstakerTxConfirmed,
+		CompleterTxConfirmed:       state.CompleterTxConfirmed,
 	}, nil
 }
 
@@ -141,5 +149,25 @@ func (s *oracleService) GetLatestEthereumNonceForAccount(ctx context.Context, re
 
 	return &api.LatestEthereumNonceForAccountResponse{
 		Nonce: nonce,
+	}, nil
+}
+
+func (s *oracleService) GetTransactionConfirmation(ctx context.Context, req *api.TransactionConfirmationRequest) (*api.TransactionConfirmationResponse, error) {
+	txHash := common.HexToHash(req.TxHash)
+	receipt, err := s.oracle.EthClient.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction receipt: %w", err)
+	}
+
+	// Transaction is confirmed if it has at least 2 block confirmations
+	header, err := s.oracle.EthClient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest block header: %w", err)
+	}
+
+	confirmed := receipt.Status == 1 && header.Number.Uint64()-receipt.BlockNumber.Uint64() >= 2
+
+	return &api.TransactionConfirmationResponse{
+		Confirmed: confirmed,
 	}, nil
 }

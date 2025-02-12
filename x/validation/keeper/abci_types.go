@@ -42,6 +42,10 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
+		StakerTxConfirmed          bool
+		EthMinterTxConfirmed       bool
+		UnstakerTxConfirmed        bool
+		CompleterTxConfirmed       bool
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
@@ -68,6 +72,10 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
+		StakerTxConfirmed          bool
+		EthMinterTxConfirmed       bool
+		UnstakerTxConfirmed        bool
+		CompleterTxConfirmed       bool
 		SolanaLamportsPerSignature uint64
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
@@ -88,6 +96,7 @@ type (
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
+		GetTransactionConfirmation(ctx context.Context, in *sidecar.TransactionConfirmationRequest, opts ...grpc.CallOption) (*sidecar.TransactionConfirmationResponse, error)
 	}
 )
 

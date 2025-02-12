@@ -39,6 +39,7 @@ func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrino
 		zrChainQueryClient: zrChainQueryClient,
 		updateChan:         make(chan sidecartypes.OracleState, 32),
 		mainLoopTicker:     ticker,
+		txHashes:           make(map[string]string),
 	}
 	o.currentState.Store(&EmptyOracleState)
 
@@ -128,19 +129,6 @@ func (o *Oracle) fetchAndProcessState(
 	}
 	incrementedGasLimit := (estimatedGas * 110) / 100
 
-	// We only need 1 signature for minting, so we can use an empty message
-	// Message should contain your tx setup
-	// solanaFee, err := o.solanaClient.GetFeeForMessage(ctx, sol.Message{
-	// 	AccountKeys:         []sol.PublicKey{},
-	// 	Header:              sol.MessageHeader{},
-	// 	RecentBlockhash:     sol.Hash{},
-	// 	Instructions:        []sol.CompiledInstruction{},
-	// 	AddressTableLookups: sol.MessageAddressTableLookupSlice{},
-	// }.ToBase64(), solana.CommitmentFinalized)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to get solana fee: %w", err)
-	// }
-
 	resp, err := http.Get(ROCKUSDPriceURL)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve ROCK price data: %w", err)
@@ -177,19 +165,43 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to process Ethereum burn events: %w", err)
 	}
 
+	// Check transaction confirmations
+	stakerTxConfirmed, err := o.checkTxConfirmation(ctx, "staker")
+	if err != nil {
+		log.Printf("Error checking staker tx confirmation: %v", err)
+	}
+
+	ethMinterTxConfirmed, err := o.checkTxConfirmation(ctx, "eth_minter")
+	if err != nil {
+		log.Printf("Error checking eth minter tx confirmation: %v", err)
+	}
+
+	unstakerTxConfirmed, err := o.checkTxConfirmation(ctx, "unstaker")
+	if err != nil {
+		log.Printf("Error checking unstaker tx confirmation: %v", err)
+	}
+
+	completerTxConfirmed, err := o.checkTxConfirmation(ctx, "completer")
+	if err != nil {
+		log.Printf("Error checking completer tx confirmation: %v", err)
+	}
+
 	o.updateChan <- sidecartypes.OracleState{
-		EigenDelegations: eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit and add EthMintGasLimit
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: *solanaFee.Value,
+		EigenDelegations:           eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                incrementedGasLimit,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
+		StakerTxConfirmed:          stakerTxConfirmed,
+		EthMinterTxConfirmed:       ethMinterTxConfirmed,
+		UnstakerTxConfirmed:        unstakerTxConfirmed,
+		CompleterTxConfirmed:       completerTxConfirmed,
 	}
 
 	return nil
@@ -383,4 +395,92 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	}
 
 	return redemptions, nil
+}
+
+// checkTxConfirmation checks if the latest transaction for a given key type is confirmed
+func (o *Oracle) checkTxConfirmation(ctx context.Context, keyType string) (bool, error) {
+	txHash, ok := o.txHashes[keyType]
+	if !ok || txHash == "" {
+		return false, nil
+	}
+
+	receipt, err := o.EthClient.TransactionReceipt(ctx, common.HexToHash(txHash))
+	if err != nil {
+		return false, fmt.Errorf("failed to get transaction receipt: %w", err)
+	}
+
+	// Get latest block number
+	header, err := o.EthClient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to get latest block header: %w", err)
+	}
+
+	// Transaction is confirmed if it has at least 2 block confirmations and was successful
+	confirmed := receipt.Status == 1 && header.Number.Uint64()-receipt.BlockNumber.Uint64() >= 2
+	if confirmed {
+		// Clear the transaction hash once confirmed
+		delete(o.txHashes, keyType)
+	}
+
+	return confirmed, nil
+}
+
+// setTxHash sets the latest transaction hash for a given key type
+func (o *Oracle) setTxHash(keyType, txHash string) {
+	o.txHashes[keyType] = txHash
+}
+
+// getTxHash gets the latest transaction hash for a given key type
+func (o *Oracle) getTxHash(keyType string) string {
+	return o.txHashes[keyType]
+}
+
+func (o *Oracle) mainLoop(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-o.mainLoopTicker.C:
+			state := o.GetState()
+
+			// Check transaction confirmations
+			stakerConfirmed, err := o.checkTxConfirmation(ctx, "staker")
+			if err != nil {
+				log.Printf("Error checking staker tx confirmation: %v", err)
+			}
+			state.StakerTxConfirmed = stakerConfirmed
+
+			ethMinterConfirmed, err := o.checkTxConfirmation(ctx, "eth_minter")
+			if err != nil {
+				log.Printf("Error checking eth_minter tx confirmation: %v", err)
+			}
+			state.EthMinterTxConfirmed = ethMinterConfirmed
+
+			unstakerConfirmed, err := o.checkTxConfirmation(ctx, "unstaker")
+			if err != nil {
+				log.Printf("Error checking unstaker tx confirmation: %v", err)
+			}
+			state.UnstakerTxConfirmed = unstakerConfirmed
+
+			completerConfirmed, err := o.checkTxConfirmation(ctx, "completer")
+			if err != nil {
+				log.Printf("Error checking completer tx confirmation: %v", err)
+			}
+			state.CompleterTxConfirmed = completerConfirmed
+
+			// Update state with confirmation status
+			o.currentState.Store(&state)
+
+			// Save state to file
+			if err := o.SaveToFile(o.Config.StateFile); err != nil {
+				log.Printf("Error saving state to file: %v", err)
+			}
+		}
+	}
+}
+
+// GetState returns the current oracle state
+func (o *Oracle) GetState() sidecartypes.OracleState {
+	state := o.currentState.Load().(*sidecartypes.OracleState)
+	return *state
 }

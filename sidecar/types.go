@@ -50,6 +50,7 @@ type Oracle struct {
 	zrChainQueryClient *client.QueryClient
 	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
+	txHashes           map[string]string // key type -> latest tx hash
 }
 
 type PriceData struct {

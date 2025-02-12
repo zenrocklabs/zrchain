@@ -62,6 +62,8 @@ type Keeper struct {
 	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
+	// RequestedTxConfirmation - key: key ID | value: struct containing txIDs slice
+	RequestedTxConfirmation collections.Map[uint64, types.TxConfirmationData]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -135,6 +137,7 @@ func NewKeeper(
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		RequestedTxConfirmation:           collections.NewMap(sb, types.RequestedTxConfirmationKey, types.RequestedTxConfirmationIndex, collections.Uint64Key, codec.CollValue[types.TxConfirmationData](cdc)),
 	}
 }
 

@@ -18,6 +18,10 @@ type OracleState struct {
 	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
 	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
 	ETHUSDPrice                float64                        `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
+	StakerTxConfirmed          bool                           `json:"stakerTxConfirmed"`
+	EthMinterTxConfirmed       bool                           `json:"ethMinterTxConfirmed"`
+	UnstakerTxConfirmed        bool                           `json:"unstakerTxConfirmed"`
+	CompleterTxConfirmed       bool                           `json:"completerTxConfirmed"`
 }
 
 type Config struct {

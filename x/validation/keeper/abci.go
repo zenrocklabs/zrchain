@@ -13,6 +13,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+	api "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
@@ -565,7 +566,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 // checkForUpdateAndDispatchTx processes nonce updates and transaction dispatch
 func checkForUpdateAndDispatchTx[T any](
 	k *Keeper,
-	ctx sdk.Context,
+	ctx context.Context,
 	keyID uint64,
 	requestedNonce uint64,
 	pendingTxs []T,
@@ -576,7 +577,8 @@ func checkForUpdateAndDispatchTx[T any](
 		return
 	}
 
-	nonceData, err := k.getNonceDataWithInit(ctx, keyID)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	nonceData, err := k.getNonceDataWithInit(sdkCtx, keyID)
 	if err != nil {
 		k.Logger(ctx).Error("error getting nonce data", "keyID", keyID, "error", err)
 		return
@@ -593,26 +595,51 @@ func checkForUpdateAndDispatchTx[T any](
 		return
 	}
 
-	nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, requestedNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
+	txConfirmationData, err := k.RequestedTxConfirmation.Get(sdkCtx, keyID)
 	if err != nil {
-		k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
-		return
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting tx confirmation data", "keyID", keyID, "error", err)
+			return
+		}
+		txConfirmationData = types.TxConfirmationData{}
 	}
 
-	if len(pendingTxs) == 1 && nonceUpdated {
-		if err := k.clearEthereumNonceRequest(ctx, keyID); err != nil {
-			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
+	var txConfirmed bool
+	if txConfirmationData.HasTxHashes() {
+		txHash := txConfirmationData.GetFirstTxHash()
+		resp, err := k.sidecarClient.GetTransactionConfirmation(ctx, &api.TransactionConfirmationRequest{TxHash: txHash})
+		if err != nil {
+			k.Logger(ctx).Error("error checking tx confirmation", "keyID", keyID, "txHash", txHash, "error", err)
+			return
 		}
-		return
+		txConfirmed = resp.Confirmed
+	}
+
+	if txConfirmed {
+		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+			k.Logger(ctx).Error("error handling tx confirmation", "keyID", keyID, "error", err)
+			return
+		}
+		txConfirmationData.RemoveFirstTxHash()
+		if err := k.RequestedTxConfirmation.Set(sdkCtx, keyID, txConfirmationData); err != nil {
+			k.Logger(ctx).Error("error updating tx confirmation data", "keyID", keyID, "error", err)
+			return
+		}
+		if len(pendingTxs) == 1 {
+			if err := k.clearEthereumNonceRequest(sdkCtx, keyID); err != nil {
+				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
+			}
+			return
+		}
 	}
 
 	if nonceData.Skip {
 		return
 	}
 
-	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
+	// If tx[0] confirmed, dispatch tx[1]. If not then retry dispatching tx[0].
 	txIndex := 0
-	if nonceUpdated {
+	if txConfirmed {
 		txIndex = 1
 	}
 
@@ -838,6 +865,21 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
+
+			// Store the transaction hash for confirmation tracking
+			keyID := k.zenBTCKeeper.GetStakerKeyID(ctx)
+			txConfirmationData, err := k.RequestedTxConfirmation.Get(ctx, keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return err
+				}
+				txConfirmationData = types.TxConfirmationData{}
+			}
+			txConfirmationData.AddTxHash(hex.EncodeToString(unsignedStakeTxHash))
+			if err := k.RequestedTxConfirmation.Set(ctx, keyID, txConfirmationData); err != nil {
+				return err
+			}
+
 			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
 			if err != nil {
 				return err
@@ -927,6 +969,21 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
+
+			// Store the transaction hash for confirmation tracking
+			keyID := k.zenBTCKeeper.GetEthMinterKeyID(ctx)
+			txConfirmationData, err := k.RequestedTxConfirmation.Get(ctx, keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return err
+				}
+				txConfirmationData = types.TxConfirmationData{}
+			}
+			txConfirmationData.AddTxHash(hex.EncodeToString(unsignedMintTxHash))
+			if err := k.RequestedTxConfirmation.Set(ctx, keyID, txConfirmationData); err != nil {
+				return err
+			}
+
 			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
 			if err != nil {
 				return err
@@ -1027,6 +1084,21 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			if err != nil {
 				return err
 			}
+
+			// Store the transaction hash for confirmation tracking
+			keyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
+			txConfirmationData, err := k.RequestedTxConfirmation.Get(ctx, keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return err
+				}
+				txConfirmationData = types.TxConfirmationData{}
+			}
+			txConfirmationData.AddTxHash(hex.EncodeToString(unsignedTxHash))
+			if err := k.RequestedTxConfirmation.Set(ctx, keyID, txConfirmationData); err != nil {
+				return err
+			}
+
 			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
 			if err != nil {
 				return err
@@ -1115,14 +1187,15 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 		foundNewRedemption = true
 		// Convert zenBTC amount to BTC amount.
 		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
-		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
+		newRedemption := zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
 				Id:                 redemption.Id,
 				DestinationAddress: redemption.DestinationAddress,
 				Amount:             btcAmount,
 			},
 			Status: zenbtctypes.RedemptionStatus_INITIATED,
-		}); err != nil {
+		}
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, newRedemption); err != nil {
 			k.Logger(ctx).Error("error adding redemption to store", "error", err)
 			continue
 		}
@@ -1170,6 +1243,21 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err != nil {
 				return err
 			}
+
+			// Store the transaction hash for confirmation tracking
+			keyID := k.zenBTCKeeper.GetCompleterKeyID(ctx)
+			txConfirmationData, err := k.RequestedTxConfirmation.Get(ctx, keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return err
+				}
+				txConfirmationData = types.TxConfirmationData{}
+			}
+			txConfirmationData.AddTxHash(hex.EncodeToString(unsignedTxHash))
+			if err := k.RequestedTxConfirmation.Set(ctx, keyID, txConfirmationData); err != nil {
+				return err
+			}
+
 			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
 			if err != nil {
 				return err
