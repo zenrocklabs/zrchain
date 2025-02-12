@@ -31,9 +31,9 @@ func (gs GenesisState) Validate() error {
 
 func DefaultNoFeeMsgs() []string {
 	return []string{
+		"/zrchain.treasury.FulfilICATransactionRequest",
 		"/zrchain.treasury.FulfilKeyRequest",
 		"/zrchain.treasury.FulfilSignRequest",
 		"/zrchain.treasury.FulfilSignTransactionRequest",
-		"/zrchain.treasury.FulfilICATransactionRequest",
 	}
 }
