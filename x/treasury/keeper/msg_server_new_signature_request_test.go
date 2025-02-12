@@ -15,7 +15,6 @@ import (
 )
 
 func Test_msgServer_NewSignatureRequest(t *testing.T) {
-
 	type args struct {
 		keyring   *idTypes.Keyring
 		workspace *idTypes.Workspace
