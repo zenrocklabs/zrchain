@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/cockroachdb/errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	bin "github.com/gagliardetto/binary"
@@ -110,7 +109,9 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 	}, nil
 }
 
-// getTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer which contains from, to, amount
+// getTransferFromInstruction for a given solana.Message decodes the instruction and returns system.Transfer
+// which contains from, to, amount. This function allows nil recipient and a zero tx.amount to allow Solana
+// contract calls to be signed by the system.
 func getTransferFromInstruction(msg solana.Message) (*transfer, error) {
 	tx := &transfer{
 		amount: new(big.Int),
@@ -154,9 +155,6 @@ func getTransferFromInstruction(msg solana.Message) (*transfer, error) {
 
 	}
 
-	if len(tx.recipient) == 0 && tx.amount.Uint64() == 0 {
-		return nil, errors.New("no transfer instruction found")
-	}
 	return tx, nil
 }
 
