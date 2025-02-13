@@ -366,7 +366,7 @@ func NewZenrockApp(
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, zentptypes.MemStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -722,6 +722,7 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.IdentityKeeper,
+		runtime.NewMemStoreService(memKeys[zentptypes.MemStoreKey]),
 	)
 
 	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)

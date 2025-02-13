@@ -26,8 +26,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	SolanaRelayerKeyId  uint64 `protobuf:"varint,1,opt,name=solana_relayer_key_id,json=solanaRelayerKeyId,proto3" json:"solana_relayer_key_id,omitempty"`
-	ZrchainRelayerKeyId uint64 `protobuf:"varint,2,opt,name=zrchain_relayer_key_id,json=zrchainRelayerKeyId,proto3" json:"zrchain_relayer_key_id,omitempty"`
+	ZrchainRelayerKeyId uint64  `protobuf:"varint,1,opt,name=zrchain_relayer_key_id,json=zrchainRelayerKeyId,proto3" json:"zrchain_relayer_key_id,omitempty"`
+	Solana              *Solana `protobuf:"bytes,2,opt,name=solana,proto3" json:"solana,omitempty"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -63,13 +63,6 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetSolanaRelayerKeyId() uint64 {
-	if m != nil {
-		return m.SolanaRelayerKeyId
-	}
-	return 0
-}
-
 func (m *Params) GetZrchainRelayerKeyId() uint64 {
 	if m != nil {
 		return m.ZrchainRelayerKeyId
@@ -77,30 +70,141 @@ func (m *Params) GetZrchainRelayerKeyId() uint64 {
 	return 0
 }
 
+func (m *Params) GetSolana() *Solana {
+	if m != nil {
+		return m.Solana
+	}
+	return nil
+}
+
+type Solana struct {
+	ProgramId            string `protobuf:"bytes,1,opt,name=program_id,json=programId,proto3" json:"program_id,omitempty"`
+	NonceAccountPubKey   string `protobuf:"bytes,2,opt,name=nonce_account_pub_key,json=nonceAccountPubKey,proto3" json:"nonce_account_pub_key,omitempty"`
+	NonceAuthorityPubKey string `protobuf:"bytes,3,opt,name=nonce_authority_pub_key,json=nonceAuthorityPubKey,proto3" json:"nonce_authority_pub_key,omitempty"`
+	RpcUrl               string `protobuf:"bytes,4,opt,name=rpc_url,json=rpcUrl,proto3" json:"rpc_url,omitempty"`
+	MintAddress          string `protobuf:"bytes,5,opt,name=mint_address,json=mintAddress,proto3" json:"mint_address,omitempty"`
+	FeeWallet            string `protobuf:"bytes,6,opt,name=fee_wallet,json=feeWallet,proto3" json:"fee_wallet,omitempty"`
+	Fee                  uint64 `protobuf:"varint,7,opt,name=fee,proto3" json:"fee,omitempty"`
+}
+
+func (m *Solana) Reset()         { *m = Solana{} }
+func (m *Solana) String() string { return proto.CompactTextString(m) }
+func (*Solana) ProtoMessage()    {}
+func (*Solana) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32fd83cb82e1f0ea, []int{1}
+}
+func (m *Solana) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Solana) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Solana.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Solana) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Solana.Merge(m, src)
+}
+func (m *Solana) XXX_Size() int {
+	return m.Size()
+}
+func (m *Solana) XXX_DiscardUnknown() {
+	xxx_messageInfo_Solana.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Solana proto.InternalMessageInfo
+
+func (m *Solana) GetProgramId() string {
+	if m != nil {
+		return m.ProgramId
+	}
+	return ""
+}
+
+func (m *Solana) GetNonceAccountPubKey() string {
+	if m != nil {
+		return m.NonceAccountPubKey
+	}
+	return ""
+}
+
+func (m *Solana) GetNonceAuthorityPubKey() string {
+	if m != nil {
+		return m.NonceAuthorityPubKey
+	}
+	return ""
+}
+
+func (m *Solana) GetRpcUrl() string {
+	if m != nil {
+		return m.RpcUrl
+	}
+	return ""
+}
+
+func (m *Solana) GetMintAddress() string {
+	if m != nil {
+		return m.MintAddress
+	}
+	return ""
+}
+
+func (m *Solana) GetFeeWallet() string {
+	if m != nil {
+		return m.FeeWallet
+	}
+	return ""
+}
+
+func (m *Solana) GetFee() uint64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*Params)(nil), "zrchain.zentp.Params")
+	proto.RegisterType((*Solana)(nil), "zrchain.zentp.Solana")
 }
 
 func init() { proto.RegisterFile("zrchain/zentp/params.proto", fileDescriptor_32fd83cb82e1f0ea) }
 
 var fileDescriptor_32fd83cb82e1f0ea = []byte{
-	// 245 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0xaa, 0x2a, 0x4a, 0xce,
-	0x48, 0xcc, 0xcc, 0xd3, 0xaf, 0x4a, 0xcd, 0x2b, 0x29, 0xd0, 0x2f, 0x48, 0x2c, 0x4a, 0xcc, 0x2d,
-	0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x85, 0xca, 0xe9, 0x81, 0xe5, 0xa4, 0x04, 0x13,
-	0x73, 0x33, 0xf3, 0xf2, 0xf5, 0xc1, 0x24, 0x44, 0x85, 0x94, 0x48, 0x7a, 0x7e, 0x7a, 0x3e, 0x98,
-	0xa9, 0x0f, 0x62, 0x41, 0x44, 0x95, 0x26, 0x32, 0x72, 0xb1, 0x05, 0x80, 0x0d, 0x12, 0x32, 0xe4,
-	0x12, 0x2d, 0xce, 0xcf, 0x49, 0xcc, 0x4b, 0x8c, 0x2f, 0x4a, 0xcd, 0x49, 0xac, 0x4c, 0x2d, 0x8a,
-	0xcf, 0x4e, 0xad, 0x8c, 0xcf, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0x60, 0x09, 0x12, 0x82, 0x48,
-	0x06, 0x41, 0xe4, 0xbc, 0x53, 0x2b, 0x3d, 0x53, 0x84, 0x8c, 0xb9, 0xc4, 0xa0, 0xf6, 0xa2, 0xeb,
-	0x61, 0x02, 0xeb, 0x11, 0x86, 0xca, 0x22, 0x6b, 0xb2, 0x92, 0x7f, 0xb1, 0x40, 0x9e, 0xb1, 0xeb,
-	0xf9, 0x06, 0x2d, 0x98, 0x5e, 0xfd, 0x0a, 0xa8, 0x8f, 0x20, 0x0e, 0x71, 0x0a, 0x38, 0xf1, 0x48,
-	0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0,
-	0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0xb3, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd,
-	0xe4, 0xfc, 0x5c, 0xfd, 0xa8, 0xd4, 0xbc, 0xa2, 0xfc, 0xe4, 0x6c, 0x5d, 0xb7, 0xfc, 0xd2, 0xbc,
-	0x94, 0xc4, 0x92, 0xcc, 0xfc, 0x3c, 0x7d, 0x98, 0x79, 0x65, 0xa6, 0x70, 0x23, 0x4b, 0x2a, 0x0b,
-	0x52, 0x8b, 0x93, 0xd8, 0xc0, 0x9e, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x41, 0xbc, 0x56,
-	0xbc, 0x42, 0x01, 0x00, 0x00,
+	// 419 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x91, 0x41, 0x6b, 0xd4, 0x40,
+	0x14, 0xc7, 0x77, 0xda, 0x35, 0x65, 0xa7, 0x0a, 0x3a, 0xb6, 0x36, 0x2c, 0x98, 0xd6, 0x9e, 0x8a,
+	0xd0, 0x04, 0x2d, 0xf5, 0xd0, 0x5b, 0x3d, 0x08, 0xa5, 0x97, 0x25, 0x22, 0x42, 0x2f, 0xc3, 0x64,
+	0xf2, 0x36, 0x1b, 0x9a, 0xcc, 0x0c, 0x93, 0x89, 0x9a, 0x9e, 0x3d, 0x09, 0x82, 0x1f, 0xc1, 0x8f,
+	0xe0, 0xc7, 0xf0, 0xb8, 0x47, 0x8f, 0xb2, 0x7b, 0xd0, 0x8f, 0x21, 0x99, 0x99, 0x2c, 0x78, 0x09,
+	0x8f, 0xff, 0xef, 0xfd, 0x5f, 0xfe, 0xef, 0x0d, 0x9e, 0xde, 0x69, 0xbe, 0x60, 0xa5, 0x48, 0xee,
+	0x40, 0x18, 0x95, 0x28, 0xa6, 0x59, 0xdd, 0xc4, 0x4a, 0x4b, 0x23, 0xc9, 0x03, 0xcf, 0x62, 0xcb,
+	0xa6, 0x8f, 0x58, 0x5d, 0x0a, 0x99, 0xd8, 0xaf, 0xeb, 0x98, 0xee, 0x15, 0xb2, 0x90, 0xb6, 0x4c,
+	0xfa, 0xca, 0xa9, 0xc7, 0x5f, 0x11, 0x0e, 0x66, 0x76, 0x10, 0x39, 0xc3, 0x4f, 0xfc, 0x10, 0xaa,
+	0xa1, 0x62, 0x1d, 0x68, 0x7a, 0x0b, 0x1d, 0x2d, 0xf3, 0x10, 0x1d, 0xa1, 0x93, 0x71, 0xfa, 0xd8,
+	0xd3, 0xd4, 0xc1, 0x6b, 0xe8, 0xae, 0x72, 0x72, 0x8a, 0x83, 0x46, 0x56, 0x4c, 0xb0, 0x70, 0xeb,
+	0x08, 0x9d, 0xec, 0xbe, 0xdc, 0x8f, 0xff, 0x0b, 0x12, 0xbf, 0xb5, 0x30, 0xf5, 0x4d, 0x17, 0x87,
+	0x7f, 0xbf, 0x1f, 0xa2, 0x2f, 0x7f, 0x7e, 0x3c, 0x1f, 0x7e, 0x95, 0x7c, 0xf2, 0xdb, 0xb8, 0x10,
+	0xc7, 0x9f, 0xb7, 0x70, 0xe0, 0x3c, 0xe4, 0x29, 0xc6, 0x4a, 0xcb, 0x42, 0xb3, 0x7a, 0xc8, 0x30,
+	0x49, 0x27, 0x5e, 0xb9, 0xca, 0xc9, 0x0b, 0xbc, 0x2f, 0xa4, 0xe0, 0x40, 0x19, 0xe7, 0xb2, 0x15,
+	0x86, 0xaa, 0x36, 0xeb, 0x03, 0xdb, 0x20, 0x93, 0x94, 0x58, 0x78, 0xe9, 0xd8, 0xac, 0xcd, 0xae,
+	0xa1, 0x23, 0xe7, 0xf8, 0xc0, 0x5b, 0x5a, 0xb3, 0x90, 0xba, 0x34, 0xdd, 0xc6, 0xb4, 0x6d, 0x4d,
+	0x7b, 0xce, 0x34, 0x50, 0x6f, 0x3b, 0xc0, 0x3b, 0x5a, 0x71, 0xda, 0xea, 0x2a, 0x1c, 0xdb, 0xb6,
+	0x40, 0x2b, 0xfe, 0x4e, 0x57, 0xe4, 0x19, 0xbe, 0x5f, 0x97, 0xc2, 0x50, 0x96, 0xe7, 0x1a, 0x9a,
+	0x26, 0xbc, 0x67, 0xe9, 0x6e, 0xaf, 0x5d, 0x3a, 0xa9, 0x5f, 0x62, 0x0e, 0x40, 0x3f, 0xb2, 0xaa,
+	0x02, 0x13, 0x06, 0x6e, 0x89, 0x39, 0xc0, 0x7b, 0x2b, 0x90, 0x87, 0x78, 0x7b, 0x0e, 0x10, 0xee,
+	0xd8, 0x03, 0xf7, 0xe5, 0xc5, 0xb8, 0xbf, 0xd0, 0xeb, 0xd9, 0xcf, 0x55, 0x84, 0x96, 0xab, 0x08,
+	0xfd, 0x5e, 0x45, 0xe8, 0xdb, 0x3a, 0x1a, 0x2d, 0xd7, 0xd1, 0xe8, 0xd7, 0x3a, 0x1a, 0xdd, 0xbc,
+	0x2a, 0x4a, 0xb3, 0x68, 0xb3, 0x98, 0xcb, 0x3a, 0xb9, 0x01, 0xa1, 0x25, 0xbf, 0x3d, 0x7d, 0x23,
+	0x5b, 0x91, 0x33, 0x53, 0x4a, 0x91, 0x0c, 0x67, 0xfd, 0x70, 0xbe, 0xb9, 0xac, 0xe9, 0x14, 0x34,
+	0x59, 0x60, 0xdf, 0xfb, 0xec, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf9, 0xc8, 0xd4, 0x91, 0x45,
+	0x02, 0x00, 0x00,
 }
 
 func (this *Params) Equal(that interface{}) bool {
@@ -122,10 +226,52 @@ func (this *Params) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.SolanaRelayerKeyId != that1.SolanaRelayerKeyId {
+	if this.ZrchainRelayerKeyId != that1.ZrchainRelayerKeyId {
 		return false
 	}
-	if this.ZrchainRelayerKeyId != that1.ZrchainRelayerKeyId {
+	if !this.Solana.Equal(that1.Solana) {
+		return false
+	}
+	return true
+}
+func (this *Solana) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Solana)
+	if !ok {
+		that2, ok := that.(Solana)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.ProgramId != that1.ProgramId {
+		return false
+	}
+	if this.NonceAccountPubKey != that1.NonceAccountPubKey {
+		return false
+	}
+	if this.NonceAuthorityPubKey != that1.NonceAuthorityPubKey {
+		return false
+	}
+	if this.RpcUrl != that1.RpcUrl {
+		return false
+	}
+	if this.MintAddress != that1.MintAddress {
+		return false
+	}
+	if this.FeeWallet != that1.FeeWallet {
+		return false
+	}
+	if this.Fee != that1.Fee {
 		return false
 	}
 	return true
@@ -150,15 +296,92 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Solana != nil {
+		{
+			size, err := m.Solana.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintParams(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
 	if m.ZrchainRelayerKeyId != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.ZrchainRelayerKeyId))
 		i--
-		dAtA[i] = 0x10
-	}
-	if m.SolanaRelayerKeyId != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SolanaRelayerKeyId))
-		i--
 		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Solana) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Solana) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Solana) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Fee != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.Fee))
+		i--
+		dAtA[i] = 0x38
+	}
+	if len(m.FeeWallet) > 0 {
+		i -= len(m.FeeWallet)
+		copy(dAtA[i:], m.FeeWallet)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.FeeWallet)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.MintAddress) > 0 {
+		i -= len(m.MintAddress)
+		copy(dAtA[i:], m.MintAddress)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.MintAddress)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.RpcUrl) > 0 {
+		i -= len(m.RpcUrl)
+		copy(dAtA[i:], m.RpcUrl)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.RpcUrl)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.NonceAuthorityPubKey) > 0 {
+		i -= len(m.NonceAuthorityPubKey)
+		copy(dAtA[i:], m.NonceAuthorityPubKey)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.NonceAuthorityPubKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.NonceAccountPubKey) > 0 {
+		i -= len(m.NonceAccountPubKey)
+		copy(dAtA[i:], m.NonceAccountPubKey)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.NonceAccountPubKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ProgramId) > 0 {
+		i -= len(m.ProgramId)
+		copy(dAtA[i:], m.ProgramId)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.ProgramId)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -180,11 +403,48 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.SolanaRelayerKeyId != 0 {
-		n += 1 + sovParams(uint64(m.SolanaRelayerKeyId))
-	}
 	if m.ZrchainRelayerKeyId != 0 {
 		n += 1 + sovParams(uint64(m.ZrchainRelayerKeyId))
+	}
+	if m.Solana != nil {
+		l = m.Solana.Size()
+		n += 1 + l + sovParams(uint64(l))
+	}
+	return n
+}
+
+func (m *Solana) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ProgramId)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = len(m.NonceAccountPubKey)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = len(m.NonceAuthorityPubKey)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = len(m.RpcUrl)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = len(m.MintAddress)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = len(m.FeeWallet)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	if m.Fee != 0 {
+		n += 1 + sovParams(uint64(m.Fee))
 	}
 	return n
 }
@@ -226,25 +486,6 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SolanaRelayerKeyId", wireType)
-			}
-			m.SolanaRelayerKeyId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.SolanaRelayerKeyId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ZrchainRelayerKeyId", wireType)
 			}
 			m.ZrchainRelayerKeyId = 0
@@ -258,6 +499,303 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.ZrchainRelayerKeyId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Solana", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Solana == nil {
+				m.Solana = &Solana{}
+			}
+			if err := m.Solana.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Solana) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Solana: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Solana: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProgramId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProgramId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NonceAccountPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NonceAccountPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NonceAuthorityPubKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NonceAuthorityPubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RpcUrl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RpcUrl = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MintAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MintAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeeWallet", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FeeWallet = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
+			}
+			m.Fee = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fee |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

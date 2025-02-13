@@ -168,6 +168,20 @@ if [ "$START_ONLY" = false ]; then
         "additional_burn_rate": "0.250000000000000000"
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
+
+  # Set initial zentp parameters
+    jq '.app_state.zentp.params = {
+        "zrchain_relayer_key_id": 1,
+        "solana": {
+          "rpc_url": "https://api.devnet.solana.com",
+          "program_id": "3dvdvGsDiHnJrCWBpuR1yDmozY2BBruEzPBcf52MWviX",
+          "nonce_account_pub_key": "3tZjSqiwvWLW7ji8MKzTtEpbMNTeE5rDxsebz97Fpj8y",
+          "nonce_authority_pub_key": "HetjsswqwXrCV9WFmDt3r3PUVY39xtqoNy89T6VsfuZF",
+          "mint_address": "7NHEm2UHRMCYhR3DnVJVHNMm8BVF3KRWuLyD85zJpxsF",
+          "fee_wallet": "AvUu1UkvwgBcvCXMEseBdEns7BGF5tNYRcLmwegDcUCX",
+          "fee": 20
+        }
+    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {
         if [[ "$OSTYPE" == "darwin"* ]]; then
             gsed "$@"

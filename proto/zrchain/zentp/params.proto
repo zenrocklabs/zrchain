@@ -11,6 +11,18 @@ message Params {
   option (amino.name) = "zrchain/x/zentp/Params";
   option (gogoproto.equal) = true;
 
-  uint64 solana_relayer_key_id = 1;
-  uint64 zrchain_relayer_key_id = 2;
+  uint64 zrchain_relayer_key_id = 1;
+  Solana solana = 2;
+}
+
+message Solana {
+  option (gogoproto.equal) = true;
+
+  string program_id = 1;
+  string nonce_account_pub_key = 2;
+  string nonce_authority_pub_key = 3;
+  string rpc_url = 4;
+  string mint_address = 5;
+  string fee_wallet = 6;
+  uint64 fee = 7;
 }

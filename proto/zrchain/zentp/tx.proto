@@ -61,7 +61,9 @@ message MsgMintRock {
 
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
-message MsgMintRockResponse {}
+message MsgMintRockResponse {
+  string tx_hash = 1;
+}
 
 // MsgBurn is the Msg/Burn request type and gated through governance
 message MsgBurn {
@@ -78,5 +80,6 @@ message MsgBurn {
 
 // MsgBurnResponse defines the response structure for executing a
 // MsgBurn message.
-message MsgBurnResponse {}
+message MsgBurnResponse {
+}
 

@@ -4,20 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
 )
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService store.KVStoreService
-		logger       log.Logger
+		cdc             codec.BinaryCodec
+		storeService    store.KVStoreService
+		memStoreService store.MemoryStoreService
+		logger          log.Logger
 
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
@@ -26,6 +29,8 @@ type (
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
 		identityKeeper types.IdentityKeeper
+		mintStore      collections.Map[uint64, types.Mint]
+		burnStore      collections.Map[uint64, types.Burn]
 	}
 )
 
@@ -38,6 +43,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	identityKeeper types.IdentityKeeper,
+	memStoreService store.MemoryStoreService,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -47,16 +53,23 @@ func NewKeeper(
 		panic(fmt.Sprintf("the x/%s module account has not been set", types.ModuleName))
 	}
 
-	return Keeper{
-		cdc:            cdc,
-		storeService:   storeService,
-		authority:      authority,
-		logger:         logger,
-		treasuryKeeper: treasuryKeeper,
-		bankKeeper:     bankKeeper,
-		accountKeeper:  accountKeeper,
-		identityKeeper: identityKeeper,
+	sb := collections.NewSchemaBuilder(storeService)
+
+	k := Keeper{
+		cdc:             cdc,
+		storeService:    storeService,
+		memStoreService: memStoreService,
+		mintStore:       collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Mint](cdc)),
+		burnStore:       collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Burn](cdc)),
+		authority:       authority,
+		logger:          logger,
+		treasuryKeeper:  treasuryKeeper,
+		bankKeeper:      bankKeeper,
+		accountKeeper:   accountKeeper,
+		identityKeeper:  identityKeeper,
 	}
+
+	return k
 }
 
 // GetAuthority returns the module's authority.
@@ -83,4 +96,44 @@ func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTyp
 	}
 
 	return false
+}
+
+func (k Keeper) GetMints(goCtx context.Context, keyID uint64, chainID string) ([]*types.Mint, error) {
+	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Mint, collections.Map[uint64, types.Mint], *types.Mint](
+		goCtx,
+		k.mintStore,
+		nil,
+		func(key uint64, value types.Mint) (bool, error) {
+			return value.RecipientKeyId == keyID &&
+				value.DestinationChain == chainID, nil
+		},
+		func(key uint64, value types.Mint) (*types.Mint, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mints, nil
+}
+
+func (k Keeper) GetBurns(goCtx context.Context, keyID uint64, chainID string) ([]*types.Burn, error) {
+	burns, _, err := query.CollectionFilteredPaginate[uint64, types.Burn, collections.Map[uint64, types.Burn], *types.Burn](
+		goCtx,
+		k.burnStore,
+		nil,
+		func(key uint64, value types.Burn) (bool, error) {
+			return value.RecipientKeyId == keyID &&
+				value.SourceChain == chainID, nil
+		},
+		func(key uint64, value types.Burn) (*types.Burn, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return burns, nil
 }

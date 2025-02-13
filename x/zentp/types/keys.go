@@ -1,5 +1,7 @@
 package types
 
+import "cosmossdk.io/collections"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "zentp"
@@ -13,6 +15,12 @@ const (
 
 var (
 	ParamsKey = []byte("p_zentp")
+
+	BurnsKey = collections.NewPrefix(0)
+	MintsKey = collections.NewPrefix(1)
+
+	BurnsIndex = "burns"
+	MintsIndex = "mints"
 )
 
 func KeyPrefix(p string) []byte {

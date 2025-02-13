@@ -36,8 +36,10 @@ class MsgMintRock(_message.Message):
     def __init__(self, creator: _Optional[str] = ..., amount: _Optional[int] = ..., source_key_id: _Optional[int] = ..., destination_chain: _Optional[str] = ..., recipient_key_id: _Optional[int] = ...) -> None: ...
 
 class MsgMintRockResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
+    __slots__ = ("tx_hash",)
+    TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    tx_hash: str
+    def __init__(self, tx_hash: _Optional[str] = ...) -> None: ...
 
 class MsgBurn(_message.Message):
     __slots__ = ("authority", "module_account", "denom", "amount")
