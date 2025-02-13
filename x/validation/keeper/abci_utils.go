@@ -32,6 +32,11 @@ import (
 	bindings "github.com/zenrocklabs/zenbtc/bindings"
 )
 
+// Note: The transaction confirmation mechanism is now used. After calling
+// constructEthereumTx the caller must append the returned tx hash to the
+// RequestedTxConfirmation store.
+
+// GetSidecarState retrieves the sidecar state.
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
 	resp, err := k.sidecarClient.GetSidecarState(ctx, &sidecar.SidecarStateRequest{})
 	if err != nil {
@@ -41,6 +46,7 @@ func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData,
 	return k.processOracleResponse(ctx, resp)
 }
 
+// GetSidecarStateByEthHeight retrieves the sidecar state by Ethereum block height.
 func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (*OracleData, error) {
 	resp, err := k.sidecarClient.GetSidecarStateByEthHeight(ctx, &sidecar.SidecarStateByEthHeightRequest{EthBlockHeight: height})
 	if err != nil {
@@ -182,7 +188,6 @@ func getVESubset(ve VoteExtension) VoteExtension {
 }
 
 func updateVotesPerVE(votesPerVoteExt map[string]*VEWithVotePower, voteExt VoteExtension, votePower int64) {
-	// Use the subset for the key
 	marshaledSubsetVE, err := json.Marshal(getVESubset(voteExt))
 	if err != nil {
 		return
@@ -192,7 +197,6 @@ func updateVotesPerVE(votesPerVoteExt map[string]*VEWithVotePower, voteExt VoteE
 	if existingVE, ok := votesPerVoteExt[key]; ok {
 		existingVE.VotePower += votePower
 	} else {
-		// Store the full VE
 		fullMarshaledVE, err := json.Marshal(voteExt)
 		if err != nil {
 			return
@@ -325,9 +329,9 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 	// check sort order of extended commit votes
 	if !slices.IsSortedFunc(ec.Votes, func(vote1, vote2 abci.ExtendedVoteInfo) int {
 		if vote1.Validator.Power == vote2.Validator.Power {
-			return bytes.Compare(vote1.Validator.Address, vote2.Validator.Address) // addresses sorted in ascending order (used to break vp conflicts)
+			return bytes.Compare(vote1.Validator.Address, vote2.Validator.Address)
 		}
-		return -int(vote1.Validator.Power - vote2.Validator.Power) // vp sorted in descending order
+		return -int(vote1.Validator.Power - vote2.Validator.Power)
 	}) {
 		return fmt.Errorf("extended commit votes are not sorted by voting power")
 	}
@@ -623,7 +627,7 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
-func (k *Keeper) getZenBTCKeyIDs(ctx context.Context) []uint64 {
+func (k *Keeper) getZenBTCKeyIDs(ctx sdk.Context) []uint64 {
 	return []uint64{
 		k.zenBTCKeeper.GetStakerKeyID(ctx),
 		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
@@ -658,8 +662,6 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
 }
 
-// CalculateZenBTCMintFee calculates the zenBTC fee required for minting
-// Returns 0 if BTCUSDPrice is zero
 func (k Keeper) CalculateZenBTCMintFee(
 	ethBaseFee uint64,
 	ethTipCap uint64,
@@ -672,7 +674,6 @@ func (k Keeper) CalculateZenBTCMintFee(
 		return 0
 	}
 
-	// Calculate total ETH gas fee in wei (base fee + tip)
 	baseFeePlusTip := new(big.Int).Add(
 		new(big.Int).SetUint64(ethBaseFee),
 		new(big.Int).SetUint64(ethTipCap),
@@ -682,20 +683,17 @@ func (k Keeper) CalculateZenBTCMintFee(
 		new(big.Int).SetUint64(ethGasLimit),
 	)
 
-	// Convert wei to ETH (divide by 1e18)
 	feeInETH := new(big.Float).Quo(
 		new(big.Float).SetInt(feeInWei),
 		new(big.Float).SetInt64(1e18),
 	)
 
-	// Convert ETH fee to BTC
 	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
 	feeBTCFloat := new(big.Float).Mul(
 		feeInETH,
 		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
 	)
 
-	// Convert to satoshis (multiply by 1e8)
 	satoshisFloat := new(big.Float).Mul(
 		feeBTCFloat,
 		new(big.Float).SetInt64(1e8),
@@ -704,7 +702,6 @@ func (k Keeper) CalculateZenBTCMintFee(
 	satoshisInt, _ := satoshisFloat.Int(nil)
 	satoshis := satoshisInt.Uint64()
 
-	// Convert BTC fee to zenBTC using exchange rate
 	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
 
 	return feeZenBTC
