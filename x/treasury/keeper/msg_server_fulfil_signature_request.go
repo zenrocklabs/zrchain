@@ -43,6 +43,22 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 		return nil, fmt.Errorf("failed to set sign request: %w", err)
 	}
 
+	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	if err != nil || !keyring.IsActive {
+		return nil, fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
+	}
+
+	if req.Fee > 0 {
+		feeRecipient := keyring.Address
+		if keyring.DelegateFees {
+			feeRecipient = types.KeyringCollectorName
+		}
+		err := k.SplitKeyringFee(ctx, msg.Creator, feeRecipient, req.Fee)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	eventType := types.EventSignRequestFulfilled
 	if req.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
 		eventType = types.EventSignRequestRejected

@@ -23,7 +23,7 @@ func (o *Oracle) runEigenOperator() error {
 	log.Println("Config:", string(configJson))
 
 	log.Println("initializing operator")
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, &o.currentState)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, o)
 	if err != nil {
 		return err
 	}

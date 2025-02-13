@@ -101,6 +101,7 @@ message MsgNewKeyRequest {
   uint64 ext_key_type = 8;
   uint64 sign_policy_id = 9;
   ZenBTCMetadata zenbtc_metadata = 10; // Optional
+  uint64 mpc_btl = 11;
 }
 
 // MsgNewKeyRequestResponse defines the response structure for executing a
@@ -142,6 +143,8 @@ message MsgNewSignatureRequest {
   bytes cache_id = 5;
   bytes verify_signing_data = 6;
   VerificationVersion verify_signing_data_version = 7;
+  uint64 mpc_btl = 8;
+  bytes zenbtc_tx_bytes = 9; // Optional
 }
 
 // Verification contains any data required to verify the incoming
@@ -182,7 +185,8 @@ enum SolanaNetworkType {
   TESTNET = 3;
 }
 
-// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a given transaction
+// MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a
+// given transaction
 message MetadataSolana {
   SolanaNetworkType network = 1;
   string mintAddress = 2;
@@ -202,6 +206,7 @@ message MsgNewSignTransactionRequest {
   uint64 btl = 6;
   bytes cache_id = 7;
   bool no_broadcast = 8;
+  uint64 mpc_btl = 9;
 }
 
 // MsgNewSignTransactionRequestResponse defines the response structure for

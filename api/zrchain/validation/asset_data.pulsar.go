@@ -596,7 +596,8 @@ func (Asset) EnumDescriptor() ([]byte, []int) {
 	return file_zrchain_validation_asset_data_proto_rawDescGZIP(), []int{0}
 }
 
-// AssetData is a struct that contains the price in USD + decimals of precision of an asset
+// AssetData is a struct that contains the price in USD + decimals of precision
+// of an asset
 type AssetData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -3,20 +3,31 @@ package shared
 import (
 	"context"
 
+	"cosmossdk.io/collections"
 	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 type ZenBTCKeeper interface {
-	GetMinterKeyID(ctx context.Context) uint64
+	GetStakerKeyID(ctx context.Context) uint64
+	GetEthMinterKeyID(ctx context.Context) uint64
 	GetUnstakerKeyID(ctx context.Context) uint64
+	GetCompleterKeyID(ctx context.Context) uint64
 	GetEthBatcherAddr(ctx context.Context) string
+	GetEthTokenAddr(ctx context.Context) string
 	GetBitcoinProxyAddress(ctx context.Context) string
-	GetPendingMintTransactions(ctx context.Context) (types.PendingMintTransactions, error)
-	SetPendingMintTransactions(ctx context.Context, pendingMintTransactions types.PendingMintTransactions) error
+	SetPendingMintTransaction(ctx context.Context, pendingMintTransaction types.PendingMintTransaction) error
+	WalkPendingMintTransactions(ctx context.Context, fn func(id uint64, pendingMintTransaction types.PendingMintTransaction) (stop bool, err error)) error
 	GetSupply(ctx context.Context) (types.Supply, error)
 	SetSupply(ctx context.Context, supply types.Supply) error
 	HasRedemption(ctx context.Context, id uint64) (bool, error)
 	SetRedemption(ctx context.Context, id uint64, redemption types.Redemption) error
 	WalkRedemptions(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
 	GetExchangeRate(ctx context.Context) (float64, error)
+	GetBurnEvent(ctx context.Context, id uint64) (types.BurnEvent, error)
+	SetBurnEvent(ctx context.Context, id uint64, burnEvent types.BurnEvent) error
+	CreateBurnEvent(ctx context.Context, burnEvent *types.BurnEvent) (uint64, error)
+	WalkBurnEvents(ctx context.Context, fn func(id uint64, burnEvent types.BurnEvent) (stop bool, err error)) error
+	GetPendingMintTransactionsStore() collections.Map[uint64, types.PendingMintTransaction]
+	GetBurnEventsStore() collections.Map[uint64, types.BurnEvent]
+	GetRedemptionsStore() collections.Map[uint64, types.Redemption]
 }

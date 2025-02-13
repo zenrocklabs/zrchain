@@ -47,7 +47,7 @@ func NewTreasuryTxClient(c *RawTxClient) *TreasuryTxClient {
 // CLI equivalent:
 // zenrockd tx treasury new-key-request workspace14a2hpadpsy9h4auve2z8lw keyring1pfnq7r04rept47gaf5cpdew2 bitcoin --from alice --chain-id zenrock -y
 func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, keyring string, keyType string) (string, error) {
-	msg := types.NewMsgNewKeyRequest(c.c.Identity.Address.String(), workspace, keyring, keyType, 0, 0)
+	msg := types.NewMsgNewKeyRequest(c.c.Identity.Address.String(), workspace, keyring, keyType, 0, 0, 0)
 	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
 	if err != nil {
 		return "", err
@@ -68,19 +68,19 @@ func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, 
 //   - keyType: The type of key to request
 //   - recipient_addr: The recipient's address
 //   - chain_type: The type of blockchain
-//   - chain_id: The chain identifier
+//   - caip_chain_id: The chain identifier in CAIP-2 format
 //   - return_address: The return address
 //
 // Returns:
 //   - string: The transaction hash if successful
 //   - error: An error if the request fails
 func (c *TreasuryTxClient) NewZenBTCKeyRequest(ctx context.Context, workspace string, keyring string, keyType string,
-	recipient_addr string, chain_type types.WalletType, chain_id uint64, return_address string) (string, error) {
+	recipient_addr string, chain_type types.WalletType, caip_chain_id string, return_address string) (string, error) {
 
 	metadata := &types.ZenBTCMetadata{
 		RecipientAddr: recipient_addr,
 		ChainType:     chain_type,
-		ChainId:       chain_id,
+		Caip2ChainId:  caip_chain_id,
 		ReturnAddress: return_address,
 	}
 

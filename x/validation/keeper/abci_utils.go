@@ -26,7 +26,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
@@ -90,8 +89,8 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		EthBaseFee:                 resp.EthBaseFee,
 		EthTipCap:                  resp.EthTipCap,
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
-		EthereumRedemptions:        resp.RedemptionsEthereum,
-		SolanaRedemptions:          resp.RedemptionsSolana,
+		EthBurnEvents:              resp.EthBurnEvents,
+		Redemptions:                resp.Redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
@@ -237,18 +236,6 @@ func deriveHash[T any](data T) ([32]byte, error) {
 	return sha256.Sum256(dataBz), nil
 }
 
-func deriveAVSContractStateHash(avsDelegations map[string]map[string]*big.Int) ([32]byte, error) {
-	return deriveHash(avsDelegations)
-}
-
-func deriveRedemptionsHash(redemptions []api.Redemption) ([32]byte, error) {
-	return deriveHash(redemptions)
-}
-
-func deriveBitcoinHeaderHash(header *sidecar.BTCBlockHeader) ([32]byte, error) {
-	return deriveHash(header)
-}
-
 // ref: https://github.com/cosmos/cosmos-sdk/blob/c64d1010800d60677cc25e2fca5b3d8c37b683cc/baseapp/abci_utils.go#L44
 func ValidateVoteExtensions(ctx sdk.Context, validationKeeper baseapp.ValidatorStore, currentHeight int64, chainID string, extCommit abci.ExtendedCommitInfo) error {
 	marshalDelimitedFn := func(msg proto.Message) ([]byte, error) {
@@ -379,13 +366,12 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 	return nonceResp.Nonce, nil
 }
 
-func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+func (k *Keeper) constructEthereumTx(addr common.Address, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	// TODO: whitelist more chain IDs before mainnet upgrade
 	if chainID != 17000 {
 		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
-	chainIDBigInt := big.NewInt(int64(chainID))
-
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	chainIDBigInt := new(big.Int).SetUint64(chainID)
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -430,23 +416,47 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, chainID uint64, data [
 	return signer.Hash(unsignedTx).Bytes(), unsignedTxBz, nil
 }
 
+func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedMintData, err := EncodeStakeCallData(new(big.Int).SetUint64(amount))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+}
+
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
 	encodedMintData, err := EncodeWrapCallData(common.HexToAddress(recipientAddr), new(big.Int).SetUint64(amount), fee)
 	if err != nil {
 		return nil, nil, err
 	}
-	return k.constructEthereumTx(ctx, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthTokenAddr(ctx))
+	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
-func (k *Keeper) constructUnstakeTx(ctx context.Context, redemptionID, chainID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, redemptionID)
+func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destinationAddr []byte, amount, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedUnstakeData, err := k.EncodeUnstakeCallData(ctx, destinationAddr, amount)
 	if err != nil {
 		return nil, nil, err
 	}
-	return k.constructEthereumTx(ctx, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
+
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
 }
 
-func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	encodedCompleteData, err := k.EncodeCompleteCallData(ctx, redemptionID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	return k.constructEthereumTx(addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
+}
+
+func EncodeStakeCallData(amount *big.Int) ([]byte, error) {
 	if !amount.IsUint64() {
 		return nil, fmt.Errorf("amount exceeds uint64 max value")
 	}
@@ -458,12 +468,33 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 
 	// Pack using the contract binding's ABI for the wrapZenBTC function
 	data, err := parsed.Pack(
-		"wrapZenBTC",
+		"stakeRockBTC",
+		amount.Uint64(),
+		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode stake call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint64) ([]byte, error) {
+	if !amount.IsUint64() {
+		return nil, fmt.Errorf("amount exceeds uint64 max value")
+	}
+
+	parsed, err := bindings.ZenBTCMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	// Pack using the contract binding's ABI for the wrap function
+	data, err := parsed.Pack(
+		"wrap",
 		recipientAddr,
 		amount.Uint64(),
 		fee,
-		bindings.ISignatureUtilsSignatureWithExpiry{Signature: []byte{}, Expiry: big.NewInt(0)}, [32]byte{},
-		// The fields on the line above can be left empty as we don't need them to delegate to our operator
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode wrapZenBTC call data: %v", err)
@@ -472,13 +503,34 @@ func EncodeWrapCallData(recipientAddr common.Address, amount *big.Int, fee uint6
 	return data, nil
 }
 
-func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, destinationAddr []byte, amount uint64) ([]byte, error) {
 	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
-	data, err := parsed.Pack("unstakeRockBTComplete", new(big.Int).SetUint64(redemptionID))
+	data, err := parsed.Pack(
+		"unstakeRockBTC",
+		new(big.Int).SetUint64(amount),
+		destinationAddr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode unstakeRockBTC call data: %v", err)
+	}
+
+	return data, nil
+}
+
+func (k *Keeper) EncodeCompleteCallData(ctx context.Context, redemptionID uint64) ([]byte, error) {
+	parsed, err := bindings.ZenBTControllerMetaData.GetAbi()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ABI: %v", err)
+	}
+
+	data, err := parsed.Pack(
+		"unstakeRockBTComplete",
+		new(big.Int).SetUint64(redemptionID),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode unstakeRockBTComplete call data: %v", err)
 	}
@@ -571,6 +623,15 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	}
 }
 
+func (k *Keeper) getZenBTCKeyIDs(ctx context.Context) []uint64 {
+	return []uint64{
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+	}
+}
+
 func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce uint64) error {
 	lastUsedNonce, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
 	if err != nil {
@@ -595,6 +656,58 @@ func (k *Keeper) updateNonceState(ctx sdk.Context, keyID uint64, currentNonce ui
 	}
 
 	return k.LastUsedEthereumNonce.Set(ctx, keyID, lastUsedNonce)
+}
+
+// CalculateZenBTCMintFee calculates the zenBTC fee required for minting
+// Returns 0 if BTCUSDPrice is zero
+func (k Keeper) CalculateZenBTCMintFee(
+	ethBaseFee uint64,
+	ethTipCap uint64,
+	ethGasLimit uint64,
+	btcUSDPrice sdkmath.LegacyDec,
+	ethUSDPrice sdkmath.LegacyDec,
+	exchangeRate float64,
+) uint64 {
+	if btcUSDPrice.IsZero() {
+		return 0
+	}
+
+	// Calculate total ETH gas fee in wei (base fee + tip)
+	baseFeePlusTip := new(big.Int).Add(
+		new(big.Int).SetUint64(ethBaseFee),
+		new(big.Int).SetUint64(ethTipCap),
+	)
+	feeInWei := new(big.Int).Mul(
+		baseFeePlusTip,
+		new(big.Int).SetUint64(ethGasLimit),
+	)
+
+	// Convert wei to ETH (divide by 1e18)
+	feeInETH := new(big.Float).Quo(
+		new(big.Float).SetInt(feeInWei),
+		new(big.Float).SetInt64(1e18),
+	)
+
+	// Convert ETH fee to BTC
+	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
+	feeBTCFloat := new(big.Float).Mul(
+		feeInETH,
+		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+	)
+
+	// Convert to satoshis (multiply by 1e8)
+	satoshisFloat := new(big.Float).Mul(
+		feeBTCFloat,
+		new(big.Float).SetInt64(1e8),
+	)
+
+	satoshisInt, _ := satoshisFloat.Int(nil)
+	satoshis := satoshisInt.Uint64()
+
+	// Convert BTC fee to zenBTC using exchange rate
+	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
+
+	return feeZenBTC
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
@@ -631,4 +744,12 @@ func (k *Keeper) recordNonVotingValidators(ctx sdk.Context, req *abci.RequestFin
 			}
 		}
 	}
+}
+
+func getChainIDForEigen(ctx sdk.Context) uint64 {
+	var chainID uint64 = 17000
+	if strings.HasPrefix(ctx.ChainID(), "diamond") {
+		chainID = 1
+	}
+	return chainID
 }

@@ -40,6 +40,8 @@ message KeyRequest {
   uint64 index = 9;
   uint64 sign_policy_id = 10;
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
+  uint64 mpc_btl = 12;
+  uint64 fee = 13;
 }
 
 // format of a key request response
@@ -55,6 +57,8 @@ message KeyReqResponse {
   uint64 index = 9;
   uint64 sign_policy_id = 10;
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
+  uint64 mpc_btl = 12;
+  uint64 fee = 13;
 }
 
 // KeyType indicates what crypto key algo will be used by this key (e.g. ECDSA
@@ -99,8 +103,9 @@ message KeyResponse {
 
 // ZenBTCMetadata is the metadata for a key on the zenBTC keyring.
 message ZenBTCMetadata {
-  string recipient_addr = 1; // Optional
-  WalletType chain_type = 2; // Optional
-  uint64 chain_id = 3; // Optional
-  string return_address = 4; // Optional
+  string recipient_addr = 1;                       // Optional
+  WalletType chain_type = 2;                       // Optional
+  uint64 chain_id = 3 [ deprecated = true ];       // Optional
+  string return_address = 4 [ deprecated = true ]; // Optional
+  string caip2_chain_id = 5;
 }

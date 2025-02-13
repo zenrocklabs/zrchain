@@ -3,8 +3,7 @@ package client
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
-
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
@@ -68,16 +67,13 @@ func NewClientConn(url string, insecure bool) (*grpc.ClientConn, error) {
 	if insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecurecreds.NewCredentials()))
 	} else {
-		certPool := x509.NewCertPool()
-		serverCert, err := ioutil.ReadFile("server.crt")
+		systemCertPool, err := x509.SystemCertPool()
 		if err != nil {
-			panic("'server.crt' file is not in root dir")
+			return nil, fmt.Errorf("failed to load system cert pool: %v", err)
 		}
-		certPool.AppendCertsFromPEM(serverCert)
-
 		// Create the credentials and connect to server
 		config := &tls.Config{
-			RootCAs: certPool,
+			RootCAs: systemCertPool,
 		}
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
 	}

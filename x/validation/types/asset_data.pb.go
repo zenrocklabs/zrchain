@@ -57,7 +57,8 @@ func (Asset) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_10a8aa4adc807764, []int{0}
 }
 
-// AssetData is a struct that contains the price in USD + decimals of precision of an asset
+// AssetData is a struct that contains the price in USD + decimals of precision
+// of an asset
 type AssetData struct {
 	Asset     Asset                       `protobuf:"varint,1,opt,name=asset,proto3,enum=zrchain.validation.Asset" json:"asset,omitempty"`
 	PriceUSD  cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=priceUSD,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"priceUSD"`

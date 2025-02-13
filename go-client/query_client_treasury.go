@@ -311,7 +311,7 @@ func (t *TreasuryQueryClient) ZrSignKeys(ctx context.Context, page *PageRequest,
 // Returns:
 //   - *types.QueryZenbtcWalletsResponse: Contains the Zenbtc wallets
 //   - error: An error if the query fails
-func (t *TreasuryQueryClient) GetZenbtcWallets(ctx context.Context, page *PageRequest, recipientAddr, returnAddr string, mintChainId uint64, chainType types.WalletType) (*types.QueryZenbtcWalletsResponse, error) {
+func (t *TreasuryQueryClient) GetZenbtcWallets(ctx context.Context, page *PageRequest, recipientAddr, returnAddr, mintChainId string, chainType types.WalletType) (*types.QueryZenbtcWalletsResponse, error) {
 	res, err := t.client.ZenbtcWallets(ctx, &types.QueryZenbtcWalletsRequest{
 		RecipientAddr: recipientAddr,
 		ChainType:     chainType,

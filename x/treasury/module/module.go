@@ -30,12 +30,12 @@ var (
 	_ module.HasConsensusVersion = (*AppModule)(nil)
 
 	_ appmodule.AppModule       = (*AppModule)(nil)
-	_ appmodule.HasBeginBlocker = (*AppModule)(nil)
+	_ appmodule.HasBeginBlocker = AppModule{}
 	_ appmodule.HasEndBlocker   = (*AppModule)(nil)
 	_ porttypes.IBCModule       = IBCModule{}
 )
 
-const consensusVersion = 2
+const consensusVersion = 4
 
 // ----------------------------------------------------------------------------
 // AppModuleBasic
@@ -129,6 +129,14 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
 		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
 	}
+
+	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
+	}
+
+	if err := cfg.RegisterMigration(types.ModuleName, 3, migrator.Migrate3to4); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", types.ModuleName, err))
+	}
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
@@ -156,8 +164,8 @@ func (AppModule) ConsensusVersion() uint64 { return consensusVersion }
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block.
 // The begin block implementation is optional.
-func (am AppModule) BeginBlock(_ context.Context) error {
-	return nil
+func (am AppModule) BeginBlock(ctx context.Context) error {
+	return am.keeper.BeginBlock(ctx)
 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block.

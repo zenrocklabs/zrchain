@@ -205,6 +205,7 @@ var maccPerms = map[string][]string{
 	wasmtypes.ModuleName:               {authtypes.Burner},
 	identitytypes.ModuleName:           nil,
 	treasurytypes.KeyringCollectorName: nil,
+	treasurytypes.KeyringEscrowName:    nil,
 	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 }
 

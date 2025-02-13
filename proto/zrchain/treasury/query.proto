@@ -15,77 +15,82 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  
+
   // Parameters queries the parameters of the module.
-  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/zrchain/treasury/params";
-  
   }
-  
+
   // Queries a list of KeyRequests items.
-  rpc KeyRequests (QueryKeyRequestsRequest) returns (QueryKeyRequestsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/key_requests/{keyring_addr}/{status}/{workspace_addr}";
-  
+  rpc KeyRequests(QueryKeyRequestsRequest) returns (QueryKeyRequestsResponse) {
+    option (google.api.http).get = "/zrchain/treasury/key_requests/"
+                                   "{keyring_addr}/{status}/{workspace_addr}";
   }
-  
+
   // Queries a list of KeyRequestByID items.
-  rpc KeyRequestByID (QueryKeyRequestByIDRequest) returns (QueryKeyRequestByIDResponse) {
+  rpc KeyRequestByID(QueryKeyRequestByIDRequest)
+      returns (QueryKeyRequestByIDResponse) {
     option (google.api.http).get = "/zrchain/treasury/key_request_by_id/{id}";
-  
   }
-  
+
   // Queries a list of Keys items.
-  rpc Keys (QueryKeysRequest) returns (QueryKeysResponse) {
-    option (google.api.http).get = "/zrchain/treasury/keys/{workspace_addr}/{wallet_type}/{prefixes}";
-  
+  rpc Keys(QueryKeysRequest) returns (QueryKeysResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/keys/{workspace_addr}/{wallet_type}/{prefixes}";
   }
-  
+
   // Queries a list of KeyByID items.
-  rpc KeyByID (QueryKeyByIDRequest) returns (QueryKeyByIDResponse) {
-    option (google.api.http).get = "/zrchain/treasury/key_by_id/{id}/{wallet_type}/{prefixes}";
-  
+  rpc KeyByID(QueryKeyByIDRequest) returns (QueryKeyByIDResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/key_by_id/{id}/{wallet_type}/{prefixes}";
   }
-  
+
   // Queries a list of SignatureRequests items.
-  rpc SignatureRequests (QuerySignatureRequestsRequest) returns (QuerySignatureRequestsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/signature_requests/{keyring_addr}/{status}";
-  
+  rpc SignatureRequests(QuerySignatureRequestsRequest)
+      returns (QuerySignatureRequestsResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/signature_requests/{keyring_addr}/{status}";
   }
-  
+
   // Queries a list of SignatureRequestByID items.
-  rpc SignatureRequestByID (QuerySignatureRequestByIDRequest) returns (QuerySignatureRequestByIDResponse) {
-    option (google.api.http).get = "/zrchain/treasury/signature_request_by_id/{id}";
-  
+  rpc SignatureRequestByID(QuerySignatureRequestByIDRequest)
+      returns (QuerySignatureRequestByIDResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/signature_request_by_id/{id}";
   }
-  
+
   // Queries a list of SignTransactionRequests items.
-  rpc SignTransactionRequests (QuerySignTransactionRequestsRequest) returns (QuerySignTransactionRequestsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/sign_transaction_request/{wallet_type}/{key_id}/{status}";
-  
+  rpc SignTransactionRequests(QuerySignTransactionRequestsRequest)
+      returns (QuerySignTransactionRequestsResponse) {
+    option (google.api.http).get = "/zrchain/treasury/sign_transaction_request/"
+                                   "{wallet_type}/{key_id}/{status}";
   }
-  
+
   // Queries a list of SignTransactionRequestByID items.
-  rpc SignTransactionRequestByID (QuerySignTransactionRequestByIDRequest) returns (QuerySignTransactionRequestByIDResponse) {
-    option (google.api.http).get = "/zrchain/treasury/sign_transaction_request_by_id/{id}";
-  
+  rpc SignTransactionRequestByID(QuerySignTransactionRequestByIDRequest)
+      returns (QuerySignTransactionRequestByIDResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/sign_transaction_request_by_id/{id}";
   }
-  
+
   // Queries a list of ZrSignKeys items.
-  rpc ZrSignKeys (QueryZrSignKeysRequest) returns (QueryZrSignKeysResponse) {
-    option (google.api.http).get = "/zrchain/treasury/zr_sign_keys/{address}/{walletType}";
-  
+  rpc ZrSignKeys(QueryZrSignKeysRequest) returns (QueryZrSignKeysResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/zr_sign_keys/{address}/{walletType}";
   }
-  
+
   // Queries a list of KeyByAddress items.
-  rpc KeyByAddress (QueryKeyByAddressRequest) returns (QueryKeyByAddressResponse) {
+  rpc KeyByAddress(QueryKeyByAddressRequest)
+      returns (QueryKeyByAddressResponse) {
     option (google.api.http).get = "/zrchain/v4/treasury/key_by_address";
-  
   }
-  
+
   // Queries a list of ZenbtcWallets items.
-  rpc ZenbtcWallets (QueryZenbtcWalletsRequest) returns (QueryZenbtcWalletsResponse) {
-    option (google.api.http).get = "/zrchain/v5/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/{mint_chain_id}/{return_addr}";
-  
+  rpc ZenbtcWallets(QueryZenbtcWalletsRequest)
+      returns (QueryZenbtcWalletsResponse) {
+    option (google.api.http).get =
+        "/zrchain/v5/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/"
+        "{mint_chain_id}/{return_addr}";
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -93,66 +98,67 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-  
+
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // QueryKeyRequestsRequest is request type for the Query/KeyRequestsRequest RPC
 // method.
 message QueryKeyRequestsRequest {
-  string                                keyring_addr   = 1;
-  KeyRequestStatus                      status         = 2;
-  string                                workspace_addr = 3;
-  cosmos.base.query.v1beta1.PageRequest pagination     = 4;
+  string keyring_addr = 1;
+  KeyRequestStatus status = 2;
+  string workspace_addr = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
 }
 
 // QueryKeyRequestsResponse is response type for the Query/KeyRequestsResponse
 // RPC method.
 message QueryKeyRequestsResponse {
-  repeated KeyReqResponse                         key_requests = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination   = 2;
+  repeated KeyReqResponse key_requests = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryKeyByIDRequest is request type for the
 // Query/KeyByIDRequest RPC method.
 message QueryKeyByIDRequest {
-           uint64     id          = 1;
-           WalletType wallet_type = 2; // Optional
-  repeated string     prefixes    = 3; // Optional
+  uint64 id = 1;
+  WalletType wallet_type = 2;   // Optional
+  repeated string prefixes = 3; // Optional
 }
 
 // QueryKeyByIDResponse is response type for the
 // Query/KeyByIDResponse RPC method.
 message QueryKeyByIDResponse {
-           KeyResponse    key     = 1;
+  KeyResponse key = 1;
   repeated WalletResponse wallets = 2;
 }
 
 // QueryKeysRequest is request type for the Query/KeysRequest RPC method.
 message QueryKeysRequest {
-           string                                workspace_addr = 1; // Optional
-           WalletType                            wallet_type    = 2; // Optional
-  repeated string                                prefixes       = 3; // Optional
-           cosmos.base.query.v1beta1.PageRequest pagination     = 4;
+  string workspace_addr = 1;    // Optional
+  WalletType wallet_type = 2;   // Optional
+  repeated string prefixes = 3; // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
 }
 
 // QueryKeysResponse is response type for the Query/KeysResponse RPC method.
 message QueryKeysResponse {
-  repeated KeyAndWalletResponse                   keys       = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated KeyAndWalletResponse keys = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // KeyWalletResponse returns the key along with derived wallets
 message KeyAndWalletResponse {
-           KeyResponse    key     = 1;
+  KeyResponse key = 1;
   repeated WalletResponse wallets = 2;
 }
 
 // WalletResponse returns the address to a certain wallet type
 message WalletResponse {
   string address = 1;
-  string type    = 2;
+  string type = 2;
 }
 
 // QueryKeyRequestByIDRequest is request type for the
@@ -166,16 +172,16 @@ message QueryKeyRequestByIDResponse { KeyReqResponse key_request = 1; }
 // QuerySignatureRequestsRequest is request type for the
 // Query/SignatureRequestsRequest RPC method.
 message QuerySignatureRequestsRequest {
-  string                                keyring_addr = 1;
-  SignRequestStatus                     status       = 2; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination   = 3;
+  string keyring_addr = 1;
+  SignRequestStatus status = 2; // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 // QuerySignatureRequestsResponse is response type for the
 // Query/SignatureRequestsResponse RPC method.
 message QuerySignatureRequestsResponse {
-  repeated SignReqResponse                        sign_requests = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination    = 2;
+  repeated SignReqResponse sign_requests = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QuerySignatureRequestByIDRequest is request type for the
@@ -189,24 +195,24 @@ message QuerySignatureRequestByIDResponse { SignReqResponse sign_request = 1; }
 // QuerySignTransactionRequestsRequest is request type for the
 // Query/SignTransactionRequestsRequest RPC method.
 message QuerySignTransactionRequestsRequest {
-  uint64                                request_id  = 1; // Optional
-  uint64                                key_id      = 2; // Optional
-  WalletType                            wallet_type = 3; // Optional
-  SignRequestStatus                     status      = 4; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination  = 5;
+  uint64 request_id = 1;        // Optional
+  uint64 key_id = 2;            // Optional
+  WalletType wallet_type = 3;   // Optional
+  SignRequestStatus status = 4; // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
 // QuerySignTransactionRequestsResponse is response type for the
 // Query/SignTransactionRequestsResponse RPC method.
 message QuerySignTransactionRequestsResponse {
-  repeated SignTransactionRequestsResponse        sign_transaction_requests = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination                = 2;
+  repeated SignTransactionRequestsResponse sign_transaction_requests = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // SignTransactionRequestResponse returns the sign transcation- and sign request
 message SignTransactionRequestsResponse {
   SignTxReqResponse sign_transaction_requests = 1;
-  SignReqResponse   sign_request              = 2;
+  SignReqResponse sign_request = 2;
 }
 
 // QuerySignTransactionRequestByIDRequest is request type for the
@@ -220,29 +226,29 @@ message QuerySignTransactionRequestByIDResponse {
 }
 
 message QueryZrSignKeysRequest {
-  string                                address    = 1;
-  string                                walletType = 2;
+  string address = 1;
+  string walletType = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 message ZrSignKeyEntry {
   string walletType = 1;
-  string address    = 2;
-  uint64 index      = 3;
-  uint64 id         = 4;
+  string address = 2;
+  uint64 index = 3;
+  uint64 id = 4;
 }
 
 message QueryZrSignKeysResponse {
-  repeated ZrSignKeyEntry                         Keys       = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated ZrSignKeyEntry Keys = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 message QueryKeyByAddressRequest {
-           string     address      = 1;
-           string     keyring_addr = 2; // Optional
-           KeyType    key_type     = 3; // Optional
-           WalletType wallet_type  = 4;
-  repeated string     prefixes     = 5;
+  string address = 1;
+  string keyring_addr = 2; // Optional
+  KeyType key_type = 3;    // Optional
+  WalletType wallet_type = 4;
+  repeated string prefixes = 5;
 }
 
 message QueryKeyByAddressResponse { KeyAndWalletResponse response = 1; }
@@ -250,11 +256,11 @@ message QueryKeyByAddressResponse { KeyAndWalletResponse response = 1; }
 // QueryZenbtcWalletsRequest is request type for the
 // Query/ZenbtcWalletsRequest RPC method.
 message QueryZenbtcWalletsRequest {
-  string                                recipient_addr = 1; // Optional
-  WalletType                            chain_type     = 2; // Optional
-  uint64                                mint_chain_id  = 3; // Optional
-  string                                return_addr    = 4; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination     = 5;
+  string recipient_addr = 1; // Optional
+  WalletType chain_type = 2; // Optional
+  string mint_chain_id = 3;  // Optional
+  string return_addr = 4;    // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
 // QueryZenbtcWalletsResponse is response type for the
@@ -263,4 +269,3 @@ message QueryZenbtcWalletsResponse {
   repeated KeyAndWalletResponse zenbtc_wallets = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-

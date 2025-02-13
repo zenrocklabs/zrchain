@@ -27,7 +27,7 @@ func (k Keeper) ZenbtcWallets(
 			}
 
 			switch {
-			case req.MintChainId != 0 && value.ZenbtcMetadata.ChainId != req.MintChainId:
+			case req.MintChainId != "" && value.ZenbtcMetadata.Caip2ChainId != req.MintChainId:
 				return false, nil
 			case req.ChainType != types.WalletType_WALLET_TYPE_UNSPECIFIED && value.ZenbtcMetadata.ChainType != req.ChainType:
 				return false, nil
@@ -38,7 +38,7 @@ func (k Keeper) ZenbtcWallets(
 			}
 
 			recipientAddressMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
-			chainIdMatch := (req.MintChainId == 0 || value.ZenbtcMetadata.ChainId == req.MintChainId)
+			chainIdMatch := (req.MintChainId == "" || value.ZenbtcMetadata.Caip2ChainId == req.MintChainId)
 			returnAddrMatch := (req.ReturnAddr == "" || value.ZenbtcMetadata.ReturnAddress == req.ReturnAddr)
 
 			return recipientAddressMatch && chainIdMatch && returnAddrMatch, nil
