@@ -9,7 +9,6 @@ eth_oracle:
     local: "http://127.0.0.1:8545"
     testnet: "https://rpc.ankr.com/eth_holesky"
     mainnet: "https://rpc.ankr.com/eth"
-  eth_burn_events_block_range: 100
   contract_addrs:
     service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
     price_feeds:
