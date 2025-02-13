@@ -870,6 +870,14 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Warn("processing zenBTC mint",
+				"recipient", tx.RecipientAddress,
+				"amount", tx.Amount,
+				"nonce", oracleData.RequestedEthMinterNonce,
+				"gas_limit", oracleData.EthGasLimit,
+				"base_fee", oracleData.EthBaseFee,
+				"tip_cap", oracleData.EthTipCap,
+			)
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return err
