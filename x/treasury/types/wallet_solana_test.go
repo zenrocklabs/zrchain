@@ -153,8 +153,12 @@ func solanaWallet(t *testing.T, seed string) *SolanaWallet {
 
 // TestGetTransferFromInstruction
 // TODO complete this test
-func TestGetTransferFromInstruction(t *testing.T) {
+func TestExtractTransfer(t *testing.T) {
 	t.Skip()
+	extractor := TransferExtractor{
+		SystemDecoder: nil, // fakeSystemDecoder
+		TokenDecoder:  nil, // fakeTokenDecoder
+	}
 	type args struct {
 		msg solana.Message
 	}
@@ -168,7 +172,7 @@ func TestGetTransferFromInstruction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getTransferFromInstruction(tt.args.msg)
+			got, err := extractor.ExtractTransfer(tt.args.msg)
 			require.Equal(t, tt.wantErr, err != nil)
 			require.Equal(t, tt.want, got)
 		})

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	bin "github.com/gagliardetto/binary"
 	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -18,6 +16,12 @@ type transfer struct {
 	amount    *big.Int
 	recipient string
 }
+
+type TransferExtractor struct {
+	SystemDecoder func(accounts []*solana.AccountMeta, data []byte) (*system.Instruction, error)
+	TokenDecoder  func(accounts []*solana.AccountMeta, data []byte) (*token.Instruction, error)
+}
+
 type SolanaWallet struct {
 	key *ed25519.PublicKey
 }
@@ -36,7 +40,6 @@ func NewSolanaWallet(k *Key) (*SolanaWallet, error) {
 }
 
 // Address returns a Solana address for the wallet - a string representation of the public key in base 58
-// TODO: are the nil checks necessary?
 func (w *SolanaWallet) Address() string {
 	if *w.key == nil {
 		panic("key is not set")
@@ -61,8 +64,12 @@ func (*SolanaWallet) ParseTx(rawTx []byte, md Metadata) (Transfer, error) {
 	if err := tx.Message.UnmarshalWithDecoder(bin.NewBinDecoder(rawTx)); err != nil {
 		return Transfer{}, err
 	}
+	extractor := TransferExtractor{
+		SystemDecoder: system.DecodeInstruction,
+		TokenDecoder:  token.DecodeInstruction,
+	}
 
-	solanaTx, err := extractTransferFromMessage(tx.Message)
+	solanaTx, err := extractor.ExtractTransfer(tx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
@@ -88,8 +95,12 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 	if err != nil {
 		return Transfer{}, err
 	}
+	extractor := TransferExtractor{
+		SystemDecoder: system.DecodeInstruction,
+		TokenDecoder:  token.DecodeInstruction,
+	}
 
-	solanaTx, err := extractTransferFromMessage(decodedTx.Message)
+	solanaTx, err := extractor.ExtractTransfer(decodedTx.Message)
 	if err != nil {
 		return Transfer{}, err
 	}
@@ -109,12 +120,12 @@ func (*SolanaWallet) ParseSignedTx(txBytes []byte, md Metadata) (Transfer, error
 	}, nil
 }
 
-// extractTransferFromMessage examines each instruction in a Solana message and
+// ExtractTransfer examines each instruction in a Solana message and
 // returns a transfer (either a system or token transfer) that contains the recipient
 // and the amount. If any transfer instruction is processed (indicated by
 // amountAndRecipientRequired being true) but both recipient and amount are empty,
 // an error is returned. This allows non-transfer transactions to pass without error.
-func extractTransferFromMessage(msg solana.Message) (*transfer, error) {
+func (te *TransferExtractor) ExtractTransfer(msg solana.Message) (*transfer, error) {
 	tx := &transfer{
 		amount: new(big.Int),
 	}
@@ -135,7 +146,7 @@ func extractTransferFromMessage(msg solana.Message) (*transfer, error) {
 		switch {
 		case programID.Equals(solana.SystemProgramID):
 			// Attempt to decode a system transfer.
-			instruction, err := system.DecodeInstruction(accounts, inst.Data)
+			instruction, err := te.SystemDecoder(accounts, inst.Data)
 			if err != nil {
 				continue
 			}
@@ -153,7 +164,7 @@ func extractTransferFromMessage(msg solana.Message) (*transfer, error) {
 
 		case programID.Equals(solana.TokenProgramID):
 			// Attempt to decode a token transfer.
-			instruction, err := token.DecodeInstruction(accounts, inst.Data)
+			instruction, err := te.TokenDecoder(accounts, inst.Data)
 			if err != nil {
 				continue
 			}
@@ -184,23 +195,4 @@ func extractTransferFromMessage(msg solana.Message) (*transfer, error) {
 	}
 
 	return tx, nil
-}
-
-// SolanaTransfer possibly not needed
-// TODO Check
-type SolanaTransfer struct {
-	To             *common.Address
-	Amount         *big.Int
-	Contract       *common.Address
-	DataForSigning []byte
-}
-
-// DecodeUnsignedSolanaPayload
-func DecodeUnsignedSolanaPayload(msg []byte) (types.TxData, error) {
-	panic("Not implemented")
-}
-
-// ParseSolanaTransaction is a placeholder
-func ParseSolanaTransaction(b []byte, chainID *big.Int) (*SolanaTransfer, error) {
-	panic("Not implemented")
 }
