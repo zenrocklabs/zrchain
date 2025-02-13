@@ -870,6 +870,14 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Warn("processing zenBTC mint",
+				"recipient", tx.RecipientAddress,
+				"amount", tx.Amount,
+				"nonce", oracleData.RequestedEthMinterNonce,
+				"gas_limit", oracleData.EthGasLimit,
+				"base_fee", oracleData.EthBaseFee,
+				"tip_cap", oracleData.EthTipCap,
+			)
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return err
@@ -951,6 +959,8 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 // storeNewZenBTCBurnEventsEthereum stores new burn events coming from Ethereum.
 func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
 	foundNewBurn := false
+	k.Logger(ctx).Info("burn events", "oracleData", fmt.Sprintf("%+v", oracleData.EthBurnEvents))
+
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range oracleData.EthBurnEvents {
 		// Check if this burn event already exists
@@ -960,6 +970,8 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 				existingBurn.LogIndex == burn.LogIndex &&
 				existingBurn.ChainID == burn.ChainID {
 				exists = true
+				k.Logger(ctx).Warn("burn event already exists", "burn", fmt.Sprintf("%+v", existingBurn))
+
 				return true, nil
 			}
 			return false, nil
@@ -977,6 +989,8 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 				Amount:          burn.Amount,
 				Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
 			}
+			k.Logger(ctx).Warn("found new burn event", "burn", fmt.Sprintf("%+v", newBurn))
+
 			id, err := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
 			if err != nil {
 				k.Logger(ctx).Error("error creating burn event", "error", err)
