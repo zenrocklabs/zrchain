@@ -20,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
@@ -246,7 +245,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 }
 
 func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(o.Config.EthOracle.EthBurnEventsBlockRange)))
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(EthBurnEventsBlockRange))
 	toBlock := latestHeader.Number
 	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {
@@ -319,25 +318,26 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 	ctx := context.Background()
 	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
 
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []common.Address{tokenAddress},
-		Topics: [][]common.Hash{
-			{crypto.Keccak256Hash([]byte("ZenBTCTokenRedemption(address,uint256,bytes,uint256)"))},
-		},
+	// Create a new instance of the ZenBTC token contract
+	zenBTCInstance, err := zenbtc.NewZenBTCFilterer(tokenAddress, o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ZenBTC token contract filterer: %w", err)
 	}
 
-	logs, err := o.EthClient.FilterLogs(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to filter logs: %w", err)
+	// Set up the filter options
+	endBlock := toBlock.Uint64()
+	filterOpts := &bind.FilterOpts{
+		Start:   fromBlock.Uint64(),
+		End:     &endBlock,
+		Context: ctx,
 	}
 
-	// Create a new instance of the ZenBTC token contract to parse logs
-	zenBTCInstance, err := zenbtc.NewZenBTC(tokenAddress, o.EthClient)
+	// Use the generated FilterTokenRedemption method
+	iterator, err := zenBTCInstance.FilterTokenRedemption(filterOpts, nil) // nil means no filter on redeemer address
 	if err != nil {
-		return nil, fmt.Errorf("failed to create ZenBTC token contract instance: %w", err)
+		return nil, fmt.Errorf("failed to filter token redemption events: %w", err)
 	}
+	defer iterator.Close()
 
 	chainID, err := o.EthClient.ChainID(ctx)
 	if err != nil {
@@ -345,12 +345,12 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 	}
 
 	var burnEvents []api.BurnEvent
-	for _, vLog := range logs {
-		event, err := zenBTCInstance.ParseTokenRedemption(vLog)
-		if err != nil {
-			log.Printf("failed to parse burn event log: %v", err)
+	for iterator.Next() {
+		event := iterator.Event
+		if event == nil {
 			continue
 		}
+
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
 			LogIndex:        uint64(event.Raw.Index),
@@ -358,6 +358,10 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 		})
+	}
+
+	if err := iterator.Error(); err != nil {
+		return nil, fmt.Errorf("error iterating through token redemption events: %w", err)
 	}
 
 	return burnEvents, nil
