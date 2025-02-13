@@ -23,9 +23,11 @@ import (
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // BLOCK HANDLERS
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // BeginBlocker calls telemetry and then tracks historical info.
 func (k *Keeper) BeginBlocker(ctx context.Context) error {
@@ -39,9 +41,11 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 	return k.BlockValidatorUpdates(ctx)
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // VOTE EXTENSION HANDLERS
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // ExtendVoteHandler is called by all validators to extend the consensus vote
 // with additional data to be voted on.
@@ -73,7 +77,8 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 }
 
 // constructVoteExtension builds the vote extension based on oracle data and on-chain state.
-// This function now performs both the nonce lookup and, in the same loop, checks for tx confirmations.
+// In addition to nonce lookups, it calls LookupTxConfirmation for each key and sets
+// Boolean fields in the vote extension accordingly.
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
 	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
@@ -98,7 +103,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
-	// Retrieve nonce values (as before)
+	// Retrieve nonce values as before.
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -117,7 +122,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
-	// Check for tx confirmations for each key (lookupTxConfirmation is called here)
+	// Check for tx confirmations for each key.
+	// NOTE: All calls to LookupTxConfirmation happen here.
 	txConfirmations := make(map[uint64]bool)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		var txConf TxConfirmation
@@ -132,14 +138,14 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		} else {
 			txConf = txConfRaw
 		}
-		// If a tx hash is stored, call lookupTxConfirmation
+		// If there is a pending tx hash, check its confirmation status.
 		if len(txConf.TxIDs) > 0 {
 			confirmed, err := k.sidecarClient.LookupTxConfirmation(ctx, &sidecar.TxConfirmationRequest{TxId: txConf.TxIDs[0]})
 			if err != nil {
 				k.Logger(ctx).Error("error checking tx confirmation", "key", key, "error", err)
 				txConfirmations[key] = false
 			} else if confirmed {
-				// Remove the confirmed tx hash
+				// Remove the confirmed tx hash from the store.
 				txConf.TxIDs = txConf.TxIDs[1:]
 				if err := k.RequestedTxConfirmation.Set(ctx, key, txConf); err != nil {
 					k.Logger(ctx).Error("error updating tx confirmation store", "key", key, "error", err)
@@ -172,7 +178,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
-		// Propagate tx confirmation status in the vote extension.
+		// Propagate the tx confirmation status in the vote extension.
 		TxConfirmedStaker:    txConfirmations[k.zenBTCKeeper.GetStakerKeyID(ctx)],
 		TxConfirmedEthMinter: txConfirmations[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		TxConfirmedUnstaker:  txConfirmations[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
@@ -212,9 +218,11 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 	return ACCEPT_VOTE, nil
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // PROPOSAL HANDLERS
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // PrepareProposal is executed only by the proposer to inject oracle data into the block.
 func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPrepareProposal) ([]byte, error) {
@@ -284,9 +292,11 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	return ACCEPT_PROPOSAL, nil
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // PRE-BLOCKER: ORACLE DATA PROCESSING
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // PreBlocker is called before each block to process oracle data and update state.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
@@ -317,6 +327,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
 
+		// For tx-based updates, we now check the stored tx confirmation status.
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMints(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
@@ -401,9 +412,11 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) 
 	return oracleData, &voteExt, nil
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // VALIDATOR & DELEGATION STATE UPDATES
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // updateValidatorStakes updates validator stake values and delegation mappings.
 func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
@@ -497,9 +510,11 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 	}
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // BITCOIN HEADER PROCESSING
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
@@ -590,300 +605,188 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 	return nil
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // ZENBTC PROCESSING: STAKING, MINTING, BURN EVENTS & REDEMPTIONS
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
-// handleTxConfirmationUpdate handles the tx confirmation logic and triggers the update callback.
-func handleTxConfirmationUpdate[T any](
-	k *Keeper,
-	ctx sdk.Context,
-	keyID uint64,
-	tx T,
-	txConfirmedCallback func(tx T) error,
-) (bool, error) {
+// isTxConfirmed is a helper that checks the tx confirmation store for a given key.
+// It returns true if no pending tx IDs remain (i.e. the latest tx has been confirmed).
+func (k *Keeper) isTxConfirmed(ctx sdk.Context, keyID uint64) bool {
 	txConf, err := k.RequestedTxConfirmation.Get(ctx, keyID)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return false, fmt.Errorf("error getting tx confirmation data: %w", err)
-		}
-		txConf = TxConfirmation{TxIDs: []string{}}
+	if err != nil || len(txConf.TxIDs) == 0 {
+		return true
 	}
-	if len(txConf.TxIDs) == 0 {
-		return false, nil
-	}
-	confirmed, err := k.sidecarClient.LookupTxConfirmation(ctx, &sidecar.TxConfirmationRequest{TxId: txConf.TxIDs[0]})
-	if err != nil {
-		return false, fmt.Errorf("error checking tx confirmation: %w", err)
-	}
-	if confirmed {
-		// Remove the confirmed tx hash.
-		txConf.TxIDs = txConf.TxIDs[1:]
-		if err := k.RequestedTxConfirmation.Set(ctx, keyID, txConf); err != nil {
-			return false, fmt.Errorf("error updating tx confirmation store: %w", err)
-		}
-		if err := txConfirmedCallback(tx); err != nil {
-			return false, fmt.Errorf("tx confirmation callback error: %w", err)
-		}
-		return true, nil
-	}
-	return false, nil
-}
-
-// clearTxConfirmationRequest resets the tx confirmation request for a given key.
-func (k *Keeper) clearTxConfirmationRequest(ctx sdk.Context, keyID uint64) error {
-	k.Logger(ctx).Warn("clearing Ethereum tx confirmation request", "keyID", keyID)
-	return k.RequestedTxConfirmation.Set(ctx, keyID, TxConfirmation{TxIDs: []string{}})
-}
-
-// isTxConfirmationRequested checks if a tx confirmation has been requested for the given key.
-func (k *Keeper) isTxConfirmationRequested(ctx sdk.Context, keyID uint64) (bool, error) {
-	_, err := k.RequestedTxConfirmation.Get(ctx, keyID)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			return false, nil
-		}
-		return false, fmt.Errorf("error getting tx confirmation state: %w", err)
-	}
-	return true, nil
-}
-
-// appendTxConfirmation appends a tx hash to the tx confirmation store for a key.
-func (k *Keeper) appendTxConfirmation(ctx sdk.Context, keyID uint64, txHash string) error {
-	txConf, err := k.RequestedTxConfirmation.Get(ctx, keyID)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			txConf = TxConfirmation{TxIDs: []string{}}
-		} else {
-			return fmt.Errorf("error getting tx confirmation data: %w", err)
-		}
-	}
-	txConf.TxIDs = append(txConf.TxIDs, txHash)
-	return k.RequestedTxConfirmation.Set(ctx, keyID, txConf)
-}
-
-// checkForUpdateAndDispatchTx processes tx confirmation and dispatches transactions accordingly.
-func checkForUpdateAndDispatchTx[T any](
-	k *Keeper,
-	ctx sdk.Context,
-	keyID uint64,
-	pendingTxs []T,
-	txConfirmedCallback func(tx T) error,
-	txDispatchCallback func(tx T) error,
-) {
-	if len(pendingTxs) == 0 {
-		return
-	}
-
-	confirmed, err := handleTxConfirmationUpdate(k, ctx, keyID, pendingTxs[0], txConfirmedCallback)
-	if err != nil {
-		k.Logger(ctx).Error("error handling tx confirmation update", "keyID", keyID, "error", err)
-		return
-	}
-
-	if len(pendingTxs) == 1 && confirmed {
-		if err := k.clearTxConfirmationRequest(ctx, keyID); err != nil {
-			k.Logger(ctx).Error("error clearing tx confirmation request", "keyID", keyID, "error", err)
-		}
-		return
-	}
-
-	if confirmed {
-		if err := txDispatchCallback(pendingTxs[1]); err != nil {
-			k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
-		}
-	} else {
-		if err := txDispatchCallback(pendingTxs[0]); err != nil {
-			k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
-		}
-	}
-}
-
-// processZenBTCTransaction is a generic helper that encapsulates the common logic for tx confirmation update and tx dispatch.
-func processZenBTCTransaction[T any](
-	k *Keeper,
-	ctx sdk.Context,
-	keyID uint64,
-	pendingGetter func(ctx sdk.Context) ([]T, error),
-	txConfirmedCallback func(tx T) error,
-	txDispatchCallback func(tx T) error,
-) {
-	isRequested, err := k.isTxConfirmationRequested(ctx, keyID)
-	if err != nil {
-		k.Logger(ctx).Error("error checking tx confirmation request state", "keyID", keyID, "error", err)
-		return
-	}
-	if !isRequested {
-		return
-	}
-
-	pendingTxs, err := pendingGetter(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("error getting pending transactions", "error", err)
-		return
-	}
-
-	if len(pendingTxs) == 0 {
-		if err := k.clearTxConfirmationRequest(ctx, keyID); err != nil {
-			k.Logger(ctx).Error("error clearing tx confirmation request", "keyID", keyID, "error", err)
-		}
-		return
-	}
-	checkForUpdateAndDispatchTx(k, ctx, keyID, pendingTxs, txConfirmedCallback, txDispatchCallback)
+	return false
 }
 
 // processZenBTCStaking processes pending staking transactions.
 func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
-	processZenBTCTransaction(
-		k,
-		ctx,
-		k.zenBTCKeeper.GetStakerKeyID(ctx),
-		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED)
-		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
-			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
-				return err
-			}
-			return nil
-		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			k.Logger(ctx).Warn("processing zenBTC stake",
-				"recipient", tx.RecipientAddress,
-				"amount", tx.Amount,
-				"nonce", oracleData.RequestedStakerNonce,
-				"gas_limit", oracleData.EthGasLimit,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
-			unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				tx.Amount,
-				oracleData.RequestedStakerNonce,
-				oracleData.EthGasLimit,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			// Append the tx hash for confirmation.
-			if err := k.appendTxConfirmation(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), hex.EncodeToString(unsignedStakeTxHash)); err != nil {
-				return err
-			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
-				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetStakerKeyID(ctx),
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedStakeTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedStakeTxHash)),
-			)
-			return err
-		},
+	pendingTxs, err := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED)
+	if err != nil || len(pendingTxs) == 0 {
+		return
+	}
+
+	keyID := k.zenBTCKeeper.GetStakerKeyID(ctx)
+	// If the tx confirmation check (done in constructVoteExtension) indicates confirmation,
+	// trigger the update callback.
+	if k.isTxConfirmed(ctx, keyID) {
+		tx := pendingTxs[0]
+		tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
+		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
+			k.Logger(ctx).Error("error updating mint transaction status", "error", err)
+		}
+		// Clear any pending tx confirmation data.
+		_ = k.RequestedTxConfirmation.Set(ctx, keyID, TxConfirmation{TxIDs: []string{}})
+		return
+	}
+
+	// Otherwise, dispatch the tx.
+	tx := pendingTxs[0]
+	k.Logger(ctx).Warn("processing zenBTC stake",
+		"recipient", tx.RecipientAddress,
+		"amount", tx.Amount,
+		"nonce", oracleData.RequestedStakerNonce,
+		"gas_limit", oracleData.EthGasLimit,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
 	)
+	unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
+		ctx,
+		getChainIDForEigen(ctx),
+		tx.Amount,
+		oracleData.RequestedStakerNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing stake tx", "error", err)
+		return
+	}
+	// Append the tx hash to the confirmation store.
+	if err := k.appendTxConfirmation(ctx, keyID, hex.EncodeToString(unsignedStakeTxHash)); err != nil {
+		k.Logger(ctx).Error("error appending tx confirmation", "error", err)
+		return
+	}
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "error", err)
+		return
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             tx.Creator,
+			KeyId:               keyID,
+			WalletType:          treasurytypes.WalletType(tx.ChainType),
+			UnsignedTransaction: unsignedStakeTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedStakeTxHash)),
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error dispatching stake tx", "error", err)
+	}
 }
 
 // processZenBTCMints processes pending mint transactions.
 func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
-	processZenBTCTransaction(
-		k,
-		ctx,
-		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
-		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			supply, err := k.zenBTCKeeper.GetSupply(ctx)
-			if err != nil {
-				return err
-			}
-			supply.PendingZenBTC -= tx.Amount
-			supply.MintedZenBTC += tx.Amount
-			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				return err
-			}
-			k.Logger(ctx).Warn("pending mint supply updated",
-				"pending_mint_old", supply.PendingZenBTC+tx.Amount,
-				"pending_mint_new", supply.PendingZenBTC,
-			)
-			k.Logger(ctx).Warn("minted supply updated",
-				"minted_old", supply.MintedZenBTC-tx.Amount,
-				"minted_new", supply.MintedZenBTC,
-			)
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
-		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-			if err != nil {
-				return err
-			}
-			feeZenBTC := k.CalculateZenBTCMintFee(
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-				oracleData.EthGasLimit,
-				oracleData.BTCUSDPrice,
-				oracleData.ETHUSDPrice,
-				exchangeRate,
-			)
-			if oracleData.BTCUSDPrice.IsZero() {
-				return nil
-			}
-			if tx.Caip2ChainId != "eip155:17000" {
-				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
-			}
-			chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
-			if err != nil {
-				return err
-			}
-			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
-				ctx,
-				tx.RecipientAddress,
-				chainID,
-				tx.Amount,
-				feeZenBTC,
-				oracleData.RequestedEthMinterNonce,
-				oracleData.EthGasLimit,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			// Append the tx hash for confirmation.
-			if err := k.appendTxConfirmation(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), hex.EncodeToString(unsignedMintTxHash)); err != nil {
-				return err
-			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
-				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedMintTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedMintTxHash)),
-			)
-			return err
-		},
+	pendingTxs, err := k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
+	if err != nil || len(pendingTxs) == 0 {
+		return
+	}
+
+	keyID := k.zenBTCKeeper.GetEthMinterKeyID(ctx)
+	if k.isTxConfirmed(ctx, keyID) {
+		// Update supply and transaction status.
+		tx := pendingTxs[0]
+		supply, err := k.zenBTCKeeper.GetSupply(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error getting supply", "error", err)
+			return
+		}
+		supply.PendingZenBTC -= tx.Amount
+		supply.MintedZenBTC += tx.Amount
+		if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+			k.Logger(ctx).Error("error updating supply", "error", err)
+		}
+		tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
+			k.Logger(ctx).Error("error updating mint tx status", "error", err)
+		}
+		_ = k.RequestedTxConfirmation.Set(ctx, keyID, TxConfirmation{TxIDs: []string{}})
+		return
+	}
+
+	// Otherwise, dispatch the mint tx.
+	tx := pendingTxs[0]
+	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting exchange rate", "error", err)
+		return
+	}
+	feeZenBTC := k.CalculateZenBTCMintFee(
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+		oracleData.EthGasLimit,
+		oracleData.BTCUSDPrice,
+		oracleData.ETHUSDPrice,
+		exchangeRate,
 	)
+	if oracleData.BTCUSDPrice.IsZero() {
+		return
+	}
+	if tx.Caip2ChainId != "eip155:17000" {
+		k.Logger(ctx).Error("invalid chain ID", "chainID", tx.Caip2ChainId)
+		return
+	}
+	chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
+	if err != nil {
+		k.Logger(ctx).Error("error extracting chainID", "error", err)
+		return
+	}
+	unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
+		ctx,
+		tx.RecipientAddress,
+		chainID,
+		tx.Amount,
+		feeZenBTC,
+		oracleData.RequestedEthMinterNonce,
+		oracleData.EthGasLimit,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing mint tx", "error", err)
+		return
+	}
+	if err := k.appendTxConfirmation(ctx, keyID, hex.EncodeToString(unsignedMintTxHash)); err != nil {
+		k.Logger(ctx).Error("error appending mint tx confirmation", "error", err)
+		return
+	}
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "error", err)
+		return
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             tx.Creator,
+			KeyId:               keyID,
+			WalletType:          treasurytypes.WalletType(tx.ChainType),
+			UnsignedTransaction: unsignedMintTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedMintTxHash)),
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error dispatching mint tx", "error", err)
+	}
 }
 
 // storeNewZenBTCBurnEventsEthereum stores new burn events coming from Ethereum.
@@ -926,76 +829,83 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 	}
 
 	if foundNewBurn {
-		if err := k.RequestedTxConfirmation.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), TxConfirmation{TxIDs: []string{}}); err != nil {
-			k.Logger(ctx).Error("error setting tx confirmation request", "error", err)
-		}
+		_ = k.RequestedTxConfirmation.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), TxConfirmation{TxIDs: []string{}})
 	}
 }
 
 // processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions.
 func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
-	processZenBTCTransaction(
-		k,
-		ctx,
-		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
-		func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-			return k.getPendingBurnEvents(ctx)
-		},
-		func(be zenbtctypes.BurnEvent) error {
-			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
-			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
-		},
-		func(be zenbtctypes.BurnEvent) error {
-			k.Logger(ctx).Warn("processing zenBTC burn unstake",
-				"burn_event", be,
-				"nonce", oracleData.RequestedUnstakerNonce,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
-			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				be.DestinationAddr,
-				be.Amount,
-				oracleData.RequestedUnstakerNonce,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			// Append the tx hash for confirmation.
-			if err := k.appendTxConfirmation(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), hex.EncodeToString(unsignedTxHash)); err != nil {
-				return err
-			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
-			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
-				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetUnstakerKeyID(ctx),
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
-			)
-			return err
-		},
+	pendingEvents, err := k.getPendingBurnEvents(ctx)
+	if err != nil || len(pendingEvents) == 0 {
+		return
+	}
+
+	keyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
+	if k.isTxConfirmed(ctx, keyID) {
+		// Update the burn event status.
+		be := pendingEvents[0]
+		be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+		if err := k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be); err != nil {
+			k.Logger(ctx).Error("error updating burn event status", "error", err)
+		}
+		_ = k.RequestedTxConfirmation.Set(ctx, keyID, TxConfirmation{TxIDs: []string{}})
+		return
+	}
+
+	// Otherwise, dispatch the unstake tx.
+	be := pendingEvents[0]
+	k.Logger(ctx).Warn("processing zenBTC burn unstake",
+		"burn_event", be,
+		"nonce", oracleData.RequestedUnstakerNonce,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
 	)
+	unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+		ctx,
+		getChainIDForEigen(ctx),
+		be.DestinationAddr,
+		be.Amount,
+		oracleData.RequestedUnstakerNonce,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing unstake tx", "error", err)
+		return
+	}
+	if err := k.appendTxConfirmation(ctx, keyID, hex.EncodeToString(unsignedTxHash)); err != nil {
+		k.Logger(ctx).Error("error appending unstake tx confirmation", "error", err)
+		return
+	}
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "error", err)
+		return
+	}
+	creator, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	if err != nil {
+		k.Logger(ctx).Error("error getting creator address", "error", err)
+		return
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error dispatching unstake tx", "error", err)
+	}
 }
 
 // storeNewZenBTCRedemptions processes new redemption events.
 func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	// Find the first INITIATED redemption.
 	var firstInitiatedRedemption zenbtctypes.Redemption
 	var found bool
 
@@ -1011,7 +921,6 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 		return
 	}
 
-	// If an INITIATED redemption is found, check if it exists in oracleData.
 	if found {
 		redemptionExists := false
 		for _, redemption := range oracleData.Redemptions {
@@ -1020,7 +929,6 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 				break
 			}
 		}
-		// If not present, mark it as unstaked.
 		if !redemptionExists {
 			firstInitiatedRedemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 			if err := k.zenBTCKeeper.SetRedemption(ctx, firstInitiatedRedemption.Data.Id, firstInitiatedRedemption); err != nil {
@@ -1054,7 +962,6 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 		}
 
 		foundNewRedemption = true
-		// Convert zenBTC amount to BTC amount.
 		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
@@ -1070,78 +977,83 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 	}
 
 	if foundNewRedemption {
-		if err := k.RequestedTxConfirmation.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), TxConfirmation{TxIDs: []string{}}); err != nil {
-			k.Logger(ctx).Error("error setting tx confirmation request", "error", err)
-		}
+		_ = k.RequestedTxConfirmation.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), TxConfirmation{TxIDs: []string{}})
 	}
 }
 
 // processZenBTCRedemptions processes pending redemption completions.
 func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	processZenBTCTransaction(
-		k,
-		ctx,
-		k.zenBTCKeeper.GetCompleterKeyID(ctx),
-		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-			return k.getPendingRedemptions(ctx)
-		},
-		func(r zenbtctypes.Redemption) error {
-			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
-				return err
-			}
-			return nil
-		},
-		func(r zenbtctypes.Redemption) error {
-			k.Logger(ctx).Warn("processing zenBTC complete",
-				"id", r.Data.Id,
-				"nonce", oracleData.RequestedCompleterNonce,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
-			unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				r.Data.Id,
-				oracleData.RequestedCompleterNonce,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			// Append the tx hash for confirmation.
-			if err := k.appendTxConfirmation(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), hex.EncodeToString(unsignedTxHash)); err != nil {
-				return err
-			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
-			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
-				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
-			)
-			return err
-		},
+	pendingRedemptions, err := k.getPendingRedemptions(ctx)
+	if err != nil || len(pendingRedemptions) == 0 {
+		return
+	}
+
+	keyID := k.zenBTCKeeper.GetCompleterKeyID(ctx)
+	if k.isTxConfirmed(ctx, keyID) {
+		r := pendingRedemptions[0]
+		r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+		if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
+			k.Logger(ctx).Error("error updating redemption status", "error", err)
+		}
+		_ = k.RequestedTxConfirmation.Set(ctx, keyID, TxConfirmation{TxIDs: []string{}})
+		return
+	}
+
+	r := pendingRedemptions[0]
+	k.Logger(ctx).Warn("processing zenBTC complete",
+		"id", r.Data.Id,
+		"nonce", oracleData.RequestedCompleterNonce,
+		"base_fee", oracleData.EthBaseFee,
+		"tip_cap", oracleData.EthTipCap,
 	)
+	unsignedTxHash, unsignedTx, err := k.constructCompleteTx(
+		ctx,
+		getChainIDForEigen(ctx),
+		r.Data.Id,
+		oracleData.RequestedCompleterNonce,
+		oracleData.EthBaseFee,
+		oracleData.EthTipCap,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error constructing complete tx", "error", err)
+		return
+	}
+	if err := k.appendTxConfirmation(ctx, keyID, hex.EncodeToString(unsignedTxHash)); err != nil {
+		k.Logger(ctx).Error("error appending complete tx confirmation", "error", err)
+		return
+	}
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
+	if err != nil {
+		k.Logger(ctx).Error("error creating metadata", "error", err)
+		return
+	}
+	creator, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+	if err != nil {
+		k.Logger(ctx).Error("error getting creator address", "error", err)
+		return
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error dispatching complete tx", "error", err)
+	}
 }
 
-// -----------------------------------------------------------------------------
+//
+// =============================================================================
 // ORACLE DATA VALIDATION
-// -----------------------------------------------------------------------------
+// =============================================================================
+//
 
 // validateHashField derives a hash from the given data and compares it with the expected value.
 func validateHashField(fieldName string, expectedHash []byte, data any) error {
