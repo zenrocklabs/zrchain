@@ -135,8 +135,7 @@ func validatePayload(payload []string, keyType types.KeyType) error {
 		return fmt.Errorf("payload is full of empty strings")
 	}
 
-	if len(payload) == 1 {
-		data := payload[0]
+	for _, data := range payload {
 		if keyType != types.KeyType_KEY_TYPE_EDDSA_ED25519 {
 			if len(data) != ecdsaHexEncodedLength {
 				return fmt.Errorf("data for signing for ecdsa key should have a hex-encoded length of %d, not: %d", ecdsaHexEncodedLength, len(data))
