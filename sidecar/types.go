@@ -17,9 +17,10 @@ import (
 // NB: these constants should not be changed as they are important for synchronicity.
 // Modifying them will exponentially increase the risk of your validator being slashed
 const (
-	MainLoopTickerInterval = 30 * time.Second
-	CacheSize              = 20
-	ROCKUSDPriceURL        = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
+	MainLoopTickerInterval  = 30 * time.Second
+	CacheSize               = 20
+	EthBurnEventsBlockRange = 1000
+	ROCKUSDPriceURL         = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 )
 
 var (
