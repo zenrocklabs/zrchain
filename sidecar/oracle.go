@@ -176,15 +176,24 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to process Ethereum burn events: %w", err)
 	}
 
+	// Get current state to preserve cleaned events
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	cleanedEvents := make(map[string]bool)
+	if currentState.CleanedEthBurnEvents != nil {
+		for k, v := range currentState.CleanedEthBurnEvents {
+			cleanedEvents[k] = v
+		}
+	}
+
 	o.updateChan <- sidecartypes.OracleState{
-		EigenDelegations: eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit and add EthMintGasLimit
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: *solanaFee.Value,
+		EigenDelegations:           eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                incrementedGasLimit,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
+		CleanedEthBurnEvents:       cleanedEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
@@ -262,12 +271,12 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 		existingEthBurnEvents[key] = true
 	}
 
-	// Only add new events that aren't already in our cache
+	// Only add new events that aren't already in our cache and haven't been cleaned up
 	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
 	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
 	for _, event := range newEthBurnEvents {
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingEthBurnEvents[key] {
+		if !existingEthBurnEvents[key] && !currentState.CleanedEthBurnEvents[key] {
 			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
 		}
 	}
@@ -283,6 +292,10 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 
 	ctx := context.Background()
 	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+	cleanedEvents := make(map[string]bool)
+	if currentState.CleanedEthBurnEvents != nil {
+		cleanedEvents = currentState.CleanedEthBurnEvents
+	}
 
 	// Check each Ethereum burn event against the chain
 	for _, event := range currentState.EthBurnEvents {
@@ -298,6 +311,8 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		if len(resp.BurnEvents) == 0 {
 			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
 		} else {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			cleanedEvents[key] = true
 			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
 		}
 	}
@@ -307,6 +322,7 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		log.Printf("Removed %d Ethereum burn events from cache", len(currentState.EthBurnEvents)-len(remainingEthBurnEvents))
 		newState := *currentState
 		newState.EthBurnEvents = remainingEthBurnEvents
+		newState.CleanedEthBurnEvents = cleanedEvents
 		o.currentState.Store(&newState)
 		o.CacheState()
 	}

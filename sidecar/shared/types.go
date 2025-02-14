@@ -14,6 +14,7 @@ type OracleState struct {
 	EthTipCap                  uint64                         `json:"ethTipCap"`
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
 	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
+	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
 	Redemptions                []api.Redemption               `json:"redemptions"`
 	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
 	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
