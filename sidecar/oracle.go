@@ -176,6 +176,9 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to process Ethereum burn events: %w", err)
 	}
 
+	// Get current state to preserve cleaned events
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
 		EthBlockHeight:   targetBlockNumber.Uint64(),
@@ -185,6 +188,7 @@ func (o *Oracle) fetchAndProcessState(
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
+		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
@@ -262,12 +266,12 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 		existingEthBurnEvents[key] = true
 	}
 
-	// Only add new events that aren't already in our cache
+	// Only add new events that aren't already in our cache and haven't been cleaned up
 	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
 	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
 	for _, event := range newEthBurnEvents {
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingEthBurnEvents[key] {
+		if !existingEthBurnEvents[key] && !currentState.CleanedEthBurnEvents[key] {
 			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
 		}
 	}
@@ -298,6 +302,11 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		if len(resp.BurnEvents) == 0 {
 			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
 		} else {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if currentState.CleanedEthBurnEvents == nil {
+				currentState.CleanedEthBurnEvents = make(map[string]bool)
+			}
+			currentState.CleanedEthBurnEvents[key] = true
 			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
 		}
 	}
