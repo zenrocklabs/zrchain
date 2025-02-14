@@ -44,10 +44,9 @@ type NeutrinoConfig struct {
 }
 
 type EthOracleConfig struct {
-	RPC                     map[string]string `yaml:"rpc"`
-	ContractAddrs           ContractAddrs     `yaml:"contract_addrs"`
-	NetworkName             map[string]string `yaml:"network_name"`
-	EthBurnEventsBlockRange uint64            `yaml:"eth_burn_events_block_range"`
+	RPC           map[string]string `yaml:"rpc"`
+	ContractAddrs ContractAddrs     `yaml:"contract_addrs"`
+	NetworkName   map[string]string `yaml:"network_name"`
 }
 
 type ContractAddrs struct {

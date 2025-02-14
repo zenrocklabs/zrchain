@@ -510,12 +510,12 @@ func (k *Keeper) EncodeUnstakeCallData(ctx context.Context, destinationAddr []by
 	}
 
 	data, err := parsed.Pack(
-		"unstakeRockBTC",
+		"unstakeRockBTCInit",
 		new(big.Int).SetUint64(amount),
 		destinationAddr,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode unstakeRockBTC call data: %v", err)
+		return nil, fmt.Errorf("failed to encode unstakeRockBTCInit call data: %v", err)
 	}
 
 	return data, nil
