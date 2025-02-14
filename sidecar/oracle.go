@@ -178,12 +178,6 @@ func (o *Oracle) fetchAndProcessState(
 
 	// Get current state to preserve cleaned events
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
-	cleanedEvents := make(map[string]bool)
-	if currentState.CleanedEthBurnEvents != nil {
-		for k, v := range currentState.CleanedEthBurnEvents {
-			cleanedEvents[k] = v
-		}
-	}
 
 	o.updateChan <- sidecartypes.OracleState{
 		EigenDelegations: eigenDelegations,
@@ -194,7 +188,7 @@ func (o *Oracle) fetchAndProcessState(
 		// SolanaLamportsPerSignature: *solanaFee.Value,
 		SolanaLamportsPerSignature: 5000, // TODO: update me
 		EthBurnEvents:              ethBurnEvents,
-		CleanedEthBurnEvents:       cleanedEvents,
+		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                redemptions,
 		ROCKUSDPrice:               ROCKUSDPrice,
 		BTCUSDPrice:                BTCUSDPrice,
@@ -293,10 +287,6 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 
 	ctx := context.Background()
 	remainingEthBurnEvents := make([]api.BurnEvent, 0)
-	cleanedEvents := make(map[string]bool)
-	if currentState.CleanedEthBurnEvents != nil {
-		cleanedEvents = currentState.CleanedEthBurnEvents
-	}
 
 	// Check each Ethereum burn event against the chain
 	for _, event := range currentState.EthBurnEvents {
@@ -313,7 +303,10 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
 		} else {
 			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			cleanedEvents[key] = true
+			if currentState.CleanedEthBurnEvents == nil {
+				currentState.CleanedEthBurnEvents = make(map[string]bool)
+			}
+			currentState.CleanedEthBurnEvents[key] = true
 			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
 		}
 	}
@@ -323,7 +316,6 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		log.Printf("Removed %d Ethereum burn events from cache", len(currentState.EthBurnEvents)-len(remainingEthBurnEvents))
 		newState := *currentState
 		newState.EthBurnEvents = remainingEthBurnEvents
-		newState.CleanedEthBurnEvents = cleanedEvents
 		o.currentState.Store(&newState)
 		o.CacheState()
 	}
