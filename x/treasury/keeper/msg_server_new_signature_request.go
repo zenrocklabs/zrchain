@@ -24,16 +24,16 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	}
 
 	payload := strings.Split(msg.DataForSigning, ",")
-	if len(payload) == 1 && len(payload[0]) != 64 {
-		return nil, fmt.Errorf("data for signing should be a have a hex-encoded length of 64, not: %d", len(payload[0]))
+	if err = validatePayload(payload, key.Type); err != nil {
+		return nil, err
 	}
 
 	signPolicyID := key.SignPolicyId
 
 	if signPolicyID == 0 {
-		ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
-		if err != nil {
-			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, err)
+		ws, getDataErr := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+		if getDataErr != nil {
+			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
 		}
 		signPolicyID = ws.SignPolicyId
 	}
@@ -50,9 +50,9 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 
 	var dataForSigning [][]byte
 	for _, p := range payload {
-		data, err := hex.DecodeString(p)
-		if err != nil {
-			return nil, err
+		data, decodeErr := hex.DecodeString(p)
+		if decodeErr != nil {
+			return nil, decodeErr
 		}
 		dataForSigning = append(dataForSigning, data)
 	}
@@ -106,4 +106,46 @@ func VerifyDataForSigning(dataForSigning [][]byte, verifySigningDataTx []byte, v
 	default:
 		return types.Verification_NotVerified, nil
 	}
+}
+
+// validatePayload validates the payload according to the following rules:
+// 1. The payload slice must not be empty.
+// 2. The payload slice must contain at least one non-empty string.
+// 3. If the payload has exactly one string:
+//   - For non-EDDSA keys (e.g. ECDSA), the hex-encoded string must be exactly ecdsaHexEncodedLength characters long.
+//   - For EDDSA keys, the hex-encoded string must be shorter than eddsaMaxHexEncodedLength.
+func validatePayload(payload []string, keyType types.KeyType) error {
+	const (
+		ecdsaHexEncodedLength    = 64   // ECDSA keys require exactly 64 characters.
+		eddsaMaxHexEncodedLength = 2000 // EDDSA keys require fewer than 2000 characters.
+	)
+
+	if len(payload) == 0 {
+		return fmt.Errorf("payload is empty")
+	}
+
+	nonEmptyStringFound := false
+	for _, item := range payload {
+		if strings.TrimSpace(item) != "" {
+			nonEmptyStringFound = true
+			break
+		}
+	}
+	if !nonEmptyStringFound {
+		return fmt.Errorf("payload is full of empty strings")
+	}
+
+	for _, data := range payload {
+		if keyType != types.KeyType_KEY_TYPE_EDDSA_ED25519 {
+			if len(data) != ecdsaHexEncodedLength {
+				return fmt.Errorf("data for signing for ecdsa key should have a hex-encoded length of %d, not: %d", ecdsaHexEncodedLength, len(data))
+			}
+		} else {
+			if len(data) >= eddsaMaxHexEncodedLength {
+				return fmt.Errorf("data for signing for eddsa key should have a hex-encoded length smaller than %d, not: %d", eddsaMaxHexEncodedLength, len(data))
+			}
+		}
+	}
+
+	return nil
 }
