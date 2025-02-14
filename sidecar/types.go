@@ -32,6 +32,7 @@ var (
 		EthTipCap:                  0,
 		SolanaLamportsPerSignature: 0,
 		EthBurnEvents:              []api.BurnEvent{},
+		CleanedEthBurnEvents:       make(map[string]bool),
 		Redemptions:                []api.Redemption{},
 		ROCKUSDPrice:               0,
 		BTCUSDPrice:                0,
