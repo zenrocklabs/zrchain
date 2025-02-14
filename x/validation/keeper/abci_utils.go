@@ -443,7 +443,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destina
 	}
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
-	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 300000, baseFee, tipCap)
+	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
 }
 
 func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
