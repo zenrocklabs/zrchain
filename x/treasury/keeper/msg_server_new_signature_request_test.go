@@ -190,7 +190,7 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 				},
 				Status:      types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 				KeyType:     types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
-				MpcBtl:      0, // TODO: why is it not 10?
+				MpcBtl:      10, // TODO: why is it not 10?
 				ChildReqIds: []uint64{2, 3},
 			},
 			want: &types.MsgNewSignatureRequestResponse{SigReqId: 1},
