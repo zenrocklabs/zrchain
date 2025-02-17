@@ -14,8 +14,9 @@ import (
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	solana "github.com/gagliardetto/solana-go/rpc"
+
+	"github.com/beevik/ntp"
 )
 
 func main() {
@@ -61,10 +62,13 @@ func main() {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
+	ntpTime, err := ntp.Time("time.google.com")
+	if err != nil {
+		log.Fatalf("Error fetching NTP time: %v", err)
+	}
 	// Align the start time to the nearest MainLoopTickerInterval
-	now := time.Now()
-	alignedStart := now.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
-	time.Sleep(alignedStart.Sub(now))
+	alignedStart := ntpTime.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
+	time.Sleep(alignedStart.Sub(ntpTime))
 
 	mainLoopTicker := time.NewTicker(MainLoopTickerInterval)
 	defer mainLoopTicker.Stop()
