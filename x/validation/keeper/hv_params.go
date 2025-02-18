@@ -38,3 +38,12 @@ func (k Keeper) GetHVParamsAuthority(ctx context.Context) string {
 	}
 	return params.Authority
 }
+
+// GetPriceRetentionBlockRange returns the price retention block range
+func (k Keeper) GetPriceRetentionBlockRange(ctx context.Context) int64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil || params.PriceRetentionBlockRange <= 0 {
+		return types.DefaultPriceRetentionBlockRange
+	}
+	return params.PriceRetentionBlockRange
+}

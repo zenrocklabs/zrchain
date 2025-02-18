@@ -309,7 +309,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 
 		for _, asset := range stakeableAssets {
 			switch asset.Asset {
-			case types.Asset_zenBTC:
+			case types.Asset_BTC:
 				continue
 			case types.Asset_ROCK:
 				if pricesAreValid {
@@ -317,7 +317,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 				} else {
 					nativePower = math.LegacyNewDec(validator.ConsensusPower(powerReduction))
 				}
-			case types.Asset_stETH:
+			case types.Asset_ETH:
 				avsPower = asset.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
 			}
 			// TODO: use zenBTC stake instead of WETH/stETH

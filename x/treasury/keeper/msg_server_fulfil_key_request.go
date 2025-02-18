@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -60,6 +61,18 @@ func (k msgServer) validateKeyRequest(msg *types.MsgFulfilKeyRequest, req *types
 
 func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
 	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
+	if len(req.PublicKey) > 0 {
+		// Check against public key from other parties
+		if !bytes.Equal(req.PublicKey, pubKey) {
+			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
+			errMsg := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
+			req.RejectReason = errMsg
+			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
+				return nil, err
+			}
+			return nil, errors.New(errMsg)
+		}
+	}
 
 	if err := k.validatePublicKey(req.KeyType, pubKey); err != nil {
 		return nil, err
@@ -100,6 +113,8 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 			return nil, err
 		}
 	} else {
+		// Store public key from first party's response so we can check other parties respond with the same key
+		req.PublicKey = pubKey
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL
 	}
 
