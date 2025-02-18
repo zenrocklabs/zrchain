@@ -1,11 +1,11 @@
-package v3_test
+package v2_test
 
 import (
 	"testing"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/migrations/v3"
+	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/migrations/v2"
 	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -49,7 +49,7 @@ func TestMigrate(t *testing.T) {
 	err = signRequestStore.Set(ctx, req2.Id, req2)
 	require.NoError(t, err)
 
-	require.NoError(t, v3.RejectBadTestnetRequests(ctx, signRequestStore, cdc))
+	require.NoError(t, v2.RejectBadTestnetRequests(ctx, signRequestStore, cdc))
 
 	migratedReq1, err := signRequestStore.Get(ctx, 1)
 	require.NoError(t, err)
