@@ -280,7 +280,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
 		k.processZenBTCStaking(ctx, oracleData)
-		k.processZenBTCMints(ctx, oracleData)
+		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 	}
@@ -833,7 +833,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 }
 
 // processZenBTCMints processes pending mint transactions.
-func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
 	processZenBTCTransaction(
 		k,
 		ctx,
