@@ -24,15 +24,5 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 		return err
 	}
 
-	if err := v2.RejectBadTestnetRequests(ctx, m.keeper.SignRequestStore, m.keeper.cdc); err != nil {
-		ctx.Logger().With("error", err).Error("failed to migrate treasury module")
-		return err
-	}
-
-	if err := v2.ChangeZenBtcMetadataChainIdtoCaip2Id(ctx, m.keeper.KeyStore, m.keeper.KeyRequestStore, m.keeper.cdc); err != nil {
-		ctx.Logger().With("error", err).Error("failed to migrate treasury module")
-		return err
-	}
-
 	return nil
 }
