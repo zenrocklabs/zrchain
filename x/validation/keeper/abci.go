@@ -1121,13 +1121,14 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 		}
 
 		foundNewRedemption = true
+
+		btcAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).RoundInt64()
 		// Convert zenBTC amount to BTC amount.
-		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
 				Id:                 redemption.Id,
 				DestinationAddress: redemption.DestinationAddress,
-				Amount:             btcAmount,
+				Amount:             uint64(btcAmount),
 			},
 			Status: zenbtctypes.RedemptionStatus_INITIATED,
 		}); err != nil {

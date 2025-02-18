@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -22,7 +23,7 @@ type ZenBTCKeeper interface {
 	HasRedemption(ctx context.Context, id uint64) (bool, error)
 	SetRedemption(ctx context.Context, id uint64, redemption types.Redemption) error
 	WalkRedemptions(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
-	GetExchangeRate(ctx context.Context) (float64, error)
+	GetExchangeRate(ctx context.Context) (math.LegacyDec, error)
 	GetBurnEvent(ctx context.Context, id uint64) (types.BurnEvent, error)
 	SetBurnEvent(ctx context.Context, id uint64, burnEvent types.BurnEvent) error
 	CreateBurnEvent(ctx context.Context, burnEvent *types.BurnEvent) (uint64, error)

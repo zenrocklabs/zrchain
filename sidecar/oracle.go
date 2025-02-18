@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"cosmossdk.io/math"
+
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -150,7 +152,8 @@ func (o *Oracle) fetchAndProcessState(
 	if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil {
 		return fmt.Errorf("failed to decode ROCK price data: %w", err)
 	}
-	ROCKUSDPrice, err := strconv.ParseFloat(priceData[0].Last, 64)
+
+	ROCKUSDPrice, err := strconv.ParseUint(priceData[0].Last, 10, 64)
 	if err != nil {
 		return fmt.Errorf("failed to parse ROCK price data: %w", err)
 	}
@@ -190,7 +193,7 @@ func (o *Oracle) fetchAndProcessState(
 		EthBurnEvents:              ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                redemptions,
-		ROCKUSDPrice:               ROCKUSDPrice,
+		ROCKUSDPrice:               math.LegacyNewDecFromInt(math.NewIntFromUint64(ROCKUSDPrice)),
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
 	}

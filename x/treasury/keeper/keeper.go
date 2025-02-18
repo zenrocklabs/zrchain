@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -532,7 +532,8 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 		return err
 	}
 
-	zenrockFee := uint64(math.Round(float64(fee) * (float64(prms.KeyringCommission) / 100.0)))
+	zenrockFeeDec := sdkmath.LegacyNewDecFromBigInt(big.NewInt(int64(fee))).Mul(sdkmath.LegacyNewDecFromBigInt(big.NewInt(int64(prms.KeyringCommission))).Quo(sdkmath.LegacyNewDec(100)))
+	zenrockFee := uint64(zenrockFeeDec.RoundInt64())
 	keyringFee := fee - zenrockFee
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
