@@ -22,7 +22,6 @@ func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets
 		AVSRewardsRate:           avsRewardsRate,
 		BlockTime:                blockTime,
 		StakeableAssets:          stakeableAssets,
-		Authority:                authority,
 		PriceRetentionBlockRange: priceRetentionBlockRange,
 	}
 }
