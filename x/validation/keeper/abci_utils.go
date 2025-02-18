@@ -711,6 +711,78 @@ func (k Keeper) CalculateZenBTCMintFee(
 	return feeZenBTC
 }
 
+// clearEthereumNonceRequest resets the nonce-request flag for a given key.
+func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error {
+	k.Logger(ctx).Warn("set EthereumNonceRequested state to false", "keyID", keyID)
+	return k.EthereumNonceRequested.Set(ctx, keyID, false)
+}
+
+// getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
+func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) ([]zenbtctypes.PendingMintTransaction, error) {
+	firstPendingID := uint64(0)
+	var err error
+	if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
+		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingStakeTransaction(ctx)
+	} else if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
+		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingMintTransaction(ctx)
+	}
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		firstPendingID = 0
+	}
+	return getPendingTransactions(
+		ctx,
+		k.zenBTCKeeper.GetPendingMintTransactionsStore(),
+		func(tx zenbtctypes.PendingMintTransaction) bool {
+			return tx.Status == status
+		},
+		firstPendingID,
+		2,
+	)
+}
+
+// getPendingBurnEvents retrieves up to 2 pending burn events with status BURNED.
+func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		firstPendingID = 0
+	}
+	return getPendingTransactions(
+		ctx,
+		k.zenBTCKeeper.GetBurnEventsStore(),
+		func(event zenbtctypes.BurnEvent) bool {
+			return event.Status == zenbtctypes.BurnStatus_BURN_STATUS_BURNED
+		},
+		firstPendingID,
+		2,
+	)
+}
+
+// getPendingRedemptions retrieves up to 2 pending redemptions with status INITIATED.
+func (k *Keeper) getPendingRedemptions(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		firstPendingID = 0
+	}
+	return getPendingTransactions(
+		ctx,
+		k.zenBTCKeeper.GetRedemptionsStore(),
+		func(r zenbtctypes.Redemption) bool {
+			return r.Status == zenbtctypes.RedemptionStatus_INITIATED
+		},
+		firstPendingID,
+		2,
+	)
+}
+
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
 	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {
@@ -753,4 +825,80 @@ func getChainIDForEigen(ctx sdk.Context) uint64 {
 		chainID = 1
 	}
 	return chainID
+}
+
+//
+// =============================================================================
+// ORACLE DATA VALIDATION
+// =============================================================================
+//
+
+// validateHashField derives a hash from the given data and compares it with the expected value.
+func validateHashField(fieldName string, expectedHash []byte, data any) error {
+	derivedHash, err := deriveHash(data)
+	if err != nil {
+		return fmt.Errorf("error deriving %s hash: %w", fieldName, err)
+	}
+	if !bytes.Equal(expectedHash, derivedHash[:]) {
+		return fmt.Errorf("%s hash mismatch, expected %x, got %x", fieldName, expectedHash, derivedHash)
+	}
+	return nil
+}
+
+// validateOracleData verifies that the vote extension and oracle data match.
+func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
+	if err := validateHashField("AVS contract delegation state", voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
+		return err
+	}
+	if err := validateHashField("Ethereum burn events", voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
+		return err
+	}
+	if err := validateHashField("Ethereum redemptions", voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
+		return err
+	}
+
+	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
+		return fmt.Errorf("ethereum block height mismatch, expected %d, got %d", voteExt.EthBlockHeight, oracleData.EthBlockHeight)
+	}
+	if voteExt.EthGasLimit != oracleData.EthGasLimit {
+		return fmt.Errorf("ethereum gas limit mismatch, expected %d, got %d", voteExt.EthGasLimit, oracleData.EthGasLimit)
+	}
+	if voteExt.EthBaseFee != oracleData.EthBaseFee {
+		return fmt.Errorf("ethereum base fee mismatch, expected %d, got %d", voteExt.EthBaseFee, oracleData.EthBaseFee)
+	}
+	if voteExt.EthTipCap != oracleData.EthTipCap {
+		return fmt.Errorf("ethereum tip cap mismatch, expected %d, got %d", voteExt.EthTipCap, oracleData.EthTipCap)
+	}
+
+	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
+		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
+	}
+	if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+		return err
+	}
+
+	if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
+		return fmt.Errorf("requested staker nonce mismatch, expected %d, got %d", voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce)
+	}
+	if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
+		return fmt.Errorf("requested eth minter nonce mismatch, expected %d, got %d", voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
+	}
+	if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
+		return fmt.Errorf("requested unstaker nonce mismatch, expected %d, got %d", voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce)
+	}
+	if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
+		return fmt.Errorf("requested completer nonce mismatch, expected %d, got %d", voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce)
+	}
+
+	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
+	}
+	if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+		return fmt.Errorf("BTC/USD price mismatch, expected %s, got %s", voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
+	}
+	if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+		return fmt.Errorf("ETH/USD price mismatch, expected %s, got %s", voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
+	}
+
+	return nil
 }
