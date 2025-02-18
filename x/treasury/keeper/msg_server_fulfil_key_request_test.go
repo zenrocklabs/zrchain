@@ -81,6 +81,8 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 	// both of these keys are invalid as they are too long
 	invalidECDSAPubKey := []byte{154, 135, 176, 26, 117, 104, 94, 9, 73, 68, 162, 139, 9, 231, 47, 249, 137, 156, 60, 87, 66, 163}
 	invalidEdDSAPubkey := []byte{1, 243, 178, 23, 221, 136, 81, 23, 248, 229, 31, 154, 135, 176, 26, 117, 104, 94, 9, 73, 68, 162, 139, 9, 231, 47, 249, 137, 156, 60, 87, 66, 163}
+	// different valid ECDSA key for testing mismatched keys
+	var differentECDSAKey = []byte{2, 202, 39, 234, 123, 6, 65, 73, 123, 25, 167, 35, 227, 185, 37, 144, 128, 28, 126, 121, 177, 20, 37, 63, 193, 233, 157, 241, 253, 151, 48, 82, 107}
 
 	type args struct {
 		keyring    *idTypes.Keyring
@@ -521,6 +523,23 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				PublicKey: defaultECDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
+		},
+		{
+			name: "FAIL: public key mismatch on partial request",
+			args: args{
+				keyring:    &defaultKr,
+				workspace:  &defaultWs,
+				keyRequest: &partialKeyRequest,
+				msg: types.NewMsgFulfilKeyRequest(
+					"testCreator",
+					1,
+					types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED,
+					&types.MsgFulfilKeyRequest_Key{Key: &types.MsgNewKey{PublicKey: differentECDSAKey}},
+					[]byte("0000000000000000000000000000000000000000000000000SecondSignature"),
+				),
+			},
+			want:    &types.MsgFulfilKeyRequestResponse{},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
