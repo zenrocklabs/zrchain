@@ -132,6 +132,7 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 		return ACCEPT_VOTE, nil
 	}
 
+	k.Logger(ctx).Warn("vote extension size", "height", req.Height, "limit", VoteExtBytesLimit, "size", len(req.VoteExtension))
 	if len(req.VoteExtension) > VoteExtBytesLimit {
 		k.Logger(ctx).Error("vote extension is too large", "height", req.Height, "limit", VoteExtBytesLimit, "size", len(req.VoteExtension))
 		return REJECT_VOTE, nil
