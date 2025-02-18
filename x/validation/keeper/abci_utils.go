@@ -366,12 +366,12 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 	return nonceResp.Nonce, nil
 }
 
-func (k *Keeper) constructEthereumTx(addr common.Address, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	// TODO: whitelist more chain IDs before mainnet upgrade
-	if chainID != 17000 {
-		return nil, nil, fmt.Errorf("unsupported chain ID: %d", chainID)
+func (k *Keeper) constructEthereumTx(ctx context.Context, addr common.Address, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
+	validatedChainID, err := types.ValidateChainID(ctx, chainID)
+	if err != nil {
+		return nil, nil, err
 	}
-	chainIDBigInt := new(big.Int).SetUint64(chainID)
+	chainIDBigInt := new(big.Int).SetUint64(validatedChainID)
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -423,7 +423,7 @@ func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, g
 	}
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
-	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+	return k.constructEthereumTx(ctx, addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
 func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chainID, amount, fee, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
@@ -433,7 +433,7 @@ func (k *Keeper) constructMintTx(ctx context.Context, recipientAddr string, chai
 	}
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthTokenAddr(ctx))
-	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
+	return k.constructEthereumTx(ctx, addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
 func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destinationAddr []byte, amount, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
@@ -443,7 +443,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destina
 	}
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
-	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
+	return k.constructEthereumTx(ctx, addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
 }
 
 func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID, ethNonce, baseFee, tipCap uint64) ([]byte, []byte, error) {
@@ -453,7 +453,7 @@ func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID,
 	}
 
 	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
-	return k.constructEthereumTx(addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
+	return k.constructEthereumTx(ctx, addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
 }
 
 func EncodeStakeCallData(amount *big.Int) ([]byte, error) {
