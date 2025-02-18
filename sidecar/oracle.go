@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -201,14 +200,14 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to decode ROCK price data: %w", err)
 			return
 		}
-		price, err := strconv.ParseInt(priceData[0].Last, 10, 64)
+		priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
 
 		if err != nil {
 			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
 			return
 		}
 		updateMutex.Lock()
-		update.ROCKUSDPrice = math.LegacyNewDecFromInt(math.NewInt(price))
+		update.ROCKUSDPrice = priceDec
 		updateMutex.Unlock()
 	}()
 

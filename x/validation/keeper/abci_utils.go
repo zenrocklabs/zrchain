@@ -423,7 +423,7 @@ func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, g
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
@@ -443,7 +443,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destina
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
 }
 
@@ -453,7 +453,7 @@ func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID,
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
 }
 
