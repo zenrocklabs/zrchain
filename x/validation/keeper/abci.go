@@ -86,7 +86,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-	ethereumRedemptionsHash, err := deriveHash(oracleData.Redemptions)
+
+	redemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
@@ -125,7 +126,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
-		RedemptionsHash:            ethereumRedemptionsHash[:],
+		RedemptionsHash:            redemptionsHash[:],
 		BtcBlockHeight:             neutrinoResponse.BlockHeight,
 		BtcHeaderHash:              bitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
