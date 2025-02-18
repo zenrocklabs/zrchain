@@ -532,7 +532,8 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 		return err
 	}
 
-	zenrockFeeDec := sdkmath.LegacyNewDecFromBigInt(big.NewInt(int64(fee))).Mul(sdkmath.LegacyNewDecFromBigInt(big.NewInt(int64(prms.KeyringCommission))).Quo(sdkmath.LegacyNewDec(100)))
+	zenrockFeeDec := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(fee)).Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(prms.KeyringCommission)).Quo(sdkmath.LegacyNewDec(100)))
+
 	zenrockFee := uint64(zenrockFeeDec.RoundInt64())
 	keyringFee := fee - zenrockFee
 
