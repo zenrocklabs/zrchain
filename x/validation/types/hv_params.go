@@ -9,8 +9,8 @@ var (
 	DefaultBlockTime         int64 = 5                                // seconds
 	DefaultStakeableAssets         = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_ETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 	}
 	DefaultHVParamsAuthority = "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3"
 )
