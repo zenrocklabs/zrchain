@@ -11,6 +11,7 @@ import (
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -64,16 +65,21 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 	}
 
 	if metadata := msg.ZenbtcMetadata; metadata != nil {
-		// TODO: add other chainIDs before zenBTC mainnet upgrade
-		if metadata.Caip2ChainId != "eip155:17000" {
-			return nil, fmt.Errorf("unsupported mint recipient chainID for zenBTC deposit key")
+		// Validate chain ID
+		if _, err := validationtypes.ValidateChainID(ctx, metadata.Caip2ChainId); err != nil {
+			return nil, fmt.Errorf("invalid mint recipient chainID for zenBTC deposit key: %w", err)
 		}
-		// TODO: add alternate check for Solana address format
-		if !common.IsHexAddress(metadata.RecipientAddr) {
-			return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
-		}
-		if metadata.ChainType == types.WalletType_WALLET_TYPE_UNSPECIFIED {
-			return nil, fmt.Errorf("unsupported chain type for zenBTC deposit key")
+
+		// Validate recipient address based on chain type
+		switch metadata.ChainType {
+		case types.WalletType_WALLET_TYPE_EVM:
+			if !common.IsHexAddress(metadata.RecipientAddr) {
+				return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
+			}
+		case types.WalletType_WALLET_TYPE_UNSPECIFIED:
+			return nil, fmt.Errorf("chain type must be specified for zenBTC deposit key")
+		default:
+			return nil, fmt.Errorf("unsupported chain type %s for zenBTC deposit key", metadata.ChainType)
 		}
 	}
 
