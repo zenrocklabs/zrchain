@@ -47,6 +47,7 @@ var partialKeyRequest = types.KeyRequest{
 	KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 	Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
 	KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
+	PublicKey:              defaultECDSAKey.PublicKey,
 }
 
 var defaultKeyReqResponse = types.KeyReqResponse{
@@ -77,11 +78,8 @@ var defaultKeyReqResponse3 = types.KeyReqResponse{
 }
 
 func Test_msgServer_FulfilKeyRequest(t *testing.T) {
-
-	// too long
+	// both of these keys are invalid as they are too long
 	invalidECDSAPubKey := []byte{154, 135, 176, 26, 117, 104, 94, 9, 73, 68, 162, 139, 9, 231, 47, 249, 137, 156, 60, 87, 66, 163}
-
-	// too long
 	invalidEdDSAPubkey := []byte{1, 243, 178, 23, 221, 136, 81, 23, 248, 229, 31, 154, 135, 176, 26, 117, 104, 94, 9, 73, 68, 162, 139, 9, 231, 47, 249, 137, 156, 60, 87, 66, 163}
 
 	type args struct {
@@ -119,6 +117,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
 				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
+				PublicKey:              defaultECDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
 		},
@@ -176,6 +175,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				KeyType:                types.KeyType_KEY_TYPE_EDDSA_ED25519,
 				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
 				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
+				PublicKey:              defaultEdDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
 		},
@@ -518,6 +518,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 					[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
 					[]byte("0000000000000000000000000000000000000000000000000SecondSignature"),
 				},
+				PublicKey: defaultECDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
 		},

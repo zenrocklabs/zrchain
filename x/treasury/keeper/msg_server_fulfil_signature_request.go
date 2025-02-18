@@ -148,6 +148,7 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 			SignedData:    sigData,
 		})
 	} else {
+		// Store signed data from first party's response so we can check other parties respond with the same data
 		if !bytes.Equal(req.SignedData[0].SignedData, sigData) {
 			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
 			req.RejectReason = fmt.Sprintf("signed data mismatch, expected %x, got %x", req.SignedData[0].SignedData, sigData)

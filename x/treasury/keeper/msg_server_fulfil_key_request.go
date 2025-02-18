@@ -113,6 +113,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 			return nil, err
 		}
 	} else {
+		// Store public key from first party's response so we can check other parties respond with the same key
 		req.PublicKey = pubKey
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL
 	}
