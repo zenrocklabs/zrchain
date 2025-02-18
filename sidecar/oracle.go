@@ -202,6 +202,7 @@ func (o *Oracle) fetchAndProcessState(
 			return
 		}
 		price, err := strconv.ParseInt(priceData[0].Last, 10, 64)
+
 		if err != nil {
 			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
 			return
