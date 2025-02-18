@@ -46,6 +46,8 @@ type Keeper struct {
 	AVSRewardsPool collections.Map[string, math.Int]
 	// AssetPrices - key: asset type | value: asset price + precision
 	AssetPrices collections.Map[types.Asset, math.LegacyDec]
+	// LastValidVEHeight - value: height of last valid VE
+	LastValidVEHeight collections.Item[int64]
 	// SlashEvents - key: id number | value: slash event struct
 	SlashEvents collections.Map[uint64, types.SlashEvent]
 	// SlashEventCount - value: number of slash events
@@ -135,6 +137,7 @@ func NewKeeper(
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 	}
 }
 
