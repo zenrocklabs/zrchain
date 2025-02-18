@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -35,24 +36,23 @@ func (o *Oracle) initPriceFeed() (*ethclient.Client, *aggregatorv3.AggregatorV3I
 	return tempEthClient, btcPriceFeed, ethPriceFeed
 }
 
-func (o *Oracle) fetchPrice(priceFeed *aggregatorv3.AggregatorV3Interface, blockNumber *big.Int) (float64, error) {
+func (o *Oracle) fetchPrice(priceFeed *aggregatorv3.AggregatorV3Interface, blockNumber *big.Int) (math.LegacyDec, error) {
 	callOpts := &bind.CallOpts{BlockNumber: blockNumber}
 
 	roundData, err := priceFeed.LatestRoundData(callOpts)
 	if err != nil {
-		return 0, fmt.Errorf("error fetching latest round data: %v", err)
+		return math.LegacyNewDec(0), fmt.Errorf("error fetching latest round data: %v", err)
 	}
 
 	decimals, err := priceFeed.Decimals(callOpts)
 	if err != nil {
-		return 0, fmt.Errorf("error fetching decimals: %v", err)
+		return math.LegacyNewDec(0), fmt.Errorf("error fetching decimals: %v", err)
 	}
 
 	divisor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	price := new(big.Float).SetInt(roundData.Answer)
-	divisorFloat := new(big.Float).SetInt(divisor)
-	result := new(big.Float).Quo(price, divisorFloat)
-	priceFloat, _ := result.Float64()
+	price := math.LegacyNewDecFromBigInt(roundData.Answer)
+	divisorDec := math.LegacyNewDecFromBigInt(divisor)
+	result := price.Quo(divisorDec)
 
-	return priceFloat, nil
+	return result, nil
 }

@@ -7,16 +7,18 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("acknowledgements", "commitments", "receipts", "send_sequences")
+    __slots__ = ("acknowledgements", "commitments", "receipts", "async_packets", "send_sequences")
     ACKNOWLEDGEMENTS_FIELD_NUMBER: _ClassVar[int]
     COMMITMENTS_FIELD_NUMBER: _ClassVar[int]
     RECEIPTS_FIELD_NUMBER: _ClassVar[int]
+    ASYNC_PACKETS_FIELD_NUMBER: _ClassVar[int]
     SEND_SEQUENCES_FIELD_NUMBER: _ClassVar[int]
     acknowledgements: _containers.RepeatedCompositeFieldContainer[PacketState]
     commitments: _containers.RepeatedCompositeFieldContainer[PacketState]
     receipts: _containers.RepeatedCompositeFieldContainer[PacketState]
+    async_packets: _containers.RepeatedCompositeFieldContainer[PacketState]
     send_sequences: _containers.RepeatedCompositeFieldContainer[PacketSequence]
-    def __init__(self, acknowledgements: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., commitments: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., receipts: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., send_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ...) -> None: ...
+    def __init__(self, acknowledgements: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., commitments: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., receipts: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., async_packets: _Optional[_Iterable[_Union[PacketState, _Mapping]]] = ..., send_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ...) -> None: ...
 
 class PacketState(_message.Message):
     __slots__ = ("client_id", "sequence", "data")

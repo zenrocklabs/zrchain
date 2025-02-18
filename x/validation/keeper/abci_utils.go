@@ -14,6 +14,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -422,7 +423,7 @@ func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, g
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
@@ -442,7 +443,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destina
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
 }
 
@@ -452,7 +453,7 @@ func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID,
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
 }
 
@@ -610,15 +611,35 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
+	pricesAreValid := true
+	if oracleData.ROCKUSDPrice.IsZero() || oracleData.BTCUSDPrice.IsZero() || oracleData.ETHUSDPrice.IsZero() {
+		pricesAreValid = false
+	}
+
+	if pricesAreValid {
+		if err := k.LastValidVEHeight.Set(ctx, ctx.BlockHeight()); err != nil {
+			k.Logger(ctx).Error("error setting last valid VE height", "height", ctx.BlockHeight(), "err", err)
+		}
+	} else {
+		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error getting last valid VE height", "height", ctx.BlockHeight(), "err", err)
+		}
+		if ctx.BlockHeight()-lastValidVEHeight < k.GetPriceRetentionBlockRange(ctx) {
+			k.Logger(ctx).Warn("last valid VE height is within price retention range, not zeroing asset prices", "retention_range", k.GetPriceRetentionBlockRange(ctx))
+			return
+		}
+	}
+
 	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
 		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_zenBTC, oracleData.BTCUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
 		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_stETH, oracleData.ETHUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
@@ -666,7 +687,7 @@ func (k Keeper) CalculateZenBTCMintFee(
 	ethGasLimit uint64,
 	btcUSDPrice sdkmath.LegacyDec,
 	ethUSDPrice sdkmath.LegacyDec,
-	exchangeRate float64,
+	exchangeRate sdkmath.LegacyDec,
 ) uint64 {
 	if btcUSDPrice.IsZero() {
 		return 0
@@ -705,7 +726,7 @@ func (k Keeper) CalculateZenBTCMintFee(
 	satoshis := satoshisInt.Uint64()
 
 	// Convert BTC fee to zenBTC using exchange rate
-	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
+	feeZenBTC := math.LegacyNewDecFromInt(math.NewIntFromUint64(satoshis)).Quo(exchangeRate).TruncateInt().Uint64()
 
 	return feeZenBTC
 }
@@ -855,6 +876,9 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if err := validateHashField("Ethereum redemptions", voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
 		return err
 	}
+	if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+		return err
+	}
 
 	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
 		return fmt.Errorf("ethereum block height mismatch, expected %d, got %d", voteExt.EthBlockHeight, oracleData.EthBlockHeight)
@@ -871,9 +895,6 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 
 	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
 		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
-	}
-	if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
-		return err
 	}
 
 	if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {

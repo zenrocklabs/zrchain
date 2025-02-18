@@ -86,7 +86,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-	ethereumRedemptionsHash, err := deriveHash(oracleData.Redemptions)
+
+	redemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
@@ -125,7 +126,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
-		RedemptionsHash:            ethereumRedemptionsHash[:],
+		RedemptionsHash:            redemptionsHash[:],
 		BtcBlockHeight:             neutrinoResponse.BlockHeight,
 		BtcHeaderHash:              bitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
@@ -280,7 +281,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
 		k.processZenBTCStaking(ctx, oracleData)
-		k.processZenBTCMints(ctx, oracleData)
+		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 	}
@@ -833,7 +834,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 }
 
 // processZenBTCMints processes pending mint transactions.
-func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
 	processZenBTCTransaction(
 		k,
 		ctx,
@@ -1100,13 +1101,14 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 		}
 
 		foundNewRedemption = true
+
+		btcAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
 		// Convert zenBTC amount to BTC amount.
-		btcAmount := uint64(float64(redemption.Amount) * exchangeRate)
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
 				Id:                 redemption.Id,
 				DestinationAddress: redemption.DestinationAddress,
-				Amount:             btcAmount,
+				Amount:             uint64(btcAmount),
 			},
 			Status: zenbtctypes.RedemptionStatus_INITIATED,
 		}); err != nil {

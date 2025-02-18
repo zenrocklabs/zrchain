@@ -9,19 +9,21 @@ var (
 	DefaultBlockTime         int64 = 5                                // seconds
 	DefaultStakeableAssets         = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_zenBTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_stETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_ETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 	}
-	DefaultHVParamsAuthority = "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3"
+	DefaultHVParamsAuthority              = "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3"
+	DefaultPriceRetentionBlockRange int64 = 100
 )
 
 // NewParams creates a new Params instance
-func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, authority string) *HVParams {
+func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, authority string, priceRetentionBlockRange int64) *HVParams {
 	return &HVParams{
-		AVSRewardsRate:  avsRewardsRate,
-		BlockTime:       blockTime,
-		StakeableAssets: stakeableAssets,
-		Authority:       authority,
+		AVSRewardsRate:           avsRewardsRate,
+		BlockTime:                blockTime,
+		StakeableAssets:          stakeableAssets,
+		Authority:                authority,
+		PriceRetentionBlockRange: priceRetentionBlockRange,
 	}
 }
 
@@ -32,5 +34,6 @@ func DefaultHVParams() *HVParams {
 		DefaultBlockTime,
 		DefaultStakeableAssets,
 		DefaultHVParamsAuthority,
+		DefaultPriceRetentionBlockRange,
 	)
 }
