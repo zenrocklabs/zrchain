@@ -140,11 +140,23 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		return fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
 	}
 
-	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
+	// Check against signed data from other parties
+	if len(req.SignedData) == 0 {
+		// Only append if this is the first party to respond
 		req.SignedData = append(req.SignedData, &types.SignedDataWithID{
 			SignRequestId: msg.RequestId,
 			SignedData:    sigData,
 		})
+	} else {
+		// Store signed data from first party's response so we can check other parties respond with the same data
+		if !bytes.Equal(req.SignedData[0].SignedData, sigData) {
+			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+			req.RejectReason = fmt.Sprintf("signed data mismatch, expected %x, got %x", req.SignedData[0].SignedData, sigData)
+			return nil
+		}
+	}
+
+	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
 		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED
 
 		if req.ParentReqId != 0 {
