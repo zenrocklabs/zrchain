@@ -153,7 +153,7 @@ func (ns *NeutrinoServer) GetBlockHeaderByHeight(chainName string, height int64)
 		if err == nil {
 			return blockHeader, hash, height, err
 		}
-		returnedError = fmt.Errorf("Failed ProxyGetBlockHeaderByHeight %d does not exist error:%w", height, returnedError)
+		returnedError = fmt.Errorf("Failed ProxyGetBlockHeaderByHeight %d does not exist error:%w", height, err)
 		//ignore this error - we can't get testnet data using the proxy fallback mechanism
 	}
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist %w", chainName, returnedError)
@@ -181,7 +181,7 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		if err == nil {
 			return blockHeader, hash, height, err
 		}
-		returnedError = fmt.Errorf("Failed ProxyGetLatestBlockHeader %d does not exist error:%w", height, returnedError)
+		returnedError = fmt.Errorf("Failed ProxyGetLatestBlockHeader %d does not exist error:%w", height, err)
 		//ignore this error - we can't get testnet data using the proxy fallback mechanism
 	}
 	return nil, nil, 0, fmt.Errorf("Node %s does not exist %w", chainName, returnedError)
