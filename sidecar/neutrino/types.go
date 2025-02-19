@@ -1,7 +1,6 @@
 package neutrino
 
 import (
-	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino/rpcservice"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
@@ -55,18 +54,18 @@ type BlockHeaderResponse struct {
 }
 
 type BitcoinBlock struct {
-	Hash              string         `json:"hash"`
-	Confirmations     int            `json:"confirmations"`
-	Size              int            `json:"size"`
-	Height            int            `json:"height"`
-	Version           int            `json:"version"`
-	MerkleRoot        string         `json:"merkleroot"`
-	Tx                []string       `json:"tx"`
-	Time              int64          `json:"time"`
-	Nonce             int64          `json:"nonce"`
-	Bits              string         `json:"bits"`
-	Difficulty        math.LegacyDec `json:"difficulty"`
-	ChainWork         string         `json:"chainwork"`
-	PreviousBlockHash string         `json:"previousblockhash"`
-	NextBlockHash     string         `json:"nextblockhash,omitempty"`
+	Hash              string   `json:"hash"`
+	Confirmations     int      `json:"confirmations"`
+	Size              int      `json:"size"`
+	Height            int      `json:"height"`
+	Version           int      `json:"version"`
+	MerkleRoot        string   `json:"merkleroot"`
+	Tx                []string `json:"tx"`
+	Time              int64    `json:"time"`
+	Nonce             int64    `json:"nonce"`
+	Bits              string   `json:"bits"`
+	Difficulty        float64  `json:"difficulty"`
+	ChainWork         string   `json:"chainwork"`
+	PreviousBlockHash string   `json:"previousblockhash"`
+	NextBlockHash     string   `json:"nextblockhash,omitempty"`
 }
