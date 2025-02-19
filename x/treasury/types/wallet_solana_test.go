@@ -101,6 +101,34 @@ func TestSolanaParseTx(t *testing.T) {
 	}
 }
 
+func TestSolanaBigMessage(t *testing.T) {
+	testCases := []struct {
+		name        string
+		to          string
+		amount      int64
+		txHexstring string
+	}{
+		{
+			name:        "Test Case 0",
+			to:          "",
+			amount:      0,
+			txHexstring: "0x0201050e5ba7e80a2d33add4dd16152c2bcff1cdf88d58a328b353882ec58985dd161d6bf76ffb86f1298ce5c25bb9e67dc6df430af9093412701b15f998a7bff835356e2aed014e565252fd2f4f81f6910b38d6016cd481463bccac651f07cae37f7c2e022e5cf56111042204c17d7e9799f9fd9ede697299c22eada8ecbded2b5822f58f9b510ee54719b11095e4e7d757a6e1e3d1b5bc69b45c8594c136d0420f35245e99ad93e09ef9ea59463f23521548c8d2c992f767245fd5819568bb216554a6fa06c50dc073d2007afead92cfa489ee7ebe9fcf44253515b3301040938dba0a9d7d6400dd8348396b23ad8f6ed9d13e2da37a6d6810dbe949f15460067b9c6545e963abadbef8d7e3139d9ad453332267ad13a1c5e4e936a43ea6106a92182706a7d517192c568ee08a845f73d29788cf035c3145b21ab344d8062ea9400000000000000000000000000000000000000000000000000000000000000000000006ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a98c97258f4e2489f1bb3d1029148e0d830b5a1399daff1084048e7bd8dbe9f859272cee1400e406aaf89dc78008b4186b7fd11090e5f840ba4a539b24757412445bb9b9636608754765e9cb46a31136a3682b8c00ca81012732857376d4bdac9d020a0302090104040000000d0c0003040506070607080a0b0c18b2280abde481ba8c0080f420e6b500000000000000000000",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			wallet := solanaWallet(t, "example seed")
+			txBytes := hexutil.MustDecode(tc.txHexstring)
+			transfer, err := wallet.ParseTx(txBytes, &MetadataSolana{})
+			expectedDataForSigning := []byte(hex.EncodeToString(txBytes))
+			require.NoError(t, err)
+			require.Equal(t, []byte(tc.to), transfer.To, "to address mismatch")
+			require.Equal(t, tc.amount, transfer.Amount.Int64(), "amount mismatch")
+			require.Equal(t, hex.EncodeToString(expectedDataForSigning), hex.EncodeToString(transfer.DataForSigning), "data for signing mismatch")
+		})
+	}
+}
+
 func solanaWallet(t *testing.T, seed string) *SolanaWallet {
 	t.Helper()
 	hashedSeed := sha256.Sum256([]byte(seed))
@@ -125,8 +153,12 @@ func solanaWallet(t *testing.T, seed string) *SolanaWallet {
 
 // TestGetTransferFromInstruction
 // TODO complete this test
-func TestGetTransferFromInstruction(t *testing.T) {
+func TestExtractTransfer(t *testing.T) {
 	t.Skip()
+	extractor := TransferExtractor{
+		SystemDecoder: nil, // fakeSystemDecoder
+		TokenDecoder:  nil, // fakeTokenDecoder
+	}
 	type args struct {
 		msg solana.Message
 	}
@@ -140,7 +172,7 @@ func TestGetTransferFromInstruction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getTransferFromInstruction(tt.args.msg)
+			got, err := extractor.ExtractTransfer(tt.args.msg)
 			require.Equal(t, tt.wantErr, err != nil)
 			require.Equal(t, tt.want, got)
 		})

@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
@@ -17,9 +18,10 @@ import (
 // NB: these constants should not be changed as they are important for synchronicity.
 // Modifying them will exponentially increase the risk of your validator being slashed
 const (
-	MainLoopTickerInterval = 30 * time.Second
-	CacheSize              = 20
-	ROCKUSDPriceURL        = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
+	MainLoopTickerInterval  = 30 * time.Second
+	CacheSize               = 20
+	EthBurnEventsBlockRange = 1000
+	ROCKUSDPriceURL         = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 )
 
 var (
@@ -31,10 +33,11 @@ var (
 		EthTipCap:                  0,
 		SolanaLamportsPerSignature: 0,
 		EthBurnEvents:              []api.BurnEvent{},
+		CleanedEthBurnEvents:       make(map[string]bool),
 		Redemptions:                []api.Redemption{},
-		ROCKUSDPrice:               0,
-		BTCUSDPrice:                0,
-		ETHUSDPrice:                0,
+		ROCKUSDPrice:               math.LegacyNewDec(0),
+		BTCUSDPrice:                math.LegacyNewDec(0),
+		ETHUSDPrice:                math.LegacyNewDec(0),
 	}
 	// EthBlocksBeforeFinality   = big.NewInt(72)
 	EthBlocksBeforeFinality = big.NewInt(0) // TODO: uncomment above and remove this line before mainnet

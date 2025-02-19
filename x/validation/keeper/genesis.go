@@ -9,7 +9,6 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
@@ -32,7 +31,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	sdkCtx = sdkCtx.WithBlockHeight(1 - sdk.ValidatorUpdateDelay)
 	ctx = sdkCtx
 
-	if err := k.SetParams(ctx, stakingtypes.Params(data.Params)); err != nil {
+	if err := k.SetParams(ctx, types.Params(data.Params)); err != nil {
 		panic(err)
 	}
 

@@ -7,9 +7,10 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
+	"sync"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -20,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
@@ -83,7 +83,10 @@ func (o *Oracle) fetchAndProcessState(
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
 ) error {
+	const httpTimeout = 10 * time.Second
+
 	ctx := context.Background()
+	var wg sync.WaitGroup
 
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -92,104 +95,205 @@ func (o *Oracle) fetchAndProcessState(
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, EthBlocksBeforeFinality)
 
-	eigenDelegations, err := o.getServiceManagerState(serviceManager, targetBlockNumber)
-	if err != nil {
-		return fmt.Errorf("failed to get contract state: %w", err)
-	}
-
-	redemptions, err := o.getRedemptions(zenBTCControllerHolesky, targetBlockNumber)
-	if err != nil {
-		return fmt.Errorf("failed to get zenBTC contract state: %w", err)
-	}
-
-	// Get base fee from latest block
+	// Check base fee availability
 	if latestHeader.BaseFee == nil {
 		return fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
-	// Get suggested priority fee from client
-	suggestedTip, err := o.EthClient.SuggestGasTipCap(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get suggested priority fee: %w", err)
+	type oracleStateUpdate struct {
+		eigenDelegations map[string]map[string]*big.Int
+		redemptions      []api.Redemption
+		suggestedTip     *big.Int
+		estimatedGas     uint64
+		ethBurnEvents    []api.BurnEvent
+		ROCKUSDPrice     math.LegacyDec
+		BTCUSDPrice      math.LegacyDec
+		ETHUSDPrice      math.LegacyDec
 	}
 
-	stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(1000000000))
-	if err != nil {
-		return fmt.Errorf("failed to encode stake call data: %w", err)
-	}
-	addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
-	estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-		From: common.HexToAddress("0xE1ca337e0a0839717ef86cdA53C51b08FE681e9c"),
-		To:   &addr,
-		Data: stakeCallData,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to estimate gas: %w", err)
-	}
-	incrementedGasLimit := (estimatedGas * 110) / 100
+	update := &oracleStateUpdate{}
+	var updateMutex sync.Mutex
+	errChan := make(chan error, 16) // needs to be larger than the number of goroutines we're spawning
 
-	// We only need 1 signature for minting, so we can use an empty message
-	// Message should contain your tx setup
-	// solanaFee, err := o.solanaClient.GetFeeForMessage(ctx, sol.Message{
-	// 	AccountKeys:         []sol.PublicKey{},
-	// 	Header:              sol.MessageHeader{},
-	// 	RecentBlockhash:     sol.Hash{},
-	// 	Instructions:        []sol.CompiledInstruction{},
-	// 	AddressTableLookups: sol.MessageAddressTableLookupSlice{},
-	// }.ToBase64(), solana.CommitmentFinalized)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to get solana fee: %w", err)
-	// }
+	// Fetch eigen delegations
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		delegations, err := o.getServiceManagerState(serviceManager, targetBlockNumber)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get contract state: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.eigenDelegations = delegations
+		updateMutex.Unlock()
+	}()
 
-	resp, err := http.Get(ROCKUSDPriceURL)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve ROCK price data: %w", err)
-	}
-	defer resp.Body.Close()
+	// Fetch redemptions
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		redemptions, err := o.getRedemptions(zenBTCControllerHolesky, targetBlockNumber)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get zenBTC contract state: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.redemptions = redemptions
+		updateMutex.Unlock()
+	}()
 
-	var priceData []PriceData
-	if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil {
-		return fmt.Errorf("failed to decode ROCK price data: %w", err)
-	}
-	ROCKUSDPrice, err := strconv.ParseFloat(priceData[0].Last, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse ROCK price data: %w", err)
+	// Get suggested priority fee
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		suggestedTip, err := o.EthClient.SuggestGasTipCap(ctx)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get suggested priority fee: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.suggestedTip = suggestedTip
+		updateMutex.Unlock()
+	}()
+
+	// Estimate gas for stake call
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(1000000000))
+		if err != nil {
+			errChan <- fmt.Errorf("failed to encode stake call data: %w", err)
+			return
+		}
+		addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
+		estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
+			From: common.HexToAddress("0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe"),
+			To:   &addr,
+			Data: stakeCallData,
+		})
+		if err != nil {
+			errChan <- fmt.Errorf("failed to estimate gas for stake call: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.estimatedGas = (estimatedGas * 110) / 100
+		updateMutex.Unlock()
+	}()
+
+	// Fetch ROCK price
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		client := &http.Client{
+			Timeout: httpTimeout,
+		}
+		resp, err := client.Get(ROCKUSDPriceURL)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to retrieve ROCK price data: %w", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		var priceData []PriceData
+		if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil {
+			errChan <- fmt.Errorf("failed to decode ROCK price data: %w", err)
+			return
+		}
+		priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
+
+		if err != nil {
+			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.ROCKUSDPrice = priceDec
+		updateMutex.Unlock()
+	}()
+
+	// Fetch BTC price
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
+			return
+		}
+		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+
+		price, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch BTC price: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.BTCUSDPrice = price
+		updateMutex.Unlock()
+	}()
+
+	// Fetch ETH price
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
+			return
+		}
+		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+
+		price, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch ETH price: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.ETHUSDPrice = price
+		updateMutex.Unlock()
+	}()
+
+	// Process ETH burn events
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.processEthBurnEvents(latestHeader)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Ethereum burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.ethBurnEvents = events
+		updateMutex.Unlock()
+	}()
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+	close(errChan)
+
+	// Check for any errors
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
 	}
 
-	mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to fetch latest block: %w", err)
-	}
-	targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
-
-	BTCUSDPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
-	if err != nil {
-		return fmt.Errorf("failed to fetch BTC price: %w", err)
-	}
-
-	ETHUSDPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
-	if err != nil {
-		return fmt.Errorf("failed to fetch ETH price: %w", err)
-	}
-
-	ethBurnEvents, err := o.processEthBurnEvents(latestHeader)
-	if err != nil {
-		return fmt.Errorf("failed to process Ethereum burn events: %w", err)
-	}
+	// Get current state to preserve cleaned events
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	o.updateChan <- sidecartypes.OracleState{
-		EigenDelegations: eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      incrementedGasLimit, // TODO: rename to EthStakeGasLimit and add EthMintGasLimit
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: *solanaFee.Value,
+		EigenDelegations:           update.eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                update.estimatedGas,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  update.suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: 5000, // TODO: update me
-		EthBurnEvents:              ethBurnEvents,
-		Redemptions:                redemptions,
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
+		EthBurnEvents:              update.ethBurnEvents,
+		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
+		Redemptions:                update.redemptions,
+		ROCKUSDPrice:               update.ROCKUSDPrice,
+		BTCUSDPrice:                update.BTCUSDPrice,
+		ETHUSDPrice:                update.ETHUSDPrice,
 	}
 
 	return nil
@@ -246,7 +350,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 }
 
 func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(o.Config.EthOracle.EthBurnEventsBlockRange)))
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(EthBurnEventsBlockRange))
 	toBlock := latestHeader.Number
 	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {
@@ -263,12 +367,12 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 		existingEthBurnEvents[key] = true
 	}
 
-	// Only add new events that aren't already in our cache
+	// Only add new events that aren't already in our cache and haven't been cleaned up
 	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
 	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
 	for _, event := range newEthBurnEvents {
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingEthBurnEvents[key] {
+		if !existingEthBurnEvents[key] && !currentState.CleanedEthBurnEvents[key] {
 			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
 		}
 	}
@@ -299,6 +403,11 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		if len(resp.BurnEvents) == 0 {
 			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
 		} else {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if currentState.CleanedEthBurnEvents == nil {
+				currentState.CleanedEthBurnEvents = make(map[string]bool)
+			}
+			currentState.CleanedEthBurnEvents[key] = true
 			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
 		}
 	}
@@ -319,25 +428,26 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 	ctx := context.Background()
 	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
 
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []common.Address{tokenAddress},
-		Topics: [][]common.Hash{
-			{crypto.Keccak256Hash([]byte("ZenBTCTokenRedemption(address,uint256,bytes,uint256)"))},
-		},
+	// Create a new instance of the ZenBTC token contract
+	zenBTCInstance, err := zenbtc.NewZenBTCFilterer(tokenAddress, o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ZenBTC token contract filterer: %w", err)
 	}
 
-	logs, err := o.EthClient.FilterLogs(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to filter logs: %w", err)
+	// Set up the filter options
+	endBlock := toBlock.Uint64()
+	filterOpts := &bind.FilterOpts{
+		Start:   fromBlock.Uint64(),
+		End:     &endBlock,
+		Context: ctx,
 	}
 
-	// Create a new instance of the ZenBTC token contract to parse logs
-	zenBTCInstance, err := zenbtc.NewZenBTC(tokenAddress, o.EthClient)
+	// Use the generated FilterTokenRedemption method
+	iterator, err := zenBTCInstance.FilterTokenRedemption(filterOpts, nil) // nil means no filter on redeemer address
 	if err != nil {
-		return nil, fmt.Errorf("failed to create ZenBTC token contract instance: %w", err)
+		return nil, fmt.Errorf("failed to filter token redemption events: %w", err)
 	}
+	defer iterator.Close()
 
 	chainID, err := o.EthClient.ChainID(ctx)
 	if err != nil {
@@ -345,12 +455,12 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 	}
 
 	var burnEvents []api.BurnEvent
-	for _, vLog := range logs {
-		event, err := zenBTCInstance.ParseTokenRedemption(vLog)
-		if err != nil {
-			log.Printf("failed to parse burn event log: %v", err)
+	for iterator.Next() {
+		event := iterator.Event
+		if event == nil {
 			continue
 		}
+
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
 			LogIndex:        uint64(event.Raw.Index),
@@ -358,6 +468,10 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 		})
+	}
+
+	if err := iterator.Error(); err != nil {
+		return nil, fmt.Errorf("error iterating through token redemption events: %w", err)
 	}
 
 	return burnEvents, nil

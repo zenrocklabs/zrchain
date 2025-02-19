@@ -17,7 +17,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 		ethGasLimit  uint64
 		btcUSDPrice  sdkmath.LegacyDec
 		ethUSDPrice  sdkmath.LegacyDec
-		exchangeRate float64
+		exchangeRate sdkmath.LegacyDec
 		expected     uint64
 	}{
 		{
@@ -27,7 +27,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			ethGasLimit:  285_000,
 			btcUSDPrice:  sdkmath.LegacyNewDec(0),
 			ethUSDPrice:  sdkmath.LegacyNewDec(2000),
-			exchangeRate: 1.0,
+			exchangeRate: sdkmath.LegacyNewDec(1),
 			expected:     0,
 		},
 		{
@@ -37,7 +37,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			ethGasLimit:  285_000,
 			btcUSDPrice:  sdkmath.LegacyNewDec(90_000_00), // $90k BTC in cents
 			ethUSDPrice:  sdkmath.LegacyNewDec(3_000_00),  // $3k ETH in cents
-			exchangeRate: 1.0,
+			exchangeRate: sdkmath.LegacyNewDec(1),
 			expected:     30399, // 0.00030399 BTC in fees (1:1 exchange rate)
 		},
 		{
@@ -47,7 +47,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			ethGasLimit:  285_000,
 			btcUSDPrice:  sdkmath.LegacyNewDec(90_000_00),
 			ethUSDPrice:  sdkmath.LegacyNewDec(3_000_00),
-			exchangeRate: 1.0,
+			exchangeRate: sdkmath.LegacyNewDec(1),
 			expected:     99749, // 0.00099749 BTC in fees (1:1 exchange rate)
 		},
 	}

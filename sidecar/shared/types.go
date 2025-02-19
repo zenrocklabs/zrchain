@@ -3,6 +3,7 @@ package shared
 import (
 	"math/big"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 )
 
@@ -14,10 +15,11 @@ type OracleState struct {
 	EthTipCap                  uint64                         `json:"ethTipCap"`
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
 	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
+	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
 	Redemptions                []api.Redemption               `json:"redemptions"`
-	ROCKUSDPrice               float64                        `json:"rockUSDPrice"`
-	BTCUSDPrice                float64                        `json:"btcUSDPrice"`
-	ETHUSDPrice                float64                        `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
+	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
+	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
+	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
 }
 
 type Config struct {
@@ -44,10 +46,9 @@ type NeutrinoConfig struct {
 }
 
 type EthOracleConfig struct {
-	RPC                     map[string]string `yaml:"rpc"`
-	ContractAddrs           ContractAddrs     `yaml:"contract_addrs"`
-	NetworkName             map[string]string `yaml:"network_name"`
-	EthBurnEventsBlockRange uint64            `yaml:"eth_burn_events_block_range"`
+	RPC           map[string]string `yaml:"rpc"`
+	ContractAddrs ContractAddrs     `yaml:"contract_addrs"`
+	NetworkName   map[string]string `yaml:"network_name"`
 }
 
 type ContractAddrs struct {
