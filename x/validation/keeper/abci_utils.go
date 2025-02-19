@@ -14,6 +14,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -422,7 +423,7 @@ func (k *Keeper) constructStakeTx(ctx context.Context, chainID, amount, nonce, g
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(ctx, addr, chainID, encodedMintData, nonce, gasLimit, baseFee, tipCap)
 }
 
@@ -442,7 +443,7 @@ func (k *Keeper) constructUnstakeTx(ctx context.Context, chainID uint64, destina
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(ctx, addr, chainID, encodedUnstakeData, ethNonce, 700000, baseFee, tipCap)
 }
 
@@ -452,7 +453,7 @@ func (k *Keeper) constructCompleteTx(ctx context.Context, chainID, redemptionID,
 		return nil, nil, err
 	}
 
-	addr := common.HexToAddress(k.zenBTCKeeper.GetEthBatcherAddr(ctx))
+	addr := common.HexToAddress(k.zenBTCKeeper.GetControllerAddr(ctx))
 	return k.constructEthereumTx(ctx, addr, chainID, encodedCompleteData, ethNonce, 300000, baseFee, tipCap)
 }
 
@@ -686,7 +687,7 @@ func (k Keeper) CalculateZenBTCMintFee(
 	ethGasLimit uint64,
 	btcUSDPrice sdkmath.LegacyDec,
 	ethUSDPrice sdkmath.LegacyDec,
-	exchangeRate float64,
+	exchangeRate sdkmath.LegacyDec,
 ) uint64 {
 	if btcUSDPrice.IsZero() {
 		return 0
@@ -725,7 +726,7 @@ func (k Keeper) CalculateZenBTCMintFee(
 	satoshis := satoshisInt.Uint64()
 
 	// Convert BTC fee to zenBTC using exchange rate
-	feeZenBTC := uint64(float64(satoshis) / exchangeRate)
+	feeZenBTC := math.LegacyNewDecFromInt(math.NewIntFromUint64(satoshis)).Quo(exchangeRate).TruncateInt().Uint64()
 
 	return feeZenBTC
 }

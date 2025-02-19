@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
@@ -34,9 +35,9 @@ var (
 		EthBurnEvents:              []api.BurnEvent{},
 		CleanedEthBurnEvents:       make(map[string]bool),
 		Redemptions:                []api.Redemption{},
-		ROCKUSDPrice:               0,
-		BTCUSDPrice:                0,
-		ETHUSDPrice:                0,
+		ROCKUSDPrice:               math.LegacyNewDec(0),
+		BTCUSDPrice:                math.LegacyNewDec(0),
+		ETHUSDPrice:                math.LegacyNewDec(0),
 	}
 	// EthBlocksBeforeFinality   = big.NewInt(72)
 	EthBlocksBeforeFinality = big.NewInt(0) // TODO: uncomment above and remove this line before mainnet

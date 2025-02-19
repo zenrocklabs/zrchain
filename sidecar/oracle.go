@@ -7,10 +7,10 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -106,9 +106,9 @@ func (o *Oracle) fetchAndProcessState(
 		suggestedTip     *big.Int
 		estimatedGas     uint64
 		ethBurnEvents    []api.BurnEvent
-		ROCKUSDPrice     float64
-		BTCUSDPrice      float64
-		ETHUSDPrice      float64
+		ROCKUSDPrice     math.LegacyDec
+		BTCUSDPrice      math.LegacyDec
+		ETHUSDPrice      math.LegacyDec
 	}
 
 	update := &oracleStateUpdate{}
@@ -200,13 +200,14 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to decode ROCK price data: %w", err)
 			return
 		}
-		price, err := strconv.ParseFloat(priceData[0].Last, 64)
+		priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
+
 		if err != nil {
 			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
 			return
 		}
 		updateMutex.Lock()
-		update.ROCKUSDPrice = price
+		update.ROCKUSDPrice = priceDec
 		updateMutex.Unlock()
 	}()
 

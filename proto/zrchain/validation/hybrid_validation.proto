@@ -136,8 +136,7 @@ message HVParams {
   ]; // % APR
   int64 BlockTime = 2; // seconds
   repeated AssetData stakeableAssets = 3;
-  string authority = 4;
-  int64 priceRetentionBlockRange = 5;
+  int64 priceRetentionBlockRange = 4;
 }
 
 message ValidationInfo {
