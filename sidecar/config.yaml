@@ -16,10 +16,10 @@ eth_oracle:
       eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
     zenbtc:
       controller:
-        testnet: "0x5b9Ea8d5486D388a158F026c337DF950866dA5e9"
+        testnet: "0x2844bd31B68AE5a0335c672e6251e99324441B73"
       token:
         ethereum:
-          testnet: "0xC8CdeDd20cCb4c06884ac4C2fF952A0B7cC230a3"
+          testnet: "0x7692E9a796001FeE9023853f490A692bAB2E4834"
   network_name:
     mainnet: "Ethereum Mainnet"
     testnet: "Holešky Ethereum Testnet"

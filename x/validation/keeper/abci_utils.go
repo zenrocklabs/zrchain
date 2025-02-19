@@ -467,7 +467,7 @@ func EncodeStakeCallData(amount *big.Int) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get ABI: %v", err)
 	}
 
-	// Pack using the contract binding's ABI for the wrapZenBTC function
+	// Pack using the contract binding's ABI for the stakeRockBTC function
 	data, err := parsed.Pack(
 		"stakeRockBTC",
 		amount.Uint64(),
