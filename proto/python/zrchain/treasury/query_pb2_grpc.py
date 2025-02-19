@@ -75,6 +75,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.FromString,
                 )
+        self.FeeExempts = channel.unary_unary(
+                '/zrchain.treasury.Query/FeeExempts',
+                request_serializer=zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -82,7 +87,7 @@ class QueryServicer(object):
     """
 
     def Params(self, request, context):
-        """Parameters queries the parameters of the module.
+        """Parameters queries the parameters of the module. 
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -165,6 +170,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def FeeExempts(self, request, context):
+        """Queries a list of FeeExempts items.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -227,6 +239,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.ZenbtcWallets,
                     request_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.FromString,
                     response_serializer=zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.SerializeToString,
+            ),
+            'FeeExempts': grpc.unary_unary_rpc_method_handler(
+                    servicer.FeeExempts,
+                    request_deserializer=zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsRequest.FromString,
+                    response_serializer=zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -440,5 +457,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.treasury.Query/ZenbtcWallets',
             zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsRequest.SerializeToString,
             zrchain_dot_treasury_dot_query__pb2.QueryZenbtcWalletsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def FeeExempts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.treasury.Query/FeeExempts',
+            zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsRequest.SerializeToString,
+            zrchain_dot_treasury_dot_query__pb2.QueryFeeExemptsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -24,20 +24,20 @@ const (
 )
 
 var (
-	KeysKey                        = collections.NewPrefix(0)
-	KeyCountKey                    = collections.NewPrefix(1)
-	WalletsKey                     = collections.NewPrefix(2)
-	WalletCountKey                 = collections.NewPrefix(3)
-	KeyRequestsKey                 = collections.NewPrefix(4)
-	KeyRequestCountKey             = collections.NewPrefix(5)
-	SignRequestsKey                = collections.NewPrefix(6)
-	SignRequestCountKey            = collections.NewPrefix(7)
-	SignTransactionRequestsKey     = collections.NewPrefix(8)
-	SignTransactionRequestCountKey = collections.NewPrefix(9)
-	ICATransactionRequestsKey      = collections.NewPrefix(10)
-	ICATransactionRequestCountKey  = collections.NewPrefix(11)
-	ParamsKey                      = collections.NewPrefix(12)
-
+	KeysKey                          = collections.NewPrefix(0)
+	KeyCountKey                      = collections.NewPrefix(1)
+	WalletsKey                       = collections.NewPrefix(2)
+	WalletCountKey                   = collections.NewPrefix(3)
+	KeyRequestsKey                   = collections.NewPrefix(4)
+	KeyRequestCountKey               = collections.NewPrefix(5)
+	SignRequestsKey                  = collections.NewPrefix(6)
+	SignRequestCountKey              = collections.NewPrefix(7)
+	SignTransactionRequestsKey       = collections.NewPrefix(8)
+	SignTransactionRequestCountKey   = collections.NewPrefix(9)
+	ICATransactionRequestsKey        = collections.NewPrefix(10)
+	ICATransactionRequestCountKey    = collections.NewPrefix(11)
+	ParamsKey                        = collections.NewPrefix(12)
+	NoFeeMsgsPrefix                  = collections.NewPrefix(13)
 	KeysIndex                        = "keys"
 	KeyCountIndex                    = "key_count"
 	WalletsIndex                     = "wallets"
@@ -51,7 +51,7 @@ var (
 	ICATransactionRequestsIndex      = "ica_transaction_requests"
 	ICATransactionRequestCountIndex  = "ica_transaction_request_count"
 	ParamsIndex                      = "params"
-
+	NoFeeMsgsIndex                   = "no_fee_msgs"
 	// PortKey defines the key to store the port ID in store
 	PortKey = KeyPrefix("treasury-port-")
 )

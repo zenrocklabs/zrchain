@@ -61,6 +61,9 @@ type Keeper struct {
 	identityKeeper     identity.Keeper
 	policyKeeper       policy.Keeper
 	zenBTCKeeper       shared.ZenBTCKeeper
+
+	// NoFeeMsgsList contains the message URLs that are disabled
+	NoFeeMsgsList collections.KeySet[string]
 }
 
 type ValidationKeeper interface {
@@ -103,6 +106,13 @@ func NewKeeper(
 		SignTransactionRequestCount: collections.NewItem(sb, types.SignTransactionRequestCountKey, types.SignTransactionRequestCountIndex, collections.Uint64Value),
 		ICATransactionRequestStore:  collections.NewMap(sb, types.ICATransactionRequestsKey, types.ICATransactionRequestsIndex, collections.Uint64Key, codec.CollValue[types.ICATransactionRequest](cdc)),
 		ICATransactionRequestCount:  collections.NewItem(sb, types.ICATransactionRequestCountKey, types.ICATransactionRequestCountIndex, collections.Uint64Value),
+
+		NoFeeMsgsList: collections.NewKeySet(
+			sb,
+			types.NoFeeMsgsPrefix,
+			"no_fee_msgs",
+			collections.StringKey,
+		),
 	}
 
 	schema, err := sb.Build()
@@ -679,4 +689,10 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 	}
 
 	return nil
+}
+
+// IsAllowed returns true when msg URL is not found in the DisableList for given context, else false.
+func (k *Keeper) IsAllowed(ctx context.Context, msgURL string) (bool, error) {
+	has, err := k.NoFeeMsgsList.Has(ctx, msgURL)
+	return !has, err
 }

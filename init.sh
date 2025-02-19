@@ -317,6 +317,13 @@ if [ "$START_ONLY" = false ]; then
           "min_gas_fee": "0.0001urock"
         }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
+        jq '.app_state.treasury.no_fee_msgs = [
+          "/zrchain.treasury.FulfilKeyRequest",
+          "/zrchain.treasury.FulfilSignRequest",
+          "/zrchain.treasury.FulfilSignTransactionRequest",
+          "/zrchain.treasury.FulfilICATransactionRequest"
+        ]' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
         jq '.app_state.gov.params.voting_period = "60s"' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
         jq '.app_state.gov.params.expedited_voting_period = "30s"' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
