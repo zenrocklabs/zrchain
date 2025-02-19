@@ -32,11 +32,7 @@ func (k Keeper) GetStakeableAssets(ctx context.Context) []*types.AssetData {
 }
 
 func (k Keeper) GetHVParamsAuthority(ctx context.Context) string {
-	params, err := k.HVParams.Get(ctx)
-	if err != nil || params.Authority == "" {
-		return types.DefaultHVParamsAuthority
-	}
-	return params.Authority
+	return k.authority
 }
 
 // GetPriceRetentionBlockRange returns the price retention block range
