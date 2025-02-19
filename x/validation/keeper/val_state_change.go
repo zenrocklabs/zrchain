@@ -334,11 +334,11 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 
 		k.Logger(ctx).Debug(fmt.Sprintf(
-			"\nvalidator: %s | %s\ntoken stake: native=%d, avs=%d, total=%d\nstake value: native=%.0f, avs=%.0f, total=%d",
+			"\nvalidator: %s | %s\ntoken stake: native=%d, avs=%d, total=%d\nstake value: native=%s, avs=%s, total=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
 			validator.ConsensusPower(powerReduction), validator.AVSConsensusPower(powerReduction),
 			validator.ConsensusPower(powerReduction)+validator.AVSConsensusPower(powerReduction),
-			nativePower.MustFloat64(), avsPower.MustFloat64(), newPower,
+			nativePower.String(), avsPower.String(), newPower,
 		))
 
 		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: newPower})

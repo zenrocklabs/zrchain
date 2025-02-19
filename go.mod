@@ -70,7 +70,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zenrocklabs/zenbtc v1.13.1
+	github.com/zenrocklabs/zenbtc v1.13.5
 	github.com/zenrocklabs/zenrock-avs v1.4.18
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.29.0
@@ -82,10 +82,7 @@ require (
 	gotest.tools/v3 v3.5.1
 )
 
-require (
-	github.com/beevik/ntp v1.4.3
-	github.com/test-go/testify v1.1.4
-)
+require github.com/beevik/ntp v1.4.3
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.1-20240508200655-46a4cf4ba109.1 // indirect
