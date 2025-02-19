@@ -63,7 +63,7 @@ func (k Keeper) MinCommissionRate(ctx context.Context) math.LegacyDec {
 
 // SetParams sets the x/staking module parameters.
 // CONTRACT: This method performs no validation of the parameters.
-func (k Keeper) SetParams(ctx context.Context, params stakingtypes.Params) error {
+func (k Keeper) SetParams(ctx context.Context, params types.Params) error {
 	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {

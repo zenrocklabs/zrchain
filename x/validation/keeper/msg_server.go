@@ -17,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 )
@@ -590,7 +589,11 @@ func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams)
 		return nil, err
 	}
 
-	if err := k.SetParams(ctx, stakingtypes.Params(msg.Params)); err != nil {
+	if err := k.SetParams(ctx, types.Params(msg.Params)); err != nil {
+		return nil, err
+	}
+
+	if err := k.HVParams.Set(ctx, msg.HVParams); err != nil {
 		return nil, err
 	}
 
