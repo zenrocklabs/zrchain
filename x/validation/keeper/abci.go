@@ -477,7 +477,7 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 
 // storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Warn("checking bitcoin header", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
+	k.Logger(ctx).Info("checking bitcoin header", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
 
 	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
 		k.Logger(ctx).Error("invalid bitcoin header data", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
@@ -488,9 +488,9 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "error", err)
+			return
 		}
-		k.Logger(ctx).Warn("requested historical Bitcoin headers store not initialised", "height", oracleData.BtcBlockHeight)
-		return
+		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised", "height", oracleData.BtcBlockHeight)
 	}
 
 	k.Logger(ctx).Info("requested headers", "headers", requestedHeaders.Heights)
@@ -502,14 +502,14 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		return
 	}
 
-	k.Logger(ctx).Warn("header previously seen", "seen", headerPreviouslySeen, "isHistorical", isHistorical)
+	k.Logger(ctx).Info("header previously seen", "seen", headerPreviouslySeen, "isHistorical", isHistorical)
 
 	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
 		return
 	}
 
-	k.Logger(ctx).Warn("stored header", "height", oracleData.BtcBlockHeight)
+	k.Logger(ctx).Info("stored header", "height", oracleData.BtcBlockHeight)
 
 	if isHistorical {
 		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
@@ -570,7 +570,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 		return err
 	}
 
-	k.Logger(ctx).Warn("requested headers after reorg check", "headers", requestedHeaders.Heights)
+	k.Logger(ctx).Info("requested headers after reorg check", "headers", requestedHeaders.Heights)
 
 	return nil
 }
