@@ -274,13 +274,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	k.updateValidatorStakes(ctx, oracleData)
 	k.updateAVSDelegationStore(ctx, oracleData)
 
-	hash, err := deriveHash(oracleData.BtcBlockHeader)
-	if err != nil {
-		k.Logger(ctx).Error("error deriving bitcoin header hash", "error", err)
-	} else {
-		k.Logger(ctx).Warn("bitcoin header hash", "hash", hash, "header", fmt.Sprintf("%+v", oracleData.BtcBlockHeader))
-	}
-
 	k.storeBitcoinBlockHeader(ctx, oracleData)
 	k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 	k.storeNewZenBTCRedemptions(ctx, oracleData)
@@ -288,6 +281,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	// Toggle minting and unstaking every other block due to a 1-block delay in processing VEs.
 	if ctx.BlockHeight()%2 == 0 {
 		k.updateNonces(ctx, oracleData)
+
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
@@ -296,6 +290,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	k.recordNonVotingValidators(ctx, req)
 	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, oracleData.ConsensusData)
+
 	return nil
 }
 
