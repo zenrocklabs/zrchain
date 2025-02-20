@@ -101,6 +101,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
+	k.Logger(ctx).Info("bitcoin header hash", "hash", bitcoinHeaderHash, "header", fmt.Sprintf("%+v", neutrinoResponse.BlockHeader))
+
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -482,6 +484,8 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		return
 	}
 
+	k.Logger(ctx).Info("requested headers", "headers", requestedHeaders.Heights)
+
 	isHistorical := k.isHistoricalHeader(oracleData.BtcBlockHeight, requestedHeaders.Heights)
 	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
 	if err != nil {
@@ -489,10 +493,14 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 		return
 	}
 
+	k.Logger(ctx).Info("header previously seen", "seen", headerPreviouslySeen, "isHistorical", isHistorical)
+
 	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
 		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
 		return
 	}
+
+	k.Logger(ctx).Info("stored header", "height", oracleData.BtcBlockHeight)
 
 	if isHistorical {
 		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
@@ -552,6 +560,8 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "error", err)
 		return err
 	}
+
+	k.Logger(ctx).Info("requested headers after reorg check", "headers", requestedHeaders.Heights)
 
 	return nil
 }
