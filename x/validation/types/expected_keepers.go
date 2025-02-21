@@ -117,3 +117,7 @@ type StakingHooksWrapper struct{ StakingHooks }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (StakingHooksWrapper) IsOnePerModuleType() {}
+
+type ZentpKeeper interface {
+	GetSignerKeyID(ctx context.Context) uint64
+}

@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&ibc/applications/fee/v1/metadata.proto\x12\x17ibc.applications.fee.v1\"L\n\x08Metadata\x12\x1f\n\x0b\x66\x65\x65_version\x18\x01 \x01(\tR\nfeeVersion\x12\x1f\n\x0b\x61pp_version\x18\x02 \x01(\tR\nappVersionB7Z5github.com/cosmos/ibc-go/v9/modules/apps/29-fee/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&ibc/applications/fee/v1/metadata.proto\x12\x17ibc.applications.fee.v1\"L\n\x08Metadata\x12\x1f\n\x0b\x66\x65\x65_version\x18\x01 \x01(\tR\nfeeVersion\x12\x1f\n\x0b\x61pp_version\x18\x02 \x01(\tR\nappVersionB8Z6github.com/cosmos/ibc-go/v10/modules/apps/29-fee/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.applications.fee.v1.metadata_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z5github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/cosmos/ibc-go/v10/modules/apps/29-fee/types'
   _globals['_METADATA']._serialized_start=67
   _globals['_METADATA']._serialized_end=143
 # @@protoc_insertion_point(module_scope)

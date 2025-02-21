@@ -22,28 +22,16 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-from cosmos.msg.v1 import msg_pb2 as cosmos_dot_msg_dot_v1_dot_msg__pb2
-from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%ibc/core/client/v2/counterparty.proto\x12\x12ibc.core.client.v2\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x14gogoproto/gogo.proto\"T\n\x10\x43ounterpartyInfo\x12#\n\rmerkle_prefix\x18\x01 \x03(\x0cR\x0cmerklePrefix\x12\x1b\n\tclient_id\x18\x02 \x01(\tR\x08\x63lientId\"\xd3\x01\n\x17MsgRegisterCounterparty\x12\x1b\n\tclient_id\x18\x01 \x01(\tR\x08\x63lientId\x12<\n\x1a\x63ounterparty_merkle_prefix\x18\x02 \x03(\x0cR\x18\x63ounterpartyMerklePrefix\x12\x34\n\x16\x63ounterparty_client_id\x18\x03 \x01(\tR\x14\x63ounterpartyClientId\x12\x16\n\x06signer\x18\x04 \x01(\tR\x06signer:\x0f\x88\xa0\x1f\x00\x82\xe7\xb0*\x06signer\"!\n\x1fMsgRegisterCounterpartyResponse2\x92\x01\n\x0f\x43ounterpartyMsg\x12x\n\x14RegisterCounterparty\x12+.ibc.core.client.v2.MsgRegisterCounterparty\x1a\x33.ibc.core.client.v2.MsgRegisterCounterpartyResponse\x1a\x05\x80\xe7\xb0*\x01\x42:Z8github.com/cosmos/ibc-go/v9/modules/core/02-client/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%ibc/core/client/v2/counterparty.proto\x12\x12ibc.core.client.v2\"T\n\x10\x43ounterpartyInfo\x12#\n\rmerkle_prefix\x18\x01 \x03(\x0cR\x0cmerklePrefix\x12\x1b\n\tclient_id\x18\x02 \x01(\tR\x08\x63lientIdB>Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.core.client.v2.counterparty_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z8github.com/cosmos/ibc-go/v9/modules/core/02-client/types'
-  _globals['_MSGREGISTERCOUNTERPARTY']._loaded_options = None
-  _globals['_MSGREGISTERCOUNTERPARTY']._serialized_options = b'\210\240\037\000\202\347\260*\006signer'
-  _globals['_COUNTERPARTYMSG']._loaded_options = None
-  _globals['_COUNTERPARTYMSG']._serialized_options = b'\200\347\260*\001'
-  _globals['_COUNTERPARTYINFO']._serialized_start=108
-  _globals['_COUNTERPARTYINFO']._serialized_end=192
-  _globals['_MSGREGISTERCOUNTERPARTY']._serialized_start=195
-  _globals['_MSGREGISTERCOUNTERPARTY']._serialized_end=406
-  _globals['_MSGREGISTERCOUNTERPARTYRESPONSE']._serialized_start=408
-  _globals['_MSGREGISTERCOUNTERPARTYRESPONSE']._serialized_end=441
-  _globals['_COUNTERPARTYMSG']._serialized_start=444
-  _globals['_COUNTERPARTYMSG']._serialized_end=590
+  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types'
+  _globals['_COUNTERPARTYINFO']._serialized_start=61
+  _globals['_COUNTERPARTYINFO']._serialized_end=145
 # @@protoc_insertion_point(module_scope)

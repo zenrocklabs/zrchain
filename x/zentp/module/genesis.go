@@ -13,6 +13,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	if err := k.SetParams(ctx, genState.Params); err != nil {
 		panic(err)
 	}
+	if err := k.MintCount.Set(ctx, uint64(0)); err != nil {
+		panic(err)
+	}
+	if err := k.BurnCount.Set(ctx, uint64(0)); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the module's exported genesis.

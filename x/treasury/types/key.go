@@ -5,7 +5,10 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gagliardetto/solana-go"
+	"github.com/pkg/errors"
 )
 
 // nolint:stylecheck,st1003
@@ -126,5 +129,26 @@ func Caip2ToKeyType(caip string) (KeyType, error) {
 	default:
 		return KeyType_KEY_TYPE_UNSPECIFIED, fmt.Errorf("invalid key type: %s", caip)
 	}
+}
 
+func ValidateChainAddress(chain string, address string) error {
+	keyType, err := Caip2ToKeyType(chain)
+	if err != nil {
+		return err
+	}
+
+	switch keyType {
+	case KeyType_KEY_TYPE_EDDSA_ED25519:
+		_, err := solana.PublicKeyFromBase58(address)
+		if err != nil {
+			return errors.Wrapf(err, "invalid solana address: %s", address)
+		}
+	case KeyType_KEY_TYPE_ECDSA_SECP256K1:
+		if !common.IsHexAddress(address) {
+			return errors.Errorf("invalid ethereum address: %s", address)
+		}
+
+	}
+
+	return nil
 }

@@ -177,5 +177,4 @@ func (k Keeper) getSolanaDurableNonce(ctx sdk.Context) (system.NonceAccount, err
 	}
 
 	return *nonceAccount, nil
-
 }

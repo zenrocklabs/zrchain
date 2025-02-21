@@ -12,6 +12,7 @@ message Params {
   option (gogoproto.equal) = true;
 
   uint64 zrchain_relayer_key_id = 1;
+
   Solana solana = 2;
 }
 

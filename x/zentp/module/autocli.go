@@ -29,25 +29,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Skip:      true, // skipped because authority gated
 				},
 				{
-					RpcMethod: "MintRock",
-					Use:       `mint-rock [amount] [src-key-id] [dst-chain] [recipient-key-id]`,
-					Short:     "Mint new ROCK tokens on destination chain",
+					RpcMethod: "BridgeRock",
+					Use:       `bridge-rock [amount] [src-address] [dst-chain] [recipient-address]`,
+					Short:     "Bridge ROCK tokens from zrchain to a destination chain",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "amount"},
-						{ProtoField: "source_key_id"},
+						{ProtoField: "source_address"},
 						{ProtoField: "destination_chain"},
-						{ProtoField: "recipient_key_id"},
+						{ProtoField: "recipient_address"},
 					},
 				},
 				{
 					RpcMethod: "Burn",
 					Skip:      true, // skipped because authority gated
-				},
-				{
-					RpcMethod:      "BurnRock",
-					Use:            "burn-rock [chain-id] [key-id] [amount] [recipient]",
-					Short:          "Send a burn_rock tx",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "chainId"}, {ProtoField: "keyId"}, {ProtoField: "amount"}, {ProtoField: "recipient"}},
 				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},

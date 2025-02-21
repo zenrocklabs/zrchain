@@ -11,6 +11,7 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	solSystem "github.com/gagliardetto/solana-go/programs/system"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -42,6 +43,7 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
+		SolROCKMintNonce           solSystem.NonceAccount
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
@@ -66,8 +68,10 @@ type (
 		EthTipCap                  uint64
 		RequestedStakerNonce       uint64
 		RequestedEthMinterNonce    uint64
+		RequestedSolMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
+		SolROCKMintNonce           solSystem.NonceAccount
 		SolanaLamportsPerSignature uint64
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
@@ -88,6 +92,7 @@ type (
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
+		GetSolanaAccountInfo(ctx context.Context, in *sidecar.SolanaAccountInfoRequest, opts ...grpc.CallOption) (*sidecar.SolanaAccountInfoResponse, error)
 	}
 )
 

@@ -23,12 +23,9 @@ type MsgClient interface {
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// MintRock defines an operation for creating a mint request of Rock
 	// on a destination chain
-	MintRock(ctx context.Context, in *MsgMintRock, opts ...grpc.CallOption) (*MsgMintRockResponse, error)
+	BridgeRock(ctx context.Context, in *MsgBridgeRock, opts ...grpc.CallOption) (*MsgBridgeRockResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
-	// BurnRock defines an operation for burning Rock on a destination chain
-	// and minting it back to a key on zrchain
-	BurnRock(ctx context.Context, in *MsgBurnRock, opts ...grpc.CallOption) (*MsgBurnRockResponse, error)
 }
 
 type msgClient struct {
@@ -48,9 +45,9 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) MintRock(ctx context.Context, in *MsgMintRock, opts ...grpc.CallOption) (*MsgMintRockResponse, error) {
-	out := new(MsgMintRockResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/MintRock", in, out, opts...)
+func (c *msgClient) BridgeRock(ctx context.Context, in *MsgBridgeRock, opts ...grpc.CallOption) (*MsgBridgeRockResponse, error) {
+	out := new(MsgBridgeRockResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/BridgeRock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,15 +63,6 @@ func (c *msgClient) Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOpti
 	return out, nil
 }
 
-func (c *msgClient) BurnRock(ctx context.Context, in *MsgBurnRock, opts ...grpc.CallOption) (*MsgBurnRockResponse, error) {
-	out := new(MsgBurnRockResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/BurnRock", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -84,12 +72,9 @@ type MsgServer interface {
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// MintRock defines an operation for creating a mint request of Rock
 	// on a destination chain
-	MintRock(context.Context, *MsgMintRock) (*MsgMintRockResponse, error)
+	BridgeRock(context.Context, *MsgBridgeRock) (*MsgBridgeRockResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
-	// BurnRock defines an operation for burning Rock on a destination chain
-	// and minting it back to a key on zrchain
-	BurnRock(context.Context, *MsgBurnRock) (*MsgBurnRockResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -100,14 +85,11 @@ type UnimplementedMsgServer struct {
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (UnimplementedMsgServer) MintRock(context.Context, *MsgMintRock) (*MsgMintRockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MintRock not implemented")
+func (UnimplementedMsgServer) BridgeRock(context.Context, *MsgBridgeRock) (*MsgBridgeRockResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BridgeRock not implemented")
 }
 func (UnimplementedMsgServer) Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Burn not implemented")
-}
-func (UnimplementedMsgServer) BurnRock(context.Context, *MsgBurnRock) (*MsgBurnRockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BurnRock not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -140,20 +122,20 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_MintRock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgMintRock)
+func _Msg_BridgeRock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgBridgeRock)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).MintRock(ctx, in)
+		return srv.(MsgServer).BridgeRock(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zrchain.zentp.Msg/MintRock",
+		FullMethod: "/zrchain.zentp.Msg/BridgeRock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).MintRock(ctx, req.(*MsgMintRock))
+		return srv.(MsgServer).BridgeRock(ctx, req.(*MsgBridgeRock))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -176,24 +158,6 @@ func _Msg_Burn_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_BurnRock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgBurnRock)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).BurnRock(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/zrchain.zentp.Msg/BurnRock",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).BurnRock(ctx, req.(*MsgBurnRock))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,16 +170,12 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "MintRock",
-			Handler:    _Msg_MintRock_Handler,
+			MethodName: "BridgeRock",
+			Handler:    _Msg_BridgeRock_Handler,
 		},
 		{
 			MethodName: "Burn",
 			Handler:    _Msg_Burn_Handler,
-		},
-		{
-			MethodName: "BurnRock",
-			Handler:    _Msg_BurnRock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

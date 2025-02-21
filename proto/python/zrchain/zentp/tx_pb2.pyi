@@ -21,25 +21,25 @@ class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
-class MsgMintRock(_message.Message):
-    __slots__ = ("creator", "amount", "source_key_id", "destination_chain", "recipient_key_id")
+class MsgBridgeRock(_message.Message):
+    __slots__ = ("creator", "source_address", "amount", "destination_chain", "recipient_address")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    SOURCE_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     DESTINATION_CHAIN_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     creator: str
+    source_address: str
     amount: int
-    source_key_id: int
     destination_chain: str
-    recipient_key_id: int
-    def __init__(self, creator: _Optional[str] = ..., amount: _Optional[int] = ..., source_key_id: _Optional[int] = ..., destination_chain: _Optional[str] = ..., recipient_key_id: _Optional[int] = ...) -> None: ...
+    recipient_address: str
+    def __init__(self, creator: _Optional[str] = ..., source_address: _Optional[str] = ..., amount: _Optional[int] = ..., destination_chain: _Optional[str] = ..., recipient_address: _Optional[str] = ...) -> None: ...
 
-class MsgMintRockResponse(_message.Message):
-    __slots__ = ("tx_hash",)
-    TX_HASH_FIELD_NUMBER: _ClassVar[int]
-    tx_hash: str
-    def __init__(self, tx_hash: _Optional[str] = ...) -> None: ...
+class MsgBridgeRockResponse(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
 
 class MsgBurn(_message.Message):
     __slots__ = ("authority", "module_account", "denom", "amount")
@@ -56,23 +56,3 @@ class MsgBurn(_message.Message):
 class MsgBurnResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
-
-class MsgBurnRock(_message.Message):
-    __slots__ = ("creator", "chain_id", "key_id", "amount", "recipient")
-    CREATOR_FIELD_NUMBER: _ClassVar[int]
-    CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
-    KEY_ID_FIELD_NUMBER: _ClassVar[int]
-    AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_FIELD_NUMBER: _ClassVar[int]
-    creator: str
-    chain_id: str
-    key_id: int
-    amount: int
-    recipient: str
-    def __init__(self, creator: _Optional[str] = ..., chain_id: _Optional[str] = ..., key_id: _Optional[int] = ..., amount: _Optional[int] = ..., recipient: _Optional[str] = ...) -> None: ...
-
-class MsgBurnRockResponse(_message.Message):
-    __slots__ = ("tx_hash",)
-    TX_HASH_FIELD_NUMBER: _ClassVar[int]
-    tx_hash: str
-    def __init__(self, tx_hash: _Optional[str] = ...) -> None: ...

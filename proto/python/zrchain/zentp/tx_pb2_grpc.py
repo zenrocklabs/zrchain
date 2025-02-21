@@ -20,20 +20,15 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
-        self.MintRock = channel.unary_unary(
-                '/zrchain.zentp.Msg/MintRock',
-                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
-                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
+        self.BridgeRock = channel.unary_unary(
+                '/zrchain.zentp.Msg/BridgeRock',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.FromString,
                 )
         self.Burn = channel.unary_unary(
                 '/zrchain.zentp.Msg/Burn',
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurn.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.FromString,
-                )
-        self.BurnRock = channel.unary_unary(
-                '/zrchain.zentp.Msg/BurnRock',
-                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.SerializeToString,
-                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.FromString,
                 )
 
 
@@ -49,7 +44,7 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def MintRock(self, request, context):
+    def BridgeRock(self, request, context):
         """MintRock defines an operation for creating a mint request of Rock
         on a destination chain
         """
@@ -64,14 +59,6 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def BurnRock(self, request, context):
-        """BurnRock defines an operation for burning Rock on a destination chain
-        and minting it back to a key on zrchain
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -80,20 +67,15 @@ def add_MsgServicer_to_server(servicer, server):
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
             ),
-            'MintRock': grpc.unary_unary_rpc_method_handler(
-                    servicer.MintRock,
-                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.FromString,
-                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.SerializeToString,
+            'BridgeRock': grpc.unary_unary_rpc_method_handler(
+                    servicer.BridgeRock,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.SerializeToString,
             ),
             'Burn': grpc.unary_unary_rpc_method_handler(
                     servicer.Burn,
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurn.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.SerializeToString,
-            ),
-            'BurnRock': grpc.unary_unary_rpc_method_handler(
-                    servicer.BurnRock,
-                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.FromString,
-                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -124,7 +106,7 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def MintRock(request,
+    def BridgeRock(request,
             target,
             options=(),
             channel_credentials=None,
@@ -134,9 +116,9 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/MintRock',
-            zrchain_dot_zentp_dot_tx__pb2.MsgMintRock.SerializeToString,
-            zrchain_dot_zentp_dot_tx__pb2.MsgMintRockResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/BridgeRock',
+            zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -154,22 +136,5 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/Burn',
             zrchain_dot_zentp_dot_tx__pb2.MsgBurn.SerializeToString,
             zrchain_dot_zentp_dot_tx__pb2.MsgBurnResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def BurnRock(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/BurnRock',
-            zrchain_dot_zentp_dot_tx__pb2.MsgBurnRock.SerializeToString,
-            zrchain_dot_zentp_dot_tx__pb2.MsgBurnRockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

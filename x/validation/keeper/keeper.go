@@ -37,6 +37,7 @@ type Keeper struct {
 	txDecoder             sdk.TxDecoder
 	zrConfig              *params.ZRConfig
 	sidecarClient         sidecarClient
+	zentpKeeper           types.ZentpKeeper
 
 	// AVSDelegations - keys: validator addr + delegator addr (operator) | value: delegation amount
 	AVSDelegations collections.Map[collections.Pair[string, string], math.Int]
@@ -58,6 +59,8 @@ type Keeper struct {
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
 	// EthereumNonceRequested - key: key ID | value: bool (is requested)
 	EthereumNonceRequested collections.Map[uint64, bool]
+	// SolanaNonceRequested - key: key ID | value: bool (is requested)
+	SolanaNonceRequested collections.Map[uint64, bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
@@ -75,6 +78,7 @@ func NewKeeper(
 	zrConfig *params.ZRConfig,
 	treasuryKeeper *treasury.Keeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
+	zentpKeeper types.ZentpKeeper,
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
@@ -120,6 +124,7 @@ func NewKeeper(
 		sidecarClient:         oracleClient,
 		treasuryKeeper:        treasuryKeeper,
 		zenBTCKeeper:          zenBTCKeeper,
+		zentpKeeper:           zentpKeeper,
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 
@@ -133,6 +138,7 @@ func NewKeeper(
 		ValidationInfos:                   collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
 		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
+		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 	}
