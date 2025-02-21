@@ -7,6 +7,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
+	"time"
 )
 
 // Package client provides a unified gRPC client implementation for interacting with various
@@ -63,7 +65,15 @@ func NewQueryClient(url string, insecure bool) (*QueryClient, error) {
 //
 // Note: When using secure connections, expects a 'server.crt' file in the root directory
 func NewClientConn(url string, insecure bool) (*grpc.ClientConn, error) {
-	opts := []grpc.DialOption{}
+	opts := []grpc.DialOption{
+		// setting the keepalive parameters
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                30 * time.Second, // ping the server if no activity is seen for this long.
+			Timeout:             10 * time.Second, // wait this long for ping ack before considering the connection dead.
+			PermitWithoutStream: true,             // send pings even without active RPCs.
+		}),
+	}
+
 	if insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecurecreds.NewCredentials()))
 	} else {
