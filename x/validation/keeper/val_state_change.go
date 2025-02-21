@@ -309,18 +309,21 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 
 		for _, asset := range stakeableAssets {
 			switch asset.Asset {
-			case types.Asset_BTC:
-				continue
 			case types.Asset_ROCK:
 				if pricesAreValid {
 					nativePower = asset.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
 				} else {
 					nativePower = math.LegacyNewDec(validator.ConsensusPower(powerReduction))
 				}
+			case types.Asset_BTC:
+				exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+				if err != nil {
+					exchangeRate = math.LegacyOneDec()
+				}
+				avsPower = asset.PriceUSD.Mul(exchangeRate).MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
 			case types.Asset_ETH:
-				avsPower = asset.PriceUSD.MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
+				continue
 			}
-			// TODO: use zenBTC stake instead of WETH/stETH
 		}
 
 		newPower := nativePower.Add(avsPower).TruncateInt64()
