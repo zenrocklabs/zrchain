@@ -47,7 +47,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 	if !slices.Contains(types.ValidKeyTypes, msg.KeyType) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.KeyType, types.ValidKeyTypes)
 	}
-	ws, err := k.identityKeeper.WorkspaceStore.Get(goCtx, msg.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, msg.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", msg.WorkspaceAddr)
 	}
@@ -59,7 +59,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 	}
 
 	// we have to check if the keyring is Active or not
-	keyring, err := k.identityKeeper.KeyringStore.Get(goCtx, msg.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, msg.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", msg.KeyringAddr)
 	}
@@ -97,7 +97,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 }
 
 func (k msgServer) NewKeyRequestPolicyGenerator(ctx sdk.Context, msg *types.MsgNewKeyRequest) (pol.Policy, error) {
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, msg.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, msg.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace not found")
 	}

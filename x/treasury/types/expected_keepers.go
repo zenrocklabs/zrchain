@@ -16,9 +16,9 @@ type AccountKeeper interface {
 }
 
 type IdentityKeeper interface {
-	GetWorkspace(ctx sdk.Context, addr string) *idtypes.Workspace
-	GetKeyring(ctx sdk.Context, addr string) *idtypes.Keyring
-	GetZrSignWorkspace(goCtx context.Context, ethAddress, walletType string) (string, error)
+	GetWorkspace(ctx sdk.Context, id string) (*idtypes.Workspace, error)
+	GetKeyring(ctx sdk.Context, addr string) (*idtypes.Keyring, error)
+	GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error)
 	GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error)
 }
 

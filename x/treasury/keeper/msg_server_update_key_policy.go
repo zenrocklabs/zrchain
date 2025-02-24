@@ -20,7 +20,7 @@ func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKe
 		return nil, fmt.Errorf("key %v not found", msg.KeyId)
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(goCtx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
@@ -45,7 +45,7 @@ func (k msgServer) UpdateKeyPolicyPolicyGenerator(ctx sdk.Context, msg *types.Ms
 		return nil, fmt.Errorf("key %v not found", msg.KeyId)
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}

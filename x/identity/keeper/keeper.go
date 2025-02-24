@@ -162,7 +162,7 @@ func (k *Keeper) ScopedKeeper() exported.ScopedKeeper {
 	return k.scopedKeeper
 }
 
-func (k *Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error) {
+func (k Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	walletTypeStr := strconv.FormatUint(walletType, 10)
@@ -240,7 +240,7 @@ func (k *Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, wa
 	return childID, nil
 }
 
-func (k *Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error) {
+func (k Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	ws, _, err := query.CollectionFilteredPaginate[string, types.Workspace, collections.Map[string, types.Workspace], *types.Workspace](
@@ -283,4 +283,20 @@ func (k *Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletTy
 	}
 
 	return workspaceList, nil
+}
+
+func (k Keeper) GetKeyring(ctx sdk.Context, id string) (*types.Keyring, error) {
+	keyring, err := k.KeyringStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &keyring, nil
+}
+
+func (k Keeper) GetWorkspace(ctx sdk.Context, id string) (*types.Workspace, error) {
+	workspace, err := k.WorkspaceStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &workspace, nil
 }
