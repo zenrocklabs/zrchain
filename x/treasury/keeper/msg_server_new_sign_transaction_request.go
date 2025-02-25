@@ -85,7 +85,7 @@ func (k msgServer) NewSignTransactionRequestPolicyGenerator(ctx sdk.Context, msg
 
 func (k msgServer) NewSignTransactionRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewSignTransactionRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

@@ -43,7 +43,7 @@ func (k msgServer) NewChildWorkspacePolicyGenerator(ctx sdk.Context, msg *types.
 
 func (k msgServer) NewChildWorkspaceActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewChildWorkspaceResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

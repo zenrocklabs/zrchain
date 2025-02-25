@@ -17,45 +17,45 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	s := &msgServer{Keeper: keeper}
 
 	policy.RegisterActionHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewKeyRequest",
 		s.NewKeyRequestActionHandler,
 	)
 	policy.RegisterPolicyGeneratorHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewKeyRequest",
 		s.NewKeyRequestPolicyGenerator,
 	)
 
 	policy.RegisterActionHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewSignatureRequest",
 		s.NewSignatureRequestActionHandler,
 	)
 	policy.RegisterPolicyGeneratorHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewSignatureRequest",
 		s.NewSignatureRequestPolicyGenerator,
 	)
 
 	policy.RegisterActionHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewSignTransactionRequest",
 		s.NewSignTransactionRequestActionHandler,
 	)
 	policy.RegisterPolicyGeneratorHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgNewSignTransactionRequest",
 		s.NewSignTransactionRequestPolicyGenerator,
 	)
 
 	policy.RegisterActionHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgUpdateKeyPolicy",
 		s.UpdateKeyPolicyActionHandler,
 	)
 	policy.RegisterPolicyGeneratorHandler(
-		&keeper.policyKeeper,
+		keeper.policyKeeper,
 		"/zrchain.treasury.MsgUpdateKeyPolicy",
 		s.UpdateKeyPolicyPolicyGenerator,
 	)

@@ -23,7 +23,7 @@ func (k Keeper) Actions(goCtx context.Context, req *types.QueryActionsRequest) (
 		req.Pagination,
 		func(key uint64, value types.Action) (bool, error) {
 			if req.Address != "" {
-				pol, err := PolicyForAction(sdk.UnwrapSDKContext(goCtx), &k, &value)
+				pol, err := k.PolicyForAction(sdk.UnwrapSDKContext(goCtx), &value)
 				if err != nil {
 					return false, nil
 				}

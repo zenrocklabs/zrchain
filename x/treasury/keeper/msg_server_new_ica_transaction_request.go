@@ -55,7 +55,7 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 
 func (k msgServer) NewICATransactionRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewICATransactionRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

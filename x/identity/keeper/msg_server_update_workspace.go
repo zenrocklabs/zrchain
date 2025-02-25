@@ -54,7 +54,7 @@ func (k msgServer) UpdateWorkspacePolicyGenerator(ctx sdk.Context, msg *types.Ms
 
 func (k msgServer) UpdateWorkspaceActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgUpdateWorkspaceResponse, error) {
 	return policy.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,
@@ -66,7 +66,7 @@ func (k msgServer) UpdateWorkspaceActionHandler(ctx sdk.Context, act *policytype
 
 			if msg.AdminPolicyId != ws.AdminPolicyId {
 				if msg.AdminPolicyId != 0 {
-					if _, err := k.policyKeeper.PolicyStore.Get(ctx, msg.AdminPolicyId); err != nil {
+					if _, err := k.policyKeeper.GetPolicy(ctx, msg.AdminPolicyId); err != nil {
 						return nil, fmt.Errorf("admin policy %v not found", msg.AdminPolicyId)
 					}
 				}
@@ -75,7 +75,7 @@ func (k msgServer) UpdateWorkspaceActionHandler(ctx sdk.Context, act *policytype
 
 			if msg.SignPolicyId != ws.SignPolicyId {
 				if msg.SignPolicyId != 0 {
-					if _, err := k.policyKeeper.PolicyStore.Get(ctx, msg.SignPolicyId); err != nil {
+					if _, err := k.policyKeeper.GetPolicy(ctx, msg.SignPolicyId); err != nil {
 						return nil, fmt.Errorf("sign policy not found")
 					}
 				}

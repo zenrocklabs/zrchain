@@ -55,7 +55,7 @@ func (k msgServer) UpdateKeyPolicyPolicyGenerator(ctx sdk.Context, msg *types.Ms
 
 func (k msgServer) UpdateKeyPolicyActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgUpdateKeyPolicyResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

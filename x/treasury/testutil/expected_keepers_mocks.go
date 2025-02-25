@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
+	policy "github.com/Zenrock-Foundation/zrchain/v5/policy"
 	types "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
 	types0 "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	types1 "github.com/cosmos/cosmos-sdk/codec/types"
@@ -331,6 +331,21 @@ func (mr *MockPolicyKeeperMockRecorder) GeneratorHandler(reqType interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GeneratorHandler", reflect.TypeOf((*MockPolicyKeeper)(nil).GeneratorHandler), reqType)
 }
 
+// GetPolicy mocks base method.
+func (m *MockPolicyKeeper) GetPolicy(ctx types2.Context, policyId uint64) (*types0.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicy", ctx, policyId)
+	ret0, _ := ret[0].(*types0.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicy indicates an expected call of GetPolicy.
+func (mr *MockPolicyKeeperMockRecorder) GetPolicy(ctx, policyId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicy", reflect.TypeOf((*MockPolicyKeeper)(nil).GetPolicy), ctx, policyId)
+}
+
 // GetPolicyParticipants mocks base method.
 func (m *MockPolicyKeeper) GetPolicyParticipants(ctx context.Context, policyId uint64) (map[string]struct{}, error) {
 	m.ctrl.T.Helper()
@@ -346,16 +361,33 @@ func (mr *MockPolicyKeeperMockRecorder) GetPolicyParticipants(ctx, policyId inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyParticipants", reflect.TypeOf((*MockPolicyKeeper)(nil).GetPolicyParticipants), ctx, policyId)
 }
 
-// PolicyMembersAreOwners mocks base method.
-func (m *MockPolicyKeeper) PolicyMembersAreOwners(ctx context.Context, policyId uint64, workspaceOwners []string) {
+// PolicyForAction mocks base method.
+func (m *MockPolicyKeeper) PolicyForAction(ctx types2.Context, act *types0.Action) (policy.Policy, error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PolicyMembersAreOwners", ctx, policyId, workspaceOwners)
+	ret := m.ctrl.Call(m, "PolicyForAction", ctx, act)
+	ret0, _ := ret[0].(policy.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PolicyForAction indicates an expected call of PolicyForAction.
+func (mr *MockPolicyKeeperMockRecorder) PolicyForAction(ctx, act interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PolicyForAction", reflect.TypeOf((*MockPolicyKeeper)(nil).PolicyForAction), ctx, act)
+}
+
+// PolicyMembersAreOwners mocks base method.
+func (m *MockPolicyKeeper) PolicyMembersAreOwners(ctx context.Context, policyId uint64, wsOwners []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PolicyMembersAreOwners", ctx, policyId, wsOwners)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // PolicyMembersAreOwners indicates an expected call of PolicyMembersAreOwners.
-func (mr *MockPolicyKeeperMockRecorder) PolicyMembersAreOwners(ctx, policyId, workspaceOwners interface{}) *gomock.Call {
+func (mr *MockPolicyKeeperMockRecorder) PolicyMembersAreOwners(ctx, policyId, wsOwners interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PolicyMembersAreOwners", reflect.TypeOf((*MockPolicyKeeper)(nil).PolicyMembersAreOwners), ctx, policyId, workspaceOwners)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PolicyMembersAreOwners", reflect.TypeOf((*MockPolicyKeeper)(nil).PolicyMembersAreOwners), ctx, policyId, wsOwners)
 }
 
 // RegisterActionHandler mocks base method.
@@ -380,4 +412,33 @@ func (m *MockPolicyKeeper) RegisterPolicyGeneratorHandler(reqType string, f func
 func (mr *MockPolicyKeeperMockRecorder) RegisterPolicyGeneratorHandler(reqType, f interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterPolicyGeneratorHandler", reflect.TypeOf((*MockPolicyKeeper)(nil).RegisterPolicyGeneratorHandler), reqType, f)
+}
+
+// SetAction mocks base method.
+func (m *MockPolicyKeeper) SetAction(ctx types2.Context, action *types0.Action) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAction", ctx, action)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAction indicates an expected call of SetAction.
+func (mr *MockPolicyKeeperMockRecorder) SetAction(ctx, action interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAction", reflect.TypeOf((*MockPolicyKeeper)(nil).SetAction), ctx, action)
+}
+
+// Unpack mocks base method.
+func (m *MockPolicyKeeper) Unpack(policyPb *types0.Policy) (policy.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unpack", policyPb)
+	ret0, _ := ret[0].(policy.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Unpack indicates an expected call of Unpack.
+func (mr *MockPolicyKeeperMockRecorder) Unpack(policyPb interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unpack", reflect.TypeOf((*MockPolicyKeeper)(nil).Unpack), policyPb)
 }

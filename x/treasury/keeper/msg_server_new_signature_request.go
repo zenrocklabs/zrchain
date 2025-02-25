@@ -83,7 +83,7 @@ func (k msgServer) NewSignatureRequestPolicyGenerator(ctx sdk.Context, msg *type
 
 func (k msgServer) NewSignatureRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewSignatureRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

@@ -108,7 +108,7 @@ func (k msgServer) NewKeyRequestPolicyGenerator(ctx sdk.Context, msg *types.MsgN
 
 func (k msgServer) NewKeyRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewKeyRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

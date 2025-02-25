@@ -28,7 +28,6 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 )
 
@@ -58,7 +57,7 @@ type Keeper struct {
 	scopedKeeper       exported.ScopedKeeper
 	bankKeeper         types.BankKeeper
 	identityKeeper     types.IdentityKeeper
-	policyKeeper       policy.Keeper
+	policyKeeper       types.PolicyKeeper
 	zenBTCKeeper       shared.ZenBTCKeeper
 }
 
@@ -73,7 +72,7 @@ func NewKeeper(
 	authority string,
 	bankKeeper types.BankKeeper,
 	identityKeeper types.IdentityKeeper,
-	policyKeeper policy.Keeper,
+	policyKeeper types.PolicyKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {

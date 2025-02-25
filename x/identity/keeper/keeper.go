@@ -23,7 +23,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 )
 
 type Keeper struct {
@@ -46,7 +45,7 @@ type Keeper struct {
 	capabilityScopedFn func(string) capabilitykeeper.ScopedKeeper
 	scopedKeeper       exported.ScopedKeeper
 	bankKeeper         types.BankKeeper
-	policyKeeper       policy.Keeper
+	policyKeeper       types.PolicyKeeper
 }
 
 func NewKeeper(
@@ -55,7 +54,7 @@ func NewKeeper(
 	logger log.Logger,
 	authority string,
 	bankKeeper types.BankKeeper,
-	policyKeeper policy.Keeper,
+	policyKeeper types.PolicyKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
