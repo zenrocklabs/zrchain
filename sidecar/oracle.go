@@ -94,6 +94,8 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, EthBlocksBeforeFinality)
+	log.Printf("Latest header number: %d", latestHeader.Number)
+	log.Printf("Target block number: %d", targetBlockNumber)
 
 	// Check base fee availability
 	if latestHeader.BaseFee == nil {
@@ -181,6 +183,37 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch BTC and ETH prices
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
+			return
+		}
+		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+
+		// Fetch BTC price
+		btcPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch BTC price: %w", err)
+			return
+		}
+
+		// Fetch ETH price
+		ethPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch ETH price: %w", err)
+			return
+		}
+
+		updateMutex.Lock()
+		update.BTCUSDPrice = btcPrice
+		update.ETHUSDPrice = ethPrice
+		updateMutex.Unlock()
+	}()
+
 	// Fetch ROCK price
 	wg.Add(1)
 	go func() {
@@ -208,48 +241,6 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		updateMutex.Lock()
 		update.ROCKUSDPrice = priceDec
-		updateMutex.Unlock()
-	}()
-
-	// Fetch BTC price
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
-			return
-		}
-		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
-
-		price, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch BTC price: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.BTCUSDPrice = price
-		updateMutex.Unlock()
-	}()
-
-	// Fetch ETH price
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
-			return
-		}
-		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
-
-		price, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch ETH price: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.ETHUSDPrice = price
 		updateMutex.Unlock()
 	}()
 
