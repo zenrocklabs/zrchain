@@ -866,7 +866,8 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 }
 
 // validateOracleData verifies that the vote extension and oracle data match.
-func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
+func (k *Keeper) validateOracleData(ctx sdk.Context, voteExt VoteExtension, oracleData *OracleData) error {
+	k.Logger(ctx).Info("avs delegation state", "avs delegation state", fmt.Sprintf("%+v", oracleData.EigenDelegationsMap), "hash", voteExt.EigenDelegationsHash)
 	if err := validateHashField("AVS contract delegation state", voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
 		return err
 	}

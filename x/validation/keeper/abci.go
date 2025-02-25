@@ -327,7 +327,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return voteExt, true
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, &oracleData); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
@@ -359,7 +359,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) 
 	oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
 	oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 
-	if err := k.validateOracleData(voteExt, oracleData); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, oracleData); err != nil {
 		return nil, nil, err
 	}
 
