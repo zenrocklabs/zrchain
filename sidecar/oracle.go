@@ -281,7 +281,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Get current state to preserve cleaned events
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-	o.updateChan <- sidecartypes.OracleState{
+	newState := sidecartypes.OracleState{
 		EigenDelegations:           update.eigenDelegations,
 		EthBlockHeight:             targetBlockNumber.Uint64(),
 		EthGasLimit:                update.estimatedGas,
@@ -295,6 +295,10 @@ func (o *Oracle) fetchAndProcessState(
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
 	}
+
+	log.Printf("\nState update: %+v\n", newState)
+
+	o.updateChan <- newState
 
 	return nil
 }
