@@ -26,14 +26,14 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from ibc.core.connection.v1 import connection_pb2 as ibc_dot_core_dot_connection_dot_v1_dot_connection__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$ibc/core/connection/v1/genesis.proto\x12\x16ibc.core.connection.v1\x1a\x14gogoproto/gogo.proto\x1a\'ibc/core/connection/v1/connection.proto\"\xc3\x02\n\x0cGenesisState\x12T\n\x0b\x63onnections\x18\x01 \x03(\x0b\x32,.ibc.core.connection.v1.IdentifiedConnectionB\x04\xc8\xde\x1f\x00R\x0b\x63onnections\x12\x65\n\x17\x63lient_connection_paths\x18\x02 \x03(\x0b\x32\'.ibc.core.connection.v1.ConnectionPathsB\x04\xc8\xde\x1f\x00R\x15\x63lientConnectionPaths\x12\x38\n\x18next_connection_sequence\x18\x03 \x01(\x04R\x16nextConnectionSequence\x12<\n\x06params\x18\x04 \x01(\x0b\x32\x1e.ibc.core.connection.v1.ParamsB\x04\xc8\xde\x1f\x00R\x06paramsB>Z<github.com/cosmos/ibc-go/v9/modules/core/03-connection/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$ibc/core/connection/v1/genesis.proto\x12\x16ibc.core.connection.v1\x1a\x14gogoproto/gogo.proto\x1a\'ibc/core/connection/v1/connection.proto\"\xc3\x02\n\x0cGenesisState\x12T\n\x0b\x63onnections\x18\x01 \x03(\x0b\x32,.ibc.core.connection.v1.IdentifiedConnectionB\x04\xc8\xde\x1f\x00R\x0b\x63onnections\x12\x65\n\x17\x63lient_connection_paths\x18\x02 \x03(\x0b\x32\'.ibc.core.connection.v1.ConnectionPathsB\x04\xc8\xde\x1f\x00R\x15\x63lientConnectionPaths\x12\x38\n\x18next_connection_sequence\x18\x03 \x01(\x04R\x16nextConnectionSequence\x12<\n\x06params\x18\x04 \x01(\x0b\x32\x1e.ibc.core.connection.v1.ParamsB\x04\xc8\xde\x1f\x00R\x06paramsB?Z=github.com/cosmos/ibc-go/v10/modules/core/03-connection/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.core.connection.v1.genesis_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/v9/modules/core/03-connection/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z=github.com/cosmos/ibc-go/v10/modules/core/03-connection/types'
   _globals['_GENESISSTATE'].fields_by_name['connections']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['connections']._serialized_options = b'\310\336\037\000'
   _globals['_GENESISSTATE'].fields_by_name['client_connection_paths']._loaded_options = None

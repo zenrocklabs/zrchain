@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n-ibc/applications/transfer/v1/denomtrace.proto\x12\x1cibc.applications.transfer.v1\"C\n\nDenomTrace\x12\x12\n\x04path\x18\x01 \x01(\tR\x04path\x12\x1d\n\nbase_denom\x18\x02 \x01(\tR\tbaseDenom:\x02\x18\x01\x42\x39Z7github.com/cosmos/ibc-go/v9/modules/apps/transfer/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n-ibc/applications/transfer/v1/denomtrace.proto\x12\x1cibc.applications.transfer.v1\"C\n\nDenomTrace\x12\x12\n\x04path\x18\x01 \x01(\tR\x04path\x12\x1d\n\nbase_denom\x18\x02 \x01(\tR\tbaseDenom:\x02\x18\x01\x42:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.applications.transfer.v1.denomtrace_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/cosmos/ibc-go/v9/modules/apps/transfer/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/types'
   _globals['_DENOMTRACE']._loaded_options = None
   _globals['_DENOMTRACE']._serialized_options = b'\030\001'
   _globals['_DENOMTRACE']._serialized_start=79

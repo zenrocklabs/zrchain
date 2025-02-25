@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -22,17 +21,6 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 )
-
-type ExportedKeeper interface {
-	AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, btl uint64, policyData map[string][]byte) (*types.Action, error)
-	Codec() codec.BinaryCodec
-	GeneratorHandler(reqType string) (func(sdk.Context, *cdctypes.Any) (policy.Policy, error), bool)
-	RegisterPolicyGeneratorHandler(reqType string, f func(sdk.Context, *cdctypes.Any) (policy.Policy, error))
-	ActionHandler(actionType string) (func(sdk.Context, *types.Action) (any, error), bool)
-	RegisterActionHandler(actionType string, f func(sdk.Context, *types.Action) (any, error))
-	GetPolicyParticipants(ctx context.Context, policyId uint64) (map[string]struct{}, error)
-	PolicyMembersAreOwners(ctx context.Context, policyId uint64, workspaceOwners []string)
-}
 
 type Keeper struct {
 	cdc          codec.BinaryCodec
