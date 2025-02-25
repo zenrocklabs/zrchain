@@ -623,10 +623,24 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	} else {
 		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
 		if err != nil {
-			k.Logger(ctx).Error("error getting last valid VE height", "height", ctx.BlockHeight(), "err", err)
+			if !errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Error("error getting last valid VE height", "height", ctx.BlockHeight(), "err", err)
+			}
+			lastValidVEHeight = 0
 		}
-		if ctx.BlockHeight()-lastValidVEHeight < k.GetPriceRetentionBlockRange(ctx) {
-			k.Logger(ctx).Warn("last valid VE height is within price retention range, not zeroing asset prices", "retention_range", k.GetPriceRetentionBlockRange(ctx))
+
+		retentionRange := k.GetPriceRetentionBlockRange(ctx)
+		// Add safety check for when block height is less than retention range
+		if ctx.BlockHeight() < retentionRange {
+			k.Logger(ctx).Warn("current block height is less than retention range; not zeroing asset prices",
+				"block_height", ctx.BlockHeight(),
+				"retention_range", retentionRange)
+			return
+		}
+		// Calculate number of blocks since last valid VE
+		if ctx.BlockHeight()-lastValidVEHeight < retentionRange {
+			k.Logger(ctx).Warn("last valid VE height is within price retention range; not zeroing asset prices",
+				"retention_range", retentionRange)
 			return
 		}
 	}
