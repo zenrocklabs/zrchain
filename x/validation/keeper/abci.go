@@ -321,12 +321,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 // shouldProcessOracleData checks if oracle data should be processed for this block.
 func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
-	// Skip processing if this node is not a validator
-	if !k.zrConfig.IsValidator {
-		k.Logger(ctx).Debug("not a validator node; skipping oracle data processing")
-		return false
-	}
-
 	if len(req.Txs) == 0 {
 		k.Logger(ctx).Debug("no transactions in block")
 		return false
