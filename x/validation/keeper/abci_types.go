@@ -182,3 +182,52 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 
 	return invalid
 }
+
+// HasAnyOracleData returns true if this OracleData contains any meaningful data
+// beyond the ConsensusData (which is always present)
+func (o OracleData) HasAnyOracleData() bool {
+	// Check if the oracle data has any ethereum or bitcoin data
+	if o.EthBlockHeight > 0 || o.BtcBlockHeight > 0 {
+		return true
+	}
+
+	// Check for ethereum burn events
+	if len(o.EthBurnEvents) > 0 {
+		return true
+	}
+
+	// Check for redemptions
+	if len(o.Redemptions) > 0 {
+		return true
+	}
+
+	// Check for eigen delegations
+	if len(o.EigenDelegationsMap) > 0 {
+		return true
+	}
+
+	return false
+}
+
+// MatchesValidatedOracleData compares this OracleData with another one
+// to verify they contain the same essential data (ignoring ConsensusData)
+func (o OracleData) MatchesValidatedOracleData(other *OracleData) bool {
+	if other == nil {
+		return false
+	}
+
+	// Compare Ethereum block data
+	if o.EthBlockHeight != other.EthBlockHeight {
+		return false
+	}
+
+	// Compare Bitcoin block data
+	if o.BtcBlockHeight != other.BtcBlockHeight {
+		return false
+	}
+
+	// We don't compare all fields as some might not have reached consensus
+	// Just check that the essential data we care about matches
+
+	return true
+}

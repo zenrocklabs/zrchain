@@ -1,13 +1,11 @@
 package keeper
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -52,45 +50,24 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
 	oracleData, err := k.GetSidecarState(ctx, req.Height)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving sidecar state for vote extension",
-			"height", req.Height,
-			"error", err)
+		k.Logger(ctx).Error("error retrieving AVS delegations", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
 	voteExt, err := k.constructVoteExtension(ctx, req.Height, oracleData)
 	if err != nil {
-		k.Logger(ctx).Error("error creating vote extension",
-			"height", req.Height,
-			"error", err)
+		k.Logger(ctx).Error("error creating vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
 	if voteExt.IsInvalid(k.Logger(ctx)) {
-		k.Logger(ctx).Error("invalid vote extension in ExtendVote",
-			"height", req.Height,
-			"reason", "one or more critical fields are invalid")
+		k.Logger(ctx).Error("invalid vote extension in ExtendVote", "height", req.Height)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	// Log the fields that we're including in our vote extension
-	k.Logger(ctx).Info("creating vote extension",
-		"height", req.Height,
-		"eth_block_height", voteExt.EthBlockHeight,
-		"btc_block_height", voteExt.BtcBlockHeight)
-
-	k.Logger(ctx).Debug("vote extension details",
-		"height", req.Height,
-		"eigen_delegations_hash", hex.EncodeToString(voteExt.EigenDelegationsHash),
-		"eth_burn_events_hash", hex.EncodeToString(voteExt.EthBurnEventsHash),
-		"redemptions_hash", hex.EncodeToString(voteExt.RedemptionsHash),
-		"btc_header_hash", hex.EncodeToString(voteExt.BtcHeaderHash))
-
 	voteExtBz, err := json.Marshal(voteExt)
 	if err != nil {
-		k.Logger(ctx).Error("error marshalling vote extension",
-			"height", req.Height,
-			"error", err)
+		k.Logger(ctx).Error("error marshalling vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
@@ -172,43 +149,25 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 	}
 
 	if len(req.VoteExtension) > VoteExtBytesLimit {
-		k.Logger(ctx).Error("vote extension is too large",
-			"height", req.Height,
-			"limit", VoteExtBytesLimit,
-			"size", len(req.VoteExtension))
+		k.Logger(ctx).Error("vote extension is too large", "height", req.Height, "limit", VoteExtBytesLimit, "size", len(req.VoteExtension))
 		return REJECT_VOTE, nil
 	}
 
 	var voteExt VoteExtension
 	if err := json.Unmarshal(req.VoteExtension, &voteExt); err != nil {
-		k.Logger(ctx).Debug("error unmarshalling vote extension",
-			"height", req.Height,
-			"error", err)
+		k.Logger(ctx).Debug("error unmarshalling vote extension", "height", req.Height, "error", err)
 		return REJECT_VOTE, nil
 	}
 
 	if req.Height != voteExt.ZRChainBlockHeight {
-		k.Logger(ctx).Error("mismatched height for vote extension",
-			"expected", req.Height,
-			"got", voteExt.ZRChainBlockHeight)
+		k.Logger(ctx).Error("mismatched height for vote extension", "expected", req.Height, "got", voteExt.ZRChainBlockHeight)
 		return REJECT_VOTE, nil
 	}
 
 	if voteExt.IsInvalid(k.Logger(ctx)) {
-		k.Logger(ctx).Error("invalid vote extension in VerifyVoteExtension",
-			"height", req.Height,
-			"reason", "one or more required fields are invalid")
+		k.Logger(ctx).Error("invalid vote extension in VerifyVoteExtension", "height", req.Height)
 		return REJECT_VOTE, nil
 	}
-
-	// Log validation of important fields
-	k.Logger(ctx).Debug("successfully verified vote extension",
-		"height", req.Height,
-		"eth_block_height", voteExt.EthBlockHeight,
-		"btc_block_height", voteExt.BtcBlockHeight,
-		"has_eigen_delegations", len(voteExt.EigenDelegationsHash) > 0,
-		"has_eth_burn_events", len(voteExt.EthBurnEventsHash) > 0,
-		"has_redemptions", len(voteExt.RedemptionsHash) > 0)
 
 	return ACCEPT_VOTE, nil
 }
@@ -228,50 +187,42 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving field-based supermajority vote extension", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
-	// If no fields reached consensus, just log a warning and propose empty oracle data
-	if len(fieldVotePowers) == 0 {
-		k.Logger(ctx).Warn("no consensus on any vote extension field; proposing empty oracle data", "height", req.Height)
+	if len(fieldVotePowers) == 0 { // no field reached consensus
+		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
 
-	// Log consensus information
-	k.Logger(ctx).Info("consensus reached on vote extension fields",
-		"height", req.Height,
-		"fields_with_consensus", len(fieldVotePowers),
-		"total_fields", 17,
-		"total_vote_power", totalVotePower,
-		"required_vote_power", requisiteVotePower(totalVotePower))
+	// Check for essential fields and log status
+	missingEssentialFields := []string{}
+	for _, field := range EssentialVoteExtensionFields {
+		if _, ok := fieldVotePowers[field]; !ok {
+			missingEssentialFields = append(missingEssentialFields, string(field))
+		}
+	}
+
+	// Log consensus field information with essential fields detail
+	if len(missingEssentialFields) > 0 {
+		k.Logger(ctx).Warn("consensus reached but missing some essential fields",
+			"height", req.Height,
+			"fields_with_consensus", len(fieldVotePowers),
+			"total_vote_power", totalVotePower,
+			"missing_essential_fields", missingEssentialFields)
+	} else {
+		k.Logger(ctx).Info("consensus reached on all essential vote extension fields",
+			"height", req.Height,
+			"fields_with_consensus", len(fieldVotePowers),
+			"total_vote_power", totalVotePower)
+	}
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
 		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
 		return nil, nil
 	}
 
-	// Check if essential fields have consensus
-	essentialFields := []string{
-		"EthBlockHeight",
-		"BtcBlockHeight",
-	}
-
-	missingEssentialFields := false
-	for _, field := range essentialFields {
-		if _, ok := fieldVotePowers[field]; !ok {
-			k.Logger(ctx).Warn("missing consensus on essential field", "height", req.Height, "field", field)
-			missingEssentialFields = true
-		}
-	}
-
-	// If missing essential fields, we may decide to return empty data or proceed with what we have
-	if missingEssentialFields {
-		k.Logger(ctx).Warn("missing consensus on some essential fields; using partial oracle data", "height", req.Height)
-		// We still proceed with what we have, as our validators will validate the partial data
-	}
-
-	// Get oracle data using the fields that have consensus
 	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
@@ -283,120 +234,83 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 }
 
 // ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
-func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
-	if !k.zrConfig.IsValidator {
-		return ACCEPT_PROPOSAL, nil
+func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (bool, error) {
+	// For block height 1, we don't have vote extensions.
+	if req.Height == 1 {
+		return true, nil
 	}
 
-	if !VoteExtensionsEnabled(ctx) || len(req.Txs) == 0 {
-		return ACCEPT_PROPOSAL, nil
+	if !VoteExtensionsEnabled(ctx) {
+		k.Logger(ctx).Debug("vote extensions disabled; skipping oracle data validation", "height", req.Height)
+		return true, nil
 	}
 
-	if !ContainsVoteExtension(req.Txs[0], k.txDecoder) {
-		k.Logger(ctx).Warn("block does not contain vote extensions, rejecting proposal")
-		return REJECT_PROPOSAL, nil
+	// Check if we have any transactions to process
+	if len(req.Txs) == 0 {
+		k.Logger(ctx).Info("no transactions in proposal to process", "height", req.Height)
+		return true, nil
 	}
 
-	var recoveredOracleData OracleData
-	if err := json.Unmarshal(req.Txs[0], &recoveredOracleData); err != nil {
-		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
+	var oracleData OracleData
+	if err := json.Unmarshal(req.Txs[0], &oracleData); err != nil {
+		k.Logger(ctx).Error("error unmarshalling oracle data", "height", req.Height, "error", err)
+		return false, nil
 	}
 
-	// Remove commit info before comparison.
-	recoveredOracleDataNoCommitInfo := recoveredOracleData
-	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
-	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
-		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	// Get our local view of the vote extensions to compare against the proposal
-	localVoteExt, localFieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, recoveredOracleData.ConsensusData)
+	// Get the vote extension consensus based on fields (our "local consensus")
+	ourVoteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving local vote extension data", "height", req.Height, "error", err)
-		// If we can't retrieve our local view, we should still validate the signatures
-		if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), recoveredOracleData.ConsensusData); err != nil {
-			k.Logger(ctx).Error("error validating vote extensions", "height", req.Height, "error", err)
-			return REJECT_PROPOSAL, err
-		}
-		return ACCEPT_PROPOSAL, nil
+		k.Logger(ctx).Error("error retrieving field-based supermajority vote extension", "height", req.Height, "error", err)
+		return false, nil
 	}
 
-	// Check that the proposal's oracle data is consistent with our local view
-	// Note: We only check fields that we have local consensus on
-	if len(localFieldVotePowers) > 0 {
-		k.Logger(ctx).Info("validating proposal against local view",
-			"height", req.Height,
-			"local_fields_with_consensus", len(localFieldVotePowers))
+	if len(fieldVotePowers) == 0 {
+		// If we don't have local consensus, there's nothing to check against.
+		// This is acceptable as we can still process blocks without oracle data.
+		k.Logger(ctx).Warn("no fields reached local consensus in vote extension", "height", req.Height)
+		return true, nil
+	}
 
-		// Essential fields to validate if present
-		essentialFields := []string{
-			"EthBlockHeight",
-			"BtcBlockHeight",
-			"EigenDelegationsHash",
-			"EthBurnEventsHash",
-			"RedemptionsHash",
-		}
-
-		// Check each essential field we have consensus on
-		for _, field := range essentialFields {
-			if _, ok := localFieldVotePowers[field]; ok {
-				// We have local consensus on this field, check if it matches the proposal
-				switch field {
-				case "EthBlockHeight":
-					if localVoteExt.EthBlockHeight != recoveredOracleData.EthBlockHeight {
-						k.Logger(ctx).Error("ethereum block height mismatch",
-							"local", localVoteExt.EthBlockHeight,
-							"proposal", recoveredOracleData.EthBlockHeight)
-						return REJECT_PROPOSAL, fmt.Errorf("ethereum block height mismatch")
-					}
-				case "BtcBlockHeight":
-					if localVoteExt.BtcBlockHeight != recoveredOracleData.BtcBlockHeight {
-						k.Logger(ctx).Error("bitcoin block height mismatch",
-							"local", localVoteExt.BtcBlockHeight,
-							"proposal", recoveredOracleData.BtcBlockHeight)
-						return REJECT_PROPOSAL, fmt.Errorf("bitcoin block height mismatch")
-					}
-				case "EigenDelegationsHash":
-					localHash, err := deriveHash(recoveredOracleData.EigenDelegationsMap)
-					if err != nil {
-						k.Logger(ctx).Error("error deriving hash", "field", field, "error", err)
-					} else if !bytes.Equal(localVoteExt.EigenDelegationsHash, localHash[:]) {
-						k.Logger(ctx).Error("eigen delegations hash mismatch")
-						return REJECT_PROPOSAL, fmt.Errorf("eigen delegations hash mismatch")
-					}
-				case "EthBurnEventsHash":
-					localHash, err := deriveHash(recoveredOracleData.EthBurnEvents)
-					if err != nil {
-						k.Logger(ctx).Error("error deriving hash", "field", field, "error", err)
-					} else if !bytes.Equal(localVoteExt.EthBurnEventsHash, localHash[:]) {
-						k.Logger(ctx).Error("eth burn events hash mismatch")
-						return REJECT_PROPOSAL, fmt.Errorf("eth burn events hash mismatch")
-					}
-				case "RedemptionsHash":
-					localHash, err := deriveHash(recoveredOracleData.Redemptions)
-					if err != nil {
-						k.Logger(ctx).Error("error deriving hash", "field", field, "error", err)
-					} else if !bytes.Equal(localVoteExt.RedemptionsHash, localHash[:]) {
-						k.Logger(ctx).Error("redemptions hash mismatch")
-						return REJECT_PROPOSAL, fmt.Errorf("redemptions hash mismatch")
-					}
-				}
+	// If we have oracle data AND we're missing essential fields, reject the proposal
+	if oracleData.HasAnyOracleData() {
+		missingFields := []string{}
+		for _, field := range EssentialVoteExtensionFields {
+			if _, ok := fieldVotePowers[field]; !ok {
+				missingFields = append(missingFields, string(field))
 			}
 		}
 
-		k.Logger(ctx).Info("proposal matches local view", "height", req.Height)
-	} else {
-		k.Logger(ctx).Warn("no local consensus on any fields, skipping additional validation", "height", req.Height)
+		if len(missingFields) > 0 {
+			k.Logger(ctx).Error("proposal contains oracle data but missing consensus on essential fields",
+				"height", req.Height,
+				"missing_fields", missingFields,
+				"fields_with_consensus", fieldVotePowers)
+			return false, nil
+		}
 	}
 
-	// Validate vote extension signatures even if we have no consensus
-	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), recoveredOracleData.ConsensusData); err != nil {
-		k.Logger(ctx).Error("error validating vote extensions", "height", req.Height, "error", err)
-		return REJECT_PROPOSAL, err
+	// Validate the oracle data against our local consensus
+	if len(fieldVotePowers) > 0 {
+		ourOracleData, _, err := k.getValidatedOracleData(ctx, ourVoteExt, fieldVotePowers)
+		if err != nil {
+			k.Logger(ctx).Error("error validating our oracle data", "height", req.Height, "error", err)
+			return false, nil
+		}
+
+		// If our consensus resulted in oracle data, then the proposal's oracle data should match
+		if !oracleData.MatchesValidatedOracleData(ourOracleData) {
+			k.Logger(ctx).Error("proposal's oracle data doesn't match our validated oracle data",
+				"height", req.Height,
+				"our_eth_height", ourOracleData.EthBlockHeight,
+				"proposal_eth_height", oracleData.EthBlockHeight,
+				"our_btc_height", ourOracleData.BtcBlockHeight,
+				"proposal_btc_height", oracleData.BtcBlockHeight)
+			return false, nil
+		}
 	}
 
-	return ACCEPT_PROPOSAL, nil
+	k.Logger(ctx).Debug("proposal's oracle data validated successfully", "height", req.Height)
+	return true, nil
 }
 
 //
@@ -468,111 +382,93 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 
 // validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
+	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extensions data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
-	// If no fields reached consensus, just log a warning and accept empty VE
 	if len(fieldVotePowers) == 0 {
-		k.Logger(ctx).Warn("no consensus on any vote extension field", "height", height)
-		return VoteExtension{}, true
+		k.Logger(ctx).Warn("no consensus on any vote extension fields", "height", height)
+		return VoteExtension{}, false
 	}
 
-	// Log which fields have consensus
-	k.Logger(ctx).Info("consensus reached on vote extension fields",
-		"height", height,
-		"fields_with_consensus", len(fieldVotePowers),
-		"total_fields", 17)
-
-	// Count how many essential fields have consensus
-	// (Consider fields essential to your use case)
-	essentialFields := []string{
-		"EigenDelegationsHash",
-		"EthBurnEventsHash",
-		"RedemptionsHash",
-		"BtcHeaderHash",
-		"BtcBlockHeight",
-		"EthBlockHeight",
-	}
-
-	essentialFieldsWithConsensus := 0
-	for _, field := range essentialFields {
-		if _, ok := fieldVotePowers[field]; ok {
-			essentialFieldsWithConsensus++
-		}
-	}
-
-	// If we have consensus on all essential fields, validate the oracle data
-	if essentialFieldsWithConsensus == len(essentialFields) {
-		if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
-			k.Logger(ctx).Error("error validating oracle data", "height", height, "error", err)
-			return VoteExtension{}, false
-		}
-		k.Logger(ctx).Info("oracle data validated successfully with all essential fields", "height", height)
-		return voteExt, true
-	}
-
-	// Even if we don't have all essential fields, we might still want to use partial data
-	// This allows for more resilience - we use what we have consensus on
-	if essentialFieldsWithConsensus > 0 {
-		k.Logger(ctx).Warn("partial consensus on essential vote extension fields",
-			"height", height,
-			"essential_fields_with_consensus", essentialFieldsWithConsensus,
-			"total_essential_fields", len(essentialFields))
-
-		// For fields with no consensus, validate what we can and log issues for the rest
-		validationSuccess := true
-		for _, field := range essentialFields {
+	// Check if all essential fields have consensus when oracle data is present
+	if oracleData.HasAnyOracleData() {
+		missingFields := []string{}
+		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				k.Logger(ctx).Warn("missing consensus on essential field", "height", height, "field", field)
-				validationSuccess = false
+				missingFields = append(missingFields, string(field))
 			}
 		}
 
-		// Validate the fields we do have consensus on
-		if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
-			k.Logger(ctx).Error("error validating partial oracle data", "height", height, "error", err)
-			validationSuccess = false
+		if len(missingFields) > 0 {
+			k.Logger(ctx).Warn("missing consensus on essential vote extension fields",
+				"height", height,
+				"missing_fields", missingFields,
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower)
+			return VoteExtension{}, false
 		}
-
-		// If we want to be more lenient, we can still return true here even with missing fields
-		// The system will work with the fields that did achieve consensus
-		return voteExt, validationSuccess
 	}
 
-	k.Logger(ctx).Error("insufficient consensus on essential vote extension fields",
-		"height", height,
-		"essential_fields_with_consensus", essentialFieldsWithConsensus,
-		"total_essential_fields", len(essentialFields))
+	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
+		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
+		return VoteExtension{}, false
+	}
 
-	return VoteExtension{}, false
+	return voteExt, true
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[string]int64) (*OracleData, *VoteExtension, error) {
-	oracleData, err := k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
+// Only validates fields that have reached consensus as indicated in fieldVotePowers.
+func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, *VoteExtension, error) {
+	// We only fetch Ethereum state if we have consensus on EthBlockHeight
+	var oracleData *OracleData
+	var err error
+
+	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+		oracleData, err = k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
+		}
+	} else {
+		// If we don't have consensus on Ethereum height, get the latest state
+		oracleData, err = k.GetSidecarState(ctx, ctx.BlockHeight())
+		if err != nil {
+			return nil, nil, fmt.Errorf("error fetching latest oracle state: %w", err)
+		}
 	}
 
-	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
-			ChainName:   k.bitcoinNetwork(ctx),
-			BlockHeight: voteExt.BtcBlockHeight,
-		},
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+	// We only fetch Bitcoin data if we have consensus on BtcBlockHeight
+	if _, ok := fieldVotePowers[VEFieldBtcBlockHeight]; ok {
+		bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
+			ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+				ChainName:   k.bitcoinNetwork(ctx),
+				BlockHeight: voteExt.BtcBlockHeight,
+			},
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+		}
+
+		oracleData.BtcBlockHeight = bitcoinData.BlockHeight
+		oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	}
 
-	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
-	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
-	oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
-	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
-	oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
-	oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
+	// Copy over nonce data if we have consensus on those fields
+	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
+	}
 
 	if err := k.validateOracleData(voteExt, oracleData, fieldVotePowers); err != nil {
 		return nil, nil, err
