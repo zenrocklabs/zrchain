@@ -252,6 +252,20 @@ const (
 	VEFieldLatestBtcHeaderHash
 )
 
+// FieldHandler defines operations for processing a specific vote extension field
+type FieldHandler struct {
+	Field    VoteExtensionField
+	GetKey   func(ve VoteExtension) string
+	GetValue func(ve VoteExtension) any
+	SetValue func(v any, ve *VoteExtension)
+}
+
+// fieldVote represents a voted value with its accumulated voting power
+type fieldVote struct {
+	value     any
+	votePower int64
+}
+
 // String returns the string representation of a VoteExtensionField
 func (f VoteExtensionField) String() string {
 	switch f {
@@ -321,10 +335,4 @@ func HasAllEssentialFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 		}
 	}
 	return true
-}
-
-// fieldVote represents a voted value with its accumulated voting power
-type fieldVote struct {
-	value     any
-	votePower int64
 }
