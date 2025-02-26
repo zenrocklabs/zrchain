@@ -186,14 +186,38 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, req.LocalLastCommit)
+	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
-	if voteExt.ZRChainBlockHeight == 0 { // no supermajority vote extension
+	if len(fieldVotePowers) == 0 { // no field reached consensus
+		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
+	}
+
+	// Log essential fields information
+	if !HasAllEssentialFields(fieldVotePowers) {
+		missingEssentialFields := []string{}
+		for _, field := range EssentialVoteExtensionFields {
+			if _, ok := fieldVotePowers[field]; !ok {
+				missingEssentialFields = append(missingEssentialFields, field.String())
+			}
+		}
+
+		if len(missingEssentialFields) > 0 {
+			k.Logger(ctx).Warn("proceeding with partial consensus - missing essential vote extension fields",
+				"height", req.Height,
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower,
+				"missing_essential_fields", strings.Join(missingEssentialFields, ", "))
+		} else {
+			k.Logger(ctx).Info("consensus reached on all essential vote extension fields",
+				"height", req.Height,
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower)
+		}
 	}
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
@@ -201,7 +225,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
+	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
@@ -213,6 +237,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 // ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
+	// Return early if this node is not a validator so non-validators don't need to be running a sidecar
 	if !k.zrConfig.IsValidator {
 		return ACCEPT_PROPOSAL, nil
 	}
@@ -231,7 +256,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
-	// Remove commit info before comparison.
+	// Check for empty oracle data - if it's empty, accept the proposal
 	recoveredOracleDataNoCommitInfo := recoveredOracleData
 	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
 	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
@@ -316,18 +341,43 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 
 // validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
+	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extensions data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
 	if reflect.DeepEqual(voteExt, VoteExtension{}) {
 		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
-		return voteExt, true
+		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
+	if len(fieldVotePowers) == 0 {
+		k.Logger(ctx).Warn("no consensus on any vote extension fields", "height", height)
+		return VoteExtension{}, false
+	}
+
+	// Check which essential fields are missing when oracle data is present, but don't fail
+	if oracleData.HasAnyOracleData() {
+		// List missing essential fields
+		missingFields := []string{}
+		for _, field := range EssentialVoteExtensionFields {
+			if _, ok := fieldVotePowers[field]; !ok {
+				missingFields = append(missingFields, field.String())
+			}
+		}
+
+		if len(missingFields) > 0 {
+			k.Logger(ctx).Warn("missing consensus on some essential vote extension fields; processing may be limited",
+				"height", height,
+				"missing_fields", strings.Join(missingFields, ", "),
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower)
+			// Don't return false - continue processing with available fields
+		}
+	}
+
+	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
@@ -336,34 +386,59 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) (*OracleData, *VoteExtension, error) {
-	oracleData, err := k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
+// Only validates fields that have reached consensus as indicated in fieldVotePowers.
+func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
+	// We only fetch Ethereum state if we have consensus on EthBlockHeight
+	var oracleData *OracleData
+	var err error
+
+	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+		oracleData, err = k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching oracle state: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("no consensus on eth block height")
 	}
 
-	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
-			ChainName:   k.bitcoinNetwork(ctx),
-			BlockHeight: voteExt.BtcBlockHeight,
-		},
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+	// We only fetch Bitcoin data if we have consensus on BtcBlockHeight
+	if _, ok := fieldVotePowers[VEFieldBtcBlockHeight]; ok {
+		bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
+			ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+				ChainName:   k.bitcoinNetwork(ctx),
+				BlockHeight: voteExt.BtcBlockHeight,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+		}
+
+		oracleData.BtcBlockHeight = bitcoinData.BlockHeight
+		oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	}
 
-	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
-	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
-	oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
-	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
-	oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
-	oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
-
-	if err := k.validateOracleData(voteExt, oracleData); err != nil {
-		return nil, nil, err
+	// Copy over nonce data if we have consensus on those fields
+	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
 
-	return oracleData, &voteExt, nil
+	// Store the field vote powers for later use in transaction dispatch callbacks
+	oracleData.FieldVotePowers = fieldVotePowers
+
+	if err := k.validateOracleData(voteExt, oracleData, fieldVotePowers); err != nil {
+		return nil, err
+	}
+
+	return oracleData, nil
 }
 
 //
@@ -806,6 +881,25 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus on required gas fields
+			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+				k.Logger(ctx).Error("cannot process zenBTC stake: missing consensus on gas fields",
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount)
+				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+			}
+
+			// Check for consensus on nonce field
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
+				k.Logger(ctx).Error("cannot process zenBTC stake: missing consensus on staker nonce",
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount)
+				return fmt.Errorf("missing consensus on staker nonce required for transaction construction")
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC stake",
 				"recipient", tx.RecipientAddress,
 				"amount", tx.Amount,
@@ -890,6 +984,35 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err := k.zenBTCKeeper.SetFirstPendingMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus on required gas fields
+			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on gas fields",
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount)
+				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+			}
+
+			// Check for consensus on nonce field
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
+				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on minter nonce",
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount)
+				return fmt.Errorf("missing consensus on minter nonce required for transaction construction")
+			}
+
+			// Check for consensus on price data for fee calculation
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldBTCUSDPrice) ||
+				!HasRequiredField(oracleData.FieldVotePowers, VEFieldETHUSDPrice) {
+				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on price data",
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount)
+				return fmt.Errorf("missing consensus on price data required for fee calculation")
+			}
+
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 			if err != nil {
 				return err
@@ -1011,6 +1134,25 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus on required gas fields
+			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+				k.Logger(ctx).Error("cannot process zenBTC burn unstake: missing consensus on gas fields",
+					"burn_id", be.Id,
+					"destination", be.DestinationAddr,
+					"amount", be.Amount)
+				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+			}
+
+			// Check for consensus on nonce field
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) {
+				k.Logger(ctx).Error("cannot process zenBTC burn unstake: missing consensus on unstaker nonce",
+					"burn_id", be.Id,
+					"destination", be.DestinationAddr,
+					"amount", be.Amount)
+				return fmt.Errorf("missing consensus on unstaker nonce required for transaction construction")
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC burn unstake",
 				"burn_event", be,
 				"nonce", oracleData.RequestedUnstakerNonce,
@@ -1159,6 +1301,23 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, r.Data.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus on required gas fields
+			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+				k.Logger(ctx).Error("cannot process zenBTC redemption: missing consensus on gas fields",
+					"redemption_id", r.Data.Id,
+					"amount", r.Data.Amount)
+				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+			}
+
+			// Check for consensus on nonce field
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
+				k.Logger(ctx).Error("cannot process zenBTC redemption: missing consensus on completer nonce",
+					"redemption_id", r.Data.Id,
+					"amount", r.Data.Amount)
+				return fmt.Errorf("missing consensus on completer nonce required for transaction construction")
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC complete",
 				"id", r.Data.Id,
 				"nonce", oracleData.RequestedCompleterNonce,

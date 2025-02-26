@@ -120,10 +120,33 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 	return validatorDelegations, nil
 }
 
-func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, error) {
-	votesPerVoteExt := make(map[string]*VEWithVotePower)
-	var totalVotePower int64
+// GetSuperMajorityVEData tallies votes for individual fields of the VoteExtension instead of requiring
+// consensus on the entire object. This makes the system more resilient by allowing fields
+// that have supermajority consensus to be accepted even if other fields don't reach consensus.
+func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, map[VoteExtensionField]int64, int64, error) {
+	// Maps to store votes for each field
+	eigenDelegationsHashVotes := make(map[string]fieldVote)
+	ethBurnEventsHashVotes := make(map[string]fieldVote)
+	redemptionsHashVotes := make(map[string]fieldVote)
+	btcHeaderHashVotes := make(map[string]fieldVote)
+	btcBlockHeightVotes := make(map[int64]fieldVote)
+	ethBlockHeightVotes := make(map[uint64]fieldVote)
+	ethGasLimitVotes := make(map[uint64]fieldVote)
+	ethBaseFeeVotes := make(map[uint64]fieldVote)
+	ethTipCapVotes := make(map[uint64]fieldVote)
+	solanaLamportsPerSignatureVotes := make(map[uint64]fieldVote)
+	requestedStakerNonceVotes := make(map[uint64]fieldVote)
+	requestedEthMinterNonceVotes := make(map[uint64]fieldVote)
+	requestedUnstakerNonceVotes := make(map[uint64]fieldVote)
+	requestedCompleterNonceVotes := make(map[uint64]fieldVote)
+	rockUSDPriceVotes := make(map[string]fieldVote)
+	btcUSDPriceVotes := make(map[string]fieldVote)
+	ethUSDPriceVotes := make(map[string]fieldVote)
 
+	var totalVotePower int64
+	fieldVotePowers := make(map[VoteExtensionField]int64)
+
+	// Process all votes
 	for _, vote := range extCommit.Votes {
 		totalVotePower += vote.Validator.Power
 
@@ -132,28 +155,173 @@ func (k Keeper) GetSuperMajorityVE(ctx context.Context, currentHeight int64, ext
 			continue
 		}
 
-		updateVotesPerVE(votesPerVoteExt, voteExt, vote.Validator.Power)
+		// Tally votes for each field
+		tallyFieldVote(eigenDelegationsHashVotes, bytesToString(voteExt.EigenDelegationsHash), voteExt.EigenDelegationsHash, vote.Validator.Power)
+		tallyFieldVote(ethBurnEventsHashVotes, bytesToString(voteExt.EthBurnEventsHash), voteExt.EthBurnEventsHash, vote.Validator.Power)
+		tallyFieldVote(redemptionsHashVotes, bytesToString(voteExt.RedemptionsHash), voteExt.RedemptionsHash, vote.Validator.Power)
+		tallyFieldVote(btcHeaderHashVotes, bytesToString(voteExt.BtcHeaderHash), voteExt.BtcHeaderHash, vote.Validator.Power)
+		tallyFieldVote(btcBlockHeightVotes, voteExt.BtcBlockHeight, voteExt.BtcBlockHeight, vote.Validator.Power)
+		tallyFieldVote(ethBlockHeightVotes, voteExt.EthBlockHeight, voteExt.EthBlockHeight, vote.Validator.Power)
+		tallyFieldVote(ethGasLimitVotes, voteExt.EthGasLimit, voteExt.EthGasLimit, vote.Validator.Power)
+		tallyFieldVote(ethBaseFeeVotes, voteExt.EthBaseFee, voteExt.EthBaseFee, vote.Validator.Power)
+		tallyFieldVote(ethTipCapVotes, voteExt.EthTipCap, voteExt.EthTipCap, vote.Validator.Power)
+		tallyFieldVote(solanaLamportsPerSignatureVotes, voteExt.SolanaLamportsPerSignature, voteExt.SolanaLamportsPerSignature, vote.Validator.Power)
+		tallyFieldVote(requestedStakerNonceVotes, voteExt.RequestedStakerNonce, voteExt.RequestedStakerNonce, vote.Validator.Power)
+		tallyFieldVote(requestedEthMinterNonceVotes, voteExt.RequestedEthMinterNonce, voteExt.RequestedEthMinterNonce, vote.Validator.Power)
+		tallyFieldVote(requestedUnstakerNonceVotes, voteExt.RequestedUnstakerNonce, voteExt.RequestedUnstakerNonce, vote.Validator.Power)
+		tallyFieldVote(requestedCompleterNonceVotes, voteExt.RequestedCompleterNonce, voteExt.RequestedCompleterNonce, vote.Validator.Power)
+		tallyFieldVote(rockUSDPriceVotes, voteExt.ROCKUSDPrice.String(), voteExt.ROCKUSDPrice, vote.Validator.Power)
+		tallyFieldVote(btcUSDPriceVotes, voteExt.BTCUSDPrice.String(), voteExt.BTCUSDPrice, vote.Validator.Power)
+		tallyFieldVote(ethUSDPriceVotes, voteExt.ETHUSDPrice.String(), voteExt.ETHUSDPrice, vote.Validator.Power)
 	}
 
-	if len(votesPerVoteExt) == 0 {
-		return VoteExtension{}, nil
+	// Create consensus VoteExtension with fields that have supermajority
+	var consensusVE VoteExtension
+	consensusVE.ZRChainBlockHeight = currentHeight - 1
+
+	// Check for consensus on each field and use the most voted value if it has supermajority
+	var requiredVotePower = requisiteVotePower(totalVotePower)
+
+	// Handle EigenDelegationsHash
+	if mostVoted, votePower := getMostVotedField(eigenDelegationsHashVotes); votePower >= requiredVotePower {
+		consensusVE.EigenDelegationsHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldEigenDelegationsHash] = votePower
 	}
 
-	mostVotedVE := getMostVotedVE(votesPerVoteExt)
-
-	finalVoteExt, err := unmarshalVE(mostVotedVE.VoteExtension)
-	if err != nil {
-		return VoteExtension{}, err
+	// Handle EthBurnEventsHash
+	if mostVoted, votePower := getMostVotedField(ethBurnEventsHashVotes); votePower >= requiredVotePower {
+		consensusVE.EthBurnEventsHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldEthBurnEventsHash] = votePower
 	}
 
-	if !hasReachedSupermajority(totalVotePower, mostVotedVE.VotePower) {
-		k.Logger(ctx).Warn("consensus not reached on vote extension",
-			"required_vote_power", requisiteVotePower(totalVotePower),
-			"actual_vote_power", mostVotedVE.VotePower)
-		return VoteExtension{}, nil
+	// Handle RedemptionsHash
+	if mostVoted, votePower := getMostVotedField(redemptionsHashVotes); votePower >= requiredVotePower {
+		consensusVE.RedemptionsHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldRedemptionsHash] = votePower
 	}
 
-	return finalVoteExt, nil
+	// Handle BtcHeaderHash
+	if mostVoted, votePower := getMostVotedField(btcHeaderHashVotes); votePower >= requiredVotePower {
+		consensusVE.BtcHeaderHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldBtcHeaderHash] = votePower
+	}
+
+	// Handle BtcBlockHeight
+	if mostVoted, votePower := getMostVotedField(btcBlockHeightVotes); votePower >= requiredVotePower {
+		consensusVE.BtcBlockHeight = mostVoted.(int64)
+		fieldVotePowers[VEFieldBtcBlockHeight] = votePower
+	}
+
+	// Handle EthBlockHeight
+	if mostVoted, votePower := getMostVotedField(ethBlockHeightVotes); votePower >= requiredVotePower {
+		consensusVE.EthBlockHeight = mostVoted.(uint64)
+		fieldVotePowers[VEFieldEthBlockHeight] = votePower
+	}
+
+	// Handle EthGasLimit
+	if mostVoted, votePower := getMostVotedField(ethGasLimitVotes); votePower >= requiredVotePower {
+		consensusVE.EthGasLimit = mostVoted.(uint64)
+		fieldVotePowers[VEFieldEthGasLimit] = votePower
+	}
+
+	// Handle EthBaseFee
+	if mostVoted, votePower := getMostVotedField(ethBaseFeeVotes); votePower >= requiredVotePower {
+		consensusVE.EthBaseFee = mostVoted.(uint64)
+		fieldVotePowers[VEFieldEthBaseFee] = votePower
+	}
+
+	// Handle EthTipCap
+	if mostVoted, votePower := getMostVotedField(ethTipCapVotes); votePower >= requiredVotePower {
+		consensusVE.EthTipCap = mostVoted.(uint64)
+		fieldVotePowers[VEFieldEthTipCap] = votePower
+	}
+
+	// Handle SolanaLamportsPerSignature
+	if mostVoted, votePower := getMostVotedField(solanaLamportsPerSignatureVotes); votePower >= requiredVotePower {
+		consensusVE.SolanaLamportsPerSignature = mostVoted.(uint64)
+		fieldVotePowers[VEFieldSolanaLamportsPerSignature] = votePower
+	}
+
+	// Handle RequestedStakerNonce
+	if mostVoted, votePower := getMostVotedField(requestedStakerNonceVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedStakerNonce = mostVoted.(uint64)
+		fieldVotePowers[VEFieldRequestedStakerNonce] = votePower
+	}
+
+	// Handle RequestedEthMinterNonce
+	if mostVoted, votePower := getMostVotedField(requestedEthMinterNonceVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedEthMinterNonce = mostVoted.(uint64)
+		fieldVotePowers[VEFieldRequestedEthMinterNonce] = votePower
+	}
+
+	// Handle RequestedUnstakerNonce
+	if mostVoted, votePower := getMostVotedField(requestedUnstakerNonceVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedUnstakerNonce = mostVoted.(uint64)
+		fieldVotePowers[VEFieldRequestedUnstakerNonce] = votePower
+	}
+
+	// Handle RequestedCompleterNonce
+	if mostVoted, votePower := getMostVotedField(requestedCompleterNonceVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedCompleterNonce = mostVoted.(uint64)
+		fieldVotePowers[VEFieldRequestedCompleterNonce] = votePower
+	}
+
+	// Handle ROCKUSDPrice
+	if mostVoted, votePower := getMostVotedField(rockUSDPriceVotes); votePower >= requiredVotePower {
+		consensusVE.ROCKUSDPrice = mostVoted.(math.LegacyDec)
+		fieldVotePowers[VEFieldROCKUSDPrice] = votePower
+	}
+
+	// Handle BTCUSDPrice
+	if mostVoted, votePower := getMostVotedField(btcUSDPriceVotes); votePower >= requiredVotePower {
+		consensusVE.BTCUSDPrice = mostVoted.(math.LegacyDec)
+		fieldVotePowers[VEFieldBTCUSDPrice] = votePower
+	}
+
+	// Handle ETHUSDPrice
+	if mostVoted, votePower := getMostVotedField(ethUSDPriceVotes); votePower >= requiredVotePower {
+		consensusVE.ETHUSDPrice = mostVoted.(math.LegacyDec)
+		fieldVotePowers[VEFieldETHUSDPrice] = votePower
+	}
+
+	// Check if all essential fields have consensus
+	hasEssentialFields := HasAllEssentialFields(fieldVotePowers)
+
+	// Log which fields have reached consensus
+	if len(fieldVotePowers) > 0 {
+		essentialFieldsMsg := "all essential fields have consensus"
+		if !hasEssentialFields {
+			essentialFieldsMsg = "missing consensus on some essential fields"
+
+			// Log which essential fields are missing
+			missingFields := []string{}
+			for _, field := range EssentialVoteExtensionFields {
+				if _, ok := fieldVotePowers[field]; !ok {
+					missingFields = append(missingFields, field.String())
+				}
+			}
+
+			k.Logger(ctx).Warn("missing consensus on essential vote extension fields",
+				"missing_fields", strings.Join(missingFields, ", "))
+		}
+
+		k.Logger(ctx).Info("consensus reached on vote extension fields",
+			"fields_with_consensus", len(fieldVotePowers),
+			"total_fields", 17,
+			"essential_fields_status", essentialFieldsMsg)
+
+		for field, power := range fieldVotePowers {
+			k.Logger(ctx).Debug("field consensus details",
+				"field", field.String(),
+				"vote_power", power,
+				"required_power", requiredVotePower,
+				"is_essential", IsEssentialField(field))
+		}
+	} else {
+		k.Logger(ctx).Warn("no consensus reached on any vote extension fields")
+	}
+
+	return consensusVE, fieldVotePowers, totalVotePower, nil
 }
 
 func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, currentHeight int64) (VoteExtension, error) {
@@ -880,59 +1048,193 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 }
 
 // validateOracleData verifies that the vote extension and oracle data match.
-func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData) error {
-	if err := validateHashField("AVS contract delegation state", voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-		return err
-	}
-	if err := validateHashField("Ethereum burn events", voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-		return err
-	}
-	if err := validateHashField("Ethereum redemptions", voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-		return err
-	}
-	if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
-		return err
+// Only fields that have reached consensus (present in fieldVotePowers) are validated.
+func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
+	var validationErrors []string
+
+	// Validate hashes only if fields have consensus
+	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
+		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
+			validationErrors = append(validationErrors, err.Error())
+		}
 	}
 
-	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-		return fmt.Errorf("ethereum block height mismatch, expected %d, got %d", voteExt.EthBlockHeight, oracleData.EthBlockHeight)
-	}
-	if voteExt.EthGasLimit != oracleData.EthGasLimit {
-		return fmt.Errorf("ethereum gas limit mismatch, expected %d, got %d", voteExt.EthGasLimit, oracleData.EthGasLimit)
-	}
-	if voteExt.EthBaseFee != oracleData.EthBaseFee {
-		return fmt.Errorf("ethereum base fee mismatch, expected %d, got %d", voteExt.EthBaseFee, oracleData.EthBaseFee)
-	}
-	if voteExt.EthTipCap != oracleData.EthTipCap {
-		return fmt.Errorf("ethereum tip cap mismatch, expected %d, got %d", voteExt.EthTipCap, oracleData.EthTipCap)
+	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
+		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
+			validationErrors = append(validationErrors, err.Error())
+		}
 	}
 
-	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
-		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
+	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
+		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
+			validationErrors = append(validationErrors, err.Error())
+		}
 	}
 
-	if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-		return fmt.Errorf("requested staker nonce mismatch, expected %d, got %d", voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce)
-	}
-	if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-		return fmt.Errorf("requested eth minter nonce mismatch, expected %d, got %d", voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
-	}
-	if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-		return fmt.Errorf("requested unstaker nonce mismatch, expected %d, got %d", voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce)
-	}
-	if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-		return fmt.Errorf("requested completer nonce mismatch, expected %d, got %d", voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce)
+	if _, ok := fieldVotePowers[VEFieldBtcHeaderHash]; ok {
+		if err := validateHashField(VEFieldBtcHeaderHash.String(), voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+			validationErrors = append(validationErrors, err.Error())
+		}
 	}
 
-	if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
-		return fmt.Errorf("ROCK/USD price mismatch, expected %s, got %s", voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
+	// Check Ethereum-related fields
+	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldEthBlockHeight.String(), voteExt.EthBlockHeight, oracleData.EthBlockHeight))
+		}
 	}
-	if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
-		return fmt.Errorf("BTC/USD price mismatch, expected %s, got %s", voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
+
+	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
+		if voteExt.EthGasLimit != oracleData.EthGasLimit {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldEthGasLimit.String(), voteExt.EthGasLimit, oracleData.EthGasLimit))
+		}
 	}
-	if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
-		return fmt.Errorf("ETH/USD price mismatch, expected %s, got %s", voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
+
+	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
+		if voteExt.EthBaseFee != oracleData.EthBaseFee {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldEthBaseFee.String(), voteExt.EthBaseFee, oracleData.EthBaseFee))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
+		if voteExt.EthTipCap != oracleData.EthTipCap {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldEthTipCap.String(), voteExt.EthTipCap, oracleData.EthTipCap))
+		}
+	}
+
+	// Check Bitcoin height
+	if _, ok := fieldVotePowers[VEFieldBtcBlockHeight]; ok {
+		if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldBtcBlockHeight.String(), voteExt.BtcBlockHeight, oracleData.BtcBlockHeight))
+		}
+	}
+
+	// Check nonce-related fields
+	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldRequestedStakerNonce.String(), voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldRequestedEthMinterNonce.String(), voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldRequestedUnstakerNonce.String(), voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldRequestedCompleterNonce.String(), voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce))
+		}
+	}
+
+	// Check price fields
+	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
+		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldROCKUSDPrice.String(), voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
+		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldBTCUSDPrice.String(), voteExt.BTCUSDPrice, oracleData.BTCUSDPrice))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
+		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldETHUSDPrice.String(), voteExt.ETHUSDPrice, oracleData.ETHUSDPrice))
+		}
+	}
+
+	if len(validationErrors) > 0 {
+		return fmt.Errorf("oracle data validation failed: %s", strings.Join(validationErrors, "; "))
 	}
 
 	return nil
+}
+
+// bytesToString converts a byte slice to a string for use as a map key
+func bytesToString(bytes []byte) string {
+	return hex.EncodeToString(bytes)
+}
+
+// tallyFieldVote adds a vote for a field to the appropriate map
+func tallyFieldVote[K comparable, V any](votes map[K]fieldVote, key K, value V, votePower int64) {
+	if existingVote, ok := votes[key]; ok {
+		existingVote.votePower += votePower
+		votes[key] = existingVote
+	} else {
+		votes[key] = fieldVote{
+			value:     value,
+			votePower: votePower,
+		}
+	}
+}
+
+// getMostVotedField returns the most voted value and its vote power for a field
+func getMostVotedField[K comparable](votes map[K]fieldVote) (interface{}, int64) {
+	var mostVotedValue interface{}
+	var maxVotePower int64
+
+	for _, vote := range votes {
+		if vote.votePower > maxVotePower {
+			maxVotePower = vote.votePower
+			mostVotedValue = vote.value
+		}
+	}
+
+	return mostVotedValue, maxVotePower
+}
+
+// HasRequiredGasFields checks if all essential gas/fee related fields have reached consensus
+func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
+	requiredFields := []VoteExtensionField{
+		VEFieldEthGasLimit,
+		VEFieldEthBaseFee,
+		VEFieldEthTipCap,
+	}
+
+	for _, field := range requiredFields {
+		if _, ok := fieldVotePowers[field]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// HasRequiredField checks if the specific field has reached consensus
+func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
+	_, ok := fieldVotePowers[field]
+	return ok
 }
