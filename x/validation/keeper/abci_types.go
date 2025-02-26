@@ -75,6 +75,7 @@ type (
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
 		ConsensusData              abci.ExtendedCommitInfo
+		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
 	}
 
 	ValidatorDelegations struct {

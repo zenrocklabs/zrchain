@@ -1307,3 +1307,25 @@ func getMostVotedField[K comparable](votes map[K]fieldVote) (interface{}, int64)
 
 	return mostVotedValue, maxVotePower
 }
+
+// HasRequiredGasFields checks if all essential gas/fee related fields have reached consensus
+func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
+	requiredFields := []VoteExtensionField{
+		VEFieldEthGasLimit,
+		VEFieldEthBaseFee,
+		VEFieldEthTipCap,
+	}
+
+	for _, field := range requiredFields {
+		if _, ok := fieldVotePowers[field]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// HasRequiredNonceField checks if the specific nonce field has reached consensus
+func HasRequiredNonceField(fieldVotePowers map[VoteExtensionField]int64, nonceField VoteExtensionField) bool {
+	_, ok := fieldVotePowers[nonceField]
+	return ok
+}
