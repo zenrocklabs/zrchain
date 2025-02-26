@@ -225,7 +225,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
+	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
@@ -312,7 +312,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 
 	// Validate the oracle data against our local consensus
 	if len(fieldVotePowers) > 0 {
-		ourOracleData, _, err := k.getValidatedOracleData(ctx, ourVoteExt, fieldVotePowers)
+		ourOracleData, err := k.getValidatedOracleData(ctx, ourVoteExt, fieldVotePowers)
 		if err != nil {
 			k.Logger(ctx).Error("error validating our oracle data", "height", req.Height, "error", err)
 			return REJECT_PROPOSAL, nil
@@ -455,7 +455,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
 // Only validates fields that have reached consensus as indicated in fieldVotePowers.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, *VoteExtension, error) {
+func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
 	// We only fetch Ethereum state if we have consensus on EthBlockHeight
 	var oracleData *OracleData
 	var err error
@@ -463,13 +463,13 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
 		oracleData, err = k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
+			return nil, fmt.Errorf("error fetching oracle state: %w", err)
 		}
 	} else {
 		// If we don't have consensus on Ethereum height, get the latest state
 		oracleData, err = k.GetSidecarState(ctx, ctx.BlockHeight())
 		if err != nil {
-			return nil, nil, fmt.Errorf("error fetching latest oracle state: %w", err)
+			return nil, fmt.Errorf("error fetching latest oracle state: %w", err)
 		}
 	}
 
@@ -482,7 +482,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 			},
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+			return nil, fmt.Errorf("error fetching bitcoin header: %w", err)
 		}
 
 		oracleData.BtcBlockHeight = bitcoinData.BlockHeight
@@ -507,10 +507,10 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	oracleData.FieldVotePowers = fieldVotePowers
 
 	if err := k.validateOracleData(voteExt, oracleData, fieldVotePowers); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return oracleData, &voteExt, nil
+	return oracleData, nil
 }
 
 //
