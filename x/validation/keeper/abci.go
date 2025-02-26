@@ -258,22 +258,27 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	}
 
 	// Check for empty oracle data - if it's empty, accept the proposal
-	recoveredOracleDataNoCommitInfo := oracleData
-	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
-	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
+	oracleDataNoCommitInfo := oracleData
+	oracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
+	if reflect.DeepEqual(oracleDataNoCommitInfo, OracleData{}) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
 	}
 
-	// Get the vote extension consensus based on fields (our "local consensus")
-	ourVoteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, oracleData.ConsensusData)
+	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), oracleData.ConsensusData); err != nil {
+		k.Logger(ctx).Error("error validating vote extensions", "height", req.Height, "error", err)
+		return REJECT_PROPOSAL, err
+	}
+
+	// Get the vote extension based on consensus per field
+	canonicalVoteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, oracleData.ConsensusData)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return REJECT_PROPOSAL, nil
 	}
 
 	if len(fieldVotePowers) == 0 {
-		// If we don't have local consensus, there's nothing to check against.
+		// If we don't have any consensus, there's nothing to check against.
 		// This is acceptable as we can still process blocks without oracle data.
 		k.Logger(ctx).Warn("no fields reached local consensus in vote extension", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
@@ -299,20 +304,20 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 
 	// Validate the oracle data against our local consensus
 	if len(fieldVotePowers) > 0 {
-		ourOracleData, err := k.getValidatedOracleData(ctx, ourVoteExt, fieldVotePowers)
+		validatedOracleData, err := k.getValidatedOracleData(ctx, canonicalVoteExt, fieldVotePowers)
 		if err != nil {
 			k.Logger(ctx).Error("error validating our oracle data", "height", req.Height, "error", err)
 			return REJECT_PROPOSAL, nil
 		}
 
 		// If our consensus resulted in oracle data, then the proposal's oracle data should match
-		if !oracleData.MatchesValidatedOracleData(ourOracleData) {
+		if !oracleData.MatchesValidatedOracleData(validatedOracleData) {
 			k.Logger(ctx).Error("proposal's oracle data doesn't match our validated oracle data",
 				"height", req.Height,
-				"our_eth_height", ourOracleData.EthBlockHeight,
-				"proposal_eth_height", oracleData.EthBlockHeight,
-				"our_btc_height", ourOracleData.BtcBlockHeight,
-				"proposal_btc_height", oracleData.BtcBlockHeight)
+				"validated_eth_height", validatedOracleData.EthBlockHeight,
+				"proposed_eth_height", oracleData.EthBlockHeight,
+				"validated_btc_height", validatedOracleData.BtcBlockHeight,
+				"proposed_btc_height", oracleData.BtcBlockHeight)
 			return REJECT_PROPOSAL, nil
 		}
 	}
@@ -405,6 +410,11 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extensions data", "height", height, "error", err)
 		return VoteExtension{}, false
+	}
+
+	if reflect.DeepEqual(voteExt, VoteExtension{}) {
+		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
+		return VoteExtension{}, true
 	}
 
 	if len(fieldVotePowers) == 0 {
