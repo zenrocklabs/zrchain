@@ -11,6 +11,7 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -231,4 +232,104 @@ func (o OracleData) MatchesValidatedOracleData(other *OracleData) bool {
 	// Just check that the essential data we care about matches
 
 	return true
+}
+
+// VoteExtensionField defines a type-safe identifier for vote extension fields
+type VoteExtensionField int
+
+const (
+	// Essential fields - absence of these can cause data loss
+	VEFieldZRChainBlockHeight   VoteExtensionField = iota // Height is always essential
+	VEFieldEigenDelegationsHash                           // AVS delegations are essential for validator updates
+	VEFieldEthBurnEventsHash                              // Events from Ethereum
+	VEFieldRedemptionsHash                                // Redemption data
+	VEFieldBtcHeaderHash                                  // Bitcoin header data
+
+	// Standard fields
+	VEFieldBtcBlockHeight
+	VEFieldEthBlockHeight
+	VEFieldEthGasLimit
+	VEFieldEthBaseFee
+	VEFieldEthTipCap
+	VEFieldSolanaLamportsPerSignature
+	VEFieldRequestedStakerNonce
+	VEFieldRequestedEthMinterNonce
+	VEFieldRequestedUnstakerNonce
+	VEFieldRequestedCompleterNonce
+	VEFieldROCKUSDPrice
+	VEFieldBTCUSDPrice
+	VEFieldETHUSDPrice
+)
+
+// String returns the string representation of a VoteExtensionField
+func (f VoteExtensionField) String() string {
+	switch f {
+	case VEFieldZRChainBlockHeight:
+		return "ZRChainBlockHeight"
+	case VEFieldEigenDelegationsHash:
+		return "EigenDelegationsHash"
+	case VEFieldEthBurnEventsHash:
+		return "EthBurnEventsHash"
+	case VEFieldRedemptionsHash:
+		return "RedemptionsHash"
+	case VEFieldBtcHeaderHash:
+		return "BtcHeaderHash"
+	case VEFieldBtcBlockHeight:
+		return "BtcBlockHeight"
+	case VEFieldEthBlockHeight:
+		return "EthBlockHeight"
+	case VEFieldEthGasLimit:
+		return "EthGasLimit"
+	case VEFieldEthBaseFee:
+		return "EthBaseFee"
+	case VEFieldEthTipCap:
+		return "EthTipCap"
+	case VEFieldSolanaLamportsPerSignature:
+		return "SolanaLamportsPerSignature"
+	case VEFieldRequestedStakerNonce:
+		return "RequestedStakerNonce"
+	case VEFieldRequestedEthMinterNonce:
+		return "RequestedEthMinterNonce"
+	case VEFieldRequestedUnstakerNonce:
+		return "RequestedUnstakerNonce"
+	case VEFieldRequestedCompleterNonce:
+		return "RequestedCompleterNonce"
+	case VEFieldROCKUSDPrice:
+		return "ROCKUSDPrice"
+	case VEFieldBTCUSDPrice:
+		return "BTCUSDPrice"
+	case VEFieldETHUSDPrice:
+		return "ETHUSDPrice"
+	default:
+		return "Unknown"
+	}
+}
+
+// EssentialVoteExtensionFields defines fields where absence of consensus
+// would cause data loss or chain issues
+var EssentialVoteExtensionFields = []VoteExtensionField{
+	VEFieldZRChainBlockHeight,   // Height is always essential
+	VEFieldEigenDelegationsHash, // AVS delegations are essential for validator updates
+	// Other fields can be made essential as needed in the future
+}
+
+// IsEssentialField returns true if the given field is considered essential
+func IsEssentialField(field VoteExtensionField) bool {
+	return slices.Contains(EssentialVoteExtensionFields, field)
+}
+
+// HasAllEssentialFields checks if all essential fields have reached consensus
+func HasAllEssentialFields(fieldVotePowers map[VoteExtensionField]int64) bool {
+	for _, field := range EssentialVoteExtensionFields {
+		if _, ok := fieldVotePowers[field]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// fieldVote represents a voted value with its accumulated voting power
+type fieldVote struct {
+	value     any
+	votePower int64
 }

@@ -188,7 +188,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving field-based supermajority vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
@@ -202,7 +202,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		missingEssentialFields := []string{}
 		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				missingEssentialFields = append(missingEssentialFields, VEFieldString(field))
+				missingEssentialFields = append(missingEssentialFields, field.String())
 			}
 		}
 
@@ -281,7 +281,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	// Get the vote extension consensus based on fields (our "local consensus")
 	ourVoteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving field-based supermajority vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return REJECT_PROPOSAL, nil
 	}
 
@@ -298,12 +298,12 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		missingFields := []string{}
 		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, VEFieldString(field))
+				missingFields = append(missingFields, field.String())
 			}
 		}
 
 		if len(missingFields) > 0 {
-			k.Logger(ctx).Error("proposal contains oracle data but is missing consensus on essential fields",
+			k.Logger(ctx).Error("rejecting proposal: missing essential fields",
 				"height", req.Height,
 				"missing_fields", strings.Join(missingFields, ", "))
 			return REJECT_PROPOSAL, nil
@@ -431,7 +431,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		missingFields := []string{}
 		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, VEFieldString(field))
+				missingFields = append(missingFields, field.String())
 			}
 		}
 
