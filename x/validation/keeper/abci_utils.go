@@ -358,14 +358,6 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 	return voteExt, nil
 }
 
-func getVESubset(ve VoteExtension) VoteExtension {
-	ve.EthBlockHeight = 0
-	ve.EthBaseFee = 0
-	ve.EthTipCap = 0
-	ve.EthGasLimit = 0
-	return ve
-}
-
 func requisiteVotePower(totalVotePower int64) int64 {
 	return ((totalVotePower * 2) / 3) + 1
 }
