@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/log"
@@ -335,4 +337,129 @@ func HasAllEssentialFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 		}
 	}
 	return true
+}
+
+// InitializeFieldHandlers creates handlers for all vote extension fields
+func initializeFieldHandlers() []FieldHandler {
+	return []FieldHandler{
+		// Hash fields
+		{
+			Field:    VEFieldEigenDelegationsHash,
+			GetKey:   func(ve VoteExtension) string { return hex.EncodeToString(ve.EigenDelegationsHash) },
+			GetValue: func(ve VoteExtension) any { return ve.EigenDelegationsHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.EigenDelegationsHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldEthBurnEventsHash,
+			GetKey:   func(ve VoteExtension) string { return hex.EncodeToString(ve.EthBurnEventsHash) },
+			GetValue: func(ve VoteExtension) any { return ve.EthBurnEventsHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.EthBurnEventsHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldRedemptionsHash,
+			GetKey:   func(ve VoteExtension) string { return hex.EncodeToString(ve.RedemptionsHash) },
+			GetValue: func(ve VoteExtension) any { return ve.RedemptionsHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.RedemptionsHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldRequestedBtcHeaderHash,
+			GetKey:   func(ve VoteExtension) string { return hex.EncodeToString(ve.RequestedBtcHeaderHash) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedBtcHeaderHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedBtcHeaderHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldLatestBtcHeaderHash,
+			GetKey:   func(ve VoteExtension) string { return hex.EncodeToString(ve.LatestBtcHeaderHash) },
+			GetValue: func(ve VoteExtension) any { return ve.LatestBtcHeaderHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.LatestBtcHeaderHash = v.([]byte) },
+		},
+
+		// Integer fields
+		{
+			Field:    VEFieldRequestedBtcBlockHeight,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.RequestedBtcBlockHeight) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedBtcBlockHeight },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedBtcBlockHeight = v.(int64) },
+		},
+		{
+			Field:    VEFieldEthBlockHeight,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.EthBlockHeight) },
+			GetValue: func(ve VoteExtension) any { return ve.EthBlockHeight },
+			SetValue: func(v any, ve *VoteExtension) { ve.EthBlockHeight = v.(uint64) },
+		},
+		{
+			Field:    VEFieldEthGasLimit,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.EthGasLimit) },
+			GetValue: func(ve VoteExtension) any { return ve.EthGasLimit },
+			SetValue: func(v any, ve *VoteExtension) { ve.EthGasLimit = v.(uint64) },
+		},
+		{
+			Field:    VEFieldEthBaseFee,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.EthBaseFee) },
+			GetValue: func(ve VoteExtension) any { return ve.EthBaseFee },
+			SetValue: func(v any, ve *VoteExtension) { ve.EthBaseFee = v.(uint64) },
+		},
+		{
+			Field:    VEFieldEthTipCap,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.EthTipCap) },
+			GetValue: func(ve VoteExtension) any { return ve.EthTipCap },
+			SetValue: func(v any, ve *VoteExtension) { ve.EthTipCap = v.(uint64) },
+		},
+		{
+			Field:    VEFieldSolanaLamportsPerSignature,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.SolanaLamportsPerSignature) },
+			GetValue: func(ve VoteExtension) any { return ve.SolanaLamportsPerSignature },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolanaLamportsPerSignature = v.(uint64) },
+		},
+		{
+			Field:    VEFieldRequestedStakerNonce,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.RequestedStakerNonce) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedStakerNonce },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedStakerNonce = v.(uint64) },
+		},
+		{
+			Field:    VEFieldRequestedEthMinterNonce,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.RequestedEthMinterNonce) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedEthMinterNonce },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedEthMinterNonce = v.(uint64) },
+		},
+		{
+			Field:    VEFieldRequestedUnstakerNonce,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.RequestedUnstakerNonce) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedUnstakerNonce },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedUnstakerNonce = v.(uint64) },
+		},
+		{
+			Field:    VEFieldRequestedCompleterNonce,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.RequestedCompleterNonce) },
+			GetValue: func(ve VoteExtension) any { return ve.RequestedCompleterNonce },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedCompleterNonce = v.(uint64) },
+		},
+		{
+			Field:    VEFieldLatestBtcBlockHeight,
+			GetKey:   func(ve VoteExtension) string { return fmt.Sprintf("%d", ve.LatestBtcBlockHeight) },
+			GetValue: func(ve VoteExtension) any { return ve.LatestBtcBlockHeight },
+			SetValue: func(v any, ve *VoteExtension) { ve.LatestBtcBlockHeight = v.(int64) },
+		},
+
+		// Decimal fields
+		{
+			Field:    VEFieldROCKUSDPrice,
+			GetKey:   func(ve VoteExtension) string { return ve.ROCKUSDPrice.String() },
+			GetValue: func(ve VoteExtension) any { return ve.ROCKUSDPrice },
+			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(math.LegacyDec) },
+		},
+		{
+			Field:    VEFieldBTCUSDPrice,
+			GetKey:   func(ve VoteExtension) string { return ve.BTCUSDPrice.String() },
+			GetValue: func(ve VoteExtension) any { return ve.BTCUSDPrice },
+			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(math.LegacyDec) },
+		},
+		{
+			Field:    VEFieldETHUSDPrice,
+			GetKey:   func(ve VoteExtension) string { return ve.ETHUSDPrice.String() },
+			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
+			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(math.LegacyDec) },
+		},
+	}
 }
