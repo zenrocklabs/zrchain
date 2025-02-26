@@ -128,8 +128,8 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	eigenDelegationsHashVotes := make(map[string]fieldVote)
 	ethBurnEventsHashVotes := make(map[string]fieldVote)
 	redemptionsHashVotes := make(map[string]fieldVote)
-	btcHeaderHashVotes := make(map[string]fieldVote)
-	btcBlockHeightVotes := make(map[int64]fieldVote)
+	requestedBtcHeaderHashVotes := make(map[string]fieldVote)
+	requestedBtcBlockHeightVotes := make(map[int64]fieldVote)
 	ethBlockHeightVotes := make(map[uint64]fieldVote)
 	ethGasLimitVotes := make(map[uint64]fieldVote)
 	ethBaseFeeVotes := make(map[uint64]fieldVote)
@@ -142,6 +142,8 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	rockUSDPriceVotes := make(map[string]fieldVote)
 	btcUSDPriceVotes := make(map[string]fieldVote)
 	ethUSDPriceVotes := make(map[string]fieldVote)
+	latestBtcBlockHeightVotes := make(map[int64]fieldVote)
+	latestBtcHeaderHashVotes := make(map[string]fieldVote)
 
 	var totalVotePower int64
 	fieldVotePowers := make(map[VoteExtensionField]int64)
@@ -159,8 +161,8 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		tallyFieldVote(eigenDelegationsHashVotes, bytesToString(voteExt.EigenDelegationsHash), voteExt.EigenDelegationsHash, vote.Validator.Power)
 		tallyFieldVote(ethBurnEventsHashVotes, bytesToString(voteExt.EthBurnEventsHash), voteExt.EthBurnEventsHash, vote.Validator.Power)
 		tallyFieldVote(redemptionsHashVotes, bytesToString(voteExt.RedemptionsHash), voteExt.RedemptionsHash, vote.Validator.Power)
-		tallyFieldVote(btcHeaderHashVotes, bytesToString(voteExt.BtcHeaderHash), voteExt.BtcHeaderHash, vote.Validator.Power)
-		tallyFieldVote(btcBlockHeightVotes, voteExt.BtcBlockHeight, voteExt.BtcBlockHeight, vote.Validator.Power)
+		tallyFieldVote(requestedBtcHeaderHashVotes, bytesToString(voteExt.RequestedBtcHeaderHash), voteExt.RequestedBtcHeaderHash, vote.Validator.Power)
+		tallyFieldVote(requestedBtcBlockHeightVotes, voteExt.RequestedBtcBlockHeight, voteExt.RequestedBtcBlockHeight, vote.Validator.Power)
 		tallyFieldVote(ethBlockHeightVotes, voteExt.EthBlockHeight, voteExt.EthBlockHeight, vote.Validator.Power)
 		tallyFieldVote(ethGasLimitVotes, voteExt.EthGasLimit, voteExt.EthGasLimit, vote.Validator.Power)
 		tallyFieldVote(ethBaseFeeVotes, voteExt.EthBaseFee, voteExt.EthBaseFee, vote.Validator.Power)
@@ -173,6 +175,8 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		tallyFieldVote(rockUSDPriceVotes, voteExt.ROCKUSDPrice.String(), voteExt.ROCKUSDPrice, vote.Validator.Power)
 		tallyFieldVote(btcUSDPriceVotes, voteExt.BTCUSDPrice.String(), voteExt.BTCUSDPrice, vote.Validator.Power)
 		tallyFieldVote(ethUSDPriceVotes, voteExt.ETHUSDPrice.String(), voteExt.ETHUSDPrice, vote.Validator.Power)
+		tallyFieldVote(latestBtcBlockHeightVotes, voteExt.LatestBtcBlockHeight, voteExt.LatestBtcBlockHeight, vote.Validator.Power)
+		tallyFieldVote(latestBtcHeaderHashVotes, bytesToString(voteExt.LatestBtcHeaderHash), voteExt.LatestBtcHeaderHash, vote.Validator.Power)
 	}
 
 	// Create consensus VoteExtension with fields that have supermajority
@@ -200,16 +204,28 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		fieldVotePowers[VEFieldRedemptionsHash] = votePower
 	}
 
-	// Handle BtcHeaderHash
-	if mostVoted, votePower := getMostVotedField(btcHeaderHashVotes); votePower >= requiredVotePower {
-		consensusVE.BtcHeaderHash = mostVoted.([]byte)
-		fieldVotePowers[VEFieldBtcHeaderHash] = votePower
+	// Handle RequestedBtcHeaderHash
+	if mostVoted, votePower := getMostVotedField(requestedBtcHeaderHashVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedBtcHeaderHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldRequestedBtcHeaderHash] = votePower
 	}
 
-	// Handle BtcBlockHeight
-	if mostVoted, votePower := getMostVotedField(btcBlockHeightVotes); votePower >= requiredVotePower {
-		consensusVE.BtcBlockHeight = mostVoted.(int64)
-		fieldVotePowers[VEFieldBtcBlockHeight] = votePower
+	// Handle RequestedBtcBlockHeight
+	if mostVoted, votePower := getMostVotedField(requestedBtcBlockHeightVotes); votePower >= requiredVotePower {
+		consensusVE.RequestedBtcBlockHeight = mostVoted.(int64)
+		fieldVotePowers[VEFieldRequestedBtcBlockHeight] = votePower
+	}
+
+	// Handle LatestBtcBlockHeight
+	if mostVoted, votePower := getMostVotedField(latestBtcBlockHeightVotes); votePower >= requiredVotePower {
+		consensusVE.LatestBtcBlockHeight = mostVoted.(int64)
+		fieldVotePowers[VEFieldLatestBtcBlockHeight] = votePower
+	}
+
+	// Handle LatestBtcHeaderHash
+	if mostVoted, votePower := getMostVotedField(latestBtcHeaderHashVotes); votePower >= requiredVotePower {
+		consensusVE.LatestBtcHeaderHash = mostVoted.([]byte)
+		fieldVotePowers[VEFieldLatestBtcHeaderHash] = votePower
 	}
 
 	// Handle EthBlockHeight
@@ -695,7 +711,7 @@ type BitcoinHeadersResponse struct {
 	HasRequested bool
 }
 
-func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*BitcoinHeadersResponse, error) {
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*BitcoinHeadersResponse, error) {
 	result := &BitcoinHeadersResponse{
 		HasRequested: false,
 	}
@@ -1058,8 +1074,8 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		}
 	}
 
-	if _, ok := fieldVotePowers[VEFieldBtcHeaderHash]; ok {
-		if err := validateHashField(VEFieldBtcHeaderHash.String(), voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
+		if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
@@ -1098,11 +1114,11 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	}
 
 	// Check Bitcoin height
-	if _, ok := fieldVotePowers[VEFieldBtcBlockHeight]; ok {
-		if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
+	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
+		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
 			validationErrors = append(validationErrors,
 				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldBtcBlockHeight.String(), voteExt.BtcBlockHeight, oracleData.BtcBlockHeight))
+					VEFieldRequestedBtcBlockHeight.String(), voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight))
 		}
 	}
 
@@ -1166,15 +1182,15 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 
 	// Check Latest Bitcoin height and hash fields
 	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
-		if voteExt.LatestBtcBlockHeight != oracleData.BtcBlockHeight {
+		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
 			validationErrors = append(validationErrors,
 				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldLatestBtcBlockHeight.String(), voteExt.LatestBtcBlockHeight, oracleData.BtcBlockHeight))
+					VEFieldLatestBtcBlockHeight.String(), voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
-		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
@@ -1239,4 +1255,19 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
 	_, ok := fieldVotePowers[field]
 	return ok
+}
+
+// Update the OracleData with BitcoinHeadersResponse data
+func (k *Keeper) updateOracleDataWithBitcoinHeaders(oracleData *OracleData, bitcoinHeaders *BitcoinHeadersResponse) {
+	// Always update latest header data
+	if bitcoinHeaders.Latest != nil {
+		oracleData.LatestBtcBlockHeight = bitcoinHeaders.Latest.BlockHeight
+		oracleData.LatestBtcBlockHeader = *bitcoinHeaders.Latest.BlockHeader
+	}
+
+	// Update requested header data if available
+	if bitcoinHeaders.HasRequested && bitcoinHeaders.Requested != nil {
+		oracleData.RequestedBtcBlockHeight = bitcoinHeaders.Requested.BlockHeight
+		oracleData.RequestedBtcBlockHeader = *bitcoinHeaders.Requested.BlockHeader
+	}
 }

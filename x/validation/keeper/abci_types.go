@@ -33,8 +33,8 @@ type (
 	VoteExtension struct {
 		ZRChainBlockHeight         int64
 		EigenDelegationsHash       []byte
-		BtcBlockHeight             int64
-		BtcHeaderHash              []byte
+		RequestedBtcBlockHeight    int64
+		RequestedBtcHeaderHash     []byte
 		EthBlockHeight             uint64
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
@@ -61,8 +61,10 @@ type (
 	OracleData struct {
 		EigenDelegationsMap        map[string]map[string]*big.Int
 		ValidatorDelegations       []ValidatorDelegations
-		BtcBlockHeight             int64
-		BtcBlockHeader             sidecar.BTCBlockHeader
+		RequestedBtcBlockHeight    int64
+		RequestedBtcBlockHeader    sidecar.BTCBlockHeader
+		LatestBtcBlockHeight       int64
+		LatestBtcBlockHeader       sidecar.BTCBlockHeader
 		EthBlockHeight             uint64
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
@@ -151,12 +153,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.BtcBlockHeight == 0 {
-		logger.Error("invalid vote extension: BtcBlockHeight is 0")
+	if ve.RequestedBtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: RequestedBtcBlockHeight is 0")
 		invalid = true
 	}
-	if len(ve.BtcHeaderHash) == 0 {
-		logger.Error("invalid vote extension: BtcHeaderHash is empty")
+	if len(ve.RequestedBtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: RequestedBtcHeaderHash is empty")
 		invalid = true
 	}
 	if ve.SolanaLamportsPerSignature == 0 {
@@ -199,7 +201,7 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 // beyond the ConsensusData (which is always present)
 func (o OracleData) HasAnyOracleData() bool {
 	// Check if the oracle data has any ethereum or bitcoin data
-	if o.EthBlockHeight > 0 || o.BtcBlockHeight > 0 {
+	if o.EthBlockHeight > 0 || o.RequestedBtcBlockHeight > 0 {
 		return true
 	}
 
@@ -226,14 +228,14 @@ type VoteExtensionField int
 
 const (
 	// Essential fields - absence of these can cause data loss
-	VEFieldZRChainBlockHeight   VoteExtensionField = iota // Height is always essential
-	VEFieldEigenDelegationsHash                           // AVS delegations are essential for validator updates
-	VEFieldEthBurnEventsHash                              // Events from Ethereum
-	VEFieldRedemptionsHash                                // Redemption data
-	VEFieldBtcHeaderHash                                  // Bitcoin header data
+	VEFieldZRChainBlockHeight     VoteExtensionField = iota // Height is always essential
+	VEFieldEigenDelegationsHash                             // AVS delegations are essential for validator updates
+	VEFieldEthBurnEventsHash                                // Events from Ethereum
+	VEFieldRedemptionsHash                                  // Redemption data
+	VEFieldRequestedBtcHeaderHash                           // Bitcoin header data
 
 	// Standard fields
-	VEFieldBtcBlockHeight
+	VEFieldRequestedBtcBlockHeight
 	VEFieldEthBlockHeight
 	VEFieldEthGasLimit
 	VEFieldEthBaseFee
@@ -261,10 +263,10 @@ func (f VoteExtensionField) String() string {
 		return "EthBurnEventsHash"
 	case VEFieldRedemptionsHash:
 		return "RedemptionsHash"
-	case VEFieldBtcHeaderHash:
-		return "BtcHeaderHash"
-	case VEFieldBtcBlockHeight:
-		return "BtcBlockHeight"
+	case VEFieldRequestedBtcHeaderHash:
+		return "RequestedBtcHeaderHash"
+	case VEFieldRequestedBtcBlockHeight:
+		return "RequestedBtcBlockHeight"
 	case VEFieldEthBlockHeight:
 		return "EthBlockHeight"
 	case VEFieldEthGasLimit:
