@@ -92,13 +92,28 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
 
-	neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
+	bitcoinHeadersResp, err := k.retrieveBitcoinHeader(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	bitcoinHeaderHash, err := deriveHash(neutrinoResponse.BlockHeader)
+
+	// Get latest Bitcoin header hash
+	latestBitcoinHeaderHash, err := deriveHash(bitcoinHeadersResp.Latest.BlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
+	}
+
+	// Only set requested header fields if there's a requested header
+	btcBlockHeight := int64(0)
+	var btcHeaderHash []byte
+	if bitcoinHeadersResp.HasRequested {
+		// Get requested Bitcoin header hash
+		requestedBitcoinHeaderHash, err := deriveHash(bitcoinHeadersResp.Requested.BlockHeader)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+		btcBlockHeight = bitcoinHeadersResp.Requested.BlockHeight
+		btcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
 	nonces := make(map[uint64]uint64)
@@ -127,8 +142,10 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
 		RedemptionsHash:            redemptionsHash[:],
-		BtcBlockHeight:             neutrinoResponse.BlockHeight,
-		BtcHeaderHash:              bitcoinHeaderHash[:],
+		BtcBlockHeight:             btcBlockHeight,
+		BtcHeaderHash:              btcHeaderHash,
+		LatestBtcBlockHeight:       bitcoinHeadersResp.Latest.BlockHeight,
+		LatestBtcHeaderHash:        latestBitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
 		EthGasLimit:                oracleData.EthGasLimit,
 		EthBaseFee:                 oracleData.EthBaseFee,
@@ -549,11 +566,25 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
 	k.Logger(ctx).Info("checking bitcoin header", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
 
-	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
-		k.Logger(ctx).Error("invalid bitcoin header data", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
-		return
+	// Store the latest Bitcoin header if it exists in the oracle data
+	if oracleData.BtcBlockHeight > 0 && oracleData.BtcBlockHeader.MerkleRoot != "" {
+		// Check if the header already exists in the store
+		headerExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+		if err != nil {
+			k.Logger(ctx).Error("error checking if latest Bitcoin header exists", "height", oracleData.BtcBlockHeight, "error", err)
+		} else if !headerExists {
+			// Store the latest header
+			if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
+				k.Logger(ctx).Error("error storing latest Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
+			} else {
+				k.Logger(ctx).Info("stored latest Bitcoin header", "height", oracleData.BtcBlockHeight)
+			}
+		}
+	} else {
+		k.Logger(ctx).Debug("no valid latest Bitcoin header in oracle data")
 	}
 
+	// Process requested historical headers
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -565,23 +596,23 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 
 	k.Logger(ctx).Info("requested headers", "headers", requestedHeaders.Heights)
 
+	// Check if the current header is one of the requested historical headers
 	isHistorical := k.isHistoricalHeader(oracleData.BtcBlockHeight, requestedHeaders.Heights)
-	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
-	if err != nil {
-		k.Logger(ctx).Error("error checking if Bitcoin header is already stored", "height", oracleData.BtcBlockHeight, "error", err)
-		return
-	}
-
-	k.Logger(ctx).Info("header previously seen", "seen", headerPreviouslySeen, "isHistorical", isHistorical)
-
-	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
-		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
-		return
-	}
-
-	k.Logger(ctx).Info("stored header", "height", oracleData.BtcBlockHeight)
 
 	if isHistorical {
+		// Store the historical header if it doesn't exist
+		headerExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+		if err != nil {
+			k.Logger(ctx).Error("error checking if historical Bitcoin header exists", "height", oracleData.BtcBlockHeight, "error", err)
+		} else if !headerExists && oracleData.BtcBlockHeight > 0 {
+			if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
+				k.Logger(ctx).Error("error storing historical Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
+			} else {
+				k.Logger(ctx).Info("stored historical Bitcoin header", "height", oracleData.BtcBlockHeight)
+			}
+		}
+
+		// Remove the height from the requested list once it's stored
 		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
 			return height == oracleData.BtcBlockHeight
 		})
@@ -589,7 +620,14 @@ func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData)
 			k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "error", err)
 			return
 		}
-		k.Logger(ctx).Debug("stored historical Bitcoin header and removed request", "height", oracleData.BtcBlockHeight, "remaining_requests", len(requestedHeaders.Heights))
+		k.Logger(ctx).Debug("removed processed historical header request", "height", oracleData.BtcBlockHeight, "remaining_requests", len(requestedHeaders.Heights))
+		return
+	}
+
+	// Handle potential Bitcoin reorgs for non-historical headers
+	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+	if err != nil {
+		k.Logger(ctx).Error("error checking if Bitcoin header is already stored", "height", oracleData.BtcBlockHeight, "error", err)
 		return
 	}
 

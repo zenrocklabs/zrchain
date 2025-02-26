@@ -350,49 +350,6 @@ func getVESubset(ve VoteExtension) VoteExtension {
 	return ve
 }
 
-func updateVotesPerVE(votesPerVoteExt map[string]*VEWithVotePower, voteExt VoteExtension, votePower int64) {
-	// Use the subset for the key
-	marshaledSubsetVE, err := json.Marshal(getVESubset(voteExt))
-	if err != nil {
-		return
-	}
-
-	key := hex.EncodeToString(marshaledSubsetVE)
-	if existingVE, ok := votesPerVoteExt[key]; ok {
-		existingVE.VotePower += votePower
-	} else {
-		// Store the full VE
-		fullMarshaledVE, err := json.Marshal(voteExt)
-		if err != nil {
-			return
-		}
-		votesPerVoteExt[key] = &VEWithVotePower{
-			VoteExtension: fullMarshaledVE,
-			VotePower:     votePower,
-		}
-	}
-}
-
-func getMostVotedVE(votesPerVoteExt map[string]*VEWithVotePower) *VEWithVotePower {
-	var mostVotedVE *VEWithVotePower
-	for _, voteExt := range votesPerVoteExt {
-		if mostVotedVE == nil || voteExt.VotePower > mostVotedVE.VotePower {
-			mostVotedVE = voteExt
-		}
-	}
-	return mostVotedVE
-}
-
-func unmarshalVE(voteExtensionBytes []byte) (VoteExtension, error) {
-	var voteExt VoteExtension
-	err := json.Unmarshal(voteExtensionBytes, &voteExt)
-	return voteExt, err
-}
-
-func hasReachedSupermajority(totalVotePower, mostVotedVEVotePower int64) bool {
-	return mostVotedVEVotePower >= requisiteVotePower(totalVotePower)
-}
-
 func requisiteVotePower(totalVotePower int64) int64 {
 	return ((totalVotePower * 2) / 3) + 1
 }
@@ -731,7 +688,28 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	return "testnet4"
 }
 
-func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
+// BitcoinHeadersResponse combines the latest and requested Bitcoin headers
+type BitcoinHeadersResponse struct {
+	Latest       *sidecar.BitcoinBlockHeaderResponse
+	Requested    *sidecar.BitcoinBlockHeaderResponse
+	HasRequested bool
+}
+
+func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*BitcoinHeadersResponse, error) {
+	result := &BitcoinHeadersResponse{
+		HasRequested: false,
+	}
+
+	// Always get the latest Bitcoin header
+	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
+		ChainName: k.bitcoinNetwork(ctx),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
+	}
+	result.Latest = latest
+
+	// Check if there are requested historical headers
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -743,11 +721,20 @@ func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlo
 		}
 	}
 
-	if len(requestedBitcoinHeaders.Heights) == 0 {
-		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: k.bitcoinNetwork(ctx)})
+	// Get requested historical headers if any
+	if len(requestedBitcoinHeaders.Heights) > 0 {
+		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   k.bitcoinNetwork(ctx),
+			BlockHeight: requestedBitcoinHeaders.Heights[0],
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
+		}
+		result.Requested = requested
+		result.HasRequested = true
 	}
 
-	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: requestedBitcoinHeaders.Heights[0]})
+	return result, nil
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
@@ -1174,6 +1161,21 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 			validationErrors = append(validationErrors,
 				fmt.Sprintf("%s mismatch, expected %s, got %s",
 					VEFieldETHUSDPrice.String(), voteExt.ETHUSDPrice, oracleData.ETHUSDPrice))
+		}
+	}
+
+	// Check Latest Bitcoin height and hash fields
+	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
+		if voteExt.LatestBtcBlockHeight != oracleData.BtcBlockHeight {
+			validationErrors = append(validationErrors,
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldLatestBtcBlockHeight.String(), voteExt.LatestBtcBlockHeight, oracleData.BtcBlockHeight))
+		}
+	}
+
+	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
+		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+			validationErrors = append(validationErrors, err.Error())
 		}
 	}
 

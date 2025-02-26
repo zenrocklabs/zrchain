@@ -49,6 +49,8 @@ type (
 		ROCKUSDPrice               math.LegacyDec
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
+		LatestBtcBlockHeight       int64
+		LatestBtcHeaderHash        []byte
 	}
 
 	VEWithVotePower struct {
@@ -181,6 +183,14 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: ETHUSDPrice is zero")
 		invalid = true
 	}
+	if ve.LatestBtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: LatestBtcBlockHeight is 0")
+		invalid = true
+	}
+	if len(ve.LatestBtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
+		invalid = true
+	}
 
 	return invalid
 }
@@ -236,6 +246,8 @@ const (
 	VEFieldROCKUSDPrice
 	VEFieldBTCUSDPrice
 	VEFieldETHUSDPrice
+	VEFieldLatestBtcBlockHeight
+	VEFieldLatestBtcHeaderHash
 )
 
 // String returns the string representation of a VoteExtensionField
@@ -277,6 +289,10 @@ func (f VoteExtensionField) String() string {
 		return "BTCUSDPrice"
 	case VEFieldETHUSDPrice:
 		return "ETHUSDPrice"
+	case VEFieldLatestBtcBlockHeight:
+		return "LatestBtcBlockHeight"
+	case VEFieldLatestBtcHeaderHash:
+		return "LatestBtcHeaderHash"
 	default:
 		return "Unknown"
 	}
