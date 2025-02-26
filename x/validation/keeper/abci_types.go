@@ -211,29 +211,6 @@ func (o OracleData) HasAnyOracleData() bool {
 	return false
 }
 
-// MatchesValidatedOracleData compares this OracleData with another one
-// to verify they contain the same essential data (ignoring ConsensusData)
-func (o OracleData) MatchesValidatedOracleData(other *OracleData) bool {
-	if other == nil {
-		return false
-	}
-
-	// Compare Ethereum block data
-	if o.EthBlockHeight != other.EthBlockHeight {
-		return false
-	}
-
-	// Compare Bitcoin block data
-	if o.BtcBlockHeight != other.BtcBlockHeight {
-		return false
-	}
-
-	// We don't compare all fields as some might not have reached consensus
-	// Just check that the essential data we care about matches
-
-	return true
-}
-
 // VoteExtensionField defines a type-safe identifier for vote extension fields
 type VoteExtensionField int
 

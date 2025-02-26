@@ -269,58 +269,6 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, err
 	}
 
-	// Get the vote extension based on consensus per field
-	canonicalVoteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, req.Height, oracleData.ConsensusData)
-	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
-		return REJECT_PROPOSAL, nil
-	}
-
-	if len(fieldVotePowers) == 0 {
-		// If we don't have any consensus, there's nothing to check against.
-		// This is acceptable as we can still process blocks without oracle data.
-		k.Logger(ctx).Warn("no fields reached local consensus in vote extension", "height", req.Height)
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	// If we have oracle data AND we're missing essential fields, reject the proposal
-	if oracleData.HasAnyOracleData() {
-		// List missing essential fields
-		missingFields := []string{}
-		for _, field := range EssentialVoteExtensionFields {
-			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, field.String())
-			}
-		}
-
-		if len(missingFields) > 0 {
-			k.Logger(ctx).Error("rejecting proposal: missing essential fields",
-				"height", req.Height,
-				"missing_fields", strings.Join(missingFields, ", "))
-			return REJECT_PROPOSAL, nil
-		}
-	}
-
-	// Validate the oracle data against our local consensus
-	if len(fieldVotePowers) > 0 {
-		validatedOracleData, err := k.getValidatedOracleData(ctx, canonicalVoteExt, fieldVotePowers)
-		if err != nil {
-			k.Logger(ctx).Error("error validating our oracle data", "height", req.Height, "error", err)
-			return REJECT_PROPOSAL, nil
-		}
-
-		// If our consensus resulted in oracle data, then the proposal's oracle data should match
-		if !oracleData.MatchesValidatedOracleData(validatedOracleData) {
-			k.Logger(ctx).Error("proposal's oracle data doesn't match our validated oracle data",
-				"height", req.Height,
-				"validated_eth_height", validatedOracleData.EthBlockHeight,
-				"proposed_eth_height", oracleData.EthBlockHeight,
-				"validated_btc_height", validatedOracleData.BtcBlockHeight,
-				"proposed_btc_height", oracleData.BtcBlockHeight)
-			return REJECT_PROPOSAL, nil
-		}
-	}
-
 	return ACCEPT_PROPOSAL, nil
 }
 
@@ -415,7 +363,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return VoteExtension{}, false
 	}
 
-	// Check if all essential fields have consensus when oracle data is present
+	// Check which essential fields are missing when oracle data is present, but don't fail
 	if oracleData.HasAnyOracleData() {
 		// List missing essential fields
 		missingFields := []string{}
@@ -426,12 +374,12 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		}
 
 		if len(missingFields) > 0 {
-			k.Logger(ctx).Warn("missing consensus on essential vote extension fields",
+			k.Logger(ctx).Warn("missing consensus on some essential vote extension fields; processing may be limited",
 				"height", height,
 				"missing_fields", strings.Join(missingFields, ", "),
 				"fields_with_consensus", len(fieldVotePowers),
 				"total_vote_power", totalVotePower)
-			return VoteExtension{}, false
+			// Don't return false - continue processing with available fields
 		}
 	}
 
