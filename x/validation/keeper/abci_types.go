@@ -14,7 +14,6 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -192,6 +191,28 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	return invalid
 }
 
+// HasRequiredGasFields checks if all essential gas/fee related fields have reached consensus
+func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
+	requiredFields := []VoteExtensionField{
+		VEFieldEthGasLimit,
+		VEFieldEthBaseFee,
+		VEFieldEthTipCap,
+	}
+
+	for _, field := range requiredFields {
+		if _, ok := fieldVotePowers[field]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// HasRequiredField checks if the specific field has reached consensus
+func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
+	_, ok := fieldVotePowers[field]
+	return ok
+}
+
 // HasAnyOracleData returns true if this OracleData contains any meaningful data
 // beyond the ConsensusData (which is always present)
 func (o OracleData) HasAnyOracleData() bool {
@@ -222,14 +243,11 @@ func (o OracleData) HasAnyOracleData() bool {
 type VoteExtensionField int
 
 const (
-	// Essential fields - absence of these can cause data loss
-	VEFieldZRChainBlockHeight     VoteExtensionField = iota // Height is always essential
-	VEFieldEigenDelegationsHash                             // AVS delegations are essential for validator updates
-	VEFieldEthBurnEventsHash                                // Events from Ethereum
-	VEFieldRedemptionsHash                                  // Redemption data
-	VEFieldRequestedBtcHeaderHash                           // Bitcoin header data
-
-	// Standard fields
+	VEFieldZRChainBlockHeight VoteExtensionField = iota
+	VEFieldEigenDelegationsHash
+	VEFieldEthBurnEventsHash
+	VEFieldRedemptionsHash
+	VEFieldRequestedBtcHeaderHash
 	VEFieldRequestedBtcBlockHeight
 	VEFieldEthBlockHeight
 	VEFieldEthGasLimit
@@ -326,29 +344,6 @@ func (f VoteExtensionField) String() string {
 	default:
 		return "Unknown"
 	}
-}
-
-// EssentialVoteExtensionFields defines fields where absence of consensus
-// would cause data loss or chain issues
-var EssentialVoteExtensionFields = []VoteExtensionField{
-	VEFieldZRChainBlockHeight,   // Height is always essential
-	VEFieldEigenDelegationsHash, // AVS delegations are essential for validator updates
-	// Other fields can be made essential as needed in the future
-}
-
-// IsEssentialField returns true if the given field is considered essential
-func IsEssentialField(field VoteExtensionField) bool {
-	return slices.Contains(EssentialVoteExtensionFields, field)
-}
-
-// HasAllEssentialFields checks if all essential fields have reached consensus
-func HasAllEssentialFields(fieldVotePowers map[VoteExtensionField]int64) bool {
-	for _, field := range EssentialVoteExtensionFields {
-		if _, ok := fieldVotePowers[field]; !ok {
-			return false
-		}
-	}
-	return true
 }
 
 // InitializeFieldHandlers creates handlers for all vote extension fields

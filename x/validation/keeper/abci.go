@@ -209,28 +209,16 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
 
-	// Log essential fields information
-	if !HasAllEssentialFields(fieldVotePowers) {
-		missingEssentialFields := []string{}
-		for _, field := range EssentialVoteExtensionFields {
-			if _, ok := fieldVotePowers[field]; !ok {
-				missingEssentialFields = append(missingEssentialFields, field.String())
-			}
-		}
-
-		if len(missingEssentialFields) > 0 {
-			k.Logger(ctx).Warn("proceeding with partial consensus - missing essential vote extension fields",
-				"height", req.Height,
-				"fields_with_consensus", len(fieldVotePowers),
-				"total_vote_power", totalVotePower,
-				"missing_essential_fields", strings.Join(missingEssentialFields, ", "))
-		} else {
-			k.Logger(ctx).Info("consensus reached on all essential vote extension fields",
-				"height", req.Height,
-				"fields_with_consensus", len(fieldVotePowers),
-				"total_vote_power", totalVotePower)
-		}
+	// Log fields information
+	fieldsWithConsensus := []string{}
+	for field := range fieldVotePowers {
+		fieldsWithConsensus = append(fieldsWithConsensus, field.String())
 	}
+
+	k.Logger(ctx).Info("proceeding with partial consensus on vote extension fields",
+		"height", req.Height,
+		"fields_with_consensus", strings.Join(fieldsWithConsensus, ", "),
+		"total_vote_power", totalVotePower)
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
 		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
@@ -239,10 +227,12 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
-		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
-		oracleData = &OracleData{}
+		k.Logger(ctx).Error("error validating oracle data for vote extension", "height", req.Height, "error", err)
+		return nil, nil
 	}
+
 	oracleData.ConsensusData = req.LocalLastCommit
+	oracleData.FieldVotePowers = fieldVotePowers
 
 	return k.marshalOracleData(req, oracleData)
 }
@@ -290,8 +280,11 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 // =============================================================================
 //
 
-// PreBlocker is called before each block to process oracle data and update state.
+// PreBlocker processes oracle data and applies the resulting state updates.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
+	// Record any validators that didn't vote for the block
+	k.recordNonVotingValidators(ctx, req)
+
 	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
 	}
@@ -301,32 +294,84 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	voteExt, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
-	if !ok {
+	if !oracleData.HasAnyOracleData() {
+		k.Logger(ctx).Debug("no oracle data to process")
 		return nil
 	}
 
-	// Process various state updates.
-	k.updateAssetPrices(ctx, oracleData)
-	k.updateValidatorStakes(ctx, oracleData)
-	k.updateAVSDelegationStore(ctx, oracleData)
-
-	k.storeBitcoinBlockHeaders(ctx, oracleData)
-	k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
-	k.storeNewZenBTCRedemptions(ctx, oracleData)
-
-	// Toggle minting and unstaking every other block due to a 1-block delay in processing VEs.
-	if ctx.BlockHeight()%2 == 0 {
-		k.updateNonces(ctx, oracleData)
-
-		k.processZenBTCStaking(ctx, oracleData)
-		k.processZenBTCMintsEthereum(ctx, oracleData)
-		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
-		k.processZenBTCRedemptions(ctx, oracleData)
+	canonicalVE, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
+	if !ok {
+		k.Logger(ctx).Error("invalid canonical vote extension")
+		return nil
 	}
 
-	k.recordNonVotingValidators(ctx, req)
-	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, oracleData.ConsensusData)
+	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
+
+	// Update asset prices if there's consensus on the price fields
+	k.updateAssetPrices(ctx, oracleData)
+
+	// Process different subsystems based on field consensus
+
+	// Validator updates - only if EigenDelegationsHash has consensus
+	if HasRequiredField(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
+		k.Logger(ctx).Info("processing validator updates from AVS delegations")
+		k.updateValidatorStakes(ctx, oracleData)
+		k.updateAVSDelegationStore(ctx, oracleData)
+	} else {
+		k.Logger(ctx).Info("skipping validator updates - no consensus on EigenDelegationsHash")
+	}
+
+	// Bitcoin header processing - only if BTC header fields have consensus
+	btcHeaderConsensus := HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash) ||
+		HasRequiredField(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash)
+	if btcHeaderConsensus {
+		k.Logger(ctx).Info("processing Bitcoin headers")
+		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
+			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
+		}
+	} else {
+		k.Logger(ctx).Info("skipping Bitcoin header processing - no consensus on header fields")
+	}
+
+	// Update Ethereum nonces
+	if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) ||
+		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) ||
+		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) ||
+		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
+		k.Logger(ctx).Info("updating Ethereum nonces")
+		k.updateNonces(ctx, oracleData)
+	}
+
+	// Process ZenBTC operations - if we have the proper fields
+	if HasRequiredGasFields(oracleData.FieldVotePowers) {
+		// Process staking operations
+		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
+			k.Logger(ctx).Info("processing ZenBTC staking operations")
+			k.processZenBTCStaking(ctx, oracleData)
+		}
+
+		// Process mint operations
+		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
+			k.Logger(ctx).Info("processing ZenBTC mints")
+			k.processZenBTCMintsEthereum(ctx, oracleData)
+		}
+
+		// Process burn events if we have consensus on burn events hash
+		if HasRequiredField(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
+			k.Logger(ctx).Info("processing Ethereum burn events")
+			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
+			k.processZenBTCBurnEventsEthereum(ctx, oracleData)
+		}
+
+		// Process redemptions if we have consensus on redemptions hash
+		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
+			k.Logger(ctx).Info("processing redemptions")
+			k.storeNewZenBTCRedemptions(ctx, oracleData)
+			k.processZenBTCRedemptions(ctx, oracleData)
+		}
+	} else {
+		k.Logger(ctx).Warn("skipping ZenBTC operations - missing gas field consensus")
+	}
 
 	return nil
 }
@@ -351,50 +396,90 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
+// validateCanonicalVE determines whether the canonical vote extension is valid
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
-	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extensions data", "height", height, "error", err)
+	if oracleData.ConsensusData.Round == 0 && len(oracleData.ConsensusData.Votes) == 0 {
+		k.Logger(ctx).Warn("no consensus data in vote extension", "height", height)
 		return VoteExtension{}, false
 	}
 
-	if reflect.DeepEqual(voteExt, VoteExtension{}) {
-		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
-		return VoteExtension{}, true
-	}
+	var consensusVE VoteExtension
+	consensusVE.ZRChainBlockHeight = height
 
-	if len(fieldVotePowers) == 0 {
-		k.Logger(ctx).Warn("no consensus on any vote extension fields", "height", height)
-		return VoteExtension{}, false
-	}
-
-	// Check which essential fields are missing when oracle data is present, but don't fail
-	if oracleData.HasAnyOracleData() {
-		// List missing essential fields
-		missingFields := []string{}
-		for _, field := range EssentialVoteExtensionFields {
-			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, field.String())
+	// Add validated fields to consensusVE
+	for field := range oracleData.FieldVotePowers {
+		switch field {
+		case VEFieldEigenDelegationsHash:
+			hash, err := deriveHash(oracleData.EigenDelegationsMap)
+			if err != nil {
+				k.Logger(ctx).Error("error deriving eigen delegations hash", "error", err)
+				continue
 			}
-		}
-
-		if len(missingFields) > 0 {
-			k.Logger(ctx).Warn("missing consensus on some essential vote extension fields; processing may be limited",
-				"height", height,
-				"missing_fields", strings.Join(missingFields, ", "),
-				"fields_with_consensus", len(fieldVotePowers),
-				"total_vote_power", totalVotePower)
-			// Don't return false - continue processing with available fields
+			consensusVE.EigenDelegationsHash = hash[:]
+		case VEFieldRequestedBtcBlockHeight:
+			consensusVE.RequestedBtcBlockHeight = oracleData.RequestedBtcBlockHeight
+		case VEFieldRequestedBtcHeaderHash:
+			hash, err := deriveHash(oracleData.RequestedBtcBlockHeader)
+			if err != nil {
+				k.Logger(ctx).Error("error deriving requested BTC header hash", "error", err)
+				continue
+			}
+			consensusVE.RequestedBtcHeaderHash = hash[:]
+		case VEFieldLatestBtcBlockHeight:
+			consensusVE.LatestBtcBlockHeight = oracleData.LatestBtcBlockHeight
+		case VEFieldLatestBtcHeaderHash:
+			hash, err := deriveHash(oracleData.LatestBtcBlockHeader)
+			if err != nil {
+				k.Logger(ctx).Error("error deriving latest BTC header hash", "error", err)
+				continue
+			}
+			consensusVE.LatestBtcHeaderHash = hash[:]
+		case VEFieldEthBlockHeight:
+			consensusVE.EthBlockHeight = oracleData.EthBlockHeight
+		case VEFieldEthGasLimit:
+			consensusVE.EthGasLimit = oracleData.EthGasLimit
+		case VEFieldEthBaseFee:
+			consensusVE.EthBaseFee = oracleData.EthBaseFee
+		case VEFieldEthTipCap:
+			consensusVE.EthTipCap = oracleData.EthTipCap
+		case VEFieldSolanaLamportsPerSignature:
+			consensusVE.SolanaLamportsPerSignature = oracleData.SolanaLamportsPerSignature
+		case VEFieldRequestedStakerNonce:
+			consensusVE.RequestedStakerNonce = oracleData.RequestedStakerNonce
+		case VEFieldRequestedEthMinterNonce:
+			consensusVE.RequestedEthMinterNonce = oracleData.RequestedEthMinterNonce
+		case VEFieldRequestedUnstakerNonce:
+			consensusVE.RequestedUnstakerNonce = oracleData.RequestedUnstakerNonce
+		case VEFieldRequestedCompleterNonce:
+			consensusVE.RequestedCompleterNonce = oracleData.RequestedCompleterNonce
+		case VEFieldEthBurnEventsHash:
+			hash, err := deriveHash(oracleData.EthBurnEvents)
+			if err != nil {
+				k.Logger(ctx).Error("error deriving ETH burn events hash", "error", err)
+				continue
+			}
+			consensusVE.EthBurnEventsHash = hash[:]
+		case VEFieldRedemptionsHash:
+			hash, err := deriveHash(oracleData.Redemptions)
+			if err != nil {
+				k.Logger(ctx).Error("error deriving redemptions hash", "error", err)
+				continue
+			}
+			consensusVE.RedemptionsHash = hash[:]
+		case VEFieldROCKUSDPrice:
+			consensusVE.ROCKUSDPrice = oracleData.ROCKUSDPrice
+		case VEFieldBTCUSDPrice:
+			consensusVE.BTCUSDPrice = oracleData.BTCUSDPrice
+		case VEFieldETHUSDPrice:
+			consensusVE.ETHUSDPrice = oracleData.ETHUSDPrice
 		}
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
-		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
+	if consensusVE.IsInvalid(k.Logger(ctx)) {
 		return VoteExtension{}, false
 	}
 
-	return voteExt, true
+	return consensusVE, true
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
@@ -558,7 +643,7 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 //
 
 // storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
-func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData) error {
 	// First store the latest Bitcoin header if available
 	if oracleData.LatestBtcBlockHeight > 0 && oracleData.LatestBtcBlockHeader.MerkleRoot != "" {
 		latestHeaderExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.LatestBtcBlockHeight)
@@ -580,7 +665,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 		k.Logger(ctx).Error("invalid bitcoin header data",
 			"height", headerHeight,
 			"merkle", oracleData.RequestedBtcBlockHeader.MerkleRoot)
-		return
+		return nil
 	}
 
 	// Get requested headers
@@ -588,7 +673,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "error", err)
-			return
+			return err
 		}
 		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised", "height", headerHeight)
 	}
@@ -600,7 +685,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	headerExists, err := k.BtcBlockHeaders.Has(ctx, headerHeight)
 	if err != nil {
 		k.Logger(ctx).Error("error checking if Bitcoin header exists", "height", headerHeight, "error", err)
-		return
+		return err
 	}
 
 	logger := k.Logger(ctx).With(
@@ -612,7 +697,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	// Always store the header regardless of whether it exists
 	if err := k.BtcBlockHeaders.Set(ctx, headerHeight, oracleData.RequestedBtcBlockHeader); err != nil {
 		k.Logger(ctx).Error("error storing Bitcoin header", "height", headerHeight, "error", err)
-		return
+		return err
 	}
 	logger.Info("stored Bitcoin header",
 		"type", map[bool]string{true: "historical", false: "latest"}[isHistorical])
@@ -626,7 +711,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 
 		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
 			k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "error", err)
-			return
+			return err
 		}
 
 		logger.Debug("removed processed historical header request",
@@ -637,6 +722,8 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 			k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", headerHeight, "error", err)
 		}
 	}
+
+	return nil
 }
 
 // isHistoricalHeader checks if the given Bitcoin block height is in the list of requested historical headers.

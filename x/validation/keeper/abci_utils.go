@@ -196,44 +196,34 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	}
 
 	// Log consensus results
-	hasEssentialFields := HasAllEssentialFields(fieldVotePowers)
-	k.logConsensusResults(ctx, fieldVotePowers, requiredVotePower, hasEssentialFields)
+	k.logConsensusResults(ctx, fieldVotePowers, requiredVotePower)
 
 	return consensusVE, fieldVotePowers, totalVotePower, nil
 }
 
 // logConsensusResults logs information about which fields reached consensus
-func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64, requiredVotePower int64, hasEssentialFields bool) {
+func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64, requiredVotePower int64) {
 	if len(fieldVotePowers) == 0 {
 		k.Logger(ctx).Warn("no consensus reached on any vote extension fields")
 		return
 	}
 
-	essentialFieldsMsg := "all essential fields have consensus"
-	if !hasEssentialFields {
-		missingFields := []string{}
-		for _, field := range EssentialVoteExtensionFields {
-			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, field.String())
-			}
-		}
+	// Log the count of fields with consensus
+	k.Logger(ctx).Info("consensus summary", "fields_with_consensus", len(fieldVotePowers))
 
-		essentialFieldsMsg = "missing consensus on some essential fields"
-		k.Logger(ctx).Warn("missing consensus on essential vote extension fields",
-			"missing_fields", strings.Join(missingFields, ", "))
-	}
-
-	k.Logger(ctx).Info("consensus reached on vote extension fields",
-		"fields_with_consensus", len(fieldVotePowers),
-		"total_fields", 17,
-		"essential_fields_status", essentialFieldsMsg)
-
-	for field, power := range fieldVotePowers {
-		k.Logger(ctx).Debug("field consensus details",
+	// Loop through all possible fields and log their consensus status
+	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+		_, hasConsensus := fieldVotePowers[field]
+		k.Logger(ctx).Debug("field consensus status",
 			"field", field.String(),
-			"vote_power", power,
-			"required_power", requiredVotePower,
-			"is_essential", IsEssentialField(field))
+			"has_consensus", hasConsensus,
+			"vote_power", func() int64 {
+				if power, ok := fieldVotePowers[field]; ok {
+					return power
+				}
+				return 0
+			}(),
+			"required_power", requiredVotePower)
 	}
 }
 
@@ -1076,26 +1066,4 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	}
 
 	return nil
-}
-
-// HasRequiredGasFields checks if all essential gas/fee related fields have reached consensus
-func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
-	requiredFields := []VoteExtensionField{
-		VEFieldEthGasLimit,
-		VEFieldEthBaseFee,
-		VEFieldEthTipCap,
-	}
-
-	for _, field := range requiredFields {
-		if _, ok := fieldVotePowers[field]; !ok {
-			return false
-		}
-	}
-	return true
-}
-
-// HasRequiredField checks if the specific field has reached consensus
-func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
-	_, ok := fieldVotePowers[field]
-	return ok
 }
