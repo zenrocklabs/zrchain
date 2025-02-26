@@ -90,25 +90,25 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
 
-	bitcoinHeaders, err := k.retrieveBitcoinHeaders(ctx)
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	latestBitcoinHeaderHash, err := deriveHash(bitcoinHeaders.Latest.BlockHeader)
+	latestBitcoinHeaderHash, err := deriveHash(latestHeader.BlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
 	}
 	// Only set requested header fields if there's a requested header
-	btcBlockHeight := int64(0)
-	var btcHeaderHash []byte
-	if bitcoinHeaders.HasRequested {
+	requestedBtcBlockHeight := int64(0)
+	var requestedBtcHeaderHash []byte
+	if requestedHeader != nil {
 		// Get requested Bitcoin header hash
-		requestedBitcoinHeaderHash, err := deriveHash(bitcoinHeaders.Requested.BlockHeader)
+		requestedBitcoinHeaderHash, err := deriveHash(requestedHeader.BlockHeader)
 		if err != nil {
 			return VoteExtension{}, err
 		}
-		btcBlockHeight = bitcoinHeaders.Requested.BlockHeight
-		btcHeaderHash = requestedBitcoinHeaderHash[:]
+		requestedBtcBlockHeight = requestedHeader.BlockHeight
+		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
 	nonces := make(map[uint64]uint64)
@@ -137,9 +137,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
 		RedemptionsHash:            redemptionsHash[:],
-		RequestedBtcBlockHeight:    btcBlockHeight,
-		RequestedBtcHeaderHash:     btcHeaderHash,
-		LatestBtcBlockHeight:       bitcoinHeaders.Latest.BlockHeight,
+		RequestedBtcBlockHeight:    requestedBtcBlockHeight,
+		RequestedBtcHeaderHash:     requestedBtcHeaderHash,
+		LatestBtcBlockHeight:       latestHeader.BlockHeight,
 		LatestBtcHeaderHash:        latestBitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
 		EthGasLimit:                oracleData.EthGasLimit,
@@ -413,15 +413,20 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("no consensus on eth block height")
 	}
 
-	// We only fetch Bitcoin data if we have consensus on RequestedBtcBlockHeight
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
-		bitcoinHeaders, err := k.retrieveBitcoinHeaders(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
-		}
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
+	}
 
-		// Update the OracleData with Bitcoin headers information
-		k.updateOracleDataWithBitcoinHeaders(oracleData, bitcoinHeaders)
+	// Copy latest Bitcoin header data if we have consensus
+	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok && latestHeader != nil {
+		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
+		oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
+	}
+	// Copy requested Bitcoin header data if we have consensus and the header exists
+	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok && requestedHeader != nil {
+		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
+		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
 	// Copy over nonce data if we have consensus on those fields

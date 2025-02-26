@@ -711,29 +711,24 @@ type BitcoinHeadersResponse struct {
 	HasRequested bool
 }
 
-func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*BitcoinHeadersResponse, error) {
-	result := &BitcoinHeadersResponse{
-		HasRequested: false,
-	}
-
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
 	// Always get the latest Bitcoin header
 	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
 		ChainName: k.bitcoinNetwork(ctx),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
+		return nil, nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
 	}
-	result.Latest = latest
 
 	// Check if there are requested historical headers
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
-			return nil, err
+			return nil, nil, err
 		}
 		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
 		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -744,13 +739,12 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*BitcoinHeadersRes
 			BlockHeight: requestedBitcoinHeaders.Heights[0],
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
+			return nil, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
 		}
-		result.Requested = requested
-		result.HasRequested = true
+		return latest, requested, nil
 	}
 
-	return result, nil
+	return latest, nil, nil
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
@@ -1255,19 +1249,4 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
 	_, ok := fieldVotePowers[field]
 	return ok
-}
-
-// Update the OracleData with BitcoinHeadersResponse data
-func (k *Keeper) updateOracleDataWithBitcoinHeaders(oracleData *OracleData, bitcoinHeaders *BitcoinHeadersResponse) {
-	// Always update latest header data
-	if bitcoinHeaders.Latest != nil {
-		oracleData.LatestBtcBlockHeight = bitcoinHeaders.Latest.BlockHeight
-		oracleData.LatestBtcBlockHeader = *bitcoinHeaders.Latest.BlockHeader
-	}
-
-	// Update requested header data if available
-	if bitcoinHeaders.HasRequested && bitcoinHeaders.Requested != nil {
-		oracleData.RequestedBtcBlockHeight = bitcoinHeaders.Requested.BlockHeight
-		oracleData.RequestedBtcBlockHeader = *bitcoinHeaders.Requested.BlockHeader
-	}
 }
