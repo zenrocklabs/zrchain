@@ -69,7 +69,7 @@ func TryExecuteAction[ReqT sdk.Msg, ResT any](
 	handlerFn func(sdk.Context, ReqT) (*ResT, error),
 ) (*ResT, error) {
 	var m sdk.Msg
-	err := cdc.UnpackAny(act.Msg, &m)
+	err := k.Codec().UnpackAny(act.Msg, &m)
 	if err != nil {
 		return nil, err
 	}
