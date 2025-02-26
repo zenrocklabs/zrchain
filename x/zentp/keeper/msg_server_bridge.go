@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k msgServer) BridgeRock(goCtx context.Context, req *types.MsgBridgeRock) (*types.MsgBridgeRockResponse, error) {
+func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	//pa := k.GetParams(goCtx)
 	//pa.Solana.NonceAuthorityPubKey = "success"
@@ -29,7 +29,7 @@ func (k msgServer) BridgeRock(goCtx context.Context, req *types.MsgBridgeRock) (
 	}
 	p := k.GetParams(ctx)
 	totalAmount := req.Amount + p.Solana.Fee // TODO: do this chain agnostic
-	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), params.BondDenom)
+	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
 	if bal.IsLT(sdk.NewCoin("urock", sdkmath.NewIntFromUint64(totalAmount))) {
 		return nil, errors.New("not enough balance")
 	}
@@ -42,11 +42,14 @@ func (k msgServer) BridgeRock(goCtx context.Context, req *types.MsgBridgeRock) (
 	}
 
 	mintsCount++
-	err = k.mintStore.Set(ctx, mintsCount, types.BridgeRock{
+	err = k.mintStore.Set(ctx, mintsCount, types.Bridge{
 		Id:               mintsCount,
+		Creator:          req.Creator,
+		SourceAddress:    req.SourceAddress,
 		SourceChain:      "cosmos:" + ctx.ChainID(),
 		DestinationChain: req.DestinationChain,
 		Amount:           req.Amount,
+		Denom:            req.Denom,
 		RecipientAddress: req.RecipientAddress,
 		State:            types.BridgeStatus_BRIDGE_STATUS_NEW,
 	})
@@ -56,14 +59,14 @@ func (k msgServer) BridgeRock(goCtx context.Context, req *types.MsgBridgeRock) (
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
-		sdk.MustAccAddressFromBech32(req.RecipientAddress),
+		sdk.MustAccAddressFromBech32(req.SourceAddress),
 		types.ModuleName,
 		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))),
 	); err != nil {
 		return nil, err
 	}
 
-	return &types.MsgBridgeRockResponse{
+	return &types.MsgBridgeResponse{
 		Id: mintsCount,
 	}, nil
 }

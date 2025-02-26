@@ -29,9 +29,9 @@ type (
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
 		identityKeeper types.IdentityKeeper
-		mintStore      collections.Map[uint64, types.BridgeRock]
+		mintStore      collections.Map[uint64, types.Bridge]
 		MintCount      collections.Item[uint64]
-		burnStore      collections.Map[uint64, types.BridgeRock]
+		burnStore      collections.Map[uint64, types.Bridge]
 		BurnCount      collections.Item[uint64]
 	}
 )
@@ -61,8 +61,8 @@ func NewKeeper(
 		cdc:             cdc,
 		storeService:    storeService,
 		memStoreService: memStoreService,
-		mintStore:       collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.BridgeRock](cdc)),
-		burnStore:       collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.BridgeRock](cdc)),
+		mintStore:       collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		burnStore:       collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		MintCount:       collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:       collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		authority:       authority,
@@ -102,16 +102,16 @@ func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTyp
 	return false
 }
 
-func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) ([]*types.BridgeRock, error) {
-	mints, _, err := query.CollectionFilteredPaginate[uint64, types.BridgeRock, collections.Map[uint64, types.BridgeRock], *types.BridgeRock](
+func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) ([]*types.Bridge, error) {
+	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
 		goCtx,
 		k.mintStore,
 		nil,
-		func(key uint64, value types.BridgeRock) (bool, error) {
+		func(key uint64, value types.Bridge) (bool, error) {
 			return value.SourceAddress == address &&
 				value.DestinationChain == chainID, nil
 		},
-		func(key uint64, value types.BridgeRock) (*types.BridgeRock, error) {
+		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil
 		},
 	)
@@ -122,16 +122,16 @@ func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) 
 	return mints, nil
 }
 
-func (k Keeper) GetBurns(goCtx context.Context, address string, chainID string) ([]*types.BridgeRock, error) {
-	burns, _, err := query.CollectionFilteredPaginate[uint64, types.BridgeRock, collections.Map[uint64, types.BridgeRock], *types.BridgeRock](
+func (k Keeper) GetBurns(goCtx context.Context, address string, chainID string) ([]*types.Bridge, error) {
+	burns, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
 		goCtx,
 		k.burnStore,
 		nil,
-		func(key uint64, value types.BridgeRock) (bool, error) {
+		func(key uint64, value types.Bridge) (bool, error) {
 			return value.RecipientAddress == address &&
 				value.SourceChain == chainID, nil
 		},
-		func(key uint64, value types.BridgeRock) (*types.BridgeRock, error) {
+		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil
 		},
 	)

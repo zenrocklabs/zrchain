@@ -19,25 +19,32 @@ const durableNonceKey = "solanaDurableNonce"
 func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signer, recipient *treasuryTypes.Key) (string, error) {
 	params := k.GetParams(goCtx).Solana
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	programID, err := solana.PublicKeyFromBase58(params.ProgramId)
 	if err != nil {
 		return "", err
 	}
 
-	nonceAccPubKey, err := solana.PublicKeyFromBase58(params.NonceAccountPubKey)
-	if err != nil {
-		return "", err
-	}
-	nonceAuthPubKey, err := solana.PublicKeyFromBase58(params.NonceAuthorityPubKey)
+	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAccountKey)
 	if err != nil {
 		return "", err
 	}
 
-	signerAddress, err := treasuryTypes.SolanaAddress(signer)
+	nonceAccPubKey, err := treasuryTypes.SolanaPubkey(nonceAccKey)
 	if err != nil {
 		return "", err
 	}
-	signerKey, err := solana.PublicKeyFromBase58(signerAddress)
+
+	nonceAuthKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAuthorityKey)
+	if err != nil {
+		return "", err
+	}
+	nonceAuthPubKey, err := treasuryTypes.SolanaPubkey(nonceAuthKey)
+	if err != nil {
+		return "", err
+	}
+
+	signerPubKey, err := treasuryTypes.SolanaPubkey(signer)
 	if err != nil {
 		return "", err
 	}
@@ -52,17 +59,11 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		return "", err
 	}
 
-	recipientAddress, err := treasuryTypes.SolanaAddress(recipient)
+	recipientPubKey, err := treasuryTypes.SolanaPubkey(recipient)
 	if err != nil {
 		return "", err
 	}
 
-	recipientKey, err := solana.PublicKeyFromBase58(recipientAddress)
-	if err != nil {
-		return "", err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	nonce, err := k.getSolanaDurableNonce(ctx)
 	if err != nil {
 		return "", err
@@ -82,7 +83,7 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		instructions = append(
 			instructions,
 			ata.NewCreateInstruction(
-				signerKey,
+				*signerPubKey,
 				feeKey,
 				mintKey,
 			).Build(),
@@ -91,7 +92,7 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		return "", err
 	}
 
-	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientKey, mintKey)
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(*recipientPubKey, mintKey)
 	if err != nil {
 		return "", err
 	}
@@ -102,17 +103,17 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		instructions = append(
 			instructions,
 			ata.NewCreateInstruction(
-				signerKey,
-				recipientKey,
+				*signerPubKey,
+				*recipientPubKey,
 				mintKey,
 			).Build(),
 		)
 	}
 
 	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
-		nonceAccPubKey,
+		*nonceAccPubKey,
 		solana.SysVarRecentBlockHashesPubkey,
-		nonceAuthPubKey,
+		*nonceAuthPubKey,
 	).Build())
 	instructions = append(instructions, solrock.Wrap(
 		zenbtc_spl_token.WrapArgs{
@@ -121,17 +122,17 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		},
 		programID,
 		mintKey,
-		signerKey,
+		*signerPubKey,
 		feeKey,
 		feeWalletAta,
-		recipientKey,
+		*recipientPubKey,
 		receiverAta,
 	))
 
 	tx, err := solana.NewTransaction(
 		instructions,
 		solana.Hash(nonce.Nonce),
-		solana.TransactionPayer(signerKey),
+		solana.TransactionPayer(*signerPubKey),
 	)
 	if err != nil {
 		return "", err
@@ -148,7 +149,12 @@ func (k Keeper) getSolanaDurableNonce(ctx sdk.Context) (system.NonceAccount, err
 		return system.NonceAccount{}, err
 	}
 	params := k.GetParams(ctx).Solana
-	acc, err := solana.PublicKeyFromBase58(params.NonceAccountPubKey)
+	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAccountKey)
+	if err != nil {
+		return system.NonceAccount{}, err
+	}
+
+	nonceAccPubKey, err := treasuryTypes.SolanaPubkey(nonceAccKey)
 	if err != nil {
 		return system.NonceAccount{}, err
 	}
@@ -156,7 +162,7 @@ func (k Keeper) getSolanaDurableNonce(ctx sdk.Context) (system.NonceAccount, err
 	client := rpc.New(params.RpcUrl)
 	accountInfo, err := client.GetAccountInfoWithOpts(
 		ctx,
-		acc,
+		*nonceAccPubKey,
 		&rpc.GetAccountInfoOpts{
 			Commitment: rpc.CommitmentConfirmed,
 			DataSlice:  nil,

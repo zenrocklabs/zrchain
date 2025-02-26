@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 K1="alice"
 K2="bob"
 K3="protocolwallet"
@@ -175,8 +175,8 @@ if [ "$START_ONLY" = false ]; then
         "solana": {
           "rpc_url": "https://api.devnet.solana.com",
           "program_id": "3dvdvGsDiHnJrCWBpuR1yDmozY2BBruEzPBcf52MWviX",
-          "nonce_account_pub_key": "3tZjSqiwvWLW7ji8MKzTtEpbMNTeE5rDxsebz97Fpj8y",
-          "nonce_authority_pub_key": "HetjsswqwXrCV9WFmDt3r3PUVY39xtqoNy89T6VsfuZF",
+          "nonce_account_key": 1,
+          "nonce_authority_key": 2,
           "mint_address": "7NHEm2UHRMCYhR3DnVJVHNMm8BVF3KRWuLyD85zJpxsF",
           "fee_wallet": "AvUu1UkvwgBcvCXMEseBdEns7BGF5tNYRcLmwegDcUCX",
           "fee": 20

@@ -20,6 +20,16 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryParamsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryParamsResponse.FromString,
                 )
+        self.Mints = channel.unary_unary(
+                '/zrchain.zentp.Query/Mints',
+                request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryMintsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryMintsResponse.FromString,
+                )
+        self.Burns = channel.unary_unary(
+                '/zrchain.zentp.Query/Burns',
+                request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -33,6 +43,20 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Mints(self, request, context):
+        """Queries a list of Mints.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Burns(self, request, context):
+        """Queries a list of Burns items.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -40,6 +64,16 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.Params,
                     request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryParamsRequest.FromString,
                     response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryParamsResponse.SerializeToString,
+            ),
+            'Mints': grpc.unary_unary_rpc_method_handler(
+                    servicer.Mints,
+                    request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryMintsRequest.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryMintsResponse.SerializeToString,
+            ),
+            'Burns': grpc.unary_unary_rpc_method_handler(
+                    servicer.Burns,
+                    request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -66,5 +100,39 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Params',
             zrchain_dot_zentp_dot_query__pb2.QueryParamsRequest.SerializeToString,
             zrchain_dot_zentp_dot_query__pb2.QueryParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Mints(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Mints',
+            zrchain_dot_zentp_dot_query__pb2.QueryMintsRequest.SerializeToString,
+            zrchain_dot_zentp_dot_query__pb2.QueryMintsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Burns(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Burns',
+            zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.SerializeToString,
+            zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

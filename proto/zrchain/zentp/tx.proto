@@ -20,7 +20,7 @@ service Msg {
   
   // MintRock defines an operation for creating a mint request of Rock
   // on a destination chain
-  rpc BridgeRock (MsgBridgeRock) returns (MsgBridgeRockResponse);
+  rpc Bridge (MsgBridge) returns (MsgBridgeResponse);
   
   // Burn defines an operation for burning Rock for a module account
   rpc Burn     (MsgBurn    ) returns (MsgBurnResponse    );
@@ -44,38 +44,46 @@ message MsgUpdateParams {
 message MsgUpdateParamsResponse {}
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
-message MsgBridgeRock {
+message MsgBridge {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
+  
   // source_address is the address on the source chain where the tokens are coming from.
   string source_address = 2;
+  
   // amount is the amount to mint on the destination chain
   uint64 amount = 3;
+
+
+  // denom is the denomination of the token being minted on the destination chain.
+  string denom = 4;
+  
   // destination is the caip identifier for the destination chain
-  string destination_chain = 4;
+  string destination_chain = 5;
+  
   // recipient is the keyID for the destination chain
-  string recipient_address = 5;
+  string recipient_address = 6;
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
-message MsgBridgeRockResponse {
+message MsgBridgeResponse {
   uint64 id = 1;
 }
 
 // MsgBurn is the Msg/Burn request type and gated through governance
 message MsgBurn {
   option (cosmos.msg.v1.signer) =                   "authority";
-  option           (amino.name) = "zrchain/x/zentp/MsgMintRock";
+  option           (amino.name) = "zrchain/x/zentp/MsgBurn";
   
   // authority is the address that controls the module (defaults to x/gov unless overwritten).
   string authority      = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string module_account = 2;
   string denom          = 3;
-  uint64  amount         = 4;
+  uint64 amount         = 4;
 }
 
 // MsgBurnResponse defines the response structure for executing a
 // MsgBurn message.
-message MsgBurnResponse {
-}
+message MsgBurnResponse {}
+

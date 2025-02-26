@@ -20,20 +20,25 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 		k.SignTransactionRequestStore,
 		req.Pagination,
 		func(key uint64, value types.SignTransactionRequest) (bool, error) {
-			include := false
-			if req.KeyId == 0 || value.KeyId == req.KeyId {
-				signReq, err := k.SignRequestStore.Get(goCtx, value.SignRequestId)
-				if err != nil {
-					return false, nil
+			keyIDMatch := false
+			if req.KeyId == 0 {
+				keyIDMatch = true
+			} else {
+				for _, keyID := range value.KeyIds {
+					if keyID == req.KeyId {
+						keyIDMatch = true
+						break
+					}
 				}
-				include = req.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_UNSPECIFIED || signReq.Status == req.Status
 			}
-
-			if req.WalletType != types.WalletType_WALLET_TYPE_UNSPECIFIED {
-				include = include && req.WalletType == value.WalletType
+			signReq, err := k.SignRequestStore.Get(goCtx, value.SignRequestId)
+			if err != nil {
+				return false, nil
 			}
+			statusMatch := req.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_UNSPECIFIED || signReq.Status == req.Status
+			walletMatch := req.WalletType != types.WalletType_WALLET_TYPE_UNSPECIFIED
 
-			return include, nil
+			return keyIDMatch && statusMatch && walletMatch, nil
 		},
 		func(key uint64, value types.SignTransactionRequest) (*types.SignTransactionRequestsResponse, error) {
 			signReq, err := k.SignRequestStore.Get(goCtx, value.SignRequestId)
@@ -44,7 +49,7 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 				SignTransactionRequests: &types.SignTxReqResponse{
 					Id:                  value.Id,
 					Creator:             value.Creator,
-					KeyId:               value.KeyId,
+					KeyIds:              value.KeyIds,
 					WalletType:          value.WalletType.String(),
 					UnsignedTransaction: value.UnsignedTransaction,
 					SignRequestId:       value.SignRequestId,

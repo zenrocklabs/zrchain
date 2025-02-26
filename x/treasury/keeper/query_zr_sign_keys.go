@@ -74,7 +74,11 @@ func zrSignWallet(key *types.Key, keyType string) (string, error) {
 	case "0":
 		return types.BitcoinP2WPKH(key, &chaincfg.MainNetParams)
 	case "501":
-		return types.SolanaAddress(key)
+		pubKey, err := types.SolanaPubkey(key)
+		if err != nil {
+			return "", err
+		}
+		return pubKey.String(), nil
 	default:
 		return "", fmt.Errorf("unknown keyType: %s", keyType)
 	}

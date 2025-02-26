@@ -21,7 +21,9 @@ type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// Queries a list of Mints.
-	ZrSignKeys(ctx context.Context, in *QueryRockMintsRequest, opts ...grpc.CallOption) (*QueryRockMintsResponse, error)
+	Mints(ctx context.Context, in *QueryMintsRequest, opts ...grpc.CallOption) (*QueryMintsResponse, error)
+	// Queries a list of Burns items.
+	Burns(ctx context.Context, in *QueryBurnsRequest, opts ...grpc.CallOption) (*QueryBurnsResponse, error)
 }
 
 type queryClient struct {
@@ -41,9 +43,18 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) ZrSignKeys(ctx context.Context, in *QueryRockMintsRequest, opts ...grpc.CallOption) (*QueryRockMintsResponse, error) {
-	out := new(QueryRockMintsResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.zentp.Query/ZrSignKeys", in, out, opts...)
+func (c *queryClient) Mints(ctx context.Context, in *QueryMintsRequest, opts ...grpc.CallOption) (*QueryMintsResponse, error) {
+	out := new(QueryMintsResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Query/Mints", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) Burns(ctx context.Context, in *QueryBurnsRequest, opts ...grpc.CallOption) (*QueryBurnsResponse, error) {
+	out := new(QueryBurnsResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Query/Burns", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +68,9 @@ type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// Queries a list of Mints.
-	ZrSignKeys(context.Context, *QueryRockMintsRequest) (*QueryRockMintsResponse, error)
+	Mints(context.Context, *QueryMintsRequest) (*QueryMintsResponse, error)
+	// Queries a list of Burns items.
+	Burns(context.Context, *QueryBurnsRequest) (*QueryBurnsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -68,8 +81,11 @@ type UnimplementedQueryServer struct {
 func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (UnimplementedQueryServer) ZrSignKeys(context.Context, *QueryRockMintsRequest) (*QueryRockMintsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ZrSignKeys not implemented")
+func (UnimplementedQueryServer) Mints(context.Context, *QueryMintsRequest) (*QueryMintsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Mints not implemented")
+}
+func (UnimplementedQueryServer) Burns(context.Context, *QueryBurnsRequest) (*QueryBurnsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Burns not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -102,20 +118,38 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ZrSignKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRockMintsRequest)
+func _Query_Mints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryMintsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ZrSignKeys(ctx, in)
+		return srv.(QueryServer).Mints(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zrchain.zentp.Query/ZrSignKeys",
+		FullMethod: "/zrchain.zentp.Query/Mints",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ZrSignKeys(ctx, req.(*QueryRockMintsRequest))
+		return srv.(QueryServer).Mints(ctx, req.(*QueryMintsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_Burns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBurnsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Burns(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zrchain.zentp.Query/Burns",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Burns(ctx, req.(*QueryBurnsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -132,8 +166,12 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "ZrSignKeys",
-			Handler:    _Query_ZrSignKeys_Handler,
+			MethodName: "Mints",
+			Handler:    _Query_Mints_Handler,
+		},
+		{
+			MethodName: "Burns",
+			Handler:    _Query_Burns_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

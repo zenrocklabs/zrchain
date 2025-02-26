@@ -461,10 +461,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		return nil, fmt.Errorf("data for signing is empty")
 	}
 
-	keyIDs := []uint64{msg.KeyId}
-	id, err := k.processSignatureRequests(ctx, dataForSigning, keyIDs, &types.SignRequest{
+	id, err := k.processSignatureRequests(ctx, dataForSigning, msg.KeyIds, &types.SignRequest{
 		Creator:        msg.Creator,
-		KeyIds:         keyIDs,
+		KeyIds:         msg.KeyIds,
 		DataForSigning: dataForSigning,
 		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		Metadata:       msg.Metadata,
@@ -477,7 +476,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
 		Creator:             msg.Creator,
 		SignRequestId:       id,
-		KeyId:               msg.KeyId,
+		KeyIds:              msg.KeyIds,
 		WalletType:          msg.WalletType,
 		UnsignedTransaction: msg.UnsignedTransaction,
 		NoBroadcast:         msg.NoBroadcast,

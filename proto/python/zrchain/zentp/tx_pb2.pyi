@@ -21,21 +21,23 @@ class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
-class MsgBridgeRock(_message.Message):
-    __slots__ = ("creator", "source_address", "amount", "destination_chain", "recipient_address")
+class MsgBridge(_message.Message):
+    __slots__ = ("creator", "source_address", "amount", "denom", "destination_chain", "recipient_address")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SOURCE_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    DENOM_FIELD_NUMBER: _ClassVar[int]
     DESTINATION_CHAIN_FIELD_NUMBER: _ClassVar[int]
     RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     creator: str
     source_address: str
     amount: int
+    denom: str
     destination_chain: str
     recipient_address: str
-    def __init__(self, creator: _Optional[str] = ..., source_address: _Optional[str] = ..., amount: _Optional[int] = ..., destination_chain: _Optional[str] = ..., recipient_address: _Optional[str] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., source_address: _Optional[str] = ..., amount: _Optional[int] = ..., denom: _Optional[str] = ..., destination_chain: _Optional[str] = ..., recipient_address: _Optional[str] = ...) -> None: ...
 
-class MsgBridgeRockResponse(_message.Message):
+class MsgBridgeResponse(_message.Message):
     __slots__ = ("id",)
     ID_FIELD_NUMBER: _ClassVar[int]
     id: int

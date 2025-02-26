@@ -20,8 +20,8 @@ message Solana {
   option (gogoproto.equal) = true;
 
   string program_id = 1;
-  string nonce_account_pub_key = 2;
-  string nonce_authority_pub_key = 3;
+  uint64 nonce_account_key = 2;
+  uint64 nonce_authority_key = 3;
   string rpc_url = 4;
   string mint_address = 5;
   string fee_wallet = 6;

@@ -27,6 +27,10 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgBurn int = 100
 
+	opWeightMsgMintRock = "op_weight_msg_mint_rock"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgMintRock int = 100
+
 	// this line is used by starport scaffolding # simapp/module/const
 )
 
@@ -61,6 +65,17 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		zentpsimulation.SimulateMsgBurn(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
+	var weightMsgMintRock int
+	simState.AppParams.GetOrGenerate(opWeightMsgMintRock, &weightMsgMintRock, nil,
+		func(_ *rand.Rand) {
+			weightMsgMintRock = defaultWeightMsgMintRock
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgMintRock,
+		zentpsimulation.SimulateMsgMintRock(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
 	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations
@@ -78,6 +93,14 @@ func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.Wei
 			},
 		),
 
+		simulation.NewWeightedProposalMsg(
+			opWeightMsgMintRock,
+			defaultWeightMsgMintRock,
+			func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
+				zentpsimulation.SimulateMsgMintRock(am.accountKeeper, am.bankKeeper, am.keeper)
+				return nil
+			},
+		),
 		// this line is used by starport scaffolding # simapp/module/OpMsg
 	}
 }

@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package zrchain.zentp;
 
 import "amino/amino.proto";
@@ -12,38 +13,57 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  
   // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/zrchain/v5/zentp/params";
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/zrchain/zentp/params";
+  
   }
+  
   // Queries a list of Mints.
-  rpc ZrSignKeys(QueryRockMintsRequest) returns (QueryRockMintsResponse) {
-    option (google.api.http).get = "/zrchain/zentp/mints/{id}/{creator}/{status/{denom}";
+  rpc Mints (QueryMintsRequest) returns (QueryMintsResponse) {
+    option (google.api.http).get = "/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}";
+  
+  }
+  
+  // Queries a list of Burns items.
+  rpc Burns (QueryBurnsRequest) returns (QueryBurnsResponse) {
+    option (google.api.http).get = "/zrchain/v5/zentp/burns/{id}/{denom}";
+  
   }
 }
-
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
+  
   // params holds all the parameters of this module.
-  Params params = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
-
-message QueryRockMintsRequest {
-  uint64 id = 1;
-  string creator = 2;
-  BridgeStatus satus = 3;
-  string denom = 4;
+message QueryMintsRequest {
+  uint64                                id         = 1;
+  string                                creator    = 2;
+  BridgeStatus                          status     = 3;
+  string                                denom      = 4;
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
-message QueryRockMintsResponse {
-  repeated BridgeRock mints = 1;
+message QueryMintsResponse {
+  repeated Bridge                        mints      = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
+
+message QueryBurnsRequest {
+  uint64 id    = 1;
+  string denom = 2;
+  BridgeStatus  status     = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+}
+
+message QueryBurnsResponse {
+  repeated Bridge                        burns      = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+

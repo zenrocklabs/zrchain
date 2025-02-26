@@ -23,7 +23,7 @@ type MsgClient interface {
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// MintRock defines an operation for creating a mint request of Rock
 	// on a destination chain
-	BridgeRock(ctx context.Context, in *MsgBridgeRock, opts ...grpc.CallOption) (*MsgBridgeRockResponse, error)
+	Bridge(ctx context.Context, in *MsgBridge, opts ...grpc.CallOption) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
 }
@@ -45,9 +45,9 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) BridgeRock(ctx context.Context, in *MsgBridgeRock, opts ...grpc.CallOption) (*MsgBridgeRockResponse, error) {
-	out := new(MsgBridgeRockResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/BridgeRock", in, out, opts...)
+func (c *msgClient) Bridge(ctx context.Context, in *MsgBridge, opts ...grpc.CallOption) (*MsgBridgeResponse, error) {
+	out := new(MsgBridgeResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/Bridge", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ type MsgServer interface {
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// MintRock defines an operation for creating a mint request of Rock
 	// on a destination chain
-	BridgeRock(context.Context, *MsgBridgeRock) (*MsgBridgeRockResponse, error)
+	Bridge(context.Context, *MsgBridge) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
 	mustEmbedUnimplementedMsgServer()
@@ -85,8 +85,8 @@ type UnimplementedMsgServer struct {
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (UnimplementedMsgServer) BridgeRock(context.Context, *MsgBridgeRock) (*MsgBridgeRockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BridgeRock not implemented")
+func (UnimplementedMsgServer) Bridge(context.Context, *MsgBridge) (*MsgBridgeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Bridge not implemented")
 }
 func (UnimplementedMsgServer) Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Burn not implemented")
@@ -122,20 +122,20 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_BridgeRock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgBridgeRock)
+func _Msg_Bridge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgBridge)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).BridgeRock(ctx, in)
+		return srv.(MsgServer).Bridge(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zrchain.zentp.Msg/BridgeRock",
+		FullMethod: "/zrchain.zentp.Msg/Bridge",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).BridgeRock(ctx, req.(*MsgBridgeRock))
+		return srv.(MsgServer).Bridge(ctx, req.(*MsgBridge))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -170,8 +170,8 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "BridgeRock",
-			Handler:    _Msg_BridgeRock_Handler,
+			MethodName: "Bridge",
+			Handler:    _Msg_Bridge_Handler,
 		},
 		{
 			MethodName: "Burn",

@@ -16,9 +16,15 @@ import (
 func (k msgServer) NewSignTransactionRequest(goCtx context.Context, msg *types.MsgNewSignTransactionRequest) (*types.MsgNewSignTransactionRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
+	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
-		return nil, fmt.Errorf("key %v not found", msg.KeyId)
+		return nil, fmt.Errorf("key %v not found", msg.KeyIds[0])
+	}
+	for _, keyId := range msg.KeyIds {
+		_, err := k.KeyStore.Get(ctx, keyId)
+		if err != nil {
+			return nil, fmt.Errorf("key %v not found", keyId)
+		}
 	}
 
 	signPolicyId := key.SignPolicyId
@@ -69,7 +75,7 @@ func (k msgServer) NewSignTransactionRequest(goCtx context.Context, msg *types.M
 }
 
 func (k msgServer) NewSignTransactionRequestPolicyGenerator(ctx sdk.Context, msg *types.MsgNewSignTransactionRequest) (pol.Policy, error) {
-	key, err := k.KeyStore.Get(ctx, msg.KeyId)
+	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
 		return nil, fmt.Errorf("key not found")
 	}

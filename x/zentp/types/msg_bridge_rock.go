@@ -8,10 +8,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var _ sdk.Msg = &MsgBridgeRock{}
+var _ sdk.Msg = &MsgBridge{}
 
 // ValidateBasic does a sanity check on the provided data.
-func (m *MsgBridgeRock) ValidateBasic() error {
+func (m *MsgBridge) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

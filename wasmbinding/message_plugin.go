@@ -184,10 +184,11 @@ func (m *CustomMessageInterceptor) signTx(ctx sdk.Context, req *signTransactionR
 		UnsignedTransaction: req.UnsignedTransaction,
 	}
 
-	internalReq.KeyId, err = strconv.ParseUint(req.KeyId, 10, 64)
+	keyID, err := strconv.ParseUint(req.KeyId, 10, 64)
 	if err != nil {
 		return cosmoserrors.Wrap(err, "keyId")
 	}
+	internalReq.KeyIds = []uint64{keyID}
 
 	if req.Metadata != nil {
 		internalReq.Metadata = &codectypes.Any{

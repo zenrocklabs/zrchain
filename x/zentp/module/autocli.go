@@ -17,6 +17,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "params",
 					Short:     "Shows the parameters of the module",
 				},
+				{
+					RpcMethod:      "Burns",
+					Use:            "burns [id] [denom]",
+					Short:          "Query burns",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "id"}, {ProtoField: "denom"}},
+				},
+
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},
@@ -29,11 +36,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Skip:      true, // skipped because authority gated
 				},
 				{
-					RpcMethod: "BridgeRock",
-					Use:       `bridge-rock [amount] [src-address] [dst-chain] [recipient-address]`,
-					Short:     "Bridge ROCK tokens from zrchain to a destination chain",
+					RpcMethod: "Bridge",
+					Use:       `bridge [amount] [denom] [src-address] [dst-chain] [recipient-address]`,
+					Short:     "Bridge tokens from zrchain to a destination chain",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "amount"},
+						{ProtoField: "denom"},
 						{ProtoField: "source_address"},
 						{ProtoField: "destination_chain"},
 						{ProtoField: "recipient_address"},

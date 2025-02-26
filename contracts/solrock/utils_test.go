@@ -2,6 +2,8 @@ package solrock
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -445,4 +447,44 @@ func TestDurableNonces(t *testing.T) {
 
 		require.NotEqual(t, nonceAccountBefore.Nonce, nonceAccountAfter.Nonce)
 	})
+}
+
+func TestCreateDurableNonceAccount(t *testing.T) {
+
+	var client = rpc.New("https://api.devnet.solana.com")
+
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("GYCxncsPLEnjpnAovBpmMwxcsaHnkGx17qeu73YtGbiY")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("GuqQ1oJJ7n9C3cSc1W6cj2NubVKCQKrEG8NkZTHucoee")
+
+	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
+	require.NoError(t, err)
+
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{
+			system.NewCreateAccountInstruction(
+				uint64(0.0015*float64(solana.LAMPORTS_PER_SOL)),
+				NONCE_ACCOUNT_LENGTH,
+				solana.SystemProgramID,
+				nonceAuthPubKey,
+				nonceAccPubKey,
+			).Build(),
+
+			system.NewInitializeNonceAccountInstruction(
+				nonceAuthPubKey,
+				nonceAccPubKey,
+				solana.SysVarRecentBlockHashesPubkey,
+				solana.SysVarRentPubkey,
+			).Build(),
+		},
+		recent.Value.Blockhash,
+		solana.TransactionPayer(nonceAuthPubKey),
+	)
+	require.NoError(t, err)
+	bin, err := tx.MarshalBinary()
+	require.NoError(t, err)
+
+	base64Bin := base64.StdEncoding.EncodeToString(bin)
+	fmt.Printf("transaction (base64): %s", base64Bin)
+
+	new
 }

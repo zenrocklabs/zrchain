@@ -143,10 +143,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "NewSignTransactionRequest",
-					Use:       "new-sign-transaction-request [key-id] [wallet-type] [unsigned-tx] --metadata [metadata] --btl [btl] --cache-id [cache-id] --mpc-btl [mpc_btl]",
+					Use:       "new-sign-transaction-request [key-ids] [wallet-type] [unsigned-tx] --metadata [metadata] --btl [btl] --cache-id [cache-id] --mpc-btl [mpc_btl]",
 					Short:     "Broadcast message NewSignTransactionRequest",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "key_id"},
+						{ProtoField: "key_ids"},
 						{ProtoField: "wallet_type"},
 						{ProtoField: "unsigned_transaction"},
 					},

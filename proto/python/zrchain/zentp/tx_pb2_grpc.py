@@ -20,10 +20,10 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
-        self.BridgeRock = channel.unary_unary(
-                '/zrchain.zentp.Msg/BridgeRock',
-                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.SerializeToString,
-                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.FromString,
+        self.Bridge = channel.unary_unary(
+                '/zrchain.zentp.Msg/Bridge',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridge.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeResponse.FromString,
                 )
         self.Burn = channel.unary_unary(
                 '/zrchain.zentp.Msg/Burn',
@@ -44,7 +44,7 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def BridgeRock(self, request, context):
+    def Bridge(self, request, context):
         """MintRock defines an operation for creating a mint request of Rock
         on a destination chain
         """
@@ -67,10 +67,10 @@ def add_MsgServicer_to_server(servicer, server):
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParams.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
             ),
-            'BridgeRock': grpc.unary_unary_rpc_method_handler(
-                    servicer.BridgeRock,
-                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.FromString,
-                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.SerializeToString,
+            'Bridge': grpc.unary_unary_rpc_method_handler(
+                    servicer.Bridge,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridge.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgBridgeResponse.SerializeToString,
             ),
             'Burn': grpc.unary_unary_rpc_method_handler(
                     servicer.Burn,
@@ -106,7 +106,7 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def BridgeRock(request,
+    def Bridge(request,
             target,
             options=(),
             channel_credentials=None,
@@ -116,9 +116,9 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/BridgeRock',
-            zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRock.SerializeToString,
-            zrchain_dot_zentp_dot_tx__pb2.MsgBridgeRockResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/Bridge',
+            zrchain_dot_zentp_dot_tx__pb2.MsgBridge.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgBridgeResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

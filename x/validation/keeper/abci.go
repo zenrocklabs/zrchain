@@ -862,7 +862,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				ctx,
 				&treasurytypes.MsgNewSignTransactionRequest{
 					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetStakerKeyID(ctx),
+					KeyIds:              []uint64{k.zenBTCKeeper.GetStakerKeyID(ctx)},
 					WalletType:          treasurytypes.WalletType(tx.ChainType),
 					UnsignedTransaction: unsignedStakeTx,
 					Metadata:            metadata,
@@ -960,7 +960,7 @@ func (k *Keeper) processZenBTCMints(ctx sdk.Context, oracleData OracleData) {
 				ctx,
 				&treasurytypes.MsgNewSignTransactionRequest{
 					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+					KeyIds:              []uint64{k.zenBTCKeeper.GetEthMinterKeyID(ctx)},
 					WalletType:          treasurytypes.WalletType(tx.ChainType),
 					UnsignedTransaction: unsignedMintTx,
 					Metadata:            metadata,
@@ -979,7 +979,7 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 		ctx,
 		0,
 		nil,
-		nil,
+		&oracleData.SolROCKMintNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
 		},
@@ -1057,7 +1057,7 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 				ctx,
 				&treasurytypes.MsgNewSignTransactionRequest{
 					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+					KeyIds:              []uint64{k.zenBTCKeeper.GetEthMinterKeyID(ctx)},
 					WalletType:          treasurytypes.WalletType(tx.ChainType),
 					UnsignedTransaction: unsignedMintTx,
 					Metadata:            metadata,
@@ -1162,7 +1162,7 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 				ctx,
 				&treasurytypes.MsgNewSignTransactionRequest{
 					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+					KeyIds:              []uint64{k.zenBTCKeeper.GetUnstakerKeyID(ctx)},
 					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
 					UnsignedTransaction: unsignedTx,
 					Metadata:            metadata,
@@ -1306,7 +1306,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				ctx,
 				&treasurytypes.MsgNewSignTransactionRequest{
 					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
+					KeyIds:              []uint64{k.zenBTCKeeper.GetCompleterKeyID(ctx)},
 					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
 					UnsignedTransaction: unsignedTx,
 					Metadata:            metadata,

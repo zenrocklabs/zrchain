@@ -872,33 +872,35 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgBridgeRock                   protoreflect.MessageDescriptor
-	fd_MsgBridgeRock_creator           protoreflect.FieldDescriptor
-	fd_MsgBridgeRock_source_address    protoreflect.FieldDescriptor
-	fd_MsgBridgeRock_amount            protoreflect.FieldDescriptor
-	fd_MsgBridgeRock_destination_chain protoreflect.FieldDescriptor
-	fd_MsgBridgeRock_recipient_address protoreflect.FieldDescriptor
+	md_MsgBridge                   protoreflect.MessageDescriptor
+	fd_MsgBridge_creator           protoreflect.FieldDescriptor
+	fd_MsgBridge_source_address    protoreflect.FieldDescriptor
+	fd_MsgBridge_amount            protoreflect.FieldDescriptor
+	fd_MsgBridge_denom             protoreflect.FieldDescriptor
+	fd_MsgBridge_destination_chain protoreflect.FieldDescriptor
+	fd_MsgBridge_recipient_address protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_zrchain_zentp_tx_proto_init()
-	md_MsgBridgeRock = File_zrchain_zentp_tx_proto.Messages().ByName("MsgBridgeRock")
-	fd_MsgBridgeRock_creator = md_MsgBridgeRock.Fields().ByName("creator")
-	fd_MsgBridgeRock_source_address = md_MsgBridgeRock.Fields().ByName("source_address")
-	fd_MsgBridgeRock_amount = md_MsgBridgeRock.Fields().ByName("amount")
-	fd_MsgBridgeRock_destination_chain = md_MsgBridgeRock.Fields().ByName("destination_chain")
-	fd_MsgBridgeRock_recipient_address = md_MsgBridgeRock.Fields().ByName("recipient_address")
+	md_MsgBridge = File_zrchain_zentp_tx_proto.Messages().ByName("MsgBridge")
+	fd_MsgBridge_creator = md_MsgBridge.Fields().ByName("creator")
+	fd_MsgBridge_source_address = md_MsgBridge.Fields().ByName("source_address")
+	fd_MsgBridge_amount = md_MsgBridge.Fields().ByName("amount")
+	fd_MsgBridge_denom = md_MsgBridge.Fields().ByName("denom")
+	fd_MsgBridge_destination_chain = md_MsgBridge.Fields().ByName("destination_chain")
+	fd_MsgBridge_recipient_address = md_MsgBridge.Fields().ByName("recipient_address")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgBridgeRock)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgBridge)(nil)
 
-type fastReflection_MsgBridgeRock MsgBridgeRock
+type fastReflection_MsgBridge MsgBridge
 
-func (x *MsgBridgeRock) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgBridgeRock)(x)
+func (x *MsgBridge) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgBridge)(x)
 }
 
-func (x *MsgBridgeRock) slowProtoReflect() protoreflect.Message {
+func (x *MsgBridge) slowProtoReflect() protoreflect.Message {
 	mi := &file_zrchain_zentp_tx_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -910,43 +912,43 @@ func (x *MsgBridgeRock) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgBridgeRock_messageType fastReflection_MsgBridgeRock_messageType
-var _ protoreflect.MessageType = fastReflection_MsgBridgeRock_messageType{}
+var _fastReflection_MsgBridge_messageType fastReflection_MsgBridge_messageType
+var _ protoreflect.MessageType = fastReflection_MsgBridge_messageType{}
 
-type fastReflection_MsgBridgeRock_messageType struct{}
+type fastReflection_MsgBridge_messageType struct{}
 
-func (x fastReflection_MsgBridgeRock_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgBridgeRock)(nil)
+func (x fastReflection_MsgBridge_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgBridge)(nil)
 }
-func (x fastReflection_MsgBridgeRock_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgBridgeRock)
+func (x fastReflection_MsgBridge_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgBridge)
 }
-func (x fastReflection_MsgBridgeRock_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgBridgeRock
+func (x fastReflection_MsgBridge_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgBridge
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgBridgeRock) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgBridgeRock
+func (x *fastReflection_MsgBridge) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgBridge
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgBridgeRock) Type() protoreflect.MessageType {
-	return _fastReflection_MsgBridgeRock_messageType
+func (x *fastReflection_MsgBridge) Type() protoreflect.MessageType {
+	return _fastReflection_MsgBridge_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgBridgeRock) New() protoreflect.Message {
-	return new(fastReflection_MsgBridgeRock)
+func (x *fastReflection_MsgBridge) New() protoreflect.Message {
+	return new(fastReflection_MsgBridge)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgBridgeRock) Interface() protoreflect.ProtoMessage {
-	return (*MsgBridgeRock)(x)
+func (x *fastReflection_MsgBridge) Interface() protoreflect.ProtoMessage {
+	return (*MsgBridge)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -954,34 +956,40 @@ func (x *fastReflection_MsgBridgeRock) Interface() protoreflect.ProtoMessage {
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgBridgeRock) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgBridge) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Creator != "" {
 		value := protoreflect.ValueOfString(x.Creator)
-		if !f(fd_MsgBridgeRock_creator, value) {
+		if !f(fd_MsgBridge_creator, value) {
 			return
 		}
 	}
 	if x.SourceAddress != "" {
 		value := protoreflect.ValueOfString(x.SourceAddress)
-		if !f(fd_MsgBridgeRock_source_address, value) {
+		if !f(fd_MsgBridge_source_address, value) {
 			return
 		}
 	}
 	if x.Amount != uint64(0) {
 		value := protoreflect.ValueOfUint64(x.Amount)
-		if !f(fd_MsgBridgeRock_amount, value) {
+		if !f(fd_MsgBridge_amount, value) {
+			return
+		}
+	}
+	if x.Denom != "" {
+		value := protoreflect.ValueOfString(x.Denom)
+		if !f(fd_MsgBridge_denom, value) {
 			return
 		}
 	}
 	if x.DestinationChain != "" {
 		value := protoreflect.ValueOfString(x.DestinationChain)
-		if !f(fd_MsgBridgeRock_destination_chain, value) {
+		if !f(fd_MsgBridge_destination_chain, value) {
 			return
 		}
 	}
 	if x.RecipientAddress != "" {
 		value := protoreflect.ValueOfString(x.RecipientAddress)
-		if !f(fd_MsgBridgeRock_recipient_address, value) {
+		if !f(fd_MsgBridge_recipient_address, value) {
 			return
 		}
 	}
@@ -998,23 +1006,25 @@ func (x *fastReflection_MsgBridgeRock) Range(f func(protoreflect.FieldDescriptor
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgBridgeRock) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgBridge) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
+	case "zrchain.zentp.MsgBridge.creator":
 		return x.Creator != ""
-	case "zrchain.zentp.MsgBridgeRock.source_address":
+	case "zrchain.zentp.MsgBridge.source_address":
 		return x.SourceAddress != ""
-	case "zrchain.zentp.MsgBridgeRock.amount":
+	case "zrchain.zentp.MsgBridge.amount":
 		return x.Amount != uint64(0)
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
+	case "zrchain.zentp.MsgBridge.denom":
+		return x.Denom != ""
+	case "zrchain.zentp.MsgBridge.destination_chain":
 		return x.DestinationChain != ""
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
+	case "zrchain.zentp.MsgBridge.recipient_address":
 		return x.RecipientAddress != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1024,23 +1034,25 @@ func (x *fastReflection_MsgBridgeRock) Has(fd protoreflect.FieldDescriptor) bool
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRock) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgBridge) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
+	case "zrchain.zentp.MsgBridge.creator":
 		x.Creator = ""
-	case "zrchain.zentp.MsgBridgeRock.source_address":
+	case "zrchain.zentp.MsgBridge.source_address":
 		x.SourceAddress = ""
-	case "zrchain.zentp.MsgBridgeRock.amount":
+	case "zrchain.zentp.MsgBridge.amount":
 		x.Amount = uint64(0)
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
+	case "zrchain.zentp.MsgBridge.denom":
+		x.Denom = ""
+	case "zrchain.zentp.MsgBridge.destination_chain":
 		x.DestinationChain = ""
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
+	case "zrchain.zentp.MsgBridge.recipient_address":
 		x.RecipientAddress = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1050,28 +1062,31 @@ func (x *fastReflection_MsgBridgeRock) Clear(fd protoreflect.FieldDescriptor) {
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgBridgeRock) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridge) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
+	case "zrchain.zentp.MsgBridge.creator":
 		value := x.Creator
 		return protoreflect.ValueOfString(value)
-	case "zrchain.zentp.MsgBridgeRock.source_address":
+	case "zrchain.zentp.MsgBridge.source_address":
 		value := x.SourceAddress
 		return protoreflect.ValueOfString(value)
-	case "zrchain.zentp.MsgBridgeRock.amount":
+	case "zrchain.zentp.MsgBridge.amount":
 		value := x.Amount
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
+	case "zrchain.zentp.MsgBridge.denom":
+		value := x.Denom
+		return protoreflect.ValueOfString(value)
+	case "zrchain.zentp.MsgBridge.destination_chain":
 		value := x.DestinationChain
 		return protoreflect.ValueOfString(value)
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
+	case "zrchain.zentp.MsgBridge.recipient_address":
 		value := x.RecipientAddress
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1085,23 +1100,25 @@ func (x *fastReflection_MsgBridgeRock) Get(descriptor protoreflect.FieldDescript
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRock) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgBridge) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
+	case "zrchain.zentp.MsgBridge.creator":
 		x.Creator = value.Interface().(string)
-	case "zrchain.zentp.MsgBridgeRock.source_address":
+	case "zrchain.zentp.MsgBridge.source_address":
 		x.SourceAddress = value.Interface().(string)
-	case "zrchain.zentp.MsgBridgeRock.amount":
+	case "zrchain.zentp.MsgBridge.amount":
 		x.Amount = value.Uint()
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
+	case "zrchain.zentp.MsgBridge.denom":
+		x.Denom = value.Interface().(string)
+	case "zrchain.zentp.MsgBridge.destination_chain":
 		x.DestinationChain = value.Interface().(string)
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
+	case "zrchain.zentp.MsgBridge.recipient_address":
 		x.RecipientAddress = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1115,56 +1132,60 @@ func (x *fastReflection_MsgBridgeRock) Set(fd protoreflect.FieldDescriptor, valu
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRock) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridge) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
-		panic(fmt.Errorf("field creator of message zrchain.zentp.MsgBridgeRock is not mutable"))
-	case "zrchain.zentp.MsgBridgeRock.source_address":
-		panic(fmt.Errorf("field source_address of message zrchain.zentp.MsgBridgeRock is not mutable"))
-	case "zrchain.zentp.MsgBridgeRock.amount":
-		panic(fmt.Errorf("field amount of message zrchain.zentp.MsgBridgeRock is not mutable"))
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
-		panic(fmt.Errorf("field destination_chain of message zrchain.zentp.MsgBridgeRock is not mutable"))
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
-		panic(fmt.Errorf("field recipient_address of message zrchain.zentp.MsgBridgeRock is not mutable"))
+	case "zrchain.zentp.MsgBridge.creator":
+		panic(fmt.Errorf("field creator of message zrchain.zentp.MsgBridge is not mutable"))
+	case "zrchain.zentp.MsgBridge.source_address":
+		panic(fmt.Errorf("field source_address of message zrchain.zentp.MsgBridge is not mutable"))
+	case "zrchain.zentp.MsgBridge.amount":
+		panic(fmt.Errorf("field amount of message zrchain.zentp.MsgBridge is not mutable"))
+	case "zrchain.zentp.MsgBridge.denom":
+		panic(fmt.Errorf("field denom of message zrchain.zentp.MsgBridge is not mutable"))
+	case "zrchain.zentp.MsgBridge.destination_chain":
+		panic(fmt.Errorf("field destination_chain of message zrchain.zentp.MsgBridge is not mutable"))
+	case "zrchain.zentp.MsgBridge.recipient_address":
+		panic(fmt.Errorf("field recipient_address of message zrchain.zentp.MsgBridge is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgBridgeRock) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridge) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRock.creator":
+	case "zrchain.zentp.MsgBridge.creator":
 		return protoreflect.ValueOfString("")
-	case "zrchain.zentp.MsgBridgeRock.source_address":
+	case "zrchain.zentp.MsgBridge.source_address":
 		return protoreflect.ValueOfString("")
-	case "zrchain.zentp.MsgBridgeRock.amount":
+	case "zrchain.zentp.MsgBridge.amount":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.zentp.MsgBridgeRock.destination_chain":
+	case "zrchain.zentp.MsgBridge.denom":
 		return protoreflect.ValueOfString("")
-	case "zrchain.zentp.MsgBridgeRock.recipient_address":
+	case "zrchain.zentp.MsgBridge.destination_chain":
+		return protoreflect.ValueOfString("")
+	case "zrchain.zentp.MsgBridge.recipient_address":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRock"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridge"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRock does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridge does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgBridgeRock) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgBridge) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.MsgBridgeRock", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.MsgBridge", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1172,7 +1193,7 @@ func (x *fastReflection_MsgBridgeRock) WhichOneof(d protoreflect.OneofDescriptor
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgBridgeRock) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgBridge) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1183,7 +1204,7 @@ func (x *fastReflection_MsgBridgeRock) GetUnknown() protoreflect.RawFields {
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRock) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgBridge) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1195,7 +1216,7 @@ func (x *fastReflection_MsgBridgeRock) SetUnknown(fields protoreflect.RawFields)
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgBridgeRock) IsValid() bool {
+func (x *fastReflection_MsgBridge) IsValid() bool {
 	return x != nil
 }
 
@@ -1205,9 +1226,9 @@ func (x *fastReflection_MsgBridgeRock) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgBridge) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgBridgeRock)
+		x := input.Message.Interface().(*MsgBridge)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1230,6 +1251,10 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 		if x.Amount != 0 {
 			n += 1 + runtime.Sov(uint64(x.Amount))
 		}
+		l = len(x.Denom)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		l = len(x.DestinationChain)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
@@ -1248,7 +1273,7 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgBridgeRock)
+		x := input.Message.Interface().(*MsgBridge)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1272,12 +1297,19 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], x.RecipientAddress)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.RecipientAddress)))
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x32
 		}
 		if len(x.DestinationChain) > 0 {
 			i -= len(x.DestinationChain)
 			copy(dAtA[i:], x.DestinationChain)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.DestinationChain)))
+			i--
+			dAtA[i] = 0x2a
+		}
+		if len(x.Denom) > 0 {
+			i -= len(x.Denom)
+			copy(dAtA[i:], x.Denom)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Denom)))
 			i--
 			dAtA[i] = 0x22
 		}
@@ -1311,7 +1343,7 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgBridgeRock)
+		x := input.Message.Interface().(*MsgBridge)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1343,10 +1375,10 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeRock: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridge: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeRock: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridge: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -1434,6 +1466,38 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 				}
 			case 4:
 				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Denom = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 5:
+				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DestinationChain", wireType)
 				}
 				var stringLen uint64
@@ -1464,7 +1528,7 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 				}
 				x.DestinationChain = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 5:
+			case 6:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RecipientAddress", wireType)
 				}
@@ -1532,25 +1596,25 @@ func (x *fastReflection_MsgBridgeRock) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_MsgBridgeRockResponse    protoreflect.MessageDescriptor
-	fd_MsgBridgeRockResponse_id protoreflect.FieldDescriptor
+	md_MsgBridgeResponse    protoreflect.MessageDescriptor
+	fd_MsgBridgeResponse_id protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_zrchain_zentp_tx_proto_init()
-	md_MsgBridgeRockResponse = File_zrchain_zentp_tx_proto.Messages().ByName("MsgBridgeRockResponse")
-	fd_MsgBridgeRockResponse_id = md_MsgBridgeRockResponse.Fields().ByName("id")
+	md_MsgBridgeResponse = File_zrchain_zentp_tx_proto.Messages().ByName("MsgBridgeResponse")
+	fd_MsgBridgeResponse_id = md_MsgBridgeResponse.Fields().ByName("id")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgBridgeRockResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgBridgeResponse)(nil)
 
-type fastReflection_MsgBridgeRockResponse MsgBridgeRockResponse
+type fastReflection_MsgBridgeResponse MsgBridgeResponse
 
-func (x *MsgBridgeRockResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgBridgeRockResponse)(x)
+func (x *MsgBridgeResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgBridgeResponse)(x)
 }
 
-func (x *MsgBridgeRockResponse) slowProtoReflect() protoreflect.Message {
+func (x *MsgBridgeResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_zrchain_zentp_tx_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1562,43 +1626,43 @@ func (x *MsgBridgeRockResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgBridgeRockResponse_messageType fastReflection_MsgBridgeRockResponse_messageType
-var _ protoreflect.MessageType = fastReflection_MsgBridgeRockResponse_messageType{}
+var _fastReflection_MsgBridgeResponse_messageType fastReflection_MsgBridgeResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgBridgeResponse_messageType{}
 
-type fastReflection_MsgBridgeRockResponse_messageType struct{}
+type fastReflection_MsgBridgeResponse_messageType struct{}
 
-func (x fastReflection_MsgBridgeRockResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgBridgeRockResponse)(nil)
+func (x fastReflection_MsgBridgeResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgBridgeResponse)(nil)
 }
-func (x fastReflection_MsgBridgeRockResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgBridgeRockResponse)
+func (x fastReflection_MsgBridgeResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgBridgeResponse)
 }
-func (x fastReflection_MsgBridgeRockResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgBridgeRockResponse
+func (x fastReflection_MsgBridgeResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgBridgeResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgBridgeRockResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgBridgeRockResponse
+func (x *fastReflection_MsgBridgeResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgBridgeResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgBridgeRockResponse) Type() protoreflect.MessageType {
-	return _fastReflection_MsgBridgeRockResponse_messageType
+func (x *fastReflection_MsgBridgeResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgBridgeResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgBridgeRockResponse) New() protoreflect.Message {
-	return new(fastReflection_MsgBridgeRockResponse)
+func (x *fastReflection_MsgBridgeResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgBridgeResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgBridgeRockResponse) Interface() protoreflect.ProtoMessage {
-	return (*MsgBridgeRockResponse)(x)
+func (x *fastReflection_MsgBridgeResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgBridgeResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1606,10 +1670,10 @@ func (x *fastReflection_MsgBridgeRockResponse) Interface() protoreflect.ProtoMes
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgBridgeRockResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgBridgeResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Id != uint64(0) {
 		value := protoreflect.ValueOfUint64(x.Id)
-		if !f(fd_MsgBridgeRockResponse_id, value) {
+		if !f(fd_MsgBridgeResponse_id, value) {
 			return
 		}
 	}
@@ -1626,15 +1690,15 @@ func (x *fastReflection_MsgBridgeRockResponse) Range(f func(protoreflect.FieldDe
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgBridgeRockResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgBridgeResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
+	case "zrchain.zentp.MsgBridgeResponse.id":
 		return x.Id != uint64(0)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1644,15 +1708,15 @@ func (x *fastReflection_MsgBridgeRockResponse) Has(fd protoreflect.FieldDescript
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRockResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgBridgeResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
+	case "zrchain.zentp.MsgBridgeResponse.id":
 		x.Id = uint64(0)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1662,16 +1726,16 @@ func (x *fastReflection_MsgBridgeRockResponse) Clear(fd protoreflect.FieldDescri
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgBridgeRockResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridgeResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
+	case "zrchain.zentp.MsgBridgeResponse.id":
 		value := x.Id
 		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1685,15 +1749,15 @@ func (x *fastReflection_MsgBridgeRockResponse) Get(descriptor protoreflect.Field
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRockResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgBridgeResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
+	case "zrchain.zentp.MsgBridgeResponse.id":
 		x.Id = value.Uint()
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1707,40 +1771,40 @@ func (x *fastReflection_MsgBridgeRockResponse) Set(fd protoreflect.FieldDescript
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRockResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridgeResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
-		panic(fmt.Errorf("field id of message zrchain.zentp.MsgBridgeRockResponse is not mutable"))
+	case "zrchain.zentp.MsgBridgeResponse.id":
+		panic(fmt.Errorf("field id of message zrchain.zentp.MsgBridgeResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgBridgeRockResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgBridgeResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.MsgBridgeRockResponse.id":
+	case "zrchain.zentp.MsgBridgeResponse.id":
 		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeRockResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.MsgBridgeResponse"))
 		}
-		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeRockResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message zrchain.zentp.MsgBridgeResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgBridgeRockResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgBridgeResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.MsgBridgeRockResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.MsgBridgeResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1748,7 +1812,7 @@ func (x *fastReflection_MsgBridgeRockResponse) WhichOneof(d protoreflect.OneofDe
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgBridgeRockResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgBridgeResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1759,7 +1823,7 @@ func (x *fastReflection_MsgBridgeRockResponse) GetUnknown() protoreflect.RawFiel
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgBridgeRockResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgBridgeResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1771,7 +1835,7 @@ func (x *fastReflection_MsgBridgeRockResponse) SetUnknown(fields protoreflect.Ra
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgBridgeRockResponse) IsValid() bool {
+func (x *fastReflection_MsgBridgeResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -1781,9 +1845,9 @@ func (x *fastReflection_MsgBridgeRockResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgBridgeRockResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgBridgeResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgBridgeRockResponse)
+		x := input.Message.Interface().(*MsgBridgeResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1808,7 +1872,7 @@ func (x *fastReflection_MsgBridgeRockResponse) ProtoMethods() *protoiface.Method
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgBridgeRockResponse)
+		x := input.Message.Interface().(*MsgBridgeResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1843,7 +1907,7 @@ func (x *fastReflection_MsgBridgeRockResponse) ProtoMethods() *protoiface.Method
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgBridgeRockResponse)
+		x := input.Message.Interface().(*MsgBridgeResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1875,10 +1939,10 @@ func (x *fastReflection_MsgBridgeRockResponse) ProtoMethods() *protoiface.Method
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeRockResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeRockResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgBridgeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -2975,7 +3039,7 @@ func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
 }
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
-type MsgBridgeRock struct {
+type MsgBridge struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2985,14 +3049,16 @@ type MsgBridgeRock struct {
 	SourceAddress string `protobuf:"bytes,2,opt,name=source_address,json=sourceAddress,proto3" json:"source_address,omitempty"`
 	// amount is the amount to mint on the destination chain
 	Amount uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	// denom is the denomination of the token being minted on the destination chain.
+	Denom string `protobuf:"bytes,4,opt,name=denom,proto3" json:"denom,omitempty"`
 	// destination is the caip identifier for the destination chain
-	DestinationChain string `protobuf:"bytes,4,opt,name=destination_chain,json=destinationChain,proto3" json:"destination_chain,omitempty"`
+	DestinationChain string `protobuf:"bytes,5,opt,name=destination_chain,json=destinationChain,proto3" json:"destination_chain,omitempty"`
 	// recipient is the keyID for the destination chain
-	RecipientAddress string `protobuf:"bytes,5,opt,name=recipient_address,json=recipientAddress,proto3" json:"recipient_address,omitempty"`
+	RecipientAddress string `protobuf:"bytes,6,opt,name=recipient_address,json=recipientAddress,proto3" json:"recipient_address,omitempty"`
 }
 
-func (x *MsgBridgeRock) Reset() {
-	*x = MsgBridgeRock{}
+func (x *MsgBridge) Reset() {
+	*x = MsgBridge{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_zrchain_zentp_tx_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3000,46 +3066,53 @@ func (x *MsgBridgeRock) Reset() {
 	}
 }
 
-func (x *MsgBridgeRock) String() string {
+func (x *MsgBridge) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgBridgeRock) ProtoMessage() {}
+func (*MsgBridge) ProtoMessage() {}
 
-// Deprecated: Use MsgBridgeRock.ProtoReflect.Descriptor instead.
-func (*MsgBridgeRock) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgBridge.ProtoReflect.Descriptor instead.
+func (*MsgBridge) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_tx_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MsgBridgeRock) GetCreator() string {
+func (x *MsgBridge) GetCreator() string {
 	if x != nil {
 		return x.Creator
 	}
 	return ""
 }
 
-func (x *MsgBridgeRock) GetSourceAddress() string {
+func (x *MsgBridge) GetSourceAddress() string {
 	if x != nil {
 		return x.SourceAddress
 	}
 	return ""
 }
 
-func (x *MsgBridgeRock) GetAmount() uint64 {
+func (x *MsgBridge) GetAmount() uint64 {
 	if x != nil {
 		return x.Amount
 	}
 	return 0
 }
 
-func (x *MsgBridgeRock) GetDestinationChain() string {
+func (x *MsgBridge) GetDenom() string {
+	if x != nil {
+		return x.Denom
+	}
+	return ""
+}
+
+func (x *MsgBridge) GetDestinationChain() string {
 	if x != nil {
 		return x.DestinationChain
 	}
 	return ""
 }
 
-func (x *MsgBridgeRock) GetRecipientAddress() string {
+func (x *MsgBridge) GetRecipientAddress() string {
 	if x != nil {
 		return x.RecipientAddress
 	}
@@ -3048,7 +3121,7 @@ func (x *MsgBridgeRock) GetRecipientAddress() string {
 
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
-type MsgBridgeRockResponse struct {
+type MsgBridgeResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -3056,8 +3129,8 @@ type MsgBridgeRockResponse struct {
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (x *MsgBridgeRockResponse) Reset() {
-	*x = MsgBridgeRockResponse{}
+func (x *MsgBridgeResponse) Reset() {
+	*x = MsgBridgeResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_zrchain_zentp_tx_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3065,18 +3138,18 @@ func (x *MsgBridgeRockResponse) Reset() {
 	}
 }
 
-func (x *MsgBridgeRockResponse) String() string {
+func (x *MsgBridgeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgBridgeRockResponse) ProtoMessage() {}
+func (*MsgBridgeResponse) ProtoMessage() {}
 
-// Deprecated: Use MsgBridgeRockResponse.ProtoReflect.Descriptor instead.
-func (*MsgBridgeRockResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgBridgeResponse.ProtoReflect.Descriptor instead.
+func (*MsgBridgeResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_tx_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *MsgBridgeRockResponse) GetId() uint64 {
+func (x *MsgBridgeResponse) GetId() uint64 {
 	if x != nil {
 		return x.Id
 	}
@@ -3198,62 +3271,61 @@ var file_zrchain_zentp_tx_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x4d, 0x73, 0x67, 0x55, 0x70,
 	0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73,
 	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd0, 0x01, 0x0a, 0x0d, 0x4d, 0x73, 0x67, 0x42, 0x72, 0x69,
-	0x64, 0x67, 0x65, 0x52, 0x6f, 0x63, 0x6b, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74,
-	0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f,
-	0x72, 0x12, 0x25, 0x0a, 0x0e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x61, 0x64, 0x64, 0x72,
-	0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75,
-	0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74,
-	0x12, 0x2b, 0x0a, 0x11, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x64, 0x65, 0x73,
-	0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x12, 0x2b, 0x0a,
-	0x11, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69,
-	0x65, 0x6e, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x3a, 0x0c, 0x82, 0xe7, 0xb0, 0x2a,
-	0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x27, 0x0a, 0x15, 0x4d, 0x73, 0x67, 0x42,
-	0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x6f, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69,
-	0x64, 0x22, 0xc6, 0x01, 0x0a, 0x07, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x36, 0x0a,
-	0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64,
-	0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68,
-	0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x25, 0x0a, 0x0e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5f,
-	0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x6d,
-	0x6f, 0x64, 0x75, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05,
-	0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e,
-	0x6f, 0x6d, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x2e, 0x82, 0xe7, 0xb0, 0x2a,
-	0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x1b, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x4d,
-	0x73, 0x67, 0x4d, 0x69, 0x6e, 0x74, 0x52, 0x6f, 0x63, 0x6b, 0x22, 0x11, 0x0a, 0x0f, 0x4d, 0x73,
-	0x67, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xf6, 0x01,
-	0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x56, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
-	0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x1e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
-	0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
-	0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a,
-	0x0a, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x6f, 0x63, 0x6b, 0x12, 0x1c, 0x2e, 0x7a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42,
-	0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x6f, 0x63, 0x6b, 0x1a, 0x24, 0x2e, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x72, 0x69,
-	0x64, 0x67, 0x65, 0x52, 0x6f, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x3e, 0x0a, 0x04, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x16, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x1a,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xe2, 0x01, 0x0a, 0x09, 0x4d, 0x73, 0x67, 0x42, 0x72, 0x69,
+	0x64, 0x67, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x25, 0x0a,
+	0x0e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x41, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05,
+	0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e,
+	0x6f, 0x6d, 0x12, 0x2b, 0x0a, 0x11, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x5f, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x64,
+	0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x12,
+	0x2b, 0x0a, 0x11, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x61, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x72, 0x65, 0x63, 0x69,
+	0x70, 0x69, 0x65, 0x6e, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x3a, 0x0c, 0x82, 0xe7,
+	0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x23, 0x0a, 0x11, 0x4d, 0x73,
+	0x67, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x22,
+	0xc2, 0x01, 0x0a, 0x07, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x36, 0x0a, 0x09, 0x61,
+	0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
+	0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72,
+	0x69, 0x74, 0x79, 0x12, 0x25, 0x0a, 0x0e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5f, 0x61, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x6d, 0x6f, 0x64,
+	0x75, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x64, 0x65,
+	0x6e, 0x6f, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d,
+	0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x2a, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61,
+	0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x17, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x4d, 0x73, 0x67,
+	0x42, 0x75, 0x72, 0x6e, 0x22, 0x11, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xea, 0x01, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12,
+	0x56, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12,
 	0x1e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e,
-	0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a,
-	0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0x91, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d, 0x2e, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42, 0x07, 0x54, 0x78,
-	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73,
-	0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02, 0x0d,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xca, 0x02, 0x0d,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xe2, 0x02, 0x19,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x5c, 0x47, 0x50,
-	0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a,
+	0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x06, 0x42, 0x72, 0x69, 0x64, 0x67,
+	0x65, 0x12, 0x18, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74,
+	0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x1a, 0x20, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42,
+	0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a,
+	0x04, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x16, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x75, 0x72, 0x6e, 0x1a, 0x1e, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x4d, 0x73,
+	0x67, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80,
+	0xe7, 0xb0, 0x2a, 0x01, 0x42, 0x91, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
+	0x7a, 0x65, 0x6e, 0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02, 0x0d, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xca, 0x02, 0x0d, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xe2, 0x02, 0x19, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x5c, 0x47, 0x50, 0x42, 0x4d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3272,8 +3344,8 @@ var file_zrchain_zentp_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_zrchain_zentp_tx_proto_goTypes = []interface{}{
 	(*MsgUpdateParams)(nil),         // 0: zrchain.zentp.MsgUpdateParams
 	(*MsgUpdateParamsResponse)(nil), // 1: zrchain.zentp.MsgUpdateParamsResponse
-	(*MsgBridgeRock)(nil),           // 2: zrchain.zentp.MsgBridgeRock
-	(*MsgBridgeRockResponse)(nil),   // 3: zrchain.zentp.MsgBridgeRockResponse
+	(*MsgBridge)(nil),               // 2: zrchain.zentp.MsgBridge
+	(*MsgBridgeResponse)(nil),       // 3: zrchain.zentp.MsgBridgeResponse
 	(*MsgBurn)(nil),                 // 4: zrchain.zentp.MsgBurn
 	(*MsgBurnResponse)(nil),         // 5: zrchain.zentp.MsgBurnResponse
 	(*Params)(nil),                  // 6: zrchain.zentp.Params
@@ -3281,10 +3353,10 @@ var file_zrchain_zentp_tx_proto_goTypes = []interface{}{
 var file_zrchain_zentp_tx_proto_depIdxs = []int32{
 	6, // 0: zrchain.zentp.MsgUpdateParams.params:type_name -> zrchain.zentp.Params
 	0, // 1: zrchain.zentp.Msg.UpdateParams:input_type -> zrchain.zentp.MsgUpdateParams
-	2, // 2: zrchain.zentp.Msg.BridgeRock:input_type -> zrchain.zentp.MsgBridgeRock
+	2, // 2: zrchain.zentp.Msg.Bridge:input_type -> zrchain.zentp.MsgBridge
 	4, // 3: zrchain.zentp.Msg.Burn:input_type -> zrchain.zentp.MsgBurn
 	1, // 4: zrchain.zentp.Msg.UpdateParams:output_type -> zrchain.zentp.MsgUpdateParamsResponse
-	3, // 5: zrchain.zentp.Msg.BridgeRock:output_type -> zrchain.zentp.MsgBridgeRockResponse
+	3, // 5: zrchain.zentp.Msg.Bridge:output_type -> zrchain.zentp.MsgBridgeResponse
 	5, // 6: zrchain.zentp.Msg.Burn:output_type -> zrchain.zentp.MsgBurnResponse
 	4, // [4:7] is the sub-list for method output_type
 	1, // [1:4] is the sub-list for method input_type
@@ -3325,7 +3397,7 @@ func file_zrchain_zentp_tx_proto_init() {
 			}
 		}
 		file_zrchain_zentp_tx_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgBridgeRock); i {
+			switch v := v.(*MsgBridge); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3337,7 +3409,7 @@ func file_zrchain_zentp_tx_proto_init() {
 			}
 		}
 		file_zrchain_zentp_tx_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgBridgeRockResponse); i {
+			switch v := v.(*MsgBridgeResponse); i {
 			case 0:
 				return &v.state
 			case 1:

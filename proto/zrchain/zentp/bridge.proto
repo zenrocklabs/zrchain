@@ -10,24 +10,28 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types";
 
 // MBStatus represents the different possible states of a mint/burn operation.
 enum BridgeStatus {
+  // Undefined: The status of the operation is not specified.
+  BRIDGE_STATUS_UNDEFINED = 0;
+
   // New: The operation has been created but not yet processed.
-      BRIDGE_STATUS_NEW = 0;
+  BRIDGE_STATUS_NEW = 1;
 
   // Pending: The operation is currently being processed.
-      BRIDGE_STATUS_PENDING = 1;
+  BRIDGE_STATUS_PENDING = 2;
 
   // Completed: The operation has been successfully finalized.
-      BRIDGE_STATUS_COMPLETED = 2;
-}
- 
-message BridgeRock {
-  uint64 id = 1;
-  string source_address = 3;
-  string source_chain = 4;
-  string destination_chain = 5;
-  uint64 amount = 6;
-  string recipient_address = 7;
-  string tx_hash = 8;
-  BridgeStatus state = 9;
+  BRIDGE_STATUS_COMPLETED = 3;
 }
 
+message Bridge {
+  uint64 id = 1;
+  string denom = 2;
+  string creator = 3;
+  string source_address = 4;
+  string source_chain = 5;
+  string destination_chain = 6;
+  uint64 amount = 7;
+  string recipient_address = 8;
+  string tx_hash = 9;
+  BridgeStatus state = 10;
+}
