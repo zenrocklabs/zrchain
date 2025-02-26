@@ -34,31 +34,61 @@ import (
 )
 
 // VoteExtensionField defines a type-safe identifier for vote extension fields
-type VoteExtensionField string
+type VoteExtensionField int
 
 const (
 	// Essential fields - absence of these can cause data loss
-	VEFieldEigenDelegationsHash VoteExtensionField = "EigenDelegationsHash"
-	VEFieldEthBurnEventsHash    VoteExtensionField = "EthBurnEventsHash"
-	VEFieldRedemptionsHash      VoteExtensionField = "RedemptionsHash"
-	VEFieldBtcHeaderHash        VoteExtensionField = "BtcHeaderHash"
+	VEFieldZRChainBlockHeight   VoteExtensionField = iota // Height is always essential
+	VEFieldEigenDelegationsHash                           // AVS delegations are essential for validator updates
+	VEFieldEthBurnEventsHash                              // Events from Ethereum
+	VEFieldRedemptionsHash                                // Redemption data
+	VEFieldBtcHeaderHash                                  // Bitcoin header data
 
 	// Standard fields
-	VEFieldBtcBlockHeight             VoteExtensionField = "BtcBlockHeight"
-	VEFieldEthBlockHeight             VoteExtensionField = "EthBlockHeight"
-	VEFieldEthGasLimit                VoteExtensionField = "EthGasLimit"
-	VEFieldEthBaseFee                 VoteExtensionField = "EthBaseFee"
-	VEFieldEthTipCap                  VoteExtensionField = "EthTipCap"
-	VEFieldSolanaLamportsPerSignature VoteExtensionField = "SolanaLamportsPerSignature"
-	VEFieldRequestedStakerNonce       VoteExtensionField = "RequestedStakerNonce"
-	VEFieldRequestedEthMinterNonce    VoteExtensionField = "RequestedEthMinterNonce"
-	VEFieldRequestedUnstakerNonce     VoteExtensionField = "RequestedUnstakerNonce"
-	VEFieldRequestedCompleterNonce    VoteExtensionField = "RequestedCompleterNonce"
-	VEFieldROCKUSDPrice               VoteExtensionField = "ROCKUSDPrice"
-	VEFieldBTCUSDPrice                VoteExtensionField = "BTCUSDPrice"
-	VEFieldETHUSDPrice                VoteExtensionField = "ETHUSDPrice"
-	VEFieldZRChainBlockHeight         VoteExtensionField = "ZRChainBlockHeight"
+	VEFieldBtcBlockHeight
+	VEFieldEthBlockHeight
+	VEFieldEthGasLimit
+	VEFieldEthBaseFee
+	VEFieldEthTipCap
+	VEFieldSolanaLamportsPerSignature
+	VEFieldRequestedStakerNonce
+	VEFieldRequestedEthMinterNonce
+	VEFieldRequestedUnstakerNonce
+	VEFieldRequestedCompleterNonce
+	VEFieldROCKUSDPrice
+	VEFieldBTCUSDPrice
+	VEFieldETHUSDPrice
 )
+
+// VEFieldNames maps field constants to their string representations for logging and debugging
+var VEFieldNames = map[VoteExtensionField]string{
+	VEFieldZRChainBlockHeight:         "ZRChainBlockHeight",
+	VEFieldEigenDelegationsHash:       "EigenDelegationsHash",
+	VEFieldEthBurnEventsHash:          "EthBurnEventsHash",
+	VEFieldRedemptionsHash:            "RedemptionsHash",
+	VEFieldBtcHeaderHash:              "BtcHeaderHash",
+	VEFieldBtcBlockHeight:             "BtcBlockHeight",
+	VEFieldEthBlockHeight:             "EthBlockHeight",
+	VEFieldEthGasLimit:                "EthGasLimit",
+	VEFieldEthBaseFee:                 "EthBaseFee",
+	VEFieldEthTipCap:                  "EthTipCap",
+	VEFieldSolanaLamportsPerSignature: "SolanaLamportsPerSignature",
+	VEFieldRequestedStakerNonce:       "RequestedStakerNonce",
+	VEFieldRequestedEthMinterNonce:    "RequestedEthMinterNonce",
+	VEFieldRequestedUnstakerNonce:     "RequestedUnstakerNonce",
+	VEFieldRequestedCompleterNonce:    "RequestedCompleterNonce",
+	VEFieldROCKUSDPrice:               "ROCKUSDPrice",
+	VEFieldBTCUSDPrice:                "BTCUSDPrice",
+	VEFieldETHUSDPrice:                "ETHUSDPrice",
+}
+
+// VEFieldString converts a VoteExtensionField to its string representation
+func VEFieldString(field VoteExtensionField) string {
+	if name, ok := VEFieldNames[field]; ok {
+		return name
+	}
+	return "Unknown"
+}
 
 // EssentialVoteExtensionFields defines fields where absence of consensus
 // would cause data loss or chain issues
@@ -66,9 +96,6 @@ var EssentialVoteExtensionFields = []VoteExtensionField{
 	VEFieldZRChainBlockHeight,   // Height is always essential
 	VEFieldEigenDelegationsHash, // AVS delegations are essential for validator updates
 	// Other fields can be made essential as needed in the future
-	// VEFieldEthBurnEventsHash,
-	// VEFieldRedemptionsHash,
-	// VEFieldBtcHeaderHash,
 }
 
 // IsEssentialField returns true if the given field is considered essential
@@ -361,7 +388,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 			missingFields := []string{}
 			for _, field := range EssentialVoteExtensionFields {
 				if _, ok := fieldVotePowers[field]; !ok {
-					missingFields = append(missingFields, string(field))
+					missingFields = append(missingFields, VEFieldString(field))
 				}
 			}
 
@@ -376,7 +403,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 		for field, power := range fieldVotePowers {
 			k.Logger(ctx).Debug("field consensus details",
-				"field", string(field),
+				"field", VEFieldString(field),
 				"vote_power", power,
 				"required_power", requiredVotePower,
 				"is_essential", IsEssentialField(field))
@@ -1118,25 +1145,25 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 
 	// Validate hashes only if fields have consensus
 	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
-		if err := validateHashField("AVS contract delegation state", voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
+		if err := validateHashField(VEFieldString(VEFieldEigenDelegationsHash), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
-		if err := validateHashField("Ethereum burn events", voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
+		if err := validateHashField(VEFieldString(VEFieldEthBurnEventsHash), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
-		if err := validateHashField("Ethereum redemptions", voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
+		if err := validateHashField(VEFieldString(VEFieldRedemptionsHash), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldBtcHeaderHash]; ok {
-		if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+		if err := validateHashField(VEFieldString(VEFieldBtcHeaderHash), voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
 			validationErrors = append(validationErrors, err.Error())
 		}
 	}
@@ -1145,32 +1172,32 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ethereum block height mismatch, expected %d, got %d",
-					voteExt.EthBlockHeight, oracleData.EthBlockHeight))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldEthBlockHeight), voteExt.EthBlockHeight, oracleData.EthBlockHeight))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ethereum gas limit mismatch, expected %d, got %d",
-					voteExt.EthGasLimit, oracleData.EthGasLimit))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldEthGasLimit), voteExt.EthGasLimit, oracleData.EthGasLimit))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ethereum base fee mismatch, expected %d, got %d",
-					voteExt.EthBaseFee, oracleData.EthBaseFee))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldEthBaseFee), voteExt.EthBaseFee, oracleData.EthBaseFee))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ethereum tip cap mismatch, expected %d, got %d",
-					voteExt.EthTipCap, oracleData.EthTipCap))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldEthTipCap), voteExt.EthTipCap, oracleData.EthTipCap))
 		}
 	}
 
@@ -1178,8 +1205,8 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if _, ok := fieldVotePowers[VEFieldBtcBlockHeight]; ok {
 		if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("bitcoin block height mismatch, expected %d, got %d",
-					voteExt.BtcBlockHeight, oracleData.BtcBlockHeight))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldBtcBlockHeight), voteExt.BtcBlockHeight, oracleData.BtcBlockHeight))
 		}
 	}
 
@@ -1187,32 +1214,32 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("requested staker nonce mismatch, expected %d, got %d",
-					voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldRequestedStakerNonce), voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("requested eth minter nonce mismatch, expected %d, got %d",
-					voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldRequestedEthMinterNonce), voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("requested unstaker nonce mismatch, expected %d, got %d",
-					voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldRequestedUnstakerNonce), voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("requested completer nonce mismatch, expected %d, got %d",
-					voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce))
+				fmt.Sprintf("%s mismatch, expected %d, got %d",
+					VEFieldString(VEFieldRequestedCompleterNonce), voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce))
 		}
 	}
 
@@ -1220,24 +1247,24 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
 		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ROCK/USD price mismatch, expected %s, got %s",
-					voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice))
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldString(VEFieldROCKUSDPrice), voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
 		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("BTC/USD price mismatch, expected %s, got %s",
-					voteExt.BTCUSDPrice, oracleData.BTCUSDPrice))
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldString(VEFieldBTCUSDPrice), voteExt.BTCUSDPrice, oracleData.BTCUSDPrice))
 		}
 	}
 
 	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
 		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
 			validationErrors = append(validationErrors,
-				fmt.Sprintf("ETH/USD price mismatch, expected %s, got %s",
-					voteExt.ETHUSDPrice, oracleData.ETHUSDPrice))
+				fmt.Sprintf("%s mismatch, expected %s, got %s",
+					VEFieldString(VEFieldETHUSDPrice), voteExt.ETHUSDPrice, oracleData.ETHUSDPrice))
 		}
 	}
 

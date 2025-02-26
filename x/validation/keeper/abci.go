@@ -196,26 +196,27 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
 
-	// Check for essential fields and log status
-	missingEssentialFields := []string{}
-	for _, field := range EssentialVoteExtensionFields {
-		if _, ok := fieldVotePowers[field]; !ok {
-			missingEssentialFields = append(missingEssentialFields, string(field))
+	// Log essential fields information
+	if !HasAllEssentialFields(fieldVotePowers) {
+		missingEssentialFields := []string{}
+		for _, field := range EssentialVoteExtensionFields {
+			if _, ok := fieldVotePowers[field]; !ok {
+				missingEssentialFields = append(missingEssentialFields, VEFieldString(field))
+			}
 		}
-	}
 
-	// Log consensus field information with essential fields detail
-	if len(missingEssentialFields) > 0 {
-		k.Logger(ctx).Warn("consensus reached but missing some essential fields",
-			"height", req.Height,
-			"fields_with_consensus", len(fieldVotePowers),
-			"total_vote_power", totalVotePower,
-			"missing_essential_fields", missingEssentialFields)
-	} else {
-		k.Logger(ctx).Info("consensus reached on all essential vote extension fields",
-			"height", req.Height,
-			"fields_with_consensus", len(fieldVotePowers),
-			"total_vote_power", totalVotePower)
+		if len(missingEssentialFields) > 0 {
+			k.Logger(ctx).Warn("proceeding with partial consensus - missing essential vote extension fields",
+				"height", req.Height,
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower,
+				"missing_essential_fields", strings.Join(missingEssentialFields, ", "))
+		} else {
+			k.Logger(ctx).Info("consensus reached on all essential vote extension fields",
+				"height", req.Height,
+				"fields_with_consensus", len(fieldVotePowers),
+				"total_vote_power", totalVotePower)
+		}
 	}
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
@@ -273,18 +274,18 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 
 	// If we have oracle data AND we're missing essential fields, reject the proposal
 	if oracleData.HasAnyOracleData() {
+		// List missing essential fields
 		missingFields := []string{}
 		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, string(field))
+				missingFields = append(missingFields, VEFieldString(field))
 			}
 		}
 
 		if len(missingFields) > 0 {
-			k.Logger(ctx).Error("proposal contains oracle data but missing consensus on essential fields",
+			k.Logger(ctx).Error("proposal contains oracle data but is missing consensus on essential fields",
 				"height", req.Height,
-				"missing_fields", missingFields,
-				"fields_with_consensus", fieldVotePowers)
+				"missing_fields", strings.Join(missingFields, ", "))
 			return false, nil
 		}
 	}
@@ -395,17 +396,18 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 
 	// Check if all essential fields have consensus when oracle data is present
 	if oracleData.HasAnyOracleData() {
+		// List missing essential fields
 		missingFields := []string{}
 		for _, field := range EssentialVoteExtensionFields {
 			if _, ok := fieldVotePowers[field]; !ok {
-				missingFields = append(missingFields, string(field))
+				missingFields = append(missingFields, VEFieldString(field))
 			}
 		}
 
 		if len(missingFields) > 0 {
 			k.Logger(ctx).Warn("missing consensus on essential vote extension fields",
 				"height", height,
-				"missing_fields", missingFields,
+				"missing_fields", strings.Join(missingFields, ", "),
 				"fields_with_consensus", len(fieldVotePowers),
 				"total_vote_power", totalVotePower)
 			return VoteExtension{}, false
