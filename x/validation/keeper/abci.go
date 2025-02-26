@@ -933,7 +933,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			}
 
 			// Check for consensus on nonce field
-			if !HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
 				k.Logger(ctx).Error("cannot process zenBTC stake: missing consensus on staker nonce",
 					"tx_id", tx.Id,
 					"recipient", tx.RecipientAddress,
@@ -1036,7 +1036,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			}
 
 			// Check for consensus on nonce field
-			if !HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
 				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on minter nonce",
 					"tx_id", tx.Id,
 					"recipient", tx.RecipientAddress,
@@ -1045,8 +1045,8 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			}
 
 			// Check for consensus on price data for fee calculation
-			if !HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldBTCUSDPrice) ||
-				!HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldETHUSDPrice) {
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldBTCUSDPrice) ||
+				!HasRequiredField(oracleData.FieldVotePowers, VEFieldETHUSDPrice) {
 				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on price data",
 					"tx_id", tx.Id,
 					"recipient", tx.RecipientAddress,
@@ -1186,7 +1186,7 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			}
 
 			// Check for consensus on nonce field
-			if !HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) {
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) {
 				k.Logger(ctx).Error("cannot process zenBTC burn unstake: missing consensus on unstaker nonce",
 					"burn_id", be.Id,
 					"destination", be.DestinationAddr,
@@ -1352,7 +1352,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			}
 
 			// Check for consensus on nonce field
-			if !HasRequiredNonceField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
+			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
 				k.Logger(ctx).Error("cannot process zenBTC redemption: missing consensus on completer nonce",
 					"redemption_id", r.Data.Id,
 					"amount", r.Data.Amount)

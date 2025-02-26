@@ -1324,8 +1324,8 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 	return true
 }
 
-// HasRequiredNonceField checks if the specific nonce field has reached consensus
-func HasRequiredNonceField(fieldVotePowers map[VoteExtensionField]int64, nonceField VoteExtensionField) bool {
-	_, ok := fieldVotePowers[nonceField]
+// HasRequiredField checks if the specific field has reached consensus
+func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
+	_, ok := fieldVotePowers[field]
 	return ok
 }
