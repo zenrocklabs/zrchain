@@ -237,28 +237,15 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 // ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
-	// Skip validation if this node is not a validator
+	// Return early if this node is not a validator so non-validators don't need to be running a sidecar
 	if !k.zrConfig.IsValidator {
 		return ACCEPT_PROPOSAL, nil
 	}
 
-	// For block height 1, we don't have vote extensions.
-	if req.Height == 1 {
+	if !VoteExtensionsEnabled(ctx) || len(req.Txs) == 0 {
 		return ACCEPT_PROPOSAL, nil
 	}
 
-	if !VoteExtensionsEnabled(ctx) {
-		k.Logger(ctx).Debug("vote extensions disabled; skipping oracle data validation", "height", req.Height)
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	// Check if we have any transactions to process
-	if len(req.Txs) == 0 {
-		k.Logger(ctx).Info("no transactions in proposal to process", "height", req.Height)
-		return ACCEPT_PROPOSAL, nil
-	}
-
-	// Verify that the transaction contains a vote extension
 	if !ContainsVoteExtension(req.Txs[0], k.txDecoder) {
 		k.Logger(ctx).Warn("block does not contain vote extensions, rejecting proposal")
 		return REJECT_PROPOSAL, nil
