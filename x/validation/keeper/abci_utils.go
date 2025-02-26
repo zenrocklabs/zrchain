@@ -149,7 +149,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 		// Process each field using the field handlers
 		for _, handler := range fieldHandlers {
-			key := handler.GetKey(voteExt)
+			key := genericGetKey(handler.GetValue(voteExt))
 			value := handler.GetValue(voteExt)
 
 			votes := fieldVotes[handler.Field]
