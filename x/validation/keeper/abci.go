@@ -918,22 +918,10 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				return err
 			}
 
-			// Check for consensus on required gas fields
-			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-				k.Logger(ctx).Error("cannot process zenBTC stake: missing consensus on gas fields",
-					"tx_id", tx.Id,
-					"recipient", tx.RecipientAddress,
-					"amount", tx.Amount)
-				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-			}
-
-			// Check for consensus on nonce field
-			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
-				k.Logger(ctx).Error("cannot process zenBTC stake: missing consensus on staker nonce",
-					"tx_id", tx.Id,
-					"recipient", tx.RecipientAddress,
-					"amount", tx.Amount)
-				return fmt.Errorf("missing consensus on staker nonce required for transaction construction")
+			// Check for consensus
+			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC stake", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				return err
 			}
 
 			k.Logger(ctx).Warn("processing zenBTC stake",
@@ -944,7 +932,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				"base_fee", oracleData.EthBaseFee,
 				"tip_cap", oracleData.EthTipCap,
 			)
-			unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
+
+			unsignedTxHash, unsignedTx, err := k.constructStakeTx(
 				ctx,
 				getChainIDForEigen(ctx),
 				tx.Amount,
@@ -956,28 +945,21 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetStakerKeyID(ctx),
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedStakeTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedStakeTxHash)),
+				tx.Creator,
+				k.zenBTCKeeper.GetStakerKeyID(ctx),
+				treasurytypes.WalletType(tx.ChainType),
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
 }
 
-// processZenBTCMints processes pending mint transactions.
+// processZenBTCMintsEthereum processes pending mint transactions.
 func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
 	processZenBTCTransaction(
 		k,
@@ -1021,32 +1003,11 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				return err
 			}
 
-			// Check for consensus on required gas fields
-			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on gas fields",
-					"tx_id", tx.Id,
-					"recipient", tx.RecipientAddress,
-					"amount", tx.Amount)
-				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-			}
-
-			// Check for consensus on nonce field
-			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
-				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on minter nonce",
-					"tx_id", tx.Id,
-					"recipient", tx.RecipientAddress,
-					"amount", tx.Amount)
-				return fmt.Errorf("missing consensus on minter nonce required for transaction construction")
-			}
-
-			// Check for consensus on price data for fee calculation
-			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldBTCUSDPrice) ||
-				!HasRequiredField(oracleData.FieldVotePowers, VEFieldETHUSDPrice) {
-				k.Logger(ctx).Error("cannot process zenBTC mint: missing consensus on price data",
-					"tx_id", tx.Id,
-					"recipient", tx.RecipientAddress,
-					"amount", tx.Amount)
-				return fmt.Errorf("missing consensus on price data required for fee calculation")
+			// Check for consensus
+			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			if err := k.validateConsensusForTransaction(ctx, oracleData, requiredFields,
+				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				return err
 			}
 
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
@@ -1064,6 +1025,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if oracleData.BTCUSDPrice.IsZero() {
 				return nil
 			}
+
 			if tx.Caip2ChainId != "eip155:17000" {
 				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
 			}
@@ -1071,6 +1033,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
+
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
@@ -1085,23 +1048,16 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyId:               k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedMintTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedMintTxHash)),
+				tx.Creator,
+				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+				treasurytypes.WalletType(tx.ChainType),
+				chainID,
+				unsignedMintTx,
+				unsignedMintTxHash,
 			)
-			return err
 		},
 	)
 }
@@ -1171,22 +1127,10 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 				return err
 			}
 
-			// Check for consensus on required gas fields
-			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-				k.Logger(ctx).Error("cannot process zenBTC burn unstake: missing consensus on gas fields",
-					"burn_id", be.Id,
-					"destination", be.DestinationAddr,
-					"amount", be.Amount)
-				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-			}
-
-			// Check for consensus on nonce field
-			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) {
-				k.Logger(ctx).Error("cannot process zenBTC burn unstake: missing consensus on unstaker nonce",
-					"burn_id", be.Id,
-					"destination", be.DestinationAddr,
-					"amount", be.Amount)
-				return fmt.Errorf("missing consensus on unstaker nonce required for transaction construction")
+			// Check for consensus
+			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC burn unstake", fmt.Sprintf("burn_id: %d, destination: %s, amount: %d", be.Id, be.DestinationAddr, be.Amount)); err != nil {
+				return err
 			}
 
 			k.Logger(ctx).Warn("processing zenBTC burn unstake",
@@ -1207,29 +1151,44 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
+
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
 				return err
 			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetUnstakerKeyID(ctx),
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
+				creator,
+				k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+				treasurytypes.WalletType_WALLET_TYPE_EVM,
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
+	if err != nil {
+		return err
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	return err
 }
 
 // storeNewZenBTCRedemptions processes new redemption events.
@@ -1338,20 +1297,10 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				return err
 			}
 
-			// Check for consensus on required gas fields
-			if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-				k.Logger(ctx).Error("cannot process zenBTC redemption: missing consensus on gas fields",
-					"redemption_id", r.Data.Id,
-					"amount", r.Data.Amount)
-				return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-			}
-
-			// Check for consensus on nonce field
-			if !HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
-				k.Logger(ctx).Error("cannot process zenBTC redemption: missing consensus on completer nonce",
-					"redemption_id", r.Data.Id,
-					"amount", r.Data.Amount)
-				return fmt.Errorf("missing consensus on completer nonce required for transaction construction")
+			// Check for consensus
+			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedCompleterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC redemption", fmt.Sprintf("redemption_id: %d, amount: %d", r.Data.Id, r.Data.Amount)); err != nil {
+				return err
 			}
 
 			k.Logger(ctx).Warn("processing zenBTC complete",
@@ -1371,27 +1320,42 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
+
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
 				return err
 			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyId:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
+				creator,
+				k.zenBTCKeeper.GetCompleterKeyID(ctx),
+				treasurytypes.WalletType_WALLET_TYPE_EVM,
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
+}
+
+// Helper function to validate consensus on multiple required fields for transactions
+func (k *Keeper) validateConsensusForTransaction(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
+	// Always check for gas fields consensus first
+	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
+			"details", txDetails)
+		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+	}
+	// Check for consensus on each required field
+	for _, field := range requiredFields {
+		if !HasRequiredField(oracleData.FieldVotePowers, field) {
+			fieldName := field.String()
+			k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on %s", txType, fieldName),
+				"details", txDetails)
+			return fmt.Errorf("missing consensus on %s required for transaction construction", fieldName)
+		}
+	}
+
+	return nil
 }
