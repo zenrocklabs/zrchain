@@ -704,13 +704,6 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	return "testnet4"
 }
 
-// BitcoinHeadersResponse combines the latest and requested Bitcoin headers
-type BitcoinHeadersResponse struct {
-	Latest       *sidecar.BitcoinBlockHeaderResponse
-	Requested    *sidecar.BitcoinBlockHeaderResponse
-	HasRequested bool
-}
-
 func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
 	// Always get the latest Bitcoin header
 	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
