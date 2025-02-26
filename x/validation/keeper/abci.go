@@ -251,20 +251,20 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, nil
 	}
 
-	var oracleData OracleData
-	if err := json.Unmarshal(req.Txs[0], &oracleData); err != nil {
+	var recoveredOracleData OracleData
+	if err := json.Unmarshal(req.Txs[0], &recoveredOracleData); err != nil {
 		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
 	// Check for empty oracle data - if it's empty, accept the proposal
-	oracleDataNoCommitInfo := oracleData
-	oracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
-	if reflect.DeepEqual(oracleDataNoCommitInfo, OracleData{}) {
+	recoveredOracleDataNoCommitInfo := recoveredOracleData
+	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
+	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
 	}
 
-	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), oracleData.ConsensusData); err != nil {
+	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), recoveredOracleData.ConsensusData); err != nil {
 		k.Logger(ctx).Error("error validating vote extensions", "height", req.Height, "error", err)
 		return REJECT_PROPOSAL, err
 	}
