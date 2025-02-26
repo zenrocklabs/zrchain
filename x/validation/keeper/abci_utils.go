@@ -570,37 +570,40 @@ type BitcoinHeadersResponse struct {
 	HasRequested bool
 }
 
-func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*BitcoinHeadersResponse, error) {
-	result := &BitcoinHeadersResponse{
-		HasRequested: false,
-	}
-
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
 	// Always get the latest Bitcoin header
 	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
 		ChainName: k.bitcoinNetwork(ctx),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
+		return nil, nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
 	}
-	result.Latest = latest
 
 	// Check if there are requested historical headers
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
-			return nil, err
+			return nil, nil, err
 		}
 		requestedBitcoinHeaders = zenbtctypes.RequestedBitcoinHeaders{}
 		if err = k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedBitcoinHeaders); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	if len(requestedBitcoinHeaders.Heights) == 0 {
-		return k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{ChainName: k.bitcoinNetwork(ctx)})
+	// Get requested historical headers if any
+	if len(requestedBitcoinHeaders.Heights) > 0 {
+		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   k.bitcoinNetwork(ctx),
+			BlockHeight: requestedBitcoinHeaders.Heights[0],
+		})
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
+		}
+		return latest, requested, nil
 	}
 
-	return k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{ChainName: k.bitcoinNetwork(ctx), BlockHeight: requestedBitcoinHeaders.Heights[0]})
+	return latest, nil, nil
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
