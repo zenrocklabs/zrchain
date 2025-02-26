@@ -32,8 +32,10 @@ type (
 	VoteExtension struct {
 		ZRChainBlockHeight         int64
 		EigenDelegationsHash       []byte
-		BtcBlockHeight             int64
-		BtcHeaderHash              []byte
+		RequestedBtcBlockHeight    int64
+		LatestBtcBlockHeight       int64
+		RequestedBtcHeaderHash     []byte
+		LatestBtcHeaderHash        []byte
 		EthBlockHeight             uint64
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
@@ -58,8 +60,10 @@ type (
 	OracleData struct {
 		EigenDelegationsMap        map[string]map[string]*big.Int
 		ValidatorDelegations       []ValidatorDelegations
-		BtcBlockHeight             int64
-		BtcBlockHeader             sidecar.BTCBlockHeader
+		RequestedBtcBlockHeight    int64
+		RequestedBtcBlockHeader    sidecar.BTCBlockHeader
+		LatestBtcBlockHeight       int64
+		LatestBtcBlockHeader       sidecar.BTCBlockHeader
 		EthBlockHeight             uint64
 		EthGasLimit                uint64
 		EthBaseFee                 uint64
@@ -147,12 +151,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.BtcBlockHeight == 0 {
-		logger.Error("invalid vote extension: BtcBlockHeight is 0")
+	if ve.RequestedBtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: RequestedBtcBlockHeight is 0")
 		invalid = true
 	}
-	if len(ve.BtcHeaderHash) == 0 {
-		logger.Error("invalid vote extension: BtcHeaderHash is empty")
+	if len(ve.RequestedBtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: RequestedBtcHeaderHash is empty")
 		invalid = true
 	}
 	if ve.SolanaLamportsPerSignature == 0 {

@@ -563,7 +563,28 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	return "testnet4"
 }
 
-func (k *Keeper) retrieveBitcoinHeader(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, error) {
+// BitcoinHeadersResponse combines the latest and requested Bitcoin headers
+type BitcoinHeadersResponse struct {
+	Latest       *sidecar.BitcoinBlockHeaderResponse
+	Requested    *sidecar.BitcoinBlockHeaderResponse
+	HasRequested bool
+}
+
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*BitcoinHeadersResponse, error) {
+	result := &BitcoinHeadersResponse{
+		HasRequested: false,
+	}
+
+	// Always get the latest Bitcoin header
+	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
+		ChainName: k.bitcoinNetwork(ctx),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest Bitcoin header: %w", err)
+	}
+	result.Latest = latest
+
+	// Check if there are requested historical headers
 	requestedBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -870,7 +891,10 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if err := validateHashField("Ethereum redemptions", voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
 		return err
 	}
-	if err := validateHashField("Bitcoin header", voteExt.BtcHeaderHash, &oracleData.BtcBlockHeader); err != nil {
+	if err := validateHashField("Latest Bitcoin header", voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
+		return err
+	}
+	if err := validateHashField("Requested Bitcoin header", voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
 		return err
 	}
 
@@ -887,8 +911,11 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		return fmt.Errorf("ethereum tip cap mismatch, expected %d, got %d", voteExt.EthTipCap, oracleData.EthTipCap)
 	}
 
-	if voteExt.BtcBlockHeight != oracleData.BtcBlockHeight {
-		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.BtcBlockHeight, oracleData.BtcBlockHeight)
+	if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
+		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight)
+	}
+	if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
+		return fmt.Errorf("bitcoin block height mismatch, expected %d, got %d", voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight)
 	}
 
 	if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
