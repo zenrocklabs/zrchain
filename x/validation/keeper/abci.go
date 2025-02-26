@@ -253,8 +253,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 
 	var oracleData OracleData
 	if err := json.Unmarshal(req.Txs[0], &oracleData); err != nil {
-		k.Logger(ctx).Error("error unmarshalling oracle data", "height", req.Height, "error", err)
-		return REJECT_PROPOSAL, nil
+		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
 	// Check for empty oracle data - if it's empty, accept the proposal
@@ -322,7 +321,6 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		}
 	}
 
-	k.Logger(ctx).Debug("proposal's oracle data validated successfully", "height", req.Height)
 	return ACCEPT_PROPOSAL, nil
 }
 
@@ -401,11 +399,6 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 
 // validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	// For block height 1, we don't have vote extensions.
-	if height == 1 {
-		return VoteExtension{}, false
-	}
-
 	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extensions data", "height", height, "error", err)
@@ -463,11 +456,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 			return nil, fmt.Errorf("error fetching oracle state: %w", err)
 		}
 	} else {
-		// If we don't have consensus on Ethereum height, get the latest state
-		oracleData, err = k.GetSidecarState(ctx, ctx.BlockHeight())
-		if err != nil {
-			return nil, fmt.Errorf("error fetching latest oracle state: %w", err)
-		}
+		return nil, fmt.Errorf("no consensus on eth block height")
 	}
 
 	// We only fetch Bitcoin data if we have consensus on BtcBlockHeight

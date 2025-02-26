@@ -177,10 +177,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
 		invalid = true
 	}
-	// if ve.ETHUSDPrice.IsZero() {
-	// 	logger.Error("invalid vote extension: ETHUSDPrice is zero")
-	// 	invalid = true
-	// }
+	if ve.ETHUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ETHUSDPrice is zero")
+		invalid = true
+	}
 
 	return invalid
 }
