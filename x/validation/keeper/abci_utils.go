@@ -226,6 +226,11 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 
 	// Loop through all possible fields and log their consensus status
 	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+		// Skip logging the ZRChainBlockHeight field
+		if field == VEFieldZRChainBlockHeight {
+			continue
+		}
+
 		_, hasConsensus := fieldVotePowers[field]
 		k.Logger(ctx).Info("field consensus status",
 			"field", field.String(),
