@@ -396,90 +396,25 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE determines whether the canonical vote extension is valid
+// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	if oracleData.ConsensusData.Round == 0 && len(oracleData.ConsensusData.Votes) == 0 {
-		k.Logger(ctx).Warn("no consensus data in vote extension", "height", height)
+	voteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
+	if err != nil {
+		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
-	var consensusVE VoteExtension
-	consensusVE.ZRChainBlockHeight = height
-
-	// Add validated fields to consensusVE
-	for field := range oracleData.FieldVotePowers {
-		switch field {
-		case VEFieldEigenDelegationsHash:
-			hash, err := deriveHash(oracleData.EigenDelegationsMap)
-			if err != nil {
-				k.Logger(ctx).Error("error deriving eigen delegations hash", "error", err)
-				continue
-			}
-			consensusVE.EigenDelegationsHash = hash[:]
-		case VEFieldRequestedBtcBlockHeight:
-			consensusVE.RequestedBtcBlockHeight = oracleData.RequestedBtcBlockHeight
-		case VEFieldRequestedBtcHeaderHash:
-			hash, err := deriveHash(oracleData.RequestedBtcBlockHeader)
-			if err != nil {
-				k.Logger(ctx).Error("error deriving requested BTC header hash", "error", err)
-				continue
-			}
-			consensusVE.RequestedBtcHeaderHash = hash[:]
-		case VEFieldLatestBtcBlockHeight:
-			consensusVE.LatestBtcBlockHeight = oracleData.LatestBtcBlockHeight
-		case VEFieldLatestBtcHeaderHash:
-			hash, err := deriveHash(oracleData.LatestBtcBlockHeader)
-			if err != nil {
-				k.Logger(ctx).Error("error deriving latest BTC header hash", "error", err)
-				continue
-			}
-			consensusVE.LatestBtcHeaderHash = hash[:]
-		case VEFieldEthBlockHeight:
-			consensusVE.EthBlockHeight = oracleData.EthBlockHeight
-		case VEFieldEthGasLimit:
-			consensusVE.EthGasLimit = oracleData.EthGasLimit
-		case VEFieldEthBaseFee:
-			consensusVE.EthBaseFee = oracleData.EthBaseFee
-		case VEFieldEthTipCap:
-			consensusVE.EthTipCap = oracleData.EthTipCap
-		case VEFieldSolanaLamportsPerSignature:
-			consensusVE.SolanaLamportsPerSignature = oracleData.SolanaLamportsPerSignature
-		case VEFieldRequestedStakerNonce:
-			consensusVE.RequestedStakerNonce = oracleData.RequestedStakerNonce
-		case VEFieldRequestedEthMinterNonce:
-			consensusVE.RequestedEthMinterNonce = oracleData.RequestedEthMinterNonce
-		case VEFieldRequestedUnstakerNonce:
-			consensusVE.RequestedUnstakerNonce = oracleData.RequestedUnstakerNonce
-		case VEFieldRequestedCompleterNonce:
-			consensusVE.RequestedCompleterNonce = oracleData.RequestedCompleterNonce
-		case VEFieldEthBurnEventsHash:
-			hash, err := deriveHash(oracleData.EthBurnEvents)
-			if err != nil {
-				k.Logger(ctx).Error("error deriving ETH burn events hash", "error", err)
-				continue
-			}
-			consensusVE.EthBurnEventsHash = hash[:]
-		case VEFieldRedemptionsHash:
-			hash, err := deriveHash(oracleData.Redemptions)
-			if err != nil {
-				k.Logger(ctx).Error("error deriving redemptions hash", "error", err)
-				continue
-			}
-			consensusVE.RedemptionsHash = hash[:]
-		case VEFieldROCKUSDPrice:
-			consensusVE.ROCKUSDPrice = oracleData.ROCKUSDPrice
-		case VEFieldBTCUSDPrice:
-			consensusVE.BTCUSDPrice = oracleData.BTCUSDPrice
-		case VEFieldETHUSDPrice:
-			consensusVE.ETHUSDPrice = oracleData.ETHUSDPrice
-		}
+	if reflect.DeepEqual(voteExt, VoteExtension{}) {
+		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
+		return VoteExtension{}, true
 	}
 
-	if consensusVE.IsInvalid(k.Logger(ctx)) {
+	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
+		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
-	return consensusVE, true
+	return voteExt, true
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
