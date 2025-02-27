@@ -101,42 +101,16 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 
 func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) ([]ValidatorDelegations, error) {
 	validatorTotals := make(map[string]*big.Int)
-
-	// Get sorted list of validators for deterministic iteration
-	validators := make([]string, 0, len(delegations))
-	for validator := range delegations {
-		validators = append(validators, validator)
-	}
-	slices.Sort(validators)
-
-	for _, validator := range validators {
-		delegatorMap := delegations[validator]
+	for validator, delegatorMap := range delegations {
 		total := new(big.Int)
-
-		// Get sorted list of delegators for deterministic iteration
-		delegators := make([]string, 0, len(delegatorMap))
-		for delegator := range delegatorMap {
-			delegators = append(delegators, delegator)
-		}
-		slices.Sort(delegators)
-
-		for _, delegator := range delegators {
-			amount := delegatorMap[delegator]
+		for _, amount := range delegatorMap {
 			total.Add(total, amount)
 		}
 		validatorTotals[validator] = total
 	}
 
-	// Get sorted list of validators again for deterministic output
-	validators = make([]string, 0, len(validatorTotals))
-	for validator := range validatorTotals {
-		validators = append(validators, validator)
-	}
-	slices.Sort(validators)
-
 	validatorDelegations := make([]ValidatorDelegations, 0, len(validatorTotals))
-	for _, validator := range validators {
-		totalStake := validatorTotals[validator]
+	for validator, totalStake := range validatorTotals {
 		validatorDelegations = append(validatorDelegations, ValidatorDelegations{
 			Validator: validator,
 			Stake:     sdkmath.NewIntFromBigInt(totalStake),
@@ -734,36 +708,24 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	} else {
 		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				k.Logger(ctx).Error("error getting last valid VE height", "height", ctx.BlockHeight(), "err", err)
-			}
-			lastValidVEHeight = 0
+			k.Logger(ctx).Error("error getting last valid VE height", "height", ctx.BlockHeight(), "err", err)
 		}
-
-		retentionRange := k.GetPriceRetentionBlockRange(ctx)
-		// Add safety check for when block height is less than retention range
-		if ctx.BlockHeight() < retentionRange {
-			k.Logger(ctx).Warn("current block height is less than retention range; not zeroing asset prices",
-				"block_height", ctx.BlockHeight(),
-				"retention_range", retentionRange)
-			return
-		}
-		// Calculate number of blocks since last valid VE
-		if ctx.BlockHeight()-lastValidVEHeight < retentionRange {
-			k.Logger(ctx).Warn("last valid VE height is within price retention range; not zeroing asset prices",
-				"retention_range", retentionRange)
+		if ctx.BlockHeight()-lastValidVEHeight < k.GetPriceRetentionBlockRange(ctx) {
+			k.Logger(ctx).Warn("last valid VE height is within price retention range, not zeroing asset prices", "retention_range", k.GetPriceRetentionBlockRange(ctx))
 			return
 		}
 	}
 
-	// Ensure deterministic order of asset price updates
-	assets := []types.Asset{types.Asset_ROCK, types.Asset_BTC, types.Asset_ETH}
-	assetPrices := []math.LegacyDec{oracleData.ROCKUSDPrice, oracleData.BTCUSDPrice, oracleData.ETHUSDPrice}
+	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
+	}
 
-	for i, asset := range assets {
-		if err := k.AssetPrices.Set(ctx, asset, assetPrices[i]); err != nil {
-			k.Logger(ctx).Error("error setting asset price", "asset", asset.String(), "height", ctx.BlockHeight(), "err", err)
-		}
+	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
+		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
 
@@ -1091,4 +1053,49 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	oracleData.FieldVotePowers = fieldVotePowers
 
 	return nil
+}
+
+// Helper function to validate consensus on multiple required fields for transactions
+func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
+	// Always check for gas fields consensus first
+	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
+			"details", txDetails)
+		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+	}
+
+	// Check if all required fields have consensus
+	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
+	if len(missingFields) > 0 {
+		fieldNames := make([]string, 0, len(missingFields))
+		for _, field := range missingFields {
+			fieldNames = append(fieldNames, field.String())
+		}
+		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
+			"details", txDetails)
+		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
+	}
+
+	return nil
+}
+
+// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
+func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
+	var missingConsensus []VoteExtensionField
+	for _, field := range fields {
+		if !fieldHasConsensus(fieldVotePowers, field) {
+			missingConsensus = append(missingConsensus, field)
+		}
+	}
+	return missingConsensus
+}
+
+// anyFieldHasConsensus checks if at least one of the specified fields has consensus
+func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
+	for _, field := range fields {
+		if fieldHasConsensus(fieldVotePowers, field) {
+			return true
+		}
+	}
+	return false
 }

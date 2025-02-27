@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -208,30 +207,6 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 	return true
 }
 
-// Helper function to validate consensus on multiple required fields for transactions
-func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
-	// Always check for gas fields consensus first
-	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-	}
-
-	// Check if all required fields have consensus
-	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
-	if len(missingFields) > 0 {
-		fieldNames := make([]string, 0, len(missingFields))
-		for _, field := range missingFields {
-			fieldNames = append(fieldNames, field.String())
-		}
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
-	}
-
-	return nil
-}
-
 // isGasField checks if the field is gas-related i.e. less critical
 func isGasField(field VoteExtensionField) bool {
 	return field == VEFieldEthGasLimit ||
@@ -244,27 +219,6 @@ func isGasField(field VoteExtensionField) bool {
 func fieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
 	_, ok := fieldVotePowers[field]
 	return ok
-}
-
-// allFieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
-func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
-	var missingConsensus []VoteExtensionField
-	for _, field := range fields {
-		if !fieldHasConsensus(fieldVotePowers, field) {
-			missingConsensus = append(missingConsensus, field)
-		}
-	}
-	return missingConsensus
-}
-
-// anyFieldHasConsensus checks if at least one of the specified fields has consensus
-func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	for _, field := range fields {
-		if fieldHasConsensus(fieldVotePowers, field) {
-			return true
-		}
-	}
-	return false
 }
 
 // VoteExtensionField defines a type-safe identifier for vote extension fields
