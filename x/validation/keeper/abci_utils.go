@@ -263,15 +263,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	// Log the count of fields with consensus
 	k.Logger(ctx).Info("consensus summary", "fields_with_consensus", len(fieldVotePowers))
 
-	// Use a deterministic field order for logging
-	fields := make([]VoteExtensionField, 0, int(VEFieldLatestBtcHeaderHash)+1)
 	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
-		fields = append(fields, field)
-	}
-	slices.Sort(fields)
-
-	// Loop through all possible fields and log their consensus status
-	for _, field := range fields {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
 			continue
@@ -1089,10 +1081,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 
-	// Sort invalidFields for deterministic ordering
-	slices.Sort(invalidFields)
-
-	// Remove invalid fields from fieldVotePowers - already in sorted order
+	// Remove invalid fields from fieldVotePowers
 	for _, field := range invalidFields {
 		delete(fieldVotePowers, field)
 		k.Logger(ctx).Info("removed mismatched field from fieldVotePowers", "field", field.String())
@@ -1102,63 +1091,4 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	oracleData.FieldVotePowers = fieldVotePowers
 
 	return nil
-}
-
-// Helper function to validate consensus on multiple required fields for transactions
-func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
-	// Always check for gas fields consensus first
-	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-	}
-
-	// Check if all required fields have consensus
-	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
-	if len(missingFields) > 0 {
-		// Sort missing fields for deterministic error messages
-		slices.Sort(missingFields)
-
-		fieldNames := make([]string, 0, len(missingFields))
-		for _, field := range missingFields {
-			fieldNames = append(fieldNames, field.String())
-		}
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
-	}
-
-	return nil
-}
-
-// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
-func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
-	var missingConsensus []VoteExtensionField
-
-	// Sort fields for deterministic checking
-	sortedFields := make([]VoteExtensionField, len(fields))
-	copy(sortedFields, fields)
-	slices.Sort(sortedFields)
-
-	for _, field := range sortedFields {
-		if !fieldHasConsensus(fieldVotePowers, field) {
-			missingConsensus = append(missingConsensus, field)
-		}
-	}
-	return missingConsensus
-}
-
-// anyFieldHasConsensus checks if at least one of the specified fields has consensus
-func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	// Sort fields for deterministic checking
-	sortedFields := make([]VoteExtensionField, len(fields))
-	copy(sortedFields, fields)
-	slices.Sort(sortedFields)
-
-	for _, field := range sortedFields {
-		if fieldHasConsensus(fieldVotePowers, field) {
-			return true
-		}
-	}
-	return false
 }
