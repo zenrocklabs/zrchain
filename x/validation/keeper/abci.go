@@ -282,9 +282,6 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 
 // PreBlocker processes oracle data and applies the resulting state updates.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
-	// Record any validators that didn't vote for the block
-	k.recordNonVotingValidators(ctx, req)
-
 	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
 	}
@@ -300,15 +297,13 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
-
 	// Update asset prices if there's consensus on the price fields
 	k.updateAssetPrices(ctx, oracleData)
 
 	// Process different subsystems based on field consensus
 
 	// Validator updates - only if EigenDelegationsHash has consensus
-	if HasRequiredField(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
+	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
 		k.Logger(ctx).Info("processing validator updates from AVS delegations")
 		k.updateValidatorStakes(ctx, oracleData)
 		k.updateAVSDelegationStore(ctx, oracleData)
@@ -317,56 +312,41 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	}
 
 	// Bitcoin header processing - only if BTC header fields have consensus
-	btcHeaderConsensus := HasRequiredField(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash) ||
-		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash)
+	btcHeaderConsensus := fieldHasConsensus(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash) ||
+		fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash)
 	if btcHeaderConsensus {
 		k.Logger(ctx).Info("processing Bitcoin headers")
 		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
 			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
 		}
 	} else {
-		k.Logger(ctx).Info("skipping Bitcoin header processing - no consensus on header fields")
+		k.Logger(ctx).Warn("skipping Bitcoin header processing - no consensus on header fields")
 	}
 
-	// Update Ethereum nonces
-	if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) ||
-		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) ||
-		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) ||
-		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
-		k.Logger(ctx).Info("updating Ethereum nonces")
-		k.updateNonces(ctx, oracleData)
-	}
-
-	// Process ZenBTC operations - if we have the proper fields
-	if HasRequiredGasFields(oracleData.FieldVotePowers) {
-		// Process staking operations
-		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) {
-			k.Logger(ctx).Info("processing ZenBTC staking operations")
-			k.processZenBTCStaking(ctx, oracleData)
+	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
+		// Update Ethereum nonces
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) ||
+			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) ||
+			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) ||
+			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
+			k.updateNonces(ctx, oracleData)
 		}
 
-		// Process mint operations
-		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) {
-			k.Logger(ctx).Info("processing ZenBTC mints")
-			k.processZenBTCMintsEthereum(ctx, oracleData)
-		}
-
-		// Process burn events if we have consensus on burn events hash
-		if HasRequiredField(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
-			k.Logger(ctx).Info("processing Ethereum burn events")
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
-			k.processZenBTCBurnEventsEthereum(ctx, oracleData)
+		}
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
+			k.storeNewZenBTCRedemptions(ctx, oracleData)
 		}
 
-		// Process redemptions if we have consensus on redemptions hash
-		if HasRequiredField(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
-			k.Logger(ctx).Info("processing redemptions")
-			k.storeNewZenBTCRedemptions(ctx, oracleData)
-			k.processZenBTCRedemptions(ctx, oracleData)
-		}
-	} else {
-		k.Logger(ctx).Warn("skipping ZenBTC operations - missing gas field consensus")
+		k.processZenBTCStaking(ctx, oracleData)
+		k.processZenBTCMintsEthereum(ctx, oracleData)
+		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
+		k.processZenBTCRedemptions(ctx, oracleData)
 	}
+
+	k.recordNonVotingValidators(ctx, req)
+	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
 
 	return nil
 }
@@ -1366,7 +1346,7 @@ func (k *Keeper) validateConsensusForTransaction(ctx sdk.Context, oracleData Ora
 	}
 	// Check for consensus on each required field
 	for _, field := range requiredFields {
-		if !HasRequiredField(oracleData.FieldVotePowers, field) {
+		if !fieldHasConsensus(oracleData.FieldVotePowers, field) {
 			fieldName := field.String()
 			k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on %s", txType, fieldName),
 				"details", txDetails)
