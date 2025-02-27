@@ -169,8 +169,8 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	var consensusVE VoteExtension
 	consensusVE.ZRChainBlockHeight = currentHeight - 1
 
-	// Calculate required vote power for supermajority
-	requiredVotePower := requisiteVotePower(totalVotePower)
+	superMajorityThreshold := superMajorityVotePower(totalVotePower)
+	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)
 
 	// Apply consensus for each field
 	for _, handler := range fieldHandlers {
@@ -189,23 +189,36 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 			}
 		}
 
-		if maxVotePower >= requiredVotePower {
+		// Use simple majority for less critical i.e. gas-related fields, supermajority for others
+		requiredPower := superMajorityThreshold
+		if isGasField(handler.Field) {
+			requiredPower = simpleMajorityThreshold
+		}
+
+		if maxVotePower >= requiredPower {
 			handler.SetValue(mostVotedValue, &consensusVE)
 			fieldVotePowers[handler.Field] = maxVotePower
 		}
 	}
 
 	// Log consensus results
-	k.logConsensusResults(ctx, fieldVotePowers, requiredVotePower)
+	k.logConsensusResults(ctx, fieldVotePowers, superMajorityThreshold, simpleMajorityThreshold)
 
 	return consensusVE, fieldVotePowers, totalVotePower, nil
 }
 
 // logConsensusResults logs information about which fields reached consensus
-func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64, requiredVotePower int64) {
+func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64, superMajorityThreshold, simpleMajorityThreshold int64) {
 	if len(fieldVotePowers) == 0 {
 		k.Logger(ctx).Warn("no consensus reached on any vote extension fields")
 		return
+	}
+
+	totalVotePower := int64(0)
+	for _, votePower := range fieldVotePowers {
+		if votePower > totalVotePower {
+			totalVotePower = votePower
+		}
 	}
 
 	// Log the count of fields with consensus
@@ -214,7 +227,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	// Loop through all possible fields and log their consensus status
 	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
 		_, hasConsensus := fieldVotePowers[field]
-		k.Logger(ctx).Debug("field consensus status",
+		k.Logger(ctx).Info("field consensus status",
 			"field", field.String(),
 			"has_consensus", hasConsensus,
 			"vote_power", func() int64 {
@@ -223,7 +236,19 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 				}
 				return 0
 			}(),
-			"required_power", requiredVotePower)
+			"required_power", func() int64 {
+				if isGasField(field) {
+					return simpleMajorityThreshold
+				}
+				return superMajorityThreshold
+			}(),
+			"threshold", func() string {
+				if isGasField(field) {
+					return "simple_majority"
+				}
+				return "supermajority"
+			}(),
+		)
 	}
 }
 
@@ -245,8 +270,14 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 	return voteExt, nil
 }
 
-func requisiteVotePower(totalVotePower int64) int64 {
+// superMajorityVotePower calculates the required vote power for a supermajority (2/3+)
+func superMajorityVotePower(totalVotePower int64) int64 {
 	return ((totalVotePower * 2) / 3) + 1
+}
+
+// simpleMajorityVotePower calculates the required vote power for a simple majority (>50%)
+func simpleMajorityVotePower(totalVotePower int64) int64 {
+	return (totalVotePower / 2) + 1
 }
 
 func deriveHash[T any](data T) ([32]byte, error) {
@@ -323,7 +354,7 @@ func ValidateVoteExtensions(ctx sdk.Context, validationKeeper baseapp.ValidatorS
 	}
 
 	if totalVotePower > 0 {
-		requiredVotePower := ((totalVotePower * 2) / 3) + 1 // for supermajority
+		requiredVotePower := superMajorityVotePower(totalVotePower)
 		if voteExtVotePower < requiredVotePower {
 			return fmt.Errorf("consensus not reached on vote extension at height %d", currentHeight)
 		}
@@ -1066,4 +1097,49 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	}
 
 	return nil
+}
+
+// Helper function to validate consensus on multiple required fields for transactions
+func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
+	// Always check for gas fields consensus first
+	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
+		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
+			"details", txDetails)
+		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
+	}
+
+	// Check if all required fields have consensus
+	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
+	if len(missingFields) > 0 {
+		fieldNames := make([]string, 0, len(missingFields))
+		for _, field := range missingFields {
+			fieldNames = append(fieldNames, field.String())
+		}
+		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
+			"details", txDetails)
+		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
+	}
+
+	return nil
+}
+
+// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
+func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
+	var missingConsensus []VoteExtensionField
+	for _, field := range fields {
+		if !fieldHasConsensus(fieldVotePowers, field) {
+			missingConsensus = append(missingConsensus, field)
+		}
+	}
+	return missingConsensus
+}
+
+// anyFieldHasConsensus checks if at least one of the specified fields has consensus
+func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
+	for _, field := range fields {
+		if fieldHasConsensus(fieldVotePowers, field) {
+			return true
+		}
+	}
+	return false
 }

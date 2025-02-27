@@ -312,9 +312,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	}
 
 	// Bitcoin header processing - only if BTC header fields have consensus
-	btcHeaderConsensus := fieldHasConsensus(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash) ||
-		fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash)
-	if btcHeaderConsensus {
+	btcHeaderFields := []VoteExtensionField{VEFieldLatestBtcHeaderHash, VEFieldRequestedBtcHeaderHash}
+	if anyFieldHasConsensus(oracleData.FieldVotePowers, btcHeaderFields) {
 		k.Logger(ctx).Info("processing Bitcoin headers")
 		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
 			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
@@ -324,11 +323,14 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	}
 
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
-		// Update Ethereum nonces
-		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedStakerNonce) ||
-			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedEthMinterNonce) ||
-			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedUnstakerNonce) ||
-			fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRequestedCompleterNonce) {
+
+		nonceFields := []VoteExtensionField{
+			VEFieldRequestedStakerNonce,
+			VEFieldRequestedEthMinterNonce,
+			VEFieldRequestedUnstakerNonce,
+			VEFieldRequestedCompleterNonce,
+		}
+		if anyFieldHasConsensus(oracleData.FieldVotePowers, nonceFields) {
 			k.updateNonces(ctx, oracleData)
 		}
 
@@ -916,7 +918,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			}
 
 			// Check for consensus
-			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
 				"zenBTC stake", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
 			}
@@ -1002,7 +1004,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 
 			// Check for consensus
 			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
-			if err := k.validateConsensusForTransaction(ctx, oracleData, requiredFields,
+			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
 			}
@@ -1125,7 +1127,7 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			}
 
 			// Check for consensus
-			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
 				"zenBTC burn unstake", fmt.Sprintf("burn_id: %d, destination: %s, amount: %d", be.Id, be.DestinationAddr, be.Amount)); err != nil {
 				return err
 			}
@@ -1295,7 +1297,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			}
 
 			// Check for consensus
-			if err := k.validateConsensusForTransaction(ctx, oracleData, []VoteExtensionField{VEFieldRequestedCompleterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedCompleterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
 				"zenBTC redemption", fmt.Sprintf("redemption_id: %d, amount: %d", r.Data.Id, r.Data.Amount)); err != nil {
 				return err
 			}
@@ -1334,25 +1336,4 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			)
 		},
 	)
-}
-
-// Helper function to validate consensus on multiple required fields for transactions
-func (k *Keeper) validateConsensusForTransaction(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
-	// Always check for gas fields consensus first
-	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-	}
-	// Check for consensus on each required field
-	for _, field := range requiredFields {
-		if !fieldHasConsensus(oracleData.FieldVotePowers, field) {
-			fieldName := field.String()
-			k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on %s", txType, fieldName),
-				"details", txDetails)
-			return fmt.Errorf("missing consensus on %s required for transaction construction", fieldName)
-		}
-	}
-
-	return nil
 }

@@ -207,6 +207,14 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 	return true
 }
 
+// isGasField checks if the field is gas-related i.e. less critical
+func isGasField(field VoteExtensionField) bool {
+	return field == VEFieldEthGasLimit ||
+		field == VEFieldEthBaseFee ||
+		field == VEFieldEthTipCap ||
+		field == VEFieldSolanaLamportsPerSignature
+}
+
 // fieldHasConsensus checks if the specific field has reached consensus
 func fieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
 	_, ok := fieldVotePowers[field]
