@@ -123,6 +123,10 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 // GetSuperMajorityVEData tallies votes for individual fields of the VoteExtension instead of requiring
 // consensus on the entire object. This makes the system more resilient by allowing fields
 // that have supermajority consensus to be accepted even if other fields don't reach consensus.
+// When multiple values for the same field have the same maximum vote power, a deterministic
+// tie-breaking mechanism is used based on the lexicographic ordering of the string representation
+// of the values. This ensures all validators will select the same consensus value regardless
+// of iteration order.
 func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, map[VoteExtensionField]int64, int64, error) {
 	// Use a generic map to store votes for all fields
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
@@ -179,23 +183,57 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 			continue
 		}
 
-		var mostVotedValue any
+		// Find the maximum vote power for this field
 		var maxVotePower int64
-
 		for _, vote := range votes {
 			if vote.votePower > maxVotePower {
 				maxVotePower = vote.votePower
-				mostVotedValue = vote.value
 			}
 		}
 
-		// Use simple majority for less critical i.e. gas-related fields, supermajority for others
+		// Use simple majority for gas-related fields, supermajority for others
 		requiredPower := superMajorityThreshold
 		if isGasField(handler.Field) {
 			requiredPower = simpleMajorityThreshold
 		}
 
+		// Check if any value has sufficient votes
 		if maxVotePower >= requiredPower {
+			// Collect all values that have the maximum vote power
+			var tiedValues []struct {
+				key   string
+				value any
+			}
+
+			for key, vote := range votes {
+				if vote.votePower == maxVotePower {
+					tiedValues = append(tiedValues, struct {
+						key   string
+						value any
+					}{key, vote.value})
+				}
+			}
+
+			// If there are multiple values with the same vote power, use deterministic tie-breaking
+			if len(tiedValues) > 1 {
+				// Log the tie-breaking event with field information
+				k.Logger(ctx).Info("performing deterministic tie-breaking",
+					"field", handler.Field.String(),
+					"tied_values_count", len(tiedValues),
+					"max_vote_power", maxVotePower)
+
+				// Sort by the hash of their serialized representation for deterministic selection
+				slices.SortFunc(tiedValues, func(a, b struct {
+					key   string
+					value any
+				}) int {
+					// Use the key, which is already a deterministic string representation
+					return strings.Compare(a.key, b.key)
+				})
+			}
+
+			// Always select the first value after deterministic sorting
+			mostVotedValue := tiedValues[0].value
 			handler.SetValue(mostVotedValue, &consensusVE)
 			fieldVotePowers[handler.Field] = maxVotePower
 		}
