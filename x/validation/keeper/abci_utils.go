@@ -971,9 +971,12 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 		}
 	}
 
+	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
 	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
-		if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-			validationErrors = append(validationErrors, err.Error())
+		if oracleData.RequestedBtcBlockHeight != 0 {
+			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
+				validationErrors = append(validationErrors, err.Error())
+			}
 		}
 	}
 
