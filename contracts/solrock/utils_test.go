@@ -455,7 +455,7 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 
 	nonceAuthPubKey := solana.MustPublicKeyFromBase58("GYCxncsPLEnjpnAovBpmMwxcsaHnkGx17qeu73YtGbiY")
 	nonceAccPubKey := solana.MustPublicKeyFromBase58("GuqQ1oJJ7n9C3cSc1W6cj2NubVKCQKrEG8NkZTHucoee")
-
+	fmt.Printf("nonceAuthPubKey: %s\n", nonceAccPubKey.String())
 	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 	require.NoError(t, err)
 
@@ -485,6 +485,23 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 
 	base64Bin := base64.StdEncoding.EncodeToString(bin)
 	fmt.Printf("transaction (base64): %s", base64Bin)
+}
 
-	new
+func TestParseDurableNonceTransaction(t *testing.T) {
+	txB64 := "AAIAAwXm3dWSnU+s1iGpvDycQw5mTg4smpU65kusWo4VRYRamexoOnfU4JeVvQ7ggopVP8es3TyNU3+VlFV5tngMQp03BqfVFxksVo7gioRfc9KXiM8DXDFFshqzRNgGLqlAAAAGp9UXGSxcUSGMyUw9SvF/WNruCJuh/UTj29mKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAifT0s57LkkWQSpOS/6DVc9hstj1+edfJ0NXqI9eVk7UCBAIAATQAAAAAYOMWAAAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAMBAgMkBgAAAObd1ZKdT6zWIam8PJxDDmZODiyalTrmS6xajhVFhFqZ"
+
+	//rawTx, err := base64.StdEncoding.DecodeString(txB64)
+	//require.NoError(t, err)
+
+	tx := &solana.Transaction{
+		Message: solana.Message{},
+	}
+
+	err := tx.UnmarshalBase64(txB64)
+	for _, i := range tx.Message.AccountKeys {
+		fmt.Println(i.String())
+	}
+	require.NoError(t, err)
+	//err = tx.Message.UnmarshalWithDecoder(bin.NewBinDecoder(rawTx))
+	//require.NoError(t, err)
 }

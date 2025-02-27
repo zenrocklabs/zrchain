@@ -40,6 +40,7 @@ func (k Keeper) KeyRequests(goCtx context.Context, req *types.QueryKeyRequestsRe
 				Index:                  value.Index,
 				SignPolicyId:           value.SignPolicyId,
 				ZenbtcMetadata:         value.ZenbtcMetadata,
+				PublicKey:              value.PublicKey,
 			}, nil
 		},
 	)

@@ -36,7 +36,7 @@ func (k Keeper) SignTransactionRequests(goCtx context.Context, req *types.QueryS
 				return false, nil
 			}
 			statusMatch := req.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_UNSPECIFIED || signReq.Status == req.Status
-			walletMatch := req.WalletType != types.WalletType_WALLET_TYPE_UNSPECIFIED
+			walletMatch := req.WalletType == types.WalletType_WALLET_TYPE_UNSPECIFIED || req.WalletType == value.WalletType
 
 			return keyIDMatch && statusMatch && walletMatch, nil
 		},

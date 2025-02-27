@@ -12,11 +12,11 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	solana "github.com/gagliardetto/solana-go/rpc"
+
+	"github.com/beevik/ntp"
 )
 
 func main() {
@@ -62,10 +62,13 @@ func main() {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
+	ntpTime, err := ntp.Time("time.google.com")
+	if err != nil {
+		log.Fatalf("Error fetching NTP time: %v", err)
+	}
 	// Align the start time to the nearest MainLoopTickerInterval
-	now := time.Now()
-	alignedStart := now.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
-	time.Sleep(alignedStart.Sub(now))
+	alignedStart := ntpTime.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
+	time.Sleep(alignedStart.Sub(ntpTime))
 
 	mainLoopTicker := time.NewTicker(MainLoopTickerInterval)
 	defer mainLoopTicker.Stop()
@@ -103,24 +106,10 @@ func main() {
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
 		slog.Info("Received AVS contract state for", "network", o.Config.EthOracle.NetworkName[o.Config.Network], "block", update.EthBlockHeight)
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
-		newState := *currentState
-
-		newState.EigenDelegations = update.EigenDelegations
-		newState.EthBlockHeight = update.EthBlockHeight
-		newState.EthGasLimit = update.EthGasLimit
-		newState.EthBaseFee = update.EthBaseFee
-		newState.EthTipCap = update.EthTipCap
-		newState.SolanaLamportsPerSignature = update.SolanaLamportsPerSignature
-		newState.Redemptions = update.Redemptions
-		newState.EthBurnEvents = update.EthBurnEvents
-
 		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
-		newState.ROCKUSDPrice = update.ROCKUSDPrice
-		newState.BTCUSDPrice = update.BTCUSDPrice
-		newState.ETHUSDPrice = update.ETHUSDPrice
-		o.currentState.Store(&newState)
 
+		newState := update
+		o.currentState.Store(&newState)
 		o.CacheState()
 	}
 }

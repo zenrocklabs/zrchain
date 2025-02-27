@@ -42,6 +42,7 @@ message KeyRequest {
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
   uint64 mpc_btl = 12;
   uint64 fee = 13;
+  bytes public_key = 14;
 }
 
 // format of a key request response
@@ -59,6 +60,7 @@ message KeyReqResponse {
   ZenBTCMetadata zenbtc_metadata = 11; // Optional
   uint64 mpc_btl = 12;
   uint64 fee = 13;
+  bytes public_key = 14;
 }
 
 // KeyType indicates what crypto key algo will be used by this key (e.g. ECDSA

@@ -4,30 +4,30 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
-
-	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
-	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	bin "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go"
 
 	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
@@ -457,8 +457,17 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		return nil, err
 	}
 
-	if len(dataForSigning) == 0 || dataForSigning[0] == nil {
+	keys := len(msg.KeyIds)
+	dataPieces := len(dataForSigning)
+	if dataPieces == 0 || dataForSigning[0] == nil {
 		return nil, fmt.Errorf("data for signing is empty")
+	}
+
+	//
+	if keys > 1 && dataPieces == 1 {
+		for i := 1; i < keys; i++ {
+			dataForSigning = append(dataForSigning, dataForSigning[0])
+		}
 	}
 
 	id, err := k.processSignatureRequests(ctx, dataForSigning, msg.KeyIds, &types.SignRequest{
@@ -471,6 +480,15 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	}, msg.MpcBtl)
 	if err != nil {
 		return nil, err
+	}
+
+	tx := &solana.Transaction{
+		Message: solana.Message{},
+	}
+	err = tx.UnmarshalWithDecoder(bin.NewBinDecoder(dataForSigning[0]))
+
+	for _, i := range tx.Message.AccountKeys {
+		fmt.Println(i.String())
 	}
 
 	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
@@ -531,7 +549,9 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 		return err
 	}
 
-	zenrockFee := uint64(math.Round(float64(fee) * (float64(prms.KeyringCommission) / 100.0)))
+	zenrockFeeDec := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(fee)).Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(prms.KeyringCommission)).Quo(sdkmath.LegacyNewDec(100)))
+
+	zenrockFee := uint64(zenrockFeeDec.RoundInt64())
 	keyringFee := fee - zenrockFee
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(

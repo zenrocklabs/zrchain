@@ -39,6 +39,7 @@ func (o *Oracle) LoadFromFile(filename string) error {
 			EthTipCap:                  latestState.EthTipCap,
 			SolanaLamportsPerSignature: latestState.SolanaLamportsPerSignature,
 			EthBurnEvents:              latestState.EthBurnEvents,
+			CleanedEthBurnEvents:       latestState.CleanedEthBurnEvents,
 			Redemptions:                latestState.Redemptions,
 			ROCKUSDPrice:               latestState.ROCKUSDPrice,
 			BTCUSDPrice:                latestState.BTCUSDPrice,

@@ -11,8 +11,8 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types
 enum Asset {
   UNSPECIFIED = 0;
   ROCK = 1;
-  zenBTC = 2;
-  stETH = 3;
+  BTC = 2;
+  ETH = 3;
 }
 
 // AssetData is a struct that contains the price in USD + decimals of precision

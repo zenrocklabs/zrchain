@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -12,7 +13,7 @@ type ZenBTCKeeper interface {
 	GetEthMinterKeyID(ctx context.Context) uint64
 	GetUnstakerKeyID(ctx context.Context) uint64
 	GetCompleterKeyID(ctx context.Context) uint64
-	GetEthBatcherAddr(ctx context.Context) string
+	GetControllerAddr(ctx context.Context) string
 	GetEthTokenAddr(ctx context.Context) string
 	GetBitcoinProxyAddress(ctx context.Context) string
 	SetPendingMintTransaction(ctx context.Context, pendingMintTransaction types.PendingMintTransaction) error
@@ -22,7 +23,7 @@ type ZenBTCKeeper interface {
 	HasRedemption(ctx context.Context, id uint64) (bool, error)
 	SetRedemption(ctx context.Context, id uint64, redemption types.Redemption) error
 	WalkRedemptions(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
-	GetExchangeRate(ctx context.Context) (float64, error)
+	GetExchangeRate(ctx context.Context) (math.LegacyDec, error)
 	GetBurnEvent(ctx context.Context, id uint64) (types.BurnEvent, error)
 	SetBurnEvent(ctx context.Context, id uint64, burnEvent types.BurnEvent) error
 	CreateBurnEvent(ctx context.Context, burnEvent *types.BurnEvent) (uint64, error)
@@ -30,4 +31,12 @@ type ZenBTCKeeper interface {
 	GetPendingMintTransactionsStore() collections.Map[uint64, types.PendingMintTransaction]
 	GetBurnEventsStore() collections.Map[uint64, types.BurnEvent]
 	GetRedemptionsStore() collections.Map[uint64, types.Redemption]
+	GetFirstPendingMintTransaction(ctx context.Context) (uint64, error)
+	SetFirstPendingMintTransaction(ctx context.Context, id uint64) error
+	GetFirstPendingBurnEvent(ctx context.Context) (uint64, error)
+	SetFirstPendingBurnEvent(ctx context.Context, id uint64) error
+	GetFirstPendingRedemption(ctx context.Context) (uint64, error)
+	SetFirstPendingRedemption(ctx context.Context, id uint64) error
+	GetFirstPendingStakeTransaction(ctx context.Context) (uint64, error)
+	SetFirstPendingStakeTransaction(ctx context.Context, id uint64) error
 }

@@ -147,15 +147,16 @@ func (ns *NeutrinoServer) GetBlockHeaderByHeight(chainName string, height int64)
 	}
 
 	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	var returnedError error
 	if chainName != "mainnet" {
 		blockHeader, hash, height, err := ns.ProxyGetBlockHeaderByHeight(chainName, height)
 		if err == nil {
 			return blockHeader, hash, height, err
 		}
+		returnedError = fmt.Errorf("Failed ProxyGetBlockHeaderByHeight %d does not exist error:%w", height, err)
 		//ignore this error - we can't get testnet data using the proxy fallback mechanism
 	}
-
-	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
+	return nil, nil, 0, fmt.Errorf("Node %s does not exist %w", chainName, returnedError)
 
 }
 
@@ -172,16 +173,18 @@ func (ns *NeutrinoServer) GetLatestBlockHeader(chainName string) (*wire.BlockHea
 		}
 		return blockHeader, &blockStamp.Hash, blockStamp.Height, nil
 	}
+
 	//If we can't get the blockheader and we are not on Mainnet, try from the proxy
+	var returnedError error
 	if chainName != "mainnet" {
 		blockHeader, hash, height, err := ns.ProxyGetLatestBlockHeader(chainName)
 		if err == nil {
 			return blockHeader, hash, height, err
 		}
+		returnedError = fmt.Errorf("Failed ProxyGetLatestBlockHeader %d does not exist error:%w", height, err)
 		//ignore this error - we can't get testnet data using the proxy fallback mechanism
 	}
-
-	return nil, nil, 0, fmt.Errorf("Node %s does not exist", chainName)
+	return nil, nil, 0, fmt.Errorf("Node %s does not exist %w", chainName, returnedError)
 }
 
 // RPC Method Arguments and Reply Types

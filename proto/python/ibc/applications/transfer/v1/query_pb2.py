@@ -25,10 +25,12 @@ _sym_db = _symbol_database.Default()
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from cosmos.base.v1beta1 import coin_pb2 as cosmos_dot_base_dot_v1beta1_dot_coin__pb2
 from ibc.applications.transfer.v1 import transfer_pb2 as ibc_dot_applications_dot_transfer_dot_v1_dot_transfer__pb2
+from ibc.applications.transfer.v1 import token_pb2 as ibc_dot_applications_dot_transfer_dot_v1_dot_token__pb2
+from cosmos.base.query.v1beta1 import pagination_pb2 as cosmos_dot_base_dot_query_dot_v1beta1_dot_pagination__pb2
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(ibc/applications/transfer/v1/query.proto\x12\x1cibc.applications.transfer.v1\x1a\x14gogoproto/gogo.proto\x1a\x1e\x63osmos/base/v1beta1/coin.proto\x1a+ibc/applications/transfer/v1/transfer.proto\x1a\x1cgoogle/api/annotations.proto\"\x14\n\x12QueryParamsRequest\"S\n\x13QueryParamsResponse\x12<\n\x06params\x18\x01 \x01(\x0b\x32$.ibc.applications.transfer.v1.ParamsR\x06params\"-\n\x15QueryDenomHashRequest\x12\x14\n\x05trace\x18\x01 \x01(\tR\x05trace\",\n\x16QueryDenomHashResponse\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\"S\n\x19QueryEscrowAddressRequest\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId\"C\n\x1aQueryEscrowAddressResponse\x12%\n\x0e\x65scrow_address\x18\x01 \x01(\tR\rescrowAddress\"7\n\x1fQueryTotalEscrowForDenomRequest\x12\x14\n\x05\x64\x65nom\x18\x01 \x01(\tR\x05\x64\x65nom\"[\n QueryTotalEscrowForDenomResponse\x12\x37\n\x06\x61mount\x18\x01 \x01(\x0b\x32\x19.cosmos.base.v1beta1.CoinB\x04\xc8\xde\x1f\x00R\x06\x61mount2\xfb\x05\n\x05Query\x12\x93\x01\n\x06Params\x12\x30.ibc.applications.transfer.v1.QueryParamsRequest\x1a\x31.ibc.applications.transfer.v1.QueryParamsResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/ibc/apps/transfer/v1/params\x12\xad\x01\n\tDenomHash\x12\x33.ibc.applications.transfer.v1.QueryDenomHashRequest\x1a\x34.ibc.applications.transfer.v1.QueryDenomHashResponse\"5\x82\xd3\xe4\x93\x02/\x12-/ibc/apps/transfer/v1/denom_hashes/{trace=**}\x12\xd6\x01\n\rEscrowAddress\x12\x37.ibc.applications.transfer.v1.QueryEscrowAddressRequest\x1a\x38.ibc.applications.transfer.v1.QueryEscrowAddressResponse\"R\x82\xd3\xe4\x93\x02L\x12J/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address\x12\xd2\x01\n\x13TotalEscrowForDenom\x12=.ibc.applications.transfer.v1.QueryTotalEscrowForDenomRequest\x1a>.ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse\"<\x82\xd3\xe4\x93\x02\x36\x12\x34/ibc/apps/transfer/v1/denoms/{denom=**}/total_escrowB:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(ibc/applications/transfer/v1/query.proto\x12\x1cibc.applications.transfer.v1\x1a\x14gogoproto/gogo.proto\x1a\x1e\x63osmos/base/v1beta1/coin.proto\x1a+ibc/applications/transfer/v1/transfer.proto\x1a(ibc/applications/transfer/v1/token.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1cgoogle/api/annotations.proto\"\x14\n\x12QueryParamsRequest\"S\n\x13QueryParamsResponse\x12<\n\x06params\x18\x01 \x01(\x0b\x32$.ibc.applications.transfer.v1.ParamsR\x06params\"\'\n\x11QueryDenomRequest\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\"O\n\x12QueryDenomResponse\x12\x39\n\x05\x64\x65nom\x18\x01 \x01(\x0b\x32#.ibc.applications.transfer.v1.DenomR\x05\x64\x65nom\"\\\n\x12QueryDenomsRequest\x12\x46\n\npagination\x18\x01 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\"\xab\x01\n\x13QueryDenomsResponse\x12K\n\x06\x64\x65noms\x18\x01 \x03(\x0b\x32#.ibc.applications.transfer.v1.DenomB\x0e\xc8\xde\x1f\x00\xaa\xdf\x1f\x06\x44\x65nomsR\x06\x64\x65noms\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"-\n\x15QueryDenomHashRequest\x12\x14\n\x05trace\x18\x01 \x01(\tR\x05trace\",\n\x16QueryDenomHashResponse\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\"S\n\x19QueryEscrowAddressRequest\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId\"C\n\x1aQueryEscrowAddressResponse\x12%\n\x0e\x65scrow_address\x18\x01 \x01(\tR\rescrowAddress\"7\n\x1fQueryTotalEscrowForDenomRequest\x12\x14\n\x05\x64\x65nom\x18\x01 \x01(\tR\x05\x64\x65nom\"[\n QueryTotalEscrowForDenomResponse\x12\x37\n\x06\x61mount\x18\x01 \x01(\x0b\x32\x19.cosmos.base.v1beta1.CoinB\x04\xc8\xde\x1f\x00R\x06\x61mount2\xae\x08\n\x05Query\x12\x93\x01\n\x06Params\x12\x30.ibc.applications.transfer.v1.QueryParamsRequest\x1a\x31.ibc.applications.transfer.v1.QueryParamsResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/ibc/apps/transfer/v1/params\x12\x93\x01\n\x06\x44\x65noms\x12\x30.ibc.applications.transfer.v1.QueryDenomsRequest\x1a\x31.ibc.applications.transfer.v1.QueryDenomsResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/ibc/apps/transfer/v1/denoms\x12\x9a\x01\n\x05\x44\x65nom\x12/.ibc.applications.transfer.v1.QueryDenomRequest\x1a\x30.ibc.applications.transfer.v1.QueryDenomResponse\".\x82\xd3\xe4\x93\x02(\x12&/ibc/apps/transfer/v1/denoms/{hash=**}\x12\xad\x01\n\tDenomHash\x12\x33.ibc.applications.transfer.v1.QueryDenomHashRequest\x1a\x34.ibc.applications.transfer.v1.QueryDenomHashResponse\"5\x82\xd3\xe4\x93\x02/\x12-/ibc/apps/transfer/v1/denom_hashes/{trace=**}\x12\xd6\x01\n\rEscrowAddress\x12\x37.ibc.applications.transfer.v1.QueryEscrowAddressRequest\x1a\x38.ibc.applications.transfer.v1.QueryEscrowAddressResponse\"R\x82\xd3\xe4\x93\x02L\x12J/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address\x12\xd2\x01\n\x13TotalEscrowForDenom\x12=.ibc.applications.transfer.v1.QueryTotalEscrowForDenomRequest\x1a>.ibc.applications.transfer.v1.QueryTotalEscrowForDenomResponse\"<\x82\xd3\xe4\x93\x02\x36\x12\x34/ibc/apps/transfer/v1/denoms/{denom=**}/total_escrowB:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,32 +38,46 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.applications.transfer.v
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/types'
+  _globals['_QUERYDENOMSRESPONSE'].fields_by_name['denoms']._loaded_options = None
+  _globals['_QUERYDENOMSRESPONSE'].fields_by_name['denoms']._serialized_options = b'\310\336\037\000\252\337\037\006Denoms'
   _globals['_QUERYTOTALESCROWFORDENOMRESPONSE'].fields_by_name['amount']._loaded_options = None
   _globals['_QUERYTOTALESCROWFORDENOMRESPONSE'].fields_by_name['amount']._serialized_options = b'\310\336\037\000'
   _globals['_QUERY'].methods_by_name['Params']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Params']._serialized_options = b'\202\323\344\223\002\036\022\034/ibc/apps/transfer/v1/params'
+  _globals['_QUERY'].methods_by_name['Denoms']._loaded_options = None
+  _globals['_QUERY'].methods_by_name['Denoms']._serialized_options = b'\202\323\344\223\002\036\022\034/ibc/apps/transfer/v1/denoms'
+  _globals['_QUERY'].methods_by_name['Denom']._loaded_options = None
+  _globals['_QUERY'].methods_by_name['Denom']._serialized_options = b'\202\323\344\223\002(\022&/ibc/apps/transfer/v1/denoms/{hash=**}'
   _globals['_QUERY'].methods_by_name['DenomHash']._loaded_options = None
   _globals['_QUERY'].methods_by_name['DenomHash']._serialized_options = b'\202\323\344\223\002/\022-/ibc/apps/transfer/v1/denom_hashes/{trace=**}'
   _globals['_QUERY'].methods_by_name['EscrowAddress']._loaded_options = None
   _globals['_QUERY'].methods_by_name['EscrowAddress']._serialized_options = b'\202\323\344\223\002L\022J/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address'
   _globals['_QUERY'].methods_by_name['TotalEscrowForDenom']._loaded_options = None
   _globals['_QUERY'].methods_by_name['TotalEscrowForDenom']._serialized_options = b'\202\323\344\223\0026\0224/ibc/apps/transfer/v1/denoms/{denom=**}/total_escrow'
-  _globals['_QUERYPARAMSREQUEST']._serialized_start=203
-  _globals['_QUERYPARAMSREQUEST']._serialized_end=223
-  _globals['_QUERYPARAMSRESPONSE']._serialized_start=225
-  _globals['_QUERYPARAMSRESPONSE']._serialized_end=308
-  _globals['_QUERYDENOMHASHREQUEST']._serialized_start=310
-  _globals['_QUERYDENOMHASHREQUEST']._serialized_end=355
-  _globals['_QUERYDENOMHASHRESPONSE']._serialized_start=357
-  _globals['_QUERYDENOMHASHRESPONSE']._serialized_end=401
-  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_start=403
-  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_end=486
-  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_start=488
-  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_end=555
-  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_start=557
-  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_end=612
-  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_start=614
-  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_end=705
-  _globals['_QUERY']._serialized_start=708
-  _globals['_QUERY']._serialized_end=1471
+  _globals['_QUERYPARAMSREQUEST']._serialized_start=289
+  _globals['_QUERYPARAMSREQUEST']._serialized_end=309
+  _globals['_QUERYPARAMSRESPONSE']._serialized_start=311
+  _globals['_QUERYPARAMSRESPONSE']._serialized_end=394
+  _globals['_QUERYDENOMREQUEST']._serialized_start=396
+  _globals['_QUERYDENOMREQUEST']._serialized_end=435
+  _globals['_QUERYDENOMRESPONSE']._serialized_start=437
+  _globals['_QUERYDENOMRESPONSE']._serialized_end=516
+  _globals['_QUERYDENOMSREQUEST']._serialized_start=518
+  _globals['_QUERYDENOMSREQUEST']._serialized_end=610
+  _globals['_QUERYDENOMSRESPONSE']._serialized_start=613
+  _globals['_QUERYDENOMSRESPONSE']._serialized_end=784
+  _globals['_QUERYDENOMHASHREQUEST']._serialized_start=786
+  _globals['_QUERYDENOMHASHREQUEST']._serialized_end=831
+  _globals['_QUERYDENOMHASHRESPONSE']._serialized_start=833
+  _globals['_QUERYDENOMHASHRESPONSE']._serialized_end=877
+  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_start=879
+  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_end=962
+  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_start=964
+  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_end=1031
+  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_start=1033
+  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_end=1088
+  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_start=1090
+  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_end=1181
+  _globals['_QUERY']._serialized_start=1184
+  _globals['_QUERY']._serialized_end=2254
 # @@protoc_insertion_point(module_scope)

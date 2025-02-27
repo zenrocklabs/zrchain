@@ -47,6 +47,8 @@ type Keeper struct {
 	AVSRewardsPool collections.Map[string, math.Int]
 	// AssetPrices - key: asset type | value: asset price + precision
 	AssetPrices collections.Map[types.Asset, math.LegacyDec]
+	// LastValidVEHeight - value: height of last valid VE
+	LastValidVEHeight collections.Item[int64]
 	// SlashEvents - key: id number | value: slash event struct
 	SlashEvents collections.Map[uint64, types.SlashEvent]
 	// SlashEventCount - value: number of slash events
@@ -82,6 +84,10 @@ func NewKeeper(
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
+	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
+		panic(fmt.Sprintf("invalid authority address: %s", authority))
+	}
+
 	// ensure bonded and not bonded module accounts are set
 	if addr := ak.GetModuleAddress(types.BondedPoolName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.BondedPoolName))
@@ -141,6 +147,7 @@ func NewKeeper(
 		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 	}
 }
 

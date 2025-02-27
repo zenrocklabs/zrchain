@@ -8,10 +8,10 @@ import (
 
 var _ sdk.Msg = &MsgNewSignatureRequest{}
 
-func NewMsgNewSignatureRequest(creator string, keyId uint64, dataForSigning string, btl, mpcBtl uint64) *MsgNewSignatureRequest {
+func NewMsgNewSignatureRequest(creator string, keyIds []uint64, dataForSigning string, btl, mpcBtl uint64) *MsgNewSignatureRequest {
 	return &MsgNewSignatureRequest{
 		Creator:        creator,
-		KeyIds:         []uint64{keyId},
+		KeyIds:         keyIds,
 		DataForSigning: dataForSigning,
 		Btl:            btl,
 		MpcBtl:         mpcBtl,
