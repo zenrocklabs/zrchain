@@ -294,11 +294,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	if !oracleData.HasAnyOracleData() {
-		k.Logger(ctx).Debug("no oracle data to process")
-		return nil
-	}
-
 	canonicalVE, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
 	if !ok {
 		k.Logger(ctx).Error("invalid canonical vote extension")
@@ -322,8 +317,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	}
 
 	// Bitcoin header processing - only if BTC header fields have consensus
-	btcHeaderConsensus := HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash) ||
-		HasRequiredField(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash)
+	btcHeaderConsensus := HasRequiredField(oracleData.FieldVotePowers, VEFieldLatestBtcHeaderHash) ||
+		HasRequiredField(oracleData.FieldVotePowers, VEFieldRequestedBtcHeaderHash)
 	if btcHeaderConsensus {
 		k.Logger(ctx).Info("processing Bitcoin headers")
 		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {

@@ -213,32 +213,6 @@ func HasRequiredField(fieldVotePowers map[VoteExtensionField]int64, field VoteEx
 	return ok
 }
 
-// HasAnyOracleData returns true if this OracleData contains any meaningful data
-// beyond the ConsensusData (which is always present)
-func (o OracleData) HasAnyOracleData() bool {
-	// Check if the oracle data has any ethereum or bitcoin data
-	if o.EthBlockHeight > 0 || o.RequestedBtcBlockHeight > 0 {
-		return true
-	}
-
-	// Check for ethereum burn events
-	if len(o.EthBurnEvents) > 0 {
-		return true
-	}
-
-	// Check for redemptions
-	if len(o.Redemptions) > 0 {
-		return true
-	}
-
-	// Check for eigen delegations
-	if len(o.EigenDelegationsMap) > 0 {
-		return true
-	}
-
-	return false
-}
-
 // VoteExtensionField defines a type-safe identifier for vote extension fields
 type VoteExtensionField int
 
