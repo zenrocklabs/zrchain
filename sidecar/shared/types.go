@@ -19,7 +19,7 @@ type OracleState struct {
 	Redemptions                []api.Redemption               `json:"redemptions"`
 	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
-	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"` // TODO: remove field if we won't use ETH stake?
+	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
 }
 
 type Config struct {
