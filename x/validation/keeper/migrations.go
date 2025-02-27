@@ -1,14 +1,17 @@
 package keeper
 
 import (
-	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
+
 	v2 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v2"
 	v3 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v3"
 	v4 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v4"
 	v5 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v5"
+
+	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
+	v7 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v7"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -52,4 +55,9 @@ func (m Migrator) Migrate4to5(ctx sdk.Context) error {
 // Migrate5to6 migrates x/staking state from consensus version 5 to 6.
 func (m Migrator) Migrate5to6(ctx sdk.Context) error {
 	return v6.UpdateParams(ctx, m.keeper.HVParams)
+}
+
+// Migrate6to7 migrates x/staking state from consensus version 6 to 7.
+func (m Migrator) Migrate6to7(ctx sdk.Context) error {
+	return v7.UpdateParams(ctx, m.keeper.HVParams)
 }
