@@ -232,7 +232,6 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	}
 
 	oracleData.ConsensusData = req.LocalLastCommit
-	oracleData.FieldVotePowers = fieldVotePowers
 
 	return k.marshalOracleData(req, oracleData)
 }
@@ -387,7 +386,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
@@ -444,7 +443,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
 
-	if err := k.validateOracleData(voteExt, oracleData, fieldVotePowers); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers); err != nil {
 		return nil, err
 	}
 

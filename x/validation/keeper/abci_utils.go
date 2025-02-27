@@ -954,25 +954,24 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 
 // validateOracleData verifies that the vote extension and oracle data match.
 // Only fields that have reached consensus (present in fieldVotePowers) are validated.
-func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
-	var validationErrors []string
+// Fields that fail validation are removed from fieldVotePowers to prevent them from being used downstream.
+func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
+	invalidFields := make([]VoteExtensionField, 0)
 
 	// Validate hashes only if fields have consensus
 	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-			validationErrors = append(validationErrors, err.Error())
+			invalidFields = append(invalidFields, VEFieldEigenDelegationsHash)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
 		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-			validationErrors = append(validationErrors, err.Error())
+			invalidFields = append(invalidFields, VEFieldEthBurnEventsHash)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-			validationErrors = append(validationErrors, err.Error())
+			invalidFields = append(invalidFields, VEFieldRedemptionsHash)
 		}
 	}
 
@@ -980,7 +979,7 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
 		if oracleData.RequestedBtcBlockHeight != 0 {
 			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-				validationErrors = append(validationErrors, err.Error())
+				invalidFields = append(invalidFields, VEFieldRequestedBtcHeaderHash)
 			}
 		}
 	}
@@ -988,121 +987,91 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	// Check Ethereum-related fields
 	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldEthBlockHeight.String(), voteExt.EthBlockHeight, oracleData.EthBlockHeight))
+			invalidFields = append(invalidFields, VEFieldEthBlockHeight)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldEthGasLimit.String(), voteExt.EthGasLimit, oracleData.EthGasLimit))
+			invalidFields = append(invalidFields, VEFieldEthGasLimit)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldEthBaseFee.String(), voteExt.EthBaseFee, oracleData.EthBaseFee))
+			invalidFields = append(invalidFields, VEFieldEthBaseFee)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldEthTipCap.String(), voteExt.EthTipCap, oracleData.EthTipCap))
+			invalidFields = append(invalidFields, VEFieldEthTipCap)
 		}
 	}
 
 	// Check Bitcoin height
 	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
 		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldRequestedBtcBlockHeight.String(), voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight))
+			invalidFields = append(invalidFields, VEFieldRequestedBtcBlockHeight)
 		}
 	}
 
 	// Check nonce-related fields
 	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldRequestedStakerNonce.String(), voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce))
+			invalidFields = append(invalidFields, VEFieldRequestedStakerNonce)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldRequestedEthMinterNonce.String(), voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce))
+			invalidFields = append(invalidFields, VEFieldRequestedEthMinterNonce)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldRequestedUnstakerNonce.String(), voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce))
+			invalidFields = append(invalidFields, VEFieldRequestedUnstakerNonce)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldRequestedCompleterNonce.String(), voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce))
+			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
 		}
 	}
 
 	// Check price fields
 	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
 		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %s, got %s",
-					VEFieldROCKUSDPrice.String(), voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice))
+			invalidFields = append(invalidFields, VEFieldROCKUSDPrice)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
 		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %s, got %s",
-					VEFieldBTCUSDPrice.String(), voteExt.BTCUSDPrice, oracleData.BTCUSDPrice))
+			invalidFields = append(invalidFields, VEFieldBTCUSDPrice)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
 		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %s, got %s",
-					VEFieldETHUSDPrice.String(), voteExt.ETHUSDPrice, oracleData.ETHUSDPrice))
+			invalidFields = append(invalidFields, VEFieldETHUSDPrice)
 		}
 	}
 
 	// Check Latest Bitcoin height and hash fields
 	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
 		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-			validationErrors = append(validationErrors,
-				fmt.Sprintf("%s mismatch, expected %d, got %d",
-					VEFieldLatestBtcBlockHeight.String(), voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight))
+			invalidFields = append(invalidFields, VEFieldLatestBtcBlockHeight)
 		}
 	}
-
 	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
 		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
-			validationErrors = append(validationErrors, err.Error())
+			invalidFields = append(invalidFields, VEFieldLatestBtcHeaderHash)
 		}
 	}
 
-	if len(validationErrors) > 0 {
-		return fmt.Errorf("oracle data validation failed: %s", strings.Join(validationErrors, "; "))
+	// Remove invalid fields from fieldVotePowers
+	for _, field := range invalidFields {
+		delete(fieldVotePowers, field)
+		k.Logger(ctx).Info("removed mismatched field from fieldVotePowers", "field", field.String())
 	}
+
+	// Update FieldVotePowers in oracleData to reflect the validated fields
+	oracleData.FieldVotePowers = fieldVotePowers
 
 	return nil
 }
