@@ -101,16 +101,42 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 
 func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) ([]ValidatorDelegations, error) {
 	validatorTotals := make(map[string]*big.Int)
-	for validator, delegatorMap := range delegations {
+
+	// Get sorted list of validators for deterministic iteration
+	validators := make([]string, 0, len(delegations))
+	for validator := range delegations {
+		validators = append(validators, validator)
+	}
+	slices.Sort(validators)
+
+	for _, validator := range validators {
+		delegatorMap := delegations[validator]
 		total := new(big.Int)
-		for _, amount := range delegatorMap {
+
+		// Get sorted list of delegators for deterministic iteration
+		delegators := make([]string, 0, len(delegatorMap))
+		for delegator := range delegatorMap {
+			delegators = append(delegators, delegator)
+		}
+		slices.Sort(delegators)
+
+		for _, delegator := range delegators {
+			amount := delegatorMap[delegator]
 			total.Add(total, amount)
 		}
 		validatorTotals[validator] = total
 	}
 
+	// Get sorted list of validators again for deterministic output
+	validators = make([]string, 0, len(validatorTotals))
+	for validator := range validatorTotals {
+		validators = append(validators, validator)
+	}
+	slices.Sort(validators)
+
 	validatorDelegations := make([]ValidatorDelegations, 0, len(validatorTotals))
-	for validator, totalStake := range validatorTotals {
+	for _, validator := range validators {
+		totalStake := validatorTotals[validator]
 		validatorDelegations = append(validatorDelegations, ValidatorDelegations{
 			Validator: validator,
 			Stake:     sdkmath.NewIntFromBigInt(totalStake),
@@ -137,6 +163,10 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 	// Get field handlers
 	fieldHandlers := initializeFieldHandlers()
+	// Sort handlers by field for deterministic processing
+	slices.SortFunc(fieldHandlers, func(a, b FieldHandler) int {
+		return int(a.Field) - int(b.Field)
+	})
 
 	// Process all votes
 	for _, vote := range extCommit.Votes {
@@ -172,7 +202,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	superMajorityThreshold := superMajorityVotePower(totalVotePower)
 	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)
 
-	// Apply consensus for each field
+	// Apply consensus for each field - ensure deterministic order
 	for _, handler := range fieldHandlers {
 		votes := fieldVotes[handler.Field]
 		if len(votes) == 0 {
@@ -182,7 +212,16 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		var mostVotedValue any
 		var maxVotePower int64
 
-		for _, vote := range votes {
+		// Get keys in deterministic order
+		keys := make([]string, 0, len(votes))
+		for k := range votes {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+
+		// Find most voted value
+		for _, key := range keys {
+			vote := votes[key]
 			if vote.votePower > maxVotePower {
 				maxVotePower = vote.votePower
 				mostVotedValue = vote.value
@@ -224,8 +263,15 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	// Log the count of fields with consensus
 	k.Logger(ctx).Info("consensus summary", "fields_with_consensus", len(fieldVotePowers))
 
-	// Loop through all possible fields and log their consensus status
+	// Use a deterministic field order for logging
+	fields := make([]VoteExtensionField, 0, int(VEFieldLatestBtcHeaderHash)+1)
 	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+		fields = append(fields, field)
+	}
+	slices.Sort(fields)
+
+	// Loop through all possible fields and log their consensus status
+	for _, field := range fields {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
 			continue
@@ -718,16 +764,14 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
-	}
+	// Ensure deterministic order of asset price updates
+	assets := []types.Asset{types.Asset_ROCK, types.Asset_BTC, types.Asset_ETH}
+	assetPrices := []math.LegacyDec{oracleData.ROCKUSDPrice, oracleData.BTCUSDPrice, oracleData.ETHUSDPrice}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
-	}
-
-	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	for i, asset := range assets {
+		if err := k.AssetPrices.Set(ctx, asset, assetPrices[i]); err != nil {
+			k.Logger(ctx).Error("error setting asset price", "asset", asset.String(), "height", ctx.BlockHeight(), "err", err)
+		}
 	}
 }
 
@@ -958,113 +1002,97 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
 	invalidFields := make([]VoteExtensionField, 0)
 
-	// Validate hashes only if fields have consensus
-	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
-		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-			invalidFields = append(invalidFields, VEFieldEigenDelegationsHash)
-		}
+	// Get sorted list of fields for deterministic validation
+	fields := make([]VoteExtensionField, 0, len(fieldVotePowers))
+	for field := range fieldVotePowers {
+		fields = append(fields, field)
 	}
-	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
-		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-			invalidFields = append(invalidFields, VEFieldEthBurnEventsHash)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
-		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-			invalidFields = append(invalidFields, VEFieldRedemptionsHash)
-		}
-	}
+	slices.Sort(fields)
 
-	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
-		if oracleData.RequestedBtcBlockHeight != 0 {
-			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-				invalidFields = append(invalidFields, VEFieldRequestedBtcHeaderHash)
+	// Validate hashes only if fields have consensus - using deterministic order
+	for _, field := range fields {
+		switch field {
+		case VEFieldEigenDelegationsHash:
+			if err := validateHashField(field.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldEthBurnEventsHash:
+			if err := validateHashField(field.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRedemptionsHash:
+			if err := validateHashField(field.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedBtcHeaderHash:
+			if oracleData.RequestedBtcBlockHeight != 0 {
+				if err := validateHashField(field.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
+					invalidFields = append(invalidFields, field)
+				}
+			}
+		case VEFieldEthBlockHeight:
+			if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldEthGasLimit:
+			if voteExt.EthGasLimit != oracleData.EthGasLimit {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldEthBaseFee:
+			if voteExt.EthBaseFee != oracleData.EthBaseFee {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldEthTipCap:
+			if voteExt.EthTipCap != oracleData.EthTipCap {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedBtcBlockHeight:
+			if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedStakerNonce:
+			if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedEthMinterNonce:
+			if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedUnstakerNonce:
+			if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldRequestedCompleterNonce:
+			if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldROCKUSDPrice:
+			if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldBTCUSDPrice:
+			if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldETHUSDPrice:
+			if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldLatestBtcBlockHeight:
+			if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
+				invalidFields = append(invalidFields, field)
+			}
+		case VEFieldLatestBtcHeaderHash:
+			if err := validateHashField(field.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
+				invalidFields = append(invalidFields, field)
 			}
 		}
 	}
 
-	// Check Ethereum-related fields
-	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
-		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-			invalidFields = append(invalidFields, VEFieldEthBlockHeight)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
-		if voteExt.EthGasLimit != oracleData.EthGasLimit {
-			invalidFields = append(invalidFields, VEFieldEthGasLimit)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
-		if voteExt.EthBaseFee != oracleData.EthBaseFee {
-			invalidFields = append(invalidFields, VEFieldEthBaseFee)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
-		if voteExt.EthTipCap != oracleData.EthTipCap {
-			invalidFields = append(invalidFields, VEFieldEthTipCap)
-		}
-	}
+	// Sort invalidFields for deterministic ordering
+	slices.Sort(invalidFields)
 
-	// Check Bitcoin height
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
-		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
-			invalidFields = append(invalidFields, VEFieldRequestedBtcBlockHeight)
-		}
-	}
-
-	// Check nonce-related fields
-	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
-		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedStakerNonce)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
-		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedEthMinterNonce)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
-		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedUnstakerNonce)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
-		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
-		}
-	}
-
-	// Check price fields
-	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
-		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldROCKUSDPrice)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
-		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldBTCUSDPrice)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
-		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldETHUSDPrice)
-		}
-	}
-
-	// Check Latest Bitcoin height and hash fields
-	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
-		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-			invalidFields = append(invalidFields, VEFieldLatestBtcBlockHeight)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
-		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
-			invalidFields = append(invalidFields, VEFieldLatestBtcHeaderHash)
-		}
-	}
-
-	// Remove invalid fields from fieldVotePowers
+	// Remove invalid fields from fieldVotePowers - already in sorted order
 	for _, field := range invalidFields {
 		delete(fieldVotePowers, field)
 		k.Logger(ctx).Info("removed mismatched field from fieldVotePowers", "field", field.String())
@@ -1088,6 +1116,9 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 	// Check if all required fields have consensus
 	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
 	if len(missingFields) > 0 {
+		// Sort missing fields for deterministic error messages
+		slices.Sort(missingFields)
+
 		fieldNames := make([]string, 0, len(missingFields))
 		for _, field := range missingFields {
 			fieldNames = append(fieldNames, field.String())
@@ -1103,7 +1134,13 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 // fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
 func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
 	var missingConsensus []VoteExtensionField
-	for _, field := range fields {
+
+	// Sort fields for deterministic checking
+	sortedFields := make([]VoteExtensionField, len(fields))
+	copy(sortedFields, fields)
+	slices.Sort(sortedFields)
+
+	for _, field := range sortedFields {
 		if !fieldHasConsensus(fieldVotePowers, field) {
 			missingConsensus = append(missingConsensus, field)
 		}
@@ -1113,7 +1150,12 @@ func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields
 
 // anyFieldHasConsensus checks if at least one of the specified fields has consensus
 func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	for _, field := range fields {
+	// Sort fields for deterministic checking
+	sortedFields := make([]VoteExtensionField, len(fields))
+	copy(sortedFields, fields)
+	slices.Sort(sortedFields)
+
+	for _, field := range sortedFields {
 		if fieldHasConsensus(fieldVotePowers, field) {
 			return true
 		}

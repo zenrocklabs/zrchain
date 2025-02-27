@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -198,6 +199,9 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 		VEFieldEthBaseFee,
 		VEFieldEthTipCap,
 	}
+
+	// Sort fields for deterministic checking
+	slices.Sort(requiredFields)
 
 	for _, field := range requiredFields {
 		if _, ok := fieldVotePowers[field]; !ok {
