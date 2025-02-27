@@ -206,7 +206,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	if len(fieldVotePowers) == 0 { // no field reached consensus
 		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
-		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
+		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit, FieldVotePowers: fieldVotePowers})
 	}
 
 	// Log fields information
@@ -227,12 +227,11 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
-		k.Logger(ctx).Error("error validating oracle data for vote extension", "height", req.Height, "error", err)
-		return nil, nil
+		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
+		oracleData = &OracleData{}
 	}
 
 	oracleData.ConsensusData = req.LocalLastCommit
-	oracleData.FieldVotePowers = fieldVotePowers
 
 	return k.marshalOracleData(req, oracleData)
 }
@@ -261,6 +260,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	// Check for empty oracle data - if it's empty, accept the proposal
 	recoveredOracleDataNoCommitInfo := recoveredOracleData
 	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
+	recoveredOracleDataNoCommitInfo.FieldVotePowers = nil
 	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
@@ -386,7 +386,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData, fieldVotePowers); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
@@ -443,7 +443,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
 
-	if err := k.validateOracleData(voteExt, oracleData, fieldVotePowers); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers); err != nil {
 		return nil, err
 	}
 
