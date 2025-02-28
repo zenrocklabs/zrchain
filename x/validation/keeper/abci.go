@@ -304,7 +304,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	// Validator updates - only if EigenDelegationsHash has consensus
 	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
-		k.Logger(ctx).Info("processing validator updates from AVS delegations")
 		k.updateValidatorStakes(ctx, oracleData)
 		k.updateAVSDelegationStore(ctx, oracleData)
 	} else {
@@ -314,7 +313,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	// Bitcoin header processing - only if BTC header fields have consensus
 	btcHeaderFields := []VoteExtensionField{VEFieldLatestBtcHeaderHash, VEFieldRequestedBtcHeaderHash}
 	if anyFieldHasConsensus(oracleData.FieldVotePowers, btcHeaderFields) {
-		k.Logger(ctx).Info("processing Bitcoin headers")
 		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
 			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
 		}
