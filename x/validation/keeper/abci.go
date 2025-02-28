@@ -198,7 +198,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	voteExt, fieldVotePowers, totalVotePower, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
+	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return nil, nil
@@ -208,17 +208,6 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit, FieldVotePowers: fieldVotePowers})
 	}
-
-	// Log fields information
-	fieldsWithConsensus := []string{}
-	for field := range fieldVotePowers {
-		fieldsWithConsensus = append(fieldsWithConsensus, field.String())
-	}
-
-	k.Logger(ctx).Info("proceeding with partial consensus on vote extension fields",
-		"height", req.Height,
-		"fields_with_consensus", strings.Join(fieldsWithConsensus, ", "),
-		"total_vote_power", totalVotePower)
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
 		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
@@ -369,7 +358,7 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 
 // validateCanonicalVE validates the canonical vote extension from oracle data.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
+	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
 		k.Logger(ctx).Error("error getting super majority VE data", "height", height, "error", err)
 		return VoteExtension{}, false
@@ -389,25 +378,6 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 	k.Logger(ctx).Info("final consensus summary",
 		"fields_with_consensus", len(fieldVotePowers),
 		"stage", "post_validation")
-
-	// Collect fields with consensus after validation
-	fieldsWithConsensus := make([]string, 0)
-	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
-		if field == VEFieldZRChainBlockHeight {
-			continue
-		}
-
-		if fieldHasConsensus(fieldVotePowers, field) {
-			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
-		}
-	}
-
-	// Log consolidated field status
-	if len(fieldsWithConsensus) > 0 {
-		k.Logger(ctx).Info("fields with final consensus",
-			"fields", strings.Join(fieldsWithConsensus, ","),
-			"stage", "post_validation")
-	}
 
 	return voteExt, true
 }

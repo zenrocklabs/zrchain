@@ -127,7 +127,7 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 // tie-breaking mechanism is used based on the lexicographic ordering of the string representation
 // of the values. This ensures all validators will select the same consensus value regardless
 // of iteration order.
-func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, map[VoteExtensionField]int64, int64, error) {
+func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, map[VoteExtensionField]int64, error) {
 	// Use a generic map to store votes for all fields
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
@@ -242,7 +242,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	// Log consensus results
 	k.logConsensusResults(ctx, fieldVotePowers, superMajorityThreshold, simpleMajorityThreshold)
 
-	return consensusVE, fieldVotePowers, totalVotePower, nil
+	return consensusVE, fieldVotePowers, nil
 }
 
 // logConsensusResults logs information about which fields reached consensus
