@@ -22,6 +22,7 @@ import (
 func main() {
 	port := flag.Int("port", 0, "Override GRPC port from config")
 	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
+	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -46,6 +47,12 @@ func main() {
 		cfg.StateFile = *cacheFile
 	}
 
+	// Set Neutrino port from flag or config
+	neutrinoRPCPort := *neutrinoPort
+	if neutrinoRPCPort == 0 && cfg.Neutrino.Port > 0 {
+		neutrinoRPCPort = cfg.Neutrino.Port
+	}
+
 	var rpcAddress string
 	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
 		rpcAddress = endpoint
@@ -62,7 +69,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path)
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
