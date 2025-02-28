@@ -23,6 +23,7 @@ func main() {
 	port := flag.Int("port", 0, "Override GRPC port from config")
 	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
+	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -54,7 +55,11 @@ func main() {
 	}
 
 	var rpcAddress string
-	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
+	// Use the override RPC endpoint if provided via flag
+	if *ethRPC != "" {
+		rpcAddress = *ethRPC
+		slog.Info("Using override Ethereum RPC endpoint", "endpoint", rpcAddress)
+	} else if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
 		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
