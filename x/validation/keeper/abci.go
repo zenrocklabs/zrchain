@@ -572,9 +572,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	// Process the requested Bitcoin header
 	headerHeight := oracleData.RequestedBtcBlockHeight
 	if headerHeight == 0 || oracleData.RequestedBtcBlockHeader.MerkleRoot == "" {
-		k.Logger(ctx).Error("invalid bitcoin header data",
-			"height", headerHeight,
-			"merkle", oracleData.RequestedBtcBlockHeader.MerkleRoot)
+		k.Logger(ctx).Debug("no requested bitcoin header")
 		return nil
 	}
 
