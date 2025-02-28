@@ -20,6 +20,13 @@ import (
 )
 
 func main() {
+	port := flag.Int("port", 0, "Override GRPC port from config")
+	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
+
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
 	cfg := LoadConfig()
 
 	if !cfg.Enabled {
@@ -29,12 +36,14 @@ func main() {
 		}
 	}
 
-	port := flag.Int("port", 0, "Override GRPC port from config")
-	flag.Parse()
-
-	// Override defeault GRPC port if --port flag is provided
+	// Override default GRPC port if --port flag is provided
 	if *port != 0 {
 		cfg.GRPCPort = *port
+	}
+
+	// Override default state file path if --cache-file flag is provided
+	if *cacheFile != "" {
+		cfg.StateFile = *cacheFile
 	}
 
 	var rpcAddress string
