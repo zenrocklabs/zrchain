@@ -306,8 +306,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
 		k.updateValidatorStakes(ctx, oracleData)
 		k.updateAVSDelegationStore(ctx, oracleData)
-	} else {
-		k.Logger(ctx).Info("skipping validator updates - no consensus on EigenDelegationsHash")
 	}
 
 	// Bitcoin header processing - only if BTC header fields have consensus
@@ -316,8 +314,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
 			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
 		}
-	} else {
-		k.Logger(ctx).Warn("skipping Bitcoin header processing - no consensus on header fields")
 	}
 
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
@@ -371,11 +367,11 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
+// validateCanonicalVE validates the canonical vote extension from oracle data.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
 	voteExt, fieldVotePowers, _, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
+		k.Logger(ctx).Error("error getting super majority VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
@@ -387,6 +383,30 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
+	}
+
+	// Log final consensus summary after validation
+	k.Logger(ctx).Info("final consensus summary",
+		"fields_with_consensus", len(fieldVotePowers),
+		"stage", "post_validation")
+
+	// Collect fields with consensus after validation
+	fieldsWithConsensus := make([]string, 0)
+	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+		if field == VEFieldZRChainBlockHeight {
+			continue
+		}
+
+		if fieldHasConsensus(fieldVotePowers, field) {
+			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
+		}
+	}
+
+	// Log consolidated field status
+	if len(fieldsWithConsensus) > 0 {
+		k.Logger(ctx).Info("fields with final consensus",
+			"fields", strings.Join(fieldsWithConsensus, ","),
+			"stage", "post_validation")
 	}
 
 	return voteExt, true

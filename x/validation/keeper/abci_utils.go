@@ -260,9 +260,12 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	}
 
 	// Log the count of fields with consensus
-	k.Logger(ctx).Info("consensus summary", "fields_with_consensus", len(fieldVotePowers))
+	k.Logger(ctx).Info("consensus summary", "fields_with_consensus", len(fieldVotePowers), "stage", "initial")
 
-	// Loop through all possible fields and log their consensus status
+	// Collect fields with and without consensus
+	fieldsWithConsensus := make([]string, 0)
+	fieldsWithoutConsensus := make([]string, 0)
+
 	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
@@ -270,28 +273,24 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 		}
 
 		_, hasConsensus := fieldVotePowers[field]
-		k.Logger(ctx).Info("field consensus status",
-			"field", field.String(),
-			"has_consensus", hasConsensus,
-			"vote_power", func() int64 {
-				if power, ok := fieldVotePowers[field]; ok {
-					return power
-				}
-				return 0
-			}(),
-			"required_power", func() int64 {
-				if isGasField(field) {
-					return simpleMajorityThreshold
-				}
-				return superMajorityThreshold
-			}(),
-			"threshold", func() string {
-				if isGasField(field) {
-					return "simple_majority"
-				}
-				return "supermajority"
-			}(),
-		)
+		if hasConsensus {
+			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
+		} else {
+			fieldsWithoutConsensus = append(fieldsWithoutConsensus, field.String())
+		}
+	}
+
+	// Log consolidated field status
+	if len(fieldsWithConsensus) > 0 {
+		k.Logger(ctx).Debug("fields with consensus",
+			"fields", strings.Join(fieldsWithConsensus, ","),
+			"stage", "initial")
+	}
+
+	if len(fieldsWithoutConsensus) > 0 {
+		k.Logger(ctx).Warn("fields without consensus",
+			"fields", strings.Join(fieldsWithoutConsensus, ","),
+			"stage", "initial")
 	}
 }
 
@@ -1103,9 +1102,16 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	}
 
 	// Remove invalid fields from fieldVotePowers
-	for _, field := range invalidFields {
-		delete(fieldVotePowers, field)
-		k.Logger(ctx).Info("removed mismatched field from fieldVotePowers", "field", field.String())
+	if len(invalidFields) > 0 {
+		fieldNames := make([]string, 0, len(invalidFields))
+		for _, field := range invalidFields {
+			delete(fieldVotePowers, field)
+			fieldNames = append(fieldNames, field.String())
+		}
+
+		k.Logger(ctx).Warn("fields had consensus but failed data validation",
+			"fields", strings.Join(fieldNames, ","),
+			"consensus_status", "revoked")
 	}
 
 	// Update FieldVotePowers in oracleData to reflect the validated fields
@@ -1158,3 +1164,7 @@ func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields [
 	}
 	return false
 }
+
+// The following functions are imported from abci_types.go:
+// - fieldHasConsensus: checks if a specific field has reached consensus
+// - HasRequiredGasFields: checks if all gas-related fields have consensus
