@@ -195,7 +195,7 @@ run-sidecar:
 	cd sidecar && ./sidecar
 
 run-alt-sidecar:
-	cd sidecar && ./sidecar --port 9393 --cache-file cache_alt.json --neutrino-port 54321
+	cd sidecar && ./sidecar --port 9393 --cache-file cache_alt.json --neutrino-port 54321 --eth-rpc https://rpc.ankr.com/eth_holesky
 
 sidecar: build-sidecar run-sidecar
 
