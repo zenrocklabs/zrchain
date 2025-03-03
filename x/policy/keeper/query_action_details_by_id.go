@@ -33,7 +33,7 @@ func (k Keeper) ActionDetailsById(goCtx context.Context, req *types.QueryActionD
 			return nil, err
 		}
 
-		pol, err := PolicyForAction(ctx, &k, &action)
+		pol, err := k.PolicyForAction(ctx, &action)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,5 @@
 from ibc.applications.transfer.v1 import transfer_pb2 as _transfer_pb2
 from ibc.applications.transfer.v2 import token_pb2 as _token_pb2
-from ibc.core.channel.v1 import channel_pb2 as _channel_pb2
 from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.protobuf.internal import containers as _containers

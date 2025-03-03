@@ -57,7 +57,7 @@ func (k msgServer) AddOwnerPolicyGenerator(ctx sdk.Context, msg *types.MsgAddWor
 
 func (k msgServer) AddOwnerActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgAddWorkspaceOwnerResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

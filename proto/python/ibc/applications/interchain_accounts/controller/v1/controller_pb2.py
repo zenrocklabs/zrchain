@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nCibc/applications/interchain_accounts/controller/v1/controller.proto\x12\x32ibc.applications.interchain_accounts.controller.v1\"7\n\x06Params\x12-\n\x12\x63ontroller_enabled\x18\x01 \x01(\x08R\x11\x63ontrollerEnabledBRZPgithub.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nCibc/applications/interchain_accounts/controller/v1/controller.proto\x12\x32ibc.applications.interchain_accounts.controller.v1\"7\n\x06Params\x12-\n\x12\x63ontroller_enabled\x18\x01 \x01(\x08R\x11\x63ontrollerEnabledBSZQgithub.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.applications.interchain_accounts.controller.v1.controller_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'ZPgithub.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/types'
+  _globals['DESCRIPTOR']._serialized_options = b'ZQgithub.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types'
   _globals['_PARAMS']._serialized_start=123
   _globals['_PARAMS']._serialized_end=178
 # @@protoc_insertion_point(module_scope)

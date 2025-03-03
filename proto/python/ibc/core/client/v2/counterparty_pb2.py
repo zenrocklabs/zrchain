@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%ibc/core/client/v2/counterparty.proto\x12\x12ibc.core.client.v2\"T\n\x10\x43ounterpartyInfo\x12#\n\rmerkle_prefix\x18\x01 \x03(\x0cR\x0cmerklePrefix\x12\x1b\n\tclient_id\x18\x02 \x01(\tR\x08\x63lientIdB=Z;github.com/cosmos/ibc-go/v9/modules/core/02-client/v2/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%ibc/core/client/v2/counterparty.proto\x12\x12ibc.core.client.v2\"T\n\x10\x43ounterpartyInfo\x12#\n\rmerkle_prefix\x18\x01 \x03(\x0cR\x0cmerklePrefix\x12\x1b\n\tclient_id\x18\x02 \x01(\tR\x08\x63lientIdB>Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.core.client.v2.counterparty_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/cosmos/ibc-go/v9/modules/core/02-client/v2/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types'
   _globals['_COUNTERPARTYINFO']._serialized_start=61
   _globals['_COUNTERPARTYINFO']._serialized_end=145
 # @@protoc_insertion_point(module_scope)
