@@ -286,6 +286,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
+		k.checkForRedemptionFulfilment(ctx)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -671,13 +672,14 @@ func processZenBTCTransaction[T any](
 
 // getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
 // and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
+// If limit is 0, all matching items will be returned.
 func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64, T], predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
 	var results []T
 	queryRange := &collections.Range[uint64]{}
 	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
 		if predicate(value) {
 			results = append(results, value)
-			if len(results) >= limit {
+			if limit > 0 && len(results) >= limit {
 				return true, nil
 			}
 		}
@@ -1146,7 +1148,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		oracleData.RequestedCompleterNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-			return k.getPendingRedemptions(ctx)
+			firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
+			if err != nil {
+				firstPendingID = 0
+			}
+			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
@@ -1199,4 +1205,87 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			return err
 		},
 	)
+}
+
+func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
+	startingIndex, err := k.zenBTCKeeper.GetFirstRedemptionAwaitingSign(ctx)
+	if err != nil {
+		startingIndex = 0
+	}
+
+	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
+	if err != nil {
+		k.Logger(ctx).Error("error getting redemptions", "error", err)
+		return
+	}
+
+	if len(redemptions) == 0 {
+		return
+	}
+
+	if err := k.zenBTCKeeper.SetFirstRedemptionAwaitingSign(ctx, redemptions[0].Data.Id); err != nil {
+		k.Logger(ctx).Error("error setting first redemption awaiting sign", "error", err)
+	}
+
+	supply, err := k.zenBTCKeeper.GetSupply(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting zenBTC supply", "error", err)
+		return
+	}
+
+	for _, redemption := range redemptions {
+		signReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, redemption.Data.SignReqId)
+		if err != nil {
+			k.Logger(ctx).Error("error getting sign request for redemption", "id", redemption.Data.Id, "error", err)
+			continue
+		}
+
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING {
+			continue
+		}
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED {
+			// Get current exchange rate
+			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("error getting zenBTC exchange rate", "error", err)
+				continue
+			}
+
+			// redemption.Data.Amount is in zenBTC (what user wants to redeem)
+			// Calculate how much BTC they should receive based on current exchange rate
+			btcToRelease := uint64(math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
+
+			// Invariant checks
+			if supply.MintedZenBTC < redemption.Data.Amount {
+				k.Logger(ctx).Error("insufficient minted zenBTC for redemption", "id", redemption.Data.Id)
+				continue
+			}
+			if supply.CustodiedBTC < btcToRelease {
+				k.Logger(ctx).Error("insufficient custodied BTC for redemption", "id", redemption.Data.Id)
+				continue
+			}
+
+			// Update supplies (zenBTC burned, BTC released)
+			supply.MintedZenBTC -= redemption.Data.Amount
+			supply.CustodiedBTC -= btcToRelease
+
+			k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC+redemption.Data.Amount, "minted_new", supply.MintedZenBTC)
+			k.Logger(ctx).Warn("custodied supply updated", "custodied_old", supply.CustodiedBTC+btcToRelease, "custodied_new", supply.CustodiedBTC)
+
+			redemption.Status = zenbtctypes.RedemptionStatus_COMPLETED
+		}
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
+			redemption.Data.SignReqId = 0
+			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+		}
+
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption); err != nil {
+			k.Logger(ctx).Error("error updating redemption status", "error", err)
+		}
+	}
+
+	if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+		k.Logger(ctx).Error("error updating zenBTC supply", "error", err)
+	}
+
 }

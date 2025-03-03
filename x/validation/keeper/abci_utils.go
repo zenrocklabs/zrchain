@@ -783,23 +783,17 @@ func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent,
 	)
 }
 
-// getPendingRedemptions retrieves up to 2 pending redemptions with status INITIATED.
-func (k *Keeper) getPendingRedemptions(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return nil, err
-		}
-		firstPendingID = 0
-	}
+// getPendingRedemptions retrieves pending redemptions with the specified status.
+// If limit is 0, all matching redemptions will be returned.
+func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus, limit int, startingIndex uint64) ([]zenbtctypes.Redemption, error) {
 	return getPendingTransactions(
 		ctx,
 		k.zenBTCKeeper.GetRedemptionsStore(),
 		func(r zenbtctypes.Redemption) bool {
-			return r.Status == zenbtctypes.RedemptionStatus_INITIATED
+			return r.Status == status
 		},
-		firstPendingID,
-		2,
+		startingIndex,
+		limit,
 	)
 }
 
