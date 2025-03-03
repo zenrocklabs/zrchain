@@ -83,7 +83,7 @@ func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes
 	return nodeMap, err
 }
 
-func (ns *NeutrinoServer) Initialize(url, user, password, path string) {
+func (ns *NeutrinoServer) Initialize(url, user, password, path string, port int) {
 	var err error
 	nodes := make(map[string]LiteNode)
 
@@ -105,8 +105,11 @@ func (ns *NeutrinoServer) Initialize(url, user, password, path string) {
 	// Register RPC server
 	rpc.Register(ns)
 	rpc.HandleHTTP()
-	// Listen for requests on port 12345
-	l, e := net.Listen("tcp", ":12345")
+	// Listen for requests on specified port (default: 12345)
+	if port <= 0 {
+		port = 12345 // Use default port if invalid port is provided
+	}
+	l, e := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
