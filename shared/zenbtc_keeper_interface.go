@@ -39,4 +39,6 @@ type ZenBTCKeeper interface {
 	SetFirstPendingRedemption(ctx context.Context, id uint64) error
 	GetFirstPendingStakeTransaction(ctx context.Context) (uint64, error)
 	SetFirstPendingStakeTransaction(ctx context.Context, id uint64) error
+	GetFirstRedemptionAwaitingSign(ctx context.Context) (uint64, error)
+	SetFirstRedemptionAwaitingSign(ctx context.Context, id uint64) error
 }
