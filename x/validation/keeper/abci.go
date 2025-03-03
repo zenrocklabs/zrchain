@@ -345,6 +345,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
+		k.checkForRedemptionFulfilment(ctx)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -781,13 +782,14 @@ func processZenBTCTransaction[T any](
 
 // getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
 // and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
+// If limit is 0, all matching items will be returned.
 func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64, T], predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
 	var results []T
 	queryRange := &collections.Range[uint64]{}
 	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
 		if predicate(value) {
 			results = append(results, value)
-			if len(results) >= limit {
+			if limit > 0 && len(results) >= limit {
 				return true, nil
 			}
 		}
@@ -1282,7 +1284,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		oracleData.RequestedCompleterNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-			return k.getPendingRedemptions(ctx)
+			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2)
 		},
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
@@ -1336,4 +1338,8 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			)
 		},
 	)
+}
+
+func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
+
 }
