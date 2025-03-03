@@ -1284,7 +1284,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		oracleData.RequestedCompleterNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2)
+			firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
+			if err != nil {
+				firstPendingID = 0
+			}
+			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
