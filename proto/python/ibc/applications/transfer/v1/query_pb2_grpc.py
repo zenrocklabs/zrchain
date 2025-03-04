@@ -20,6 +20,16 @@ class QueryStub(object):
                 request_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsRequest.SerializeToString,
                 response_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsResponse.FromString,
                 )
+        self.Denoms = channel.unary_unary(
+                '/ibc.applications.transfer.v1.Query/Denoms',
+                request_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsRequest.SerializeToString,
+                response_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsResponse.FromString,
+                )
+        self.Denom = channel.unary_unary(
+                '/ibc.applications.transfer.v1.Query/Denom',
+                request_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomRequest.SerializeToString,
+                response_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomResponse.FromString,
+                )
         self.DenomHash = channel.unary_unary(
                 '/ibc.applications.transfer.v1.Query/DenomHash',
                 request_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomHashRequest.SerializeToString,
@@ -43,6 +53,20 @@ class QueryServicer(object):
 
     def Params(self, request, context):
         """Params queries all parameters of the ibc-transfer module.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Denoms(self, request, context):
+        """Denoms queries all denominations
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Denom(self, request, context):
+        """Denom queries a denomination
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -76,6 +100,16 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.Params,
                     request_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsRequest.FromString,
                     response_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsResponse.SerializeToString,
+            ),
+            'Denoms': grpc.unary_unary_rpc_method_handler(
+                    servicer.Denoms,
+                    request_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsRequest.FromString,
+                    response_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsResponse.SerializeToString,
+            ),
+            'Denom': grpc.unary_unary_rpc_method_handler(
+                    servicer.Denom,
+                    request_deserializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomRequest.FromString,
+                    response_serializer=ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomResponse.SerializeToString,
             ),
             'DenomHash': grpc.unary_unary_rpc_method_handler(
                     servicer.DenomHash,
@@ -117,6 +151,40 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/ibc.applications.transfer.v1.Query/Params',
             ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsRequest.SerializeToString,
             ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Denoms(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ibc.applications.transfer.v1.Query/Denoms',
+            ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsRequest.SerializeToString,
+            ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Denom(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ibc.applications.transfer.v1.Query/Denom',
+            ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomRequest.SerializeToString,
+            ibc_dot_applications_dot_transfer_dot_v1_dot_query__pb2.QueryDenomResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

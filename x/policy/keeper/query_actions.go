@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +16,7 @@ func (k Keeper) Actions(goCtx context.Context, req *types.QueryActionsRequest) (
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "request is nil")
 	}
 
-	actions, pageRes, err := query.CollectionFilteredPaginate[uint64, types.Action, collections.Map[uint64, types.Action], types.ActionResponse](
+	actions, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.ActionStore,
 		req.Pagination,

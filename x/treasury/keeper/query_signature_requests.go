@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -14,7 +13,7 @@ func (k Keeper) SignatureRequests(goCtx context.Context, req *types.QuerySignatu
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "invalid arguments: request is nil")
 	}
 
-	requests, pageRes, err := query.CollectionFilteredPaginate[uint64, types.SignRequest, collections.Map[uint64, types.SignRequest], *types.SignReqResponse](
+	requests, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.SignRequestStore,
 		req.Pagination,
