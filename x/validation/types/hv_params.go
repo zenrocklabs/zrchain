@@ -9,8 +9,8 @@ var (
 	DefaultBlockTime         int64 = 5                                // seconds
 	DefaultStakeableAssets         = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_ETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
+		// {Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		// {Asset: Asset_ETH, Precision: 18, PriceUSD: math.LegacyZeroDec()},
 	}
 	DefaultPriceRetentionBlockRange int64 = 100
 )
