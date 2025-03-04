@@ -783,7 +783,7 @@ func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent,
 	)
 }
 
-// getPendingRedemptions retrieves pending redemptions with the specified status.
+// getRedemptionsByStatus retrieves redemptions with the specified status.
 // If limit is 0, all matching redemptions will be returned.
 func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus, limit int, startingIndex uint64) ([]zenbtctypes.Redemption, error) {
 	return getPendingTransactions(
