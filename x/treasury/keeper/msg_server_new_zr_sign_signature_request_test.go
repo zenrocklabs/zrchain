@@ -81,6 +81,7 @@ func Test_msgServer_NewZrSignSignatureRequest_Hash_OrData(t *testing.T) {
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 				DataForSigning: [][]byte{rawData},
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
+				MpcBtl:         20,
 			},
 			wantResp: &types.MsgNewZrSignSignatureRequestResponse{
 				ReqId: 1,

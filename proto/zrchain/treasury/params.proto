@@ -17,4 +17,5 @@ message Params {
   uint64 keyring_commission = 3;
   string keyring_commission_destination = 4;
   string min_gas_fee = 5;
+  uint64 default_btl = 6;
 }

@@ -26,14 +26,14 @@ from ibc.core.client.v2 import counterparty_pb2 as ibc_dot_core_dot_client_dot_v
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1eibc/core/client/v2/query.proto\x12\x12ibc.core.client.v2\x1a%ibc/core/client/v2/counterparty.proto\x1a\x1cgoogle/api/annotations.proto\";\n\x1cQueryCounterpartyInfoRequest\x12\x1b\n\tclient_id\x18\x01 \x01(\tR\x08\x63lientId\"r\n\x1dQueryCounterpartyInfoResponse\x12Q\n\x11\x63ounterparty_info\x18\x01 \x01(\x0b\x32$.ibc.core.client.v2.CounterpartyInfoR\x10\x63ounterpartyInfo2\xbc\x01\n\x05Query\x12\xb2\x01\n\x10\x43ounterpartyInfo\x12\x30.ibc.core.client.v2.QueryCounterpartyInfoRequest\x1a\x31.ibc.core.client.v2.QueryCounterpartyInfoResponse\"9\x82\xd3\xe4\x93\x02\x33\x12\x31/ibc/core/client/v2/counterparty_info/{client_id}B=Z;github.com/cosmos/ibc-go/v9/modules/core/02-client/v2/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1eibc/core/client/v2/query.proto\x12\x12ibc.core.client.v2\x1a%ibc/core/client/v2/counterparty.proto\x1a\x1cgoogle/api/annotations.proto\";\n\x1cQueryCounterpartyInfoRequest\x12\x1b\n\tclient_id\x18\x01 \x01(\tR\x08\x63lientId\"r\n\x1dQueryCounterpartyInfoResponse\x12Q\n\x11\x63ounterparty_info\x18\x01 \x01(\x0b\x32$.ibc.core.client.v2.CounterpartyInfoR\x10\x63ounterpartyInfo2\xbc\x01\n\x05Query\x12\xb2\x01\n\x10\x43ounterpartyInfo\x12\x30.ibc.core.client.v2.QueryCounterpartyInfoRequest\x1a\x31.ibc.core.client.v2.QueryCounterpartyInfoResponse\"9\x82\xd3\xe4\x93\x02\x33\x12\x31/ibc/core/client/v2/counterparty_info/{client_id}B>Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.core.client.v2.query_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/cosmos/ibc-go/v9/modules/core/02-client/v2/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types'
   _globals['_QUERY'].methods_by_name['CounterpartyInfo']._loaded_options = None
   _globals['_QUERY'].methods_by_name['CounterpartyInfo']._serialized_options = b'\202\323\344\223\0023\0221/ibc/core/client/v2/counterparty_info/{client_id}'
   _globals['_QUERYCOUNTERPARTYINFOREQUEST']._serialized_start=123
