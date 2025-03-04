@@ -50,6 +50,7 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 				DataForSigning: [][]byte{{119, 143, 87, 47, 51, 175, 171, 131, 19, 101, 213, 46, 86, 58, 13, 221, 153, 105, 165, 53, 246, 34, 98, 18, 91, 176, 109, 67, 104, 28, 89, 170}},
 				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				MpcBtl:         20,
 			},
 			want: &types.MsgNewSignatureRequestResponse{SigReqId: 1},
 		},
