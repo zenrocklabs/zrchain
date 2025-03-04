@@ -25,14 +25,14 @@ _sym_db = _symbol_database.Default()
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&ibc/lightclients/wasm/v1/genesis.proto\x12\x18ibc.lightclients.wasm.v1\x1a\x14gogoproto/gogo.proto\"V\n\x0cGenesisState\x12\x46\n\tcontracts\x18\x01 \x03(\x0b\x32\".ibc.lightclients.wasm.v1.ContractB\x04\xc8\xde\x1f\x00R\tcontracts\"/\n\x08\x43ontract\x12\x1d\n\ncode_bytes\x18\x01 \x01(\x0cR\tcodeBytes:\x04\x88\xa0\x1f\x00\x42>Z<github.com/cosmos/ibc-go/modules/light-clients/08-wasm/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&ibc/lightclients/wasm/v1/genesis.proto\x12\x18ibc.lightclients.wasm.v1\x1a\x14gogoproto/gogo.proto\"V\n\x0cGenesisState\x12\x46\n\tcontracts\x18\x01 \x03(\x0b\x32\".ibc.lightclients.wasm.v1.ContractB\x04\xc8\xde\x1f\x00R\tcontracts\"/\n\x08\x43ontract\x12\x1d\n\ncode_bytes\x18\x01 \x01(\x0cR\tcodeBytes:\x04\x88\xa0\x1f\x00\x42\x42Z@github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.lightclients.wasm.v1.genesis_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z@github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types'
   _globals['_GENESISSTATE'].fields_by_name['contracts']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['contracts']._serialized_options = b'\310\336\037\000'
   _globals['_CONTRACT']._loaded_options = None

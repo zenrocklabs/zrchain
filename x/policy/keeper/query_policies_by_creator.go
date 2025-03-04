@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/collections"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -18,7 +17,7 @@ func (k Keeper) PoliciesByCreator(goCtx context.Context, req *types.QueryPolicie
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	policies, pageRes, err := query.CollectionFilteredPaginate[uint64, types.Policy, collections.Map[uint64, types.Policy], *types.Policy](
+	policies, pageRes, err := query.CollectionFilteredPaginate(
 		ctx,
 		k.PolicyStore,
 		req.Pagination,
