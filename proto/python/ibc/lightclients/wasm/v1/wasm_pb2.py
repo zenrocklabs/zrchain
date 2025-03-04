@@ -26,14 +26,14 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from ibc.core.client.v1 import client_pb2 as ibc_dot_core_dot_client_dot_v1_dot_client__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#ibc/lightclients/wasm/v1/wasm.proto\x12\x18ibc.lightclients.wasm.v1\x1a\x14gogoproto/gogo.proto\x1a\x1fibc/core/client/v1/client.proto\"\x8a\x01\n\x0b\x43lientState\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta\x12\x1a\n\x08\x63hecksum\x18\x02 \x01(\x0cR\x08\x63hecksum\x12\x45\n\rlatest_height\x18\x03 \x01(\x0b\x32\x1a.ibc.core.client.v1.HeightB\x04\xc8\xde\x1f\x00R\x0clatestHeight:\x04\x88\xa0\x1f\x00\"*\n\x0e\x43onsensusState\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta:\x04\x88\xa0\x1f\x00\")\n\rClientMessage\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta:\x04\x88\xa0\x1f\x00\"-\n\tChecksums\x12\x1c\n\tchecksums\x18\x01 \x03(\x0cR\tchecksums:\x02\x18\x01\x42>Z<github.com/cosmos/ibc-go/modules/light-clients/08-wasm/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#ibc/lightclients/wasm/v1/wasm.proto\x12\x18ibc.lightclients.wasm.v1\x1a\x14gogoproto/gogo.proto\x1a\x1fibc/core/client/v1/client.proto\"\x8a\x01\n\x0b\x43lientState\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta\x12\x1a\n\x08\x63hecksum\x18\x02 \x01(\x0cR\x08\x63hecksum\x12\x45\n\rlatest_height\x18\x03 \x01(\x0b\x32\x1a.ibc.core.client.v1.HeightB\x04\xc8\xde\x1f\x00R\x0clatestHeight:\x04\x88\xa0\x1f\x00\"*\n\x0e\x43onsensusState\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta:\x04\x88\xa0\x1f\x00\")\n\rClientMessage\x12\x12\n\x04\x64\x61ta\x18\x01 \x01(\x0cR\x04\x64\x61ta:\x04\x88\xa0\x1f\x00\"-\n\tChecksums\x12\x1c\n\tchecksums\x18\x01 \x03(\x0cR\tchecksums:\x02\x18\x01\x42\x42Z@github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.lightclients.wasm.v1.wasm_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z@github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types'
   _globals['_CLIENTSTATE'].fields_by_name['latest_height']._loaded_options = None
   _globals['_CLIENTSTATE'].fields_by_name['latest_height']._serialized_options = b'\310\336\037\000'
   _globals['_CLIENTSTATE']._loaded_options = None

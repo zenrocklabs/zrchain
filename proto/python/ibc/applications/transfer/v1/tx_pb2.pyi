@@ -11,7 +11,7 @@ from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Opti
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MsgTransfer(_message.Message):
-    __slots__ = ("source_port", "source_channel", "token", "sender", "receiver", "timeout_height", "timeout_timestamp", "memo")
+    __slots__ = ("source_port", "source_channel", "token", "sender", "receiver", "timeout_height", "timeout_timestamp", "memo", "encoding")
     SOURCE_PORT_FIELD_NUMBER: _ClassVar[int]
     SOURCE_CHANNEL_FIELD_NUMBER: _ClassVar[int]
     TOKEN_FIELD_NUMBER: _ClassVar[int]
@@ -20,6 +20,7 @@ class MsgTransfer(_message.Message):
     TIMEOUT_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     MEMO_FIELD_NUMBER: _ClassVar[int]
+    ENCODING_FIELD_NUMBER: _ClassVar[int]
     source_port: str
     source_channel: str
     token: _coin_pb2.Coin
@@ -28,7 +29,8 @@ class MsgTransfer(_message.Message):
     timeout_height: _client_pb2.Height
     timeout_timestamp: int
     memo: str
-    def __init__(self, source_port: _Optional[str] = ..., source_channel: _Optional[str] = ..., token: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ..., sender: _Optional[str] = ..., receiver: _Optional[str] = ..., timeout_height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ..., timeout_timestamp: _Optional[int] = ..., memo: _Optional[str] = ...) -> None: ...
+    encoding: str
+    def __init__(self, source_port: _Optional[str] = ..., source_channel: _Optional[str] = ..., token: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ..., sender: _Optional[str] = ..., receiver: _Optional[str] = ..., timeout_height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ..., timeout_timestamp: _Optional[int] = ..., memo: _Optional[str] = ..., encoding: _Optional[str] = ...) -> None: ...
 
 class MsgTransferResponse(_message.Message):
     __slots__ = ("sequence",)

@@ -16,7 +16,7 @@ func (k Keeper) SignMethodsByAddress(goCtx context.Context, req *types.QuerySign
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	signMethods, pageRes, err := query.CollectionFilteredPaginate[collections.Pair[string, string], codectypes.Any, collections.Map[collections.Pair[string, string], codectypes.Any], *codectypes.Any](
+	signMethods, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.SignMethodStore,
 		req.Pagination,

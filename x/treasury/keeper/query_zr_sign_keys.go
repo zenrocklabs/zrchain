@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -24,7 +23,7 @@ func (k Keeper) ZrSignKeys(goCtx context.Context, req *types.QueryZrSignKeysRequ
 	}
 
 	result := &types.QueryZrSignKeysResponse{}
-	keys, pageRes, err := query.CollectionFilteredPaginate[uint64, types.Key, collections.Map[uint64, types.Key], *types.ZrSignKeyEntry](
+	keys, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.KeyStore,
 		nil,
