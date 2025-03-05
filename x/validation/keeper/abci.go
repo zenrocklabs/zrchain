@@ -12,7 +12,6 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -87,19 +86,30 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-
 	redemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
 
-	neutrinoResponse, err := k.retrieveBitcoinHeader(ctx)
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	bitcoinHeaderHash, err := deriveHash(neutrinoResponse.BlockHeader)
+	latestBitcoinHeaderHash, err := deriveHash(latestHeader.BlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
+	}
+	// Only set requested header fields if there's a requested header
+	requestedBtcBlockHeight := int64(0)
+	var requestedBtcHeaderHash []byte
+	if requestedHeader != nil {
+		// Get requested Bitcoin header hash
+		requestedBitcoinHeaderHash, err := deriveHash(requestedHeader.BlockHeader)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+		requestedBtcBlockHeight = requestedHeader.BlockHeight
+		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
 	nonces := make(map[uint64]uint64)
@@ -120,8 +130,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
-	//solNonce := k.sidecarClient.
-
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
 		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
@@ -130,8 +138,10 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
 		RedemptionsHash:            redemptionsHash[:],
-		BtcBlockHeight:             neutrinoResponse.BlockHeight,
-		BtcHeaderHash:              bitcoinHeaderHash[:],
+		RequestedBtcBlockHeight:    requestedBtcBlockHeight,
+		RequestedBtcHeaderHash:     requestedBtcHeaderHash,
+		LatestBtcBlockHeight:       latestHeader.BlockHeight,
+		LatestBtcHeaderHash:        latestBitcoinHeaderHash[:],
 		EthBlockHeight:             oracleData.EthBlockHeight,
 		EthGasLimit:                oracleData.EthGasLimit,
 		EthBaseFee:                 oracleData.EthBaseFee,
@@ -189,14 +199,15 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, req.LocalLastCommit)
+	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
-	if voteExt.ZRChainBlockHeight == 0 { // no supermajority vote extension
-		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
+	if len(fieldVotePowers) == 0 { // no field reached consensus
+		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
+		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit, FieldVotePowers: fieldVotePowers})
 	}
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
@@ -204,11 +215,12 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
+	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
 	}
+
 	oracleData.ConsensusData = req.LocalLastCommit
 
 	return k.marshalOracleData(req, oracleData)
@@ -216,6 +228,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 
 // ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
+	// Return early if this node is not a validator so non-validators don't need to be running a sidecar
 	if !k.zrConfig.IsValidator {
 		return ACCEPT_PROPOSAL, nil
 	}
@@ -234,9 +247,10 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
-	// Remove commit info before comparison.
+	// Check for empty oracle data - if it's empty, accept the proposal
 	recoveredOracleDataNoCommitInfo := recoveredOracleData
 	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
+	recoveredOracleDataNoCommitInfo.FieldVotePowers = nil
 	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
@@ -256,7 +270,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 // =============================================================================
 //
 
-// PreBlocker is called before each block to process oracle data and update state.
+// PreBlocker processes oracle data and applies the resulting state updates.
 func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) error {
 	if !k.shouldProcessOracleData(ctx, req) {
 		return nil
@@ -267,33 +281,60 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	voteExt, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
+	canonicalVE, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
 	if !ok {
+		k.Logger(ctx).Error("invalid canonical vote extension")
 		return nil
 	}
 
-	// Process various state updates.
+	// Update asset prices if there's consensus on the price fields
 	k.updateAssetPrices(ctx, oracleData)
-	k.updateValidatorStakes(ctx, oracleData)
-	k.updateAVSDelegationStore(ctx, oracleData)
 
-	k.storeBitcoinBlockHeader(ctx, oracleData)
-	k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
-	k.storeNewZenBTCRedemptions(ctx, oracleData)
+	// Process different subsystems based on field consensus
 
-	// Toggle minting and unstaking every other block due to a 1-block delay in processing VEs.
-	if ctx.BlockHeight()%2 == 0 {
-		k.updateNonces(ctx, oracleData)
+	// Validator updates - only if EigenDelegationsHash has consensus
+	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
+		k.updateValidatorStakes(ctx, oracleData)
+		k.updateAVSDelegationStore(ctx, oracleData)
+	}
+
+	// Bitcoin header processing - only if BTC header fields have consensus
+	btcHeaderFields := []VoteExtensionField{VEFieldLatestBtcHeaderHash, VEFieldRequestedBtcHeaderHash}
+	if anyFieldHasConsensus(oracleData.FieldVotePowers, btcHeaderFields) {
+		if err := k.storeBitcoinBlockHeaders(ctx, oracleData); err != nil {
+			k.Logger(ctx).Error("error storing Bitcoin headers", "error", err)
+		}
+	}
+
+	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
+
+		nonceFields := []VoteExtensionField{
+			VEFieldRequestedStakerNonce,
+			VEFieldRequestedEthMinterNonce,
+			VEFieldRequestedUnstakerNonce,
+			VEFieldRequestedCompleterNonce,
+		}
+		if anyFieldHasConsensus(oracleData.FieldVotePowers, nonceFields) {
+			k.updateNonces(ctx, oracleData)
+		}
+
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
+			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
+		}
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
+			k.storeNewZenBTCRedemptions(ctx, oracleData)
+		}
 
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCBurnEventsEthereum(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
+		k.checkForRedemptionFulfilment(ctx)
 		k.processROCKMints(ctx, oracleData)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
-	k.recordMismatchedVoteExtensions(ctx, req.Height, voteExt, oracleData.ConsensusData)
+	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
 
 	return nil
 }
@@ -318,62 +359,86 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 	return true
 }
 
-// validateCanonicalVE validates the proposed oracle data against the supermajority vote extension.
+// validateCanonicalVE validates the canonical vote extension from oracle data.
 func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, err := k.GetSuperMajorityVE(ctx, height, oracleData.ConsensusData)
+	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving supermajority vote extensions", "height", height, "error", err)
+		k.Logger(ctx).Error("error getting super majority VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
 
 	if reflect.DeepEqual(voteExt, VoteExtension{}) {
 		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
-		return voteExt, true
+		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(voteExt, &oracleData); err != nil {
+	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
 		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
 		return VoteExtension{}, false
 	}
+
+	// Log final consensus summary after validation
+	k.Logger(ctx).Info("final consensus summary",
+		"fields_with_consensus", len(fieldVotePowers),
+		"stage", "post_validation")
 
 	return voteExt, true
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) (*OracleData, *VoteExtension, error) {
-	oracleData, err := k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
+// Only validates fields that have reached consensus as indicated in fieldVotePowers.
+func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
+	// We only fetch Ethereum state if we have consensus on EthBlockHeight
+	var oracleData *OracleData
+	var err error
+
+	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+		oracleData, err = k.GetSidecarStateByEthHeight(ctx, voteExt.EthBlockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching oracle state: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("no consensus on eth block height")
+	}
+
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching oracle state: %w", err)
+		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
-	bitcoinData, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(
-		ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
-			ChainName:   k.bitcoinNetwork(ctx),
-			BlockHeight: voteExt.BtcBlockHeight,
-		},
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
+	// Copy latest Bitcoin header data if we have consensus
+	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok && latestHeader != nil {
+		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
+		oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
+	}
+	// Copy requested Bitcoin header data if we have consensus and the header exists
+	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok && requestedHeader != nil {
+		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
+		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
-	solanaNonce, err := k.GetSolanaNonceAccount(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error fetching solana nonce account: %w", err)
+	// Copy over nonce data if we have consensus on those fields
+	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
+	}
+	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
 
-	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
-	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
-	oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
-	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
-	oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
-	oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
-	oracleData.SolROCKMintNonce = *solanaNonce
+	// Store the field vote powers for later use in transaction dispatch callbacks
+	oracleData.FieldVotePowers = fieldVotePowers
 
-	if err := k.validateOracleData(voteExt, oracleData); err != nil {
-		return nil, nil, err
+	if err := k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers); err != nil {
+		return nil, err
 	}
 
-	return oracleData, &voteExt, nil
+	return oracleData, nil
 }
 
 //
@@ -481,61 +546,85 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 //
 
 // storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
-func (k *Keeper) storeBitcoinBlockHeader(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Info("checking bitcoin header", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
-
-	if oracleData.BtcBlockHeight == 0 || oracleData.BtcBlockHeader.MerkleRoot == "" {
-		k.Logger(ctx).Error("invalid bitcoin header data", "height", oracleData.BtcBlockHeight, "merkle", oracleData.BtcBlockHeader.MerkleRoot)
-		return
+func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData) error {
+	// First store the latest Bitcoin header if available
+	if oracleData.LatestBtcBlockHeight > 0 && oracleData.LatestBtcBlockHeader.MerkleRoot != "" {
+		latestHeaderExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.LatestBtcBlockHeight)
+		if err != nil {
+			k.Logger(ctx).Error("error checking if latest Bitcoin header exists", "height", oracleData.LatestBtcBlockHeight, "error", err)
+		} else if !latestHeaderExists {
+			// Only store if it doesn't already exist
+			if err := k.BtcBlockHeaders.Set(ctx, oracleData.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeader); err != nil {
+				k.Logger(ctx).Error("error storing latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight, "error", err)
+			} else {
+				k.Logger(ctx).Info("stored latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight)
+			}
+		}
 	}
 
+	// Process the requested Bitcoin header
+	headerHeight := oracleData.RequestedBtcBlockHeight
+	if headerHeight == 0 || oracleData.RequestedBtcBlockHeader.MerkleRoot == "" {
+		k.Logger(ctx).Debug("no requested bitcoin header")
+		return nil
+	}
+
+	// Get requested headers
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "error", err)
-			return
+			return err
 		}
-		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised", "height", oracleData.BtcBlockHeight)
+		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised", "height", headerHeight)
 	}
 
-	k.Logger(ctx).Info("requested headers", "headers", requestedHeaders.Heights)
+	// Check if the header is historical
+	isHistorical := k.isHistoricalHeader(headerHeight, requestedHeaders.Heights)
 
-	isHistorical := k.isHistoricalHeader(oracleData.BtcBlockHeight, requestedHeaders.Heights)
-	headerPreviouslySeen, err := k.BtcBlockHeaders.Has(ctx, oracleData.BtcBlockHeight)
+	// Check if header exists (for logging only)
+	headerExists, err := k.BtcBlockHeaders.Has(ctx, headerHeight)
 	if err != nil {
-		k.Logger(ctx).Error("error checking if Bitcoin header is already stored", "height", oracleData.BtcBlockHeight, "error", err)
-		return
+		k.Logger(ctx).Error("error checking if Bitcoin header exists", "height", headerHeight, "error", err)
+		return err
 	}
 
-	k.Logger(ctx).Info("header previously seen", "seen", headerPreviouslySeen, "isHistorical", isHistorical)
+	logger := k.Logger(ctx).With(
+		"height", headerHeight,
+		"is_historical", isHistorical,
+		"already_exists", headerExists,
+		"requested_headers", requestedHeaders.Heights)
 
-	if err := k.BtcBlockHeaders.Set(ctx, oracleData.BtcBlockHeight, oracleData.BtcBlockHeader); err != nil {
-		k.Logger(ctx).Error("error storing Bitcoin header", "height", oracleData.BtcBlockHeight, "error", err)
-		return
+	// Always store the header regardless of whether it exists
+	if err := k.BtcBlockHeaders.Set(ctx, headerHeight, oracleData.RequestedBtcBlockHeader); err != nil {
+		k.Logger(ctx).Error("error storing Bitcoin header", "height", headerHeight, "error", err)
+		return err
 	}
+	logger.Info("stored Bitcoin header",
+		"type", map[bool]string{true: "historical", false: "latest"}[isHistorical])
 
-	k.Logger(ctx).Info("stored header", "height", oracleData.BtcBlockHeight)
-
+	// Process according to header type
 	if isHistorical {
+		// Remove the processed historical header from the requested list
 		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
-			return height == oracleData.BtcBlockHeight
+			return height == headerHeight
 		})
+
 		if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
 			k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "error", err)
-			return
+			return err
 		}
-		k.Logger(ctx).Debug("stored historical Bitcoin header and removed request", "height", oracleData.BtcBlockHeight, "remaining_requests", len(requestedHeaders.Heights))
-		return
+
+		logger.Debug("removed processed historical header request",
+			"remaining_requests", len(requestedHeaders.Heights))
+	} else if !headerExists {
+		// Only check for reorgs for non-historical headers that weren't already stored
+		if err := k.checkForBitcoinReorg(ctx, oracleData, requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", headerHeight, "error", err)
+		}
 	}
 
-	if headerPreviouslySeen {
-		k.Logger(ctx).Debug("bitcoin header previously seen; skipping reorg check", "height", oracleData.BtcBlockHeight)
-		return
-	}
-
-	if err := k.checkForBitcoinReorg(ctx, oracleData, requestedHeaders); err != nil {
-		k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", oracleData.BtcBlockHeight, "error", err)
-	}
+	return nil
 }
 
 // isHistoricalHeader checks if the given Bitcoin block height is in the list of requested historical headers.
@@ -557,7 +646,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 
 	prevHeights := make([]int64, 0, numHistoricalHeadersToRequest)
 	for i := int64(1); i <= numHistoricalHeadersToRequest; i++ {
-		prevHeight := oracleData.BtcBlockHeight - i
+		prevHeight := oracleData.RequestedBtcBlockHeight - i
 		if prevHeight <= 0 {
 			break
 		}
@@ -565,7 +654,7 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 	}
 
 	if len(prevHeights) == 0 {
-		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", oracleData.BtcBlockHeight)
+		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", oracleData.RequestedBtcBlockHeight)
 		return nil
 	}
 
@@ -692,13 +781,14 @@ func processTransaction[T any](
 
 // getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
 // and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
+// If limit is 0, all matching items will be returned.
 func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64, T], predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
 	var results []T
 	queryRange := &collections.Range[uint64]{}
 	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
 		if predicate(value) {
 			results = append(results, value)
-			if len(results) >= limit {
+			if limit > 0 && len(results) >= limit {
 				return true, nil
 			}
 		}
@@ -834,6 +924,13 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC stake", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				return err
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC stake",
 				"recipient", tx.RecipientAddress,
 				"amount", tx.Amount,
@@ -842,7 +939,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				"base_fee", oracleData.EthBaseFee,
 				"tip_cap", oracleData.EthTipCap,
 			)
-			unsignedStakeTxHash, unsignedStakeTx, err := k.constructStakeTx(
+
+			unsignedTxHash, unsignedTx, err := k.constructStakeTx(
 				ctx,
 				getChainIDForEigen(ctx),
 				tx.Amount,
@@ -854,28 +952,21 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyIds:              []uint64{k.zenBTCKeeper.GetStakerKeyID(ctx)},
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedStakeTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedStakeTxHash)),
+				tx.Creator,
+				k.zenBTCKeeper.GetStakerKeyID(ctx),
+				treasurytypes.WalletType(tx.ChainType),
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
 }
 
-// processZenBTCMints processes pending mint transactions.
+// processZenBTCMintsEthereum processes pending mint transactions.
 func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
 	processTransaction(
 		k,
@@ -916,6 +1007,17 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			if err := k.zenBTCKeeper.SetFirstPendingMintTransaction(ctx, tx.Id); err != nil {
+				return err
+			}
+
+			// Check for consensus
+			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
+				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				return err
+			}
+
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 			if err != nil {
 				return err
@@ -931,6 +1033,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if oracleData.BTCUSDPrice.IsZero() {
 				return nil
 			}
+
 			if tx.Caip2ChainId != "eip155:17000" {
 				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
 			}
@@ -938,6 +1041,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
+
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
@@ -952,34 +1056,28 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyIds:              []uint64{k.zenBTCKeeper.GetEthMinterKeyID(ctx)},
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedMintTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedMintTxHash)),
+				tx.Creator,
+				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+				treasurytypes.WalletType(tx.ChainType),
+				chainID,
+				unsignedMintTx,
+				unsignedMintTxHash,
 			)
-			return err
 		},
 	)
 }
 
+// processROCKMints processes pending mint transactions.
 func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 	processTransaction(
 		k,
 		ctx,
-		0,
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		&oracleData.RequestedEthMinterNonce,
 		nil,
-		&oracleData.SolROCKMintNonce,
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
 		},
@@ -1016,6 +1114,14 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetFirstPendingMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus
+			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
+				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				return err
+			}
+
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 			if err != nil {
 				return err
@@ -1031,6 +1137,7 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 			if oracleData.BTCUSDPrice.IsZero() {
 				return nil
 			}
+
 			if tx.Caip2ChainId != "eip155:17000" {
 				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
 			}
@@ -1038,6 +1145,7 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
+
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
@@ -1052,23 +1160,16 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
-			if err != nil {
-				return err
-			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             tx.Creator,
-					KeyIds:              []uint64{k.zenBTCKeeper.GetEthMinterKeyID(ctx)},
-					WalletType:          treasurytypes.WalletType(tx.ChainType),
-					UnsignedTransaction: unsignedMintTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedMintTxHash)),
+				tx.Creator,
+				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+				treasurytypes.WalletType(tx.ChainType),
+				chainID,
+				unsignedMintTx,
+				unsignedMintTxHash,
 			)
-			return err
 		},
 	)
 }
@@ -1138,6 +1239,13 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC burn unstake", fmt.Sprintf("burn_id: %d, destination: %s, amount: %d", be.Id, be.DestinationAddr, be.Amount)); err != nil {
+				return err
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC burn unstake",
 				"burn_event", be,
 				"nonce", oracleData.RequestedUnstakerNonce,
@@ -1156,29 +1264,44 @@ func (k *Keeper) processZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Ora
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
+
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
 				return err
 			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyIds:              []uint64{k.zenBTCKeeper.GetUnstakerKeyID(ctx)},
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
+				creator,
+				k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+				treasurytypes.WalletType_WALLET_TYPE_EVM,
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
+	if err != nil {
+		return err
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyIds:              []uint64{keyID},
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	return err
 }
 
 // storeNewZenBTCRedemptions processes new redemption events.
@@ -1274,7 +1397,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		&oracleData.RequestedCompleterNonce,
 		nil,
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
-			return k.getPendingRedemptions(ctx)
+			firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
+			if err != nil {
+				firstPendingID = 0
+			}
+			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
@@ -1287,6 +1414,13 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, r.Data.Id); err != nil {
 				return err
 			}
+
+			// Check for consensus
+			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedCompleterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
+				"zenBTC redemption", fmt.Sprintf("redemption_id: %d, amount: %d", r.Data.Id, r.Data.Amount)); err != nil {
+				return err
+			}
+
 			k.Logger(ctx).Warn("processing zenBTC complete",
 				"id", r.Data.Id,
 				"nonce", oracleData.RequestedCompleterNonce,
@@ -1304,27 +1438,104 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err != nil {
 				return err
 			}
-			metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: getChainIDForEigen(ctx)})
-			if err != nil {
-				return err
-			}
+
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
 				return err
 			}
-			_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+
+			return k.submitEthereumTransaction(
 				ctx,
-				&treasurytypes.MsgNewSignTransactionRequest{
-					Creator:             creator,
-					KeyIds:              []uint64{k.zenBTCKeeper.GetCompleterKeyID(ctx)},
-					WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
-					UnsignedTransaction: unsignedTx,
-					Metadata:            metadata,
-					NoBroadcast:         false,
-				},
-				[]byte(hex.EncodeToString(unsignedTxHash)),
+				creator,
+				k.zenBTCKeeper.GetCompleterKeyID(ctx),
+				treasurytypes.WalletType_WALLET_TYPE_EVM,
+				getChainIDForEigen(ctx),
+				unsignedTx,
+				unsignedTxHash,
 			)
-			return err
 		},
 	)
+}
+
+func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
+	startingIndex, err := k.zenBTCKeeper.GetFirstRedemptionAwaitingSign(ctx)
+	if err != nil {
+		startingIndex = 0
+	}
+
+	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
+	if err != nil {
+		k.Logger(ctx).Error("error getting redemptions", "error", err)
+		return
+	}
+
+	if len(redemptions) == 0 {
+		return
+	}
+
+	if err := k.zenBTCKeeper.SetFirstRedemptionAwaitingSign(ctx, redemptions[0].Data.Id); err != nil {
+		k.Logger(ctx).Error("error setting first redemption awaiting sign", "error", err)
+	}
+
+	supply, err := k.zenBTCKeeper.GetSupply(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting zenBTC supply", "error", err)
+		return
+	}
+
+	for _, redemption := range redemptions {
+		signReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, redemption.Data.SignReqId)
+		if err != nil {
+			k.Logger(ctx).Error("error getting sign request for redemption", "id", redemption.Data.Id, "error", err)
+			continue
+		}
+
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING {
+			continue
+		}
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED {
+			// Get current exchange rate
+			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("error getting zenBTC exchange rate", "error", err)
+				continue
+			}
+
+			// redemption.Data.Amount is in zenBTC (what user wants to redeem)
+			// Calculate how much BTC they should receive based on current exchange rate
+			btcToRelease := uint64(math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
+
+			// Invariant checks
+			if supply.MintedZenBTC < redemption.Data.Amount {
+				k.Logger(ctx).Error("insufficient minted zenBTC for redemption", "id", redemption.Data.Id)
+				continue
+			}
+			if supply.CustodiedBTC < btcToRelease {
+				k.Logger(ctx).Error("insufficient custodied BTC for redemption", "id", redemption.Data.Id)
+				continue
+			}
+
+			// Update supplies (zenBTC burned, BTC released)
+			supply.MintedZenBTC -= redemption.Data.Amount
+			supply.CustodiedBTC -= btcToRelease
+
+			k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC+redemption.Data.Amount, "minted_new", supply.MintedZenBTC)
+			k.Logger(ctx).Warn("custodied supply updated", "custodied_old", supply.CustodiedBTC+btcToRelease, "custodied_new", supply.CustodiedBTC)
+
+			redemption.Status = zenbtctypes.RedemptionStatus_COMPLETED
+		}
+		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
+			redemption.Data.SignReqId = 0
+			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+		}
+
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption); err != nil {
+			k.Logger(ctx).Error("error updating redemption status", "error", err)
+		}
+	}
+
+	if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+		k.Logger(ctx).Error("error updating zenBTC supply", "error", err)
+	}
+
 }

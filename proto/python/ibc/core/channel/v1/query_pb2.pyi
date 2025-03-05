@@ -4,7 +4,6 @@ from ibc.core.channel.v1 import channel_pb2 as _channel_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
-from ibc.core.channel.v1 import upgrade_pb2 as _upgrade_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -279,49 +278,3 @@ class QueryNextSequenceSendResponse(_message.Message):
     proof: bytes
     proof_height: _client_pb2.Height
     def __init__(self, next_sequence_send: _Optional[int] = ..., proof: _Optional[bytes] = ..., proof_height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ...) -> None: ...
-
-class QueryUpgradeErrorRequest(_message.Message):
-    __slots__ = ("port_id", "channel_id")
-    PORT_ID_FIELD_NUMBER: _ClassVar[int]
-    CHANNEL_ID_FIELD_NUMBER: _ClassVar[int]
-    port_id: str
-    channel_id: str
-    def __init__(self, port_id: _Optional[str] = ..., channel_id: _Optional[str] = ...) -> None: ...
-
-class QueryUpgradeErrorResponse(_message.Message):
-    __slots__ = ("error_receipt", "proof", "proof_height")
-    ERROR_RECEIPT_FIELD_NUMBER: _ClassVar[int]
-    PROOF_FIELD_NUMBER: _ClassVar[int]
-    PROOF_HEIGHT_FIELD_NUMBER: _ClassVar[int]
-    error_receipt: _upgrade_pb2.ErrorReceipt
-    proof: bytes
-    proof_height: _client_pb2.Height
-    def __init__(self, error_receipt: _Optional[_Union[_upgrade_pb2.ErrorReceipt, _Mapping]] = ..., proof: _Optional[bytes] = ..., proof_height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ...) -> None: ...
-
-class QueryUpgradeRequest(_message.Message):
-    __slots__ = ("port_id", "channel_id")
-    PORT_ID_FIELD_NUMBER: _ClassVar[int]
-    CHANNEL_ID_FIELD_NUMBER: _ClassVar[int]
-    port_id: str
-    channel_id: str
-    def __init__(self, port_id: _Optional[str] = ..., channel_id: _Optional[str] = ...) -> None: ...
-
-class QueryUpgradeResponse(_message.Message):
-    __slots__ = ("upgrade", "proof", "proof_height")
-    UPGRADE_FIELD_NUMBER: _ClassVar[int]
-    PROOF_FIELD_NUMBER: _ClassVar[int]
-    PROOF_HEIGHT_FIELD_NUMBER: _ClassVar[int]
-    upgrade: _upgrade_pb2.Upgrade
-    proof: bytes
-    proof_height: _client_pb2.Height
-    def __init__(self, upgrade: _Optional[_Union[_upgrade_pb2.Upgrade, _Mapping]] = ..., proof: _Optional[bytes] = ..., proof_height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ...) -> None: ...
-
-class QueryChannelParamsRequest(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
-
-class QueryChannelParamsResponse(_message.Message):
-    __slots__ = ("params",)
-    PARAMS_FIELD_NUMBER: _ClassVar[int]
-    params: _channel_pb2.Params
-    def __init__(self, params: _Optional[_Union[_channel_pb2.Params, _Mapping]] = ...) -> None: ...

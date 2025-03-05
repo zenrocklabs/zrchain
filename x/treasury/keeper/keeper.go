@@ -26,8 +26,6 @@ import (
 	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
 
 	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
 	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
@@ -207,7 +205,7 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 		return nil, errorsmod.Wrap(err, "get zr sign workspaces")
 	}
 
-	allKeys, _, err := query.CollectionFilteredPaginate[uint64, types.Key, collections.Map[uint64, types.Key], *types.Key](
+	allKeys, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.KeyStore,
 		nil,
@@ -219,7 +217,7 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 		},
 	)
 
-	unfulfilledRequests, _, err := query.CollectionFilteredPaginate[uint64, types.KeyRequest, collections.Map[uint64, types.KeyRequest], *types.KeyReqResponse](
+	unfulfilledRequests, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.KeyRequestStore,
 		nil,
@@ -293,12 +291,12 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("unknown key type: %s", msg.KeyType)
 	}
 
-	mpcBtl := uint64(0)
-	if keyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
-		if msg.MpcBtl > 0 {
-			mpcBtl = uint64(ctx.BlockHeight()) + msg.MpcBtl
-		}
+	mpcBTLDefault, err := k.GetDefaultBTL(ctx)
+	if err != nil {
+		return nil, err
 	}
+	// TODO: we aren't using msg.MpcBtl, should we deprecate it?
+	mpcBTL := uint64(ctx.BlockHeight()) + mpcBTLDefault
 
 	req := &types.KeyRequest{
 		Creator:        msg.Creator,
@@ -309,7 +307,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		Index:          msg.Index,
 		SignPolicyId:   msg.SignPolicyId,
 		ZenbtcMetadata: msg.ZenbtcMetadata,
-		MpcBtl:         mpcBtl,
+		MpcBtl:         mpcBTL,
 		Fee:            keyring.KeyReqFee,
 	}
 
@@ -350,13 +348,24 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 		return nil, fmt.Errorf("error whilst verifying transaction & hashes %s", err.Error())
 	}
 
-	id, err := k.processSignatureRequests(ctx, dataForSigning, msg.KeyIds, &types.SignRequest{
-		Creator:        msg.Creator,
-		DataForSigning: dataForSigning,
-		KeyIds:         msg.KeyIds,
-		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
-		CacheId:        msg.CacheId,
-	}, msg.MpcBtl)
+	mpcBTLDefault, err := k.GetDefaultBTL(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := k.processSignatureRequests(
+		ctx,
+		dataForSigning,
+		msg.KeyIds,
+		&types.SignRequest{
+			Creator:        msg.Creator,
+			DataForSigning: dataForSigning,
+			KeyIds:         msg.KeyIds,
+			Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
+			CacheId:        msg.CacheId,
+		},
+		mpcBTLDefault, // TODO: we aren't using msg.MpcBtl, should we deprecate it?
+	)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "processSignatureRequests")
 	}
@@ -371,9 +380,8 @@ func (k *Keeper) HandleSignatureRequest(ctx sdk.Context, msg *types.MsgNewSignat
 	return &types.MsgNewSignatureRequestResponse{SigReqId: id}, nil
 }
 
-func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, keyIds []uint64, req *types.SignRequest, mpcBtl uint64) (uint64, error) {
+func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]byte, keyIds []uint64, req *types.SignRequest, mpcBTL uint64) (uint64, error) {
 	// Verify all keys exist and collect keyring fees
-	bh := ctx.BlockHeight()
 	var sigReqs []*types.SignRequest
 	for _, keyID := range keyIds {
 		key, err := k.KeyStore.Get(ctx, keyID)
@@ -389,13 +397,9 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
-		btl := uint64(0)
-		if mpcBtl > 0 && key.GetType() != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
-			btl = uint64(bh) + mpcBtl
-		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
-			MpcBtl: btl,
+			MpcBtl: uint64(ctx.BlockHeight()) + mpcBTL,
 			Fee:    keyring.SigReqFee,
 		})
 
@@ -408,6 +412,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		}
 		req.KeyType = key.GetType()
 	}
+
 	req.MpcBtl = sigReqs[0].MpcBtl
 	req.Fee = sigReqs[0].Fee
 
@@ -463,32 +468,32 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		return nil, fmt.Errorf("data for signing is empty")
 	}
 
-	//
+	mpcBTLDefault, err := k.GetDefaultBTL(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if keys > 1 && dataPieces == 1 {
 		for i := 1; i < keys; i++ {
 			dataForSigning = append(dataForSigning, dataForSigning[0])
 		}
 	}
-
-	id, err := k.processSignatureRequests(ctx, dataForSigning, msg.KeyIds, &types.SignRequest{
-		Creator:        msg.Creator,
-		KeyIds:         msg.KeyIds,
-		DataForSigning: dataForSigning,
-		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
-		Metadata:       msg.Metadata,
-		CacheId:        msg.CacheId,
-	}, msg.MpcBtl)
+	id, err := k.processSignatureRequests(
+		ctx,
+		dataForSigning,
+		msg.KeyIds,
+		&types.SignRequest{
+			Creator:        msg.Creator,
+			KeyIds:         msg.KeyIds,
+			DataForSigning: dataForSigning,
+			Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
+			Metadata:       msg.Metadata,
+			CacheId:        msg.CacheId,
+		},
+		mpcBTLDefault, // TODO: we aren't using msg.MpcBtl, should we deprecate it?
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	tx := &solana.Transaction{
-		Message: solana.Message{},
-	}
-	err = tx.UnmarshalWithDecoder(bin.NewBinDecoder(dataForSigning[0]))
-
-	for _, i := range tx.Message.AccountKeys {
-		fmt.Println(i.String())
 	}
 
 	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
@@ -585,15 +590,15 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	blockHeight := ctx.BlockHeight()
-	requests, _, err := query.CollectionFilteredPaginate[uint64, types.KeyRequest, collections.Map[uint64, types.KeyRequest], *types.KeyRequest](
+	requests, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.KeyRequestStore,
 		nil,
 		func(key uint64, value types.KeyRequest) (bool, error) {
 			return value.MpcBtl > 0 &&
 				value.MpcBtl < uint64(blockHeight) &&
-				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
-				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING, nil
+				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING ||
+				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL, nil
 		},
 		func(key uint64, value types.KeyRequest) (*types.KeyRequest, error) {
 			return &value, nil
@@ -634,15 +639,15 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	keyrings := map[string]*idtypes.Keyring{}
 	blockHeight := ctx.BlockHeight()
-	requests, _, err := query.CollectionFilteredPaginate[uint64, types.SignRequest, collections.Map[uint64, types.SignRequest], *types.SignRequest](
+	requests, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.SignRequestStore,
 		nil,
 		func(key uint64, value types.SignRequest) (bool, error) {
 			return value.MpcBtl > 0 &&
 				value.MpcBtl < uint64(blockHeight) &&
-				value.KeyType != types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 &&
-				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING, nil
+				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING ||
+				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL, nil
 		},
 		func(key uint64, value types.SignRequest) (*types.SignRequest, error) {
 			return &value, nil

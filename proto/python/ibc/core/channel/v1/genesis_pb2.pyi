@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("channels", "acknowledgements", "commitments", "receipts", "send_sequences", "recv_sequences", "ack_sequences", "next_channel_sequence", "params")
+    __slots__ = ("channels", "acknowledgements", "commitments", "receipts", "send_sequences", "recv_sequences", "ack_sequences", "next_channel_sequence")
     CHANNELS_FIELD_NUMBER: _ClassVar[int]
     ACKNOWLEDGEMENTS_FIELD_NUMBER: _ClassVar[int]
     COMMITMENTS_FIELD_NUMBER: _ClassVar[int]
@@ -17,7 +17,6 @@ class GenesisState(_message.Message):
     RECV_SEQUENCES_FIELD_NUMBER: _ClassVar[int]
     ACK_SEQUENCES_FIELD_NUMBER: _ClassVar[int]
     NEXT_CHANNEL_SEQUENCE_FIELD_NUMBER: _ClassVar[int]
-    PARAMS_FIELD_NUMBER: _ClassVar[int]
     channels: _containers.RepeatedCompositeFieldContainer[_channel_pb2.IdentifiedChannel]
     acknowledgements: _containers.RepeatedCompositeFieldContainer[_channel_pb2.PacketState]
     commitments: _containers.RepeatedCompositeFieldContainer[_channel_pb2.PacketState]
@@ -26,8 +25,7 @@ class GenesisState(_message.Message):
     recv_sequences: _containers.RepeatedCompositeFieldContainer[PacketSequence]
     ack_sequences: _containers.RepeatedCompositeFieldContainer[PacketSequence]
     next_channel_sequence: int
-    params: _channel_pb2.Params
-    def __init__(self, channels: _Optional[_Iterable[_Union[_channel_pb2.IdentifiedChannel, _Mapping]]] = ..., acknowledgements: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., commitments: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., receipts: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., send_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., recv_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., ack_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., next_channel_sequence: _Optional[int] = ..., params: _Optional[_Union[_channel_pb2.Params, _Mapping]] = ...) -> None: ...
+    def __init__(self, channels: _Optional[_Iterable[_Union[_channel_pb2.IdentifiedChannel, _Mapping]]] = ..., acknowledgements: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., commitments: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., receipts: _Optional[_Iterable[_Union[_channel_pb2.PacketState, _Mapping]]] = ..., send_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., recv_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., ack_sequences: _Optional[_Iterable[_Union[PacketSequence, _Mapping]]] = ..., next_channel_sequence: _Optional[int] = ...) -> None: ...
 
 class PacketSequence(_message.Message):
     __slots__ = ("port_id", "channel_id", "sequence")

@@ -20,6 +20,15 @@ import (
 )
 
 func main() {
+	port := flag.Int("port", 0, "Override GRPC port from config")
+	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
+	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
+	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
+
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
 	cfg := LoadConfig()
 
 	if !cfg.Enabled {
@@ -29,16 +38,28 @@ func main() {
 		}
 	}
 
-	port := flag.Int("port", 0, "Override GRPC port from config")
-	flag.Parse()
-
-	// Override defeault GRPC port if --port flag is provided
+	// Override default GRPC port if --port flag is provided
 	if *port != 0 {
 		cfg.GRPCPort = *port
 	}
 
+	// Override default state file path if --cache-file flag is provided
+	if *cacheFile != "" {
+		cfg.StateFile = *cacheFile
+	}
+
+	// Set Neutrino port from flag or config
+	neutrinoRPCPort := *neutrinoPort
+	if neutrinoRPCPort == 0 && cfg.Neutrino.Port > 0 {
+		neutrinoRPCPort = cfg.Neutrino.Port
+	}
+
 	var rpcAddress string
-	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
+	// Use the override RPC endpoint if provided via flag
+	if *ethRPC != "" {
+		rpcAddress = *ethRPC
+		slog.Info("Using override Ethereum RPC endpoint", "endpoint", rpcAddress)
+	} else if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
 		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
@@ -53,7 +74,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path)
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
