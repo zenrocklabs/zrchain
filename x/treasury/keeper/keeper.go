@@ -7,20 +7,19 @@ import (
 	"strconv"
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
-	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	shared "github.com/Zenrock-Foundation/zrchain/v5/shared"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -463,7 +462,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		return nil, err
 	}
 
-	if len(dataForSigning) == 0 || dataForSigning[0] == nil {
+	keys := len(msg.KeyIds)
+	dataPieces := len(dataForSigning)
+	if dataPieces == 0 || dataForSigning[0] == nil {
 		return nil, fmt.Errorf("data for signing is empty")
 	}
 
@@ -472,14 +473,18 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		return nil, err
 	}
 
-	keyIDs := []uint64{msg.KeyId}
+	if keys > 1 && dataPieces == 1 {
+		for i := 1; i < keys; i++ {
+			dataForSigning = append(dataForSigning, dataForSigning[0])
+		}
+	}
 	id, err := k.processSignatureRequests(
 		ctx,
 		dataForSigning,
-		keyIDs,
+		msg.KeyIds,
 		&types.SignRequest{
 			Creator:        msg.Creator,
-			KeyIds:         keyIDs,
+			KeyIds:         msg.KeyIds,
 			DataForSigning: dataForSigning,
 			Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 			Metadata:       msg.Metadata,
@@ -494,7 +499,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	tID, err := k.CreateSignTransactionRequest(ctx, &types.SignTransactionRequest{
 		Creator:             msg.Creator,
 		SignRequestId:       id,
-		KeyId:               msg.KeyId,
+		KeyIds:              msg.KeyIds,
 		WalletType:          msg.WalletType,
 		UnsignedTransaction: msg.UnsignedTransaction,
 		NoBroadcast:         msg.NoBroadcast,
@@ -697,4 +702,12 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 	}
 
 	return nil
+}
+
+func (k Keeper) GetKey(ctx sdk.Context, keyID uint64) (*types.Key, error) {
+	key, err := k.KeyStore.Get(ctx, keyID)
+	if err != nil {
+		return nil, fmt.Errorf("key with ID %d not found: %w", keyID, err)
+	}
+	return &key, nil
 }

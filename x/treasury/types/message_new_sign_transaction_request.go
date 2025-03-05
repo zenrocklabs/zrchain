@@ -9,10 +9,10 @@ import (
 
 var _ sdk.Msg = &MsgNewSignTransactionRequest{}
 
-func NewMsgNewSignTransactionRequest(creator string, keyID uint64, walletType WalletType, unsignedTx []byte, meta *cdctypes.Any, btl uint64) *MsgNewSignTransactionRequest {
+func NewMsgNewSignTransactionRequest(creator string, keyIDs []uint64, walletType WalletType, unsignedTx []byte, meta *cdctypes.Any, btl uint64) *MsgNewSignTransactionRequest {
 	return &MsgNewSignTransactionRequest{
 		Creator:             creator,
-		KeyId:               keyID,
+		KeyIds:              keyIDs,
 		UnsignedTransaction: unsignedTx,
 		WalletType:          walletType,
 		Metadata:            meta,

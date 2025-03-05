@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+
 package api;
 
 import "cosmos_proto/cosmos.proto";
@@ -17,6 +18,8 @@ service SidecarService {
       returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest)
       returns (LatestEthereumNonceForAccountResponse) {}
+  rpc GetSolanaAccountInfo(SolanaAccountInfoRequest)
+      returns (SolanaAccountInfoResponse) {}
 }
 
 message LatestBitcoinBlockHeaderRequest { string ChainName = 1; }
@@ -77,3 +80,7 @@ message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
 message LatestEthereumNonceForAccountRequest { string Address = 1; }
 
 message LatestEthereumNonceForAccountResponse { uint64 Nonce = 1; }
+
+message SolanaAccountInfoRequest { string PubKey = 1; }
+
+message SolanaAccountInfoResponse { bytes Account = 1; }

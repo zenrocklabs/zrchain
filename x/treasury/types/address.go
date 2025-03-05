@@ -81,11 +81,11 @@ func BitcoinP2WPKH(key *Key, chain *chaincfg.Params) (string, error) {
 	return address.EncodeAddress(), nil
 }
 
-func SolanaAddress(key *Key) (string, error) {
+func SolanaPubkey(key *Key) (*solana.PublicKey, error) {
 	_, err := key.ToEdDSAEd25519()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	pk := solana.PublicKeyFromBytes(key.PublicKey)
-	return pk.String(), nil
+	return &pk, nil
 }

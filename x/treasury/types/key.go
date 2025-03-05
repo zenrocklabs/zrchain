@@ -5,7 +5,10 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gagliardetto/solana-go"
+	"github.com/pkg/errors"
 )
 
 // nolint:stylecheck,st1003
@@ -105,4 +108,47 @@ func (k *Key) ToEdDSAEd25519() (*ed25519.PublicKey, error) {
 	pubKey := ed25519.PublicKey(k.PublicKey)
 	pk = &pubKey
 	return pk, nil
+}
+
+func Caip2ToKeyType(caip string) (KeyType, error) {
+	switch caip {
+	case "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:7S3P4HxJpyyigGzodYwHtCxZyUQe9JiBMHyRWXArAaKv", // solana mainnet
+		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1:DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKK", // solana devnet
+		"solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z:6LmSRCiu3z6NCSpF19oz1pHXkYkN4jWbj9K1nVELpDkT": // solana testnet
+		return KeyType_KEY_TYPE_EDDSA_ED25519, nil
+	case "eip155:1", // eth mainnet
+		"eip155:11155111",  // sepolia
+		"eip155:137",       // polygon main
+		" eip155:80002",    // polygon amoy
+		"eip155:56",        // bnb smartchan main
+		"eip155:97",        // bnb smartchain test
+		"eip155:43114",     // avalanche main
+		"eip155:43113",     // avalanche fuji test
+		"eip155:168587773": // blast sepolia
+		return KeyType_KEY_TYPE_ECDSA_SECP256K1, nil
+	default:
+		return KeyType_KEY_TYPE_UNSPECIFIED, fmt.Errorf("invalid key type: %s", caip)
+	}
+}
+
+func ValidateChainAddress(chain string, address string) error {
+	keyType, err := Caip2ToKeyType(chain)
+	if err != nil {
+		return err
+	}
+
+	switch keyType {
+	case KeyType_KEY_TYPE_EDDSA_ED25519:
+		_, err := solana.PublicKeyFromBase58(address)
+		if err != nil {
+			return errors.Wrapf(err, "invalid solana address: %s", address)
+		}
+	case KeyType_KEY_TYPE_ECDSA_SECP256K1:
+		if !common.IsHexAddress(address) {
+			return errors.Errorf("invalid ethereum address: %s", address)
+		}
+
+	}
+
+	return nil
 }

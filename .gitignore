@@ -17,7 +17,6 @@ cmd/zenrockd/zenrockd*
 scripts/bootstrap/**
 !scripts/bootstrap/main.sh
 reset.sh
-tmp_app.toml
 
 sidecar/neutrino/neutrino_*/*.bin
 sidecar/neutrino/neutrino_*/*.db

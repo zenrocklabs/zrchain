@@ -3,6 +3,7 @@ package types
 import (
 	context "context"
 
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	"cosmossdk.io/core/address"
@@ -117,3 +118,8 @@ type StakingHooksWrapper struct{ StakingHooks }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (StakingHooksWrapper) IsOnePerModuleType() {}
+
+type ZentpKeeper interface {
+	GetSignerKeyID(ctx context.Context) uint64
+	GetParams(ctx context.Context) zentptypes.Params
+}

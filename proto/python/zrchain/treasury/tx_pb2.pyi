@@ -166,9 +166,9 @@ class MetadataSolana(_message.Message):
     def __init__(self, network: _Optional[_Union[SolanaNetworkType, str]] = ..., mintAddress: _Optional[str] = ...) -> None: ...
 
 class MsgNewSignTransactionRequest(_message.Message):
-    __slots__ = ("creator", "key_id", "wallet_type", "unsigned_transaction", "metadata", "btl", "cache_id", "no_broadcast", "mpc_btl")
+    __slots__ = ("creator", "key_ids", "wallet_type", "unsigned_transaction", "metadata", "btl", "cache_id", "no_broadcast", "mpc_btl")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
-    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     WALLET_TYPE_FIELD_NUMBER: _ClassVar[int]
     UNSIGNED_TRANSACTION_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
@@ -177,7 +177,7 @@ class MsgNewSignTransactionRequest(_message.Message):
     NO_BROADCAST_FIELD_NUMBER: _ClassVar[int]
     MPC_BTL_FIELD_NUMBER: _ClassVar[int]
     creator: str
-    key_id: int
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
     wallet_type: _wallet_pb2.WalletType
     unsigned_transaction: bytes
     metadata: _any_pb2.Any
@@ -185,7 +185,7 @@ class MsgNewSignTransactionRequest(_message.Message):
     cache_id: bytes
     no_broadcast: bool
     mpc_btl: int
-    def __init__(self, creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., no_broadcast: bool = ..., mpc_btl: _Optional[int] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., btl: _Optional[int] = ..., cache_id: _Optional[bytes] = ..., no_broadcast: bool = ..., mpc_btl: _Optional[int] = ...) -> None: ...
 
 class MsgNewSignTransactionRequestResponse(_message.Message):
     __slots__ = ("id", "signature_request_id")
