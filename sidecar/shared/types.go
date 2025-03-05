@@ -43,6 +43,7 @@ type ProxyRPCConfig struct {
 
 type NeutrinoConfig struct {
 	Path string `yaml:"path"`
+	Port int    `yaml:"port"`
 }
 
 type EthOracleConfig struct {
