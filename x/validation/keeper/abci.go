@@ -356,12 +356,18 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) 
 		return nil, nil, fmt.Errorf("error fetching bitcoin header: %w", err)
 	}
 
+	solanaNonce, err := k.GetSolanaNonceAccount(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error fetching solana nonce account: %w", err)
+	}
+
 	oracleData.BtcBlockHeight = bitcoinData.BlockHeight
 	oracleData.BtcBlockHeader = *bitcoinData.BlockHeader
 	oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
 	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
 	oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
 	oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
+	oracleData.SolROCKMintNonce = *solanaNonce
 
 	if err := k.validateOracleData(voteExt, oracleData); err != nil {
 		return nil, nil, err

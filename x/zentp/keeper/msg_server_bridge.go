@@ -14,11 +14,7 @@ import (
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	//pa := k.GetParams(goCtx)
-	//pa.Solana.NonceAuthorityPubKey = "success"
-	//if err := k.SetParams(ctx, pa); err != nil {
-	//	panic(err)
-	//}
+
 	_, err := treasurytypes.Caip2ToKeyType(req.DestinationChain)
 	if err != nil {
 		return nil, err

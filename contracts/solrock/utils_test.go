@@ -2,7 +2,7 @@ package solrock
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var endpoint = rpc.LocalNet.RPC
+var endpoint = "api.devnet.solana.com" //rpc.LocalNet.RPC
 var authority, _ = LoadLocalWallet()
 var programID = solana.MustPublicKeyFromBase58("3dvdvGsDiHnJrCWBpuR1yDmozY2BBruEzPBcf52MWviX")
 
-var client = rpc.New(endpoint)
+var client = rpc.New("https://api.devnet.solana.com")
 
 var tokenParams = Token{
 	Name:     "Zenrock BTC",
@@ -337,19 +337,24 @@ func TestGetTokenRedemptionEvents(t *testing.T) {
 }
 
 func TestDurableNonces(t *testing.T) {
-	nonceAuth := solana.NewWallet()
-	nonceWallet := solana.NewWallet()
+	nonceAuth, err := solana.WalletFromPrivateKeyBase58("3E2YL7Sf5EZS6kXrHEd34byyF5Kzh7PCPH9Q4tRyRaTJfcHmbzr9nPUWgJ9t5Xy9LBg9BXJFdbuJwTtpdNoJS1Yh") //solana.NewWallet()
+	fmt.Printf("pubkey: %s\n", nonceAuth.PublicKey().String())
+	require.NoError(t, err)
+	nonceWallet, err := solana.WalletFromPrivateKeyBase58("7hLFPdmGFZkzPjdi75qsYfFg9gpaZttwa1bqvJmzKydGodV5PQqQ1oi7HFaT54F8UmcZb4vjuBa4RWMwFJuKy7k") //solana.NewWallet()
+	require.NoError(t, err)
+	fmt.Printf("nonceWallet: %s\n", nonceWallet.PublicKey().String())
 	sender := solana.NewWallet()
 	receiver := solana.NewWallet().PublicKey()
 
-	err := RequestAirdrop(context.Background(), client, nonceAuth.PublicKey(), 1000*solana.LAMPORTS_PER_SOL)
-	require.NoError(t, err)
-
-	err = RequestAirdrop(context.Background(), client, sender.PublicKey(), 1000*solana.LAMPORTS_PER_SOL)
-	require.NoError(t, err)
+	//err := RequestAirdrop(context.Background(), client, nonceAuth.PublicKey(), 1000*solana.LAMPORTS_PER_SOL)
+	//require.NoError(t, err)
+	//
+	//err = RequestAirdrop(context.Background(), client, sender.PublicKey(), 1000*solana.LAMPORTS_PER_SOL)
+	//require.NoError(t, err)
+	recentHash, err := solana.HashFromBase58("HmhsXVRocBP2NuTkVoSgqfpEhuygfVTW6nYVKmshXPCA")
 
 	t.Run("Creates a nonce account", func(t *testing.T) {
-		recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
+		//recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 		require.NoError(t, err)
 
 		tx, err := solana.NewTransaction(
@@ -369,7 +374,7 @@ func TestDurableNonces(t *testing.T) {
 					solana.SysVarRentPubkey,
 				).Build(),
 			},
-			recent.Value.Blockhash,
+			recentHash,
 			solana.TransactionPayer(nonceAuth.PublicKey()),
 		)
 		require.NoError(t, err)
@@ -378,8 +383,11 @@ func TestDurableNonces(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = SignTransaction(tx, nonceWallet.PrivateKey)
-		require.NoError(t, err)
 
+		require.NoError(t, err)
+		bin, err := tx.MarshalBinary()
+		require.NoError(t, err)
+		fmt.Printf("tx: %s\n", string(bin))
 		signature, err := SendTransaction(client, context.Background(), tx)
 		require.NoError(t, err)
 
@@ -453,12 +461,11 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 
 	var client = rpc.New("https://api.devnet.solana.com")
 
-	nonceAuthPubKey := solana.MustPublicKeyFromBase58("GYCxncsPLEnjpnAovBpmMwxcsaHnkGx17qeu73YtGbiY")
-	nonceAccPubKey := solana.MustPublicKeyFromBase58("GuqQ1oJJ7n9C3cSc1W6cj2NubVKCQKrEG8NkZTHucoee")
-	fmt.Printf("nonceAuthPubKey: %s\n", nonceAccPubKey.String())
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("2zE66k3xtC7NXZ7Qb9YXYvZYRLhtPQaS9m23rWvXTHch")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("FbZM91qUMLLj7ro8iAmdKSaCSiySeMzXQB7HJDnXA5zv")
 	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 	require.NoError(t, err)
-
+	require.NoError(t, err)
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{
 			system.NewCreateAccountInstruction(
@@ -480,11 +487,10 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 		solana.TransactionPayer(nonceAuthPubKey),
 	)
 	require.NoError(t, err)
-	bin, err := tx.MarshalBinary()
+	bin, err := tx.Message.MarshalBinary()
 	require.NoError(t, err)
 
-	base64Bin := base64.StdEncoding.EncodeToString(bin)
-	fmt.Printf("transaction (base64): %s", base64Bin)
+	fmt.Printf("transaction : %s", hex.EncodeToString(bin))
 }
 
 func TestParseDurableNonceTransaction(t *testing.T) {

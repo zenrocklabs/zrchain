@@ -174,10 +174,10 @@ if [ "$START_ONLY" = false ]; then
         "zrchain_relayer_key_id": 1,
         "solana": {
           "rpc_url": "https://api.devnet.solana.com",
-          "program_id": "3dvdvGsDiHnJrCWBpuR1yDmozY2BBruEzPBcf52MWviX",
-          "nonce_account_key": 1,
-          "nonce_authority_key": 2,
-          "mint_address": "7NHEm2UHRMCYhR3DnVJVHNMm8BVF3KRWuLyD85zJpxsF",
+          "program_id": "zTsNe6inwEA8Z6WdogiA1vPLLAkaheGdU6WNvxdaXUx",
+          "nonce_account_key": 8,
+          "nonce_authority_key": 9,
+          "mint_address": "Ce1gvD5BG1gjEjuDKJXPcQgNfwDPJH9VvgfcSEzyNZn4",
           "fee_wallet": "AvUu1UkvwgBcvCXMEseBdEns7BGF5tNYRcLmwegDcUCX",
           "fee": 20
         }

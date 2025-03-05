@@ -25,6 +25,8 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	bin "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go/programs/system"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -921,4 +923,28 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	}
 
 	return nil
+}
+
+func (k Keeper) GetSolanaNonceAccount(ctx sdk.Context) (*system.NonceAccount, error) {
+	zParams := k.zentpKeeper.GetParams(ctx)
+	key, err := k.treasuryKeeper.GetKey(ctx, zParams.Solana.NonceAccountKey)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := treasurytypes.SolanaPubkey(key)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(ctx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: publicKey.String(),
+	})
+
+	nonceAccount := &system.NonceAccount{}
+	decoder := bin.NewBorshDecoder(resp.Account)
+
+	err = nonceAccount.UnmarshalWithDecoder(decoder)
+	if err != nil {
+		return nil, err
+	}
+	return nonceAccount, err
 }
