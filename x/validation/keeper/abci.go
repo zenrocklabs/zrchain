@@ -205,7 +205,6 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	}
 
 	if voteExt.ZRChainBlockHeight == 0 { // no supermajority vote extension
-		// if true {
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
 
@@ -248,8 +247,6 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	if isEmptyOracleData(recoveredOracleData) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
-		// } else {
-		// 	k.Logger(ctx).Warn("not empty")
 	}
 
 	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), recoveredOracleData.ConsensusData); err != nil {
