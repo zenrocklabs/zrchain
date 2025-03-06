@@ -31,7 +31,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			expected:     0,
 		},
 		{
-			name:         "typical ETH mainnet values",
+			name:         "typical Ethereum mainnet values",
 			ethBaseFee:   30_000_000_000, // 30 gwei
 			ethTipCap:    2_000_000_000,  // 2 gwei
 			ethGasLimit:  285_000,
@@ -39,6 +39,16 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			ethUSDPrice:  sdkmath.LegacyNewDec(3_000_00),  // $3k ETH in cents
 			exchangeRate: sdkmath.LegacyNewDec(1),
 			expected:     30399, // 0.00030399 BTC in fees (1:1 exchange rate)
+		},
+		{
+			name:         "typical Ethereum Holesky testnet values",
+			ethBaseFee:   1816605,
+			ethTipCap:    1000000,
+			ethGasLimit:  239646,
+			btcUSDPrice:  sdkmath.LegacyNewDec(90_000_00), // $90k BTC in cents
+			ethUSDPrice:  sdkmath.LegacyNewDec(2_000_00),  // $2k ETH in cents
+			exchangeRate: sdkmath.LegacyNewDec(1),
+			expected:     1, // 0.00000001 BTC in fees (1:1 exchange rate)
 		},
 		{
 			name:         "high gas price scenario",
