@@ -897,8 +897,10 @@ func (k *Keeper) validateOracleData(voteExt VoteExtension, oracleData *OracleDat
 	if err := validateHashField("Latest Bitcoin header", voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
 		return err
 	}
-	if err := validateHashField("Requested Bitcoin header", voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-		return err
+	if voteExt.RequestedBtcBlockHeight != 0 {
+		if err := validateHashField("Requested Bitcoin header", voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
+			return err
+		}
 	}
 
 	if voteExt.EthBlockHeight != oracleData.EthBlockHeight {

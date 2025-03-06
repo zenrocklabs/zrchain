@@ -186,3 +186,51 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 
 	return invalid
 }
+
+// isEmptyOracleData checks if the oracle data is effectively empty by checking
+// each field individually, properly handling nil/zero price fields.
+func isEmptyOracleData(data OracleData) bool {
+	if len(data.EigenDelegationsMap) > 0 {
+		return false
+	}
+	if len(data.ValidatorDelegations) > 0 {
+		return false
+	}
+	if len(data.EthBurnEvents) > 0 {
+		return false
+	}
+	if len(data.Redemptions) > 0 {
+		return false
+	}
+
+	emptyBtcHeader := sidecar.BTCBlockHeader{}
+	if data.RequestedBtcBlockHeight != 0 || data.RequestedBtcBlockHeader != emptyBtcHeader {
+		return false
+	}
+	if data.LatestBtcBlockHeight != 0 || data.LatestBtcBlockHeader != emptyBtcHeader {
+		return false
+	}
+
+	if data.EthBlockHeight != 0 || data.EthGasLimit != 0 || data.EthBaseFee != 0 || data.EthTipCap != 0 {
+		return false
+	}
+	if data.RequestedStakerNonce != 0 || data.RequestedEthMinterNonce != 0 ||
+		data.RequestedUnstakerNonce != 0 || data.RequestedCompleterNonce != 0 {
+		return false
+	}
+	if data.SolanaLamportsPerSignature != 0 {
+		return false
+	}
+
+	if !(data.ROCKUSDPrice.IsNil() || data.ROCKUSDPrice.Equal(math.LegacyZeroDec())) {
+		return false
+	}
+	if !(data.BTCUSDPrice.IsNil() || data.BTCUSDPrice.Equal(math.LegacyZeroDec())) {
+		return false
+	}
+	if !(data.ETHUSDPrice.IsNil() || data.ETHUSDPrice.Equal(math.LegacyZeroDec())) {
+		return false
+	}
+
+	return true
+}

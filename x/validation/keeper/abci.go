@@ -198,28 +198,21 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	k.Logger(ctx).Warn("checkpoint 1")
-
 	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extension", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
-	k.Logger(ctx).Warn("checkpoint 2")
-
 	if voteExt.ZRChainBlockHeight == 0 { // no supermajority vote extension
+		// if true {
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
-
-	k.Logger(ctx).Warn("checkpoint 3")
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
 		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
 		return nil, nil
 	}
-
-	k.Logger(ctx).Warn("checkpoint 4")
 
 	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
 	if err != nil {
@@ -228,14 +221,13 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	}
 	oracleData.ConsensusData = req.LocalLastCommit
 
-	k.Logger(ctx).Warn("checkpoint 5")
-
 	return k.marshalOracleData(req, oracleData)
 }
 
 // ProcessProposal is executed by all validators to check whether the proposer prepared valid data.
 func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 	if !k.zrConfig.IsValidator {
+		k.Logger(ctx).Warn("not a validator; skipping ProcessProposal")
 		return ACCEPT_PROPOSAL, nil
 	}
 
@@ -253,12 +245,11 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
-	// Remove commit info before comparison.
-	recoveredOracleDataNoCommitInfo := recoveredOracleData
-	recoveredOracleDataNoCommitInfo.ConsensusData = abci.ExtendedCommitInfo{}
-	if reflect.DeepEqual(recoveredOracleDataNoCommitInfo, OracleData{}) {
+	if isEmptyOracleData(recoveredOracleData) {
 		k.Logger(ctx).Warn("accepting empty oracle data", "height", req.Height)
 		return ACCEPT_PROPOSAL, nil
+		// } else {
+		// 	k.Logger(ctx).Warn("not empty")
 	}
 
 	if err := ValidateVoteExtensions(ctx, k, req.Height, ctx.ChainID(), recoveredOracleData.ConsensusData); err != nil {
@@ -283,6 +274,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	oracleData, ok := k.unmarshalOracleData(ctx, req.Txs[0])
 	if !ok {
+		return nil
+	}
+
+	if isEmptyOracleData(oracleData) {
+		k.Logger(ctx).Warn("oracle data is empty; returning early (PreBlocker)", "height", req.Height)
 		return nil
 	}
 
@@ -369,14 +365,14 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension) 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
-
-	// Copy latest Bitcoin header data if we have consensus
-	oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
-	oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
-
-	// Copy requested Bitcoin header data if we have consensus and the header exists
-	oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
-	oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
+	if latestHeader != nil {
+		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
+		oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
+	}
+	if requestedHeader != nil {
+		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
+		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
+	}
 
 	oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
 	oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
@@ -514,9 +510,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	// Process the requested Bitcoin header
 	headerHeight := oracleData.RequestedBtcBlockHeight
 	if headerHeight == 0 || oracleData.RequestedBtcBlockHeader.MerkleRoot == "" {
-		k.Logger(ctx).Error("invalid bitcoin header data",
-			"height", headerHeight,
-			"merkle", oracleData.RequestedBtcBlockHeader.MerkleRoot)
+		k.Logger(ctx).Debug("no requested Bitcoin header")
 		return
 	}
 
