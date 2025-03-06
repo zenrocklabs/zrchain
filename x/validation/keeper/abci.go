@@ -198,20 +198,28 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
+	k.Logger(ctx).Warn("checkpoint 1")
+
 	voteExt, err := k.GetSuperMajorityVE(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extension", "height", req.Height, "error", err)
 		return nil, nil
 	}
 
+	k.Logger(ctx).Warn("checkpoint 2")
+
 	if voteExt.ZRChainBlockHeight == 0 { // no supermajority vote extension
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit})
 	}
+
+	k.Logger(ctx).Warn("checkpoint 3")
 
 	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
 		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
 		return nil, nil
 	}
+
+	k.Logger(ctx).Warn("checkpoint 4")
 
 	oracleData, _, err := k.getValidatedOracleData(ctx, voteExt)
 	if err != nil {
@@ -219,6 +227,8 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		oracleData = &OracleData{}
 	}
 	oracleData.ConsensusData = req.LocalLastCommit
+
+	k.Logger(ctx).Warn("checkpoint 5")
 
 	return k.marshalOracleData(req, oracleData)
 }

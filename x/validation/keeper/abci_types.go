@@ -151,12 +151,12 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.RequestedBtcBlockHeight == 0 {
-		logger.Error("invalid vote extension: RequestedBtcBlockHeight is 0")
+	if ve.LatestBtcBlockHeight == 0 {
+		logger.Error("invalid vote extension: LatestBtcBlockHeight is 0")
 		invalid = true
 	}
-	if len(ve.RequestedBtcHeaderHash) == 0 {
-		logger.Error("invalid vote extension: RequestedBtcHeaderHash is empty")
+	if len(ve.LatestBtcHeaderHash) == 0 {
+		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
 		invalid = true
 	}
 	if ve.SolanaLamportsPerSignature == 0 {
@@ -179,10 +179,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
 		invalid = true
 	}
-	// if ve.ETHUSDPrice.IsZero() {
-	// 	logger.Error("invalid vote extension: ETHUSDPrice is zero")
-	// 	invalid = true
-	// }
+	if ve.ETHUSDPrice.IsZero() {
+		logger.Error("invalid vote extension: ETHUSDPrice is zero")
+		invalid = true
+	}
 
 	return invalid
 }
