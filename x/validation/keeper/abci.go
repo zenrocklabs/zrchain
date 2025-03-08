@@ -945,12 +945,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if oracleData.BTCUSDPrice.IsZero() {
 				return nil
 			}
-			if tx.Caip2ChainId != "eip155:17000" {
-				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
-			}
-			chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
+			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
-				return err
+				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
