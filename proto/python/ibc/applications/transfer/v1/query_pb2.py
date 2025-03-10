@@ -25,6 +25,8 @@ _sym_db = _symbol_database.Default()
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from cosmos.base.v1beta1 import coin_pb2 as cosmos_dot_base_dot_v1beta1_dot_coin__pb2
 from ibc.applications.transfer.v1 import transfer_pb2 as ibc_dot_applications_dot_transfer_dot_v1_dot_transfer__pb2
+from ibc.applications.transfer.v1 import token_pb2 as ibc_dot_applications_dot_transfer_dot_v1_dot_token__pb2
+from cosmos.base.query.v1beta1 import pagination_pb2 as cosmos_dot_base_dot_query_dot_v1beta1_dot_pagination__pb2
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 
 
@@ -40,28 +42,40 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERYTOTALESCROWFORDENOMRESPONSE'].fields_by_name['amount']._serialized_options = b'\310\336\037\000'
   _globals['_QUERY'].methods_by_name['Params']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Params']._serialized_options = b'\202\323\344\223\002\036\022\034/ibc/apps/transfer/v1/params'
+  _globals['_QUERY'].methods_by_name['Denoms']._loaded_options = None
+  _globals['_QUERY'].methods_by_name['Denoms']._serialized_options = b'\202\323\344\223\002\036\022\034/ibc/apps/transfer/v1/denoms'
+  _globals['_QUERY'].methods_by_name['Denom']._loaded_options = None
+  _globals['_QUERY'].methods_by_name['Denom']._serialized_options = b'\202\323\344\223\002(\022&/ibc/apps/transfer/v1/denoms/{hash=**}'
   _globals['_QUERY'].methods_by_name['DenomHash']._loaded_options = None
   _globals['_QUERY'].methods_by_name['DenomHash']._serialized_options = b'\202\323\344\223\002/\022-/ibc/apps/transfer/v1/denom_hashes/{trace=**}'
   _globals['_QUERY'].methods_by_name['EscrowAddress']._loaded_options = None
   _globals['_QUERY'].methods_by_name['EscrowAddress']._serialized_options = b'\202\323\344\223\002L\022J/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address'
   _globals['_QUERY'].methods_by_name['TotalEscrowForDenom']._loaded_options = None
   _globals['_QUERY'].methods_by_name['TotalEscrowForDenom']._serialized_options = b'\202\323\344\223\0026\0224/ibc/apps/transfer/v1/denoms/{denom=**}/total_escrow'
-  _globals['_QUERYPARAMSREQUEST']._serialized_start=203
-  _globals['_QUERYPARAMSREQUEST']._serialized_end=223
-  _globals['_QUERYPARAMSRESPONSE']._serialized_start=225
-  _globals['_QUERYPARAMSRESPONSE']._serialized_end=308
-  _globals['_QUERYDENOMHASHREQUEST']._serialized_start=310
-  _globals['_QUERYDENOMHASHREQUEST']._serialized_end=355
-  _globals['_QUERYDENOMHASHRESPONSE']._serialized_start=357
-  _globals['_QUERYDENOMHASHRESPONSE']._serialized_end=401
-  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_start=403
-  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_end=486
-  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_start=488
-  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_end=555
-  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_start=557
-  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_end=612
-  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_start=614
-  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_end=705
-  _globals['_QUERY']._serialized_start=708
-  _globals['_QUERY']._serialized_end=1471
+  _globals['_QUERYPARAMSREQUEST']._serialized_start=289
+  _globals['_QUERYPARAMSREQUEST']._serialized_end=309
+  _globals['_QUERYPARAMSRESPONSE']._serialized_start=311
+  _globals['_QUERYPARAMSRESPONSE']._serialized_end=394
+  _globals['_QUERYDENOMREQUEST']._serialized_start=396
+  _globals['_QUERYDENOMREQUEST']._serialized_end=435
+  _globals['_QUERYDENOMRESPONSE']._serialized_start=437
+  _globals['_QUERYDENOMRESPONSE']._serialized_end=516
+  _globals['_QUERYDENOMSREQUEST']._serialized_start=518
+  _globals['_QUERYDENOMSREQUEST']._serialized_end=610
+  _globals['_QUERYDENOMSRESPONSE']._serialized_start=613
+  _globals['_QUERYDENOMSRESPONSE']._serialized_end=784
+  _globals['_QUERYDENOMHASHREQUEST']._serialized_start=786
+  _globals['_QUERYDENOMHASHREQUEST']._serialized_end=831
+  _globals['_QUERYDENOMHASHRESPONSE']._serialized_start=833
+  _globals['_QUERYDENOMHASHRESPONSE']._serialized_end=877
+  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_start=879
+  _globals['_QUERYESCROWADDRESSREQUEST']._serialized_end=962
+  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_start=964
+  _globals['_QUERYESCROWADDRESSRESPONSE']._serialized_end=1031
+  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_start=1033
+  _globals['_QUERYTOTALESCROWFORDENOMREQUEST']._serialized_end=1088
+  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_start=1090
+  _globals['_QUERYTOTALESCROWFORDENOMRESPONSE']._serialized_end=1181
+  _globals['_QUERY']._serialized_start=1184
+  _globals['_QUERY']._serialized_end=2254
 # @@protoc_insertion_point(module_scope)

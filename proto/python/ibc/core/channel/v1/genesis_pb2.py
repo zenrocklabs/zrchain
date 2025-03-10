@@ -48,10 +48,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['recv_sequences']._serialized_options = b'\310\336\037\000'
   _globals['_GENESISSTATE'].fields_by_name['ack_sequences']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['ack_sequences']._serialized_options = b'\310\336\037\000'
-  _globals['_GENESISSTATE'].fields_by_name['params']._loaded_options = None
-  _globals['_GENESISSTATE'].fields_by_name['params']._serialized_options = b'\310\336\037\000'
   _globals['_GENESISSTATE']._serialized_start=116
-  _globals['_GENESISSTATE']._serialized_end=806
-  _globals['_PACKETSEQUENCE']._serialized_start=808
-  _globals['_PACKETSEQUENCE']._serialized_end=908
+  _globals['_GENESISSTATE']._serialized_end=747
+  _globals['_PACKETSEQUENCE']._serialized_start=749
+  _globals['_PACKETSEQUENCE']._serialized_end=849
 # @@protoc_insertion_point(module_scope)

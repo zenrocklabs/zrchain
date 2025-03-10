@@ -165,7 +165,7 @@ func (k Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, wal
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	walletTypeStr := strconv.FormatUint(walletType, 10)
-	ws, _, err := query.CollectionFilteredPaginate[string, types.Workspace, collections.Map[string, types.Workspace], *types.Workspace](
+	ws, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.WorkspaceStore,
 		nil,
@@ -242,7 +242,7 @@ func (k Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, wal
 func (k Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	ws, _, err := query.CollectionFilteredPaginate[string, types.Workspace, collections.Map[string, types.Workspace], *types.Workspace](
+	ws, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.WorkspaceStore,
 		nil,
