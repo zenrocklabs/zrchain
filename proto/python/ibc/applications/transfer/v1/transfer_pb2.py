@@ -25,14 +25,14 @@ _sym_db = _symbol_database.Default()
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n+ibc/applications/transfer/v1/transfer.proto\x12\x1cibc.applications.transfer.v1\x1a\x14gogoproto/gogo.proto\"T\n\x06Params\x12!\n\x0csend_enabled\x18\x01 \x01(\x08R\x0bsendEnabled\x12\'\n\x0freceive_enabled\x18\x02 \x01(\x08R\x0ereceiveEnabled\"C\n\x03Hop\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId:\x04\x98\xa0\x1f\x00\x42\x39Z7github.com/cosmos/ibc-go/v9/modules/apps/transfer/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n+ibc/applications/transfer/v1/transfer.proto\x12\x1cibc.applications.transfer.v1\x1a\x14gogoproto/gogo.proto\"T\n\x06Params\x12!\n\x0csend_enabled\x18\x01 \x01(\x08R\x0bsendEnabled\x12\'\n\x0freceive_enabled\x18\x02 \x01(\x08R\x0ereceiveEnabled\"C\n\x03Hop\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId:\x04\x98\xa0\x1f\x00\x42:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.applications.transfer.v1.transfer_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/cosmos/ibc-go/v9/modules/apps/transfer/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/types'
   _globals['_HOP']._loaded_options = None
   _globals['_HOP']._serialized_options = b'\230\240\037\000'
   _globals['_PARAMS']._serialized_start=99

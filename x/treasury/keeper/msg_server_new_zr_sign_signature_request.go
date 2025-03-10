@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/errors"
 	cosmos_types "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -36,7 +35,7 @@ func (k msgServer) NewZrSignSignatureRequest(goCtx context.Context, msg *types.M
 	}
 	wsID, _ := ws[walletTypeStr]
 
-	keys, _, err := query.CollectionFilteredPaginate[uint64, types.Key, collections.Map[uint64, types.Key], types.Key](
+	keys, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.KeyStore,
 		nil,

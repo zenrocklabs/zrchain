@@ -15,8 +15,6 @@ class State(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     STATE_TRYOPEN: _ClassVar[State]
     STATE_OPEN: _ClassVar[State]
     STATE_CLOSED: _ClassVar[State]
-    STATE_FLUSHING: _ClassVar[State]
-    STATE_FLUSHCOMPLETE: _ClassVar[State]
 
 class Order(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -28,30 +26,26 @@ STATE_INIT: State
 STATE_TRYOPEN: State
 STATE_OPEN: State
 STATE_CLOSED: State
-STATE_FLUSHING: State
-STATE_FLUSHCOMPLETE: State
 ORDER_NONE_UNSPECIFIED: Order
 ORDER_UNORDERED: Order
 ORDER_ORDERED: Order
 
 class Channel(_message.Message):
-    __slots__ = ("state", "ordering", "counterparty", "connection_hops", "version", "upgrade_sequence")
+    __slots__ = ("state", "ordering", "counterparty", "connection_hops", "version")
     STATE_FIELD_NUMBER: _ClassVar[int]
     ORDERING_FIELD_NUMBER: _ClassVar[int]
     COUNTERPARTY_FIELD_NUMBER: _ClassVar[int]
     CONNECTION_HOPS_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
-    UPGRADE_SEQUENCE_FIELD_NUMBER: _ClassVar[int]
     state: State
     ordering: Order
     counterparty: Counterparty
     connection_hops: _containers.RepeatedScalarFieldContainer[str]
     version: str
-    upgrade_sequence: int
-    def __init__(self, state: _Optional[_Union[State, str]] = ..., ordering: _Optional[_Union[Order, str]] = ..., counterparty: _Optional[_Union[Counterparty, _Mapping]] = ..., connection_hops: _Optional[_Iterable[str]] = ..., version: _Optional[str] = ..., upgrade_sequence: _Optional[int] = ...) -> None: ...
+    def __init__(self, state: _Optional[_Union[State, str]] = ..., ordering: _Optional[_Union[Order, str]] = ..., counterparty: _Optional[_Union[Counterparty, _Mapping]] = ..., connection_hops: _Optional[_Iterable[str]] = ..., version: _Optional[str] = ...) -> None: ...
 
 class IdentifiedChannel(_message.Message):
-    __slots__ = ("state", "ordering", "counterparty", "connection_hops", "version", "port_id", "channel_id", "upgrade_sequence")
+    __slots__ = ("state", "ordering", "counterparty", "connection_hops", "version", "port_id", "channel_id")
     STATE_FIELD_NUMBER: _ClassVar[int]
     ORDERING_FIELD_NUMBER: _ClassVar[int]
     COUNTERPARTY_FIELD_NUMBER: _ClassVar[int]
@@ -59,7 +53,6 @@ class IdentifiedChannel(_message.Message):
     VERSION_FIELD_NUMBER: _ClassVar[int]
     PORT_ID_FIELD_NUMBER: _ClassVar[int]
     CHANNEL_ID_FIELD_NUMBER: _ClassVar[int]
-    UPGRADE_SEQUENCE_FIELD_NUMBER: _ClassVar[int]
     state: State
     ordering: Order
     counterparty: Counterparty
@@ -67,8 +60,7 @@ class IdentifiedChannel(_message.Message):
     version: str
     port_id: str
     channel_id: str
-    upgrade_sequence: int
-    def __init__(self, state: _Optional[_Union[State, str]] = ..., ordering: _Optional[_Union[Order, str]] = ..., counterparty: _Optional[_Union[Counterparty, _Mapping]] = ..., connection_hops: _Optional[_Iterable[str]] = ..., version: _Optional[str] = ..., port_id: _Optional[str] = ..., channel_id: _Optional[str] = ..., upgrade_sequence: _Optional[int] = ...) -> None: ...
+    def __init__(self, state: _Optional[_Union[State, str]] = ..., ordering: _Optional[_Union[Order, str]] = ..., counterparty: _Optional[_Union[Counterparty, _Mapping]] = ..., connection_hops: _Optional[_Iterable[str]] = ..., version: _Optional[str] = ..., port_id: _Optional[str] = ..., channel_id: _Optional[str] = ...) -> None: ...
 
 class Counterparty(_message.Message):
     __slots__ = ("port_id", "channel_id")
@@ -135,9 +127,3 @@ class Timeout(_message.Message):
     height: _client_pb2.Height
     timestamp: int
     def __init__(self, height: _Optional[_Union[_client_pb2.Height, _Mapping]] = ..., timestamp: _Optional[int] = ...) -> None: ...
-
-class Params(_message.Message):
-    __slots__ = ("upgrade_timeout",)
-    UPGRADE_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
-    upgrade_timeout: Timeout
-    def __init__(self, upgrade_timeout: _Optional[_Union[Timeout, _Mapping]] = ...) -> None: ...

@@ -211,7 +211,7 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch BTC price
+	// Fetch BTC and ETH prices
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -222,34 +222,23 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
 
-		price, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
+		// Fetch BTC price
+		btcPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to fetch BTC price: %w", err)
 			return
 		}
-		updateMutex.Lock()
-		update.BTCUSDPrice = price
-		updateMutex.Unlock()
-	}()
 
-	// Fetch ETH price
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
-			return
-		}
-		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
-
-		price, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
+		// Fetch ETH price
+		ethPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to fetch ETH price: %w", err)
 			return
 		}
+
 		updateMutex.Lock()
-		update.ETHUSDPrice = price
+		update.BTCUSDPrice = btcPrice
+		update.ETHUSDPrice = ethPrice
 		updateMutex.Unlock()
 	}()
 
@@ -281,7 +270,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Get current state to preserve cleaned events
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-	o.updateChan <- sidecartypes.OracleState{
+	newState := sidecartypes.OracleState{
 		EigenDelegations:           update.eigenDelegations,
 		EthBlockHeight:             targetBlockNumber.Uint64(),
 		EthGasLimit:                update.estimatedGas,
@@ -295,6 +284,10 @@ func (o *Oracle) fetchAndProcessState(
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
 	}
+
+	log.Printf("\nState update: %+v\n", newState)
+
+	o.updateChan <- newState
 
 	return nil
 }
