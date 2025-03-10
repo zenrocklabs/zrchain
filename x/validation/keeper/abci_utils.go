@@ -986,7 +986,7 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 // validateOracleData verifies that the vote extension and oracle data match.
 // Only fields that have reached consensus (present in fieldVotePowers) are validated.
 // Fields that fail validation are removed from fieldVotePowers to prevent them from being used downstream.
-func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
+func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) {
 	invalidFields := make([]VoteExtensionField, 0)
 
 	// Validate hashes only if fields have consensus
@@ -1110,8 +1110,6 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	// Update FieldVotePowers in oracleData to reflect the validated fields
 	oracleData.FieldVotePowers = fieldVotePowers
-
-	return nil
 }
 
 // Helper function to validate consensus on multiple required fields for transactions
@@ -1137,28 +1135,3 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 
 	return nil
 }
-
-// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
-func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
-	var missingConsensus []VoteExtensionField
-	for _, field := range fields {
-		if !fieldHasConsensus(fieldVotePowers, field) {
-			missingConsensus = append(missingConsensus, field)
-		}
-	}
-	return missingConsensus
-}
-
-// anyFieldHasConsensus checks if at least one of the specified fields has consensus
-func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	for _, field := range fields {
-		if fieldHasConsensus(fieldVotePowers, field) {
-			return true
-		}
-	}
-	return false
-}
-
-// The following functions are imported from abci_types.go:
-// - fieldHasConsensus: checks if a specific field has reached consensus
-// - HasRequiredGasFields: checks if all gas-related fields have consensus
