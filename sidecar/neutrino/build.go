@@ -23,11 +23,11 @@ import (
 	"github.com/btcsuite/btclog"
 )
 
-func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes *map[string]LiteNode, path string) (map[string]LiteNode, error) {
+func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes *map[string]LiteNode, path string, neutrinoPath string) (map[string]LiteNode, error) {
 
 	chainName := chainParams.Name
-	dataDir := path + "/neutrino_" + chainName
-	dbPath := dataDir + "/neutrino_" + chainName + ".db"
+	dataDir := path + neutrinoPath + chainName
+	dbPath := dataDir + neutrinoPath + chainName + ".db"
 
 	err := os.MkdirAll(dataDir, os.ModePerm)
 	if err != nil {
@@ -83,12 +83,12 @@ func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes
 	return nodeMap, err
 }
 
-func (ns *NeutrinoServer) Initialize(url, user, password, path string, port int) {
+func (ns *NeutrinoServer) Initialize(url, user, password, path string, port int, neutrinoPath string) {
 	var err error
 	nodes := make(map[string]LiteNode)
 
 	//Testnet
-	nodes, err = buildNeutrinoNode(chaincfg.TestNet3Params, btclog.LevelError, &nodes, path)
+	nodes, err = buildNeutrinoNode(chaincfg.TestNet3Params, btclog.LevelError, &nodes, path, neutrinoPath)
 	if err != nil {
 		log.Printf("Failed to Start Node Testnet3")
 	}
@@ -96,7 +96,7 @@ func (ns *NeutrinoServer) Initialize(url, user, password, path string, port int)
 	ns.Nodes = nodes
 
 	//Mainnet
-	nodes, err = buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes, path)
+	nodes, err = buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes, path, neutrinoPath)
 	if err != nil {
 		log.Printf("Failed to Start Node Mainnet")
 	}

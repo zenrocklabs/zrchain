@@ -22,7 +22,7 @@ func Test_ProxyFunctions_Testnet3(t *testing.T) {
 	*/
 
 	ns := neutrino.NeutrinoServer{}
-	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345)
+	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
 
 	time.Sleep(30 * time.Second)
 
@@ -59,7 +59,7 @@ func Test_ProxyFunctions_Testnet4(t *testing.T) {
 	*/
 
 	ns := neutrino.NeutrinoServer{}
-	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345)
+	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
 	time.Sleep(30 * time.Second)
 
 	//Get via the Neutrino Node
