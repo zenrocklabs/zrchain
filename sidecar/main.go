@@ -24,6 +24,7 @@ func main() {
 	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
+	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -74,7 +75,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort)
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
