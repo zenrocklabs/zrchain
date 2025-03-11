@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -135,7 +136,7 @@ func PolicyForAction(ctx sdk.Context, k *Keeper, act *types.Action) (policy.Poli
 // AddAction creates a new action for the provided message with initial approvers.
 // Who calls this function should also immediately check if the action can be
 // executed with the provided initialApprovers, by calling TryExecuteAction.
-func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, reqBtl uint64, policyData map[string][]byte) (*types.Action, error) {
+func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, reqBtl uint64, policyData map[string][]byte, wsOwners []string) (*types.Action, error) {
 	wrappedMsg, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
@@ -168,13 +169,14 @@ func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID
 		return nil, err
 	}
 
-	creatorAbbr, err := pol.AddressToParticipant(creator)
-	if err != nil {
-		return nil, err
+	if !addressInWorkspace(wsOwners, creator) {
+		return nil, fmt.Errorf("creator %s is not an owner of this workspace", creator)
 	}
 
-	if err := act.AddApprover(creatorAbbr); err != nil {
-		return nil, err
+	if addressInPolicy(pol.GetParticipantAddresses(), creator) {
+		if err := act.AddApprover(creator); err != nil {
+			return nil, err
+		}
 	}
 
 	// get policy participants
@@ -254,4 +256,12 @@ func mapToDeterministicSlice(policyData map[string][]byte) []*types.KeyValue {
 		return strings.Compare(policyDataKv[i].Key, policyDataKv[j].Key) < 0
 	})
 	return policyDataKv
+}
+
+func addressInWorkspace(wsOwners []string, creator string) bool {
+	return slices.Contains(wsOwners, creator)
+}
+
+func addressInPolicy(policyParticipants []string, creator string) bool {
+	return slices.Contains(policyParticipants, creator)
 }
