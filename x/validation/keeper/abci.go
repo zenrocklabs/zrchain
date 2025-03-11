@@ -370,14 +370,11 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
-		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
-		return VoteExtension{}, false
-	}
+	k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers)
 
 	// Log final consensus summary after validation
 	k.Logger(ctx).Info("final consensus summary",
-		"fields_with_consensus", len(fieldVotePowers),
+		"fields_with_consensus", len(oracleData.FieldVotePowers),
 		"stage", "post_validation")
 
 	return voteExt, true
@@ -429,12 +426,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
 
-	// Store the field vote powers for later use in transaction dispatch callbacks
-	oracleData.FieldVotePowers = fieldVotePowers
-
-	if err := k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers); err != nil {
-		return nil, err
-	}
+	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
 
 	return oracleData, nil
 }
@@ -1013,12 +1005,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				return nil
 			}
 
-			if tx.Caip2ChainId != "eip155:17000" {
-				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
-			}
-			chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
+			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
-				return err
+				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
 
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(

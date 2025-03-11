@@ -221,6 +221,27 @@ func fieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, field VoteE
 	return ok
 }
 
+// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
+func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
+	var missingConsensus []VoteExtensionField
+	for _, field := range fields {
+		if !fieldHasConsensus(fieldVotePowers, field) {
+			missingConsensus = append(missingConsensus, field)
+		}
+	}
+	return missingConsensus
+}
+
+// anyFieldHasConsensus checks if at least one of the specified fields has consensus
+func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
+	for _, field := range fields {
+		if fieldHasConsensus(fieldVotePowers, field) {
+			return true
+		}
+	}
+	return false
+}
+
 // VoteExtensionField defines a type-safe identifier for vote extension fields
 type VoteExtensionField int
 

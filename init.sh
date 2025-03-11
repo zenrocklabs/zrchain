@@ -352,9 +352,14 @@ if [ "$BUILD_ONLY" = false ]; then
         sleep 25
     fi
 
-    # Start the node with optional flags
+    if [ "$NON_VALIDATOR" = true ]; then
+        NON_VALIDATOR_FLAG="--non-validator"
+    else
+        NON_VALIDATOR_FLAG=""
+    fi
+
     zenrockd start --home $HOME_DIR --pruning=nothing --log_level $LOGLEVEL \
     --minimum-gas-prices=0.0001urock --api.enable --api.enabled-unsafe-cors \
-    ${NON_VALIDATOR:+--non-validator} \
+    $NON_VALIDATOR_FLAG \
     ${SIDECAR_ADDR:+--sidecar-addr "$SIDECAR_ADDR"}
 fi
