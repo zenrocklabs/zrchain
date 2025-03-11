@@ -168,7 +168,7 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
 		estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-			From: common.HexToAddress("0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe"),
+			From: common.HexToAddress("0xBc17325952D043cCe5Bf1e4F42E26aE531962ED0"),
 			To:   &addr,
 			Data: stakeCallData,
 		})
