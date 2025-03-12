@@ -19,7 +19,7 @@ func (p *AnyInGroupPolicy) AddressToParticipant(addr string) (string, error) {
 			return addr, nil
 		}
 	}
-	return "", fmt.Errorf("address not a participant of this policy")
+	return "", fmt.Errorf("address not in this policy")
 }
 
 func (p *AnyInGroupPolicy) GetParticipantAddresses() []string {

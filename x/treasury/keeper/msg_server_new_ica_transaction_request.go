@@ -33,11 +33,12 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 
 	signPolicyId := key.SignPolicyId
 
+	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	if err != nil {
+		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
+	}
+
 	if signPolicyId == 0 {
-		ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
-		if err != nil {
-			return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
-		}
 		signPolicyId = ws.SignPolicyId
 	}
 
@@ -46,7 +47,7 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyId, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}
