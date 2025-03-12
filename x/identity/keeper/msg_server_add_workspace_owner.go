@@ -30,7 +30,7 @@ func (k msgServer) AddWorkspaceOwner(goCtx context.Context, msg *types.MsgAddWor
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "new owner %s is already an owner of the workspace", msg.Creator)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}

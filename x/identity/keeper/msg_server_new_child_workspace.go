@@ -24,7 +24,7 @@ func (k msgServer) NewChildWorkspace(goCtx context.Context, msg *types.MsgNewChi
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "creator %s is not an owner of the workspace %s", msg.Creator, msg.ParentWorkspaceAddr)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil, parent.Owners)
 	if err != nil {
 		return nil, err
 	}

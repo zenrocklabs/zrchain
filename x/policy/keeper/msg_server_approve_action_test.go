@@ -125,6 +125,19 @@ func Test_msgServer_ApproveAction(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "FAIL: approver outside policy",
+			args: args{
+				action: &defaultAction,
+				policy: &defaultPolicy,
+				msg: &types.MsgApproveAction{
+					Creator:    "invalidApprover",
+					ActionType: addToWorkspaceMsgAny.TypeUrl,
+					ActionId:   1,
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

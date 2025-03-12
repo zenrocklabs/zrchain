@@ -72,7 +72,7 @@ func Test_msgServer_AddAction_Btl(t *testing.T) {
 			}
 			policy.InitGenesis(ctx, *pk, polGenesis)
 
-			res, err := pk.AddAction(ctx, "some-creator", &types.MsgNewPolicy{}, 1, tt.msgBtl, nil)
+			res, err := pk.AddAction(ctx, "some-creator", &types.MsgNewPolicy{}, 1, tt.msgBtl, nil, []string{"some-creator"})
 
 			require.Nil(t, err)
 			require.NotNil(t, res)

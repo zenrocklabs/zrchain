@@ -31,7 +31,7 @@ func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKe
 		}
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, key.SignPolicyId, 0, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, key.SignPolicyId, 0, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}
