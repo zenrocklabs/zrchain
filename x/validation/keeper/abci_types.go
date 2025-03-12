@@ -250,6 +250,7 @@ const (
 	VEFieldETHUSDPrice
 	VEFieldLatestBtcBlockHeight
 	VEFieldLatestBtcHeaderHash
+	VEFieldSolROCKMintNonce
 )
 
 // FieldHandler defines operations for processing a specific vote extension field
@@ -328,6 +329,8 @@ func (f VoteExtensionField) String() string {
 		return "LatestBtcBlockHeight"
 	case VEFieldLatestBtcHeaderHash:
 		return "LatestBtcHeaderHash"
+	case VEFieldSolROCKMintNonce:
+		return "SolROCKMintNonce"
 	default:
 		return "Unknown"
 	}
@@ -435,6 +438,11 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
 			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(math.LegacyDec) },
+		},
+		{
+			Field:    VEFieldSolROCKMintNonce,
+			GetValue: func(ve VoteExtension) any { return ve.SolROCKMintNonce },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolROCKMintNonce = v.(solSystem.NonceAccount) },
 		},
 	}
 }

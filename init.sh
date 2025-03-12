@@ -171,13 +171,13 @@ if [ "$START_ONLY" = false ]; then
 
   # Set initial zentp parameters
     jq '.app_state.zentp.params = {
-        "zrchain_relayer_key_id": 1,
         "solana": {
+          "signer_key_id": 1,
           "rpc_url": "https://api.devnet.solana.com",
-          "program_id": "zTsNe6inwEA8Z6WdogiA1vPLLAkaheGdU6WNvxdaXUx",
-          "nonce_account_key": 8,
-          "nonce_authority_key": 9,
-          "mint_address": "Ce1gvD5BG1gjEjuDKJXPcQgNfwDPJH9VvgfcSEzyNZn4",
+          "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+          "nonce_authority_key": 8,
+          "nonce_account_key": 9,
+          "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
           "fee_wallet": "AvUu1UkvwgBcvCXMEseBdEns7BGF5tNYRcLmwegDcUCX",
           "fee": 20
         }

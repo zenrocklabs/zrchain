@@ -134,7 +134,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldZRChainBlockHeight; i <= VEFieldLatestBtcHeaderHash; i++ {
+	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolROCKMintNonce; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
@@ -1067,6 +1067,11 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
 		}
 	}
+	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonce]; ok {
+		if voteExt.SolROCKMintNonce != oracleData.SolROCKMintNonce {
+			invalidFields = append(invalidFields, VEFieldSolROCKMintNonce)
+		}
+	}
 
 	// Check price fields
 	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
@@ -1165,26 +1170,30 @@ func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields [
 // - fieldHasConsensus: checks if a specific field has reached consensus
 // - HasRequiredGasFields: checks if all gas-related fields have consensus
 
-func (k Keeper) GetSolanaNonceAccount(ctx sdk.Context) (*system.NonceAccount, error) {
-	zParams := k.zentpKeeper.GetParams(ctx)
+func (k Keeper) GetSolanaNonceAccount(goCtx context.Context) (system.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	zParams := k.zentpKeeper.GetParams(goCtx)
 	key, err := k.treasuryKeeper.GetKey(ctx, zParams.Solana.NonceAccountKey)
 	if err != nil {
-		return nil, err
+		return system.NonceAccount{}, err
 	}
 	publicKey, err := treasurytypes.SolanaPubkey(key)
 	if err != nil {
-		return nil, err
+		return system.NonceAccount{}, err
 	}
-	resp, err := k.sidecarClient.GetSolanaAccountInfo(ctx, &sidecar.SolanaAccountInfoRequest{
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
 		PubKey: publicKey.String(),
 	})
-
-	nonceAccount := &system.NonceAccount{}
+	if err != nil {
+		k.Logger(ctx).Error("failed to get solana account info from sidecar: ", err)
+		return system.NonceAccount{}, err
+	}
+	nonceAccount := system.NonceAccount{}
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	err = nonceAccount.UnmarshalWithDecoder(decoder)
 	if err != nil {
-		return nil, err
+		return nonceAccount, err
 	}
 	return nonceAccount, err
 }

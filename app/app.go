@@ -725,6 +725,7 @@ func NewZenrockApp(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.IdentityKeeper,
+		app.ValidationKeeper,
 		runtime.NewMemStoreService(memKeys[zentptypes.MemStoreKey]),
 	)
 

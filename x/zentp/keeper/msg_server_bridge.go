@@ -32,8 +32,6 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	mintsCount, err := k.MintCount.Get(ctx)
 	if err != nil {
-	}
-	if err != nil {
 		return nil, err
 	}
 
@@ -53,12 +51,18 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
+	k.MintCount.Set(ctx, mintsCount)
+
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(req.SourceAddress),
 		types.ModuleName,
 		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))),
 	); err != nil {
+		return nil, err
+	}
+
+	if err := k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.Solana.NonceAccountKey, true); err != nil {
 		return nil, err
 	}
 

@@ -24,15 +24,16 @@ type (
 
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
-		authority      string
-		treasuryKeeper types.TreasuryKeeper
-		bankKeeper     types.BankKeeper
-		accountKeeper  types.AccountKeeper
-		identityKeeper types.IdentityKeeper
-		mintStore      collections.Map[uint64, types.Bridge]
-		MintCount      collections.Item[uint64]
-		burnStore      collections.Map[uint64, types.Bridge]
-		BurnCount      collections.Item[uint64]
+		authority        string
+		treasuryKeeper   types.TreasuryKeeper
+		bankKeeper       types.BankKeeper
+		accountKeeper    types.AccountKeeper
+		identityKeeper   types.IdentityKeeper
+		validationKeeper types.ValidationKeeper
+		mintStore        collections.Map[uint64, types.Bridge]
+		MintCount        collections.Item[uint64]
+		burnStore        collections.Map[uint64, types.Bridge]
+		BurnCount        collections.Item[uint64]
 	}
 )
 
@@ -45,6 +46,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	identityKeeper types.IdentityKeeper,
+	validationKeeper types.ValidationKeeper,
 	memStoreService store.MemoryStoreService,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
@@ -58,19 +60,20 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:             cdc,
-		storeService:    storeService,
-		memStoreService: memStoreService,
-		mintStore:       collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
-		burnStore:       collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
-		MintCount:       collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
-		BurnCount:       collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
-		authority:       authority,
-		logger:          logger,
-		treasuryKeeper:  treasuryKeeper,
-		bankKeeper:      bankKeeper,
-		accountKeeper:   accountKeeper,
-		identityKeeper:  identityKeeper,
+		cdc:              cdc,
+		storeService:     storeService,
+		memStoreService:  memStoreService,
+		mintStore:        collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		burnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
+		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
+		authority:        authority,
+		logger:           logger,
+		treasuryKeeper:   treasuryKeeper,
+		bankKeeper:       bankKeeper,
+		accountKeeper:    accountKeeper,
+		identityKeeper:   identityKeeper,
+		validationKeeper: validationKeeper,
 	}
 
 	return k
@@ -146,4 +149,27 @@ func (k Keeper) GetSignerKeyID(ctx context.Context) uint64 {
 	params := k.GetParams(ctx)
 
 	return params.ZrchainRelayerKeyId
+}
+
+func (k Keeper) GetNewMints(goCtx context.Context) ([]*types.Bridge, error) {
+	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
+		goCtx,
+		k.mintStore,
+		nil,
+		func(key uint64, value types.Bridge) (bool, error) {
+			return value.State == types.BridgeStatus_BRIDGE_STATUS_NEW, nil
+		},
+		func(key uint64, value types.Bridge) (*types.Bridge, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mints, nil
+}
+
+func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
+	return k.mintStore.Set(ctx, id, *mint)
 }

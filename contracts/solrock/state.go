@@ -3,7 +3,7 @@ package solrock
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/zenbtc_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/rock_spl_token"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -11,53 +11,29 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func GetGlobalConfig(context context.Context, client *rpc.Client, programID solana.PublicKey) (zenbtc_spl_token.GlobalConfigAccount, error) {
+func GetGlobalConfig(context context.Context, client *rpc.Client, programID solana.PublicKey) (rock_spl_token.GlobalConfigAccount, error) {
 	globalConfigPDA, err := GetGlobalConfigPDA(programID)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return rock_spl_token.GlobalConfigAccount{}, err
 	}
 
 	accountInfo, err := GetAccountInfo(context, client, globalConfigPDA)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return rock_spl_token.GlobalConfigAccount{}, err
 	}
 
 	data := accountInfo.Value.Data.GetBinary()
 
-	globalConfig := new(zenbtc_spl_token.GlobalConfigAccount)
+	globalConfig := new(rock_spl_token.GlobalConfigAccount)
 	decoder := bin.NewBorshDecoder(data)
 
 	err = globalConfig.UnmarshalWithDecoder(decoder)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return rock_spl_token.GlobalConfigAccount{}, err
 	}
 
 	return *globalConfig, nil
 
-}
-
-func GetTokenConfig(context context.Context, client *rpc.Client, programID solana.PublicKey, mintPubkey solana.PublicKey) (zenbtc_spl_token.TokenConfigAccount, error) {
-	tokenConfigPDA, err := GetTokenConfigPDA(programID, mintPubkey)
-	if err != nil {
-		return zenbtc_spl_token.TokenConfigAccount{}, err
-	}
-
-	accountInfo, err := GetAccountInfo(context, client, tokenConfigPDA)
-	if err != nil {
-		return zenbtc_spl_token.TokenConfigAccount{}, err
-	}
-
-	data := accountInfo.Value.Data.GetBinary()
-
-	tokenConfig := new(zenbtc_spl_token.TokenConfigAccount)
-	decoder := bin.NewBorshDecoder(data)
-
-	err = tokenConfig.UnmarshalWithDecoder(decoder)
-	if err != nil {
-		return zenbtc_spl_token.TokenConfigAccount{}, err
-	}
-
-	return *tokenConfig, nil
 }
 
 func GetMint(context context.Context, client *rpc.Client, mintPubkey solana.PublicKey) (token.Mint, error) {

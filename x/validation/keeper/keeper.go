@@ -246,3 +246,7 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 
 	return valUpdates.Updates, nil
 }
+
+func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
+	return k.SolanaNonceRequested.Set(ctx, keyID, state)
+}

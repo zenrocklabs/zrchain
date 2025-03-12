@@ -4,76 +4,78 @@ import (
 	"context"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock"
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/zenbtc_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/rock_spl_token"
 	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-const durableNonceKey = "solanaDurableNonce"
-
-func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signer, recipient *treasuryTypes.Key) (string, error) {
+func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount) ([]byte, error) {
 	params := k.GetParams(goCtx).Solana
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	programID, err := solana.PublicKeyFromBase58(params.ProgramId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAccountKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	nonceAccPubKey, err := treasuryTypes.SolanaPubkey(nonceAccKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	nonceAuthKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAuthorityKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	nonceAuthPubKey, err := treasuryTypes.SolanaPubkey(nonceAuthKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	signerPubKey, err := treasuryTypes.SolanaPubkey(signer)
+	signerKey, err := k.treasuryKeeper.GetKey(ctx, params.SignerKeyId)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	signerPubKey, err := treasuryTypes.SolanaPubkey(signerKey)
+	if err != nil {
+		return nil, err
 	}
 
 	mintKey, err := solana.PublicKeyFromBase58(params.MintAddress)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	feeKey, err := solana.PublicKeyFromBase58(params.FeeWallet)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	recipientPubKey, err := treasuryTypes.SolanaPubkey(recipient)
+	recipientPubKey, err := solana.PublicKeyFromBase58(recipient)
 	if err != nil {
-		return "", err
-	}
-
-	nonce, err := k.getSolanaDurableNonce(ctx)
-	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var instructions []solana.Instruction
 
+	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
+		*nonceAccPubKey,
+		solana.SysVarRecentBlockHashesPubkey,
+		*nonceAuthPubKey,
+	).Build())
+
 	feeWalletAta, _, err := solana.FindAssociatedTokenAddress(feeKey, mintKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	client := rpc.New(params.RpcUrl)
@@ -89,12 +91,12 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 			).Build(),
 		)
 	} else {
-		return "", err
+		return nil, err
 	}
 
-	receiverAta, _, err := solana.FindAssociatedTokenAddress(*recipientPubKey, mintKey)
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	_, err = solrock.GetTokenAccount(context.Background(), client, receiverAta)
@@ -104,28 +106,23 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 			instructions,
 			ata.NewCreateInstruction(
 				*signerPubKey,
-				*recipientPubKey,
+				recipientPubKey,
 				mintKey,
 			).Build(),
 		)
 	}
 
-	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
-		*nonceAccPubKey,
-		solana.SysVarRecentBlockHashesPubkey,
-		*nonceAuthPubKey,
-	).Build())
 	instructions = append(instructions, solrock.Wrap(
-		zenbtc_spl_token.WrapArgs{
+		programID,
+		rock_spl_token.WrapArgs{
 			Value: amount,
 			Fee:   params.Fee,
 		},
-		programID,
-		mintKey,
 		*signerPubKey,
+		mintKey,
 		feeKey,
 		feeWalletAta,
-		*recipientPubKey,
+		recipientPubKey,
 		receiverAta,
 	))
 
@@ -135,52 +132,11 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, signe
 		solana.TransactionPayer(*signerPubKey),
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return tx.String(), nil
-}
-
-func (k Keeper) getSolanaDurableNonce(ctx sdk.Context) (system.NonceAccount, error) {
-	var data []byte
-	memStore := k.memStoreService.OpenMemoryStore(ctx)
-	data, err := memStore.Get([]byte(durableNonceKey))
+	txBytes, err := tx.Message.MarshalBinary()
 	if err != nil {
-		return system.NonceAccount{}, err
+		return nil, err
 	}
-	params := k.GetParams(ctx).Solana
-	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, params.NonceAccountKey)
-	if err != nil {
-		return system.NonceAccount{}, err
-	}
-
-	nonceAccPubKey, err := treasuryTypes.SolanaPubkey(nonceAccKey)
-	if err != nil {
-		return system.NonceAccount{}, err
-	}
-
-	client := rpc.New(params.RpcUrl)
-	accountInfo, err := client.GetAccountInfoWithOpts(
-		ctx,
-		*nonceAccPubKey,
-		&rpc.GetAccountInfoOpts{
-			Commitment: rpc.CommitmentConfirmed,
-			DataSlice:  nil,
-		},
-	)
-	if err != nil {
-		return system.NonceAccount{}, err
-	}
-
-	data = accountInfo.Value.Data.GetBinary()
-
-	nonceAccount := new(system.NonceAccount)
-	decoder := bin.NewBorshDecoder(data)
-
-	err = nonceAccount.UnmarshalWithDecoder(decoder)
-	if err != nil {
-		return system.NonceAccount{}, err
-	}
-
-	return *nonceAccount, nil
+	return txBytes, nil
 }

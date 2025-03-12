@@ -39,3 +39,7 @@ type TreasuryKeeper interface {
 type IdentityKeeper interface {
 	GetWorkspaces(goCtx context.Context, user string) ([]*types.Workspace, error)
 }
+
+type ValidationKeeper interface {
+	SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error
+}

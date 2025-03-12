@@ -14,6 +14,7 @@ import (
 	"cosmossdk.io/math"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -130,6 +131,21 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
+	var solNonce solSystem.NonceAccount
+	solNonceRequestsd, err := k.SolanaNonceRequested.Get(ctx, k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return VoteExtension{}, err
+		}
+		solNonceRequestsd = false
+	}
+	if solNonceRequestsd {
+		solNonce, err = k.GetSolanaNonceAccount(ctx)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+	}
+
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
 		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
@@ -151,6 +167,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
+		SolROCKMintNonce:           solNonce,
 	}
 
 	return voteExt, nil
@@ -430,6 +447,9 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
 		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
+	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonce]; ok {
+		oracleData.SolROCKMintNonce = voteExt.SolROCKMintNonce
+	}
 
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
@@ -691,43 +711,55 @@ func checkForUpdateAndDispatchTx[T any](
 		return
 	}
 
-	nonceData, err := k.getNonceDataWithInit(ctx, keyID)
-	if err != nil {
-		k.Logger(ctx).Error("error getting nonce data", "keyID", keyID, "error", err)
-		return
-	}
-	k.Logger(ctx).Info("Nonce info",
-		"nonce", nonceData.Nonce,
-		"prev", nonceData.PrevNonce,
-		"counter", nonceData.Counter,
-		"skip", nonceData.Skip,
-		"requested", requestedEthNonce,
-	)
-
-	if nonceData.Nonce != 0 && *requestedEthNonce == 0 {
-		return
-	}
-
 	nonceUpdated := false
+
 	if requestedEthNonce != nil {
-		nonceUpdated, err = handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
+		nonceData, err := k.getNonceDataWithInit(ctx, keyID)
 		if err != nil {
-			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
+			k.Logger(ctx).Error("error getting nonce data", "keyID", keyID, "error", err)
+			return
+		}
+		k.Logger(ctx).Info("Nonce info",
+			"nonce", nonceData.Nonce,
+			"prev", nonceData.PrevNonce,
+			"counter", nonceData.Counter,
+			"skip", nonceData.Skip,
+			"requested", requestedEthNonce,
+		)
+		if nonceData.Nonce != 0 && *requestedEthNonce == 0 {
+			return
+		}
+
+		if requestedEthNonce != nil {
+			nonceUpdated, err = handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
+			if err != nil {
+				k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
+				return
+			}
+		}
+
+		if len(pendingTxs) == 1 && nonceUpdated {
+			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
+				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
+			}
+			return
+		}
+
+		if nonceData.Skip {
+			return
+		}
+	} else if requestedSolNonce != nil {
+		if requestedSolNonce.Nonce.IsZero() {
+			k.Logger(ctx).Error("solana nonce is zero")
+			return
+		}
+		if len(pendingTxs) == 1 && nonceUpdated {
+			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
+				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
+			}
 			return
 		}
 	}
-
-	if len(pendingTxs) == 1 && nonceUpdated {
-		if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
-			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-		}
-		return
-	}
-
-	if nonceData.Skip {
-		return
-	}
-
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
 	txIndex := 0
 	if nonceUpdated {
@@ -751,7 +783,7 @@ func processTransaction[T any](
 	txDispatchCallback func(tx T) error,
 ) {
 	nonceReqStore := k.EthereumNonceRequested
-	if requestedEthNonce != nil {
+	if requestedEthNonce == nil {
 		nonceReqStore = k.SolanaNonceRequested
 	}
 
@@ -1075,101 +1107,42 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 	processTransaction(
 		k,
 		ctx,
-		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-		&oracleData.RequestedEthMinterNonce,
+		k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey,
 		nil,
-		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactionsByStatus(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED)
+		&oracleData.SolROCKMintNonce,
+		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
+			return k.zentpKeeper.GetNewMints(ctx)
 		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			k.Logger(ctx).Warn("processing zenBTC mint",
-				"recipient", tx.RecipientAddress,
-				"amount", tx.Amount,
-				"nonce", oracleData.RequestedEthMinterNonce,
-				"gas_limit", oracleData.EthGasLimit,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
-			supply, err := k.zenBTCKeeper.GetSupply(ctx)
-			if err != nil {
-				return err
-			}
-			supply.PendingZenBTC -= tx.Amount
-			supply.MintedZenBTC += tx.Amount
-			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				return err
-			}
-			k.Logger(ctx).Warn("pending mint supply updated",
-				"pending_mint_old", supply.PendingZenBTC+tx.Amount,
-				"pending_mint_new", supply.PendingZenBTC,
-			)
-			k.Logger(ctx).Warn("minted supply updated",
-				"minted_old", supply.MintedZenBTC-tx.Amount,
-				"minted_new", supply.MintedZenBTC,
-			)
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+		func(_ *zentptypes.Bridge) error {
+			return nil
 		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			if err := k.zenBTCKeeper.SetFirstPendingMintTransaction(ctx, tx.Id); err != nil {
-				return err
-			}
-
+		func(tx *zentptypes.Bridge) error {
 			// Check for consensus
-			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			requiredFields := []VoteExtensionField{VEFieldSolROCKMintNonce}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
-				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
+				"solROCK mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
 			}
 
-			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-			if err != nil {
-				return err
-			}
-			feeZenBTC := k.CalculateZenBTCMintFee(
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-				oracleData.EthGasLimit,
-				oracleData.BTCUSDPrice,
-				oracleData.ETHUSDPrice,
-				exchangeRate,
-			)
-			if oracleData.BTCUSDPrice.IsZero() {
-				return nil
-			}
-
-			if tx.Caip2ChainId != "eip155:17000" {
-				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
-			}
-			chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
+			transaction, err := k.zentpKeeper.PrepareSolRockMintTx(ctx, tx.Amount, tx.RecipientAddress, &oracleData.SolROCKMintNonce)
 			if err != nil {
 				return err
 			}
 
-			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
-				ctx,
-				tx.RecipientAddress,
-				chainID,
-				tx.Amount,
-				feeZenBTC,
-				oracleData.RequestedEthMinterNonce,
-				oracleData.EthGasLimit,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-
-			return k.submitEthereumTransaction(
+			params := k.zentpKeeper.GetParams(ctx)
+			err = k.submitSolanaTransaction(
 				ctx,
 				tx.Creator,
-				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-				treasurytypes.WalletType(tx.ChainType),
-				chainID,
-				unsignedMintTx,
-				unsignedMintTxHash,
+				[]uint64{params.Solana.SignerKeyId, params.Solana.NonceAuthorityKey},
+				treasurytypes.WalletType_WALLET_TYPE_SOLANA,
+				tx.DestinationChain,
+				transaction,
 			)
+			if err != nil {
+				return err
+			}
+			tx.State = zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING
+			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 	)
 }
@@ -1300,6 +1273,28 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 			NoBroadcast:         false,
 		},
 		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	return err
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) error {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
+		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+	if err != nil {
+		return err
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyIds:              keyIDs,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTx)),
 	)
 	return err
 }
