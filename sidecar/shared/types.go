@@ -53,7 +53,7 @@ type EthOracleConfig struct {
 }
 
 type ContractAddrs struct {
-	ServiceManager      string            `yaml:"service_manager"`
+	ServiceManager      map[string]string `yaml:"service_manager"`
 	PriceFeeds          PriceFeeds        `yaml:"price_feeds"`
 	ZenBTC              ZenBTC            `yaml:"zenbtc"`
 	WhitelistedRoleAddr map[string]string `yaml:"whitelisted_role_addr"`

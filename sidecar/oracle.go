@@ -29,7 +29,14 @@ import (
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solana.Client, zrChainQueryClient *client.QueryClient, ticker *time.Ticker) *Oracle {
+func NewOracle(
+	config sidecartypes.Config,
+	ethClient *ethclient.Client,
+	neutrinoServer *neutrino.NeutrinoServer,
+	solanaClient *solana.Client,
+	zrChainQueryClient *client.QueryClient,
+	ticker *time.Ticker,
+) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
 		Config:             config,
@@ -51,24 +58,28 @@ func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrino
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	serviceManager, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]), o.EthClient,
+	serviceManager, err := middleware.NewContractZrServiceManager(
+		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager[o.Config.Network]),
+		o.EthClient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	tempEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
+	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]),
+		o.EthClient,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create contract instance: %w", err)
+	}
+	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 			o.cleanUpEthBurnEvents()
