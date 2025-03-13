@@ -26,7 +26,7 @@ func (k Keeper) GetBlockTime(ctx context.Context) int64 {
 func (k Keeper) GetStakeableAssets(ctx context.Context) []*types.AssetData {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
-		return types.DefaultStakeableAssets
+		return types.GetDefaultStakeableAssets(ctx)
 	}
 	return params.StakeableAssets
 }

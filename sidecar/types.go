@@ -39,7 +39,7 @@ var (
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
 	}
-	EthBlocksBeforeFinality = big.NewInt(5)
+	EthBlocksBeforeFinality = big.NewInt(5) // TODO: should this be increased?
 )
 
 type Oracle struct {
