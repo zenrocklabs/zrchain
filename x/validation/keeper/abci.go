@@ -401,28 +401,33 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
-	// Copy latest Bitcoin header data if we have consensus
-	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok && latestHeader != nil {
+	// Copy latest Bitcoin header data if we have consensus on both height and hash fields
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) &&
+		latestHeader != nil {
 		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
 		oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
 	}
-	// Copy requested Bitcoin header data if we have consensus and the header exists
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok && requestedHeader != nil {
+
+	// Copy requested Bitcoin header data if we have consensus on both height and hash fields
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) &&
+		requestedHeader != nil {
 		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
 	// Copy over nonce data if we have consensus on those fields
-	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
 
