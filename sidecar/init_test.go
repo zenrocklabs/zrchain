@@ -8,6 +8,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
+
 	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	// "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -21,7 +22,7 @@ func initTestOracle() *sidecar.Oracle {
 	cfg := sidecar.LoadConfig()
 
 	var rpcAddress string
-	if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
+	if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
 		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)

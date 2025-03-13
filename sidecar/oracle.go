@@ -59,14 +59,14 @@ func NewOracle(
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	serviceManager, err := middleware.NewContractZrServiceManager(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager[o.Config.Network]),
+		common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
 	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]),
+		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
 	if err != nil {
@@ -177,9 +177,9 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to encode stake call data: %w", err)
 			return
 		}
-		addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
+		addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
 		estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-			From: common.HexToAddress(o.Config.EthOracle.ContractAddrs.WhitelistedRoleAddr[o.Config.Network]),
+			From: common.HexToAddress(sidecartypes.WhitelistedRoleAddresses[o.Config.Network]),
 			To:   &addr,
 			Data: stakeCallData,
 		})
@@ -430,7 +430,7 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
 func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
-	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
+	tokenAddress := common.HexToAddress(sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network])
 
 	// Create a new instance of the ZenBTC token contract
 	zenBTCInstance, err := zenbtc.NewZenBTCFilterer(tokenAddress, o.EthClient)

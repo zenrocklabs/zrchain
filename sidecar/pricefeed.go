@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -14,18 +15,18 @@ import (
 )
 
 func (o *Oracle) initPriceFeed() (*ethclient.Client, *aggregatorv3.AggregatorV3Interface, *aggregatorv3.AggregatorV3Interface) {
-	mainnetEthClient, err := ethclient.Dial(o.Config.EthOracle.RPC["mainnet"])
+	mainnetEthClient, err := ethclient.Dial(o.Config.EthRPC["mainnet"])
 	if err != nil {
 		log.Fatalf("failed to connect to the Ethereum client: %v", err)
 	}
 
-	btcPriceFeedAddr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.PriceFeeds.BTC)
+	btcPriceFeedAddr := common.HexToAddress(sidecartypes.PriceFeedAddresses.BTC)
 	btcPriceFeed, err := aggregatorv3.NewAggregatorV3Interface(btcPriceFeedAddr, mainnetEthClient)
 	if err != nil {
 		log.Fatalf("Failed to create Chainlink price feed instance: %v", err)
 	}
 
-	ethPriceFeedAddr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.PriceFeeds.ETH)
+	ethPriceFeedAddr := common.HexToAddress(sidecartypes.PriceFeedAddresses.ETH)
 	ethPriceFeed, err := aggregatorv3.NewAggregatorV3Interface(ethPriceFeedAddr, mainnetEthClient)
 	if err != nil {
 		log.Fatalf("Failed to create Chainlink price feed instance: %v", err)
