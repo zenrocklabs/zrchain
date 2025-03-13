@@ -15,7 +15,7 @@ import (
 )
 
 func (o *Oracle) initPriceFeed() (*ethclient.Client, *aggregatorv3.AggregatorV3Interface, *aggregatorv3.AggregatorV3Interface) {
-	mainnetEthClient, err := ethclient.Dial(o.Config.EthRPC["mainnet"])
+	mainnetEthClient, err := ethclient.Dial(o.Config.EthRPC[sidecartypes.NetworkMainnet])
 	if err != nil {
 		log.Fatalf("failed to connect to the Ethereum client: %v", err)
 	}
