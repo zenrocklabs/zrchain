@@ -411,6 +411,9 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
+	// Collect fields that fail validation to revoke consensus
+	mismatchedFields := make([]VoteExtensionField, 0)
+
 	// Copy latest Bitcoin header data if we have consensus on both height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) &&
 		fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) &&
@@ -432,12 +435,17 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
-		} else if voteExt.SolanaRecentBlockhash != currentBlockhash && currentBlockhash != "" {
+			// Skip the rest of this validation block on error
+		} else if currentBlockhash != "" && voteExt.SolanaRecentBlockhash != currentBlockhash {
+			// Check for mismatch only if we have a valid current blockhash
 			k.Logger(ctx).Warn("solana recent blockhash mismatch",
 				"voteExt", voteExt.SolanaRecentBlockhash,
 				"current", currentBlockhash)
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaRecentBlockhash)
+		} else {
+			// No mismatch or empty current blockhash, use the consensus value
+			oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
 		}
-		oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
 	}
 
 	// Verify nonce fields and copy them if they have consensus
@@ -470,6 +478,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 						"keyID", nf.keyID,
 						"voteExt", nf.voteExtVal,
 						"current", currentNonce)
+					mismatchedFields = append(mismatchedFields, nf.field)
 				}
 			}
 
@@ -477,6 +486,10 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		}
 	}
 
+	// Process mismatched fields
+	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
+
+	// Call the standard validateOracleData to check other fields
 	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
 
 	return oracleData, nil
