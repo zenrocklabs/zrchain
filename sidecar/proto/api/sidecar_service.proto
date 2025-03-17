@@ -17,6 +17,8 @@ service SidecarService {
       returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest)
       returns (LatestEthereumNonceForAccountResponse) {}
+  rpc GetSolanaRecentBlockhash(SolanaRecentBlockhashRequest)
+      returns (SolanaRecentBlockhashResponse) {}
 }
 
 message LatestBitcoinBlockHeaderRequest { string ChainName = 1; }
@@ -77,3 +79,10 @@ message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
 message LatestEthereumNonceForAccountRequest { string Address = 1; }
 
 message LatestEthereumNonceForAccountResponse { uint64 Nonce = 1; }
+
+message SolanaRecentBlockhashRequest {}
+
+message SolanaRecentBlockhashResponse { 
+  string Blockhash = 1;
+  uint64 Slot = 2;
+}

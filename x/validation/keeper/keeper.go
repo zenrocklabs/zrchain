@@ -62,6 +62,8 @@ type Keeper struct {
 	EthereumNonceRequested collections.Map[uint64, bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
+	// SolanaBlockhashRequested - value: bool (is requested)
+	SolanaBlockhashRequested collections.Item[bool]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -141,6 +143,7 @@ func NewKeeper(
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		SolanaBlockhashRequested:          collections.NewItem(sb, types.SolanaBlockhashRequestedKey, types.SolanaBlockhashRequestedIndex, collections.BoolValue),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 	}
 }

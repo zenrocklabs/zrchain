@@ -90,3 +90,36 @@ func ValidateChainID(ctx context.Context, chainID any) (uint64, error) {
 
 	return evmChainID, nil
 }
+
+// ExtractSolanaNetwork checks if a CAIP-2 string is Solana-based and extracts the network type.
+// Returns the network type (mainnet, testnet, or devnet) and an error if not a valid Solana CAIP-2.
+func ExtractSolanaNetwork(input string) (string, error) {
+	namespace, reference, err := ExtractCAIP2Parts(input)
+	if err != nil {
+		return "", err
+	}
+
+	if namespace != "solana" {
+		return "", errors.New("CAIP-2 is not of Solana type")
+	}
+
+	// Validate that the reference is one of the allowed Solana networks
+	allowedNetworks := []string{"mainnet", "testnet", "devnet"}
+	if !slices.Contains(allowedNetworks, reference) {
+		return "", fmt.Errorf("invalid Solana network: %s (allowed values: %v)", reference, allowedNetworks)
+	}
+
+	return reference, nil
+}
+
+// IsSolanaCAIP2 checks if a CAIP-2 string represents a Solana network (mainnet, testnet, or devnet).
+func IsSolanaCAIP2(input string) bool {
+	network, err := ExtractSolanaNetwork(input)
+	return err == nil && network != ""
+}
+
+// IsEthereumCAIP2 checks if a CAIP-2 string represents an Ethereum network (eip155 namespace).
+func IsEthereumCAIP2(input string) bool {
+	_, err := ExtractEVMChainID(input)
+	return err == nil
+}
