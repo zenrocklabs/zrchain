@@ -112,12 +112,25 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
-	// Get Solana recent blockhash aligned with modulo 50
-	solanaRecentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
+	// Check if Solana blockhash is requested first
+	solanaBlockhashRequested, err := k.SolanaBlockhashRequested.Get(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
-		// Non-fatal error, continue with empty string
-		solanaRecentBlockhash = ""
+		if !errors.Is(err, collections.ErrNotFound) {
+			return VoteExtension{}, err
+		}
+		// Not found means false
+		solanaBlockhashRequested = false
+	}
+
+	// Only get Solana recent blockhash if it's requested
+	solanaRecentBlockhash := ""
+	if solanaBlockhashRequested {
+		solanaRecentBlockhash, err = k.GetSolanaRecentBlockhash(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+			// Non-fatal error, continue with empty string
+			solanaRecentBlockhash = ""
+		}
 	}
 
 	nonces := make(map[uint64]uint64)
@@ -954,7 +967,12 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
-			return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
+			if types.IsSolanaCAIP2(tx.Caip2ChainId) {
+				return k.SolanaBlockhashRequested.Set(ctx, true)
+			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
+				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
+			}
+			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
