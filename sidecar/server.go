@@ -145,7 +145,7 @@ func (s *oracleService) GetLatestEthereumNonceForAccount(ctx context.Context, re
 }
 
 func (s *oracleService) GetSolanaRecentBlockhash(ctx context.Context, req *api.SolanaRecentBlockhashRequest) (*api.SolanaRecentBlockhashResponse, error) {
-	blockhash, slot, err := s.oracle.getSolanaRecentBlockhashWithSlot(ctx)
+	blockhash, slot, err := s.oracle.getSolanaRecentBlockhash(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent blockhash: %w", err)
 	}

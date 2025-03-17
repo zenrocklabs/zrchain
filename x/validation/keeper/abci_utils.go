@@ -1117,7 +1117,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 
-	// Remove invalid fields from fieldVotePowers
+	// Nullify mismatched fields from fieldVotePowers to prevent them from being used downstream
 	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
 }
 
