@@ -427,18 +427,54 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
-	// Copy over nonce data if we have consensus on those fields
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
-		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
+	// Verify Solana recent blockhash if there's consensus on it
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaRecentBlockhash) {
+		currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
+		} else if voteExt.SolanaRecentBlockhash != currentBlockhash && currentBlockhash != "" {
+			k.Logger(ctx).Warn("solana recent blockhash mismatch",
+				"voteExt", voteExt.SolanaRecentBlockhash,
+				"current", currentBlockhash)
+		}
+		oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
 	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
-		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
+
+	// Verify nonce fields and copy them if they have consensus
+	nonceFields := []struct {
+		field       VoteExtensionField
+		keyID       uint64
+		voteExtVal  uint64
+		oracleField *uint64
+	}{
+		{VEFieldRequestedStakerNonce, k.zenBTCKeeper.GetStakerKeyID(ctx), voteExt.RequestedStakerNonce, &oracleData.RequestedStakerNonce},
+		{VEFieldRequestedEthMinterNonce, k.zenBTCKeeper.GetEthMinterKeyID(ctx), voteExt.RequestedEthMinterNonce, &oracleData.RequestedEthMinterNonce},
+		{VEFieldRequestedUnstakerNonce, k.zenBTCKeeper.GetUnstakerKeyID(ctx), voteExt.RequestedUnstakerNonce, &oracleData.RequestedUnstakerNonce},
+		{VEFieldRequestedCompleterNonce, k.zenBTCKeeper.GetCompleterKeyID(ctx), voteExt.RequestedCompleterNonce, &oracleData.RequestedCompleterNonce},
 	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
-		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
-	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
-		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
+
+	for _, nf := range nonceFields {
+		if fieldHasConsensus(fieldVotePowers, nf.field) {
+			// Also verify nonce against what would be fetched
+			requested, err := k.EthereumNonceRequested.Get(ctx, nf.keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					k.Logger(ctx).Error("error checking nonce request state", "keyID", nf.keyID, "error", err)
+				}
+			} else if requested {
+				currentNonce, err := k.lookupEthereumNonce(ctx, nf.keyID)
+				if err != nil {
+					k.Logger(ctx).Error("error looking up Ethereum nonce for validation", "keyID", nf.keyID, "error", err)
+				} else if currentNonce != nf.voteExtVal && nf.voteExtVal != 0 {
+					k.Logger(ctx).Warn("nonce mismatch for key",
+						"keyID", nf.keyID,
+						"voteExt", nf.voteExtVal,
+						"current", currentNonce)
+				}
+			}
+
+			*nf.oracleField = nf.voteExtVal
+		}
 	}
 
 	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
