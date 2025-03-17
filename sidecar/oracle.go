@@ -502,3 +502,43 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 
 	return redemptions, nil
 }
+
+// getSolanaRecentBlockhash is a wrapper around getSolanaRecentBlockhashWithSlot that returns only the blockhash
+func (o *Oracle) getSolanaRecentBlockhash(ctx context.Context) (string, error) {
+	blockhash, _, err := o.getSolanaRecentBlockhashWithSlot(ctx)
+	return blockhash, err
+}
+
+// getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by 50
+// (i.e., a block height ending in 00 or 50) and returns both the blockhash and slot
+func (o *Oracle) getSolanaRecentBlockhashWithSlot(ctx context.Context) (string, uint64, error) {
+	// Get the latest block height
+	resp, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to get recent blockhash: %w", err)
+	}
+
+	// Get the slot for the recent blockhash
+	slot, err := o.solanaClient.GetSlot(ctx, solana.CommitmentFinalized)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to get current slot: %w", err)
+	}
+
+	// Calculate the nearest slot that is divisible by 50
+	targetSlot := slot - (slot % 50)
+
+	// If we're at slot 0, use the current slot's blockhash
+	if targetSlot == 0 {
+		return resp.Value.Blockhash.String(), slot, nil
+	}
+
+	// Get the blockhash for the target slot
+	blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
+	if err != nil {
+		// Fallback to the recent blockhash if we can't get the target block
+		log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
+		return resp.Value.Blockhash.String(), slot, nil
+	}
+
+	return blockInfo.Blockhash.String(), targetSlot, nil
+}

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -98,6 +98,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, err
 	}
+
 	// Only set requested header fields if there's a requested header
 	requestedBtcBlockHeight := int64(0)
 	var requestedBtcHeaderHash []byte
@@ -109,6 +110,14 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 		requestedBtcBlockHeight = requestedHeader.BlockHeight
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
+	}
+
+	// Get Solana recent blockhash aligned with modulo 50
+	solanaRecentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+		// Non-fatal error, continue with empty string
+		solanaRecentBlockhash = ""
 	}
 
 	nonces := make(map[uint64]uint64)
@@ -146,6 +155,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
+		SolanaRecentBlockhash:      solanaRecentBlockhash,
 		RequestedStakerNonce:       nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
 		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
@@ -464,7 +474,7 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 			continue
 		}
 
-		validator.TokensAVS = math.Int(delegation.Stake)
+		validator.TokensAVS = sdkmath.Int(delegation.Stake)
 
 		if err = k.SetValidator(ctx, validator); err != nil {
 			k.Logger(ctx).Error("error setting validator", "validator", delegation.Validator, "error", err)
@@ -486,7 +496,7 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
-	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake math.Int) (bool, error) {
+	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake sdkmath.Int) (bool, error) {
 		if !validatorInAVSDelegationSet[valAddr] {
 			validatorsToRemove = append(validatorsToRemove, valAddr)
 		}
@@ -514,7 +524,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 		return fmt.Errorf("error retrieving validator for removal: %w", err)
 	}
 
-	validator.TokensAVS = math.ZeroInt()
+	validator.TokensAVS = sdkmath.ZeroInt()
 
 	if err = k.SetValidator(ctx, validator); err != nil {
 		return fmt.Errorf("error updating validator after removal: %w", err)
@@ -527,7 +537,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData) {
 	for validatorAddr, delegatorMap := range oracleData.EigenDelegationsMap {
 		for delegatorAddr, amount := range delegatorMap {
-			if err := k.AVSDelegations.Set(ctx, collections.Join(validatorAddr, delegatorAddr), math.NewIntFromBigInt(amount)); err != nil {
+			if err := k.AVSDelegations.Set(ctx, collections.Join(validatorAddr, delegatorAddr), sdkmath.NewIntFromBigInt(amount)); err != nil {
 				k.Logger(ctx).Error("error setting AVS delegations", "error", err)
 			}
 		}
@@ -1234,7 +1244,7 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 
 		foundNewRedemption = true
 
-		btcAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
+		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
 		// Convert zenBTC amount to BTC amount.
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
@@ -1370,7 +1380,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 			// redemption.Data.Amount is in zenBTC (what user wants to redeem)
 			// Calculate how much BTC they should receive based on current exchange rate
-			btcToRelease := uint64(math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
+			btcToRelease := uint64(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
 
 			// Invariant checks
 			if supply.MintedZenBTC < redemption.Data.Amount {
