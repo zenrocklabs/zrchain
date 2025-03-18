@@ -170,18 +170,18 @@ func (o *Oracle) fetchAndProcessState(
 	}()
 
 	// Fetch Solana lamports per signature
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.solanaLamportsPerSignature = lamportsPerSignature
-		updateMutex.Unlock()
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
+	// 	if err != nil {
+	// 		errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
+	// 		return
+	// 	}
+	// 	updateMutex.Lock()
+	// 	update.solanaLamportsPerSignature = lamportsPerSignature
+	// 	updateMutex.Unlock()
+	// }()
 
 	// Estimate gas for stake call
 	wg.Add(1)
@@ -297,12 +297,13 @@ func (o *Oracle) fetchAndProcessState(
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations:           update.eigenDelegations,
-		EthBlockHeight:             targetBlockNumber.Uint64(),
-		EthGasLimit:                update.estimatedGas,
-		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
-		EthTipCap:                  update.suggestedTip.Uint64(),
-		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
+		EigenDelegations: update.eigenDelegations,
+		EthBlockHeight:   targetBlockNumber.Uint64(),
+		EthGasLimit:      update.estimatedGas,
+		EthBaseFee:       latestHeader.BaseFee.Uint64(),
+		EthTipCap:        update.suggestedTip.Uint64(),
+		// SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
+		SolanaLamportsPerSignature: 5000,
 		EthBurnEvents:              update.ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                update.redemptions,
