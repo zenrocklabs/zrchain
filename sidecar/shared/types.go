@@ -63,6 +63,10 @@ var (
 		NetworkTestnet: "Holešky Ethereum Testnet",
 		NetworkMainnet: "Ethereum Mainnet",
 	}
+
+	// SolanaSlotRoundingFactor is the value used to round Solana slots for consistent blockhash and fee querying
+	// Slots are rounded down to the nearest multiple of this value
+	SolanaSlotRoundingFactor = uint64(50)
 )
 
 type OracleState struct {
