@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -98,6 +98,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, err
 	}
+
 	// Only set requested header fields if there's a requested header
 	requestedBtcBlockHeight := int64(0)
 	var requestedBtcHeaderHash []byte
@@ -110,6 +111,27 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		requestedBtcBlockHeight = requestedHeader.BlockHeight
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
+
+	// Check if Solana blockhash is requested first
+	// solanaBlockhashRequested, err := k.SolanaBlockhashRequested.Get(ctx)
+	// if err != nil {
+	// 	if !errors.Is(err, collections.ErrNotFound) {
+	// 		return VoteExtension{}, err
+	// 	}
+	// 	// Not found means false
+	// 	solanaBlockhashRequested = false
+	// }
+
+	// Only get Solana recent blockhash if it's requested
+	// solanaRecentBlockhash := ""
+	// if solanaBlockhashRequested {
+	// 	solanaRecentBlockhash, err = k.GetSolanaRecentBlockhash(ctx)
+	// 	if err != nil {
+	// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+	// 		// Non-fatal error, continue with empty string
+	// 		solanaRecentBlockhash = ""
+	// 	}
+	// }
 
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
@@ -146,10 +168,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
-		RequestedStakerNonce:       nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
-		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
-		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
-		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
+		// SolanaRecentBlockhash:      solanaRecentBlockhash,
+		RequestedStakerNonce:    nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
+		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
+		RequestedUnstakerNonce:  nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
+		RequestedCompleterNonce: nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 	}
 
 	return voteExt, nil
@@ -401,6 +424,9 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
+	// Collect fields that fail validation to revoke consensus
+	mismatchedFields := make([]VoteExtensionField, 0)
+
 	// Copy latest Bitcoin header data if we have consensus on both height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) &&
 		fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) &&
@@ -417,20 +443,66 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
-	// Copy over nonce data if we have consensus on those fields
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
-		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
-	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
-		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
-	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
-		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
-	}
-	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
-		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
+	// Verify Solana recent blockhash if there's consensus on it
+	// if fieldHasConsensus(fieldVotePowers, VEFieldSolanaRecentBlockhash) {
+	// 	currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
+	// 	if err != nil {
+	// 		k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
+	// 		// Skip the rest of this validation block on error
+	// 	} else if currentBlockhash != "" && voteExt.SolanaRecentBlockhash != currentBlockhash {
+	// 		// Check for mismatch only if we have a valid current blockhash
+	// 		k.Logger(ctx).Warn("solana recent blockhash mismatch",
+	// 			"voteExt", voteExt.SolanaRecentBlockhash,
+	// 			"current", currentBlockhash)
+	// 		mismatchedFields = append(mismatchedFields, VEFieldSolanaRecentBlockhash)
+	// 	} else {
+	// 		// No mismatch or empty current blockhash, use the consensus value
+	// 		oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
+	// 	}
+	// }
+
+	// Verify nonce fields and copy them if they have consensus
+	nonceFields := []struct {
+		field       VoteExtensionField
+		keyID       uint64
+		voteExtVal  uint64
+		oracleField *uint64
+	}{
+		{VEFieldRequestedStakerNonce, k.zenBTCKeeper.GetStakerKeyID(ctx), voteExt.RequestedStakerNonce, &oracleData.RequestedStakerNonce},
+		{VEFieldRequestedEthMinterNonce, k.zenBTCKeeper.GetEthMinterKeyID(ctx), voteExt.RequestedEthMinterNonce, &oracleData.RequestedEthMinterNonce},
+		{VEFieldRequestedUnstakerNonce, k.zenBTCKeeper.GetUnstakerKeyID(ctx), voteExt.RequestedUnstakerNonce, &oracleData.RequestedUnstakerNonce},
+		{VEFieldRequestedCompleterNonce, k.zenBTCKeeper.GetCompleterKeyID(ctx), voteExt.RequestedCompleterNonce, &oracleData.RequestedCompleterNonce},
 	}
 
+	for _, nf := range nonceFields {
+		if fieldHasConsensus(fieldVotePowers, nf.field) {
+			// Also verify nonce against what would be fetched
+			requested, err := k.EthereumNonceRequested.Get(ctx, nf.keyID)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					k.Logger(ctx).Error("error checking nonce request state", "keyID", nf.keyID, "error", err)
+				}
+			} else if requested {
+				currentNonce, err := k.lookupEthereumNonce(ctx, nf.keyID)
+				if err != nil {
+					k.Logger(ctx).Error("error looking up Ethereum nonce for validation", "keyID", nf.keyID, "error", err)
+				} else if currentNonce != nf.voteExtVal && nf.voteExtVal != 0 {
+					k.Logger(ctx).Warn("nonce mismatch for key",
+						"keyID", nf.keyID,
+						"voteExt", nf.voteExtVal,
+						"current", currentNonce)
+					mismatchedFields = append(mismatchedFields, nf.field)
+				}
+			}
+
+			*nf.oracleField = nf.voteExtVal
+		}
+	}
+
+	// Process mismatched fields
+	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
+
+	// Call the standard validateOracleData to check other fields
 	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
 
 	return oracleData, nil
@@ -464,7 +536,7 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 			continue
 		}
 
-		validator.TokensAVS = math.Int(delegation.Stake)
+		validator.TokensAVS = sdkmath.Int(delegation.Stake)
 
 		if err = k.SetValidator(ctx, validator); err != nil {
 			k.Logger(ctx).Error("error setting validator", "validator", delegation.Validator, "error", err)
@@ -486,7 +558,7 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
-	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake math.Int) (bool, error) {
+	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake sdkmath.Int) (bool, error) {
 		if !validatorInAVSDelegationSet[valAddr] {
 			validatorsToRemove = append(validatorsToRemove, valAddr)
 		}
@@ -514,7 +586,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 		return fmt.Errorf("error retrieving validator for removal: %w", err)
 	}
 
-	validator.TokensAVS = math.ZeroInt()
+	validator.TokensAVS = sdkmath.ZeroInt()
 
 	if err = k.SetValidator(ctx, validator); err != nil {
 		return fmt.Errorf("error updating validator after removal: %w", err)
@@ -527,7 +599,7 @@ func (k *Keeper) updateValidatorTokensAVS(ctx sdk.Context, valAddr string) error
 func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData) {
 	for validatorAddr, delegatorMap := range oracleData.EigenDelegationsMap {
 		for delegatorAddr, amount := range delegatorMap {
-			if err := k.AVSDelegations.Set(ctx, collections.Join(validatorAddr, delegatorAddr), math.NewIntFromBigInt(amount)); err != nil {
+			if err := k.AVSDelegations.Set(ctx, collections.Join(validatorAddr, delegatorAddr), sdkmath.NewIntFromBigInt(amount)); err != nil {
 				k.Logger(ctx).Error("error setting AVS delegations", "error", err)
 			}
 		}
@@ -895,7 +967,12 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
-			return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
+			if types.IsSolanaCAIP2(tx.Caip2ChainId) {
+				return k.SolanaBlockhashRequested.Set(ctx, true)
+			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
+				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
+			}
+			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
@@ -1234,7 +1311,7 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 
 		foundNewRedemption = true
 
-		btcAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
+		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
 		// Convert zenBTC amount to BTC amount.
 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data: zenbtctypes.RedemptionData{
@@ -1370,7 +1447,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 			// redemption.Data.Amount is in zenBTC (what user wants to redeem)
 			// Calculate how much BTC they should receive based on current exchange rate
-			btcToRelease := uint64(math.LegacyNewDecFromInt(math.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
+			btcToRelease := uint64(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
 
 			// Invariant checks
 			if supply.MintedZenBTC < redemption.Data.Amount {
