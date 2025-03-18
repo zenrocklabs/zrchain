@@ -34,7 +34,10 @@ type ValidatorInfo struct {
 	Address string
 	Power   int
 	Index   int
+	HasVote bool
 }
+
+const NO_VOTE = "<no vote extension>"
 
 func main() {
 	var input []byte
@@ -75,72 +78,107 @@ func main() {
 		return
 	}
 
+	// Calculate total validator power
+	totalPower := 0
+	for _, vote := range blockData.ConsensusData.Votes {
+		totalPower += vote.Validator.Power
+	}
+
 	// Store all decoded extensions for comparison
 	allExtensions := make([]map[string]interface{}, 0)
-	validatorInfos := make([]ValidatorInfo, 0)
+	allValidators := make([]ValidatorInfo, 0)
+	validatorsWithExtensions := 0
+	totalVotingPower := 0
+	totalVotedPower := 0
 
 	// Process each vote
-	fmt.Printf("Found %d votes to decode\n", len(blockData.ConsensusData.Votes))
+	fmt.Printf("Found %d validators in the block\n", len(blockData.ConsensusData.Votes))
 	for i, vote := range blockData.ConsensusData.Votes {
+		validatorHasVote := false
+
 		validatorInfo := ValidatorInfo{
 			Address: vote.Validator.Address,
 			Power:   vote.Validator.Power,
 			Index:   i + 1,
+			HasVote: false,
 		}
+
+		totalVotingPower += vote.Validator.Power
 
 		fmt.Printf("\n=== Validator %d (Power: %d) ===\n", i+1, vote.Validator.Power)
 
 		// Skip if vote extension is empty
 		if vote.VoteExtension == "" {
 			fmt.Println("No vote extension found")
-			continue
+		} else {
+			validatorHasVote = true
+			validatorsWithExtensions++
+			totalVotedPower += vote.Validator.Power
+
+			// Decode base64 data
+			decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
+			if err != nil {
+				fmt.Printf("Error decoding base64: %v\n", err)
+			} else {
+				// Parse and pretty print the JSON
+				var prettyJSON map[string]interface{}
+				err = json.Unmarshal(decodedBytes, &prettyJSON)
+				if err != nil {
+					fmt.Printf("Error parsing decoded JSON: %v\n", err)
+					fmt.Println("Raw decoded data:", string(decodedBytes))
+				} else {
+					// Format the JSON with indentation
+					prettyJSONBytes, err := json.MarshalIndent(prettyJSON, "", "  ")
+					if err != nil {
+						fmt.Printf("Error formatting JSON: %v\n", err)
+					} else {
+						fmt.Println("Decoded vote extension:")
+						fmt.Println(string(prettyJSONBytes))
+
+						// Store extension for comparison
+						allExtensions = append(allExtensions, prettyJSON)
+					}
+				}
+			}
 		}
 
-		// Decode base64 data
-		decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
-		if err != nil {
-			fmt.Printf("Error decoding base64: %v\n", err)
-			continue
+		validatorInfo.HasVote = validatorHasVote
+		allValidators = append(allValidators, validatorInfo)
+
+		// If no extension, add a nil map to maintain index alignment
+		if !validatorHasVote {
+			allExtensions = append(allExtensions, nil)
 		}
-
-		// Parse and pretty print the JSON
-		var prettyJSON map[string]interface{}
-		err = json.Unmarshal(decodedBytes, &prettyJSON)
-		if err != nil {
-			fmt.Printf("Error parsing decoded JSON: %v\n", err)
-			fmt.Println("Raw decoded data:", string(decodedBytes))
-			continue
-		}
-
-		// Format the JSON with indentation
-		prettyJSONBytes, err := json.MarshalIndent(prettyJSON, "", "  ")
-		if err != nil {
-			fmt.Printf("Error formatting JSON: %v\n", err)
-			continue
-		}
-
-		fmt.Println("Decoded vote extension:")
-		fmt.Println(string(prettyJSONBytes))
-
-		// Store for later comparison
-		allExtensions = append(allExtensions, prettyJSON)
-		validatorInfos = append(validatorInfos, validatorInfo)
 	}
 
+	// Show vote extension participation stats
+	fmt.Printf("\n=== VOTE EXTENSION PARTICIPATION ===\n")
+	fmt.Printf("Validators with vote extensions: %d of %d (%.2f%%)\n",
+		validatorsWithExtensions,
+		len(blockData.ConsensusData.Votes),
+		float64(validatorsWithExtensions)/float64(len(blockData.ConsensusData.Votes))*100)
+	fmt.Printf("Voting power with extensions: %d of %d (%.2f%%)\n",
+		totalVotedPower,
+		totalVotingPower,
+		float64(totalVotedPower)/float64(totalVotingPower)*100)
+
 	// Compare extensions to find differences
-	if len(allExtensions) > 1 {
+	if len(allExtensions) > 0 {
 		fmt.Println("\n\n=== DIFFERENCES BETWEEN VOTE EXTENSIONS ===")
-		findDifferences(allExtensions, validatorInfos)
+		findDifferences(allExtensions, allValidators, totalVotingPower)
 	}
 }
 
-func findDifferences(extensions []map[string]interface{}, validators []ValidatorInfo) {
+func findDifferences(extensions []map[string]interface{}, validators []ValidatorInfo, totalPower int) {
 	// Map to track differences by field
 	differences := make(map[string]map[string][]ValidatorInfo)
 
 	// Get all possible keys from all extensions
 	allKeys := make(map[string]bool)
 	for _, ext := range extensions {
+		if ext == nil {
+			continue
+		}
 		for k := range ext {
 			allKeys[k] = true
 		}
@@ -157,7 +195,9 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 			}
 
 			var valueStr string
-			if val, ok := ext[key]; ok {
+			if ext == nil {
+				valueStr = NO_VOTE
+			} else if val, ok := ext[key]; ok {
 				// Convert value to string representation
 				bytes, err := json.Marshal(val)
 				if err == nil {
@@ -166,7 +206,7 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 					valueStr = fmt.Sprintf("%v", val)
 				}
 			} else {
-				valueStr = "<missing>"
+				valueStr = "<missing field>"
 			}
 
 			// Add validator to the list for this value
@@ -207,15 +247,15 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 
 		valueCounts := make([]ValueCount, 0, len(valueMap))
 		for v, validators := range valueMap {
-			totalPower := 0
+			thisPower := 0
 			for _, val := range validators {
-				totalPower += val.Power
+				thisPower += val.Power
 			}
 
 			valueCounts = append(valueCounts, ValueCount{
 				Value:      v,
 				Validators: validators,
-				TotalPower: totalPower,
+				TotalPower: thisPower,
 			})
 		}
 
@@ -227,7 +267,9 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 		// Format for display
 		for i, vc := range valueCounts {
 			displayValue := vc.Value
-			if len(displayValue) > 100 {
+			if displayValue == NO_VOTE {
+				displayValue = "NO VOTE EXTENSION SUBMITTED"
+			} else if len(displayValue) > 100 {
 				displayValue = displayValue[:97] + "..."
 			}
 
@@ -236,13 +278,28 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 				valueLabel = "MINORITY"
 			}
 
-			fmt.Printf("%s VALUE (Power: %d):\n", valueLabel, vc.TotalPower)
+			powerPercentage := float64(vc.TotalPower) / float64(totalPower) * 100
+
+			fmt.Printf("%s VALUE (Power: %d, %.2f%% of total)\n", valueLabel, vc.TotalPower, powerPercentage)
 			fmt.Printf("  %s\n", displayValue)
-			fmt.Printf("  Used by %d validators (%.2f%% of votes)\n",
+			fmt.Printf("  Supported by %d validators (%.2f%% of validators)\n",
 				len(vc.Validators),
 				float64(len(vc.Validators))/float64(len(validators))*100)
 
-			fmt.Printf("  Validators: %s\n\n", formatValidatorList(vc.Validators, 3))
+			// Count validators with and without votes
+			votedCount := 0
+			for _, v := range vc.Validators {
+				if v.HasVote {
+					votedCount++
+				}
+			}
+
+			noVoteCount := len(vc.Validators) - votedCount
+			if displayValue != "NO VOTE EXTENSION SUBMITTED" && noVoteCount > 0 {
+				fmt.Printf("  Note: %d validators in this group did not submit a vote extension\n", noVoteCount)
+			}
+
+			fmt.Printf("  Validators: %s\n\n", formatValidatorList(vc.Validators, 5))
 		}
 	}
 }
@@ -252,14 +309,22 @@ func formatValidatorList(validators []ValidatorInfo, maxItems int) string {
 	if len(validators) <= maxItems {
 		var result []string
 		for _, v := range validators {
-			result = append(result, fmt.Sprintf("#%d (power: %d)", v.Index, v.Power))
+			tag := ""
+			if !v.HasVote {
+				tag = " (no vote)"
+			}
+			result = append(result, fmt.Sprintf("#%d (power: %d)%s", v.Index, v.Power, tag))
 		}
 		return strings.Join(result, ", ")
 	}
 
 	var result []string
 	for _, v := range validators[:maxItems] {
-		result = append(result, fmt.Sprintf("#%d (power: %d)", v.Index, v.Power))
+		tag := ""
+		if !v.HasVote {
+			tag = " (no vote)"
+		}
+		result = append(result, fmt.Sprintf("#%d (power: %d)%s", v.Index, v.Power, tag))
 	}
 	return strings.Join(result, ", ") + fmt.Sprintf(" and %d more...", len(validators)-maxItems)
 }
