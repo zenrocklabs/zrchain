@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"io"
 	"os"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -40,21 +42,29 @@ type ValidatorInfo struct {
 const NO_VOTE = "<no vote extension>"
 
 func main() {
+	// Command line flags
+	useFilePtr := flag.String("file", "", "Use file instead of executing command (optional)")
+	rpcNodePtr := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
+	blockHeightPtr := flag.String("height", "", "Block height (default: latest)")
+	flag.Parse()
+
 	var input []byte
 	var err error
 
 	// If a file is provided, read from it
-	if len(os.Args) > 1 {
-		input, err = os.ReadFile(os.Args[1])
+	if *useFilePtr != "" {
+		input, err = os.ReadFile(*useFilePtr)
 		if err != nil {
 			fmt.Printf("Error reading file: %v\n", err)
 			return
 		}
 	} else {
-		// Otherwise read from stdin
-		input, err = io.ReadAll(os.Stdin)
+		// Otherwise execute the command
+		fmt.Println("Querying latest block data...")
+
+		input, err = executeZenrockdCommand(*rpcNodePtr, *blockHeightPtr)
 		if err != nil {
-			fmt.Printf("Error reading from stdin: %v\n", err)
+			fmt.Printf("Error executing command: %v\n", err)
 			return
 		}
 	}
@@ -167,6 +177,33 @@ func main() {
 		fmt.Println("\n\n=== DIFFERENCES BETWEEN VOTE EXTENSIONS ===")
 		findDifferences(allExtensions, allValidators, totalVotingPower)
 	}
+}
+
+// executeZenrockdCommand runs the zenrockd command and returns the output
+func executeZenrockdCommand(rpcNode, blockHeight string) ([]byte, error) {
+	var cmd *exec.Cmd
+
+	if blockHeight == "" {
+		// Use bash to execute the full command pipeline
+		fullCmd := fmt.Sprintf(`zenrockd --node=%s query block --type=height $(zenrockd --node=%s status | jq -r '.sync_info.latest_block_height') --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, rpcNode)
+		cmd = exec.Command("bash", "-c", fullCmd)
+	} else {
+		// Use specific block height
+		fullCmd := fmt.Sprintf(`zenrockd --node=%s query block --type=height %s --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, blockHeight)
+		cmd = exec.Command("bash", "-c", fullCmd)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("command execution failed: %s\nStderr: %s", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }
 
 func findDifferences(extensions []map[string]interface{}, validators []ValidatorInfo, totalPower int) {
