@@ -30,16 +30,12 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 
 	signPolicyID := key.SignPolicyId
 
-	ws, getDataErr := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	ws, getDataErr := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if getDataErr != nil {
 		return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
 	}
 
 	if signPolicyID == 0 {
-		ws, getDataErr := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
-		if getDataErr != nil {
-			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
-		}
 		signPolicyID = ws.SignPolicyId
 	}
 

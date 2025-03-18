@@ -17,7 +17,7 @@ type AccountKeeper interface {
 }
 
 type PolicyKeeper interface {
-	AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, btl uint64, policyData map[string][]byte) (*policytypes.Action, error)
+	AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, btl uint64, policyData map[string][]byte, wsOwners []string) (*policytypes.Action, error)
 	GetPolicyParticipants(ctx context.Context, policyId uint64) (map[string]struct{}, error)
 	PolicyMembersAreOwners(ctx context.Context, policyId uint64, wsOwners []string) error
 	GetPolicy(ctx sdk.Context, policyId uint64) (*policytypes.Policy, error)
