@@ -10,7 +10,8 @@ import (
 	"os/exec"
 	"regexp"
 	"sort"
-	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ConsensusVote represents a vote from a validator
@@ -33,10 +34,11 @@ type BlockData struct {
 
 // ValidatorInfo stores information about a validator
 type ValidatorInfo struct {
-	Address string
-	Power   int
-	Index   int
-	HasVote bool
+	Address     string
+	Power       int
+	Index       int
+	HasVote     bool
+	DecodedAddr string
 }
 
 const NO_VOTE = "<no vote extension>"
@@ -46,6 +48,7 @@ func main() {
 	useFilePtr := flag.String("file", "", "Use file instead of executing command (optional)")
 	rpcNodePtr := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
 	blockHeightPtr := flag.String("height", "", "Block height (default: latest)")
+	missingOnlyPtr := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
 	flag.Parse()
 
 	var input []byte
@@ -100,52 +103,76 @@ func main() {
 	validatorsWithExtensions := 0
 	totalVotingPower := 0
 	totalVotedPower := 0
+	missingValidators := make([]ValidatorInfo, 0)
 
 	// Process each vote
-	fmt.Printf("Found %d validators in the block\n", len(blockData.ConsensusData.Votes))
+	if !*missingOnlyPtr {
+		fmt.Printf("Found %d validators in the block\n", len(blockData.ConsensusData.Votes))
+	}
+
 	for i, vote := range blockData.ConsensusData.Votes {
 		validatorHasVote := false
 
+		// Decode the base64 address
+		decodedAddr := decodeValidatorAddress(vote.Validator.Address)
+
 		validatorInfo := ValidatorInfo{
-			Address: vote.Validator.Address,
-			Power:   vote.Validator.Power,
-			Index:   i + 1,
-			HasVote: false,
+			Address:     vote.Validator.Address,
+			Power:       vote.Validator.Power,
+			Index:       i + 1,
+			HasVote:     false,
+			DecodedAddr: decodedAddr,
 		}
 
 		totalVotingPower += vote.Validator.Power
 
-		fmt.Printf("\n=== Validator %d (Power: %d) ===\n", i+1, vote.Validator.Power)
+		if !*missingOnlyPtr {
+			fmt.Printf("\n=== Validator %s (Power: %d) ===\n", decodedAddr, vote.Validator.Power)
+		}
 
 		// Skip if vote extension is empty
 		if vote.VoteExtension == "" {
-			fmt.Println("No vote extension found")
+			if !*missingOnlyPtr {
+				fmt.Println("No vote extension found")
+			}
+			missingValidators = append(missingValidators, validatorInfo)
 		} else {
 			validatorHasVote = true
 			validatorsWithExtensions++
 			totalVotedPower += vote.Validator.Power
 
-			// Decode base64 data
-			decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
-			if err != nil {
-				fmt.Printf("Error decoding base64: %v\n", err)
-			} else {
-				// Parse and pretty print the JSON
-				var prettyJSON map[string]interface{}
-				err = json.Unmarshal(decodedBytes, &prettyJSON)
+			if !*missingOnlyPtr {
+				// Decode base64 data
+				decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
 				if err != nil {
-					fmt.Printf("Error parsing decoded JSON: %v\n", err)
-					fmt.Println("Raw decoded data:", string(decodedBytes))
+					fmt.Printf("Error decoding base64: %v\n", err)
 				} else {
-					// Format the JSON with indentation
-					prettyJSONBytes, err := json.MarshalIndent(prettyJSON, "", "  ")
+					// Parse and pretty print the JSON
+					var prettyJSON map[string]interface{}
+					err = json.Unmarshal(decodedBytes, &prettyJSON)
 					if err != nil {
-						fmt.Printf("Error formatting JSON: %v\n", err)
+						fmt.Printf("Error parsing decoded JSON: %v\n", err)
+						fmt.Println("Raw decoded data:", string(decodedBytes))
 					} else {
-						fmt.Println("Decoded vote extension:")
-						fmt.Println(string(prettyJSONBytes))
+						// Format the JSON with indentation
+						prettyJSONBytes, err := json.MarshalIndent(prettyJSON, "", "  ")
+						if err != nil {
+							fmt.Printf("Error formatting JSON: %v\n", err)
+						} else {
+							fmt.Println("Decoded vote extension:")
+							fmt.Println(string(prettyJSONBytes))
 
-						// Store extension for comparison
+							// Store extension for comparison
+							allExtensions = append(allExtensions, prettyJSON)
+						}
+					}
+				}
+			} else {
+				// Still need to decode for comparison in missing-only mode
+				decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
+				if err == nil {
+					var prettyJSON map[string]interface{}
+					if json.Unmarshal(decodedBytes, &prettyJSON) == nil {
 						allExtensions = append(allExtensions, prettyJSON)
 					}
 				}
@@ -171,6 +198,32 @@ func main() {
 		totalVotedPower,
 		totalVotingPower,
 		float64(totalVotedPower)/float64(totalVotingPower)*100)
+
+	// If missing-only flag is set, just list the missing validators
+	if *missingOnlyPtr {
+		fmt.Printf("\n=== VALIDATORS WITHOUT VOTE EXTENSIONS (%d validators) ===\n", len(missingValidators))
+		if len(missingValidators) == 0 {
+			fmt.Println("All validators submitted vote extensions!")
+		} else {
+			// Sort missing validators by power (high to low)
+			sort.Slice(missingValidators, func(i, j int) bool {
+				return missingValidators[i].Power > missingValidators[j].Power
+			})
+
+			totalMissingPower := 0
+			for _, v := range missingValidators {
+				totalMissingPower += v.Power
+			}
+			fmt.Printf("Total missing power: %d (%.2f%% of total)\n\n",
+				totalMissingPower,
+				float64(totalMissingPower)/float64(totalVotingPower)*100)
+
+			for i, v := range missingValidators {
+				fmt.Printf("%3d. %s (Power: %d)\n", i+1, v.DecodedAddr, v.Power)
+			}
+		}
+		return
+	}
 
 	// Compare extensions to find differences
 	if len(allExtensions) > 0 {
@@ -204,6 +257,18 @@ func executeZenrockdCommand(rpcNode, blockHeight string) ([]byte, error) {
 	}
 
 	return stdout.Bytes(), nil
+}
+
+// Decode validator address from base64
+func decodeValidatorAddress(base64Addr string) string {
+	// Decode from base64
+	decoded, err := base64.StdEncoding.DecodeString(base64Addr)
+	if err != nil {
+		return fmt.Sprintf("Invalid(%s)", base64Addr)
+	}
+
+	// Format as hex
+	return sdk.MustBech32ifyAddressBytes("zenvalcons", decoded)
 }
 
 func findDifferences(extensions []map[string]interface{}, validators []ValidatorInfo, totalPower int) {
@@ -336,32 +401,15 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 				fmt.Printf("  Note: %d validators in this group did not submit a vote extension\n", noVoteCount)
 			}
 
-			fmt.Printf("  Validators: %s\n\n", formatValidatorList(vc.Validators, 5))
-		}
-	}
-}
-
-// Helper function to format a validator list nicely
-func formatValidatorList(validators []ValidatorInfo, maxItems int) string {
-	if len(validators) <= maxItems {
-		var result []string
-		for _, v := range validators {
-			tag := ""
-			if !v.HasVote {
-				tag = " (no vote)"
+			fmt.Printf("  Validators:\n")
+			for j, v := range vc.Validators {
+				tag := ""
+				if !v.HasVote {
+					tag = " (no vote)"
+				}
+				fmt.Printf("    %3d. %s (power: %d)%s\n", j+1, v.DecodedAddr, v.Power, tag)
 			}
-			result = append(result, fmt.Sprintf("#%d (power: %d)%s", v.Index, v.Power, tag))
+			fmt.Println()
 		}
-		return strings.Join(result, ", ")
 	}
-
-	var result []string
-	for _, v := range validators[:maxItems] {
-		tag := ""
-		if !v.HasVote {
-			tag = " (no vote)"
-		}
-		result = append(result, fmt.Sprintf("#%d (power: %d)%s", v.Index, v.Power, tag))
-	}
-	return strings.Join(result, ", ") + fmt.Sprintf(" and %d more...", len(validators)-maxItems)
 }
