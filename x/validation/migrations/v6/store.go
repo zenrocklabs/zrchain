@@ -7,7 +7,7 @@ import (
 )
 
 func UpdateParams(ctx sdk.Context, params collections.Item[types.HVParams]) error {
-	if err := params.Set(ctx, *types.DefaultHVParams()); err != nil {
+	if err := params.Set(ctx, *types.DefaultHVParams(ctx)); err != nil {
 		return err
 	}
 	return nil

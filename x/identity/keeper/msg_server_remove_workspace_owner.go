@@ -46,7 +46,7 @@ func (k msgServer) RemoveWorkspaceOwner(goCtx context.Context, msg *types.MsgRem
 		}
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}

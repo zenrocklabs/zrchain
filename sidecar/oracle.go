@@ -29,7 +29,14 @@ import (
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solana.Client, zrChainQueryClient *client.QueryClient, ticker *time.Ticker) *Oracle {
+func NewOracle(
+	config sidecartypes.Config,
+	ethClient *ethclient.Client,
+	neutrinoServer *neutrino.NeutrinoServer,
+	solanaClient *solana.Client,
+	zrChainQueryClient *client.QueryClient,
+	ticker *time.Ticker,
+) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
 		Config:             config,
@@ -51,24 +58,28 @@ func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrino
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	serviceManager, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]), o.EthClient,
+	serviceManager, err := middleware.NewContractZrServiceManager(
+		common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]),
+		o.EthClient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	tempEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
+	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
+		o.EthClient,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create contract instance: %w", err)
+	}
+	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 			o.cleanUpEthBurnEvents()
@@ -166,9 +177,9 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to encode stake call data: %w", err)
 			return
 		}
-		addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
+		addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
 		estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-			From: common.HexToAddress("0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe"),
+			From: common.HexToAddress(sidecartypes.WhitelistedRoleAddresses[o.Config.Network]),
 			To:   &addr,
 			Data: stakeCallData,
 		})
@@ -419,7 +430,7 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
 func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
-	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
+	tokenAddress := common.HexToAddress(sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network])
 
 	// Create a new instance of the ZenBTC token contract
 	zenBTCInstance, err := zenbtc.NewZenBTCFilterer(tokenAddress, o.EthClient)

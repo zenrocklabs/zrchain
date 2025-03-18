@@ -88,7 +88,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 	// 	return nil, err
 	// }
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.SignPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.SignPolicyId, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}

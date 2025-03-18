@@ -36,7 +36,7 @@ func (k msgServer) AppendChildWorkspace(goCtx context.Context, msg *types.MsgApp
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "new child is already a child workspace %s", msg.ChildWorkspaceAddr)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil, parent.Owners)
 	if err != nil {
 		return nil, err
 	}

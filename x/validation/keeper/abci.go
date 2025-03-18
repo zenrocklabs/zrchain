@@ -370,14 +370,11 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 		return VoteExtension{}, true
 	}
 
-	if err := k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers); err != nil {
-		k.Logger(ctx).Error("error validating oracle data; won't store VE data", "height", height, "error", err)
-		return VoteExtension{}, false
-	}
+	k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers)
 
 	// Log final consensus summary after validation
 	k.Logger(ctx).Info("final consensus summary",
-		"fields_with_consensus", len(fieldVotePowers),
+		"fields_with_consensus", len(oracleData.FieldVotePowers),
 		"stage", "post_validation")
 
 	return voteExt, true
@@ -404,37 +401,37 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
-	// Copy latest Bitcoin header data if we have consensus
-	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok && latestHeader != nil {
+	// Copy latest Bitcoin header data if we have consensus on both height and hash fields
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) &&
+		latestHeader != nil {
 		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
 		oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
 	}
-	// Copy requested Bitcoin header data if we have consensus and the header exists
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok && requestedHeader != nil {
+
+	// Copy requested Bitcoin header data if we have consensus on both height and hash fields
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) &&
+		requestedHeader != nil {
 		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
 	// Copy over nonce data if we have consensus on those fields
-	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		oracleData.RequestedStakerNonce = voteExt.RequestedStakerNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		oracleData.RequestedEthMinterNonce = voteExt.RequestedEthMinterNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		oracleData.RequestedUnstakerNonce = voteExt.RequestedUnstakerNonce
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		oracleData.RequestedCompleterNonce = voteExt.RequestedCompleterNonce
 	}
 
-	// Store the field vote powers for later use in transaction dispatch callbacks
-	oracleData.FieldVotePowers = fieldVotePowers
-
-	if err := k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers); err != nil {
-		return nil, err
-	}
+	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
 
 	return oracleData, nil
 }
@@ -1013,12 +1010,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				return nil
 			}
 
-			if tx.Caip2ChainId != "eip155:17000" {
-				return fmt.Errorf("invalid chain ID: %s", tx.Caip2ChainId)
-			}
-			chainID, err := types.ExtractEVMChainID(tx.Caip2ChainId)
+			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
-				return err
+				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
 
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(

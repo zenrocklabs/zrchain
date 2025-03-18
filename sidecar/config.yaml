@@ -3,32 +3,20 @@ grpc_port: 9191
 state_file: "cache.json"
 zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
-network: "testnet"
-eth_oracle:
-  rpc:
-    local: "http://127.0.0.1:8545"
-    testnet: "https://rpc.ankr.com/eth_holesky"
-    mainnet: "https://rpc.ankr.com/eth"
-  contract_addrs:
-    service_manager: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3"
-    price_feeds:
-      btc: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-      eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-    zenbtc:
-      controller:
-        testnet: "0x2844bd31B68AE5a0335c672e6251e99324441B73"
-      token:
-        ethereum:
-          testnet: "0x7692E9a796001FeE9023853f490A692bAB2E4834"
-  network_name:
-    mainnet: "Ethereum Mainnet"
-    testnet: "Holešky Ethereum Testnet"
+network: "mainnet"
+eth_rpc:
+  # local: "http://127.0.0.1:8545"
+  testnet: "https://rpc.ankr.com/eth_holesky"
+  mainnet: "https://rpc.ankr.com/eth"
+# Contract addresses + more are now defined in shared/types.go
 solana_rpc:
   testnet: "https://api.testnet.solana.com"
   mainnet: "https://api.mainnet-beta.solana.com/"
+neutrino:
+  path: "./neutrino"
+
+# Only needed for dev/testnet
 proxy_rpc:
   url: "http://127.0.0.1:1234"
   user: "user"
   password: "secret"
-neutrino:
-  path: "./neutrino"

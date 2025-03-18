@@ -84,9 +84,10 @@ func (o *Oracle) CacheState() {
 }
 
 func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, error) {
-	for _, state := range o.stateCache {
-		if state.EthBlockHeight == height {
-			return &state, nil
+	// Search in reverse order to efficiently find the most recent state with matching height
+	for i := len(o.stateCache) - 1; i >= 0; i-- {
+		if o.stateCache[i].EthBlockHeight == height {
+			return &o.stateCache[i], nil
 		}
 	}
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)

@@ -986,28 +986,28 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 // validateOracleData verifies that the vote extension and oracle data match.
 // Only fields that have reached consensus (present in fieldVotePowers) are validated.
 // Fields that fail validation are removed from fieldVotePowers to prevent them from being used downstream.
-func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
+func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) {
 	invalidFields := make([]VoteExtensionField, 0)
 
 	// Validate hashes only if fields have consensus
-	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEigenDelegationsHash) {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
 			invalidFields = append(invalidFields, VEFieldEigenDelegationsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBurnEventsHash) {
 		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
 			invalidFields = append(invalidFields, VEFieldEthBurnEventsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRedemptionsHash) {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
 			invalidFields = append(invalidFields, VEFieldRedemptionsHash)
 		}
 	}
 
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
 		if oracleData.RequestedBtcBlockHeight != 0 {
 			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
 				invalidFields = append(invalidFields, VEFieldRequestedBtcHeaderHash)
@@ -1016,80 +1016,80 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	}
 
 	// Check Ethereum-related fields
-	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBlockHeight) {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
 			invalidFields = append(invalidFields, VEFieldEthBlockHeight)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthGasLimit) {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
 			invalidFields = append(invalidFields, VEFieldEthGasLimit)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBaseFee) {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
 			invalidFields = append(invalidFields, VEFieldEthBaseFee)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthTipCap) {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
 			invalidFields = append(invalidFields, VEFieldEthTipCap)
 		}
 	}
 
 	// Check Bitcoin height
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) {
 		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
 			invalidFields = append(invalidFields, VEFieldRequestedBtcBlockHeight)
 		}
 	}
 
 	// Check nonce-related fields
-	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
 			invalidFields = append(invalidFields, VEFieldRequestedStakerNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
 			invalidFields = append(invalidFields, VEFieldRequestedEthMinterNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
 			invalidFields = append(invalidFields, VEFieldRequestedUnstakerNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
 			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
 		}
 	}
 
 	// Check price fields
-	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
 		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
 			invalidFields = append(invalidFields, VEFieldROCKUSDPrice)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
 		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
 			invalidFields = append(invalidFields, VEFieldBTCUSDPrice)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
 		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
 			invalidFields = append(invalidFields, VEFieldETHUSDPrice)
 		}
 	}
 
 	// Check Latest Bitcoin height and hash fields
-	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) {
 		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
 			invalidFields = append(invalidFields, VEFieldLatestBtcBlockHeight)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) {
 		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
 			invalidFields = append(invalidFields, VEFieldLatestBtcHeaderHash)
 		}
@@ -1110,8 +1110,6 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	// Update FieldVotePowers in oracleData to reflect the validated fields
 	oracleData.FieldVotePowers = fieldVotePowers
-
-	return nil
 }
 
 // Helper function to validate consensus on multiple required fields for transactions
@@ -1137,28 +1135,3 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 
 	return nil
 }
-
-// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
-func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
-	var missingConsensus []VoteExtensionField
-	for _, field := range fields {
-		if !fieldHasConsensus(fieldVotePowers, field) {
-			missingConsensus = append(missingConsensus, field)
-		}
-	}
-	return missingConsensus
-}
-
-// anyFieldHasConsensus checks if at least one of the specified fields has consensus
-func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	for _, field := range fields {
-		if fieldHasConsensus(fieldVotePowers, field) {
-			return true
-		}
-	}
-	return false
-}
-
-// The following functions are imported from abci_types.go:
-// - fieldHasConsensus: checks if a specific field has reached consensus
-// - HasRequiredGasFields: checks if all gas-related fields have consensus

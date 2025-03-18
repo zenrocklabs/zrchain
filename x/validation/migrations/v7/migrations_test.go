@@ -17,8 +17,6 @@ import (
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 )
 
-var params = types.DefaultHVParams()
-
 func TestMigrate(t *testing.T) {
 	encCfg := moduletestutil.MakeTestEncodingConfig(validation.AppModuleBasic{})
 	cdc := encCfg.Codec

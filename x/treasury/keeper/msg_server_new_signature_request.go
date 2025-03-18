@@ -30,6 +30,11 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 
 	signPolicyID := key.SignPolicyId
 
+	ws, getDataErr := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	if getDataErr != nil {
+		return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
+	}
+
 	if signPolicyID == 0 {
 		ws, getDataErr := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 		if getDataErr != nil {
@@ -43,7 +48,7 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}

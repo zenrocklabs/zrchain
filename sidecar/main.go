@@ -12,6 +12,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
@@ -24,6 +25,7 @@ func main() {
 	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
+	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -59,7 +61,7 @@ func main() {
 	if *ethRPC != "" {
 		rpcAddress = *ethRPC
 		slog.Info("Using override Ethereum RPC endpoint", "endpoint", rpcAddress)
-	} else if endpoint, ok := cfg.EthOracle.RPC[cfg.Network]; ok {
+	} else if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
 		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
@@ -74,7 +76,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort)
+	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
@@ -126,11 +128,10 @@ func main() {
 
 func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
-		slog.Info("Received AVS contract state for", "network", o.Config.EthOracle.NetworkName[o.Config.Network], "block", update.EthBlockHeight)
+		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", update.EthBlockHeight)
 		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
 
-		newState := update
-		o.currentState.Store(&newState)
+		o.currentState.Store(&update)
 		o.CacheState()
 	}
 }
