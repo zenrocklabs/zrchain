@@ -12,6 +12,7 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"gopkg.in/yaml.v2"
 )
 
 // ConsensusVote represents a vote from a validator
@@ -39,6 +40,48 @@ type ValidatorInfo struct {
 	Index       int
 	HasVote     bool
 	DecodedAddr string
+	Moniker     string // Added moniker field
+}
+
+// ValidatorSetEntry represents a validator in the validator set
+type ValidatorSetEntry struct {
+	Address          string `yaml:"address"`
+	ProposerPriority string `yaml:"proposer_priority"`
+	PubKey           struct {
+		Type  string `yaml:"type"`
+		Value string `yaml:"value"`
+	} `yaml:"pub_key"`
+	VotingPower string `yaml:"voting_power"`
+}
+
+// ValidatorSetResponse is the response structure for the validator set query
+type ValidatorSetResponse struct {
+	BlockHeight string              `yaml:"block_height"`
+	Validators  []ValidatorSetEntry `yaml:"validators"`
+	Pagination  struct {
+		Total string `yaml:"total"`
+	} `yaml:"pagination"`
+}
+
+// ValidatorEntry represents a validator in the validators query
+type ValidatorEntry struct {
+	ConsensusPublicKey struct {
+		Type  string `yaml:"type"`
+		Value string `yaml:"value"`
+	} `yaml:"consensus_pubkey"`
+	Description struct {
+		Moniker string `yaml:"moniker"`
+		Details string `yaml:"details,omitempty"`
+		Website string `yaml:"website,omitempty"`
+	} `yaml:"description"`
+}
+
+// ValidatorsResponse is the response structure for the validators query
+type ValidatorsResponse struct {
+	Validators []ValidatorEntry `yaml:"validators"`
+	Pagination struct {
+		Total string `yaml:"total"`
+	} `yaml:"pagination"`
 }
 
 const NO_VOTE = "<no vote extension>"
@@ -53,6 +96,17 @@ func main() {
 
 	var input []byte
 	var err error
+
+	// Get validator information first
+	fmt.Println("Fetching validator information...")
+
+	// Build a mapping from consensus address to moniker
+	addrToMoniker, err := buildValidatorMappings(*rpcNodePtr)
+	if err != nil {
+		fmt.Printf("Warning: Failed to get validator information: %v\n", err)
+		fmt.Println("Proceeding without validator names.")
+		addrToMoniker = make(map[string]string)
+	}
 
 	// If a file is provided, read from it
 	if *useFilePtr != "" {
@@ -116,18 +170,25 @@ func main() {
 		// Decode the base64 address
 		decodedAddr := decodeValidatorAddress(vote.Validator.Address)
 
+		// Get moniker for this validator
+		moniker := addrToMoniker[decodedAddr]
+		if moniker == "" {
+			moniker = "Unknown"
+		}
+
 		validatorInfo := ValidatorInfo{
 			Address:     vote.Validator.Address,
 			Power:       vote.Validator.Power,
 			Index:       i + 1,
 			HasVote:     false,
 			DecodedAddr: decodedAddr,
+			Moniker:     moniker,
 		}
 
 		totalVotingPower += vote.Validator.Power
 
 		if !*missingOnlyPtr {
-			fmt.Printf("\n=== Validator %s (Power: %d) ===\n", decodedAddr, vote.Validator.Power)
+			fmt.Printf("\n=== Validator %s (%s) (Power: %d) ===\n", decodedAddr, moniker, vote.Validator.Power)
 		}
 
 		// Skip if vote extension is empty
@@ -219,7 +280,7 @@ func main() {
 				float64(totalMissingPower)/float64(totalVotingPower)*100)
 
 			for i, v := range missingValidators {
-				fmt.Printf("%3d. %s (Power: %d)\n", i+1, v.DecodedAddr, v.Power)
+				fmt.Printf("%3d. %s (%s) (Power: %d)\n", i+1, v.DecodedAddr, v.Moniker, v.Power)
 			}
 		}
 		return
@@ -230,6 +291,58 @@ func main() {
 		fmt.Println("\n\n=== DIFFERENCES BETWEEN VOTE EXTENSIONS ===")
 		findDifferences(allExtensions, allValidators, totalVotingPower)
 	}
+}
+
+// buildValidatorMappings builds a mapping from bech32 consensus address to moniker
+func buildValidatorMappings(rpcNode string) (map[string]string, error) {
+	// Maps to store the results
+	addressToMoniker := make(map[string]string)
+	pubkeyToMoniker := make(map[string]string)
+
+	// Execute command to get validator set
+	fmt.Println("Fetching validator set...")
+	valSetCmd := exec.Command("bash", "-c", fmt.Sprintf("zenrockd --node=%s q consensus comet validator-set", rpcNode))
+	valSetOutput, err := valSetCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get validator set: %v", err)
+	}
+
+	// Execute command to get validators with monikers
+	fmt.Println("Fetching validator details...")
+	validatorsCmd := exec.Command("bash", "-c", fmt.Sprintf("zenrockd --node=%s q validation validators", rpcNode))
+	validatorsOutput, err := validatorsCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get validators: %v", err)
+	}
+
+	// Parse validator set response
+	var valSetResp ValidatorSetResponse
+	err = yaml.Unmarshal(valSetOutput, &valSetResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse validator set: %v", err)
+	}
+
+	// Parse validators response
+	var validatorsResp ValidatorsResponse
+	err = yaml.Unmarshal(validatorsOutput, &validatorsResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse validators: %v", err)
+	}
+
+	// Build mapping from pubkey to moniker
+	for _, val := range validatorsResp.Validators {
+		pubkeyToMoniker[val.ConsensusPublicKey.Value] = val.Description.Moniker
+	}
+
+	// Build mapping from address to moniker
+	for _, val := range valSetResp.Validators {
+		if moniker, ok := pubkeyToMoniker[val.PubKey.Value]; ok {
+			addressToMoniker[val.Address] = moniker
+		}
+	}
+
+	fmt.Printf("Found %d validators with monikers\n", len(addressToMoniker))
+	return addressToMoniker, nil
 }
 
 // executeZenrockdCommand runs the zenrockd command and returns the output
@@ -407,7 +520,7 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 				if !v.HasVote {
 					tag = " (no vote)"
 				}
-				fmt.Printf("    %3d. %s (power: %d)%s\n", j+1, v.DecodedAddr, v.Power, tag)
+				fmt.Printf("    %3d. %s (%s) (power: %d)%s\n", j+1, v.DecodedAddr, v.Moniker, v.Power, tag)
 			}
 			fmt.Println()
 		}
