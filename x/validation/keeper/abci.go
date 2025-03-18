@@ -113,25 +113,25 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 
 	// Check if Solana blockhash is requested first
-	solanaBlockhashRequested, err := k.SolanaBlockhashRequested.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return VoteExtension{}, err
-		}
-		// Not found means false
-		solanaBlockhashRequested = false
-	}
+	// solanaBlockhashRequested, err := k.SolanaBlockhashRequested.Get(ctx)
+	// if err != nil {
+	// 	if !errors.Is(err, collections.ErrNotFound) {
+	// 		return VoteExtension{}, err
+	// 	}
+	// 	// Not found means false
+	// 	solanaBlockhashRequested = false
+	// }
 
 	// Only get Solana recent blockhash if it's requested
-	solanaRecentBlockhash := ""
-	if solanaBlockhashRequested {
-		solanaRecentBlockhash, err = k.GetSolanaRecentBlockhash(ctx)
-		if err != nil {
-			k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
-			// Non-fatal error, continue with empty string
-			solanaRecentBlockhash = ""
-		}
-	}
+	// solanaRecentBlockhash := ""
+	// if solanaBlockhashRequested {
+	// 	solanaRecentBlockhash, err = k.GetSolanaRecentBlockhash(ctx)
+	// 	if err != nil {
+	// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+	// 		// Non-fatal error, continue with empty string
+	// 		solanaRecentBlockhash = ""
+	// 	}
+	// }
 
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
@@ -168,11 +168,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
-		SolanaRecentBlockhash:      solanaRecentBlockhash,
-		RequestedStakerNonce:       nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
-		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
-		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
-		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
+		// SolanaRecentBlockhash:      solanaRecentBlockhash,
+		RequestedStakerNonce:    nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
+		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
+		RequestedUnstakerNonce:  nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
+		RequestedCompleterNonce: nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 	}
 
 	return voteExt, nil
@@ -444,22 +444,22 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	}
 
 	// Verify Solana recent blockhash if there's consensus on it
-	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaRecentBlockhash) {
-		currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
-		if err != nil {
-			k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
-			// Skip the rest of this validation block on error
-		} else if currentBlockhash != "" && voteExt.SolanaRecentBlockhash != currentBlockhash {
-			// Check for mismatch only if we have a valid current blockhash
-			k.Logger(ctx).Warn("solana recent blockhash mismatch",
-				"voteExt", voteExt.SolanaRecentBlockhash,
-				"current", currentBlockhash)
-			mismatchedFields = append(mismatchedFields, VEFieldSolanaRecentBlockhash)
-		} else {
-			// No mismatch or empty current blockhash, use the consensus value
-			oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
-		}
-	}
+	// if fieldHasConsensus(fieldVotePowers, VEFieldSolanaRecentBlockhash) {
+	// 	currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
+	// 	if err != nil {
+	// 		k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
+	// 		// Skip the rest of this validation block on error
+	// 	} else if currentBlockhash != "" && voteExt.SolanaRecentBlockhash != currentBlockhash {
+	// 		// Check for mismatch only if we have a valid current blockhash
+	// 		k.Logger(ctx).Warn("solana recent blockhash mismatch",
+	// 			"voteExt", voteExt.SolanaRecentBlockhash,
+	// 			"current", currentBlockhash)
+	// 		mismatchedFields = append(mismatchedFields, VEFieldSolanaRecentBlockhash)
+	// 	} else {
+	// 		// No mismatch or empty current blockhash, use the consensus value
+	// 		oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
+	// 	}
+	// }
 
 	// Verify nonce fields and copy them if they have consensus
 	nonceFields := []struct {

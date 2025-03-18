@@ -158,14 +158,14 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.SolanaLamportsPerSignature == 0 {
-		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
-		invalid = true
-	}
-	if ve.SolanaRecentBlockhash == "" {
-		logger.Error("invalid vote extension: SolanaRecentBlockhash is empty")
-		invalid = true
-	}
+	// if ve.SolanaLamportsPerSignature == 0 {
+	// 	logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
+	// 	invalid = true
+	// }
+	// if ve.SolanaRecentBlockhash == "" {
+	// 	logger.Error("invalid vote extension: SolanaRecentBlockhash is empty")
+	// 	invalid = true
+	// }
 	if len(ve.EthBurnEventsHash) == 0 {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
