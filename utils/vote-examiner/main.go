@@ -15,159 +15,120 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ConsensusVote represents a vote from a validator
-type ConsensusVote struct {
-	Validator struct {
-		Address string `json:"address"`
-		Power   int    `json:"power"`
-	} `json:"validator"`
-	VoteExtension      string `json:"vote_extension"`
-	ExtensionSignature string `json:"extension_signature"`
-	BlockIDFlag        int    `json:"block_id_flag"`
-}
-
-// BlockData represents the block data structure
-type BlockData struct {
-	ConsensusData struct {
-		Votes []ConsensusVote `json:"votes"`
-	} `json:"ConsensusData"`
-}
-
-// ValidatorInfo stores information about a validator
-type ValidatorInfo struct {
-	Address     string
-	Power       int
-	Index       int
-	HasVote     bool
-	DecodedAddr string
-	Moniker     string // Added moniker field
-}
-
-// ValidatorSetEntry represents a validator in the validator set
-type ValidatorSetEntry struct {
-	Address          string `yaml:"address"`
-	ProposerPriority string `yaml:"proposer_priority"`
-	PubKey           struct {
-		Type  string `yaml:"type"`
-		Value string `yaml:"value"`
-	} `yaml:"pub_key"`
-	VotingPower string `yaml:"voting_power"`
-}
-
-// ValidatorSetResponse is the response structure for the validator set query
-type ValidatorSetResponse struct {
-	BlockHeight string              `yaml:"block_height"`
-	Validators  []ValidatorSetEntry `yaml:"validators"`
-	Pagination  struct {
-		Total string `yaml:"total"`
-	} `yaml:"pagination"`
-}
-
-// ValidatorEntry represents a validator in the validators query
-type ValidatorEntry struct {
-	ConsensusPublicKey struct {
-		Type  string `yaml:"type"`
-		Value string `yaml:"value"`
-	} `yaml:"consensus_pubkey"`
-	Description struct {
-		Moniker string `yaml:"moniker"`
-		Details string `yaml:"details,omitempty"`
-		Website string `yaml:"website,omitempty"`
-	} `yaml:"description"`
-}
-
-// ValidatorsResponse is the response structure for the validators query
-type ValidatorsResponse struct {
-	Validators []ValidatorEntry `yaml:"validators"`
-	Pagination struct {
-		Total string `yaml:"total"`
-	} `yaml:"pagination"`
-}
-
-const NO_VOTE = "<no vote extension>"
-
 func main() {
-	// Command line flags
-	useFilePtr := flag.String("file", "", "Use file instead of executing command (optional)")
-	rpcNodePtr := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
-	blockHeightPtr := flag.String("height", "", "Block height (default: latest)")
-	missingOnlyPtr := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
-	flag.Parse()
+	config := parseFlags()
 
-	var input []byte
-	var err error
-
-	// Get validator information first
+	// Get validator information
 	fmt.Println("Fetching validator information...")
-
-	// Build a mapping from consensus address to moniker
-	addrToMoniker, err := buildValidatorMappings(*rpcNodePtr)
+	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
 	if err != nil {
 		fmt.Printf("Warning: Failed to get validator information: %v\n", err)
 		fmt.Println("Proceeding without validator names.")
 		addrToMoniker = make(map[string]string)
 	}
 
-	// If a file is provided, read from it
-	if *useFilePtr != "" {
-		input, err = os.ReadFile(*useFilePtr)
+	// Get block data
+	blockData, err := getBlockData(config)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+
+	// Process block data
+	processBlockData(blockData, addrToMoniker, config.MissingOnly)
+}
+
+// parseFlags parses command line flags and returns a Config
+func parseFlags() Config {
+	useFileFlag := flag.String("file", "", "Use file instead of executing command (optional)")
+	rpcNodeFlag := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
+	blockHeightFlag := flag.String("height", "", "Block height (default: latest)")
+	missingOnlyFlag := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
+	flag.Parse()
+
+	return Config{
+		UseFile:     *useFileFlag,
+		RPCNode:     *rpcNodeFlag,
+		BlockHeight: *blockHeightFlag,
+		MissingOnly: *missingOnlyFlag,
+	}
+}
+
+// getBlockData retrieves block data from file or by executing command
+func getBlockData(config Config) (*BlockData, error) {
+	var input []byte
+	var err error
+
+	if config.UseFile != "" {
+		input, err = os.ReadFile(config.UseFile)
 		if err != nil {
-			fmt.Printf("Error reading file: %v\n", err)
-			return
+			return nil, fmt.Errorf("error reading file: %v", err)
 		}
 	} else {
-		// Otherwise execute the command
 		fmt.Println("Querying latest block data...")
-
-		input, err = executeZenrockdCommand(*rpcNodePtr, *blockHeightPtr)
+		input, err = executeZenrockdCommand(config.RPCNode, config.BlockHeight)
 		if err != nil {
-			fmt.Printf("Error executing command: %v\n", err)
-			return
+			return nil, fmt.Errorf("error executing command: %v", err)
 		}
 	}
 
-	// Convert to string for processing
-	inputStr := string(input)
-
-	// Extract the JSON object - find text between { and the last }
+	// Extract the JSON object from the input
 	re := regexp.MustCompile(`\{[\s\S]*\}`)
-	match := re.FindString(inputStr)
+	match := re.FindString(string(input))
 	if match == "" {
-		fmt.Println("Could not find a JSON object in the input")
-		return
+		return nil, fmt.Errorf("could not find a JSON object in the input")
 	}
 
 	// Parse the JSON data
 	var blockData BlockData
-	err = json.Unmarshal([]byte(match), &blockData)
-	if err != nil {
-		fmt.Printf("Error parsing JSON: %v\n", err)
+	if err := json.Unmarshal([]byte(match), &blockData); err != nil {
+		return nil, fmt.Errorf("error parsing JSON: %v", err)
+	}
+
+	return &blockData, nil
+}
+
+// processBlockData analyzes the block data and displays results
+func processBlockData(blockData *BlockData, addrToMoniker map[string]string, missingOnly bool) {
+	if len(blockData.ConsensusData.Votes) == 0 {
+		fmt.Println("No votes found in block data")
 		return
 	}
 
-	// Calculate total validator power
-	totalPower := 0
-	for _, vote := range blockData.ConsensusData.Votes {
-		totalPower += vote.Validator.Power
+	// Calculate statistics
+	validators, allExtensions := processVotes(blockData.ConsensusData.Votes, addrToMoniker, missingOnly)
+	stats := calculateStats(validators)
+
+	// Display participation stats
+	printParticipationStats(stats)
+
+	// Handle missing validators if requested
+	if missingOnly {
+		printMissingValidators(validators, stats.TotalVotingPower)
+		return
 	}
 
-	// Store all decoded extensions for comparison
-	allExtensions := make([]map[string]interface{}, 0)
-	allValidators := make([]ValidatorInfo, 0)
+	// Compare extensions to find differences
+	if len(allExtensions) > 0 {
+		fmt.Println("\n\n=== DIFFERENCES BETWEEN VOTE EXTENSIONS ===")
+		findDifferences(allExtensions, validators, stats.TotalVotingPower)
+	}
+}
+
+// processVotes processes all votes and returns validator information
+func processVotes(votes []ConsensusVote, addrToMoniker map[string]string, missingOnly bool) ([]ValidatorInfo, []map[string]any) {
+	validators := make([]ValidatorInfo, 0, len(votes))
+	allExtensions := make([]map[string]any, 0, len(votes))
 	validatorsWithExtensions := 0
 	totalVotingPower := 0
 	totalVotedPower := 0
-	missingValidators := make([]ValidatorInfo, 0)
 
-	// Process each vote
-	if !*missingOnlyPtr {
-		fmt.Printf("Found %d validators in the block\n", len(blockData.ConsensusData.Votes))
+	if !missingOnly {
+		fmt.Printf("Found %d validators in the block\n", len(votes))
 	}
 
-	for i, vote := range blockData.ConsensusData.Votes {
-		validatorHasVote := false
-
-		// Decode the base64 address
+	for i, vote := range votes {
+		// Decode the validator address
 		decodedAddr := decodeValidatorAddress(vote.Validator.Address)
 
 		// Get moniker for this validator
@@ -187,154 +148,172 @@ func main() {
 
 		totalVotingPower += vote.Validator.Power
 
-		if !*missingOnlyPtr {
+		// Print validator info if not in missing-only mode
+		if !missingOnly {
 			fmt.Printf("\n=== Validator %s (%s) (Power: %d) ===\n", decodedAddr, moniker, vote.Validator.Power)
 		}
 
-		// Skip if vote extension is empty
+		// Process vote extension
 		if vote.VoteExtension == "" {
-			if !*missingOnlyPtr {
+			if !missingOnly {
 				fmt.Println("No vote extension found")
 			}
-			missingValidators = append(missingValidators, validatorInfo)
+			allExtensions = append(allExtensions, nil)
 		} else {
-			validatorHasVote = true
+			validatorInfo.HasVote = true
 			validatorsWithExtensions++
 			totalVotedPower += vote.Validator.Power
 
-			if !*missingOnlyPtr {
-				// Decode base64 data
-				decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
-				if err != nil {
-					fmt.Printf("Error decoding base64: %v\n", err)
-				} else {
-					// Parse and pretty print the JSON
-					var prettyJSON map[string]interface{}
-					err = json.Unmarshal(decodedBytes, &prettyJSON)
-					if err != nil {
-						fmt.Printf("Error parsing decoded JSON: %v\n", err)
-						fmt.Println("Raw decoded data:", string(decodedBytes))
-					} else {
-						// Format the JSON with indentation
-						prettyJSONBytes, err := json.MarshalIndent(prettyJSON, "", "  ")
-						if err != nil {
-							fmt.Printf("Error formatting JSON: %v\n", err)
-						} else {
-							fmt.Println("Decoded vote extension:")
-							fmt.Println(string(prettyJSONBytes))
-
-							// Store extension for comparison
-							allExtensions = append(allExtensions, prettyJSON)
-						}
-					}
-				}
-			} else {
-				// Still need to decode for comparison in missing-only mode
-				decodedBytes, err := base64.StdEncoding.DecodeString(vote.VoteExtension)
-				if err == nil {
-					var prettyJSON map[string]interface{}
-					if json.Unmarshal(decodedBytes, &prettyJSON) == nil {
-						allExtensions = append(allExtensions, prettyJSON)
-					}
-				}
-			}
+			extension := processVoteExtension(vote.VoteExtension, missingOnly)
+			allExtensions = append(allExtensions, extension)
 		}
 
-		validatorInfo.HasVote = validatorHasVote
-		allValidators = append(allValidators, validatorInfo)
+		validators = append(validators, validatorInfo)
+	}
 
-		// If no extension, add a nil map to maintain index alignment
-		if !validatorHasVote {
-			allExtensions = append(allExtensions, nil)
+	return validators, allExtensions
+}
+
+// processVoteExtension decodes and processes a vote extension
+func processVoteExtension(extensionBase64 string, missingOnly bool) map[string]any {
+	// Decode base64 data
+	decodedBytes, err := base64.StdEncoding.DecodeString(extensionBase64)
+	if err != nil {
+		if !missingOnly {
+			fmt.Printf("Error decoding base64: %v\n", err)
+		}
+		return nil
+	}
+
+	// Parse JSON
+	var extension map[string]any
+	if err := json.Unmarshal(decodedBytes, &extension); err != nil {
+		if !missingOnly {
+			fmt.Printf("Error parsing decoded JSON: %v\n", err)
+			fmt.Println("Raw decoded data:", string(decodedBytes))
+		}
+		return nil
+	}
+
+	// Print pretty JSON if not in missing-only mode
+	if !missingOnly {
+		prettyJSONBytes, err := json.MarshalIndent(extension, "", "  ")
+		if err != nil {
+			fmt.Printf("Error formatting JSON: %v\n", err)
+		} else {
+			fmt.Println("Decoded vote extension:")
+			fmt.Println(string(prettyJSONBytes))
 		}
 	}
 
-	// Show vote extension participation stats
+	return extension
+}
+
+// calculateStats calculates statistics from validator information
+func calculateStats(validators []ValidatorInfo) Stats {
+	validatorsWithExtensions := 0
+	totalVotedPower := 0
+	totalVotingPower := 0
+
+	for _, v := range validators {
+		totalVotingPower += v.Power
+		if v.HasVote {
+			validatorsWithExtensions++
+			totalVotedPower += v.Power
+		}
+	}
+
+	return Stats{
+		ValidatorsWithExtensions: validatorsWithExtensions,
+		TotalValidators:          len(validators),
+		TotalVotedPower:          totalVotedPower,
+		TotalVotingPower:         totalVotingPower,
+	}
+}
+
+// printParticipationStats prints statistics about vote extension participation
+func printParticipationStats(stats Stats) {
 	fmt.Printf("\n=== VOTE EXTENSION PARTICIPATION ===\n")
 	fmt.Printf("Validators with vote extensions: %d of %d (%.2f%%)\n",
-		validatorsWithExtensions,
-		len(blockData.ConsensusData.Votes),
-		float64(validatorsWithExtensions)/float64(len(blockData.ConsensusData.Votes))*100)
+		stats.ValidatorsWithExtensions,
+		stats.TotalValidators,
+		float64(stats.ValidatorsWithExtensions)/float64(stats.TotalValidators)*100)
 	fmt.Printf("Voting power with extensions: %d of %d (%.2f%%)\n",
-		totalVotedPower,
-		totalVotingPower,
-		float64(totalVotedPower)/float64(totalVotingPower)*100)
+		stats.TotalVotedPower,
+		stats.TotalVotingPower,
+		float64(stats.TotalVotedPower)/float64(stats.TotalVotingPower)*100)
+}
 
-	// If missing-only flag is set, just list the missing validators
-	if *missingOnlyPtr {
-		fmt.Printf("\n=== VALIDATORS WITHOUT VOTE EXTENSIONS (%d validators) ===\n", len(missingValidators))
-		if len(missingValidators) == 0 {
-			fmt.Println("All validators submitted vote extensions!")
-		} else {
-			// Sort missing validators by power (high to low)
-			sort.Slice(missingValidators, func(i, j int) bool {
-				return missingValidators[i].Power > missingValidators[j].Power
-			})
-
-			totalMissingPower := 0
-			for _, v := range missingValidators {
-				totalMissingPower += v.Power
-			}
-			fmt.Printf("Total missing power: %d (%.2f%% of total)\n\n",
-				totalMissingPower,
-				float64(totalMissingPower)/float64(totalVotingPower)*100)
-
-			for i, v := range missingValidators {
-				fmt.Printf("%3d. %s (%s) (Power: %d)\n", i+1, v.DecodedAddr, v.Moniker, v.Power)
-			}
+// printMissingValidators prints information about validators missing vote extensions
+func printMissingValidators(validators []ValidatorInfo, totalVotingPower int) {
+	missingValidators := []ValidatorInfo{}
+	for _, v := range validators {
+		if !v.HasVote {
+			missingValidators = append(missingValidators, v)
 		}
+	}
+
+	fmt.Printf("\n=== VALIDATORS WITHOUT VOTE EXTENSIONS (%d validators) ===\n", len(missingValidators))
+	if len(missingValidators) == 0 {
+		fmt.Println("All validators submitted vote extensions!")
 		return
 	}
 
-	// Compare extensions to find differences
-	if len(allExtensions) > 0 {
-		fmt.Println("\n\n=== DIFFERENCES BETWEEN VOTE EXTENSIONS ===")
-		findDifferences(allExtensions, allValidators, totalVotingPower)
+	// Sort missing validators by power (high to low)
+	sort.Slice(missingValidators, func(i, j int) bool {
+		return missingValidators[i].Power > missingValidators[j].Power
+	})
+
+	totalMissingPower := 0
+	for _, v := range missingValidators {
+		totalMissingPower += v.Power
+	}
+
+	fmt.Printf("Total missing power: %d (%.2f%% of total)\n\n",
+		totalMissingPower,
+		float64(totalMissingPower)/float64(totalVotingPower)*100)
+
+	for i, v := range missingValidators {
+		fmt.Printf("%3d. %s (%s) (Power: %d)\n", i+1, v.DecodedAddr, v.Moniker, v.Power)
 	}
 }
 
 // buildValidatorMappings builds a mapping from bech32 consensus address to moniker
 func buildValidatorMappings(rpcNode string) (map[string]string, error) {
-	// Maps to store the results
 	addressToMoniker := make(map[string]string)
-	pubkeyToMoniker := make(map[string]string)
 
-	// Execute command to get validator set
-	fmt.Println("Fetching validator set...")
-	valSetCmd := exec.Command("bash", "-c", fmt.Sprintf("zenrockd --node=%s q consensus comet validator-set", rpcNode))
-	valSetOutput, err := valSetCmd.Output()
+	// Get validator set data
+	valSetOutput, err := execCommand("bash", "-c",
+		fmt.Sprintf("zenrockd --node=%s q consensus comet validator-set", rpcNode))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get validator set: %v", err)
 	}
 
-	// Execute command to get validators with monikers
-	fmt.Println("Fetching validator details...")
-	validatorsCmd := exec.Command("bash", "-c", fmt.Sprintf("zenrockd --node=%s q validation validators", rpcNode))
-	validatorsOutput, err := validatorsCmd.Output()
+	// Get validators with monikers
+	validatorsOutput, err := execCommand("bash", "-c",
+		fmt.Sprintf("zenrockd --node=%s q validation validators", rpcNode))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get validators: %v", err)
 	}
 
-	// Parse validator set response
+	// Parse responses
 	var valSetResp ValidatorSetResponse
-	err = yaml.Unmarshal(valSetOutput, &valSetResp)
-	if err != nil {
+	if err := yaml.Unmarshal(valSetOutput, &valSetResp); err != nil {
 		return nil, fmt.Errorf("failed to parse validator set: %v", err)
 	}
 
-	// Parse validators response
 	var validatorsResp ValidatorsResponse
-	err = yaml.Unmarshal(validatorsOutput, &validatorsResp)
-	if err != nil {
+	if err := yaml.Unmarshal(validatorsOutput, &validatorsResp); err != nil {
 		return nil, fmt.Errorf("failed to parse validators: %v", err)
 	}
 
-	// Build mapping from pubkey to moniker
+	// Build pubkey to moniker mapping
+	pubkeyToMoniker := make(map[string]string)
 	for _, val := range validatorsResp.Validators {
 		pubkeyToMoniker[val.ConsensusPublicKey.Value] = val.Description.Moniker
 	}
 
-	// Build mapping from address to moniker
+	// Build address to moniker mapping
 	for _, val := range valSetResp.Validators {
 		if moniker, ok := pubkeyToMoniker[val.PubKey.Value]; ok {
 			addressToMoniker[val.Address] = moniker
@@ -345,59 +324,50 @@ func buildValidatorMappings(rpcNode string) (map[string]string, error) {
 	return addressToMoniker, nil
 }
 
-// executeZenrockdCommand runs the zenrockd command and returns the output
-func executeZenrockdCommand(rpcNode, blockHeight string) ([]byte, error) {
-	var cmd *exec.Cmd
-
-	if blockHeight == "" {
-		// Use bash to execute the full command pipeline
-		fullCmd := fmt.Sprintf(`zenrockd --node=%s query block --type=height $(zenrockd --node=%s status | jq -r '.sync_info.latest_block_height') --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, rpcNode)
-		cmd = exec.Command("bash", "-c", fullCmd)
-	} else {
-		// Use specific block height
-		fullCmd := fmt.Sprintf(`zenrockd --node=%s query block --type=height %s --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, blockHeight)
-		cmd = exec.Command("bash", "-c", fullCmd)
-	}
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+// execCommand is a helper to execute commands and capture output
+func execCommand(name string, args ...string) ([]byte, error) {
+	cmd := exec.Command(name, args...)
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("command execution failed: %s\nStderr: %s", err, stderr.String())
 	}
 
 	return stdout.Bytes(), nil
 }
 
-// Decode validator address from base64
+// executeZenrockdCommand runs the zenrockd command and returns the output
+func executeZenrockdCommand(rpcNode, blockHeight string) ([]byte, error) {
+	var fullCmd string
+
+	if blockHeight == "" {
+		fullCmd = fmt.Sprintf(`zenrockd --node=%s query block --type=height $(zenrockd --node=%s status | jq -r '.sync_info.latest_block_height') --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, rpcNode)
+	} else {
+		fullCmd = fmt.Sprintf(`zenrockd --node=%s query block --type=height %s --output=json | jq -r '.data.txs[0]' | base64 --decode`, rpcNode, blockHeight)
+	}
+
+	return execCommand("bash", "-c", fullCmd)
+}
+
+// decodeValidatorAddress decodes validator address from base64
 func decodeValidatorAddress(base64Addr string) string {
-	// Decode from base64
 	decoded, err := base64.StdEncoding.DecodeString(base64Addr)
 	if err != nil {
 		return fmt.Sprintf("Invalid(%s)", base64Addr)
 	}
 
-	// Format as hex
 	return sdk.MustBech32ifyAddressBytes("zenvalcons", decoded)
 }
 
-func findDifferences(extensions []map[string]interface{}, validators []ValidatorInfo, totalPower int) {
+// findDifferences finds and displays differences between vote extensions
+func findDifferences(extensions []map[string]any, validators []ValidatorInfo, totalPower int) {
 	// Map to track differences by field
 	differences := make(map[string]map[string][]ValidatorInfo)
 
 	// Get all possible keys from all extensions
-	allKeys := make(map[string]bool)
-	for _, ext := range extensions {
-		if ext == nil {
-			continue
-		}
-		for k := range ext {
-			allKeys[k] = true
-		}
-	}
+	allKeys := getAllKeys(extensions)
 
 	// Check each key for differences
 	for key := range allKeys {
@@ -409,22 +379,7 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 				continue
 			}
 
-			var valueStr string
-			if ext == nil {
-				valueStr = NO_VOTE
-			} else if val, ok := ext[key]; ok {
-				// Convert value to string representation
-				bytes, err := json.Marshal(val)
-				if err == nil {
-					valueStr = string(bytes)
-				} else {
-					valueStr = fmt.Sprintf("%v", val)
-				}
-			} else {
-				valueStr = "<missing field>"
-			}
-
-			// Add validator to the list for this value
+			valueStr := getValueString(ext, key)
 			valueMap[valueStr] = append(valueMap[valueStr], validators[i])
 		}
 
@@ -434,7 +389,42 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 		}
 	}
 
-	// Display differences in a nice format
+	printDifferences(differences, validators, totalPower)
+}
+
+// getAllKeys gets all keys from all extensions
+func getAllKeys(extensions []map[string]any) map[string]bool {
+	allKeys := make(map[string]bool)
+	for _, ext := range extensions {
+		if ext == nil {
+			continue
+		}
+		for k := range ext {
+			allKeys[k] = true
+		}
+	}
+	return allKeys
+}
+
+// getValueString converts an extension value to a string representation
+func getValueString(ext map[string]any, key string) string {
+	if ext == nil {
+		return noVoteMsg
+	}
+
+	if val, ok := ext[key]; ok {
+		bytes, err := json.Marshal(val)
+		if err == nil {
+			return string(bytes)
+		}
+		return fmt.Sprintf("%v", val)
+	}
+
+	return missingFieldMsg
+}
+
+// printDifferences displays the differences between vote extensions
+func printDifferences(differences map[string]map[string][]ValidatorInfo, validators []ValidatorInfo, totalPower int) {
 	if len(differences) == 0 {
 		fmt.Println("No differences found between vote extensions")
 		return
@@ -452,77 +442,82 @@ func findDifferences(extensions []map[string]interface{}, validators []Validator
 		fmt.Printf("-------------------------\n")
 
 		valueMap := differences[key]
+		printValueDifferences(valueMap, validators, totalPower)
+	}
+}
 
-		// Sort values by number of validators (descending) and power
-		type ValueCount struct {
-			Value      string
-			Validators []ValidatorInfo
-			TotalPower int
+// printValueDifferences prints the differences for a specific field
+func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []ValidatorInfo, totalPower int) {
+	// Convert map to slice for sorting
+	valueCounts := make([]ValueCount, 0, len(valueMap))
+	for v, validators := range valueMap {
+		thisPower := 0
+		for _, val := range validators {
+			thisPower += val.Power
 		}
 
-		valueCounts := make([]ValueCount, 0, len(valueMap))
-		for v, validators := range valueMap {
-			thisPower := 0
-			for _, val := range validators {
-				thisPower += val.Power
-			}
-
-			valueCounts = append(valueCounts, ValueCount{
-				Value:      v,
-				Validators: validators,
-				TotalPower: thisPower,
-			})
-		}
-
-		// Sort by power (descending)
-		sort.Slice(valueCounts, func(i, j int) bool {
-			return valueCounts[i].TotalPower > valueCounts[j].TotalPower
+		valueCounts = append(valueCounts, ValueCount{
+			Value:      v,
+			Validators: validators,
+			TotalPower: thisPower,
 		})
+	}
 
-		// Format for display
-		for i, vc := range valueCounts {
-			displayValue := vc.Value
-			if displayValue == NO_VOTE {
-				displayValue = "NO VOTE EXTENSION SUBMITTED"
-			} else if len(displayValue) > 100 {
-				displayValue = displayValue[:97] + "..."
-			}
+	// Sort by power (descending)
+	sort.Slice(valueCounts, func(i, j int) bool {
+		return valueCounts[i].TotalPower > valueCounts[j].TotalPower
+	})
 
-			valueLabel := "MAJORITY"
-			if i > 0 {
-				valueLabel = "MINORITY"
-			}
-
-			powerPercentage := float64(vc.TotalPower) / float64(totalPower) * 100
-
-			fmt.Printf("%s VALUE (Power: %d, %.2f%% of total)\n", valueLabel, vc.TotalPower, powerPercentage)
-			fmt.Printf("  %s\n", displayValue)
-			fmt.Printf("  Supported by %d validators (%.2f%% of validators)\n",
-				len(vc.Validators),
-				float64(len(vc.Validators))/float64(len(validators))*100)
-
-			// Count validators with and without votes
-			votedCount := 0
-			for _, v := range vc.Validators {
-				if v.HasVote {
-					votedCount++
-				}
-			}
-
-			noVoteCount := len(vc.Validators) - votedCount
-			if displayValue != "NO VOTE EXTENSION SUBMITTED" && noVoteCount > 0 {
-				fmt.Printf("  Note: %d validators in this group did not submit a vote extension\n", noVoteCount)
-			}
-
-			fmt.Printf("  Validators:\n")
-			for j, v := range vc.Validators {
-				tag := ""
-				if !v.HasVote {
-					tag = " (no vote)"
-				}
-				fmt.Printf("    %3d. %s (%s) (power: %d)%s\n", j+1, v.DecodedAddr, v.Moniker, v.Power, tag)
-			}
-			fmt.Println()
+	// Format for display
+	for i, vc := range valueCounts {
+		displayValue := vc.Value
+		if displayValue == noVoteMsg {
+			displayValue = noVoteMsg
+		} else if len(displayValue) > 100 {
+			displayValue = displayValue[:97] + "..."
 		}
+
+		powerPercentage := float64(vc.TotalPower) / float64(totalPower) * 100
+
+		// Determine appropriate label based on power percentage
+		var valueLabel string
+		if i == 0 && powerPercentage >= 67.0 {
+			valueLabel = "SUPERMAJORITY"
+		} else if i == 0 && powerPercentage >= 50.0 {
+			valueLabel = "MAJORITY"
+		} else if i == 0 {
+			valueLabel = "PLURALITY"
+		} else {
+			valueLabel = "MINORITY"
+		}
+
+		fmt.Printf("%s VALUE (Power: %d, %.2f%% of total)\n", valueLabel, vc.TotalPower, powerPercentage)
+		fmt.Printf("  %s\n", displayValue)
+		fmt.Printf("  Supported by %d validators (%.2f%% of validators)\n",
+			len(vc.Validators),
+			float64(len(vc.Validators))/float64(len(allValidators))*100)
+
+		// Count validators with and without votes
+		votedCount := 0
+		for _, v := range vc.Validators {
+			if v.HasVote {
+				votedCount++
+			}
+		}
+
+		noVoteCount := len(vc.Validators) - votedCount
+		if displayValue != noVoteMsg && noVoteCount > 0 {
+			fmt.Printf("  Note: %d validators in this group did not submit a vote extension\n", noVoteCount)
+		}
+
+		fmt.Printf("  Validators:\n")
+		for j, v := range vc.Validators {
+			tag := ""
+			if !v.HasVote {
+				tag = " (no vote)"
+			}
+			fmt.Printf("    %3d. %s (%s) (power: %d)%s\n", j+1, v.DecodedAddr, v.Moniker, v.Power, tag)
+		}
+		fmt.Println()
 	}
 }
