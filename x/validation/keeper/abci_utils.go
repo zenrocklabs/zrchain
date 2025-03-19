@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -25,6 +24,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/shamaton/msgpack/v2"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -54,7 +54,7 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
 
-	if err := json.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
+	if err := msgpack.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
 
@@ -300,7 +300,7 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 	}
 
 	var voteExt VoteExtension
-	if err := json.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
+	if err := msgpack.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
 		return VoteExtension{}, err
 	}
 
@@ -323,7 +323,7 @@ func simpleMajorityVotePower(totalVotePower int64) int64 {
 }
 
 func deriveHash[T any](data T) ([32]byte, error) {
-	dataBz, err := json.Marshal(data)
+	dataBz, err := msgpack.Marshal(data)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("error encoding data: %w", err)
 	}
@@ -693,7 +693,7 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBl
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
-	oracleDataBz, err := json.Marshal(oracleData)
+	oracleDataBz, err := msgpack.Marshal(oracleData)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding oracle data: %w", err)
 	}
@@ -712,8 +712,8 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 	}
 
 	var oracleData OracleData
-	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		k.Logger(ctx).Error("error unmarshalling oracle data JSON", "err", err)
+	if err := msgpack.Unmarshal(tx, &oracleData); err != nil {
+		k.Logger(ctx).Error("error unmarshalling oracle data", "err", err)
 		return OracleData{}, false
 	}
 
@@ -922,7 +922,7 @@ func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
-	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
+	canonicalVoteExtBz, err := msgpack.Marshal(canonicalVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
 		return

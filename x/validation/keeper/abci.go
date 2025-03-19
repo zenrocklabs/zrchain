@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -18,6 +17,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/shamaton/msgpack/v2"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -65,7 +65,7 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	voteExtBz, err := json.Marshal(voteExt)
+	voteExtBz, err := msgpack.Marshal(voteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
@@ -190,7 +190,7 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 	}
 
 	var voteExt VoteExtension
-	if err := json.Unmarshal(req.VoteExtension, &voteExt); err != nil {
+	if err := msgpack.Unmarshal(req.VoteExtension, &voteExt); err != nil {
 		k.Logger(ctx).Debug("error unmarshalling vote extension", "height", req.Height, "error", err)
 		return REJECT_VOTE, nil
 	}
@@ -265,7 +265,7 @@ func (k *Keeper) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessPropos
 	}
 
 	var recoveredOracleData OracleData
-	if err := json.Unmarshal(req.Txs[0], &recoveredOracleData); err != nil {
+	if err := msgpack.Unmarshal(req.Txs[0], &recoveredOracleData); err != nil {
 		return REJECT_PROPOSAL, fmt.Errorf("error unmarshalling oracle data: %w", err)
 	}
 
