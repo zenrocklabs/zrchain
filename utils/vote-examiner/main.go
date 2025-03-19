@@ -430,18 +430,44 @@ func printDifferences(differences map[string]map[string][]ValidatorInfo, validat
 		return
 	}
 
-	// Sort keys for consistent output
-	sortedKeys := make([]string, 0, len(differences))
-	for k := range differences {
-		sortedKeys = append(sortedKeys, k)
+	// Create a slice of keys with their consensus percentages
+	type fieldConsensus struct {
+		key              string
+		consensusPercent float64
 	}
-	sort.Strings(sortedKeys)
 
-	for _, key := range sortedKeys {
-		fmt.Printf("\nDifferences in field: %s\n", key)
+	fieldsByConsensus := make([]fieldConsensus, 0, len(differences))
+
+	for key, valueMap := range differences {
+		// Find highest consensus for this field
+		highestConsensus := 0.0
+		for _, vals := range valueMap {
+			thisPower := 0
+			for _, val := range vals {
+				thisPower += val.Power
+			}
+			consensusPercent := float64(thisPower) / float64(totalPower) * 100
+			if consensusPercent > highestConsensus {
+				highestConsensus = consensusPercent
+			}
+		}
+
+		fieldsByConsensus = append(fieldsByConsensus, fieldConsensus{
+			key:              key,
+			consensusPercent: highestConsensus,
+		})
+	}
+
+	// Sort by consensus percentage (ascending - lowest consensus last)
+	sort.Slice(fieldsByConsensus, func(i, j int) bool {
+		return fieldsByConsensus[i].consensusPercent > fieldsByConsensus[j].consensusPercent
+	})
+
+	for _, field := range fieldsByConsensus {
+		fmt.Printf("\nDifferences in field: %s (highest consensus: %.2f%%)\n", field.key, field.consensusPercent)
 		fmt.Printf("-------------------------\n")
 
-		valueMap := differences[key]
+		valueMap := differences[field.key]
 		printValueDifferences(valueMap, validators, totalPower)
 	}
 }
