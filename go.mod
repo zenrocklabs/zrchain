@@ -70,7 +70,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zenrocklabs/zenbtc v1.15.5
+	github.com/zenrocklabs/zenbtc v1.15.6
 	github.com/zenrocklabs/zenrock-avs v1.4.18
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.29.0
@@ -82,7 +82,10 @@ require (
 	gotest.tools/v3 v3.5.1
 )
 
-require github.com/beevik/ntp v1.4.3
+require (
+	github.com/beevik/ntp v1.4.3
+	gopkg.in/yaml.v2 v2.4.0
+)
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.1-20240508200655-46a4cf4ba109.1 // indirect
@@ -335,7 +338,6 @@ require (
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect
 	pgregory.net/rapid v1.1.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
