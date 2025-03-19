@@ -18,6 +18,9 @@ import (
 func main() {
 	config := parseFlags()
 
+	// Display selected network info
+	fmt.Printf("Using %s network (%s)\n", config.Network, config.RPCNode)
+
 	// Get validator information
 	fmt.Println("Fetching validator information...")
 	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
@@ -41,14 +44,34 @@ func main() {
 // parseFlags parses command line flags and returns a Config
 func parseFlags() Config {
 	useFileFlag := flag.String("file", "", "Use file instead of executing command (optional)")
-	rpcNodeFlag := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
+	networkFlag := flag.String("network", "mainnet", "Network to use: devnet, testnet, or mainnet (default: mainnet)")
+	rpcNodeFlag := flag.String("node", "", "RPC node URL (overrides network selection)")
 	blockHeightFlag := flag.String("height", "", "Block height (default: latest)")
 	missingOnlyFlag := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
 	flag.Parse()
 
+	// Map network to RPC URL if node is not explicitly provided
+	rpcURL := *rpcNodeFlag
+	if rpcURL == "" {
+		switch *networkFlag {
+		case "devnet", "dev", "amber":
+			rpcURL = "https://rpc.dev.zenrock.tech:443"
+		case "testnet", "test", "gardia":
+			rpcURL = "https://rpc.gardia.zenrocklabs.io:443"
+		case "mainnet", "main", "diamond":
+			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
+		default:
+			// Default to mainnet if unrecognized network
+			fmt.Printf("Warning: Unrecognized network '%s', defaulting to mainnet\n", *networkFlag)
+			*networkFlag = "mainnet"
+			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
+		}
+	}
+
 	return Config{
 		UseFile:     *useFileFlag,
-		RPCNode:     *rpcNodeFlag,
+		RPCNode:     rpcURL,
+		Network:     *networkFlag,
 		BlockHeight: *blockHeightFlag,
 		MissingOnly: *missingOnlyFlag,
 	}
