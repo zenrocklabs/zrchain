@@ -7,19 +7,19 @@ sidebar_position: 1
 ## Contents
 
 * [State](#state)
-    * [Minter](#minter)
-    * [Params](#params)
+  * [Minter](#minter)
+  * [Params](#params)
 * [Begin-Block](#begin-block)
-    * [NextInflationRate](#nextinflationrate)
-    * [NextAnnualProvisions](#nextannualprovisions)
-    * [BlockProvision](#blockprovision)
+  * [NextInflationRate](#nextinflationrate)
+  * [NextAnnualProvisions](#nextannualprovisions)
+  * [BlockProvision](#blockprovision)
 * [Parameters](#parameters)
 * [Events](#events)
-    * [BeginBlocker](#beginblocker)
+  * [BeginBlocker](#beginblocker)
 * [Client](#client)
-    * [CLI](#cli)
-    * [gRPC](#grpc)
-    * [REST](#rest)
+  * [CLI](#cli)
+  * [gRPC](#grpc)
+  * [REST](#rest)
 
 ## Concepts
 
@@ -129,6 +129,7 @@ rate. This parameter is calculated once per block.
 ```go
 NextAnnualProvisions(params Params, totalSupply math.LegacyDec) (provisions math.LegacyDec) {
 	return Inflation * totalSupply
+}
 ```
 
 ### BlockProvision
@@ -139,28 +140,28 @@ Calculate the provisions generated for each block based on current annual provis
 BlockProvision(params Params) sdk.Coin {
 	provisionAmt = AnnualProvisions/ params.BlocksPerYear
 	return sdk.NewCoin(params.MintDenom, provisionAmt.Truncate())
+}
 ```
-
 
 ## Parameters
 
 The minting module contains the following parameters:
 
-| Key                          | Type            | Example                  |
-|------------------------------|-----------------|--------------------------|
-| MintDenom                    | string          | "uatom"                  |
-| InflationRateChange          | string (dec)    | "0.000000000000000000"   |
-| InflationMax                 | string (dec)    | "0.000000000000000000"   |
-| InflationMin                 | string (dec)    | "0.000000000000000000"   |
-| GoalBonded                   | string (dec)    | "0.670000000000000000"   |
-| BlocksPerYear                | string (uint64) | "6311520"                |
-| StakingYield                 | string (dec)    | "0.070000000000000000"   |
-| BurnRate                     | string (dec)    | "0.100000000000000000"   |
-| ProtocolWalletRate           | string (dec)    | "0.300000000000000000"   |
-| AdditionalStakingRewards     | string (dec)    | "0.300000000000000000"   |
-| AdditionalMpcRewards         | string (dec)    | "0.050000000000000000"   |
-| AdditionalBurnRate           | string (dec)    | "0.250000000000000000"   |
-
+| Key                          | Type            | Example                  | Description                           |
+|------------------------------|-----------------|--------------------------|---------------------------------------|
+| MintDenom                    | string          | "uatom"                  | Type of coin to mint                  |
+| InflationRateChange          | string (dec)    | "0.000000000000000000"   | Maximum annual change in inflation rate |
+| InflationMax                 | string (dec)    | "0.000000000000000000"   | Maximum inflation rate                |
+| InflationMin                 | string (dec)    | "0.000000000000000000"   | Minimum inflation rate                |
+| GoalBonded                   | string (dec)    | "0.670000000000000000"   | Goal of percent bonded atoms          |
+| BlocksPerYear                | string (uint64) | "6311520"                | Expected blocks per year              |
+| StakingYield                 | string (dec)    | "0.070000000000000000"   | Goal of percent staking yield         |
+| BurnRate                     | string (dec)    | "0.100000000000000000"   | Rewards burn rate                     |
+| ProtocolWalletRate           | string (dec)    | "0.300000000000000000"   | Rewards protocol wallet rate          |
+| ProtocolWalletAddress        | string          | "zr..."                  | Address of protocol wallet            |
+| AdditionalStakingRewards     | string (dec)    | "0.300000000000000000"   | Additional staking rewards rate       |
+| AdditionalMpcRewards         | string (dec)    | "0.050000000000000000"   | Additional MPC rewards rate           |
+| AdditionalBurnRate           | string (dec)    | "0.250000000000000000"   | Additional burn rate                  |
 
 ## Events
 
@@ -188,7 +189,7 @@ A user can query and interact with the `mint` module using the CLI.
 The `query` commands allows users to query `mint` state.
 
 ```shell
-simd query mint --help
+zenrockd query mint --help
 ```
 
 ##### annual-provisions
@@ -196,13 +197,13 @@ simd query mint --help
 The `annual-provisions` command allows users to query the current minting annual provisions value
 
 ```shell
-simd query mint annual-provisions [flags]
+zenrockd query mint annual-provisions [flags]
 ```
 
 Example:
 
 ```shell
-simd query mint annual-provisions
+zenrockd query mint annual-provisions
 ```
 
 Example Output:
@@ -216,13 +217,13 @@ Example Output:
 The `inflation` command allows users to query the current minting inflation value
 
 ```shell
-simd query mint inflation [flags]
+zenrockd query mint inflation [flags]
 ```
 
 Example:
 
 ```shell
-simd query mint inflation
+zenrockd query mint inflation
 ```
 
 Example Output:
@@ -236,7 +237,7 @@ Example Output:
 The `params` command allows users to query the current minting parameters
 
 ```shell
-simd query mint params [flags]
+zenrockd query mint params [flags]
 ```
 
 Example:
@@ -265,7 +266,7 @@ The `AnnualProvisions` endpoint allows users to query the current minting annual
 Example:
 
 ```shell
-grpcurl -plaintext localhost:9090 cosmos.mint.v1beta1.Query/AnnualProvisions
+grpcurl -plaintext localhost:9090 zrchain.mint.v1beta1.Query/AnnualProvisions
 ```
 
 Example Output:
@@ -287,7 +288,7 @@ The `Inflation` endpoint allows users to query the current minting inflation val
 Example:
 
 ```shell
-grpcurl -plaintext localhost:9090 cosmos.mint.v1beta1.Query/Inflation
+grpcurl -plaintext localhost:9090 zrchain.mint.v1beta1.Query/Inflation
 ```
 
 Example Output:
@@ -303,13 +304,13 @@ Example Output:
 The `Params` endpoint allows users to query the current minting parameters
 
 ```shell
-/cosmos.mint.v1beta1.Query/Params
+/zrchain/mint/v1beta1.Query/params
 ```
 
 Example:
 
 ```shell
-grpcurl -plaintext localhost:9090 cosmos.mint.v1beta1.Query/Params
+grpcurl -plaintext localhost:9090 zrchain.mint.v1beta1.Query/Params
 ```
 
 Example Output:
@@ -322,7 +323,14 @@ Example Output:
     "inflationMax": "200000000000000000",
     "inflationMin": "70000000000000000",
     "goalBonded": "670000000000000000",
-    "blocksPerYear": "6311520"
+    "blocksPerYear": "6311520",
+    "stakingYield": "70000000000000000",
+    "burnRate": "100000000000000000",
+    "protocolWalletRate": "300000000000000000",
+    "protocolWalletAddress": "zr1...",
+    "additionalStakingRewards": "300000000000000000",
+    "additionalMpcRewards": "50000000000000000",
+    "additionalBurnRate": "250000000000000000"
   }
 }
 ```
@@ -334,13 +342,13 @@ A user can query the `mint` module using REST endpoints.
 #### annual-provisions
 
 ```shell
-/cosmos/mint/v1beta1/annual_provisions
+/zrchain/mint/v1beta1/annual_provisions
 ```
 
 Example:
 
 ```shell
-curl "localhost:1317/cosmos/mint/v1beta1/annual_provisions"
+curl "localhost:1317/zrchain/mint/v1beta1/annual_provisions"
 ```
 
 Example Output:
@@ -354,13 +362,13 @@ Example Output:
 #### inflation
 
 ```shell
-/cosmos/mint/v1beta1/inflation
+/zrchain/mint/v1beta1/inflation
 ```
 
 Example:
 
 ```shell
-curl "localhost:1317/cosmos/mint/v1beta1/inflation"
+curl "localhost:1317/zrchain/mint/v1beta1/inflation"
 ```
 
 Example Output:
@@ -374,13 +382,13 @@ Example Output:
 #### params
 
 ```shell
-/cosmos/mint/v1beta1/params
+/zrchain/mint/v1beta1/params
 ```
 
 Example:
 
 ```shell
-curl "localhost:1317/cosmos/mint/v1beta1/params"
+curl "localhost:1317/zrchain/mint/v1beta1/params"
 ```
 
 Example Output:
@@ -393,7 +401,14 @@ Example Output:
     "inflationMax": "200000000000000000",
     "inflationMin": "70000000000000000",
     "goalBonded": "670000000000000000",
-    "blocksPerYear": "6311520"
+    "blocksPerYear": "6311520",
+    "stakingYield": "70000000000000000",
+    "burnRate": "100000000000000000",
+    "protocolWalletRate": "300000000000000000",
+    "protocolWalletAddress": "zr1...",
+    "additionalStakingRewards": "300000000000000000",
+    "additionalMpcRewards": "50000000000000000",
+    "additionalBurnRate": "250000000000000000"
   }
 }
 ```

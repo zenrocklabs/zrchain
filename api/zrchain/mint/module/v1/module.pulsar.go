@@ -516,6 +516,8 @@ type Module struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// fee_collector_name defines the name of the fee collector module account,
+	// required for the mint module to collect fees.
 	FeeCollectorName string `protobuf:"bytes,1,opt,name=fee_collector_name,json=feeCollectorName,proto3" json:"fee_collector_name,omitempty"`
 	// authority defines the custom module authority. If not set, defaults to the
 	// governance module.
