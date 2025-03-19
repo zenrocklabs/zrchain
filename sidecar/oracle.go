@@ -391,10 +391,21 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 	}
 
 	ctx := context.Background()
-	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+	ethBurnEventsInRange := make([]api.BurnEvent, 0)
 
-	// Check each Ethereum burn event against the chain
-	for _, event := range currentState.EthBurnEvents {
+	// Get the latest block height to check for stale events
+	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		log.Printf("Error fetching latest block header: %v", err)
+		return
+	}
+
+	// First, filter out old events based on block height
+	ethBurnEventsInRange = o.removeStaleEvents(currentState, latestHeader)
+
+	// Then check remaining events against the chain
+	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+	for _, event := range ethBurnEventsInRange {
 		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
 		if err != nil {
 			log.Printf("Error querying Ethereum burn event (txID: %s, logIndex: %d): %v", event.TxID, event.LogIndex, err)
@@ -424,6 +435,31 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 		o.currentState.Store(&newState)
 		o.CacheState()
 	}
+}
+
+// removeStaleEvents removes events that are older than EthBurnEventsBlockRange
+// and adds them to CleanedEthBurnEvents
+func (o *Oracle) removeStaleEvents(currentState *sidecartypes.OracleState, latestHeader *ethtypes.Header) []api.BurnEvent {
+	cutoffHeight := new(big.Int).Sub(latestHeader.Number, big.NewInt(EthBurnEventsBlockRange)).Uint64()
+	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+
+	for _, event := range currentState.EthBurnEvents {
+		// Skip events that are older than EthBurnEventsBlockRange
+		if event.BlockHeight <= cutoffHeight {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if currentState.CleanedEthBurnEvents == nil {
+				currentState.CleanedEthBurnEvents = make(map[string]bool)
+			}
+			currentState.CleanedEthBurnEvents[key] = true
+			log.Printf("Removing stale Ethereum burn event from cache (txID: %s, logIndex: %d, chainID: %s, blockHeight: %d)",
+				event.TxID, event.LogIndex, event.ChainID, event.BlockHeight)
+		} else {
+			// Keep recent events
+			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
+		}
+	}
+
+	return remainingEthBurnEvents
 }
 
 // getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
@@ -471,6 +507,7 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			ChainID:         fmt.Sprintf("eip155:%s", chainID.String()),
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
+			BlockHeight:     event.Raw.BlockNumber,
 		})
 	}
 

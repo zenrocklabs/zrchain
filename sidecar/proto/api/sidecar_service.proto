@@ -54,6 +54,7 @@ message BurnEvent {
   string chainID = 3;
   bytes destinationAddr = 4;
   uint64 amount = 5;
+  uint64 blockHeight = 6;
 }
 
 message SidecarStateRequest {}
