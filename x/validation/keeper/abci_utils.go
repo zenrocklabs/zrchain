@@ -53,7 +53,6 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
-
 	if err := msgpack.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
@@ -61,24 +60,6 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 	validatorDelegations, err := k.processDelegations(delegations)
 	if err != nil {
 		k.Logger(ctx).Error("error processing delegations", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	ROCKUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ROCKUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing rock price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	BTCUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.BTCUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing btc price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	ETHUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ETHUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing eth price", "error", err)
 		return nil, ErrOracleSidecar
 	}
 
@@ -92,9 +73,9 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
 		EthBurnEvents:              resp.EthBurnEvents,
 		Redemptions:                resp.Redemptions,
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
+		ROCKUSDPrice:               resp.ROCKUSDPrice,
+		BTCUSDPrice:                resp.BTCUSDPrice,
+		ETHUSDPrice:                resp.ETHUSDPrice,
 		ConsensusData:              abci.ExtendedCommitInfo{},
 	}, nil
 }
@@ -722,10 +703,22 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice.IsNil() || oracleData.ROCKUSDPrice.IsZero() ||
-		oracleData.BTCUSDPrice.IsNil() || oracleData.BTCUSDPrice.IsZero() ||
-		oracleData.ETHUSDPrice.IsNil() || oracleData.ETHUSDPrice.IsZero() {
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" {
 		pricesAreValid = false
+	} else {
+		// Verify all prices are valid decimal values
+		rockPrice, err := oracleData.GetROCKUSDPrice()
+		if err != nil || rockPrice.IsNil() || rockPrice.IsZero() {
+			pricesAreValid = false
+		}
+		btcPrice, err := oracleData.GetBTCUSDPrice()
+		if err != nil || btcPrice.IsNil() || btcPrice.IsZero() {
+			pricesAreValid = false
+		}
+		ethPrice, err := oracleData.GetETHUSDPrice()
+		if err != nil || ethPrice.IsNil() || ethPrice.IsZero() {
+			pricesAreValid = false
+		}
 	}
 
 	if pricesAreValid {
@@ -757,16 +750,25 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
+	rockPrice, err := oracleData.GetROCKUSDPrice()
+	if err == nil {
+		if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, rockPrice); err != nil {
+			k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
+		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+	btcPrice, err := oracleData.GetBTCUSDPrice()
+	if err == nil {
+		if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btcPrice); err != nil {
+			k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
+		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
-		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	ethPrice, err := oracleData.GetETHUSDPrice()
+	if err == nil {
+		if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
+			k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+		}
 	}
 }
 
@@ -1097,17 +1099,23 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	// Check price fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
-		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+		voteExtPrice, err1 := voteExt.GetROCKUSDPrice()
+		oracleDataPrice, err2 := oracleData.GetROCKUSDPrice()
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldROCKUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
-		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+		voteExtPrice, err1 := voteExt.GetBTCUSDPrice()
+		oracleDataPrice, err2 := oracleData.GetBTCUSDPrice()
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldBTCUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
-		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+		voteExtPrice, err1 := voteExt.GetETHUSDPrice()
+		oracleDataPrice, err2 := oracleData.GetETHUSDPrice()
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldETHUSDPrice)
 		}
 	}

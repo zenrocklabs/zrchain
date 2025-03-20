@@ -153,9 +153,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
-		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
-		BTCUSDPrice:                oracleData.BTCUSDPrice,
-		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
 		RedemptionsHash:            redemptionsHash[:],
@@ -173,6 +170,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:  nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce: nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
+		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
+		BTCUSDPrice:             oracleData.BTCUSDPrice,
+		ETHUSDPrice:             oracleData.ETHUSDPrice,
 	}
 
 	return voteExt, nil
@@ -1075,17 +1075,28 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
+
+			// Get decimal values from string representations
+			btcUSDPrice, err := oracleData.GetBTCUSDPrice()
+			if err != nil || btcUSDPrice.IsNil() || btcUSDPrice.IsZero() {
+				k.Logger(ctx).Error("invalid BTC USD price", "error", err)
+				return nil
+			}
+
+			ethUSDPrice, err := oracleData.GetETHUSDPrice()
+			if err != nil || ethUSDPrice.IsNil() || ethUSDPrice.IsZero() {
+				k.Logger(ctx).Error("invalid ETH USD price", "error", err)
+				return nil
+			}
+
 			feeZenBTC := k.CalculateZenBTCMintFee(
 				oracleData.EthBaseFee,
 				oracleData.EthTipCap,
 				oracleData.EthGasLimit,
-				oracleData.BTCUSDPrice,
-				oracleData.ETHUSDPrice,
+				btcUSDPrice,
+				ethUSDPrice,
 				exchangeRate,
 			)
-			if oracleData.BTCUSDPrice.IsNil() || oracleData.BTCUSDPrice.IsZero() {
-				return nil
-			}
 
 			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
 			if err != nil {

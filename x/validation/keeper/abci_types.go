@@ -49,9 +49,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string `msgpack:"rockUsdPrice"`
+		BTCUSDPrice                string `msgpack:"btcUsdPrice"`
+		ETHUSDPrice                string `msgpack:"ethUsdPrice"`
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
 	}
@@ -80,9 +80,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string `msgpack:"rockUsdPrice"`
+		BTCUSDPrice                string `msgpack:"btcUsdPrice"`
+		ETHUSDPrice                string `msgpack:"ethUsdPrice"`
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
 	}
@@ -174,16 +174,16 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
 	}
-	if ve.ROCKUSDPrice.IsNil() || ve.ROCKUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ROCKUSDPrice is nil or zero")
+	if ve.ROCKUSDPrice == "" {
+		logger.Error("invalid vote extension: ROCKUSDPrice is empty")
 		invalid = true
 	}
-	if ve.BTCUSDPrice.IsNil() || ve.BTCUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
+	if ve.BTCUSDPrice == "" {
+		logger.Error("invalid vote extension: BTCUSDPrice is empty")
 		invalid = true
 	}
-	if ve.ETHUSDPrice.IsNil() || ve.ETHUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ETHUSDPrice is nil or zero")
+	if ve.ETHUSDPrice == "" {
+		logger.Error("invalid vote extension: ETHUSDPrice is empty")
 		invalid = true
 	}
 	if ve.LatestBtcBlockHeight == 0 {
@@ -456,17 +456,67 @@ func initializeFieldHandlers() []FieldHandler {
 		{
 			Field:    VEFieldROCKUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ROCKUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldBTCUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.BTCUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
 		},
 	}
+}
+
+// Helper methods for type-safe access to VoteExtension price fields
+func (ve *VoteExtension) GetROCKUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(ve.ROCKUSDPrice)
+}
+
+func (ve *VoteExtension) SetROCKUSDPrice(price math.LegacyDec) {
+	ve.ROCKUSDPrice = price.String()
+}
+
+func (ve *VoteExtension) GetBTCUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(ve.BTCUSDPrice)
+}
+
+func (ve *VoteExtension) SetBTCUSDPrice(price math.LegacyDec) {
+	ve.BTCUSDPrice = price.String()
+}
+
+func (ve *VoteExtension) GetETHUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(ve.ETHUSDPrice)
+}
+
+func (ve *VoteExtension) SetETHUSDPrice(price math.LegacyDec) {
+	ve.ETHUSDPrice = price.String()
+}
+
+// Helper methods for type-safe access to OracleData price fields
+func (od *OracleData) GetROCKUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(od.ROCKUSDPrice)
+}
+
+func (od *OracleData) SetROCKUSDPrice(price math.LegacyDec) {
+	od.ROCKUSDPrice = price.String()
+}
+
+func (od *OracleData) GetBTCUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(od.BTCUSDPrice)
+}
+
+func (od *OracleData) SetBTCUSDPrice(price math.LegacyDec) {
+	od.BTCUSDPrice = price.String()
+}
+
+func (od *OracleData) GetETHUSDPrice() (math.LegacyDec, error) {
+	return math.LegacyNewDecFromStr(od.ETHUSDPrice)
+}
+
+func (od *OracleData) SetETHUSDPrice(price math.LegacyDec) {
+	od.ETHUSDPrice = price.String()
 }
