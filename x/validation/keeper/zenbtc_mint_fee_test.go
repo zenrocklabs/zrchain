@@ -38,7 +38,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			btcUSDPrice:  sdkmath.LegacyNewDec(90_000_00), // $90k BTC in cents
 			ethUSDPrice:  sdkmath.LegacyNewDec(3_000_00),  // $3k ETH in cents
 			exchangeRate: sdkmath.LegacyNewDec(1),
-			expected:     30399, // 0.00030399 BTC in fees (1:1 exchange rate)
+			expected:     30400, // 0.000304 BTC in fees (1:1 exchange rate)
 		},
 		{
 			name:         "high gas price scenario",
@@ -48,7 +48,7 @@ func TestCalculateZenBTCMintFee(t *testing.T) {
 			btcUSDPrice:  sdkmath.LegacyNewDec(90_000_00),
 			ethUSDPrice:  sdkmath.LegacyNewDec(3_000_00),
 			exchangeRate: sdkmath.LegacyNewDec(1),
-			expected:     99749, // 0.00099749 BTC in fees (1:1 exchange rate)
+			expected:     99750, // 0.0009975 BTC in fees (1:1 exchange rate)
 		},
 	}
 

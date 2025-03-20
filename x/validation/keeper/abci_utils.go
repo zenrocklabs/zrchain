@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -21,10 +20,12 @@ import (
 	"github.com/cometbft/cometbft/libs/protoio"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/shamaton/msgpack/v2"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -53,32 +54,13 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
-
-	if err := json.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
+	if err := msgpack.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
 
 	validatorDelegations, err := k.processDelegations(delegations)
 	if err != nil {
 		k.Logger(ctx).Error("error processing delegations", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	ROCKUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ROCKUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing rock price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	BTCUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.BTCUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing btc price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	ETHUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ETHUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing eth price", "error", err)
 		return nil, ErrOracleSidecar
 	}
 
@@ -92,9 +74,9 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
 		EthBurnEvents:              resp.EthBurnEvents,
 		Redemptions:                resp.Redemptions,
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
+		ROCKUSDPrice:               resp.ROCKUSDPrice,
+		BTCUSDPrice:                resp.BTCUSDPrice,
+		ETHUSDPrice:                resp.ETHUSDPrice,
 		ConsensusData:              abci.ExtendedCommitInfo{},
 	}, nil
 }
@@ -300,7 +282,7 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 	}
 
 	var voteExt VoteExtension
-	if err := json.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
+	if err := msgpack.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
 		return VoteExtension{}, err
 	}
 
@@ -323,7 +305,7 @@ func simpleMajorityVotePower(totalVotePower int64) int64 {
 }
 
 func deriveHash[T any](data T) ([32]byte, error) {
-	dataBz, err := json.Marshal(data)
+	dataBz, err := msgpack.Marshal(data)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("error encoding data: %w", err)
 	}
@@ -693,7 +675,7 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBl
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
-	oracleDataBz, err := json.Marshal(oracleData)
+	oracleDataBz, err := msgpack.Marshal(oracleData)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding oracle data: %w", err)
 	}
@@ -712,8 +694,8 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 	}
 
 	var oracleData OracleData
-	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		k.Logger(ctx).Error("error unmarshalling oracle data JSON", "err", err)
+	if err := msgpack.Unmarshal(tx, &oracleData); err != nil {
+		k.Logger(ctx).Error("error unmarshalling oracle data", "err", err)
 		return OracleData{}, false
 	}
 
@@ -721,16 +703,28 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
+	// Parse prices once at the beginning
+	rockPrice, rockPriceErr := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
+	btcPrice, btcPriceErr := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+	ethPrice, ethPriceErr := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+
+	// Check if prices are valid
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice.IsZero() || oracleData.BTCUSDPrice.IsZero() || oracleData.ETHUSDPrice.IsZero() {
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" ||
+		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil ||
+		rockPrice.IsNil() || rockPrice.IsZero() ||
+		btcPrice.IsNil() || btcPrice.IsZero() ||
+		ethPrice.IsNil() || ethPrice.IsZero() {
 		pricesAreValid = false
 	}
 
+	// Update the last valid VE height if prices are valid
 	if pricesAreValid {
 		if err := k.LastValidVEHeight.Set(ctx, ctx.BlockHeight()); err != nil {
 			k.Logger(ctx).Error("error setting last valid VE height", "height", ctx.BlockHeight(), "err", err)
 		}
 	} else {
+		// Handle invalid prices
 		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -740,14 +734,16 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		retentionRange := k.GetPriceRetentionBlockRange(ctx)
-		// Add safety check for when block height is less than retention range
+
+		// Safety check for when block height is less than retention range
 		if ctx.BlockHeight() < retentionRange {
 			k.Logger(ctx).Warn("current block height is less than retention range; not zeroing asset prices",
 				"block_height", ctx.BlockHeight(),
 				"retention_range", retentionRange)
 			return
 		}
-		// Calculate number of blocks since last valid VE
+
+		// Keep using existing prices if we're within retention range
 		if ctx.BlockHeight()-lastValidVEHeight < retentionRange {
 			k.Logger(ctx).Warn("last valid VE height is within price retention range; not zeroing asset prices",
 				"retention_range", retentionRange)
@@ -755,15 +751,17 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
+	// Outside retention range or prices are valid
+	// Invalid prices will be zero/nil values
+	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, rockPrice); err != nil {
 		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btcPrice); err != nil {
 		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
@@ -833,16 +831,21 @@ func (k Keeper) CalculateZenBTCMintFee(
 		new(big.Float).SetInt64(1e18),
 	)
 
-	// Convert ETH fee to BTC
-	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
-	feeBTCFloat := new(big.Float).Mul(
+	// Convert ETH fee to USD
+	feeInUSD := new(big.Float).Mul(
 		feeInETH,
-		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+		new(big.Float).SetFloat64(ethUSDPrice.MustFloat64()),
+	)
+
+	// Convert USD fee to BTC
+	feeInBTC := new(big.Float).Quo(
+		feeInUSD,
+		new(big.Float).SetFloat64(btcUSDPrice.MustFloat64()),
 	)
 
 	// Convert to satoshis (multiply by 1e8)
 	satoshisFloat := new(big.Float).Mul(
-		feeBTCFloat,
+		feeInBTC,
 		new(big.Float).SetInt64(1e8),
 	)
 
@@ -922,7 +925,7 @@ func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
-	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
+	canonicalVoteExtBz, err := msgpack.Marshal(canonicalVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
 		return
@@ -1090,17 +1093,23 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	// Check price fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
-		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ROCKUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldROCKUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
-		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.BTCUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldBTCUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
-		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ETHUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldETHUSDPrice)
 		}
 	}
@@ -1153,4 +1162,25 @@ func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return resp.Blockhash, nil
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
+	if err != nil {
+		return err
+	}
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	return err
 }
