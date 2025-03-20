@@ -60,6 +60,8 @@ func parseFlags() Config {
 			rpcURL = "https://rpc.gardia.zenrocklabs.io:443"
 		case "mainnet", "main", "diamond":
 			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
+		case "local", "localhost", "localnet":
+			rpcURL = "http://localhost:26657"
 		default:
 			// Default to mainnet if unrecognized network
 			fmt.Printf("Warning: Unrecognized network '%s', defaulting to mainnet\n", *networkFlag)

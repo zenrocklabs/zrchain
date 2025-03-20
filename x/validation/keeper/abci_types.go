@@ -305,7 +305,7 @@ func genericGetKey(value any) string {
 	bytes, err := msgpack.Marshal(value)
 	if err != nil {
 		// Fall back to string representation if marshaling fails
-		return fmt.Sprintf("%v", value)
+		return fmt.Sprintf("%+v", value)
 	}
 	return string(bytes)
 }
