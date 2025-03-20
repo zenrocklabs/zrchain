@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -282,7 +283,7 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 	}
 
 	var voteExt VoteExtension
-	if err := msgpack.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
+	if err := json.Unmarshal(vote.VoteExtension, &voteExt); err != nil {
 		return VoteExtension{}, err
 	}
 
@@ -675,7 +676,7 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBl
 }
 
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
-	oracleDataBz, err := msgpack.Marshal(oracleData)
+	oracleDataBz, err := json.Marshal(oracleData)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding oracle data: %w", err)
 	}
@@ -694,7 +695,7 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 	}
 
 	var oracleData OracleData
-	if err := msgpack.Unmarshal(tx, &oracleData); err != nil {
+	if err := json.Unmarshal(tx, &oracleData); err != nil {
 		k.Logger(ctx).Error("error unmarshalling oracle data", "err", err)
 		return OracleData{}, false
 	}
