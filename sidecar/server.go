@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/shamaton/msgpack/v2"
 	"google.golang.org/grpc"
 )
 
@@ -41,7 +41,7 @@ func NewOracleService(oracle *Oracle) *oracleService {
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
 	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
 
-	contractState, err := json.Marshal(currentState.EigenDelegations)
+	contractState, err := msgpack.Marshal(currentState.EigenDelegations)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal state: %w", err)
 	}
@@ -67,7 +67,7 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		return nil, err
 	}
 
-	contractState, err := json.Marshal(state.EigenDelegations)
+	contractState, err := msgpack.Marshal(state.EigenDelegations)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal state: %w", err)
 	}
