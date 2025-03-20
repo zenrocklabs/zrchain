@@ -833,16 +833,21 @@ func (k Keeper) CalculateZenBTCMintFee(
 		new(big.Float).SetInt64(1e18),
 	)
 
-	// Convert ETH fee to BTC
-	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
-	feeBTCFloat := new(big.Float).Mul(
+	// Convert ETH fee to USD
+	feeInUSD := new(big.Float).Mul(
 		feeInETH,
-		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+		new(big.Float).SetFloat64(ethUSDPrice.MustFloat64()),
+	)
+
+	// Convert USD fee to BTC
+	feeInBTC := new(big.Float).Quo(
+		feeInUSD,
+		new(big.Float).SetFloat64(btcUSDPrice.MustFloat64()),
 	)
 
 	// Convert to satoshis (multiply by 1e8)
 	satoshisFloat := new(big.Float).Mul(
-		feeBTCFloat,
+		feeInBTC,
 		new(big.Float).SetInt64(1e8),
 	)
 
