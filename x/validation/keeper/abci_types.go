@@ -49,9 +49,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
-		ROCKUSDPrice               string `msgpack:"rockUsdPrice"`
-		BTCUSDPrice                string `msgpack:"btcUsdPrice"`
-		ETHUSDPrice                string `msgpack:"ethUsdPrice"`
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
 	}
@@ -80,9 +80,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
-		ROCKUSDPrice               string `msgpack:"rockUsdPrice"`
-		BTCUSDPrice                string `msgpack:"btcUsdPrice"`
-		ETHUSDPrice                string `msgpack:"ethUsdPrice"`
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
 	}

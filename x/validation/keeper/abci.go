@@ -153,6 +153,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
+		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
+		BTCUSDPrice:                oracleData.BTCUSDPrice,
+		ETHUSDPrice:                oracleData.ETHUSDPrice,
 		EigenDelegationsHash:       avsDelegationsHash[:],
 		EthBurnEventsHash:          ethBurnEventsHash[:],
 		RedemptionsHash:            redemptionsHash[:],
@@ -170,9 +173,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:  nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce: nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		BTCUSDPrice:             oracleData.BTCUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
 	}
 
 	return voteExt, nil
