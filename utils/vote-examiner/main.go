@@ -54,17 +54,17 @@ func parseFlags() Config {
 	rpcURL := *rpcNodeFlag
 	if rpcURL == "" {
 		switch *networkFlag {
+		case "localnet", "local", "localhost":
+			rpcURL = "http://localhost:26657"
 		case "devnet", "dev", "amber":
 			rpcURL = "https://rpc.dev.zenrock.tech:443"
 		case "testnet", "test", "gardia":
 			rpcURL = "https://rpc.gardia.zenrocklabs.io:443"
 		case "mainnet", "main", "diamond":
 			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
-		case "local", "localhost", "localnet":
-			rpcURL = "http://localhost:26657"
 		default:
 			// Default to mainnet if unrecognized network
-			fmt.Printf("Warning: Unrecognized network '%s', defaulting to mainnet\n", *networkFlag)
+			fmt.Printf("Warning: unrecognized network '%s', defaulting to mainnet\n", *networkFlag)
 			*networkFlag = "mainnet"
 			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
 		}
@@ -536,7 +536,7 @@ func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []
 			valueLabel = "SUPERMAJORITY"
 		} else if i == 0 && powerPercentage >= 50.0 {
 			valueLabel = "MAJORITY"
-		} else if i == 0 {
+		} else if i == 0 && (len(valueCounts) == 1 || valueCounts[0].TotalPower > valueCounts[1].TotalPower) {
 			valueLabel = "PLURALITY"
 		} else {
 			valueLabel = "MINORITY"
