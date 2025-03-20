@@ -722,7 +722,9 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice.IsZero() || oracleData.BTCUSDPrice.IsZero() || oracleData.ETHUSDPrice.IsZero() {
+	if oracleData.ROCKUSDPrice.IsNil() || oracleData.ROCKUSDPrice.IsZero() ||
+		oracleData.BTCUSDPrice.IsNil() || oracleData.BTCUSDPrice.IsZero() ||
+		oracleData.ETHUSDPrice.IsNil() || oracleData.ETHUSDPrice.IsZero() {
 		pricesAreValid = false
 	}
 

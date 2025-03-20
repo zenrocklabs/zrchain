@@ -1083,7 +1083,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				oracleData.ETHUSDPrice,
 				exchangeRate,
 			)
-			if oracleData.BTCUSDPrice.IsZero() {
+			if oracleData.BTCUSDPrice.IsNil() || oracleData.BTCUSDPrice.IsZero() {
 				return nil
 			}
 
