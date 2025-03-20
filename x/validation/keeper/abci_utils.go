@@ -26,7 +26,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/shamaton/msgpack/v2"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -55,7 +54,7 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
-	if err := msgpack.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
+	if err := json.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
 
@@ -306,7 +305,7 @@ func simpleMajorityVotePower(totalVotePower int64) int64 {
 }
 
 func deriveHash[T any](data T) ([32]byte, error) {
-	dataBz, err := msgpack.Marshal(data)
+	dataBz, err := json.Marshal(data)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("error encoding data: %w", err)
 	}
@@ -926,7 +925,7 @@ func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
-	canonicalVoteExtBz, err := msgpack.Marshal(canonicalVoteExt)
+	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
 		return

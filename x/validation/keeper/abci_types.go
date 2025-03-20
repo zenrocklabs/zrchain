@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -13,7 +14,6 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/shamaton/msgpack/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -301,8 +301,8 @@ func genericGetKey(value any) string {
 		return hex.EncodeToString(byteSlice)
 	}
 
-	// For other types, use msgpack
-	bytes, err := msgpack.Marshal(value)
+	// For other types, use JSON
+	bytes, err := json.Marshal(value)
 	if err != nil {
 		// Fall back to string representation if marshaling fails
 		return fmt.Sprintf("%+v", value)
