@@ -471,7 +471,7 @@ func initializeFieldHandlers() []FieldHandler {
 	}
 }
 
-// Helper methods for type-safe access to VoteExtension price fields
+// Helper methods for type-safe access to price fields
 func (ve *VoteExtension) GetROCKUSDPrice() (math.LegacyDec, error) {
 	return math.LegacyNewDecFromStr(ve.ROCKUSDPrice)
 }
@@ -496,7 +496,6 @@ func (ve *VoteExtension) SetETHUSDPrice(price math.LegacyDec) {
 	ve.ETHUSDPrice = price.String()
 }
 
-// Helper methods for type-safe access to OracleData price fields
 func (od *OracleData) GetROCKUSDPrice() (math.LegacyDec, error) {
 	return math.LegacyNewDecFromStr(od.ROCKUSDPrice)
 }

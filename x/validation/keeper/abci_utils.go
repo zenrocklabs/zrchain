@@ -702,30 +702,28 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
+	// Parse prices once at the beginning
+	rockPrice, rockPriceErr := oracleData.GetROCKUSDPrice()
+	btcPrice, btcPriceErr := oracleData.GetBTCUSDPrice()
+	ethPrice, ethPriceErr := oracleData.GetETHUSDPrice()
+
+	// Check if prices are valid
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" {
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" ||
+		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil ||
+		rockPrice.IsNil() || rockPrice.IsZero() ||
+		btcPrice.IsNil() || btcPrice.IsZero() ||
+		ethPrice.IsNil() || ethPrice.IsZero() {
 		pricesAreValid = false
-	} else {
-		// Verify all prices are valid decimal values
-		rockPrice, err := oracleData.GetROCKUSDPrice()
-		if err != nil || rockPrice.IsNil() || rockPrice.IsZero() {
-			pricesAreValid = false
-		}
-		btcPrice, err := oracleData.GetBTCUSDPrice()
-		if err != nil || btcPrice.IsNil() || btcPrice.IsZero() {
-			pricesAreValid = false
-		}
-		ethPrice, err := oracleData.GetETHUSDPrice()
-		if err != nil || ethPrice.IsNil() || ethPrice.IsZero() {
-			pricesAreValid = false
-		}
 	}
 
+	// Update the last valid VE height if prices are valid
 	if pricesAreValid {
 		if err := k.LastValidVEHeight.Set(ctx, ctx.BlockHeight()); err != nil {
 			k.Logger(ctx).Error("error setting last valid VE height", "height", ctx.BlockHeight(), "err", err)
 		}
 	} else {
+		// Handle invalid prices
 		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -735,14 +733,16 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		retentionRange := k.GetPriceRetentionBlockRange(ctx)
-		// Add safety check for when block height is less than retention range
+
+		// Safety check for when block height is less than retention range
 		if ctx.BlockHeight() < retentionRange {
 			k.Logger(ctx).Warn("current block height is less than retention range; not zeroing asset prices",
 				"block_height", ctx.BlockHeight(),
 				"retention_range", retentionRange)
 			return
 		}
-		// Calculate number of blocks since last valid VE
+
+		// Keep using existing prices if we're within retention range
 		if ctx.BlockHeight()-lastValidVEHeight < retentionRange {
 			k.Logger(ctx).Warn("last valid VE height is within price retention range; not zeroing asset prices",
 				"retention_range", retentionRange)
@@ -750,25 +750,18 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
-	rockPrice, err := oracleData.GetROCKUSDPrice()
-	if err == nil {
-		if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, rockPrice); err != nil {
-			k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
-		}
+	// Outside retention range or prices are valid
+	// Invalid prices will be zero/nil values
+	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, rockPrice); err != nil {
+		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	btcPrice, err := oracleData.GetBTCUSDPrice()
-	if err == nil {
-		if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btcPrice); err != nil {
-			k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
-		}
+	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btcPrice); err != nil {
+		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	ethPrice, err := oracleData.GetETHUSDPrice()
-	if err == nil {
-		if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
-			k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
-		}
+	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
+		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
 
