@@ -23,7 +23,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
 )
 
 type Keeper struct {
@@ -46,7 +45,7 @@ type Keeper struct {
 	capabilityScopedFn func(string) capabilitykeeper.ScopedKeeper
 	scopedKeeper       exported.ScopedKeeper
 	bankKeeper         types.BankKeeper
-	policyKeeper       policy.Keeper
+	policyKeeper       types.PolicyKeeper
 }
 
 func NewKeeper(
@@ -55,7 +54,7 @@ func NewKeeper(
 	logger log.Logger,
 	authority string,
 	bankKeeper types.BankKeeper,
-	policyKeeper policy.Keeper,
+	policyKeeper types.PolicyKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -162,7 +161,7 @@ func (k *Keeper) ScopedKeeper() exported.ScopedKeeper {
 	return k.scopedKeeper
 }
 
-func (k *Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error) {
+func (k Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	walletTypeStr := strconv.FormatUint(walletType, 10)
@@ -240,7 +239,7 @@ func (k *Keeper) GetZrSignWorkspace(goCtx context.Context, ethAddress string, wa
 	return childID, nil
 }
 
-func (k *Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error) {
+func (k Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	ws, _, err := query.CollectionFilteredPaginate(
@@ -283,4 +282,20 @@ func (k *Keeper) GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletTy
 	}
 
 	return workspaceList, nil
+}
+
+func (k Keeper) GetKeyring(ctx sdk.Context, id string) (*types.Keyring, error) {
+	keyring, err := k.KeyringStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &keyring, nil
+}
+
+func (k Keeper) GetWorkspace(ctx sdk.Context, id string) (*types.Workspace, error) {
+	workspace, err := k.WorkspaceStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &workspace, nil
 }
