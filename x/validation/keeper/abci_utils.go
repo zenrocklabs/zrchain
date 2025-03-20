@@ -703,9 +703,9 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	// Parse prices once at the beginning
-	rockPrice, rockPriceErr := oracleData.GetROCKUSDPrice()
-	btcPrice, btcPriceErr := oracleData.GetBTCUSDPrice()
-	ethPrice, ethPriceErr := oracleData.GetETHUSDPrice()
+	rockPrice, rockPriceErr := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
+	btcPrice, btcPriceErr := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+	ethPrice, ethPriceErr := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
 
 	// Check if prices are valid
 	pricesAreValid := true
@@ -1092,22 +1092,22 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	// Check price fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
-		voteExtPrice, err1 := voteExt.GetROCKUSDPrice()
-		oracleDataPrice, err2 := oracleData.GetROCKUSDPrice()
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ROCKUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
 		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldROCKUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
-		voteExtPrice, err1 := voteExt.GetBTCUSDPrice()
-		oracleDataPrice, err2 := oracleData.GetBTCUSDPrice()
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.BTCUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
 		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldBTCUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
-		voteExtPrice, err1 := voteExt.GetETHUSDPrice()
-		oracleDataPrice, err2 := oracleData.GetETHUSDPrice()
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ETHUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
 		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
 			mismatchedFields = append(mismatchedFields, VEFieldETHUSDPrice)
 		}

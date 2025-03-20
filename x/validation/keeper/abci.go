@@ -1077,13 +1077,12 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			}
 
 			// Get decimal values from string representations
-			btcUSDPrice, err := oracleData.GetBTCUSDPrice()
+			btcUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
 			if err != nil || btcUSDPrice.IsNil() || btcUSDPrice.IsZero() {
 				k.Logger(ctx).Error("invalid BTC USD price", "error", err)
 				return nil
 			}
-
-			ethUSDPrice, err := oracleData.GetETHUSDPrice()
+			ethUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
 			if err != nil || ethUSDPrice.IsNil() || ethUSDPrice.IsZero() {
 				k.Logger(ctx).Error("invalid ETH USD price", "error", err)
 				return nil
