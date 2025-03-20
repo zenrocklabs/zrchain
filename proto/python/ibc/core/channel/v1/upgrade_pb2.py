@@ -26,14 +26,14 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from ibc.core.channel.v1 import channel_pb2 as ibc_dot_core_dot_channel_dot_v1_dot_channel__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!ibc/core/channel/v1/upgrade.proto\x12\x13ibc.core.channel.v1\x1a\x14gogoproto/gogo.proto\x1a!ibc/core/channel/v1/channel.proto\"\xbd\x01\n\x07Upgrade\x12@\n\x06\x66ields\x18\x01 \x01(\x0b\x32\".ibc.core.channel.v1.UpgradeFieldsB\x04\xc8\xde\x1f\x00R\x06\x66ields\x12<\n\x07timeout\x18\x02 \x01(\x0b\x32\x1c.ibc.core.channel.v1.TimeoutB\x04\xc8\xde\x1f\x00R\x07timeout\x12,\n\x12next_sequence_send\x18\x03 \x01(\x04R\x10nextSequenceSend:\x04\x88\xa0\x1f\x00\"\x90\x01\n\rUpgradeFields\x12\x36\n\x08ordering\x18\x01 \x01(\x0e\x32\x1a.ibc.core.channel.v1.OrderR\x08ordering\x12\'\n\x0f\x63onnection_hops\x18\x02 \x03(\tR\x0e\x63onnectionHops\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version:\x04\x88\xa0\x1f\x00\"J\n\x0c\x45rrorReceipt\x12\x1a\n\x08sequence\x18\x01 \x01(\x04R\x08sequence\x12\x18\n\x07message\x18\x02 \x01(\tR\x07message:\x04\x88\xa0\x1f\x00\x42;Z9github.com/cosmos/ibc-go/v9/modules/core/04-channel/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!ibc/core/channel/v1/upgrade.proto\x12\x13ibc.core.channel.v1\x1a\x14gogoproto/gogo.proto\x1a!ibc/core/channel/v1/channel.proto\"\xbd\x01\n\x07Upgrade\x12@\n\x06\x66ields\x18\x01 \x01(\x0b\x32\".ibc.core.channel.v1.UpgradeFieldsB\x04\xc8\xde\x1f\x00R\x06\x66ields\x12<\n\x07timeout\x18\x02 \x01(\x0b\x32\x1c.ibc.core.channel.v1.TimeoutB\x04\xc8\xde\x1f\x00R\x07timeout\x12,\n\x12next_sequence_send\x18\x03 \x01(\x04R\x10nextSequenceSend:\x04\x88\xa0\x1f\x00\"\x90\x01\n\rUpgradeFields\x12\x36\n\x08ordering\x18\x01 \x01(\x0e\x32\x1a.ibc.core.channel.v1.OrderR\x08ordering\x12\'\n\x0f\x63onnection_hops\x18\x02 \x03(\tR\x0e\x63onnectionHops\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version:\x04\x88\xa0\x1f\x00\"J\n\x0c\x45rrorReceipt\x12\x1a\n\x08sequence\x18\x01 \x01(\x04R\x08sequence\x12\x18\n\x07message\x18\x02 \x01(\tR\x07message:\x04\x88\xa0\x1f\x00\x42<Z:github.com/cosmos/ibc-go/v10/modules/core/04-channel/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ibc.core.channel.v1.upgrade_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/cosmos/ibc-go/v9/modules/core/04-channel/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z:github.com/cosmos/ibc-go/v10/modules/core/04-channel/types'
   _globals['_UPGRADE'].fields_by_name['fields']._loaded_options = None
   _globals['_UPGRADE'].fields_by_name['fields']._serialized_options = b'\310\336\037\000'
   _globals['_UPGRADE'].fields_by_name['timeout']._loaded_options = None

@@ -65,7 +65,7 @@ func (k msgServer) RemoveOwnerPolicyGenerator(ctx sdk.Context, msg *types.MsgRem
 
 func (k msgServer) RemoveOwnerActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgRemoveWorkspaceOwnerResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

@@ -44,7 +44,7 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 		return nil, fmt.Errorf("failed to set sign request: %w", err)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
 	}
@@ -136,7 +136,7 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		req.KeyringPartySignatures = append(req.KeyringPartySignatures, msg.KeyringPartySignature)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
 	}

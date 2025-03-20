@@ -30,7 +30,7 @@ func (k msgServer) ApproveAction(goCtx context.Context, msg *types.MsgApproveAct
 		}, nil
 	}
 
-	policy, err := PolicyForAction(ctx, &k.Keeper, &act)
+	policy, err := k.PolicyForAction(ctx, &act)
 	if err != nil {
 		return nil, err
 	}

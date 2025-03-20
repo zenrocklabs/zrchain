@@ -92,7 +92,7 @@ func (k msgServer) handleICATransactionRequestFulfilment(ctx sdk.Context, req *t
 		req.KeyringPartySignatures = append(req.KeyringPartySignatures, keyringPartySignature)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
 	}
