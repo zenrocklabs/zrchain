@@ -1,6 +1,6 @@
 module github.com/Zenrock-Foundation/zrchain/v6
 
-go 1.24.1
+go 1.23.2
 
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
