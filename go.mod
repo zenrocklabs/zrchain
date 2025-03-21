@@ -1,13 +1,13 @@
-module github.com/Zenrock-Foundation/zrchain/v5
+module github.com/Zenrock-Foundation/zrchain/v6
 
-go 1.23.2
+go 1.24.1
 
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.0.0
-	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.12-zenrock
+	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
 	// fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
@@ -83,6 +83,7 @@ require (
 )
 
 require (
+	github.com/Zenrock-Foundation/zrchain/v5 v5.24.4
 	github.com/beevik/ntp v1.4.3
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -268,7 +269,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
