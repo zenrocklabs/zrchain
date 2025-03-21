@@ -11,41 +11,43 @@ The treasury module facilitates a wide-range of applications - including cross-c
 ## Contents
 
 * [Concepts](#concepts)
-    * [Supported Keys](#supported-keys)
-    * [Signatures](#signatures)
+  * [Supported Keys](#supported-keys)
+  * [Signatures](#signatures)
 * [State](#state)
-    * [KeyStore](#keystore)
-    * [KeyRequestStore](#keyrequeststore)
-    * [SignRequestStore](#signrequeststore)
-    * [SignTransactionRequestStore](#signtransactionrequeststore)
-    * [ICATransactionRequestStore](#icatransactionrequeststore)
+  * [KeyStore](#keystore)
+  * [KeyRequestStore](#keyrequeststore)
+  * [SignRequestStore](#signrequeststore)
+  * [SignTransactionRequestStore](#signtransactionrequeststore)
+  * [ICATransactionRequestStore](#icatransactionrequeststore)
 * [Msg Service](#msg-service)
-    * [Msg/NewKeyRequest](#msgnewkeyrequest)
-    * [Msg/FulfilKeyRequest](#msgfulfilkeyrequest)
-    * [Msg/NewSignatureRequest](#msgnewsignaturerequest)
-    * [Msg/NewSignTransactionRequest](#msgnewsigntransactionrequest)
-    * [Msg/FulfilSignatureRequest](#msgfulfilsignaturerequest)
-    * [Msg/TransferFromKeyring](#msgtransferfromkeyring)
-    * [Msg/NewICATransactionRequest](#msgnewicatransactionrequest)
-    * [Msg/FulfilICATransactionRequest](#msgfulfilicatransactionrequest)
-    * [Msg/UpdateKeyPolicy](#msgupdatekeypolicy)
+  * [Msg/NewKeyRequest](#msgnewkeyrequest)
+  * [Msg/FulfilKeyRequest](#msgfulfilkeyrequest)
+  * [Msg/NewSignatureRequest](#msgnewsignaturerequest)
+  * [Msg/NewSignTransactionRequest](#msgnewsigntransactionrequest)
+  * [Msg/FulfilSignatureRequest](#msgfulfilsignaturerequest)
+  * [Msg/TransferFromKeyring](#msgtransferfromkeyring)
+  * [Msg/NewICATransactionRequest](#msgnewicatransactionrequest)
+  * [Msg/FulfilICATransactionRequest](#msgfulfilicatransactionrequest)
+  * [Msg/UpdateKeyPolicy](#msgupdatekeypolicy)
+  * [Msg/NewZrSignSignatureRequest](#msgnewzrsignsignaturerequest)
 * [Events](#events)
-    * [EventNewKeyRequest](#eventnewkeyrequest)
-    * [EventKeyRequestFulfilled](#eventkeyrequestfulfilled)
-    * [EventKeyRequestRejected](#eventkeyrequestrejected)
-    * [EventNewSignRequest](#eventnewsignrequest)
-    * [EventSignRequestFulfilled](#eventsignrequestfulfilled)
-    * [EventSignRequestRejected](#eventsignrequestrejected)
-    * [EventNewICATransactionRequest](#eventnewicatransactionrequest)
-    * [EventICATransactionRequestFulfilled](#eventicatransactionrequestfulfilled)
+  * [EventNewKeyRequest](#eventnewkeyrequest)
+  * [EventKeyRequestFulfilled](#eventkeyrequestfulfilled)
+  * [EventKeyRequestRejected](#eventkeyrequestrejected)
+  * [EventNewSignRequest](#eventnewsignrequest)
+  * [EventSignRequestFulfilled](#eventsignrequestfulfilled)
+  * [EventSignRequestRejected](#eventsignrequestrejected)
+  * [EventNewICATransactionRequest](#eventnewicatransactionrequest)
+  * [EventICATransactionRequestFulfilled](#eventicatransactionrequestfulfilled)
 * [Client](#client)
-    * [CLI](#cli)
-    * [gRPC](#grpc)
-    * [REST](#rest)
+  * [CLI](#cli)
+  * [gRPC](#grpc)
+  * [REST](#rest)
 
 ## Concepts
 
 ### Supported Keys
+
 Zenrock has the capacity to generate ecdsa secp256k1 and eddsa ed25519 keys. Key requests are processed off-chain by registered Keyrings, which subsequently store generated keys on-chain.
 
 Keys can be used to derive valid EVM, Cosmos, Solana, and Bitcoin addresses.
@@ -75,7 +77,7 @@ The `KeyRequestStore` stores `KeyRequest`: `BigEndian(KeyRequestId) -> ProtocolB
 
 ### SignRequestStore
 
-The `SignRequestStore` stores `SignRequest`: `BigEndian(KeyRequestId) -> ProtocolBuffer(SignRequest)`.
+The `SignRequestStore` stores `SignRequest`: `BigEndian(SignRequestId) -> ProtocolBuffer(SignRequest)`.
 
 ### SignTransactionRequestStore
 
@@ -147,7 +149,7 @@ It's expected to fail if
 * the keyring is not active
 * the transaction creator is not a keyring party
 * the key request is already completed
-* the keyring signature is not 64 bytes 
+* the keyring signature is not 64 bytes
 * the public key has an invalid size for the type
 
 ### Msg/NewSignatureRequest
@@ -158,12 +160,14 @@ A new signature can be requested with the `MsgNewSignatureRequest` message.
 message MsgNewSignatureRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string              creator                     = 1;
-  uint64              key_id                      = 2;
+  repeated uint64     key_ids                     = 2;
   string              data_for_signing            = 3;
   uint64              btl                         = 4;
   bytes               cache_id                    = 5;
   bytes               verify_signing_data         = 6;
   VerificationVersion verify_signing_data_version = 7;
+  uint64              mpc_btl                     = 8;
+  bytes               zenbtc_tx_bytes             = 9;  // Optional
 }
 
 enum VerificationVersion {
@@ -174,11 +178,13 @@ enum VerificationVersion {
 
 It's expected to fail if
 
-* the payload is not a 32 byte has in hex format
+* the payload is not a 32 byte hash in hex format
 * the key or its workspace can not be found
 * the keyring to which the key belongs to is not found or not active
 * in case of a bitcoin signature request, that the tx in verify_signing_data matches the hash in data_for_signing
-* the transaction creators balance is to low to pay the keyring key creation fee
+* the transaction creators balance is too low to pay the keyring key creation fee
+* the number of key IDs doesn't match the number of data elements
+* the request is for a zenBTC deposit key but not from the Bitcoin proxy service
 
 ### Msg/NewSignTransactionRequest
 
@@ -197,10 +203,24 @@ message MsgNewSignTransactionRequest {
   uint64              btl      = 6;
   bytes               cache_id = 7;
   bool                no_broadcast = 8;
+  uint64              mpc_btl = 9;
 }
 
 message MetadataEthereum {
   uint64 chain_id = 1;
+}
+
+// Define an enum for Solana network types
+enum SolanaNetworkType {
+  UNDEFINED = 0;
+  MAINNET = 1;
+  DEVNET = 2;
+  TESTNET = 3;
+}
+
+message MetadataSolana {
+  SolanaNetworkType network = 1;
+  string mintAddress = 2;
 }
 ```
 
@@ -208,9 +228,11 @@ It's expected to fail if
 
 * the key or its workspace can not be found
 * the keyring to which the key belongs to is not found or not active
-* the transaction cannot be parsed ( depends on the wallet type )
-* the metadata is invalid ( depends on the wallet type )
-* the transaction creators balance is to low to pay the keyring key creation fee
+* the transaction cannot be parsed (depends on the wallet type)
+* the metadata is invalid (depends on the wallet type)
+* the transaction creators balance is too low to pay the keyring key creation fee
+* the data for signing is empty
+* the request is for a zenBTC deposit key but not from the Bitcoin proxy service
 
 ### Msg/FulfilSignatureRequest
 
@@ -236,6 +258,7 @@ It's expected to fail if
 * the keyring signature is not 64 bytes
 * the keyring is not found or inactive
 * the signed data contains an invalid signature for the data in the sign request
+* the transaction creator is not a keyring party
 
 ### Msg/TransferFromKeyring
 
@@ -274,8 +297,41 @@ message MsgUpdateKeyPolicy {
 
 It's expected to fail if
 
-* the key or it's workspace is not found
-* the new policies participants are now owners of the workspace
+* the key or its workspace is not found
+* the new policy's participants are not owners of the workspace
+* the transaction creator is not authorized to modify the key policy
+* the specified policy ID does not exist
+
+### Msg/NewZrSignSignatureRequest
+
+A new ZrSign signature can be requested with the `MsgNewZrSignSignatureRequest` message.
+
+```proto
+message MsgNewZrSignSignatureRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string address = 2;
+  uint64 key_type = 3;
+  uint64 wallet_index = 4;
+  bytes cache_id = 5;
+  string data = 6;
+  bytes verify_signing_data = 7;
+  VerificationVersion verify_signing_data_version = 8;
+  WalletType wallet_type = 9;
+  google.protobuf.Any metadata = 10;
+  bool no_broadcast = 11;
+  uint64 btl = 12;
+  bool tx = 13;
+}
+```
+
+It's expected to fail if
+
+* the ZrSign workspace cannot be found for the address
+* the data for signing is invalid
+* the wallet type is not supported
+* the transaction verification fails
+* the creator's balance is too low to pay the required fees
 
 ### Msg/NewICATransactionRequest
 
@@ -293,6 +349,14 @@ message MsgNewICATransactionRequest {
 }
 ```
 
+It's expected to fail if
+
+* the key or its workspace cannot be found
+* the keyring to which the key belongs is not found or not active
+* the connection ID is invalid
+* the transaction creator's balance is too low to pay the keyring fee
+* the request is for a zenBTC deposit key but not from the Bitcoin proxy service
+
 ### Msg/FulfilICATransactionRequest
 
 A ICA transaction request can be fulfilled with the `MSgFulfilICATransactionRequest` message.
@@ -308,6 +372,15 @@ message MsgFulfilICATransactionRequest {
   string            reject_reason           = 6;
 }
 ```
+
+It's expected to fail if
+
+* the request is not found
+* the ICA transaction request is already completed
+* signed data is missing or contains an invalid signature
+* the keyring signature is not 64 bytes
+* the keyring is not found or inactive
+* the transaction creator is not a keyring party
 
 ## Events
 
@@ -361,7 +434,6 @@ The treasury module emits the following events:
 | --------------------------------- | ------------- | -------------------------------- |
 | ica_transaction_request_fulfilled | request_id    | {request_id}                     |
 
-
 ## Parameters
 
 ### KeyringCommission
@@ -378,7 +450,11 @@ The minimum gas fee to be paid on the network.
 
 ### MPCKeyring
 
-The MPC Keyring address that will be used by ZrSign
+The MPC Keyring address that will be used by ZrSign.
+
+### DefaultBTL
+
+The default BTL (Blocks To Live) for MPC key and signature requests.
 
 ## Client
 

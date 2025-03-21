@@ -269,6 +269,8 @@ message MsgFulfilICATransactionRequest {
 // executing a MsgFulfilICATransactionRequest message.
 message MsgFulfilICATransactionRequestResponse {}
 
+// MsgNewZrSignSignatureRequest is the Msg/NewZrSignSignatureRequest request
+// type.
 message MsgNewZrSignSignatureRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -286,8 +288,11 @@ message MsgNewZrSignSignatureRequest {
   bool tx = 13;
 }
 
+// MsgNewZrSignSignatureRequestResponse defines the response structure for
+// executing a MsgNewZrSignSignatureRequest message.
 message MsgNewZrSignSignatureRequestResponse { uint64 req_id = 1; }
 
+// MsgUpdateKeyPolicy is the Msg/UpdateKeyPolicy request type.
 message MsgUpdateKeyPolicy {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -295,4 +300,6 @@ message MsgUpdateKeyPolicy {
   uint64 sign_policy_id = 3;
 }
 
+// MsgUpdateKeyPolicyResponse defines the response structure for executing a
+// MsgUpdateKeyPolicy message.
 message MsgUpdateKeyPolicyResponse {}

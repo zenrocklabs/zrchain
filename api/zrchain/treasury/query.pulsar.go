@@ -15846,6 +15846,8 @@ func (x *QuerySignTransactionRequestByIDResponse) GetSignTransactionRequest() *S
 	return nil
 }
 
+// QueryZrSignKeysRequest is request type for the
+// Query/ZrSignKeysRequest RPC method.
 type QueryZrSignKeysRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15897,6 +15899,8 @@ func (x *QueryZrSignKeysRequest) GetPagination() *v1beta1.PageRequest {
 	return nil
 }
 
+// QueryZrSignKeysResponse is response type for the
+// Query/ZrSignKeysResponse RPC method.
 type ZrSignKeyEntry struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15956,6 +15960,8 @@ func (x *ZrSignKeyEntry) GetId() uint64 {
 	return 0
 }
 
+// QueryZrSignKeysResponse is response type for the
+// Query/ZrSignKeysResponse RPC method.
 type QueryZrSignKeysResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15999,6 +16005,8 @@ func (x *QueryZrSignKeysResponse) GetPagination() *v1beta1.PageResponse {
 	return nil
 }
 
+// QueryKeyByAddressRequest is request type for the
+// Query/KeyByAddressRequest RPC method.
 type QueryKeyByAddressRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -16066,6 +16074,8 @@ func (x *QueryKeyByAddressRequest) GetPrefixes() []string {
 	return nil
 }
 
+// QueryKeyByAddressResponse is response type for the
+// Query/KeyByAddressResponse RPC method.
 type QueryKeyByAddressResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

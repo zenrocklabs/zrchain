@@ -50,6 +50,11 @@ class QueryStub(object):
                 request_serializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsRequest.SerializeToString,
                 response_deserializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsResponse.FromString,
                 )
+        self.ClientCreator = channel.unary_unary(
+                '/ibc.core.client.v1.Query/ClientCreator',
+                request_serializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorRequest.SerializeToString,
+                response_deserializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorResponse.FromString,
+                )
         self.UpgradedClientState = channel.unary_unary(
                 '/ibc.core.client.v1.Query/UpgradedClientState',
                 request_serializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryUpgradedClientStateRequest.SerializeToString,
@@ -122,6 +127,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ClientCreator(self, request, context):
+        """ClientCreator queries the creator of a given client.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpgradedClientState(self, request, context):
         """UpgradedClientState queries an Upgraded IBC light client.
         """
@@ -180,6 +192,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.ClientParams,
                     request_deserializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsRequest.FromString,
                     response_serializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsResponse.SerializeToString,
+            ),
+            'ClientCreator': grpc.unary_unary_rpc_method_handler(
+                    servicer.ClientCreator,
+                    request_deserializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorRequest.FromString,
+                    response_serializer=ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorResponse.SerializeToString,
             ),
             'UpgradedClientState': grpc.unary_unary_rpc_method_handler(
                     servicer.UpgradedClientState,
@@ -323,6 +340,23 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/ibc.core.client.v1.Query/ClientParams',
             ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsRequest.SerializeToString,
             ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ClientCreator(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ibc.core.client.v1.Query/ClientCreator',
+            ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorRequest.SerializeToString,
+            ibc_dot_core_dot_client_dot_v1_dot_query__pb2.QueryClientCreatorResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
