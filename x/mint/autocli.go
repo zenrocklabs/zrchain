@@ -2,7 +2,7 @@ package mint
 
 import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
-	mintv1beta1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/mint/v1beta1"
+	mintv1beta1 "github.com/Zenrock-Foundation/zrchain/v6/api/zrchain/mint/v1beta1"
 )
 
 func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {

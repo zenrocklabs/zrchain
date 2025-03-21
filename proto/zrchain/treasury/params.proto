@@ -4,12 +4,12 @@ package zrchain.treasury;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
 // Params defines the parameters for the module.
 message Params {
   option (amino.name) =
-      "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/Params";
+      "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/Params";
   option (gogoproto.equal) = true;
 
   string mpc_keyring = 1;

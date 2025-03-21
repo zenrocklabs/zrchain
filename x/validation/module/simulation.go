@@ -7,10 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	validationsimulation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/simulation"
+	validationsimulation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/simulation"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // avoid unused import issue

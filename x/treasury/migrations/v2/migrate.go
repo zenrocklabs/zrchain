@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func ChangeKeyIdtoKeyIds(ctx sdk.Context, signReqCol collections.Map[uint64, types.SignRequest], codec codec.BinaryCodec) error {

@@ -6,8 +6,8 @@ import (
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/app"
-	"github.com/Zenrock-Foundation/zrchain/v5/cmd/zenrockd/cmd"
+	"github.com/Zenrock-Foundation/zrchain/v6/app"
+	"github.com/Zenrock-Foundation/zrchain/v6/cmd/zenrockd/cmd"
 )
 
 func main() {

@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
-	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum"
@@ -25,7 +25,7 @@ import (
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 

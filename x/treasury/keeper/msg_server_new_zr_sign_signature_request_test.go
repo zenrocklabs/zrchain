@@ -4,12 +4,12 @@ import (
 	"encoding/hex"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )

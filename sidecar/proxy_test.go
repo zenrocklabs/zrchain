@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/stretchr/testify/require"
 )
 

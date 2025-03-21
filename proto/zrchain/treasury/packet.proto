@@ -1,7 +1,7 @@
 syntax = "proto3";
 package zrchain.treasury;
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
 // defines the treasury packet data
 message TreasuryPacketData {

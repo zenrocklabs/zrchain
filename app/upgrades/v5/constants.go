@@ -2,7 +2,7 @@ package v5
 
 import (
 	storetypes "cosmossdk.io/store/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/upgrades"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 

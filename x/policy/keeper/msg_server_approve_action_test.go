@@ -4,15 +4,15 @@ import (
 	"encoding/base64"
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 )
 
 type handlers struct {

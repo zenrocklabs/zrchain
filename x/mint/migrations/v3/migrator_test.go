@@ -5,15 +5,15 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/mint/migrations/v3"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/exported"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -29,14 +29,14 @@ from zrchain.identity import keyring_pb2 as zrchain_dot_identity_dot_keyring__pb
 from zrchain.identity import workspace_pb2 as zrchain_dot_identity_dot_workspace__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ezrchain/identity/genesis.proto\x12\x10zrchain.identity\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1dzrchain/identity/params.proto\x1a\x1ezrchain/identity/keyring.proto\x1a zrchain/identity/workspace.proto\"\xe4\x01\n\x0cGenesisState\x12;\n\x06params\x18\x01 \x01(\x0b\x32\x18.zrchain.identity.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x17\n\x07port_id\x18\x02 \x01(\tR\x06portId\x12;\n\x08keyrings\x18\x03 \x03(\x0b\x32\x19.zrchain.identity.KeyringB\x04\xc8\xde\x1f\x00R\x08keyrings\x12\x41\n\nworkspaces\x18\x04 \x03(\x0b\x32\x1b.zrchain.identity.WorkspaceB\x04\xc8\xde\x1f\x00R\nworkspacesB;Z9github.com/Zenrock-Foundation/zrchain/v5/x/identity/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ezrchain/identity/genesis.proto\x12\x10zrchain.identity\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1dzrchain/identity/params.proto\x1a\x1ezrchain/identity/keyring.proto\x1a zrchain/identity/workspace.proto\"\xe4\x01\n\x0cGenesisState\x12;\n\x06params\x18\x01 \x01(\x0b\x32\x18.zrchain.identity.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x17\n\x07port_id\x18\x02 \x01(\tR\x06portId\x12;\n\x08keyrings\x18\x03 \x03(\x0b\x32\x19.zrchain.identity.KeyringB\x04\xc8\xde\x1f\x00R\x08keyrings\x12\x41\n\nworkspaces\x18\x04 \x03(\x0b\x32\x1b.zrchain.identity.WorkspaceB\x04\xc8\xde\x1f\x00R\nworkspacesB;Z9github.com/Zenrock-Foundation/zrchain/v6/x/identity/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.identity.genesis_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/Zenrock-Foundation/zrchain/v5/x/identity/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/Zenrock-Foundation/zrchain/v6/x/identity/types'
   _globals['_GENESISSTATE'].fields_by_name['params']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['keyrings']._loaded_options = None

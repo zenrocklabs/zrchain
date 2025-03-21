@@ -3,10 +3,10 @@ package types
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

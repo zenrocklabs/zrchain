@@ -8,10 +8,10 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 
-	treasurysimulation "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/simulation"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	treasurysimulation "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 // avoid unused import issue

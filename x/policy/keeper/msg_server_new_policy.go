@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/policy"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/policy"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
