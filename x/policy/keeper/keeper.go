@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -22,17 +21,6 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 )
-
-type ExportedKeeper interface {
-	AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, btl uint64, policyData map[string][]byte) (*types.Action, error)
-	Codec() codec.BinaryCodec
-	GeneratorHandler(reqType string) (func(sdk.Context, *cdctypes.Any) (policy.Policy, error), bool)
-	RegisterPolicyGeneratorHandler(reqType string, f func(sdk.Context, *cdctypes.Any) (policy.Policy, error))
-	ActionHandler(actionType string) (func(sdk.Context, *types.Action) (any, error), bool)
-	RegisterActionHandler(actionType string, f func(sdk.Context, *types.Action) (any, error))
-	GetPolicyParticipants(ctx context.Context, policyId uint64) (map[string]struct{}, error)
-	PolicyMembersAreOwners(ctx context.Context, policyId uint64, workspaceOwners []string)
-}
 
 type Keeper struct {
 	cdc          codec.BinaryCodec
@@ -194,4 +182,26 @@ func (k Keeper) ActionHandler(actionType string) (func(sdk.Context, *types.Actio
 
 func (k Keeper) RegisterActionHandler(actionType string, f func(sdk.Context, *types.Action) (any, error)) {
 	k.actionHandlers[actionType] = f
+}
+
+func (k Keeper) GetPolicy(ctx sdk.Context, policyId uint64) (*types.Policy, error) {
+	policy, err := k.PolicyStore.Get(ctx, policyId)
+	if err != nil {
+		return nil, err
+	}
+	return &policy, nil
+}
+
+func (k Keeper) Unpack(policyPb *types.Policy) (policy.Policy, error) {
+	var p policy.Policy
+	err := k.Codec().UnpackAny(policyPb.Policy, &p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func (k Keeper) SetAction(ctx sdk.Context, action *types.Action) error {
+	return k.ActionStore.Set(ctx, action.Id, *action)
 }

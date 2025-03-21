@@ -78,6 +78,7 @@ type ValidatorsResponse struct {
 type Config struct {
 	UseFile     string
 	RPCNode     string
+	Network     string
 	BlockHeight string
 	MissingOnly bool
 }

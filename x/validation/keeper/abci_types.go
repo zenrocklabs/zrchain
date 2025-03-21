@@ -49,9 +49,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
 	}
@@ -80,9 +80,9 @@ type (
 		SolanaRecentBlockhash      string
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
 	}
@@ -174,16 +174,16 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
 	}
-	if ve.ROCKUSDPrice.IsNil() || ve.ROCKUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ROCKUSDPrice is nil or zero")
+	if ve.ROCKUSDPrice == "" {
+		logger.Error("invalid vote extension: ROCKUSDPrice is empty")
 		invalid = true
 	}
-	if ve.BTCUSDPrice.IsNil() || ve.BTCUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
+	if ve.BTCUSDPrice == "" {
+		logger.Error("invalid vote extension: BTCUSDPrice is empty")
 		invalid = true
 	}
-	if ve.ETHUSDPrice.IsNil() || ve.ETHUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ETHUSDPrice is nil or zero")
+	if ve.ETHUSDPrice == "" {
+		logger.Error("invalid vote extension: ETHUSDPrice is empty")
 		invalid = true
 	}
 	if ve.LatestBtcBlockHeight == 0 {
@@ -290,7 +290,7 @@ type fieldVote struct {
 	votePower int64
 }
 
-// genericGetKey marshals a value to JSON for use as a map key
+// genericGetKey marshals a value to bytes for use as a map key
 func genericGetKey(value any) string {
 	if value == nil {
 		return ""
@@ -305,7 +305,7 @@ func genericGetKey(value any) string {
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		// Fall back to string representation if marshaling fails
-		return fmt.Sprintf("%v", value)
+		return fmt.Sprintf("%+v", value)
 	}
 	return string(bytes)
 }
@@ -456,17 +456,17 @@ func initializeFieldHandlers() []FieldHandler {
 		{
 			Field:    VEFieldROCKUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ROCKUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldBTCUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.BTCUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
 		},
 	}
 }

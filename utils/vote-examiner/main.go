@@ -18,6 +18,9 @@ import (
 func main() {
 	config := parseFlags()
 
+	// Display selected network info
+	fmt.Printf("Using %s network (%s)\n", config.Network, config.RPCNode)
+
 	// Get validator information
 	fmt.Println("Fetching validator information...")
 	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
@@ -41,14 +44,36 @@ func main() {
 // parseFlags parses command line flags and returns a Config
 func parseFlags() Config {
 	useFileFlag := flag.String("file", "", "Use file instead of executing command (optional)")
-	rpcNodeFlag := flag.String("node", "https://rpc.diamond.zenrocklabs.io:443", "RPC node URL")
+	networkFlag := flag.String("network", "mainnet", "Network to use: devnet, testnet, or mainnet (default: mainnet)")
+	rpcNodeFlag := flag.String("node", "", "RPC node URL (overrides network selection)")
 	blockHeightFlag := flag.String("height", "", "Block height (default: latest)")
 	missingOnlyFlag := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
 	flag.Parse()
 
+	// Map network to RPC URL if node is not explicitly provided
+	rpcURL := *rpcNodeFlag
+	if rpcURL == "" {
+		switch *networkFlag {
+		case "localnet", "local", "localhost":
+			rpcURL = "http://localhost:26657"
+		case "devnet", "dev", "amber":
+			rpcURL = "https://rpc.dev.zenrock.tech:443"
+		case "testnet", "test", "gardia":
+			rpcURL = "https://rpc.gardia.zenrocklabs.io:443"
+		case "mainnet", "main", "diamond":
+			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
+		default:
+			// Default to mainnet if unrecognized network
+			fmt.Printf("Warning: unrecognized network '%s', defaulting to mainnet\n", *networkFlag)
+			*networkFlag = "mainnet"
+			rpcURL = "https://rpc.diamond.zenrocklabs.io:443"
+		}
+	}
+
 	return Config{
 		UseFile:     *useFileFlag,
-		RPCNode:     *rpcNodeFlag,
+		RPCNode:     rpcURL,
+		Network:     *networkFlag,
 		BlockHeight: *blockHeightFlag,
 		MissingOnly: *missingOnlyFlag,
 	}
@@ -430,18 +455,44 @@ func printDifferences(differences map[string]map[string][]ValidatorInfo, validat
 		return
 	}
 
-	// Sort keys for consistent output
-	sortedKeys := make([]string, 0, len(differences))
-	for k := range differences {
-		sortedKeys = append(sortedKeys, k)
+	// Create a slice of keys with their consensus percentages
+	type fieldConsensus struct {
+		key              string
+		consensusPercent float64
 	}
-	sort.Strings(sortedKeys)
 
-	for _, key := range sortedKeys {
-		fmt.Printf("\nDifferences in field: %s\n", key)
+	fieldsByConsensus := make([]fieldConsensus, 0, len(differences))
+
+	for key, valueMap := range differences {
+		// Find highest consensus for this field
+		highestConsensus := 0.0
+		for _, vals := range valueMap {
+			thisPower := 0
+			for _, val := range vals {
+				thisPower += val.Power
+			}
+			consensusPercent := float64(thisPower) / float64(totalPower) * 100
+			if consensusPercent > highestConsensus {
+				highestConsensus = consensusPercent
+			}
+		}
+
+		fieldsByConsensus = append(fieldsByConsensus, fieldConsensus{
+			key:              key,
+			consensusPercent: highestConsensus,
+		})
+	}
+
+	// Sort by consensus percentage (ascending - lowest consensus last)
+	sort.Slice(fieldsByConsensus, func(i, j int) bool {
+		return fieldsByConsensus[i].consensusPercent > fieldsByConsensus[j].consensusPercent
+	})
+
+	for _, field := range fieldsByConsensus {
+		fmt.Printf("\nDifferences in field: %s (highest consensus: %.2f%%)\n", field.key, field.consensusPercent)
 		fmt.Printf("-------------------------\n")
 
-		valueMap := differences[key]
+		valueMap := differences[field.key]
 		printValueDifferences(valueMap, validators, totalPower)
 	}
 }
@@ -485,7 +536,7 @@ func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []
 			valueLabel = "SUPERMAJORITY"
 		} else if i == 0 && powerPercentage >= 50.0 {
 			valueLabel = "MAJORITY"
-		} else if i == 0 {
+		} else if i == 0 && (len(valueCounts) == 1 || valueCounts[0].TotalPower > valueCounts[1].TotalPower) {
 			valueLabel = "PLURALITY"
 		} else {
 			valueLabel = "MINORITY"
