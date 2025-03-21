@@ -282,8 +282,8 @@ github.com/VictoriaMetrics/fastcache v1.12.2 h1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjC
 github.com/VictoriaMetrics/fastcache v1.12.2/go.mod h1:AmC+Nzz1+3G2eCPapF6UcsnkThDcMsQicp4xDukwJYI=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
-github.com/Zenrock-Foundation/zrchain/v5 v5.24.4 h1:2VwytA43gk5tWgDGZlxHzjS7SkWUvwK+C6+FhjCfEy4=
-github.com/Zenrock-Foundation/zrchain/v5 v5.24.4/go.mod h1:idMFDNeOt4tBOTEFR8K5Kp27cjsNYz6OC1p8sfGNpUs=
+github.com/Zenrock-Foundation/zrchain/v5 v5.19.1 h1:cPgw9c63HkGjI59XNbeuZPsdNiEAH+vCvWF0XgOR0C4=
+github.com/Zenrock-Foundation/zrchain/v5 v5.19.1/go.mod h1:c/g9ZC8eUQtyRS0eHh9rjN6xqsNjhwojVbgi/DlAEDk=
 github.com/adlio/schema v1.3.6 h1:k1/zc2jNfeiZBA5aFTRy37jlBIuCkXCm0XmvpzCKI9I=
 github.com/adlio/schema v1.3.6/go.mod h1:qkxwLgPBd1FgLRHYVCmQT/rrBr3JH38J9LjmVzWNudg=
 github.com/aead/siphash v1.0.1 h1:FwHfE/T45KPKYuuSAKyyvE+oPWcaQ+CUmFW0bPlM+kg=

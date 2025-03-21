@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/treasury/packet.proto\x12\x10zrchain.treasury\"S\n\x12TreasuryPacketData\x12\x33\n\x07no_data\x18\x01 \x01(\x0b\x32\x18.zrchain.treasury.NoDataH\x00R\x06noDataB\x08\n\x06packet\"\x08\n\x06NoDataB;Z9github.com/Zenrock-Foundation/zrchain/v5/x/treasury/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/treasury/packet.proto\x12\x10zrchain.treasury\"S\n\x12TreasuryPacketData\x12\x33\n\x07no_data\x18\x01 \x01(\x0b\x32\x18.zrchain.treasury.NoDataH\x00R\x06noDataB\x08\n\x06packet\"\x08\n\x06NoDataB;Z9github.com/Zenrock-Foundation/zrchain/v6/x/treasury/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.treasury.packet_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types'
   _globals['_TREASURYPACKETDATA']._serialized_start=51
   _globals['_TREASURYPACKETDATA']._serialized_end=134
   _globals['_NODATA']._serialized_start=136

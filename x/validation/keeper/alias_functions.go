@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // Validator Set

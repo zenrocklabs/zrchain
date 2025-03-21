@@ -22,7 +22,7 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 )
 
 type Keeper struct {

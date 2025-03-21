@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 )
 
 type msgServer struct {

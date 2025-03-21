@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 // Package client provides transaction handling capabilities for Inter-Chain Account (ICA) operations

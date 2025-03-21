@@ -3,10 +3,10 @@ package treasury_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/nullify"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
 )

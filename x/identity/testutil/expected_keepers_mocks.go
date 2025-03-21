@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	policy "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	types "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	types "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	types0 "github.com/cosmos/cosmos-sdk/codec/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"

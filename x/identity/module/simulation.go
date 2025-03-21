@@ -8,9 +8,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
-	identitysimulation "github.com/Zenrock-Foundation/zrchain/v5/x/identity/simulation"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
+	identitysimulation "github.com/Zenrock-Foundation/zrchain/v6/x/identity/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 )
 
 // avoid unused import issue

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 )
 
 func TestAppGenesis_Marshal(t *testing.T) {

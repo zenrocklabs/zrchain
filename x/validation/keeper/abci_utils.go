@@ -28,9 +28,9 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	bindings "github.com/zenrocklabs/zenbtc/bindings"
 )
 

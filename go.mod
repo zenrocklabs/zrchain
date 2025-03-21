@@ -83,7 +83,7 @@ require (
 )
 
 require (
-	github.com/Zenrock-Foundation/zrchain/v5 v5.24.4
+	github.com/Zenrock-Foundation/zrchain/v5 v5.19.1
 	github.com/beevik/ntp v1.4.3
 	gopkg.in/yaml.v2 v2.4.0
 )

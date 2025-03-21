@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 )

@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	pol "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	"github.com/stretchr/testify/require"
 )
 

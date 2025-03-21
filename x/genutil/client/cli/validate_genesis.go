@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"

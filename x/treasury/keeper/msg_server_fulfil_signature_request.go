@@ -15,8 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	bitcoinutils "github.com/Zenrock-Foundation/zrchain/v5/bitcoin"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	bitcoinutils "github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgFulfilSignatureRequest) (*types.MsgFulfilSignatureRequestResponse, error) {

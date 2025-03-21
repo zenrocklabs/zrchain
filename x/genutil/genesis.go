@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 )
 
 // InitGenesis - initialize accounts and deliver genesis transactions

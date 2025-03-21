@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 )

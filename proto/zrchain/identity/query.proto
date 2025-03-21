@@ -10,7 +10,7 @@ import "zrchain/identity/params.proto";
 import "zrchain/identity/workspace.proto";
 import "zrchain/identity/keyring.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types";
 
 // Query defines the gRPC querier service.
 service Query {

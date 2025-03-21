@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"

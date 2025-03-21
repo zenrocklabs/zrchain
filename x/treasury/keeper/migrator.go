@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/migrations/v2"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/migrations/v3"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	v2 "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/migrations/v2"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/migrations/v3"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

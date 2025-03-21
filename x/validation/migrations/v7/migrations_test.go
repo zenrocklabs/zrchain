@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"cosmossdk.io/collections"
-	v6 "github.com/Zenrock-Foundation/zrchain/v5/x/validation/migrations/v6"
-	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
+	v6 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v6"
+	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/module"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"

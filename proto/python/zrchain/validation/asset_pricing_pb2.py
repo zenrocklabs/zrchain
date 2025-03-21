@@ -26,14 +26,14 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&zrchain/validation/asset_pricing.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\"[\n\nAssetPrice\x12M\n\x08priceUSD\x18\x01 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\x08priceUSDB=Z;github.com/Zenrock-Foundation/zrchain/v5/x/validation/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&zrchain/validation/asset_pricing.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\"[\n\nAssetPrice\x12M\n\x08priceUSD\x18\x01 \x01(\tB1\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.DecR\x08priceUSDB=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.validation.asset_pricing_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/Zenrock-Foundation/zrchain/v5/x/validation/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/types'
   _globals['_ASSETPRICE'].fields_by_name['priceUSD']._loaded_options = None
   _globals['_ASSETPRICE'].fields_by_name['priceUSD']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec'
   _globals['_ASSETPRICE']._serialized_start=111

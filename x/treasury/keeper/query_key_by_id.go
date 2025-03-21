@@ -5,7 +5,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func (k Keeper) KeyByID(goCtx context.Context, req *types.QueryKeyByIDRequest) (*types.QueryKeyByIDResponse, error) {

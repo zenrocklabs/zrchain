@@ -4,8 +4,8 @@ package main_test
 // 	"context"
 // 	"testing"
 
-// 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
-// 	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+// 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar"
+// 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 // 	"github.com/ethereum/go-ethereum/common"
 // 	"github.com/stretchr/testify/require"
 // )

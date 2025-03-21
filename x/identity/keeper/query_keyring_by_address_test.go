@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 

@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func (k Keeper) CreateICATransactionRequest(ctx sdk.Context, icaTransactionRequest *types.ICATransactionRequest) (uint64, error) {
