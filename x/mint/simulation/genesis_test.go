@@ -9,9 +9,9 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/simulation"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"

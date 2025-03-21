@@ -29,14 +29,14 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/mint/v1beta1/tx.proto\x12\x14zrchain.mint.v1beta1\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x11\x61mino/amino.proto\x1a\x1fzrchain/mint/v1beta1/mint.proto\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\xbd\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12?\n\x06params\x18\x02 \x01(\x0b\x32\x1c.zrchain.mint.v1beta1.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:1\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1ezrchain/x/mint/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse2r\n\x03Msg\x12\x64\n\x0cUpdateParams\x12%.zrchain.mint.v1beta1.MsgUpdateParams\x1a-.zrchain.mint.v1beta1.MsgUpdateParamsResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x37Z5github.com/Zenrock-Foundation/zrchain/v5/x/mint/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/mint/v1beta1/tx.proto\x12\x14zrchain.mint.v1beta1\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x11\x61mino/amino.proto\x1a\x1fzrchain/mint/v1beta1/mint.proto\x1a\x14gogoproto/gogo.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\xbd\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12?\n\x06params\x18\x02 \x01(\x0b\x32\x1c.zrchain.mint.v1beta1.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:1\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1ezrchain/x/mint/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse2r\n\x03Msg\x12\x64\n\x0cUpdateParams\x12%.zrchain.mint.v1beta1.MsgUpdateParams\x1a-.zrchain.mint.v1beta1.MsgUpdateParamsResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x37Z5github.com/Zenrock-Foundation/zrchain/v6/x/mint/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.mint.v1beta1.tx_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z5github.com/Zenrock-Foundation/zrchain/v5/x/mint/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z5github.com/Zenrock-Foundation/zrchain/v6/x/mint/types'
   _globals['_MSGUPDATEPARAMS'].fields_by_name['authority']._loaded_options = None
   _globals['_MSGUPDATEPARAMS'].fields_by_name['authority']._serialized_options = b'\322\264-\024cosmos.AddressString'
   _globals['_MSGUPDATEPARAMS'].fields_by_name['params']._loaded_options = None

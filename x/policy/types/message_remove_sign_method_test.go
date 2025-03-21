@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/sample"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )

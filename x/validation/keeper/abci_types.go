@@ -10,8 +10,8 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc"

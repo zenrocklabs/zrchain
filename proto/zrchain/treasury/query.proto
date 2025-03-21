@@ -11,7 +11,7 @@ import "zrchain/treasury/mpcsign.proto";
 import "zrchain/treasury/params.proto";
 import "zrchain/treasury/wallet.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
 // Query defines the gRPC querier service.
 service Query {

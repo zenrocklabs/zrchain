@@ -15,8 +15,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 )
 
 func PolicyKeeper(t testing.TB, db dbm.DB, stateStore storetypes.CommitMultiStore, authzKeeper types.AuthzKeeper) (keeper.Keeper, sdk.Context) {

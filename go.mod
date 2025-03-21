@@ -36,6 +36,7 @@ require (
 	github.com/CosmWasm/wasmd v0.53.0
 	github.com/CosmWasm/wasmvm/v2 v2.1.3
 	github.com/Layr-Labs/eigensdk-go v0.1.12
+	github.com/beevik/ntp v1.4.3
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/btcsuite/btcd/btcutil v1.1.6
@@ -46,7 +47,7 @@ require (
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.50.10
+	github.com/cosmos/cosmos-sdk v0.50.13
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
@@ -55,7 +56,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.11.0
-	github.com/golang/mock v1.6.0
+	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -70,22 +71,17 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zenrocklabs/zenbtc v1.15.7
-	github.com/zenrocklabs/zenrock-avs v1.4.18
+	github.com/zenrocklabs/zenbtc v1.15.8
+	github.com/zenrocklabs/zenrock-avs v1.6.3
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.29.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a
 	google.golang.org/grpc v1.70.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.36.4
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
-)
-
-require (
-	github.com/Zenrock-Foundation/zrchain/v5 v5.24.4
-	github.com/beevik/ntp v1.4.3
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -269,6 +265,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect

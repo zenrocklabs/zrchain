@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

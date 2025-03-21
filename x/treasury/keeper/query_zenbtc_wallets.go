@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

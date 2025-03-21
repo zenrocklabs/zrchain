@@ -7,10 +7,10 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
-	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/exported"
+	v2 "github.com/Zenrock-Foundation/zrchain/v6/x/mint/migrations/v2"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"

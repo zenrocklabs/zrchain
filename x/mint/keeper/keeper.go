@@ -9,8 +9,8 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

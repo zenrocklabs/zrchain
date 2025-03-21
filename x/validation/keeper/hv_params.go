@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 func (k Keeper) GetAVSRewardsRate(ctx context.Context) math.LegacyDec {

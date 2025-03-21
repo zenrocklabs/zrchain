@@ -5,7 +5,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func (k Keeper) SignatureRequestByID(goCtx context.Context, req *types.QuerySignatureRequestByIDRequest) (*types.QuerySignatureRequestByIDResponse, error) {

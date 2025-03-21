@@ -18,7 +18,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 type msgServer struct {

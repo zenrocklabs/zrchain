@@ -3,8 +3,8 @@ package app
 import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/app/upgrades"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/upgrades/v5rev5"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades/v5rev5"
 )
 
 var Upgrades = []upgrades.Upgrade{

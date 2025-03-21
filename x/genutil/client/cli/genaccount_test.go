@@ -10,8 +10,8 @@ import (
 
 	"cosmossdk.io/log"
 
-	genutilcli "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/cli"
-	genutiltest "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/testutil"
+	genutilcli "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/cli"
+	genutiltest "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/testutil"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"

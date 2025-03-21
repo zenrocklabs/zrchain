@@ -11,8 +11,8 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

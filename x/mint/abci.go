@@ -3,8 +3,8 @@ package mint
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

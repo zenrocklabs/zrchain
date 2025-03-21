@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from cosmos.app.v1alpha1 import module_pb2 as cosmos_dot_app_dot_v1alpha1_dot_module__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&zrchain/genutil/module/v1/module.proto\x12\x19zrchain.genutil.module.v1\x1a cosmos/app/v1alpha1/module.proto\"E\n\x06Module:;\xba\xc0\x96\xda\x01\x35\n3github.com/Zenrock-Foundation/zrchain/v5/x/genutilb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&zrchain/genutil/module/v1/module.proto\x12\x19zrchain.genutil.module.v1\x1a cosmos/app/v1alpha1/module.proto\"E\n\x06Module:;\xba\xc0\x96\xda\x01\x35\n3github.com/Zenrock-Foundation/zrchain/v6/x/genutilb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,7 +33,7 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.genutil.module.v1.m
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_MODULE']._loaded_options = None
-  _globals['_MODULE']._serialized_options = b'\272\300\226\332\0015\n3github.com/Zenrock-Foundation/zrchain/v5/x/genutil'
+  _globals['_MODULE']._serialized_options = b'\272\300\226\332\0015\n3github.com/Zenrock-Foundation/zrchain/v6/x/genutil'
   _globals['_MODULE']._serialized_start=103
   _globals['_MODULE']._serialized_end=172
 # @@protoc_insertion_point(module_scope)

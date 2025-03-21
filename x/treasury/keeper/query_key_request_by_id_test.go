@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/stretchr/testify/require"
 )
 

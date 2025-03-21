@@ -11,7 +11,7 @@ import "tendermint/types/types.proto";
 import "zrchain/validation/asset_data.proto";
 import "zrchain/validation/staking.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types";
 
 // HV stands for Hybrid Validation. These types differ from SDK staking types
 // as they provide support for multiple token types.

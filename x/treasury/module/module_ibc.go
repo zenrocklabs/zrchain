@@ -3,8 +3,8 @@ package treasury
 import (
 	"fmt"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

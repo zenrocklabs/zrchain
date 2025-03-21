@@ -4,8 +4,8 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

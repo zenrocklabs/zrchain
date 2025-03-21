@@ -9,8 +9,8 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
