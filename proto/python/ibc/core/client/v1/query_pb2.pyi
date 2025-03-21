@@ -118,6 +118,18 @@ class QueryClientParamsResponse(_message.Message):
     params: _client_pb2.Params
     def __init__(self, params: _Optional[_Union[_client_pb2.Params, _Mapping]] = ...) -> None: ...
 
+class QueryClientCreatorRequest(_message.Message):
+    __slots__ = ("client_id",)
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    def __init__(self, client_id: _Optional[str] = ...) -> None: ...
+
+class QueryClientCreatorResponse(_message.Message):
+    __slots__ = ("creator",)
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    creator: str
+    def __init__(self, creator: _Optional[str] = ...) -> None: ...
+
 class QueryUpgradedClientStateRequest(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

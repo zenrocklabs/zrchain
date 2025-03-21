@@ -112,3 +112,15 @@ class MsgUpdateParams(_message.Message):
 class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgDeleteClientCreator(_message.Message):
+    __slots__ = ("client_id", "signer")
+    CLIENT_ID_FIELD_NUMBER: _ClassVar[int]
+    SIGNER_FIELD_NUMBER: _ClassVar[int]
+    client_id: str
+    signer: str
+    def __init__(self, client_id: _Optional[str] = ..., signer: _Optional[str] = ...) -> None: ...
+
+class MsgDeleteClientCreatorResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

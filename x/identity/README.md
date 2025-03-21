@@ -9,35 +9,35 @@ Zenrock's Identity Module is responsible for identity management on Zenrock. The
 ## Contents
 
 * [Concepts](#concepts)
-    * [Keyrings](#keyrings)
-    * [Workspaces](#workspaces)
+  * [Keyrings](#keyrings)
+  * [Workspaces](#workspaces)
 * [State](#state)
-    * [Keyring Store](#keyring-store)
-    * [Workspace Store](#workspace-store)
+  * [Keyring Store](#keyring-store)
+  * [Workspace Store](#workspace-store)
 * [Msg Service](#msg-service)
-    * [Msg/NewWorkspace](#msgnewworkspace)
-    * [Msg/AddWorkspaceOwner](#msgaddworkspaceowner)
-    * [Msg/RemoveWorkspaceOwner](#msgremoveworkspaceowner)
-    * [Msg/NewChildWorkspace](#msgnewchildworkspace)
-    * [Msg/AppendChildWorkspace](#msgappendchildworkspace)
-    * [Msg/UpdateWorkspace](#msgupdateworkspace)
-    * [Msg/NewKeyring](#msgnewkeyring)
-    * [Msg/AddKeyringParty](#msgaddkeyringparty)
-    * [Msg/AddKeyringAdmin](#msgaddkeyringadmin)
-    * [Msg/RemoveKeyringParty](#msgremovekeyringparty)
-    * [Msg/RemoveKeyringAdmin](#msgremovekeyringadmin)
-    * [Msg/DeactivateKeyring](#msgdeactivatekeyring)
-    * [Msg/UpdateKeyring](#msgupdatekeyring)
+  * [Msg/NewWorkspace](#msgnewworkspace)
+  * [Msg/AddWorkspaceOwner](#msgaddworkspaceowner)
+  * [Msg/RemoveWorkspaceOwner](#msgremoveworkspaceowner)
+  * [Msg/NewChildWorkspace](#msgnewchildworkspace)
+  * [Msg/AppendChildWorkspace](#msgappendchildworkspace)
+  * [Msg/UpdateWorkspace](#msgupdateworkspace)
+  * [Msg/NewKeyring](#msgnewkeyring)
+  * [Msg/AddKeyringParty](#msgaddkeyringparty)
+  * [Msg/AddKeyringAdmin](#msgaddkeyringadmin)
+  * [Msg/RemoveKeyringParty](#msgremovekeyringparty)
+  * [Msg/RemoveKeyringAdmin](#msgremovekeyringadmin)
+  * [Msg/DeactivateKeyring](#msgdeactivatekeyring)
+  * [Msg/UpdateKeyring](#msgupdatekeyring)
 * [Events](#events)
-    * [EventNewWorkspace](#eventnewworkspace)
-    * [EventAddOwnerToWorkspace](#eventaddownertoworkspace)
-    * [EventOwnerAddedToWorkspace](#eventowneraddedtoworkspace)
+  * [EventNewWorkspace](#eventnewworkspace)
+  * [EventAddOwnerToWorkspace](#eventaddownertoworkspace)
+  * [EventOwnerAddedToWorkspace](#eventowneraddedtoworkspace)
 * [Parameters](#parameters)
-    * [KeyringCreationFee](#keyringcreationfee)
+  * [KeyringCreationFee](#keyringcreationfee)
 * [Client](#client)
-    * [CLI](#cli)
-    * [gRPC](#grpc)
-    * [REST](#rest)
+  * [CLI](#cli)
+  * [gRPC](#grpc)
+  * [REST](#rest)
 
 ## Concepts
 
@@ -94,9 +94,9 @@ message MsgNewWorkspace {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
-* if the the creator or additional owners are not a member of the specified admin or sign policy
+* the creator or additional owners are not members of the specified admin or sign policy
 
 ### Msg/AddWorkspaceOwner
 
@@ -112,11 +112,13 @@ message MsgAddWorkspaceOwner {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the workspace is not found
 * the transaction creator is not an owner of the workspace
 * the new owner is already an owner of the workspace
+
+This action creates a policy action that requires approval based on the workspace's admin policy. When approved, the owner is added to the workspace.
 
 ### Msg/RemoveWorkspaceOwner
 
@@ -132,12 +134,14 @@ message MsgRemoveWorkspaceOwner {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the workspace is not found
 * the transaction creator is not an owner of the workspace
 * the existing owner is not an owner of the workspace
 * the existing owner is a member of the assigned admin or sign policy
+
+This action creates a policy action that requires approval based on the workspace's admin policy.
 
 ### Msg/NewChildWorkspace
 
@@ -152,10 +156,12 @@ message MsgNewChildWorkspace {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the parent workspace is not found
 * the transaction creator is not an owner of the workspace
+
+This action creates a policy action that requires approval based on the parent workspace's admin policy.
 
 ### Msg/AppendChildWorkspace
 
@@ -171,11 +177,13 @@ message MsgAppendChildWorkspace {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the parent or child workspace is not found
 * the transaction creator is not an owner of the parent or child workspace
 * the child workspace is already a child of the parent workspace
+
+This action creates a policy action that requires approval based on the parent workspace's admin policy.
 
 ### Msg/UpdateWorkspace
 
@@ -192,11 +200,15 @@ message MsgUpdateWorkspace {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the workspace is not found
 * the transaction creator is not an owner of the workspace
 * there are no updates to the policies
+* the owners are not members of the specified new admin or sign policy
+* the specified policy IDs don't exist
+
+This action creates a policy action that requires approval based on the workspace's current admin policy.
 
 ### Msg/NewKeyring
 
@@ -210,12 +222,15 @@ message MsgNewKeyring {
   uint32 party_threshold = 3;
   uint64 key_req_fee = 4;
   uint64 sig_req_fee = 5;
+  bool delegate_fees = 6;
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
-* the balance of the transaction sender is to low to pay the fee
+* the balance of the transaction sender is too low to pay the KeyringCreationFee parameter
+
+The creator is automatically added as an admin of the keyring, and the keyring is set to active by default.
 
 ### Msg/AddKeyringParty
 
@@ -231,12 +246,14 @@ message MsgAddKeyringParty {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the keyring is not found
 * the keyring is not active
 * the party is already added to the keyring
 * the transaction creator is not an admin of the keyring
+
+When adding a party, the threshold is set to at least 1 if it was previously 0.
 
 ### Msg/AddKeyringAdmin
 
@@ -251,7 +268,7 @@ message MsgAddKeyringAdmin {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the keyring is not found
 * the keyring is not active
@@ -272,7 +289,7 @@ message MsgRemoveKeyringParty {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the keyring is not found
 * the keyring is not active
@@ -292,7 +309,7 @@ message MsgRemoveKeyringAdmin {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the keyring is not found
 * the keyring is not active
@@ -312,10 +329,12 @@ message MsgDeactivateKeyring {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * the keyring is not found
 * the transaction creator is not a keyring admin
+
+Deactivating a keyring sets its `is_active` status to false, which prevents it from creating new keys or signing new requests.
 
 ### Msg/UpdateKeyring
 
@@ -334,10 +353,12 @@ message MsgUpdateKeyring {
 }
 ```
 
-It's expected to fail if
+It's expected to fail if:
 
 * keyring is not found
 * the transaction creator is not a keyring admin
+
+This message allows updating multiple keyring attributes in a single transaction including the threshold, fees, description, and active status.
 
 ## Events
 
@@ -351,7 +372,6 @@ The identity module emits the following events:
 | message                          | module         | identity                          |
 | new_workspace                    | workspace_addr | {workapce_addr}                   |
 
-
 ### EventAddOwnerToWorkspace
 
 | Type                             | Attribute Key  | Attribute Value                        |
@@ -359,7 +379,6 @@ The identity module emits the following events:
 | message                          | action         | /zrchain.identity.MsgAddWorkspaceOwner |
 | message                          | module         | identity                               |
 | add_owner_to_workspace           | action_id      | {action_id}                            |
- 
 
 ### EventOwnerAddedToWorkspace
 
@@ -390,7 +409,7 @@ The `query` commands allow users to query `identity` state.
 zenrockd query identity --help
 ```
 
-##### keyrings
+##### Keyrings
 
 The `keyrings` command allows users to query the available keyrings.
 
@@ -460,7 +479,7 @@ keyring:
   sig_req_fee: "2"
 ```
 
-##### workspaces
+##### Workspaces
 
 The `workspaces` command allows users to query the available workspaces.
 
@@ -524,7 +543,7 @@ zenrockd tx identity --help
 The `new-workspace` command allows users to create a new workspace.
 
 ```bash
-zenrockd tx tx identity new-workspace --admin-policy-id [admin-policy-id] --sign-policy-id [sign-policy-id] --additional-owners [additional-owners]
+zenrockd tx identity new-workspace --admin-policy-id [admin-policy-id] --sign-policy-id [sign-policy-id] --additional-owners [additional-owners]
 ```
 
 Example:
@@ -666,7 +685,6 @@ zenrockd tx identity remove-keyring-admin keyring1k6vc6vhp6e6l3rxalue9v4ux zen12
 The `remove-keyring-party` command allows users to remove a signing party from a keyring.
 The decrease threshold parameter specifies whether or not to decrease the signature threshold for the keyring.
 
-
 ```bash
 zenrockd tx identity remove-keyring-party [keyring-addr] [party] --decrease-threshold [true] 
 ```
@@ -773,7 +791,7 @@ Example Output:
 
 #### Keyrings
 
-The `todo` endpoint allows users to query all keyrings.
+The `Keyrings` endpoint allows users to query all keyrings.
 
 ```bash
 zrchain.identity.Query/Keyrings 
@@ -931,7 +949,7 @@ Example Output:
 }
 ```
 
-#### keyrings
+#### Keyrings
 
 The `keyrings` endpoint allows users to query all keyrings.
 

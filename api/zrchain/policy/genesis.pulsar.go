@@ -1572,6 +1572,7 @@ func (x *GenesisState) GetSignMethods() []*GenesisSignMethod {
 	return nil
 }
 
+// GenesisSignMethod is a message that contains the sign method for the policy.
 type GenesisSignMethod struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -20,6 +20,7 @@ message GenesisState {
   repeated GenesisSignMethod sign_methods = 5 [ (gogoproto.nullable) = false ];
 }
 
+// GenesisSignMethod is a message that contains the sign method for the policy.
 message GenesisSignMethod {
   string owner = 1;
   string id = 2;

@@ -15429,6 +15429,8 @@ func (*MsgFulfilICATransactionRequestResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_treasury_tx_proto_rawDescGZIP(), []int{20}
 }
 
+// MsgNewZrSignSignatureRequest is the Msg/NewZrSignSignatureRequest request
+// type.
 type MsgNewZrSignSignatureRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15560,6 +15562,8 @@ func (x *MsgNewZrSignSignatureRequest) GetTx() bool {
 	return false
 }
 
+// MsgNewZrSignSignatureRequestResponse defines the response structure for
+// executing a MsgNewZrSignSignatureRequest message.
 type MsgNewZrSignSignatureRequestResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15595,6 +15599,7 @@ func (x *MsgNewZrSignSignatureRequestResponse) GetReqId() uint64 {
 	return 0
 }
 
+// MsgUpdateKeyPolicy is the Msg/UpdateKeyPolicy request type.
 type MsgUpdateKeyPolicy struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -15646,6 +15651,8 @@ func (x *MsgUpdateKeyPolicy) GetSignPolicyId() uint64 {
 	return 0
 }
 
+// MsgUpdateKeyPolicyResponse defines the response structure for executing a
+// MsgUpdateKeyPolicy message.
 type MsgUpdateKeyPolicyResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
