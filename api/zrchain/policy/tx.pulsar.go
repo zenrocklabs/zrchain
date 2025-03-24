@@ -7922,6 +7922,7 @@ func (*MsgRemoveSignMethodResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_policy_tx_proto_rawDescGZIP(), []int{11}
 }
 
+// MsgAddMultiGrant defines the Msg/AddMultiGrant request type.
 type MsgAddMultiGrant struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7973,6 +7974,8 @@ func (x *MsgAddMultiGrant) GetMsgs() []string {
 	return nil
 }
 
+// MsgAddMultiGrantResponse defines the response structure for executing a
+// MsgAddMultiGrant message.
 type MsgAddMultiGrantResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7999,6 +8002,7 @@ func (*MsgAddMultiGrantResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_policy_tx_proto_rawDescGZIP(), []int{13}
 }
 
+// MsgRemoveMultiGrant defines the Msg/RemoveMultiGrant request type.
 type MsgRemoveMultiGrant struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8050,6 +8054,8 @@ func (x *MsgRemoveMultiGrant) GetMsgs() []string {
 	return nil
 }
 
+// MsgRemoveMultiGrantResponse defines the response structure for executing a
+// MsgRemoveMultiGrant message.
 type MsgRemoveMultiGrantResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

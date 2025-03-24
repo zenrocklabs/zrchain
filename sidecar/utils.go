@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"gopkg.in/yaml.v3"
 )
 

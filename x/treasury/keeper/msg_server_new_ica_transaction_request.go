@@ -14,9 +14,9 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.MsgNewICATransactionRequest) (*types.MsgNewICATransactionRequestResponse, error) {
@@ -33,7 +33,7 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 
 	signPolicyId := key.SignPolicyId
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
@@ -42,7 +42,7 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 		signPolicyId = ws.SignPolicyId
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
@@ -56,7 +56,7 @@ func (k msgServer) NewICATransactionRequest(goCtx context.Context, msg *types.Ms
 
 func (k msgServer) NewICATransactionRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewICATransactionRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,
@@ -66,7 +66,7 @@ func (k msgServer) NewICATransactionRequestActionHandler(ctx sdk.Context, act *p
 				return nil, fmt.Errorf("key %v not found", msg.KeyId)
 			}
 
-			if _, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr); err != nil {
+			if _, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr); err != nil {
 				return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 			}
 

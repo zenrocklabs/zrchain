@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func RejectBadTestnetRequests(ctx sdk.Context, signRequestStore collections.Map[uint64, types.SignRequest], keyRequestStore collections.Map[uint64, types.KeyRequest], codec codec.BinaryCodec) error {

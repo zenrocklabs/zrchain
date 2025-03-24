@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k msgServer) TransferFromKeyring(goCtx context.Context, msg *types.MsgTransferFromKeyring) (*types.MsgTransferFromKeyringResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, msg.Keyring)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, msg.Keyring)
 	if err != nil {
 		return nil, fmt.Errorf("keyring %s is nil", msg.Keyring)
 	}

@@ -5,7 +5,7 @@ package zrchain.validation;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types";
 
 // Asset is an enum that represents the assets we store pricing for
 enum Asset {

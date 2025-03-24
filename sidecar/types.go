@@ -9,16 +9,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 )
 
 // NB: these constants should not be changed as they are important for synchronicity.
 // Modifying them will exponentially increase the risk of your validator being slashed
 const (
-	MainLoopTickerInterval  = 30 * time.Second
+	MainLoopTickerInterval  = 10 * time.Second
 	CacheSize               = 20
 	EthBurnEventsBlockRange = 1000
 	ROCKUSDPriceURL         = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"

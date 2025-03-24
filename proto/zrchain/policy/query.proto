@@ -11,7 +11,7 @@ import "zrchain/policy/params.proto";
 import "zrchain/policy/policy.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -131,8 +131,12 @@ message QueryPoliciesByCreatorResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryActionDetailsByIdRequest is request type for the
+// Query/ActionDetailsById RPC method.
 message QueryActionDetailsByIdRequest { uint64 id = 1; }
 
+// QueryActionDetailsByIdResponse is response type for the
+// Query/ActionDetailsById RPC method.
 message QueryActionDetailsByIdResponse {
   uint64 id = 1;
   Action action = 2;

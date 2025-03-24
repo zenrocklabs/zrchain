@@ -8,7 +8,7 @@ import (
 
 	address "cosmossdk.io/core/address"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

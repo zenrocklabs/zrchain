@@ -15,10 +15,10 @@ import (
 
 	"cosmossdk.io/log"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	genutilcli "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/cli"
-	genutiltest "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/testutil"
-	genutiltypes "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	genutilcli "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/cli"
+	genutiltest "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/testutil"
+	genutiltypes "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -30,7 +30,7 @@ func (k msgServer) ApproveAction(goCtx context.Context, msg *types.MsgApproveAct
 		}, nil
 	}
 
-	policy, err := PolicyForAction(ctx, &k.Keeper, &act)
+	policy, err := k.PolicyForAction(ctx, &act)
 	if err != nil {
 		return nil, err
 	}

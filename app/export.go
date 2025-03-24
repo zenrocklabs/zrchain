@@ -13,8 +13,8 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	validation "github.com/Zenrock-Foundation/zrchain/v5/x/validation/module"
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/module"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis file.

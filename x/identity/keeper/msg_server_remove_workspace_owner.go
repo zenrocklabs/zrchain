@@ -4,11 +4,11 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -65,7 +65,7 @@ func (k msgServer) RemoveOwnerPolicyGenerator(ctx sdk.Context, msg *types.MsgRem
 
 func (k msgServer) RemoveOwnerActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgRemoveWorkspaceOwnerResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

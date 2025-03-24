@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	genutiltypes "github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	genutiltypes "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 )
 
 // GenesisCoreCommand adds core sdk's sub-commands into genesis command.

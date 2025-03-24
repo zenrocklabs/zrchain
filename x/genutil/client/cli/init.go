@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/cobra"
@@ -16,8 +16,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math/unsafe"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"

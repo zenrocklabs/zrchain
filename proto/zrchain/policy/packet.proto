@@ -1,7 +1,7 @@
 syntax = "proto3";
 package zrchain.policy;
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types";
 
 // defines IBC packet for identity module
 message PolicyPacketData {

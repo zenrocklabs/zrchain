@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 )
@@ -55,9 +55,9 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		SolanaLamportsPerSignature: currentState.SolanaLamportsPerSignature,
 		EthBurnEvents:              currentState.EthBurnEvents,
 		Redemptions:                currentState.Redemptions,
-		ROCKUSDPrice:               fmt.Sprint(currentState.ROCKUSDPrice),
-		BTCUSDPrice:                fmt.Sprint(currentState.BTCUSDPrice),
-		ETHUSDPrice:                fmt.Sprint(currentState.ETHUSDPrice),
+		ROCKUSDPrice:               currentState.ROCKUSDPrice.String(),
+		BTCUSDPrice:                currentState.BTCUSDPrice.String(),
+		ETHUSDPrice:                currentState.ETHUSDPrice.String(),
 	}, nil
 }
 
@@ -81,9 +81,9 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		SolanaLamportsPerSignature: state.SolanaLamportsPerSignature,
 		EthBurnEvents:              state.EthBurnEvents,
 		Redemptions:                state.Redemptions,
-		ROCKUSDPrice:               fmt.Sprint(state.ROCKUSDPrice),
-		BTCUSDPrice:                fmt.Sprint(state.BTCUSDPrice),
-		ETHUSDPrice:                fmt.Sprint(state.ETHUSDPrice),
+		ROCKUSDPrice:               state.ROCKUSDPrice.String(),
+		BTCUSDPrice:                state.BTCUSDPrice.String(),
+		ETHUSDPrice:                state.ETHUSDPrice.String(),
 	}, nil
 }
 

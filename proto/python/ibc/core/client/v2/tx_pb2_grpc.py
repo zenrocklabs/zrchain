@@ -20,6 +20,11 @@ class MsgStub(object):
                 request_serializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterparty.SerializeToString,
                 response_deserializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterpartyResponse.FromString,
                 )
+        self.UpdateClientConfig = channel.unary_unary(
+                '/ibc.core.client.v2.Msg/UpdateClientConfig',
+                request_serializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfig.SerializeToString,
+                response_deserializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfigResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -33,6 +38,13 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateClientConfig(self, request, context):
+        """UpdateClientConfig defines a rpc handler method for MsgUpdateClientConfig.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -40,6 +52,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.RegisterCounterparty,
                     request_deserializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterparty.FromString,
                     response_serializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterpartyResponse.SerializeToString,
+            ),
+            'UpdateClientConfig': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateClientConfig,
+                    request_deserializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfig.FromString,
+                    response_serializer=ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfigResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -66,5 +83,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/ibc.core.client.v2.Msg/RegisterCounterparty',
             ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterparty.SerializeToString,
             ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgRegisterCounterpartyResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateClientConfig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ibc.core.client.v2.Msg/UpdateClientConfig',
+            ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfig.SerializeToString,
+            ibc_dot_core_dot_client_dot_v2_dot_tx__pb2.MsgUpdateClientConfigResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

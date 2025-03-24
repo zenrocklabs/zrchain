@@ -16,7 +16,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 func (k Keeper) GetDelegation(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error) {

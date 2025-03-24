@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/cli"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"

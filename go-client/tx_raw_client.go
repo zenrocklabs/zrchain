@@ -10,7 +10,7 @@ import (
 	signingv1beta1 "cosmossdk.io/api/cosmos/tx/signing/v1beta1"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/app"
+	"github.com/Zenrock-Foundation/zrchain/v6/app"
 	db "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -21,7 +21,7 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"google.golang.org/grpc"
 
-	appparams "github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 )
 
 var (

@@ -2,7 +2,7 @@ package v7
 
 import (
 	"cosmossdk.io/collections"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

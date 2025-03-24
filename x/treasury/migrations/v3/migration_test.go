@@ -5,9 +5,9 @@ import (
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/migrations/v3"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/migrations/v3"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"

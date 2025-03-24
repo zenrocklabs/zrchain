@@ -14,8 +14,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // SetGenTxsInAppGenesisState - sets the genesis transactions in the app genesis state

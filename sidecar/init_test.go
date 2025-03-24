@@ -6,8 +6,8 @@ import (
 	// "testing"
 	"time"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar"
 
 	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	// "github.com/ethereum/go-ethereum/common"

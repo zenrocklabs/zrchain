@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,7 +33,7 @@ func (k Keeper) ActionDetailsById(goCtx context.Context, req *types.QueryActionD
 			return nil, err
 		}
 
-		pol, err := PolicyForAction(ctx, &k, &action)
+		pol, err := k.PolicyForAction(ctx, &action)
 		if err != nil {
 			return nil, err
 		}

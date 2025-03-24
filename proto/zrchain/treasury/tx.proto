@@ -12,7 +12,7 @@ import "zrchain/treasury/mpcsign.proto";
 import "zrchain/treasury/params.proto";
 import "zrchain/treasury/wallet.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -71,7 +71,7 @@ service Msg {
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) =
-      "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/MsgUpdateParams";
+      "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/MsgUpdateParams";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -269,6 +269,8 @@ message MsgFulfilICATransactionRequest {
 // executing a MsgFulfilICATransactionRequest message.
 message MsgFulfilICATransactionRequestResponse {}
 
+// MsgNewZrSignSignatureRequest is the Msg/NewZrSignSignatureRequest request
+// type.
 message MsgNewZrSignSignatureRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -286,8 +288,11 @@ message MsgNewZrSignSignatureRequest {
   bool tx = 13;
 }
 
+// MsgNewZrSignSignatureRequestResponse defines the response structure for
+// executing a MsgNewZrSignSignatureRequest message.
 message MsgNewZrSignSignatureRequestResponse { uint64 req_id = 1; }
 
+// MsgUpdateKeyPolicy is the Msg/UpdateKeyPolicy request type.
 message MsgUpdateKeyPolicy {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -295,4 +300,6 @@ message MsgUpdateKeyPolicy {
   uint64 sign_policy_id = 3;
 }
 
+// MsgUpdateKeyPolicyResponse defines the response structure for executing a
+// MsgUpdateKeyPolicy message.
 message MsgUpdateKeyPolicyResponse {}

@@ -22,8 +22,8 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/app"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
+	"github.com/Zenrock-Foundation/zrchain/v6/app"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 )
 
 const DefaultSidecarAddr = "localhost:9191"

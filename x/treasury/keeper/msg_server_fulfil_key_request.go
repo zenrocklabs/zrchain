@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -24,12 +24,12 @@ func (k msgServer) FulfilKeyRequest(goCtx context.Context, msg *types.MsgFulfilK
 		return nil, fmt.Errorf("request %v not found", msg.RequestId)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, req.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, req.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", req.KeyringAddr)
 	}
 
-	if err := k.validateKeyRequest(msg, &req, &keyring); err != nil {
+	if err := k.validateKeyRequest(msg, &req, keyring); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +90,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		req.KeyringPartySignatures = append(req.KeyringPartySignatures, msg.KeyringPartySignature)
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, req.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, req.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", req.KeyringAddr)
 	}

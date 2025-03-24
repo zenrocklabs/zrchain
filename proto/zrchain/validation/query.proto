@@ -10,7 +10,7 @@ import "google/api/annotations.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "zrchain/validation/staking.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/validation/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types";
 
 // Query defines the gRPC querier service.
 service Query {

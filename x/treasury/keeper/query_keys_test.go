@@ -6,9 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 func TestKeeper_Keys(t *testing.T) {

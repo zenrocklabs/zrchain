@@ -2,6 +2,7 @@ breaking:
   use:
     - FILE
 deps:
+  - buf.build/protocolbuffers/wellknowntypes
   - buf.build/cosmos/cosmos-sdk
   - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/gogo-proto
