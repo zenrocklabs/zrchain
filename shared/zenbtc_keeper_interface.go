@@ -32,8 +32,10 @@ type ZenBTCKeeper interface {
 	GetPendingMintTransactionsStore() collections.Map[uint64, types.PendingMintTransaction]
 	GetBurnEventsStore() collections.Map[uint64, types.BurnEvent]
 	GetRedemptionsStore() collections.Map[uint64, types.Redemption]
-	GetFirstPendingMintTransaction(ctx context.Context) (uint64, error)
-	SetFirstPendingMintTransaction(ctx context.Context, id uint64) error
+	GetFirstPendingEthMintTransaction(ctx context.Context) (uint64, error)
+	SetFirstPendingEthMintTransaction(ctx context.Context, id uint64) error
+	GetFirstPendingSolMintTransaction(ctx context.Context) (uint64, error)
+	SetFirstPendingSolMintTransaction(ctx context.Context, id uint64) error
 	GetFirstPendingBurnEvent(ctx context.Context) (uint64, error)
 	SetFirstPendingBurnEvent(ctx context.Context, id uint64) error
 	GetFirstPendingRedemption(ctx context.Context) (uint64, error)

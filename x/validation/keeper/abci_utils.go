@@ -865,13 +865,17 @@ func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error 
 }
 
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
-func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) ([]zenbtctypes.PendingMintTransaction, error) {
+func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.MintTransactionStatus, walletType zenbtctypes.WalletType) ([]zenbtctypes.PendingMintTransaction, error) {
 	firstPendingID := uint64(0)
 	var err error
 	if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
 		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingStakeTransaction(ctx)
 	} else if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
-		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingMintTransaction(ctx)
+		if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
+		} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingEthMintTransaction(ctx)
+		}
 	}
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -883,7 +887,17 @@ func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenb
 		ctx,
 		k.zenBTCKeeper.GetPendingMintTransactionsStore(),
 		func(tx zenbtctypes.PendingMintTransaction) bool {
-			return tx.Status == status
+			isMatchingStatus := tx.Status == status
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED {
+				return isMatchingStatus
+			}
+			isMatchingNetwork := false
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+				isMatchingNetwork = types.IsSolanaCAIP2(tx.Caip2ChainId)
+			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+				isMatchingNetwork = types.IsEthereumCAIP2(tx.Caip2ChainId)
+			}
+			return isMatchingStatus && isMatchingNetwork
 		},
 		firstPendingID,
 		2,
