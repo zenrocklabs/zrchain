@@ -33,7 +33,7 @@ require (
 	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/tx v0.13.7
 	cosmossdk.io/x/upgrade v0.1.4
-	github.com/CosmWasm/wasmd v0.53.0
+	github.com/CosmWasm/wasmd v0.53.2
 	github.com/CosmWasm/wasmvm/v2 v2.1.5
 	github.com/Layr-Labs/eigensdk-go v0.1.12
 	github.com/beevik/ntp v1.4.3
