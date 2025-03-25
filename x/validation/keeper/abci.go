@@ -16,6 +16,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	solana "github.com/gagliardetto/solana-go/programs/system"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -149,23 +150,37 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
+	var solNonce solana.NonceAccount
+	solNonceRequested, err := k.SolanaNonceRequested.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return VoteExtension{}, err
+		}
+		solNonceRequested = false
+	}
+	if solNonceRequested {
+		solNonce, err = k.GetSolanaNonceAccount(ctx)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+	}
+
 	voteExt := VoteExtension{
-		ZRChainBlockHeight:         height,
-		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
-		BTCUSDPrice:                oracleData.BTCUSDPrice,
-		ETHUSDPrice:                oracleData.ETHUSDPrice,
-		EigenDelegationsHash:       avsDelegationsHash[:],
-		EthBurnEventsHash:          ethBurnEventsHash[:],
-		RedemptionsHash:            redemptionsHash[:],
-		RequestedBtcBlockHeight:    requestedBtcBlockHeight,
-		RequestedBtcHeaderHash:     requestedBtcHeaderHash,
-		LatestBtcBlockHeight:       latestHeader.BlockHeight,
-		LatestBtcHeaderHash:        latestBitcoinHeaderHash[:],
-		EthBlockHeight:             oracleData.EthBlockHeight,
-		EthGasLimit:                oracleData.EthGasLimit,
-		EthBaseFee:                 oracleData.EthBaseFee,
-		EthTipCap:                  oracleData.EthTipCap,
-		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
+		ZRChainBlockHeight:      height,
+		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
+		BTCUSDPrice:             oracleData.BTCUSDPrice,
+		ETHUSDPrice:             oracleData.ETHUSDPrice,
+		EigenDelegationsHash:    avsDelegationsHash[:],
+		EthBurnEventsHash:       ethBurnEventsHash[:],
+		RedemptionsHash:         redemptionsHash[:],
+		RequestedBtcBlockHeight: requestedBtcBlockHeight,
+		RequestedBtcHeaderHash:  requestedBtcHeaderHash,
+		LatestBtcBlockHeight:    latestHeader.BlockHeight,
+		LatestBtcHeaderHash:     latestBitcoinHeaderHash[:],
+		EthBlockHeight:          oracleData.EthBlockHeight,
+		EthGasLimit:             oracleData.EthGasLimit,
+		EthBaseFee:              oracleData.EthBaseFee,
+		EthTipCap:               oracleData.EthTipCap,
 		// SolanaRecentBlockhash:      solanaRecentBlockhash,
 		RequestedStakerNonce:    nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
 		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
@@ -1014,7 +1029,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				return err
 			}
 			if types.IsSolanaCAIP2(tx.Caip2ChainId) {
-				return k.SolanaBlockhashRequested.Set(ctx, true)
+				return k.SolanaNonceRequested.Set(ctx, true)
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}

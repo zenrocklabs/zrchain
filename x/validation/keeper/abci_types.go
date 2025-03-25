@@ -46,7 +46,6 @@ type (
 		RequestedEthMinterNonce     uint64
 		RequestedUnstakerNonce      uint64
 		RequestedCompleterNonce     uint64
-		SolanaLamportsPerSignature  uint64
 		EthBurnEventsHash           []byte
 		RedemptionsHash             []byte
 		ROCKUSDPrice                string
@@ -64,29 +63,28 @@ type (
 	}
 
 	OracleData struct {
-		EigenDelegationsMap        map[string]map[string]*big.Int
-		ValidatorDelegations       []ValidatorDelegations
-		RequestedBtcBlockHeight    int64
-		RequestedBtcBlockHeader    sidecar.BTCBlockHeader
-		LatestBtcBlockHeight       int64
-		LatestBtcBlockHeader       sidecar.BTCBlockHeader
-		EthBlockHeight             uint64
-		EthGasLimit                uint64
-		EthBaseFee                 uint64
-		EthTipCap                  uint64
-		RequestedStakerNonce       uint64
-		RequestedEthMinterNonce    uint64
-		RequestedUnstakerNonce     uint64
-		RequestedCompleterNonce    uint64
-		SolanaLamportsPerSignature uint64
-		EthBurnEvents              []api.BurnEvent
-		Redemptions                []api.Redemption
-		ROCKUSDPrice               string
-		BTCUSDPrice                string
-		ETHUSDPrice                string
-		ConsensusData              abci.ExtendedCommitInfo
-		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
-		RequestedSolMinterNonce    solana.NonceAccount
+		EigenDelegationsMap     map[string]map[string]*big.Int
+		ValidatorDelegations    []ValidatorDelegations
+		RequestedBtcBlockHeight int64
+		RequestedBtcBlockHeader sidecar.BTCBlockHeader
+		LatestBtcBlockHeight    int64
+		LatestBtcBlockHeader    sidecar.BTCBlockHeader
+		EthBlockHeight          uint64
+		EthGasLimit             uint64
+		EthBaseFee              uint64
+		EthTipCap               uint64
+		RequestedStakerNonce    uint64
+		RequestedEthMinterNonce uint64
+		RequestedUnstakerNonce  uint64
+		RequestedCompleterNonce uint64
+		EthBurnEvents           []api.BurnEvent
+		Redemptions             []api.Redemption
+		ROCKUSDPrice            string
+		BTCUSDPrice             string
+		ETHUSDPrice             string
+		ConsensusData           abci.ExtendedCommitInfo
+		FieldVotePowers         map[VoteExtensionField]int64 // Track which fields reached consensus
+		RequestedSolMinterNonce solana.NonceAccount
 		// SolanaRecentBlockhash      string
 	}
 
@@ -161,10 +159,6 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.SolanaLamportsPerSignature == 0 {
-		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
-		invalid = true
-	}
 	if len(ve.EthBurnEventsHash) == 0 {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
@@ -225,8 +219,7 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 func isGasField(field VoteExtensionField) bool {
 	return field == VEFieldEthGasLimit ||
 		field == VEFieldEthBaseFee ||
-		field == VEFieldEthTipCap ||
-		field == VEFieldSolanaLamportsPerSignature
+		field == VEFieldEthTipCap
 	// field == VEFieldSolanaRecentBlockhash
 }
 
@@ -271,7 +264,6 @@ const (
 	VEFieldEthGasLimit
 	VEFieldEthBaseFee
 	VEFieldEthTipCap
-	VEFieldSolanaLamportsPerSignature
 	VEFieldRequestedStakerNonce
 	VEFieldRequestedEthMinterNonce
 	VEFieldRequestedUnstakerNonce
@@ -341,8 +333,6 @@ func (f VoteExtensionField) String() string {
 		return "EthBaseFee"
 	case VEFieldEthTipCap:
 		return "EthTipCap"
-	case VEFieldSolanaLamportsPerSignature:
-		return "SolanaLamportsPerSignature"
 	case VEFieldRequestedStakerNonce:
 		return "RequestedStakerNonce"
 	case VEFieldRequestedEthMinterNonce:
@@ -427,11 +417,6 @@ func initializeFieldHandlers() []FieldHandler {
 			SetValue: func(v any, ve *VoteExtension) { ve.EthTipCap = v.(uint64) },
 		},
 		{
-			Field:    VEFieldSolanaLamportsPerSignature,
-			GetValue: func(ve VoteExtension) any { return ve.SolanaLamportsPerSignature },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolanaLamportsPerSignature = v.(uint64) },
-		},
-		{
 			Field:    VEFieldRequestedStakerNonce,
 			GetValue: func(ve VoteExtension) any { return ve.RequestedStakerNonce },
 			SetValue: func(v any, ve *VoteExtension) { ve.RequestedStakerNonce = v.(uint64) },
@@ -461,11 +446,6 @@ func initializeFieldHandlers() []FieldHandler {
 			GetValue: func(ve VoteExtension) any { return ve.RequestedSolMinterNonceHash },
 			SetValue: func(v any, ve *VoteExtension) { ve.RequestedSolMinterNonceHash = v.([]byte) },
 		},
-		// {
-		// 	Field:    VEFieldSolanaRecentBlockhash,
-		// 	GetValue: func(ve VoteExtension) any { return ve.SolanaRecentBlockhash },
-		// 	SetValue: func(v any, ve *VoteExtension) { ve.SolanaRecentBlockhash = v.(string) },
-		// },
 		// Decimal fields
 		{
 			Field:    VEFieldROCKUSDPrice,
