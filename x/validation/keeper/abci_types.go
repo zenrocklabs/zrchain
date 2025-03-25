@@ -99,6 +99,7 @@ type (
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
+		GetSolanaAccountInfo(ctx context.Context, in *sidecar.SolanaAccountInfoRequest, opts ...grpc.CallOption) (*sidecar.SolanaAccountInfoResponse, error)
 		// GetSolanaRecentBlockhash(ctx context.Context, in *sidecar.SolanaRecentBlockhashRequest, opts ...grpc.CallOption) (*sidecar.SolanaRecentBlockhashResponse, error)
 	}
 )

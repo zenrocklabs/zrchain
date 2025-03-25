@@ -26,6 +26,8 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	bin "github.com/gagliardetto/binary"
+	solana "github.com/gagliardetto/solana-go/programs/system"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -1201,4 +1203,31 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
 	return err
+}
+
+func (k Keeper) GetSolanaNonceAccount(goCtx context.Context) (solana.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	key, err := k.treasuryKeeper.KeyStore.Get(ctx, k.zenBTCKeeper.GetSolMinterKeyID(ctx))
+	if err != nil {
+		return solana.NonceAccount{}, err
+	}
+	publicKey, err := treasurytypes.SolanaPubkey(&key)
+	if err != nil {
+		return solana.NonceAccount{}, err
+	}
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: publicKey.String(),
+	})
+	if err != nil {
+		k.Logger(ctx).Error("failed to get solana account info from sidecar: ", err)
+		return solana.NonceAccount{}, err
+	}
+	nonceAccount := solana.NonceAccount{}
+	decoder := bin.NewBorshDecoder(resp.Account)
+
+	err = nonceAccount.UnmarshalWithDecoder(decoder)
+	if err != nil {
+		return nonceAccount, err
+	}
+	return nonceAccount, err
 }

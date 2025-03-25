@@ -10,6 +10,8 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"google.golang.org/grpc"
 )
 
@@ -153,5 +155,26 @@ func (s *oracleService) GetSolanaRecentBlockhash(ctx context.Context, req *api.S
 	return &api.SolanaRecentBlockhashResponse{
 		Blockhash: blockhash,
 		Slot:      slot,
+	}, nil
+}
+
+func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.SolanaAccountInfoRequest) (*api.SolanaAccountInfoResponse, error) {
+	recipientKey, err := solana.PublicKeyFromBase58(req.PubKey)
+	if err != nil {
+		return nil, err
+	}
+	accountInfo, err := s.oracle.solanaClient.GetAccountInfoWithOpts(
+		ctx,
+		recipientKey,
+		&rpc.GetAccountInfoOpts{
+			Commitment: rpc.CommitmentConfirmed,
+			DataSlice:  nil,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Solana account info: %w", err)
+	}
+	return &api.SolanaAccountInfoResponse{
+		Account: accountInfo.GetBinary(),
 	}, nil
 }

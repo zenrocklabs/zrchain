@@ -164,23 +164,28 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 			return VoteExtension{}, err
 		}
 	}
+	requestedSolMinterNonceHash, err := deriveHash(solNonce)
+	if err != nil {
+		return VoteExtension{}, err
+	}
 
 	voteExt := VoteExtension{
-		ZRChainBlockHeight:      height,
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		BTCUSDPrice:             oracleData.BTCUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		EigenDelegationsHash:    avsDelegationsHash[:],
-		EthBurnEventsHash:       ethBurnEventsHash[:],
-		RedemptionsHash:         redemptionsHash[:],
-		RequestedBtcBlockHeight: requestedBtcBlockHeight,
-		RequestedBtcHeaderHash:  requestedBtcHeaderHash,
-		LatestBtcBlockHeight:    latestHeader.BlockHeight,
-		LatestBtcHeaderHash:     latestBitcoinHeaderHash[:],
-		EthBlockHeight:          oracleData.EthBlockHeight,
-		EthGasLimit:             oracleData.EthGasLimit,
-		EthBaseFee:              oracleData.EthBaseFee,
-		EthTipCap:               oracleData.EthTipCap,
+		ZRChainBlockHeight:          height,
+		ROCKUSDPrice:                oracleData.ROCKUSDPrice,
+		BTCUSDPrice:                 oracleData.BTCUSDPrice,
+		ETHUSDPrice:                 oracleData.ETHUSDPrice,
+		EigenDelegationsHash:        avsDelegationsHash[:],
+		EthBurnEventsHash:           ethBurnEventsHash[:],
+		RedemptionsHash:             redemptionsHash[:],
+		RequestedBtcBlockHeight:     requestedBtcBlockHeight,
+		RequestedBtcHeaderHash:      requestedBtcHeaderHash,
+		LatestBtcBlockHeight:        latestHeader.BlockHeight,
+		LatestBtcHeaderHash:         latestBitcoinHeaderHash[:],
+		EthBlockHeight:              oracleData.EthBlockHeight,
+		EthGasLimit:                 oracleData.EthGasLimit,
+		EthBaseFee:                  oracleData.EthBaseFee,
+		EthTipCap:                   oracleData.EthTipCap,
+		RequestedSolMinterNonceHash: requestedSolMinterNonceHash[:],
 		// SolanaRecentBlockhash:      solanaRecentBlockhash,
 		RequestedStakerNonce:    nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
 		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
@@ -437,9 +442,6 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
 
-	// Collect fields that fail validation to revoke consensus
-	mismatchedFields := make([]VoteExtensionField, 0)
-
 	// Copy latest Bitcoin header data if we have consensus on both height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) &&
 		fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) &&
@@ -478,13 +480,12 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	nonceFields := []struct {
 		field       VoteExtensionField
 		keyID       uint64
-		voteExtVal  uint64
 		oracleField *uint64
 	}{
-		{VEFieldRequestedStakerNonce, k.zenBTCKeeper.GetStakerKeyID(ctx), voteExt.RequestedStakerNonce, &oracleData.RequestedStakerNonce},
-		{VEFieldRequestedEthMinterNonce, k.zenBTCKeeper.GetEthMinterKeyID(ctx), voteExt.RequestedEthMinterNonce, &oracleData.RequestedEthMinterNonce},
-		{VEFieldRequestedUnstakerNonce, k.zenBTCKeeper.GetUnstakerKeyID(ctx), voteExt.RequestedUnstakerNonce, &oracleData.RequestedUnstakerNonce},
-		{VEFieldRequestedCompleterNonce, k.zenBTCKeeper.GetCompleterKeyID(ctx), voteExt.RequestedCompleterNonce, &oracleData.RequestedCompleterNonce},
+		{VEFieldRequestedStakerNonce, k.zenBTCKeeper.GetStakerKeyID(ctx), &oracleData.RequestedStakerNonce},
+		{VEFieldRequestedEthMinterNonce, k.zenBTCKeeper.GetEthMinterKeyID(ctx), &oracleData.RequestedEthMinterNonce},
+		{VEFieldRequestedUnstakerNonce, k.zenBTCKeeper.GetUnstakerKeyID(ctx), &oracleData.RequestedUnstakerNonce},
+		{VEFieldRequestedCompleterNonce, k.zenBTCKeeper.GetCompleterKeyID(ctx), &oracleData.RequestedCompleterNonce},
 	}
 	for _, nf := range nonceFields {
 		if fieldHasConsensus(fieldVotePowers, nf.field) {
@@ -498,21 +499,19 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 				currentNonce, err := k.lookupEthereumNonce(ctx, nf.keyID)
 				if err != nil {
 					k.Logger(ctx).Error("error looking up Ethereum nonce for validation", "keyID", nf.keyID, "error", err)
-				} else if currentNonce != nf.voteExtVal && nf.voteExtVal != 0 {
-					k.Logger(ctx).Warn("nonce mismatch for key",
-						"keyID", nf.keyID,
-						"voteExt", nf.voteExtVal,
-						"current", currentNonce)
-					mismatchedFields = append(mismatchedFields, nf.field)
 				}
+				*nf.oracleField = currentNonce
 			}
-
-			*nf.oracleField = nf.voteExtVal
 		}
 	}
 
-	// Process mismatched fields
-	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedSolMinterNonceHash) {
+		solanaNonce, err := k.GetSolanaNonceAccount(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching Solana nonce account: %w", err)
+		}
+		oracleData.RequestedSolMinterNonce = solanaNonce
+	}
 
 	// Call the standard validateOracleData to check other fields
 	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
