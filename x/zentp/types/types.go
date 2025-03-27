@@ -1,6 +1,6 @@
 package types
 
-import treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+import treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 func Caip2ToSolananNetwork(caip string) treasurytypes.SolanaNetworkType {
 	switch caip {

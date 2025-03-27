@@ -8304,6 +8304,8 @@ func (x *QueryPoliciesByCreatorResponse) GetPagination() *v1beta1.PageResponse {
 	return nil
 }
 
+// QueryActionDetailsByIdRequest is request type for the
+// Query/ActionDetailsById RPC method.
 type QueryActionDetailsByIdRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8339,6 +8341,8 @@ func (x *QueryActionDetailsByIdRequest) GetId() uint64 {
 	return 0
 }
 
+// QueryActionDetailsByIdResponse is response type for the
+// Query/ActionDetailsById RPC method.
 type QueryActionDetailsByIdResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

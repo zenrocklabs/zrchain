@@ -8,8 +8,8 @@ import (
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/testutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/testutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

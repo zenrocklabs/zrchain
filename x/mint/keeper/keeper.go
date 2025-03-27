@@ -9,8 +9,8 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -138,6 +138,14 @@ func (k Keeper) ClaimKeyringFees(ctx context.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyKeyringRewards, keyringRewards.String()),
+		),
+	)
+
 	return keyringRewards, nil
 }
 
@@ -153,6 +161,14 @@ func (k Keeper) ClaimTxFees(ctx context.Context) (sdk.Coin, error) {
 	if err != nil {
 		return sdk.Coin{}, err
 	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyTxFees, feesAmount.String()),
+		),
+	)
 
 	return feesAmount, nil
 }
@@ -177,6 +193,15 @@ func (k Keeper) BaseDistribution(ctx context.Context, totalRewards sdk.Coin) (sd
 	}
 
 	totalRewards.Amount = totalRewards.Amount.Sub(protocolWalletPortion).Sub(burnAmount)
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyBurnAmountRewards, burnAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyProtocolWaleltRatio, protocolWalletPortion.String()),
+		),
+	)
 
 	return totalRewards, nil
 }
@@ -205,6 +230,14 @@ func (k Keeper) CalculateTopUp(ctx context.Context, stakingRewards sdk.Coin, tot
 	if topUpAmount.IsNegative() {
 		return sdk.Coin{}, fmt.Errorf("topUpAmount cannot be negative: %v", topUpAmount)
 	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyTopUpAmount, topUpAmount.String()),
+		),
+	)
 
 	return sdk.NewCoin(stakingRewards.Denom, topUpAmount), nil
 }
@@ -239,6 +272,14 @@ func (k Keeper) CalculateExcess(ctx context.Context, totalBlockStakingReward sdk
 		return sdk.Coin{}, fmt.Errorf("excess cannot be negative: %v", excess)
 	}
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeySurplusAmount, excess.String()),
+		),
+	)
+
 	return sdk.NewCoin(totalBlockStakingReward.Denom, excess), nil
 }
 
@@ -251,6 +292,13 @@ func (k Keeper) AdditionalBurn(ctx context.Context, excess sdk.Coin) error {
 	burnAmount := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
 	excess.Amount = excess.Amount.Sub(burnAmount)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyAdditionalBurnAmountRewards, burnAmount.String()),
+		),
+	)
 	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount)))
 }
 
@@ -269,6 +317,14 @@ func (k Keeper) AdditionalMpcRewards(ctx context.Context, excess sdk.Coin) error
 	mpcRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
 	excess.Amount = excess.Amount.Sub(mpcRewards)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyAdditionalMpcRewards, mpcRewards.String()),
+		),
+	)
+
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards)))
 }
 
@@ -280,6 +336,14 @@ func (k Keeper) AdditionalStakingRewards(ctx context.Context, excess sdk.Coin) e
 
 	stakingRewards := math.LegacyNewDecFromInt(excess.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
 	excess.Amount = excess.Amount.Sub(stakingRewards)
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyAdditionalStakingRewards, stakingRewards.String()),
+		),
+	)
 
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards)))
 }

@@ -3,7 +3,7 @@ package zentp
 import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 
-	modulev1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/zentp"
+	modulev1 "github.com/Zenrock-Foundation/zrchain/v6/api/zrchain/zentp"
 )
 
 // AutoCLIOptions implements the autocli.HasAutoCLIConfig interface.

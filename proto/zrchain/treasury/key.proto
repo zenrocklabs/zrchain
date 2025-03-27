@@ -3,7 +3,7 @@ package zrchain.treasury;
 
 import "zrchain/treasury/wallet.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
 // KeyRequestStatus indicates the status of a key request.
 // A request starts as "pending", waiting to be picked up. Then it can move to

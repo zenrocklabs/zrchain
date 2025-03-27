@@ -9,7 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 )
 
 func (k Keeper) CreateKeyring(ctx sdk.Context, keyring *types.Keyring) (string, error) {

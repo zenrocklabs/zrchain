@@ -3,9 +3,12 @@ package types
 import (
 	"context"
 
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	idtypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -16,9 +19,9 @@ type AccountKeeper interface {
 }
 
 type IdentityKeeper interface {
-	GetWorkspace(ctx sdk.Context, addr string) *idtypes.Workspace
-	GetKeyring(ctx sdk.Context, addr string) *idtypes.Keyring
-	GetZrSignWorkspace(goCtx context.Context, ethAddress, walletType string) (string, error)
+	GetWorkspace(ctx sdk.Context, id string) (*idtypes.Workspace, error)
+	GetKeyring(ctx sdk.Context, addr string) (*idtypes.Keyring, error)
+	GetZrSignWorkspace(goCtx context.Context, ethAddress string, walletType uint64) (string, error)
 	GetZrSignWorkspaces(goCtx context.Context, ethAddress, walletType string) (map[string]string, error)
 }
 
@@ -36,5 +39,16 @@ type ParamSubspace interface {
 }
 
 type PolicyKeeper interface {
-	policykeeper.ExportedKeeper
+	AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, btl uint64, policyData map[string][]byte, wsOwners []string) (*policytypes.Action, error)
+	GetPolicyParticipants(ctx context.Context, policyId uint64) (map[string]struct{}, error)
+	PolicyMembersAreOwners(ctx context.Context, policyId uint64, wsOwners []string) error
+	GetPolicy(ctx sdk.Context, policyId uint64) (*policytypes.Policy, error)
+	SetAction(ctx sdk.Context, action *policytypes.Action) error
+	PolicyForAction(ctx sdk.Context, act *policytypes.Action) (policy.Policy, error)
+	ActionHandler(actionType string) (func(sdk.Context, *policytypes.Action) (any, error), bool)
+	GeneratorHandler(reqType string) (func(sdk.Context, *cdctypes.Any) (policy.Policy, error), bool)
+	Unpack(policyPb *policytypes.Policy) (policy.Policy, error)
+	Codec() codec.BinaryCodec
+	RegisterActionHandler(actionType string, f func(sdk.Context, *policytypes.Action) (any, error))
+	RegisterPolicyGeneratorHandler(reqType string, f func(sdk.Context, *cdctypes.Any) (policy.Policy, error))
 }

@@ -4,11 +4,11 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -24,7 +24,7 @@ func (k msgServer) NewChildWorkspace(goCtx context.Context, msg *types.MsgNewChi
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "creator %s is not an owner of the workspace %s", msg.Creator, msg.ParentWorkspaceAddr)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, parent.AdminPolicyId, msg.Btl, nil, parent.Owners)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (k msgServer) NewChildWorkspacePolicyGenerator(ctx sdk.Context, msg *types.
 
 func (k msgServer) NewChildWorkspaceActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewChildWorkspaceResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

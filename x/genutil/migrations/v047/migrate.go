@@ -13,7 +13,7 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	groupv2 "github.com/cosmos/cosmos-sdk/x/group/migrations/v2"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
 )
 
 // Migrate migrates exported state from v0.46 to a v0.47 genesis state.

@@ -629,6 +629,7 @@ func (m *MsgRemoveSignMethodResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRemoveSignMethodResponse proto.InternalMessageInfo
 
+// MsgAddMultiGrant defines the Msg/AddMultiGrant request type.
 type MsgAddMultiGrant struct {
 	Creator string   `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Grantee string   `protobuf:"bytes,2,opt,name=grantee,proto3" json:"grantee,omitempty"`
@@ -689,6 +690,8 @@ func (m *MsgAddMultiGrant) GetMsgs() []string {
 	return nil
 }
 
+// MsgAddMultiGrantResponse defines the response structure for executing a
+// MsgAddMultiGrant message.
 type MsgAddMultiGrantResponse struct {
 }
 
@@ -725,6 +728,7 @@ func (m *MsgAddMultiGrantResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddMultiGrantResponse proto.InternalMessageInfo
 
+// MsgRemoveMultiGrant defines the Msg/RemoveMultiGrant request type.
 type MsgRemoveMultiGrant struct {
 	Creator string   `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Grantee string   `protobuf:"bytes,2,opt,name=grantee,proto3" json:"grantee,omitempty"`
@@ -785,6 +789,8 @@ func (m *MsgRemoveMultiGrant) GetMsgs() []string {
 	return nil
 }
 
+// MsgRemoveMultiGrantResponse defines the response structure for executing a
+// MsgRemoveMultiGrant message.
 type MsgRemoveMultiGrantResponse struct {
 }
 

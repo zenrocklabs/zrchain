@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock"
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/rock_spl_token"
-	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gagliardetto/solana-go"
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"

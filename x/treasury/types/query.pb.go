@@ -1163,6 +1163,8 @@ func (m *QuerySignTransactionRequestByIDResponse) GetSignTransactionRequest() *S
 	return nil
 }
 
+// QueryZrSignKeysRequest is request type for the
+// Query/ZrSignKeysRequest RPC method.
 type QueryZrSignKeysRequest struct {
 	Address    string             `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	WalletType string             `protobuf:"bytes,2,opt,name=walletType,proto3" json:"walletType,omitempty"`
@@ -1223,6 +1225,8 @@ func (m *QueryZrSignKeysRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
+// QueryZrSignKeysResponse is response type for the
+// Query/ZrSignKeysResponse RPC method.
 type ZrSignKeyEntry struct {
 	WalletType string `protobuf:"bytes,1,opt,name=walletType,proto3" json:"walletType,omitempty"`
 	Address    string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
@@ -1291,6 +1295,8 @@ func (m *ZrSignKeyEntry) GetId() uint64 {
 	return 0
 }
 
+// QueryZrSignKeysResponse is response type for the
+// Query/ZrSignKeysResponse RPC method.
 type QueryZrSignKeysResponse struct {
 	Keys       []*ZrSignKeyEntry   `protobuf:"bytes,1,rep,name=Keys,proto3" json:"Keys,omitempty"`
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -1343,6 +1349,8 @@ func (m *QueryZrSignKeysResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryKeyByAddressRequest is request type for the
+// Query/KeyByAddressRequest RPC method.
 type QueryKeyByAddressRequest struct {
 	Address     string     `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	KeyringAddr string     `protobuf:"bytes,2,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
@@ -1419,6 +1427,8 @@ func (m *QueryKeyByAddressRequest) GetPrefixes() []string {
 	return nil
 }
 
+// QueryKeyByAddressResponse is response type for the
+// Query/KeyByAddressResponse RPC method.
 type QueryKeyByAddressResponse struct {
 	Response *KeyAndWalletResponse `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
 }

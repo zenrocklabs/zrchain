@@ -5,11 +5,11 @@ import (
 	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
-	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -30,7 +30,7 @@ func (k msgServer) AddWorkspaceOwner(goCtx context.Context, msg *types.MsgAddWor
 		return nil, errorsmod.Wrapf(types.ErrInvalidArgument, "new owner %s is already an owner of the workspace", msg.Creator)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, ws.AdminPolicyId, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (k msgServer) AddOwnerPolicyGenerator(ctx sdk.Context, msg *types.MsgAddWor
 
 func (k msgServer) AddOwnerActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgAddWorkspaceOwnerResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

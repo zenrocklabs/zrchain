@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
 func TestMsgUpdateParams(t *testing.T) {

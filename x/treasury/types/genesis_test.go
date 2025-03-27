@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
 )

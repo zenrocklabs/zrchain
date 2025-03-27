@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -57,9 +57,9 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		SolanaLamportsPerSignature: currentState.SolanaLamportsPerSignature,
 		EthBurnEvents:              currentState.EthBurnEvents,
 		Redemptions:                currentState.Redemptions,
-		ROCKUSDPrice:               fmt.Sprint(currentState.ROCKUSDPrice),
-		BTCUSDPrice:                fmt.Sprint(currentState.BTCUSDPrice),
-		ETHUSDPrice:                fmt.Sprint(currentState.ETHUSDPrice),
+		ROCKUSDPrice:               currentState.ROCKUSDPrice.String(),
+		BTCUSDPrice:                currentState.BTCUSDPrice.String(),
+		ETHUSDPrice:                currentState.ETHUSDPrice.String(),
 		SolanaRockMintEvents:       currentState.SolanaRockMintEvents,
 	}, nil
 }
@@ -84,9 +84,9 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		SolanaLamportsPerSignature: state.SolanaLamportsPerSignature,
 		EthBurnEvents:              state.EthBurnEvents,
 		Redemptions:                state.Redemptions,
-		ROCKUSDPrice:               fmt.Sprint(state.ROCKUSDPrice),
-		BTCUSDPrice:                fmt.Sprint(state.BTCUSDPrice),
-		ETHUSDPrice:                fmt.Sprint(state.ETHUSDPrice),
+		ROCKUSDPrice:               state.ROCKUSDPrice.String(),
+		BTCUSDPrice:                state.BTCUSDPrice.String(),
+		ETHUSDPrice:                state.ETHUSDPrice.String(),
 		SolanaRockMintEvents:       state.SolanaRockMintEvents,
 	}, nil
 }
@@ -148,6 +148,18 @@ func (s *oracleService) GetLatestEthereumNonceForAccount(ctx context.Context, re
 	}, nil
 }
 
+func (s *oracleService) GetSolanaRecentBlockhash(ctx context.Context, req *api.SolanaRecentBlockhashRequest) (*api.SolanaRecentBlockhashResponse, error) {
+	blockhash, slot, err := s.oracle.getSolanaRecentBlockhash(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent blockhash: %w", err)
+	}
+
+	return &api.SolanaRecentBlockhashResponse{
+		Blockhash: blockhash,
+		Slot:      slot,
+	}, nil
+}
+
 func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.SolanaAccountInfoRequest) (*api.SolanaAccountInfoResponse, error) {
 	recipientKey, err := solana.PublicKeyFromBase58(req.PubKey)
 	if err != nil {
@@ -162,10 +174,10 @@ func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.Solan
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get Solana account info: %w", err)
 	}
-	b := accountInfo.GetBinary()
 	return &api.SolanaAccountInfoResponse{
-		Account: b,
+		Account: accountInfo.GetBinary(),
 	}, nil
 }
+

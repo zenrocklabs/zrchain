@@ -9,7 +9,7 @@ import "gogoproto/gogo.proto";
 import "zrchain/policy/params.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -121,6 +121,7 @@ message MsgRemoveSignMethod {
 // MsgRemoveSignMethod message.
 message MsgRemoveSignMethodResponse {}
 
+// MsgAddMultiGrant defines the Msg/AddMultiGrant request type.
 message MsgAddMultiGrant {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -128,8 +129,11 @@ message MsgAddMultiGrant {
   repeated string msgs = 3;
 }
 
+// MsgAddMultiGrantResponse defines the response structure for executing a
+// MsgAddMultiGrant message.
 message MsgAddMultiGrantResponse {}
 
+// MsgRemoveMultiGrant defines the Msg/RemoveMultiGrant request type.
 message MsgRemoveMultiGrant {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
@@ -137,4 +141,6 @@ message MsgRemoveMultiGrant {
   repeated string msgs = 3;
 }
 
+// MsgRemoveMultiGrantResponse defines the response structure for executing a
+// MsgRemoveMultiGrant message. 
 message MsgRemoveMultiGrantResponse {}

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 

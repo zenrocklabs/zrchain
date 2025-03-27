@@ -10,12 +10,13 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
+	solana "github.com/gagliardetto/solana-go/programs/system"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -164,10 +165,6 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthGasLimit is 0")
 		invalid = true
 	}
-	if ve.SolanaLamportsPerSignature == 0 {
-		logger.Error("invalid vote extension: SolanaLamportsPerSignature is 0")
-		invalid = true
-	}
 	if len(ve.EthBurnEventsHash) == 0 {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
@@ -176,16 +173,16 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
 	}
-	if ve.ROCKUSDPrice.IsNil() || ve.ROCKUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ROCKUSDPrice is nil or zero")
+	if ve.ROCKUSDPrice == "" {
+		logger.Error("invalid vote extension: ROCKUSDPrice is empty")
 		invalid = true
 	}
-	if ve.BTCUSDPrice.IsNil() || ve.BTCUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: BTCUSDPrice is nil or zero")
+	if ve.BTCUSDPrice == "" {
+		logger.Error("invalid vote extension: BTCUSDPrice is empty")
 		invalid = true
 	}
-	if ve.ETHUSDPrice.IsNil() || ve.ETHUSDPrice.IsZero() {
-		logger.Error("invalid vote extension: ETHUSDPrice is nil or zero")
+	if ve.ETHUSDPrice == "" {
+		logger.Error("invalid vote extension: ETHUSDPrice is empty")
 		invalid = true
 	}
 	if ve.LatestBtcBlockHeight == 0 {
@@ -196,6 +193,14 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
 		invalid = true
 	}
+	//if ve.RequestedSolMinterNonceHash == nil {
+	//	logger.Error("invalid vote extension: RequestedSolMinterNonceHash is empty")
+	//	invalid = true
+	//}
+	// if ve.SolanaRecentBlockhash == "" {
+	// 	logger.Error("invalid vote extension: SolanaRecentBlockhash is empty")
+	// 	invalid = true
+	// }
 
 	return invalid
 }
@@ -220,14 +225,35 @@ func HasRequiredGasFields(fieldVotePowers map[VoteExtensionField]int64) bool {
 func isGasField(field VoteExtensionField) bool {
 	return field == VEFieldEthGasLimit ||
 		field == VEFieldEthBaseFee ||
-		field == VEFieldEthTipCap ||
-		field == VEFieldSolanaLamportsPerSignature
+		field == VEFieldEthTipCap
+	// field == VEFieldSolanaRecentBlockhash
 }
 
 // fieldHasConsensus checks if the specific field has reached consensus
 func fieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, field VoteExtensionField) bool {
 	_, ok := fieldVotePowers[field]
 	return ok
+}
+
+// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
+func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
+	var missingConsensus []VoteExtensionField
+	for _, field := range fields {
+		if !fieldHasConsensus(fieldVotePowers, field) {
+			missingConsensus = append(missingConsensus, field)
+		}
+	}
+	return missingConsensus
+}
+
+// anyFieldHasConsensus checks if at least one of the specified fields has consensus
+func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
+	for _, field := range fields {
+		if fieldHasConsensus(fieldVotePowers, field) {
+			return true
+		}
+	}
+	return false
 }
 
 // VoteExtensionField defines a type-safe identifier for vote extension fields
@@ -244,7 +270,6 @@ const (
 	VEFieldEthGasLimit
 	VEFieldEthBaseFee
 	VEFieldEthTipCap
-	VEFieldSolanaLamportsPerSignature
 	VEFieldRequestedStakerNonce
 	VEFieldRequestedEthMinterNonce
 	VEFieldRequestedUnstakerNonce
@@ -272,7 +297,7 @@ type fieldVote struct {
 	votePower int64
 }
 
-// genericGetKey marshals a value to JSON for use as a map key
+// genericGetKey marshals a value to bytes for use as a map key
 func genericGetKey(value any) string {
 	if value == nil {
 		return ""
@@ -287,7 +312,7 @@ func genericGetKey(value any) string {
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		// Fall back to string representation if marshaling fails
-		return fmt.Sprintf("%v", value)
+		return fmt.Sprintf("%+v", value)
 	}
 	return string(bytes)
 }
@@ -315,8 +340,6 @@ func (f VoteExtensionField) String() string {
 		return "EthBaseFee"
 	case VEFieldEthTipCap:
 		return "EthTipCap"
-	case VEFieldSolanaLamportsPerSignature:
-		return "SolanaLamportsPerSignature"
 	case VEFieldRequestedStakerNonce:
 		return "RequestedStakerNonce"
 	case VEFieldRequestedEthMinterNonce:
@@ -418,11 +441,6 @@ func initializeFieldHandlers() []FieldHandler {
 			SetValue: func(v any, ve *VoteExtension) { ve.EthTipCap = v.(uint64) },
 		},
 		{
-			Field:    VEFieldSolanaLamportsPerSignature,
-			GetValue: func(ve VoteExtension) any { return ve.SolanaLamportsPerSignature },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolanaLamportsPerSignature = v.(uint64) },
-		},
-		{
 			Field:    VEFieldRequestedStakerNonce,
 			GetValue: func(ve VoteExtension) any { return ve.RequestedStakerNonce },
 			SetValue: func(v any, ve *VoteExtension) { ve.RequestedStakerNonce = v.(uint64) },
@@ -452,17 +470,17 @@ func initializeFieldHandlers() []FieldHandler {
 		{
 			Field:    VEFieldROCKUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ROCKUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ROCKUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldBTCUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.BTCUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.BTCUSDPrice = v.(string) },
 		},
 		{
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
-			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(math.LegacyDec) },
+			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
 		},
 	}
 }

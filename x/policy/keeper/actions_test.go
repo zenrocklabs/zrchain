@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +72,7 @@ func Test_msgServer_AddAction_Btl(t *testing.T) {
 			}
 			policy.InitGenesis(ctx, *pk, polGenesis)
 
-			res, err := pk.AddAction(ctx, "some-creator", &types.MsgNewPolicy{}, 1, tt.msgBtl, nil)
+			res, err := pk.AddAction(ctx, "some-creator", &types.MsgNewPolicy{}, 1, tt.msgBtl, nil, []string{"some-creator"})
 
 			require.Nil(t, err)
 			require.NotNil(t, res)

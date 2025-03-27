@@ -2,11 +2,11 @@ package v3
 
 import (
 
-	// "github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
+	// "github.com/Zenrock-Foundation/zrchain/v6/x/mint/exported"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

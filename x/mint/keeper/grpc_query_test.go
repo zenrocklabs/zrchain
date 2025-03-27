@@ -9,10 +9,10 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/keeper"
-	minttestutil "github.com/Zenrock-Foundation/zrchain/v5/x/mint/testutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/keeper"
+	minttestutil "github.com/Zenrock-Foundation/zrchain/v6/x/mint/testutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"

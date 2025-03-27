@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,11 +11,10 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/rock_spl_token"
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
-	neutrino "github.com/Zenrock-Foundation/zrchain/v5/sidecar/neutrino"
-	"github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum"
@@ -27,12 +25,18 @@ import (
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v5/x/validation/keeper"
-	"github.com/gagliardetto/solana-go"
-	solrpc "github.com/gagliardetto/solana-go/rpc"
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
-func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrinoServer *neutrino.NeutrinoServer, solanaClient *solrpc.Client, zrChainQueryClient *client.QueryClient, ticker *time.Ticker) *Oracle {
+func NewOracle(
+	config sidecartypes.Config,
+	ethClient *ethclient.Client,
+	neutrinoServer *neutrino.NeutrinoServer,
+	solanaClient *solana.Client,
+	zrChainQueryClient *client.QueryClient,
+	ticker *time.Ticker,
+) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
 		Config:             config,
@@ -54,24 +58,28 @@ func NewOracle(config sidecartypes.Config, ethClient *ethclient.Client, neutrino
 }
 
 func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
-	serviceManager, err := middleware.NewContractZrServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
-		common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network]), o.EthClient,
+	serviceManager, err := middleware.NewContractZrServiceManager(
+		common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]),
+		o.EthClient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	tempEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
+	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
+		o.EthClient,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create contract instance: %w", err)
+	}
+	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-o.mainLoopTicker.C:
-			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, tempEthClient); err != nil {
+			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
 			o.cleanUpEthBurnEvents()
@@ -104,14 +112,15 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	type oracleStateUpdate struct {
-		eigenDelegations  map[string]map[string]*big.Int
-		redemptions       []api.Redemption
-		suggestedTip      *big.Int
-		estimatedGas      uint64
-		ethBurnEvents     []api.BurnEvent
-		ROCKUSDPrice      math.LegacyDec
-		BTCUSDPrice       math.LegacyDec
-		ETHUSDPrice       math.LegacyDec
+		eigenDelegations map[string]map[string]*big.Int
+		redemptions      []api.Redemption
+		suggestedTip     *big.Int
+		estimatedGas     uint64
+		ethBurnEvents    []api.BurnEvent
+		ROCKUSDPrice     math.LegacyDec
+		BTCUSDPrice      math.LegacyDec
+		ETHUSDPrice      math.LegacyDec
+		solanaLamportsPerSignature uint64
 		SolRockMintEvents []api.SolanaRockMintEvent
 	}
 
@@ -161,6 +170,20 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch Solana lamports per signature
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaLamportsPerSignature = lamportsPerSignature
+		updateMutex.Unlock()
+	}()
+
 	// Estimate gas for stake call
 	wg.Add(1)
 	go func() {
@@ -170,9 +193,9 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to encode stake call data: %w", err)
 			return
 		}
-		addr := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Controller[o.Config.Network])
+		addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
 		estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-			From: common.HexToAddress("0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe"),
+			From: common.HexToAddress(sidecartypes.WhitelistedRoleAddresses[o.Config.Network]),
 			To:   &addr,
 			Data: stakeCallData,
 		})
@@ -264,6 +287,7 @@ func (o *Oracle) fetchAndProcessState(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		// TODO: put id in config
 		events, err := o.getSolROCKMints("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
@@ -294,7 +318,7 @@ func (o *Oracle) fetchAndProcessState(
 		EthGasLimit:                update.estimatedGas,
 		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
 		EthTipCap:                  update.suggestedTip.Uint64(),
-		SolanaLamportsPerSignature: 5000, // TODO: update me
+		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                update.redemptions,
@@ -438,7 +462,7 @@ func (o *Oracle) cleanUpEthBurnEvents() {
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
 func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
-	tokenAddress := common.HexToAddress(o.Config.EthOracle.ContractAddrs.ZenBTC.Token.Ethereum[o.Config.Network])
+	tokenAddress := common.HexToAddress(sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network])
 
 	// Create a new instance of the ZenBTC token contract
 	zenBTCInstance, err := zenbtc.NewZenBTCFilterer(tokenAddress, o.EthClient)
@@ -563,4 +587,62 @@ func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, e
 		}
 	}
 	return mintEvents, nil
+}
+
+// getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
+// (i.e., a block height that's a multiple of the rounding factor) and returns both the blockhash and slot
+func (o *Oracle) getSolanaRecentBlockhash(ctx context.Context) (string, uint64, error) {
+	blockhash, slot, _, err := o.getSolanaBlockInfoAtRoundedSlot(ctx)
+	if err != nil {
+		return "", 0, err
+	}
+	return blockhash, slot, nil
+}
+
+// getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
+// Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
+func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
+	_, _, feeCalculator, err := o.getSolanaBlockInfoAtRoundedSlot(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return feeCalculator, nil
+}
+
+// getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
+// Returns blockhash string, slot number, and lamports per signature
+func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
+	// Get the latest block height
+	resp, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
+	if err != nil {
+		return "", 0, 0, fmt.Errorf("failed to get recent blockhash: %w", err)
+	}
+
+	// Default values from the recent block
+	recentBlockhash := resp.Value.Blockhash.String()
+	lamportsPerSignature := resp.Value.FeeCalculator.LamportsPerSignature
+
+	// Get the slot for the recent blockhash
+	slot, err := o.solanaClient.GetSlot(ctx, solana.CommitmentFinalized)
+	if err != nil {
+		return recentBlockhash, slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
+	}
+
+	// Calculate the nearest slot that is divisible by the rounding factor
+	targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
+
+	// If we're at slot 0, use the current slot's blockhash
+	if targetSlot == 0 {
+		return recentBlockhash, slot, lamportsPerSignature, nil
+	}
+
+	// Get the blockhash for the target slot
+	blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
+	if err != nil {
+		// Fallback to the recent blockhash if we can't get the target block
+		log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
+		return recentBlockhash, slot, lamportsPerSignature, nil
+	}
+
+	return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
 }

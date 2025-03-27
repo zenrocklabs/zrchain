@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
-	v2 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v2"
-	v3 "github.com/Zenrock-Foundation/zrchain/v5/x/mint/migrations/v3"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/exported"
+	v2 "github.com/Zenrock-Foundation/zrchain/v6/x/mint/migrations/v2"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/mint/migrations/v3"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"

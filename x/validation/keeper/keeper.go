@@ -15,11 +15,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/app/params"
-	"github.com/Zenrock-Foundation/zrchain/v5/shared"
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	"github.com/Zenrock-Foundation/zrchain/v6/shared"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 

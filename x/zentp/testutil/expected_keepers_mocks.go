@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	types "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	types0 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )

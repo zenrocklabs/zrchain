@@ -7,10 +7,10 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
+	identitykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 )
 
 type keyringByAddressQuery struct {

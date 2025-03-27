@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 func (k Keeper) GetAVSRewardsRate(ctx context.Context) math.LegacyDec {
@@ -26,7 +26,7 @@ func (k Keeper) GetBlockTime(ctx context.Context) int64 {
 func (k Keeper) GetStakeableAssets(ctx context.Context) []*types.AssetData {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {
-		return types.DefaultStakeableAssets
+		return types.GetDefaultStakeableAssets(ctx)
 	}
 	return params.StakeableAssets
 }

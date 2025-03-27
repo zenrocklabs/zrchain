@@ -3,8 +3,8 @@ package v2
 import (
 	storetypes "cosmossdk.io/core/store"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/exported"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/exported"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

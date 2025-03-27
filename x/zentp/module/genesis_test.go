@@ -3,10 +3,10 @@ package zentp_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/testutil/nullify"
-	zentp "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
+	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/stretchr/testify/require"
 )
 

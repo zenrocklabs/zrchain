@@ -1,7 +1,7 @@
 package solrock
 
 import (
-	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/gagliardetto/solana-go"
 )
 

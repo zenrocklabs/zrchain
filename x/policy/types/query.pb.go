@@ -686,6 +686,8 @@ func (m *QueryPoliciesByCreatorResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryActionDetailsByIdRequest is request type for the
+// Query/ActionDetailsById RPC method.
 type QueryActionDetailsByIdRequest struct {
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
@@ -730,6 +732,8 @@ func (m *QueryActionDetailsByIdRequest) GetId() uint64 {
 	return 0
 }
 
+// QueryActionDetailsByIdResponse is response type for the
+// Query/ActionDetailsById RPC method.
 type QueryActionDetailsByIdResponse struct {
 	Id               uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Action           *Action  `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`

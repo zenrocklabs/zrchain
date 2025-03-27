@@ -16,10 +16,10 @@ import (
 
 	// this line is used by starport scaffolding # 1
 
-	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
-	policy "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
+	policy "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 var (
@@ -35,7 +35,7 @@ var (
 	_ porttypes.IBCModule       = IBCModule{}
 )
 
-const consensusVersion = 2
+const consensusVersion = 3
 
 // ----------------------------------------------------------------------------
 // AppModuleBasic
@@ -128,6 +128,10 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	migrator := keeper.NewMigrator(am.keeper)
 	if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
 		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
+	}
+
+	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
 	}
 }
 

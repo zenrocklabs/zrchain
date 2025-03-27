@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	treasury_types "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	treasury_types "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

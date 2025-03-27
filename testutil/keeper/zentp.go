@@ -17,8 +17,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
 func ZentpKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {

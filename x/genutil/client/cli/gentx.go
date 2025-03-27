@@ -24,9 +24,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/client/cli"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/client/cli"
 )
 
 // GenTxCmd builds the application's gentx command.

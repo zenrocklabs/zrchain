@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/identity/params.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -69,7 +69,7 @@ service Msg {
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) =
-      "github.com/Zenrock-Foundation/zrchain/v5/x/identity/MsgUpdateParams";
+      "github.com/Zenrock-Foundation/zrchain/v6/x/identity/MsgUpdateParams";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).

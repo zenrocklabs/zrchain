@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 )
 
 func (k Keeper) Actions(goCtx context.Context, req *types.QueryActionsRequest) (*types.QueryActionsResponse, error) {
@@ -22,7 +22,7 @@ func (k Keeper) Actions(goCtx context.Context, req *types.QueryActionsRequest) (
 		req.Pagination,
 		func(key uint64, value types.Action) (bool, error) {
 			if req.Address != "" {
-				pol, err := PolicyForAction(sdk.UnwrapSDKContext(goCtx), &k, &value)
+				pol, err := k.PolicyForAction(sdk.UnwrapSDKContext(goCtx), &value)
 				if err != nil {
 					return false, nil
 				}

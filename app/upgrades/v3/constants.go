@@ -2,7 +2,7 @@ package v3
 
 import (
 	storetypes "cosmossdk.io/store/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/app/upgrades"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades"
 )
 
 const UpgradeName = "v3"

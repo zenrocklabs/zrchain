@@ -3,12 +3,14 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/Zenrock-Foundation/zrchain/v5/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v5/x/identity/module"
-	idTypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	treasury "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
+	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	policy "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,6 +19,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 	type args struct {
 		keyring   *idTypes.Keyring
 		workspace *idTypes.Workspace
+		policy    *policytypes.Policy
 		msg       *types.MsgNewKeyRequest
 	}
 	tests := []struct {
@@ -31,6 +34,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "ecdsa", 1000, 0, 0),
 			},
 			wantKeyRequest: &types.KeyRequest{
@@ -49,6 +53,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "ed25519", 1000, 0, 0),
 			},
 			wantKeyRequest: &types.KeyRequest{
@@ -67,6 +72,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "ed25519", 1000, 0, 10),
 			},
 			wantKeyRequest: &types.KeyRequest{
@@ -85,6 +91,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "bitcoin", 1000, 0, 10),
 			},
 			wantKeyRequest: &types.KeyRequest{
@@ -99,10 +106,59 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			want: &types.MsgNewKeyRequestResponse{KeyReqId: 1},
 		},
 		{
+			name: "PASS: policy participant makes request",
+			args: args{
+				keyring: &defaultKr,
+				workspace: &idTypes.Workspace{
+					Address:      "workspace14a2hpadpsy9h4auve2z8lw",
+					Creator:      "testOwner",
+					Owners:       []string{"testOwner", "testOwner2"},
+					SignPolicyId: 1,
+				},
+				policy: &policy1,
+				msg:    types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "bitcoin", 1000, 0, 10),
+			},
+			wantKeyRequest: &types.KeyRequest{
+				Id:            1,
+				Creator:       "testOwner",
+				WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:       types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
+				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING,
+				MpcBtl:        20,
+			},
+			want: &types.MsgNewKeyRequestResponse{KeyReqId: 1},
+		},
+		{
+			name: "PASS: no policy participant but workspace owner makes request",
+			args: args{
+				keyring: &defaultKr,
+				workspace: &idTypes.Workspace{
+					Address:      "workspace14a2hpadpsy9h4auve2z8lw",
+					Creator:      "testOwner",
+					Owners:       []string{"testOwner", "testOwner2"},
+					SignPolicyId: 2,
+				},
+				policy: &policy2,
+				msg:    types.NewMsgNewKeyRequest("testOwner2", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "bitcoin", 1000, 0, 10),
+			},
+			wantKeyRequest: &types.KeyRequest{
+				Id:            1,
+				Creator:       "testOwner2",
+				WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:       types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
+				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING,
+				MpcBtl:        20,
+			},
+			want: &types.MsgNewKeyRequestResponse{KeyReqId: 1},
+		},
+		{
 			name: "FAIL: workspace not found",
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "notAWorkspace", "keyring1pfnq7r04rept47gaf5cpdew2", "ecdsa", 1000, 0, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
@@ -113,6 +169,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			args: args{
 				keyring:   &defaultKr,
 				workspace: &defaultWs,
+				policy:    &policy2,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "ecdsa", 1000, 1, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
@@ -132,6 +189,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 					IsActive:    false,
 				},
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "ecdsa", 1000, 0, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
@@ -151,6 +209,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 					IsActive:    false,
 				},
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "invalid", "keyring1pfnq7r04rept47gaf5cpdew2", "ecdsa", 1000, 0, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
@@ -170,6 +229,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 					IsActive:    false,
 				},
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "invalid", "ecdsa", 1000, 0, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
@@ -189,7 +249,19 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 					IsActive:    false,
 				},
 				workspace: &defaultWs,
+				policy:    &policy1,
 				msg:       types.NewMsgNewKeyRequest("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "invalid", 1000, 0, 0),
+			},
+			want:    &types.MsgNewKeyRequestResponse{},
+			wantErr: true,
+		},
+		{
+			name: "FAIL: creator outside workspace",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				policy:    &policy1,
+				msg:       types.NewMsgNewKeyRequest("invalidOwner", "workspace14a2hpadpsy9h4auve2z8lw", "keyring1pfnq7r04rept47gaf5cpdew2", "invalid", 1000, 0, 0),
 			},
 			want:    &types.MsgNewKeyRequestResponse{},
 			wantErr: true,
@@ -203,6 +275,12 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			pk := keepers.PolicyKeeper
 			ctx := keepers.Ctx
 			msgSer := keeper.NewMsgServerImpl(*tk)
+
+			polGenesis := policytypes.GenesisState{
+				PortId:   policytypes.PortID,
+				Policies: []policytypes.Policy{*tt.args.policy},
+			}
+			policy.InitGenesis(ctx, *pk, polGenesis)
 
 			idGenesis := idTypes.GenesisState{
 				PortId:     idTypes.PortID,

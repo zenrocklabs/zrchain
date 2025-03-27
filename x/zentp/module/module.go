@@ -18,9 +18,9 @@ import (
 
 	// this line is used by starport scaffolding # 1
 
-	modulev1 "github.com/Zenrock-Foundation/zrchain/v5/api/zrchain/zentp/module"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	modulev1 "github.com/Zenrock-Foundation/zrchain/v6/api/zrchain/zentp/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
 var (

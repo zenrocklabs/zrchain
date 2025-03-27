@@ -8,7 +8,7 @@ package solrock
 //	"math/big"
 //	"testing"
 //
-//	"github.com/Zenrock-Foundation/zrchain/v5/contracts/solrock/generated/zenbtc_spl_token"
+//	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/zenbtc_spl_token"
 //	"github.com/gagliardetto/solana-go"
 //	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 //	"github.com/gagliardetto/solana-go/programs/system"

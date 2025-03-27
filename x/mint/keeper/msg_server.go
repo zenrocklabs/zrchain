@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/errors"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/mint/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 

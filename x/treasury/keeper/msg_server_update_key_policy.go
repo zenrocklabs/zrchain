@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 )
 
 func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKeyPolicy) (*types.MsgUpdateKeyPolicyResponse, error) {
@@ -20,7 +20,7 @@ func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKe
 		return nil, fmt.Errorf("key %v not found", msg.KeyId)
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(goCtx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
@@ -31,7 +31,7 @@ func (k msgServer) UpdateKeyPolicy(goCtx context.Context, msg *types.MsgUpdateKe
 		}
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, key.SignPolicyId, 0, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, key.SignPolicyId, 0, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (k msgServer) UpdateKeyPolicyPolicyGenerator(ctx sdk.Context, msg *types.Ms
 		return nil, fmt.Errorf("key %v not found", msg.KeyId)
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
@@ -55,7 +55,7 @@ func (k msgServer) UpdateKeyPolicyPolicyGenerator(ctx sdk.Context, msg *types.Ms
 
 func (k msgServer) UpdateKeyPolicyActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgUpdateKeyPolicyResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/pkg/errors"
 )

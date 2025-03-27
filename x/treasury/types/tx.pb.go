@@ -1491,6 +1491,8 @@ func (m *MsgFulfilICATransactionRequestResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgFulfilICATransactionRequestResponse proto.InternalMessageInfo
 
+// MsgNewZrSignSignatureRequest is the Msg/NewZrSignSignatureRequest request
+// type.
 type MsgNewZrSignSignatureRequest struct {
 	Creator                  string              `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Address                  string              `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
@@ -1631,6 +1633,8 @@ func (m *MsgNewZrSignSignatureRequest) GetTx() bool {
 	return false
 }
 
+// MsgNewZrSignSignatureRequestResponse defines the response structure for
+// executing a MsgNewZrSignSignatureRequest message.
 type MsgNewZrSignSignatureRequestResponse struct {
 	ReqId uint64 `protobuf:"varint,1,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
 }
@@ -1675,6 +1679,7 @@ func (m *MsgNewZrSignSignatureRequestResponse) GetReqId() uint64 {
 	return 0
 }
 
+// MsgUpdateKeyPolicy is the Msg/UpdateKeyPolicy request type.
 type MsgUpdateKeyPolicy struct {
 	Creator      string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	KeyId        uint64 `protobuf:"varint,2,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
@@ -1735,6 +1740,8 @@ func (m *MsgUpdateKeyPolicy) GetSignPolicyId() uint64 {
 	return 0
 }
 
+// MsgUpdateKeyPolicyResponse defines the response structure for executing a
+// MsgUpdateKeyPolicy message.
 type MsgUpdateKeyPolicyResponse struct {
 }
 

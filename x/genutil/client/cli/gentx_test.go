@@ -13,8 +13,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/genutil/client/cli"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec/address"

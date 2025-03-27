@@ -11,11 +11,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// custom keepers
-	identitykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/identity/keeper"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v5/x/identity/types"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/keeper"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	identitykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
 type CustomMessageInterceptor struct {

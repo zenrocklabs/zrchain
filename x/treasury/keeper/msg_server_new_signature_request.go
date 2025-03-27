@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	pol "github.com/Zenrock-Foundation/zrchain/v5/policy"
-	policykeeper "github.com/Zenrock-Foundation/zrchain/v5/x/policy/keeper"
-	policytypes "github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
+	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -30,20 +30,21 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 
 	signPolicyID := key.SignPolicyId
 
+	ws, getDataErr := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
+	if getDataErr != nil {
+		return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
+	}
+
 	if signPolicyID == 0 {
-		ws, getDataErr := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
-		if getDataErr != nil {
-			return nil, fmt.Errorf("workspace %s not found: %v", key.WorkspaceAddr, getDataErr)
-		}
 		signPolicyID = ws.SignPolicyId
 	}
 
-	keyring, err := k.identityKeeper.KeyringStore.Get(ctx, key.KeyringAddr)
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil)
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func (k msgServer) NewSignatureRequestPolicyGenerator(ctx sdk.Context, msg *type
 		return nil, fmt.Errorf("key %v not found", msg.KeyIds[0])
 	}
 
-	ws, err := k.identityKeeper.WorkspaceStore.Get(ctx, key.WorkspaceAddr)
+	ws, err := k.identityKeeper.GetWorkspace(ctx, key.WorkspaceAddr)
 	if err != nil {
 		return nil, fmt.Errorf("workspace %s not found", key.WorkspaceAddr)
 	}
@@ -83,7 +84,7 @@ func (k msgServer) NewSignatureRequestPolicyGenerator(ctx sdk.Context, msg *type
 
 func (k msgServer) NewSignatureRequestActionHandler(ctx sdk.Context, act *policytypes.Action) (*types.MsgNewSignatureRequestResponse, error) {
 	return policykeeper.TryExecuteAction(
-		&k.policyKeeper,
+		k.policyKeeper,
 		k.cdc,
 		ctx,
 		act,

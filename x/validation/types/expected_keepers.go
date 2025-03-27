@@ -3,7 +3,7 @@ package types
 import (
 	context "context"
 
-	zentptypes "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/gagliardetto/solana-go/programs/system"
 

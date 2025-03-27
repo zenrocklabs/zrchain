@@ -7,9 +7,11 @@ import "cosmos/app/v1alpha1/module.proto";
 // Module is the config object of the mint module.
 message Module {
   option (cosmos.app.v1alpha1.module) = {
-    go_import : "github.com/Zenrock-Foundation/zrchain/v5/x/mint"
+    go_import : "github.com/Zenrock-Foundation/zrchain/v6/x/mint"
   };
 
+  // fee_collector_name defines the name of the fee collector module account,
+  // required for the mint module to collect fees.
   string fee_collector_name = 1;
 
   // authority defines the custom module authority. If not set, defaults to the

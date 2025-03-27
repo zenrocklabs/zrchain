@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/policy"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/policy/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/policy"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,7 +22,7 @@ func init() {
 
 // RegisterActionHandler registers a handler for a specific action type.
 // The handler function is called when the action is executed.
-func RegisterActionHandler[ResT any](k *Keeper, actionType string, handlerFn func(sdk.Context, *types.Action) (ResT, error)) {
+func RegisterActionHandler[ResT any](k types.PolicyKeeper, actionType string, handlerFn func(sdk.Context, *types.Action) (ResT, error)) {
 	if _, ok := k.ActionHandler(actionType); ok {
 		// To be safe and prevent mistakes we shouldn't allow to register
 		// multiple handlers for the same action type.
@@ -34,7 +35,7 @@ func RegisterActionHandler[ResT any](k *Keeper, actionType string, handlerFn fun
 	})
 }
 
-func RegisterPolicyGeneratorHandler[ReqT any](k *Keeper, reqType string, handlerFn func(sdk.Context, ReqT) (policy.Policy, error)) {
+func RegisterPolicyGeneratorHandler[ReqT any](k types.PolicyKeeper, reqType string, handlerFn func(sdk.Context, ReqT) (policy.Policy, error)) {
 	if _, ok := k.GeneratorHandler(reqType); ok {
 		// To be safe and prevent mistakes we shouldn't allow to register
 		// multiple handlers for the same action type.
@@ -62,7 +63,7 @@ func RegisterPolicyGeneratorHandler[ReqT any](k *Keeper, reqType string, handler
 // - after an action is created
 // - every time there is a change in the approvers set
 func TryExecuteAction[ReqT sdk.Msg, ResT any](
-	k *Keeper,
+	k types.PolicyKeeper,
 	cdc codec.BinaryCodec,
 	ctx sdk.Context,
 	act *types.Action,
@@ -79,7 +80,7 @@ func TryExecuteAction[ReqT sdk.Msg, ResT any](
 		return nil, fmt.Errorf("invalid message type, expected %T", new(ReqT))
 	}
 
-	pol, err := PolicyForAction(ctx, k, act)
+	pol, err := k.PolicyForAction(ctx, act)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func TryExecuteAction[ReqT sdk.Msg, ResT any](
 	if err := pol.Verify(signersSet, act.GetPolicyDataMap()); err == nil {
 		act.Status = types.ActionStatus_ACTION_STATUS_COMPLETED
 
-		if err := k.ActionStore.Set(ctx, act.Id, *act); err != nil {
+		if err := k.SetAction(ctx, act); err != nil {
 			return nil, err
 		}
 
@@ -100,7 +101,7 @@ func TryExecuteAction[ReqT sdk.Msg, ResT any](
 	return &res, nil
 }
 
-func PolicyForAction(ctx sdk.Context, k *Keeper, act *types.Action) (policy.Policy, error) {
+func (k Keeper) PolicyForAction(ctx sdk.Context, act *types.Action) (policy.Policy, error) {
 	var (
 		pol policy.Policy
 		err error
@@ -123,7 +124,7 @@ func PolicyForAction(ctx sdk.Context, k *Keeper, act *types.Action) (policy.Poli
 			return nil, fmt.Errorf("policy not found: %d", act.PolicyId)
 		}
 
-		pol, err = types.UnpackPolicy(k.Codec(), &p)
+		pol, err = k.Unpack(&p)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +136,7 @@ func PolicyForAction(ctx sdk.Context, k *Keeper, act *types.Action) (policy.Poli
 // AddAction creates a new action for the provided message with initial approvers.
 // Who calls this function should also immediately check if the action can be
 // executed with the provided initialApprovers, by calling TryExecuteAction.
-func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, reqBtl uint64, policyData map[string][]byte) (*types.Action, error) {
+func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID, reqBtl uint64, policyData map[string][]byte, wsOwners []string) (*types.Action, error) {
 	wrappedMsg, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return nil, err
@@ -163,18 +164,19 @@ func (k Keeper) AddAction(ctx sdk.Context, creator string, msg sdk.Msg, policyID
 	}
 
 	// add initial approver
-	pol, err := PolicyForAction(ctx, &k, &act)
+	pol, err := k.PolicyForAction(ctx, &act)
 	if err != nil {
 		return nil, err
 	}
 
-	creatorAbbr, err := pol.AddressToParticipant(creator)
-	if err != nil {
-		return nil, err
+	if !addressInWorkspace(wsOwners, creator) {
+		return nil, fmt.Errorf("creator %s is not an owner of this workspace", creator)
 	}
 
-	if err := act.AddApprover(creatorAbbr); err != nil {
-		return nil, err
+	if addressInPolicy(pol.GetParticipantAddresses(), creator) {
+		if err := act.AddApprover(creator); err != nil {
+			return nil, err
+		}
 	}
 
 	// get policy participants
@@ -254,4 +256,12 @@ func mapToDeterministicSlice(policyData map[string][]byte) []*types.KeyValue {
 		return strings.Compare(policyDataKv[i].Key, policyDataKv[j].Key) < 0
 	})
 	return policyDataKv
+}
+
+func addressInWorkspace(wsOwners []string, creator string) bool {
+	return slices.Contains(wsOwners, creator)
+}
+
+func addressInPolicy(policyParticipants []string, creator string) bool {
+	return slices.Contains(policyParticipants, creator)
 }

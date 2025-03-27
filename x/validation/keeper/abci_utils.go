@@ -21,6 +21,7 @@ import (
 	"github.com/cometbft/cometbft/libs/protoio"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,9 +32,9 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
-	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v5/x/treasury/types"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	bindings "github.com/zenrocklabs/zenbtc/bindings"
 )
 
@@ -57,7 +58,6 @@ func (k Keeper) GetSidecarStateByEthHeight(ctx context.Context, height uint64) (
 
 func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.SidecarStateResponse) (*OracleData, error) {
 	var delegations map[string]map[string]*big.Int
-
 	if err := json.Unmarshal(resp.EigenDelegations, &delegations); err != nil {
 		return nil, err
 	}
@@ -68,39 +68,20 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		return nil, ErrOracleSidecar
 	}
 
-	ROCKUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ROCKUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing rock price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	BTCUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.BTCUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing btc price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
-	ETHUSDPrice, err := sdkmath.LegacyNewDecFromStr(resp.ETHUSDPrice)
-	if err != nil {
-		k.Logger(ctx).Error("error parsing eth price", "error", err)
-		return nil, ErrOracleSidecar
-	}
-
 	return &OracleData{
-		EigenDelegationsMap:        delegations,
-		ValidatorDelegations:       validatorDelegations,
-		EthBlockHeight:             resp.EthBlockHeight,
-		EthGasLimit:                resp.EthGasLimit,
-		EthBaseFee:                 resp.EthBaseFee,
-		EthTipCap:                  resp.EthTipCap,
-		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
-		EthBurnEvents:              resp.EthBurnEvents,
-		Redemptions:                resp.Redemptions,
-		ROCKUSDPrice:               ROCKUSDPrice,
-		BTCUSDPrice:                BTCUSDPrice,
-		ETHUSDPrice:                ETHUSDPrice,
-		ConsensusData:              abci.ExtendedCommitInfo{},
-		SolanaROCKMintEvents:       resp.SolanaRockMintEvents,
+		EigenDelegationsMap:  delegations,
+		ValidatorDelegations: validatorDelegations,
+		EthBlockHeight:       resp.EthBlockHeight,
+		EthGasLimit:          resp.EthGasLimit,
+		EthBaseFee:           resp.EthBaseFee,
+		EthTipCap:            resp.EthTipCap,
+		EthBurnEvents:        resp.EthBurnEvents,
+		Redemptions:          resp.Redemptions,
+		ROCKUSDPrice:         resp.ROCKUSDPrice,
+		BTCUSDPrice:          resp.BTCUSDPrice,
+		ETHUSDPrice:          resp.ETHUSDPrice,
+		ConsensusData:        abci.ExtendedCommitInfo{},
+		SolanaROCKMintEvents: resp.SolanaRockMintEvents,
 	}, nil
 }
 
@@ -726,16 +707,28 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 }
 
 func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
+	// Parse prices once at the beginning
+	rockPrice, rockPriceErr := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
+	btcPrice, btcPriceErr := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+	ethPrice, ethPriceErr := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+
+	// Check if prices are valid
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice.IsZero() || oracleData.BTCUSDPrice.IsZero() || oracleData.ETHUSDPrice.IsZero() {
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" ||
+		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil ||
+		rockPrice.IsNil() || rockPrice.IsZero() ||
+		btcPrice.IsNil() || btcPrice.IsZero() ||
+		ethPrice.IsNil() || ethPrice.IsZero() {
 		pricesAreValid = false
 	}
 
+	// Update the last valid VE height if prices are valid
 	if pricesAreValid {
 		if err := k.LastValidVEHeight.Set(ctx, ctx.BlockHeight()); err != nil {
 			k.Logger(ctx).Error("error setting last valid VE height", "height", ctx.BlockHeight(), "err", err)
 		}
 	} else {
+		// Handle invalid prices
 		lastValidVEHeight, err := k.LastValidVEHeight.Get(ctx)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -745,14 +738,16 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 
 		retentionRange := k.GetPriceRetentionBlockRange(ctx)
-		// Add safety check for when block height is less than retention range
+
+		// Safety check for when block height is less than retention range
 		if ctx.BlockHeight() < retentionRange {
 			k.Logger(ctx).Warn("current block height is less than retention range; not zeroing asset prices",
 				"block_height", ctx.BlockHeight(),
 				"retention_range", retentionRange)
 			return
 		}
-		// Calculate number of blocks since last valid VE
+
+		// Keep using existing prices if we're within retention range
 		if ctx.BlockHeight()-lastValidVEHeight < retentionRange {
 			k.Logger(ctx).Warn("last valid VE height is within price retention range; not zeroing asset prices",
 				"retention_range", retentionRange)
@@ -760,15 +755,17 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 		}
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, oracleData.ROCKUSDPrice); err != nil {
+	// Outside retention range or prices are valid
+	// Invalid prices will be zero/nil values
+	if err := k.AssetPrices.Set(ctx, types.Asset_ROCK, rockPrice); err != nil {
 		k.Logger(ctx).Error("error setting ROCK price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, oracleData.BTCUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_BTC, btcPrice); err != nil {
 		k.Logger(ctx).Error("error setting BTC price", "height", ctx.BlockHeight(), "err", err)
 	}
 
-	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, oracleData.ETHUSDPrice); err != nil {
+	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
@@ -838,16 +835,21 @@ func (k Keeper) CalculateZenBTCMintFee(
 		new(big.Float).SetInt64(1e18),
 	)
 
-	// Convert ETH fee to BTC
-	ethToBTC := ethUSDPrice.Quo(btcUSDPrice)
-	feeBTCFloat := new(big.Float).Mul(
+	// Convert ETH fee to USD
+	feeInUSD := new(big.Float).Mul(
 		feeInETH,
-		new(big.Float).SetFloat64(ethToBTC.MustFloat64()),
+		new(big.Float).SetFloat64(ethUSDPrice.MustFloat64()),
+	)
+
+	// Convert USD fee to BTC
+	feeInBTC := new(big.Float).Quo(
+		feeInUSD,
+		new(big.Float).SetFloat64(btcUSDPrice.MustFloat64()),
 	)
 
 	// Convert to satoshis (multiply by 1e8)
 	satoshisFloat := new(big.Float).Mul(
-		feeBTCFloat,
+		feeInBTC,
 		new(big.Float).SetInt64(1e8),
 	)
 
@@ -867,13 +869,17 @@ func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error 
 }
 
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
-func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) ([]zenbtctypes.PendingMintTransaction, error) {
+func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.MintTransactionStatus, walletType zenbtctypes.WalletType) ([]zenbtctypes.PendingMintTransaction, error) {
 	firstPendingID := uint64(0)
 	var err error
 	if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
 		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingStakeTransaction(ctx)
 	} else if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
-		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingMintTransaction(ctx)
+		if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
+		} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingEthMintTransaction(ctx)
+		}
 	}
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -885,7 +891,17 @@ func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenb
 		ctx,
 		k.zenBTCKeeper.GetPendingMintTransactionsStore(),
 		func(tx zenbtctypes.PendingMintTransaction) bool {
-			return tx.Status == status
+			isMatchingStatus := tx.Status == status
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED {
+				return isMatchingStatus
+			}
+			isMatchingNetwork := false
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+				isMatchingNetwork = types.IsSolanaCAIP2(tx.Caip2ChainId)
+			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+				isMatchingNetwork = types.IsEthereumCAIP2(tx.Caip2ChainId)
+			}
+			return isMatchingStatus && isMatchingNetwork
 		},
 		firstPendingID,
 		2,
@@ -976,6 +992,28 @@ func getChainIDForEigen(ctx sdk.Context) uint64 {
 // =============================================================================
 //
 
+// nullifyMismatchedFields removes fields that failed validation from consensus consideration
+// and updates the oracle data's fieldVotePowers to reflect these changes.
+// This ensures that fields with validation mismatches aren't used in subsequent processing.
+func (k *Keeper) nullifyMismatchedFields(ctx context.Context, mismatchedFields []VoteExtensionField, fieldVotePowers map[VoteExtensionField]int64, oracleData *OracleData) {
+	if len(mismatchedFields) > 0 {
+		fieldNames := make([]string, 0, len(mismatchedFields))
+		for _, field := range mismatchedFields {
+			delete(fieldVotePowers, field)
+			fieldNames = append(fieldNames, field.String())
+		}
+
+		k.Logger(ctx).Warn("fields had consensus but failed data validation",
+			"fields", strings.Join(fieldNames, ","),
+			"consensus_status", "revoked")
+	}
+
+	// Update FieldVotePowers in oracleData to reflect the validated fields
+	if oracleData != nil {
+		oracleData.FieldVotePowers = fieldVotePowers
+	}
+}
+
 // validateHashField derives a hash from the given data and compares it with the expected value.
 func validateHashField(fieldName string, expectedHash []byte, data any) error {
 	derivedHash, err := deriveHash(data)
@@ -990,26 +1028,27 @@ func validateHashField(fieldName string, expectedHash []byte, data any) error {
 
 // validateOracleData verifies that the vote extension and oracle data match.
 // Only fields that have reached consensus (present in fieldVotePowers) are validated.
-// Fields that fail validation are removed from fieldVotePowers to prevent them from being used downstream.
-func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) error {
-	invalidFields := make([]VoteExtensionField, 0)
+// Fields that fail validation are nullified to prevent them from being used downstream.
+func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) {
+	mismatchedFields := make([]VoteExtensionField, 0)
 
 	// Validate hashes only if fields have consensus
-	if _, ok := fieldVotePowers[VEFieldEigenDelegationsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEigenDelegationsHash) {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-			invalidFields = append(invalidFields, VEFieldEigenDelegationsHash)
+			mismatchedFields = append(mismatchedFields, VEFieldEigenDelegationsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthBurnEventsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBurnEventsHash) {
 		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-			invalidFields = append(invalidFields, VEFieldEthBurnEventsHash)
+			mismatchedFields = append(mismatchedFields, VEFieldEthBurnEventsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRedemptionsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRedemptionsHash) {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-			invalidFields = append(invalidFields, VEFieldRedemptionsHash)
+			mismatchedFields = append(mismatchedFields, VEFieldRedemptionsHash)
 		}
 	}
+
 	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
 			invalidFields = append(invalidFields, VEFieldSolanaAccountsHash)
@@ -1020,113 +1059,103 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			invalidFields = append(invalidFields, VEFieldSolROCKMintNonceHash)
 		}
 	}
-
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
 		if oracleData.RequestedBtcBlockHeight != 0 {
 			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-				invalidFields = append(invalidFields, VEFieldRequestedBtcHeaderHash)
+				mismatchedFields = append(mismatchedFields, VEFieldRequestedBtcHeaderHash)
 			}
 		}
 	}
 
 	// Check Ethereum-related fields
-	if _, ok := fieldVotePowers[VEFieldEthBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBlockHeight) {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-			invalidFields = append(invalidFields, VEFieldEthBlockHeight)
+			mismatchedFields = append(mismatchedFields, VEFieldEthBlockHeight)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthGasLimit]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthGasLimit) {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
-			invalidFields = append(invalidFields, VEFieldEthGasLimit)
+			mismatchedFields = append(mismatchedFields, VEFieldEthGasLimit)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthBaseFee]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthBaseFee) {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
-			invalidFields = append(invalidFields, VEFieldEthBaseFee)
+			mismatchedFields = append(mismatchedFields, VEFieldEthBaseFee)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldEthTipCap]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldEthTipCap) {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
-			invalidFields = append(invalidFields, VEFieldEthTipCap)
+			mismatchedFields = append(mismatchedFields, VEFieldEthTipCap)
 		}
 	}
 
 	// Check Bitcoin height
-	if _, ok := fieldVotePowers[VEFieldRequestedBtcBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) {
 		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
-			invalidFields = append(invalidFields, VEFieldRequestedBtcBlockHeight)
+			mismatchedFields = append(mismatchedFields, VEFieldRequestedBtcBlockHeight)
 		}
 	}
 
 	// Check nonce-related fields
-	if _, ok := fieldVotePowers[VEFieldRequestedStakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedStakerNonce)
+			mismatchedFields = append(mismatchedFields, VEFieldRequestedStakerNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedEthMinterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedEthMinterNonce)
+			mismatchedFields = append(mismatchedFields, VEFieldRequestedEthMinterNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedUnstakerNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedUnstakerNonce)
+			mismatchedFields = append(mismatchedFields, VEFieldRequestedUnstakerNonce)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
+			mismatchedFields = append(mismatchedFields, VEFieldRequestedCompleterNonce)
 		}
 	}
 
 	// Check price fields
-	if _, ok := fieldVotePowers[VEFieldROCKUSDPrice]; ok {
-		if !voteExt.ROCKUSDPrice.Equal(oracleData.ROCKUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldROCKUSDPrice)
+	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ROCKUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
+			mismatchedFields = append(mismatchedFields, VEFieldROCKUSDPrice)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldBTCUSDPrice]; ok {
-		if !voteExt.BTCUSDPrice.Equal(oracleData.BTCUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldBTCUSDPrice)
+	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.BTCUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
+			mismatchedFields = append(mismatchedFields, VEFieldBTCUSDPrice)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldETHUSDPrice]; ok {
-		if !voteExt.ETHUSDPrice.Equal(oracleData.ETHUSDPrice) {
-			invalidFields = append(invalidFields, VEFieldETHUSDPrice)
+	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
+		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ETHUSDPrice)
+		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
+			mismatchedFields = append(mismatchedFields, VEFieldETHUSDPrice)
 		}
 	}
 
 	// Check Latest Bitcoin height and hash fields
-	if _, ok := fieldVotePowers[VEFieldLatestBtcBlockHeight]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) {
 		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-			invalidFields = append(invalidFields, VEFieldLatestBtcBlockHeight)
+			mismatchedFields = append(mismatchedFields, VEFieldLatestBtcBlockHeight)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldLatestBtcHeaderHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) {
 		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
-			invalidFields = append(invalidFields, VEFieldLatestBtcHeaderHash)
+			mismatchedFields = append(mismatchedFields, VEFieldLatestBtcHeaderHash)
 		}
 	}
 
-	// Remove invalid fields from fieldVotePowers
-	if len(invalidFields) > 0 {
-		fieldNames := make([]string, 0, len(invalidFields))
-		for _, field := range invalidFields {
-			delete(fieldVotePowers, field)
-			fieldNames = append(fieldNames, field.String())
-		}
-
-		k.Logger(ctx).Warn("fields had consensus but failed data validation",
-			"fields", strings.Join(fieldNames, ","),
-			"consensus_status", "revoked")
-	}
-
-	// Update FieldVotePowers in oracleData to reflect the validated fields
-	oracleData.FieldVotePowers = fieldVotePowers
-
-	return nil
+	// Nullify mismatched fields from fieldVotePowers to prevent them from being used downstream
+	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
 }
 
 // Helper function to validate consensus on multiple required fields for transactions
@@ -1153,30 +1182,36 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 	return nil
 }
 
-// fieldsHaveConsensus checks if all specified fields have consensus and returns any fields that don't
-func allFieldsHaveConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) []VoteExtensionField {
-	var missingConsensus []VoteExtensionField
-	for _, field := range fields {
-		if !fieldHasConsensus(fieldVotePowers, field) {
-			missingConsensus = append(missingConsensus, field)
-		}
-	}
-	return missingConsensus
-}
+// GetSolanaRecentBlockhash fetches the Solana recent blockhash from a block with height aligned to modulo 50
+// func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
+// 	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
+// 	if err != nil {
+// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+// 		return "", err
+// 	}
+// 	return resp.Blockhash, nil
+// }
 
-// anyFieldHasConsensus checks if at least one of the specified fields has consensus
-func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields []VoteExtensionField) bool {
-	for _, field := range fields {
-		if fieldHasConsensus(fieldVotePowers, field) {
-			return true
-		}
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
+	if err != nil {
+		return err
 	}
-	return false
+	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyId:               keyID,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTxHash)),
+	)
+	return err
 }
-
-// The following functions are imported from abci_types.go:
-// - fieldHasConsensus: checks if a specific field has reached consensus
-// - HasRequiredGasFields: checks if all gas-related fields have consensus
 
 func (k Keeper) GetSolanaNonceAccount(goCtx context.Context) (system.NonceAccount, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

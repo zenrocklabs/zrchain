@@ -3,8 +3,8 @@ package zentp
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

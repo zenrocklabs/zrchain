@@ -10,7 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/x/validation/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // InitGenesis sets the pool and parameters for the provided keeper.  For each
@@ -37,7 +37,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 
 	hvParams := data.HVParams
 	if hvParams == nil {
-		hvParams = types.DefaultHVParams()
+		hvParams = types.DefaultHVParams(ctx)
 	}
 	if err := k.HVParams.Set(ctx, *hvParams); err != nil {
 		panic(err)
