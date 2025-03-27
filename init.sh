@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 K1="alice"
 K2="bob"
 K3="protocolwallet"
@@ -168,6 +168,19 @@ if [ "$START_ONLY" = false ]; then
         "additional_burn_rate": "0.250000000000000000"
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
+
+  # Set initial zentp parameters
+    jq '.app_state.zentp.params = {
+        "solana": {
+          "signer_key_id": 1,
+          "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+          "nonce_authority_key": 8,
+          "nonce_account_key": 9,
+          "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+          "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+          "fee": 20
+        }
+    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {
         if [[ "$OSTYPE" == "darwin"* ]]; then
             gsed "$@"
@@ -185,6 +198,7 @@ if [ "$START_ONLY" = false ]; then
             zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
             # Add funds for mint module - not a validator
             zenrockd genesis add-genesis-account zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR --module-name mint
+            zenrockd genesis add-genesis-account zen1a0hfnvaslygrauq8k8weu5fjsnawlu37wvdpfl 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zentp
             # Add funds for other accounts
             zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
             zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR

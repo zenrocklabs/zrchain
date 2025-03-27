@@ -82,6 +82,7 @@ type OracleState struct {
 	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
 	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
+	SolanaRockMintEvents       []api.SolanaRockMintEvent      `json:"solanaRockMintEvents"`
 }
 
 type Config struct {

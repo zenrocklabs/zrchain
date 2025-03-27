@@ -112,15 +112,16 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	type oracleStateUpdate struct {
-		eigenDelegations           map[string]map[string]*big.Int
-		redemptions                []api.Redemption
-		suggestedTip               *big.Int
-		estimatedGas               uint64
-		ethBurnEvents              []api.BurnEvent
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		eigenDelegations map[string]map[string]*big.Int
+		redemptions      []api.Redemption
+		suggestedTip     *big.Int
+		estimatedGas     uint64
+		ethBurnEvents    []api.BurnEvent
+		ROCKUSDPrice     math.LegacyDec
+		BTCUSDPrice      math.LegacyDec
+		ETHUSDPrice      math.LegacyDec
 		solanaLamportsPerSignature uint64
+		SolRockMintEvents []api.SolanaRockMintEvent
 	}
 
 	update := &oracleStateUpdate{}
@@ -170,18 +171,18 @@ func (o *Oracle) fetchAndProcessState(
 	}()
 
 	// Fetch Solana lamports per signature
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.solanaLamportsPerSignature = lamportsPerSignature
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaLamportsPerSignature = lamportsPerSignature
+		updateMutex.Unlock()
+	}()
 
 	// Estimate gas for stake call
 	wg.Add(1)
@@ -282,6 +283,21 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch SolROCK redemptions
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// TODO: put id in config
+		events, err := o.getSolROCKMints("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolRockMintEvents = events
+		updateMutex.Unlock()
+	}()
+
 	// Wait for all goroutines to complete
 	wg.Wait()
 	close(errChan)
@@ -297,19 +313,19 @@ func (o *Oracle) fetchAndProcessState(
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations: update.eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      update.estimatedGas,
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        update.suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
-		SolanaLamportsPerSignature: 5000,
+		EigenDelegations:           update.eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                update.estimatedGas,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  update.suggestedTip.Uint64(),
+		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		Redemptions:                update.redemptions,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
+		SolanaRockMintEvents:       update.SolRockMintEvents,
 	}
 
 	log.Printf("\nState update: %+v\n", newState)
@@ -517,6 +533,60 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	}
 
 	return redemptions, nil
+}
+
+func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, error) {
+	limit := 1000
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SolROCK redemptions: %w", err)
+	}
+
+	var mintEvents []api.SolanaRockMintEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get SolROCK redemption transaction: %w", err)
+		}
+
+		events, err := rock_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode SolROCK redemption events: %w", err)
+		}
+
+		solTX, err := tx.Transaction.GetTransaction()
+		if len(solTX.Signatures) != 2 {
+			continue
+		}
+		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+		sigHash := sha256.Sum256(combined)
+		for _, event := range events {
+			if event.Name == "TokensMintedWithFee" {
+				e := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
+
+				mintEvents = append(mintEvents, api.SolanaRockMintEvent{
+					SigHash:   sigHash[:],
+					Date:      tx.BlockTime.Time().Unix(),
+					Recipient: e.Recipient.Bytes(),
+					Value:     e.Value,
+					Fee:       e.Fee,
+					Mint:      e.Mint.Bytes(),
+				})
+			}
+		}
+	}
+	return mintEvents, nil
 }
 
 // getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor

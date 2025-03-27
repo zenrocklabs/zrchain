@@ -23,7 +23,7 @@ type SidecarServiceClient interface {
 	GetBitcoinBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error)
-	GetSolanaRecentBlockhash(ctx context.Context, in *SolanaRecentBlockhashRequest, opts ...grpc.CallOption) (*SolanaRecentBlockhashResponse, error)
+	GetSolanaAccountInfo(ctx context.Context, in *SolanaAccountInfoRequest, opts ...grpc.CallOption) (*SolanaAccountInfoResponse, error)
 }
 
 type sidecarServiceClient struct {
@@ -79,9 +79,9 @@ func (c *sidecarServiceClient) GetLatestEthereumNonceForAccount(ctx context.Cont
 	return out, nil
 }
 
-func (c *sidecarServiceClient) GetSolanaRecentBlockhash(ctx context.Context, in *SolanaRecentBlockhashRequest, opts ...grpc.CallOption) (*SolanaRecentBlockhashResponse, error) {
-	out := new(SolanaRecentBlockhashResponse)
-	err := c.cc.Invoke(ctx, "/api.SidecarService/GetSolanaRecentBlockhash", in, out, opts...)
+func (c *sidecarServiceClient) GetSolanaAccountInfo(ctx context.Context, in *SolanaAccountInfoRequest, opts ...grpc.CallOption) (*SolanaAccountInfoResponse, error) {
+	out := new(SolanaAccountInfoResponse)
+	err := c.cc.Invoke(ctx, "/api.SidecarService/GetSolanaAccountInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ type SidecarServiceServer interface {
 	GetBitcoinBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error)
-	GetSolanaRecentBlockhash(context.Context, *SolanaRecentBlockhashRequest) (*SolanaRecentBlockhashResponse, error)
+	GetSolanaAccountInfo(context.Context, *SolanaAccountInfoRequest) (*SolanaAccountInfoResponse, error)
 	mustEmbedUnimplementedSidecarServiceServer()
 }
 
@@ -120,8 +120,8 @@ func (UnimplementedSidecarServiceServer) GetLatestBitcoinBlockHeader(context.Con
 func (UnimplementedSidecarServiceServer) GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestEthereumNonceForAccount not implemented")
 }
-func (UnimplementedSidecarServiceServer) GetSolanaRecentBlockhash(context.Context, *SolanaRecentBlockhashRequest) (*SolanaRecentBlockhashResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSolanaRecentBlockhash not implemented")
+func (UnimplementedSidecarServiceServer) GetSolanaAccountInfo(context.Context, *SolanaAccountInfoRequest) (*SolanaAccountInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSolanaAccountInfo not implemented")
 }
 func (UnimplementedSidecarServiceServer) mustEmbedUnimplementedSidecarServiceServer() {}
 
@@ -226,20 +226,20 @@ func _SidecarService_GetLatestEthereumNonceForAccount_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SidecarService_GetSolanaRecentBlockhash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SolanaRecentBlockhashRequest)
+func _SidecarService_GetSolanaAccountInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SolanaAccountInfoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SidecarServiceServer).GetSolanaRecentBlockhash(ctx, in)
+		return srv.(SidecarServiceServer).GetSolanaAccountInfo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.SidecarService/GetSolanaRecentBlockhash",
+		FullMethod: "/api.SidecarService/GetSolanaAccountInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SidecarServiceServer).GetSolanaRecentBlockhash(ctx, req.(*SolanaRecentBlockhashRequest))
+		return srv.(SidecarServiceServer).GetSolanaAccountInfo(ctx, req.(*SolanaAccountInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -272,8 +272,8 @@ var SidecarService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SidecarService_GetLatestEthereumNonceForAccount_Handler,
 		},
 		{
-			MethodName: "GetSolanaRecentBlockhash",
-			Handler:    _SidecarService_GetSolanaRecentBlockhash_Handler,
+			MethodName: "GetSolanaAccountInfo",
+			Handler:    _SidecarService_GetSolanaAccountInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

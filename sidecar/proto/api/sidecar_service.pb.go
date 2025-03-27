@@ -445,17 +445,18 @@ func (m *SidecarStateRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_SidecarStateRequest proto.InternalMessageInfo
 
 type SidecarStateResponse struct {
-	EigenDelegations           []byte       `protobuf:"bytes,1,opt,name=EigenDelegations,proto3" json:"EigenDelegations,omitempty"`
-	EthBlockHeight             uint64       `protobuf:"varint,2,opt,name=EthBlockHeight,proto3" json:"EthBlockHeight,omitempty"`
-	EthGasLimit                uint64       `protobuf:"varint,3,opt,name=EthGasLimit,proto3" json:"EthGasLimit,omitempty"`
-	EthBaseFee                 uint64       `protobuf:"varint,4,opt,name=EthBaseFee,proto3" json:"EthBaseFee,omitempty"`
-	EthTipCap                  uint64       `protobuf:"varint,5,opt,name=EthTipCap,proto3" json:"EthTipCap,omitempty"`
-	SolanaLamportsPerSignature uint64       `protobuf:"varint,6,opt,name=SolanaLamportsPerSignature,proto3" json:"SolanaLamportsPerSignature,omitempty"`
-	EthBurnEvents              []BurnEvent  `protobuf:"bytes,7,rep,name=EthBurnEvents,proto3" json:"EthBurnEvents"`
-	Redemptions                []Redemption `protobuf:"bytes,8,rep,name=Redemptions,proto3" json:"Redemptions"`
-	ROCKUSDPrice               string       `protobuf:"bytes,9,opt,name=ROCKUSDPrice,proto3" json:"ROCKUSDPrice,omitempty"`
-	BTCUSDPrice                string       `protobuf:"bytes,10,opt,name=BTCUSDPrice,proto3" json:"BTCUSDPrice,omitempty"`
-	ETHUSDPrice                string       `protobuf:"bytes,11,opt,name=ETHUSDPrice,proto3" json:"ETHUSDPrice,omitempty"`
+	EigenDelegations           []byte                `protobuf:"bytes,1,opt,name=EigenDelegations,proto3" json:"EigenDelegations,omitempty"`
+	EthBlockHeight             uint64                `protobuf:"varint,2,opt,name=EthBlockHeight,proto3" json:"EthBlockHeight,omitempty"`
+	EthGasLimit                uint64                `protobuf:"varint,3,opt,name=EthGasLimit,proto3" json:"EthGasLimit,omitempty"`
+	EthBaseFee                 uint64                `protobuf:"varint,4,opt,name=EthBaseFee,proto3" json:"EthBaseFee,omitempty"`
+	EthTipCap                  uint64                `protobuf:"varint,5,opt,name=EthTipCap,proto3" json:"EthTipCap,omitempty"`
+	SolanaLamportsPerSignature uint64                `protobuf:"varint,6,opt,name=SolanaLamportsPerSignature,proto3" json:"SolanaLamportsPerSignature,omitempty"`
+	EthBurnEvents              []BurnEvent           `protobuf:"bytes,7,rep,name=EthBurnEvents,proto3" json:"EthBurnEvents"`
+	Redemptions                []Redemption          `protobuf:"bytes,8,rep,name=Redemptions,proto3" json:"Redemptions"`
+	ROCKUSDPrice               string                `protobuf:"bytes,9,opt,name=ROCKUSDPrice,proto3" json:"ROCKUSDPrice,omitempty"`
+	BTCUSDPrice                string                `protobuf:"bytes,10,opt,name=BTCUSDPrice,proto3" json:"BTCUSDPrice,omitempty"`
+	ETHUSDPrice                string                `protobuf:"bytes,11,opt,name=ETHUSDPrice,proto3" json:"ETHUSDPrice,omitempty"`
+	SolanaRockMintEvents       []SolanaRockMintEvent `protobuf:"bytes,12,rep,name=SolanaRockMintEvents,proto3" json:"SolanaRockMintEvents"`
 }
 
 func (m *SidecarStateResponse) Reset()         { *m = SidecarStateResponse{} }
@@ -566,6 +567,13 @@ func (m *SidecarStateResponse) GetETHUSDPrice() string {
 		return m.ETHUSDPrice
 	}
 	return ""
+}
+
+func (m *SidecarStateResponse) GetSolanaRockMintEvents() []SolanaRockMintEvent {
+	if m != nil {
+		return m.SolanaRockMintEvents
+	}
+	return nil
 }
 
 type SidecarStateByEthHeightRequest struct {
@@ -700,21 +708,22 @@ func (m *LatestEthereumNonceForAccountResponse) GetNonce() uint64 {
 	return 0
 }
 
-type SolanaRecentBlockhashRequest struct {
+type SolanaAccountInfoRequest struct {
+	PubKey string `protobuf:"bytes,1,opt,name=PubKey,proto3" json:"PubKey,omitempty"`
 }
 
-func (m *SolanaRecentBlockhashRequest) Reset()         { *m = SolanaRecentBlockhashRequest{} }
-func (m *SolanaRecentBlockhashRequest) String() string { return proto.CompactTextString(m) }
-func (*SolanaRecentBlockhashRequest) ProtoMessage()    {}
-func (*SolanaRecentBlockhashRequest) Descriptor() ([]byte, []int) {
+func (m *SolanaAccountInfoRequest) Reset()         { *m = SolanaAccountInfoRequest{} }
+func (m *SolanaAccountInfoRequest) String() string { return proto.CompactTextString(m) }
+func (*SolanaAccountInfoRequest) ProtoMessage()    {}
+func (*SolanaAccountInfoRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9f890d7da2148de8, []int{11}
 }
-func (m *SolanaRecentBlockhashRequest) XXX_Unmarshal(b []byte) error {
+func (m *SolanaAccountInfoRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SolanaRecentBlockhashRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SolanaAccountInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SolanaRecentBlockhashRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SolanaAccountInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -724,68 +733,151 @@ func (m *SolanaRecentBlockhashRequest) XXX_Marshal(b []byte, deterministic bool)
 		return b[:n], nil
 	}
 }
-func (m *SolanaRecentBlockhashRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SolanaRecentBlockhashRequest.Merge(m, src)
+func (m *SolanaAccountInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SolanaAccountInfoRequest.Merge(m, src)
 }
-func (m *SolanaRecentBlockhashRequest) XXX_Size() int {
+func (m *SolanaAccountInfoRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *SolanaRecentBlockhashRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_SolanaRecentBlockhashRequest.DiscardUnknown(m)
+func (m *SolanaAccountInfoRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SolanaAccountInfoRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SolanaRecentBlockhashRequest proto.InternalMessageInfo
+var xxx_messageInfo_SolanaAccountInfoRequest proto.InternalMessageInfo
 
-type SolanaRecentBlockhashResponse struct {
-	Blockhash string `protobuf:"bytes,1,opt,name=Blockhash,proto3" json:"Blockhash,omitempty"`
-	Slot      uint64 `protobuf:"varint,2,opt,name=Slot,proto3" json:"Slot,omitempty"`
-}
-
-func (m *SolanaRecentBlockhashResponse) Reset()         { *m = SolanaRecentBlockhashResponse{} }
-func (m *SolanaRecentBlockhashResponse) String() string { return proto.CompactTextString(m) }
-func (*SolanaRecentBlockhashResponse) ProtoMessage()    {}
-func (*SolanaRecentBlockhashResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9f890d7da2148de8, []int{12}
-}
-func (m *SolanaRecentBlockhashResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *SolanaRecentBlockhashResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_SolanaRecentBlockhashResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *SolanaRecentBlockhashResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SolanaRecentBlockhashResponse.Merge(m, src)
-}
-func (m *SolanaRecentBlockhashResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *SolanaRecentBlockhashResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_SolanaRecentBlockhashResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SolanaRecentBlockhashResponse proto.InternalMessageInfo
-
-func (m *SolanaRecentBlockhashResponse) GetBlockhash() string {
+func (m *SolanaAccountInfoRequest) GetPubKey() string {
 	if m != nil {
-		return m.Blockhash
+		return m.PubKey
 	}
 	return ""
 }
 
-func (m *SolanaRecentBlockhashResponse) GetSlot() uint64 {
+type SolanaAccountInfoResponse struct {
+	Account []byte `protobuf:"bytes,1,opt,name=Account,proto3" json:"Account,omitempty"`
+}
+
+func (m *SolanaAccountInfoResponse) Reset()         { *m = SolanaAccountInfoResponse{} }
+func (m *SolanaAccountInfoResponse) String() string { return proto.CompactTextString(m) }
+func (*SolanaAccountInfoResponse) ProtoMessage()    {}
+func (*SolanaAccountInfoResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{12}
+}
+func (m *SolanaAccountInfoResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SolanaAccountInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SolanaAccountInfoResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SolanaAccountInfoResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SolanaAccountInfoResponse.Merge(m, src)
+}
+func (m *SolanaAccountInfoResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *SolanaAccountInfoResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SolanaAccountInfoResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SolanaAccountInfoResponse proto.InternalMessageInfo
+
+func (m *SolanaAccountInfoResponse) GetAccount() []byte {
 	if m != nil {
-		return m.Slot
+		return m.Account
+	}
+	return nil
+}
+
+type SolanaRockMintEvent struct {
+	SigHash   []byte `protobuf:"bytes,1,opt,name=SigHash,proto3" json:"SigHash,omitempty"`
+	Recipient []byte `protobuf:"bytes,2,opt,name=Recipient,proto3" json:"Recipient,omitempty"`
+	Date      int64  `protobuf:"varint,3,opt,name=Date,proto3" json:"Date,omitempty"`
+	Value     uint64 `protobuf:"varint,4,opt,name=Value,proto3" json:"Value,omitempty"`
+	Fee       uint64 `protobuf:"varint,5,opt,name=Fee,proto3" json:"Fee,omitempty"`
+	Mint      []byte `protobuf:"bytes,6,opt,name=Mint,proto3" json:"Mint,omitempty"`
+}
+
+func (m *SolanaRockMintEvent) Reset()         { *m = SolanaRockMintEvent{} }
+func (m *SolanaRockMintEvent) String() string { return proto.CompactTextString(m) }
+func (*SolanaRockMintEvent) ProtoMessage()    {}
+func (*SolanaRockMintEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{13}
+}
+func (m *SolanaRockMintEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SolanaRockMintEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SolanaRockMintEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SolanaRockMintEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SolanaRockMintEvent.Merge(m, src)
+}
+func (m *SolanaRockMintEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *SolanaRockMintEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_SolanaRockMintEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SolanaRockMintEvent proto.InternalMessageInfo
+
+func (m *SolanaRockMintEvent) GetSigHash() []byte {
+	if m != nil {
+		return m.SigHash
+	}
+	return nil
+}
+
+func (m *SolanaRockMintEvent) GetRecipient() []byte {
+	if m != nil {
+		return m.Recipient
+	}
+	return nil
+}
+
+func (m *SolanaRockMintEvent) GetDate() int64 {
+	if m != nil {
+		return m.Date
 	}
 	return 0
+}
+
+func (m *SolanaRockMintEvent) GetValue() uint64 {
+	if m != nil {
+		return m.Value
+	}
+	return 0
+}
+
+func (m *SolanaRockMintEvent) GetFee() uint64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
+func (m *SolanaRockMintEvent) GetMint() []byte {
+	if m != nil {
+		return m.Mint
+	}
+	return nil
 }
 
 func init() {
@@ -800,75 +892,81 @@ func init() {
 	proto.RegisterType((*SidecarStateByEthHeightRequest)(nil), "api.SidecarStateByEthHeightRequest")
 	proto.RegisterType((*LatestEthereumNonceForAccountRequest)(nil), "api.LatestEthereumNonceForAccountRequest")
 	proto.RegisterType((*LatestEthereumNonceForAccountResponse)(nil), "api.LatestEthereumNonceForAccountResponse")
-	proto.RegisterType((*SolanaRecentBlockhashRequest)(nil), "api.SolanaRecentBlockhashRequest")
-	proto.RegisterType((*SolanaRecentBlockhashResponse)(nil), "api.SolanaRecentBlockhashResponse")
+	proto.RegisterType((*SolanaAccountInfoRequest)(nil), "api.SolanaAccountInfoRequest")
+	proto.RegisterType((*SolanaAccountInfoResponse)(nil), "api.SolanaAccountInfoResponse")
+	proto.RegisterType((*SolanaRockMintEvent)(nil), "api.SolanaRockMintEvent")
 }
 
 func init() { proto.RegisterFile("api/sidecar_service.proto", fileDescriptor_9f890d7da2148de8) }
 
 var fileDescriptor_9f890d7da2148de8 = []byte{
-	// 966 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x56, 0xcd, 0x6e, 0xdb, 0x46,
-	0x10, 0xb6, 0x6c, 0xda, 0x8e, 0x47, 0xae, 0x5c, 0xac, 0xdd, 0x82, 0x66, 0x13, 0xd9, 0x61, 0xd3,
-	0xc0, 0x0d, 0x50, 0x0b, 0x70, 0x11, 0x14, 0x08, 0xd0, 0x9f, 0x48, 0x96, 0x2d, 0xa3, 0x6e, 0xea,
-	0x52, 0x6a, 0x0f, 0x39, 0xd4, 0x58, 0x93, 0x53, 0x71, 0x6b, 0x91, 0xcb, 0x72, 0x57, 0x46, 0xd2,
-	0xbe, 0x44, 0x81, 0x1e, 0xfa, 0x4a, 0x39, 0x15, 0x39, 0xf6, 0x54, 0x14, 0xf6, 0xa1, 0xd7, 0x3e,
-	0x42, 0xb0, 0xbb, 0xa4, 0x44, 0xfd, 0x3a, 0x37, 0xee, 0x37, 0xb3, 0x33, 0xdf, 0xec, 0x7c, 0xb3,
-	0x4b, 0xd8, 0xa6, 0x09, 0xab, 0x09, 0x16, 0xa0, 0x4f, 0xd3, 0x73, 0x81, 0xe9, 0x15, 0xf3, 0x71,
-	0x3f, 0x49, 0xb9, 0xe4, 0x64, 0x89, 0x26, 0xcc, 0xd9, 0xf6, 0xb9, 0x88, 0xb8, 0x38, 0xd7, 0x50,
-	0xcd, 0x2c, 0x8c, 0xdd, 0xd9, 0xea, 0xf2, 0x2e, 0x37, 0xb8, 0xfa, 0x32, 0xa8, 0xfb, 0x25, 0xec,
-	0x9c, 0x52, 0x89, 0x42, 0xd6, 0x99, 0xf4, 0x39, 0x8b, 0xeb, 0x3d, 0xee, 0x5f, 0xb6, 0x90, 0x06,
-	0x98, 0x7a, 0xf8, 0x4b, 0x1f, 0x85, 0x24, 0x77, 0x61, 0xad, 0x11, 0x52, 0x16, 0x3f, 0xa3, 0x11,
-	0xda, 0xa5, 0xdd, 0xd2, 0xde, 0x9a, 0x37, 0x04, 0x5c, 0x1f, 0xee, 0x4f, 0x6e, 0xad, 0xbf, 0x6c,
-	0x21, 0xeb, 0x86, 0x32, 0x0f, 0xb1, 0x0b, 0xe5, 0xcc, 0xaa, 0x50, 0x1d, 0x64, 0xc9, 0x2b, 0x42,
-	0xa3, 0x49, 0x16, 0xc7, 0x93, 0xfc, 0x51, 0x02, 0x67, 0x1a, 0x41, 0x91, 0xf0, 0x58, 0x20, 0x79,
-	0x0c, 0xe5, 0x8b, 0x21, 0xac, 0xc3, 0x97, 0x0f, 0x36, 0xf7, 0x69, 0xc2, 0xf6, 0xeb, 0x9d, 0x46,
-	0x71, 0x47, 0xd1, 0x6f, 0x9c, 0xd5, 0xe2, 0x54, 0x56, 0x1d, 0x96, 0x64, 0xf6, 0x25, 0x6d, 0x1f,
-	0x02, 0xee, 0x5f, 0x25, 0xa8, 0x8c, 0xc6, 0x27, 0x36, 0xac, 0xfe, 0x80, 0xa9, 0x60, 0x3c, 0xce,
-	0x8a, 0xcc, 0x97, 0x2a, 0xd4, 0x59, 0x8a, 0x57, 0xda, 0x39, 0x2f, 0x70, 0x00, 0x90, 0x2a, 0xc0,
-	0x37, 0x98, 0x5e, 0xf6, 0xd0, 0xe3, 0xdc, 0x64, 0x5a, 0xf3, 0x0a, 0x88, 0x21, 0x12, 0x61, 0x5b,
-	0xd2, 0x28, 0xb1, 0xad, 0x9c, 0x48, 0x06, 0x10, 0x02, 0x56, 0x9d, 0x49, 0x61, 0x2f, 0x6b, 0x83,
-	0xfe, 0x26, 0x5b, 0xb0, 0xfc, 0x8c, 0xc7, 0x3e, 0xda, 0x2b, 0x1a, 0x34, 0x0b, 0x15, 0xc7, 0xd0,
-	0xa5, 0x22, 0xb4, 0x57, 0x0d, 0x8b, 0x01, 0xe0, 0x22, 0x80, 0x87, 0x01, 0x46, 0x89, 0x54, 0x8c,
-	0x2b, 0xb0, 0xc8, 0x02, 0x5d, 0x86, 0xe5, 0x2d, 0xb2, 0x80, 0xd4, 0x60, 0x33, 0x40, 0x21, 0x59,
-	0x4c, 0x95, 0xf9, 0x9c, 0x06, 0x41, 0x8a, 0x42, 0xe8, 0x5a, 0xd6, 0x3d, 0x52, 0x30, 0x3d, 0x35,
-	0x16, 0xf2, 0x3e, 0xac, 0xd0, 0x88, 0xf7, 0x63, 0x53, 0x90, 0xe5, 0x65, 0x2b, 0xf7, 0xcf, 0x12,
-	0xac, 0xd5, 0xfb, 0x69, 0xdc, 0xbc, 0xc2, 0x58, 0x2a, 0xf2, 0xf2, 0xc5, 0xc9, 0x61, 0xa6, 0x2c,
-	0xfd, 0x4d, 0x1c, 0xb8, 0xd3, 0xe3, 0xdd, 0x93, 0x38, 0xc0, 0x17, 0x3a, 0xbe, 0xe5, 0x0d, 0xd6,
-	0xea, 0x88, 0x7d, 0x25, 0x8c, 0x93, 0xc3, 0xec, 0x9c, 0xf2, 0x25, 0xd9, 0x83, 0x8d, 0x31, 0x16,
-	0xfa, 0xa8, 0xd6, 0xbd, 0x71, 0xb8, 0xc0, 0x6c, 0x79, 0x84, 0xd9, 0x7b, 0xb0, 0xd9, 0x36, 0xc3,
-	0xd5, 0x96, 0x54, 0x62, 0x26, 0x5f, 0xf7, 0xbf, 0x25, 0xd8, 0x1a, 0xc5, 0x33, 0xe1, 0x3d, 0x82,
-	0x77, 0x9b, 0xac, 0x8b, 0xf1, 0x21, 0xf6, 0xb0, 0xab, 0xc3, 0x0b, 0x5d, 0xc7, 0xba, 0x37, 0x81,
-	0x93, 0x87, 0x50, 0x69, 0xca, 0x70, 0x5c, 0x70, 0x96, 0x37, 0x86, 0x2a, 0x55, 0x36, 0x65, 0x78,
-	0x4c, 0xc5, 0x29, 0x8b, 0x58, 0x7e, 0x74, 0x45, 0x48, 0x89, 0x45, 0xed, 0xa1, 0x02, 0x8f, 0x10,
-	0x75, 0x89, 0x96, 0x57, 0x40, 0x54, 0x93, 0x9b, 0x32, 0xec, 0xb0, 0xa4, 0x41, 0x93, 0xac, 0xc0,
-	0x21, 0x40, 0xbe, 0x00, 0xa7, 0xcd, 0x7b, 0x34, 0xa6, 0xa7, 0x34, 0x4a, 0x78, 0x2a, 0xc5, 0x19,
-	0xa6, 0x6d, 0xd6, 0x8d, 0xa9, 0xec, 0xa7, 0x46, 0x2d, 0x96, 0x37, 0xc7, 0x83, 0x3c, 0x81, 0x77,
-	0x54, 0xae, 0xbc, 0x7f, 0xc2, 0x5e, 0xdd, 0x5d, 0xda, 0x2b, 0x1f, 0x54, 0xcc, 0xb8, 0xe5, 0x70,
-	0xdd, 0x7a, 0xf5, 0xcf, 0xce, 0x82, 0x37, 0xea, 0x4a, 0x3e, 0x83, 0xf2, 0x50, 0x60, 0xc2, 0xbe,
-	0xa3, 0x77, 0x6e, 0xe8, 0x9d, 0x43, 0x3c, 0xdb, 0x5a, 0xf4, 0x24, 0x2e, 0xac, 0x7b, 0xdf, 0x36,
-	0xbe, 0xfe, 0xbe, 0x7d, 0x78, 0x96, 0x32, 0x1f, 0xed, 0x35, 0xdd, 0xf9, 0x11, 0x4c, 0x8f, 0x73,
-	0xa7, 0x31, 0x70, 0x01, 0xed, 0x52, 0x84, 0xf4, 0xd1, 0x76, 0x5a, 0x03, 0x8f, 0xb2, 0xf1, 0x28,
-	0x40, 0x6e, 0x0b, 0xaa, 0xc5, 0x46, 0xd7, 0x5f, 0x36, 0x65, 0x38, 0x7a, 0x95, 0x4d, 0xb6, 0xb1,
-	0x34, 0xad, 0x8d, 0xee, 0x57, 0xf0, 0xc0, 0x5c, 0xac, 0x4d, 0x19, 0x62, 0x8a, 0xfd, 0x48, 0x0f,
-	0xe0, 0x11, 0x4f, 0x9f, 0xfa, 0xbe, 0xd2, 0x5a, 0x1e, 0xcf, 0x86, 0xd5, 0x6c, 0x5e, 0xb2, 0x09,
-	0xc8, 0x97, 0xee, 0xe7, 0xf0, 0xd1, 0x2d, 0x11, 0x32, 0x15, 0x0e, 0x46, 0xdd, 0x30, 0x31, 0x0b,
-	0xb7, 0x0a, 0x77, 0x4d, 0x17, 0x3d, 0xf4, 0x55, 0x43, 0x14, 0xb7, 0x90, 0x8a, 0x30, 0x17, 0xf5,
-	0x77, 0x70, 0x6f, 0x86, 0x3d, 0x0b, 0x9b, 0xdf, 0x15, 0x0a, 0xcc, 0xef, 0xfd, 0x01, 0xa0, 0xc6,
-	0xb6, 0xdd, 0xe3, 0xb9, 0x88, 0xf5, 0xf7, 0xc1, 0xff, 0x16, 0x54, 0xf2, 0xe3, 0x33, 0x6f, 0x13,
-	0x69, 0xc1, 0xc6, 0x31, 0xca, 0xe2, 0x99, 0x12, 0x5b, 0xf7, 0x7b, 0xca, 0x9c, 0x39, 0xdb, 0x53,
-	0x2c, 0x86, 0x8c, 0xbb, 0x40, 0x7e, 0x04, 0x67, 0x2c, 0x52, 0xa1, 0x3b, 0xe4, 0xc3, 0x89, 0xad,
-	0x93, 0xbd, 0x9b, 0x1f, 0xff, 0x67, 0xb8, 0x77, 0x8c, 0x72, 0xf6, 0x5b, 0x46, 0x1e, 0x1a, 0x85,
-	0xdf, 0xf6, 0xd8, 0x39, 0x3b, 0x33, 0xfc, 0x0a, 0xb9, 0x7e, 0x82, 0x0f, 0x8e, 0x51, 0xce, 0x7a,
-	0x78, 0xc9, 0x03, 0x1d, 0xe1, 0x96, 0x77, 0xf9, 0x6d, 0xf2, 0xfc, 0x06, 0xbb, 0x83, 0x3c, 0x33,
-	0x54, 0x44, 0x3e, 0x2e, 0x24, 0x9b, 0xaf, 0x55, 0xe7, 0xd1, 0xdb, 0xb8, 0x0e, 0x92, 0xfb, 0x60,
-	0xab, 0x86, 0x4d, 0xd3, 0x18, 0xb9, 0x6f, 0x3a, 0x31, 0x47, 0x9f, 0x8e, 0x3b, 0xcf, 0x25, 0x4f,
-	0x52, 0xef, 0xbc, 0xba, 0xae, 0x96, 0x5e, 0x5f, 0x57, 0x4b, 0xff, 0x5e, 0x57, 0x4b, 0xbf, 0xdf,
-	0x54, 0x17, 0x5e, 0xdf, 0x54, 0x17, 0xfe, 0xbe, 0xa9, 0x2e, 0x3c, 0x7f, 0xd2, 0x65, 0x32, 0xec,
-	0x5f, 0xec, 0xfb, 0x3c, 0xaa, 0x3d, 0xc7, 0x38, 0xe5, 0xfe, 0xe5, 0x27, 0x47, 0xbc, 0x1f, 0x07,
-	0xfa, 0x3e, 0xae, 0xfd, 0x9a, 0xea, 0x67, 0xa3, 0x76, 0xf5, 0x38, 0xff, 0x9f, 0xaa, 0x99, 0x9f,
-	0x23, 0x9a, 0xb0, 0x8b, 0x15, 0xfd, 0xf9, 0xe9, 0x9b, 0x00, 0x00, 0x00, 0xff, 0xff, 0x74, 0xc1,
-	0x1e, 0x78, 0x6f, 0x09, 0x00, 0x00,
+	// 1052 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x56, 0x5b, 0x4f, 0x1b, 0x47,
+	0x14, 0xc6, 0xb0, 0x40, 0x38, 0x76, 0x21, 0x1a, 0x68, 0xb4, 0xb8, 0x8d, 0xa1, 0xdb, 0x34, 0xa2,
+	0x91, 0x8a, 0x25, 0x2a, 0x54, 0x29, 0x52, 0x2f, 0x31, 0x98, 0x8b, 0x42, 0x52, 0x34, 0x76, 0x53,
+	0x29, 0x0f, 0x45, 0xc3, 0xfa, 0xc4, 0x9e, 0xe2, 0xdd, 0xd9, 0xee, 0x8c, 0x51, 0x68, 0xff, 0x44,
+	0xa5, 0x3e, 0xf4, 0xa9, 0xbf, 0xa4, 0x7f, 0x20, 0x4f, 0x55, 0x1e, 0xfb, 0x54, 0x55, 0xd0, 0x1f,
+	0x52, 0xcd, 0x65, 0xed, 0xf5, 0x05, 0xc8, 0xdb, 0x9c, 0xef, 0xdc, 0x67, 0xbe, 0x73, 0x76, 0x61,
+	0x95, 0x25, 0xbc, 0x2a, 0x79, 0x0b, 0x43, 0x96, 0x9e, 0x48, 0x4c, 0xcf, 0x79, 0x88, 0x9b, 0x49,
+	0x2a, 0x94, 0x20, 0x33, 0x2c, 0xe1, 0xe5, 0xd5, 0x50, 0xc8, 0x48, 0xc8, 0x13, 0x03, 0x55, 0xad,
+	0x60, 0xf5, 0xe5, 0x95, 0xb6, 0x68, 0x0b, 0x8b, 0xeb, 0x93, 0x45, 0x83, 0xaf, 0x61, 0xed, 0x88,
+	0x29, 0x94, 0xaa, 0xc6, 0x55, 0x28, 0x78, 0x5c, 0xeb, 0x8a, 0xf0, 0xec, 0x00, 0x59, 0x0b, 0x53,
+	0x8a, 0x3f, 0xf5, 0x50, 0x2a, 0xf2, 0x21, 0x2c, 0xec, 0x74, 0x18, 0x8f, 0x9f, 0xb3, 0x08, 0xfd,
+	0xc2, 0x7a, 0x61, 0x63, 0x81, 0x0e, 0x80, 0x20, 0x84, 0x8f, 0xc6, 0x5d, 0x6b, 0x17, 0x07, 0xc8,
+	0xdb, 0x1d, 0x95, 0x85, 0x58, 0x87, 0xa2, 0xd3, 0x6a, 0xd4, 0x04, 0x99, 0xa1, 0x79, 0x68, 0x38,
+	0xc9, 0xf4, 0x68, 0x92, 0xdf, 0x0a, 0x50, 0x9e, 0x54, 0xa0, 0x4c, 0x44, 0x2c, 0x91, 0x6c, 0x43,
+	0xf1, 0x74, 0x00, 0x9b, 0xf0, 0xc5, 0xad, 0xe5, 0x4d, 0x96, 0xf0, 0xcd, 0x5a, 0x73, 0x27, 0xef,
+	0x91, 0xb7, 0x1b, 0xad, 0x6a, 0x7a, 0x62, 0x55, 0x4d, 0x9e, 0x38, 0xfd, 0x8c, 0xd1, 0x0f, 0x80,
+	0xe0, 0xaf, 0x02, 0x2c, 0x0e, 0xc7, 0x27, 0x3e, 0xcc, 0xbf, 0xc0, 0x54, 0x72, 0x11, 0xbb, 0x26,
+	0x33, 0x51, 0x87, 0x3a, 0x4e, 0xf1, 0xdc, 0x18, 0x67, 0x0d, 0xf6, 0x01, 0x52, 0x01, 0x78, 0x86,
+	0xe9, 0x59, 0x17, 0xa9, 0x10, 0x36, 0xd3, 0x02, 0xcd, 0x21, 0xb6, 0x90, 0x08, 0x1b, 0x8a, 0x45,
+	0x89, 0xef, 0x65, 0x85, 0x38, 0x80, 0x10, 0xf0, 0x6a, 0x5c, 0x49, 0x7f, 0xd6, 0x28, 0xcc, 0x99,
+	0xac, 0xc0, 0xec, 0x73, 0x11, 0x87, 0xe8, 0xcf, 0x19, 0xd0, 0x0a, 0x3a, 0x8e, 0x2d, 0x97, 0xc9,
+	0x8e, 0x3f, 0x6f, 0xab, 0xe8, 0x03, 0x01, 0x02, 0x50, 0x6c, 0x61, 0x94, 0x28, 0x5d, 0xf1, 0x22,
+	0x4c, 0xf3, 0x96, 0x69, 0xc3, 0xa3, 0xd3, 0xbc, 0x45, 0xaa, 0xb0, 0xdc, 0x42, 0xa9, 0x78, 0xcc,
+	0xb4, 0xfa, 0x84, 0xb5, 0x5a, 0x29, 0x4a, 0x69, 0x7a, 0x29, 0x51, 0x92, 0x53, 0x3d, 0xb1, 0x1a,
+	0x72, 0x0f, 0xe6, 0x58, 0x24, 0x7a, 0xb1, 0x6d, 0xc8, 0xa3, 0x4e, 0x0a, 0x7e, 0x2f, 0xc0, 0x42,
+	0xad, 0x97, 0xc6, 0xf5, 0x73, 0x8c, 0x95, 0x2e, 0x5e, 0xbd, 0x3e, 0xdc, 0x75, 0xcc, 0x32, 0x67,
+	0x52, 0x86, 0x3b, 0x5d, 0xd1, 0x3e, 0x8c, 0x5b, 0xf8, 0xda, 0xc4, 0xf7, 0x68, 0x5f, 0xd6, 0x57,
+	0x1c, 0x6a, 0x62, 0x1c, 0xee, 0xba, 0x7b, 0xca, 0x44, 0xb2, 0x01, 0x4b, 0x23, 0x55, 0x98, 0xab,
+	0x2a, 0xd1, 0x51, 0x38, 0x57, 0xd9, 0xec, 0x50, 0x65, 0xef, 0xc3, 0x72, 0xc3, 0x0e, 0x57, 0x43,
+	0x31, 0x85, 0x8e, 0xbe, 0xc1, 0x9f, 0x1e, 0xac, 0x0c, 0xe3, 0x8e, 0x78, 0x8f, 0xe0, 0x6e, 0x9d,
+	0xb7, 0x31, 0xde, 0xc5, 0x2e, 0xb6, 0x4d, 0x78, 0x69, 0xfa, 0x28, 0xd1, 0x31, 0x9c, 0x3c, 0x84,
+	0xc5, 0xba, 0xea, 0x8c, 0x12, 0xce, 0xa3, 0x23, 0xa8, 0x66, 0x65, 0x5d, 0x75, 0xf6, 0x99, 0x3c,
+	0xe2, 0x11, 0xcf, 0xae, 0x2e, 0x0f, 0x69, 0xb2, 0x68, 0x1f, 0x26, 0x71, 0x0f, 0xd1, 0xb4, 0xe8,
+	0xd1, 0x1c, 0xa2, 0x1f, 0xb9, 0xae, 0x3a, 0x4d, 0x9e, 0xec, 0xb0, 0xc4, 0x35, 0x38, 0x00, 0xc8,
+	0x57, 0x50, 0x6e, 0x88, 0x2e, 0x8b, 0xd9, 0x11, 0x8b, 0x12, 0x91, 0x2a, 0x79, 0x8c, 0x69, 0x83,
+	0xb7, 0x63, 0xa6, 0x7a, 0xa9, 0x65, 0x8b, 0x47, 0x6f, 0xb0, 0x20, 0x8f, 0xe1, 0x3d, 0x9d, 0x2b,
+	0x7b, 0x3f, 0xe9, 0xcf, 0xaf, 0xcf, 0x6c, 0x14, 0xb7, 0x16, 0xed, 0xb8, 0x65, 0x70, 0xcd, 0x7b,
+	0xf3, 0xcf, 0xda, 0x14, 0x1d, 0x36, 0x25, 0x5f, 0x40, 0x71, 0x40, 0x30, 0xe9, 0xdf, 0x31, 0x9e,
+	0x4b, 0xc6, 0x73, 0x80, 0x3b, 0xd7, 0xbc, 0x25, 0x09, 0xa0, 0x44, 0xbf, 0xdd, 0x79, 0xfa, 0x5d,
+	0x63, 0xf7, 0x38, 0xe5, 0x21, 0xfa, 0x0b, 0xe6, 0xe5, 0x87, 0x30, 0x33, 0xce, 0xcd, 0x9d, 0xbe,
+	0x09, 0x18, 0x93, 0x3c, 0x64, 0xae, 0xb6, 0x79, 0xd0, 0xb7, 0x28, 0x5a, 0x8b, 0x1c, 0x44, 0x28,
+	0xac, 0xd8, 0xd6, 0xa9, 0x08, 0xcf, 0x9e, 0xf1, 0x58, 0xb9, 0x1e, 0x4b, 0xa6, 0x52, 0xdf, 0x54,
+	0x3a, 0xc1, 0xc0, 0x95, 0x3c, 0xd1, 0x37, 0x38, 0x80, 0x4a, 0x9e, 0x3c, 0xb5, 0x8b, 0xba, 0xea,
+	0x0c, 0xaf, 0xc7, 0x71, 0x6a, 0x14, 0x26, 0x51, 0x23, 0xf8, 0x06, 0x1e, 0xd8, 0x65, 0x5d, 0x57,
+	0x1d, 0x4c, 0xb1, 0x17, 0x99, 0xa1, 0xde, 0x13, 0xe9, 0x93, 0x30, 0xd4, 0xfc, 0xcd, 0xe2, 0xf9,
+	0x30, 0xef, 0x66, 0xd0, 0x4d, 0x55, 0x26, 0x06, 0x5f, 0xc2, 0x27, 0xb7, 0x44, 0x70, 0xcc, 0xee,
+	0xaf, 0x0f, 0x5b, 0x89, 0x15, 0x82, 0x2d, 0xf0, 0x6d, 0x8b, 0xce, 0xfc, 0x30, 0x7e, 0x25, 0xb2,
+	0xa4, 0xf7, 0x60, 0xee, 0xb8, 0x77, 0xfa, 0x14, 0x2f, 0x5c, 0x4e, 0x27, 0x05, 0xdb, 0xb0, 0x3a,
+	0xc1, 0xc7, 0xa5, 0xd1, 0x95, 0x5a, 0xd8, 0xcd, 0x4d, 0x26, 0x06, 0x7f, 0x14, 0x60, 0x79, 0xc2,
+	0x75, 0x6a, 0x8f, 0x06, 0x6f, 0x9b, 0xfd, 0xe5, 0x3c, 0x9c, 0xa8, 0x69, 0x4f, 0x31, 0xe4, 0x09,
+	0xc7, 0x58, 0xb9, 0xad, 0x34, 0x00, 0xf4, 0x9a, 0xd9, 0x65, 0x0a, 0xdd, 0x16, 0x37, 0x67, 0xdd,
+	0xe4, 0x0b, 0xd6, 0xed, 0x65, 0x33, 0x64, 0x05, 0x72, 0x17, 0x66, 0xf4, 0x5c, 0xd9, 0xc1, 0xd1,
+	0x47, 0xed, 0xab, 0x0b, 0x30, 0xc3, 0x51, 0xa2, 0xe6, 0xbc, 0xf5, 0x9f, 0x07, 0x8b, 0xd9, 0xb3,
+	0xda, 0xef, 0x30, 0x39, 0x80, 0xa5, 0x7d, 0x54, 0xf9, 0xb7, 0x26, 0x8e, 0x31, 0xe3, 0x3b, 0xa5,
+	0xbc, 0x3a, 0x41, 0x63, 0x2f, 0x25, 0x98, 0x22, 0x3f, 0x40, 0x79, 0x24, 0x52, 0x8e, 0x35, 0xe4,
+	0xe3, 0x31, 0xd7, 0x71, 0x4e, 0xdd, 0x1c, 0xff, 0x47, 0xb8, 0xbf, 0x8f, 0xea, 0xfa, 0xef, 0x36,
+	0x79, 0x68, 0xa7, 0xf9, 0xb6, 0x0f, 0x7b, 0x79, 0xed, 0x1a, 0xbb, 0x5c, 0xae, 0x57, 0xf0, 0xc1,
+	0x3e, 0xaa, 0xeb, 0x7e, 0x32, 0xc8, 0x03, 0x13, 0xe1, 0x96, 0x7f, 0x90, 0x77, 0xc9, 0xf3, 0x0b,
+	0xac, 0xf7, 0xf3, 0x5c, 0xc3, 0x6e, 0xf2, 0x69, 0x2e, 0xd9, 0xcd, 0x33, 0x54, 0x7e, 0xf4, 0x2e,
+	0xa6, 0xfd, 0xe4, 0xdf, 0xc3, 0x8a, 0x7e, 0xb0, 0x51, 0x9e, 0x93, 0xfb, 0xb9, 0x8d, 0x31, 0x3e,
+	0x33, 0xe5, 0xca, 0x75, 0xea, 0x2c, 0x70, 0xad, 0xf9, 0xe6, 0xb2, 0x52, 0x78, 0x7b, 0x59, 0x29,
+	0xfc, 0x7b, 0x59, 0x29, 0xfc, 0x7a, 0x55, 0x99, 0x7a, 0x7b, 0x55, 0x99, 0xfa, 0xfb, 0xaa, 0x32,
+	0xf5, 0xf2, 0x71, 0x9b, 0xab, 0x4e, 0xef, 0x74, 0x33, 0x14, 0x51, 0xf5, 0x25, 0xc6, 0xa9, 0x08,
+	0xcf, 0x3e, 0xdb, 0x13, 0xbd, 0xb8, 0x65, 0xbe, 0x37, 0xd5, 0x9f, 0x53, 0xf3, 0x59, 0xac, 0x9e,
+	0x6f, 0x67, 0xff, 0x8b, 0x55, 0xfb, 0xf3, 0xc7, 0x12, 0x7e, 0x3a, 0x67, 0x8e, 0x9f, 0xff, 0x1f,
+	0x00, 0x00, 0xff, 0xff, 0x13, 0x9f, 0xd8, 0xb7, 0x4f, 0x0a, 0x00, 0x00,
 }
 
 func (m *LatestBitcoinBlockHeaderRequest) Marshal() (dAtA []byte, err error) {
@@ -1182,6 +1280,20 @@ func (m *SidecarStateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.SolanaRockMintEvents) > 0 {
+		for iNdEx := len(m.SolanaRockMintEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.SolanaRockMintEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSidecarService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x62
+		}
+	}
 	if len(m.ETHUSDPrice) > 0 {
 		i -= len(m.ETHUSDPrice)
 		copy(dAtA[i:], m.ETHUSDPrice)
@@ -1352,7 +1464,7 @@ func (m *LatestEthereumNonceForAccountResponse) MarshalToSizedBuffer(dAtA []byte
 	return len(dAtA) - i, nil
 }
 
-func (m *SolanaRecentBlockhashRequest) Marshal() (dAtA []byte, err error) {
+func (m *SolanaAccountInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1362,20 +1474,27 @@ func (m *SolanaRecentBlockhashRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SolanaRecentBlockhashRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *SolanaAccountInfoRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *SolanaRecentBlockhashRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SolanaAccountInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.PubKey) > 0 {
+		i -= len(m.PubKey)
+		copy(dAtA[i:], m.PubKey)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.PubKey)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *SolanaRecentBlockhashResponse) Marshal() (dAtA []byte, err error) {
+func (m *SolanaAccountInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1385,25 +1504,79 @@ func (m *SolanaRecentBlockhashResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SolanaRecentBlockhashResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *SolanaAccountInfoResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *SolanaRecentBlockhashResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SolanaAccountInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Slot != 0 {
-		i = encodeVarintSidecarService(dAtA, i, uint64(m.Slot))
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Account)))
 		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0xa
 	}
-	if len(m.Blockhash) > 0 {
-		i -= len(m.Blockhash)
-		copy(dAtA[i:], m.Blockhash)
-		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Blockhash)))
+	return len(dAtA) - i, nil
+}
+
+func (m *SolanaRockMintEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SolanaRockMintEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SolanaRockMintEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Mint) > 0 {
+		i -= len(m.Mint)
+		copy(dAtA[i:], m.Mint)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Mint)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.Fee != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Fee))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Value != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Value))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Date != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Date))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Recipient) > 0 {
+		i -= len(m.Recipient)
+		copy(dAtA[i:], m.Recipient)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Recipient)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.SigHash) > 0 {
+		i -= len(m.SigHash)
+		copy(dAtA[i:], m.SigHash)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.SigHash)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1606,6 +1779,12 @@ func (m *SidecarStateResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovSidecarService(uint64(l))
 	}
+	if len(m.SolanaRockMintEvents) > 0 {
+		for _, e := range m.SolanaRockMintEvents {
+			l = e.Size()
+			n += 1 + l + sovSidecarService(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -1646,27 +1825,58 @@ func (m *LatestEthereumNonceForAccountResponse) Size() (n int) {
 	return n
 }
 
-func (m *SolanaRecentBlockhashRequest) Size() (n int) {
+func (m *SolanaAccountInfoRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	return n
-}
-
-func (m *SolanaRecentBlockhashResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Blockhash)
+	l = len(m.PubKey)
 	if l > 0 {
 		n += 1 + l + sovSidecarService(uint64(l))
 	}
-	if m.Slot != 0 {
-		n += 1 + sovSidecarService(uint64(m.Slot))
+	return n
+}
+
+func (m *SolanaAccountInfoResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	return n
+}
+
+func (m *SolanaRockMintEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SigHash)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Recipient)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	if m.Date != 0 {
+		n += 1 + sovSidecarService(uint64(m.Date))
+	}
+	if m.Value != 0 {
+		n += 1 + sovSidecarService(uint64(m.Value))
+	}
+	if m.Fee != 0 {
+		n += 1 + sovSidecarService(uint64(m.Fee))
+	}
+	l = len(m.Mint)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
 	}
 	return n
 }
@@ -2886,6 +3096,40 @@ func (m *SidecarStateResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.ETHUSDPrice = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SolanaRockMintEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SolanaRockMintEvents = append(m.SolanaRockMintEvents, SolanaRockMintEvent{})
+			if err := m.SolanaRockMintEvents[len(m.SolanaRockMintEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSidecarService(dAtA[iNdEx:])
@@ -3127,7 +3371,7 @@ func (m *LatestEthereumNonceForAccountResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SolanaRecentBlockhashRequest) Unmarshal(dAtA []byte) error {
+func (m *SolanaAccountInfoRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3150,65 +3394,15 @@ func (m *SolanaRecentBlockhashRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SolanaRecentBlockhashRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: SolanaAccountInfoRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SolanaRecentBlockhashRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSidecarService(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthSidecarService
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *SolanaRecentBlockhashResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSidecarService
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SolanaRecentBlockhashResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SolanaRecentBlockhashResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SolanaAccountInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Blockhash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PubKey", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3236,13 +3430,63 @@ func (m *SolanaRecentBlockhashResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Blockhash = string(dAtA[iNdEx:postIndex])
+			m.PubKey = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Slot", wireType)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
 			}
-			m.Slot = 0
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SolanaAccountInfoResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SolanaAccountInfoResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SolanaAccountInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowSidecarService
@@ -3252,11 +3496,235 @@ func (m *SolanaRecentBlockhashResponse) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Slot |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = append(m.Account[:0], dAtA[iNdEx:postIndex]...)
+			if m.Account == nil {
+				m.Account = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SolanaRockMintEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SolanaRockMintEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SolanaRockMintEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SigHash = append(m.SigHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.SigHash == nil {
+				m.SigHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Recipient", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Recipient = append(m.Recipient[:0], dAtA[iNdEx:postIndex]...)
+			if m.Recipient == nil {
+				m.Recipient = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Date", wireType)
+			}
+			m.Date = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Date |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			m.Value = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Value |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
+			}
+			m.Fee = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fee |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mint", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Mint = append(m.Mint[:0], dAtA[iNdEx:postIndex]...)
+			if m.Mint == nil {
+				m.Mint = []byte{}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSidecarService(dAtA[iNdEx:])

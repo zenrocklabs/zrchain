@@ -118,10 +118,10 @@ func processWallets(
 				)
 			}
 		case types.WalletType_WALLET_TYPE_SOLANA:
-			if address, err := types.SolanaAddress(&key); err == nil {
+			if pubKey, err := types.SolanaPubkey(&key); err == nil {
 				wallets = append(
 					wallets,
-					&types.WalletResponse{Address: address, Type: walletType.String()},
+					&types.WalletResponse{Address: pubKey.String(), Type: walletType.String()},
 				)
 			}
 		}

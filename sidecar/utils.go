@@ -44,6 +44,7 @@ func (o *Oracle) LoadFromFile(filename string) error {
 			ROCKUSDPrice:               latestState.ROCKUSDPrice,
 			BTCUSDPrice:                latestState.BTCUSDPrice,
 			ETHUSDPrice:                latestState.ETHUSDPrice,
+			SolanaRockMintEvents:       latestState.SolanaRockMintEvents,
 		}
 		o.stateCache = states
 	} else {

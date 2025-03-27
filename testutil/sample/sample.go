@@ -8,6 +8,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // AccAddress returns a sample account address
@@ -40,4 +43,8 @@ func StringLen(n int) string {
 	}
 
 	return string(b)
+}
+
+func GetAuthority() string {
+	return authtypes.NewModuleAddress(govtypes.ModuleName).String()
 }

@@ -67,7 +67,7 @@ func (k msgServer) NewZrSignSignatureRequest(goCtx context.Context, msg *types.M
 		}
 		resp, err := k.HandleSignTransactionRequest(ctx, &types.MsgNewSignTransactionRequest{
 			Creator:             msg.Creator,
-			KeyId:               key.Id,
+			KeyIds:              []uint64{key.Id},
 			WalletType:          msg.WalletType,
 			UnsignedTransaction: byteData,
 			Metadata:            msg.Metadata,

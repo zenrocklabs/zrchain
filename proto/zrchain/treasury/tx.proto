@@ -197,7 +197,7 @@ message MetadataSolana {
 message MsgNewSignTransactionRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
-  uint64 key_id = 2;
+  repeated uint64 key_ids = 2;
   WalletType wallet_type = 3;
   bytes unsigned_transaction = 4;
 

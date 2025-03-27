@@ -149,10 +149,10 @@ func (c *TreasuryTxClient) NewZrSignKeyRequest(ctx context.Context, creator, add
 // Returns:
 //   - string: The transaction hash if successful
 //   - error: An error if the request fails
-func (c *TreasuryTxClient) NewSignTransactionRequest(ctx context.Context, keyID uint64, unsignedTransaction []byte, walletType types.WalletType, metadata *cosmos_types.Any) (string, error) {
+func (c *TreasuryTxClient) NewSignTransactionRequest(ctx context.Context, keyIDs []uint64, unsignedTransaction []byte, walletType types.WalletType, metadata *cosmos_types.Any) (string, error) {
 	msg := &types.MsgNewSignTransactionRequest{
 		Creator:             c.c.Identity.Address.String(),
-		KeyId:               keyID,
+		KeyIds:              keyIDs,
 		WalletType:          walletType,
 		UnsignedTransaction: unsignedTransaction,
 		Metadata:            metadata,
