@@ -10,10 +10,9 @@ import (
 	"github.com/gagliardetto/solana-go"
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
-	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount) ([]byte, error) {
+func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount, fundReceiver bool) ([]byte, error) {
 	params := k.GetParams(goCtx).Solana
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -78,30 +77,12 @@ func (k Keeper) PrepareSolRockMintTx(goCtx context.Context, amount uint64, recip
 		return nil, err
 	}
 
-	client := rpc.New(params.RpcUrl)
-	_, err = solrock.GetTokenAccount(context.Background(), client, feeWalletAta)
-
-	if err.Error() == "not found" {
-		instructions = append(
-			instructions,
-			ata.NewCreateInstruction(
-				*signerPubKey,
-				feeKey,
-				mintKey,
-			).Build(),
-		)
-	} else {
-		return nil, err
-	}
-
 	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintKey)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = solrock.GetTokenAccount(context.Background(), client, receiverAta)
-
-	if err.Error() == "not found" {
+	if fundReceiver {
 		instructions = append(
 			instructions,
 			ata.NewCreateInstruction(

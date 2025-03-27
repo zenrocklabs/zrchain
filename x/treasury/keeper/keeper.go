@@ -514,7 +514,7 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 			sdk.NewAttribute(types.AttributeRequestId, strconv.FormatUint(tID, 10)),
 		),
 	})
-	return &types.MsgNewSignTransactionRequestResponse{Id: id, SignatureRequestId: id}, nil
+	return &types.MsgNewSignTransactionRequestResponse{Id: tID, SignatureRequestId: id}, nil
 }
 
 func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {

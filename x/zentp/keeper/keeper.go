@@ -148,16 +148,16 @@ func (k Keeper) GetBurns(goCtx context.Context, address string, chainID string) 
 func (k Keeper) GetSignerKeyID(ctx context.Context) uint64 {
 	params := k.GetParams(ctx)
 
-	return params.ZrchainRelayerKeyId
+	return params.Solana.SignerKeyId
 }
 
-func (k Keeper) GetNewMints(goCtx context.Context) ([]*types.Bridge, error) {
+func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeStatus) ([]*types.Bridge, error) {
 	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
 		goCtx,
 		k.mintStore,
 		nil,
 		func(key uint64, value types.Bridge) (bool, error) {
-			return value.State == types.BridgeStatus_BRIDGE_STATUS_NEW, nil
+			return value.State == status, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil

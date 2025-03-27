@@ -25,3 +25,12 @@ type TokenRedemptionEvent struct {
 	Mint      solana.PublicKey
 	Id        *big.Int
 }
+
+type TokenMintEvent struct {
+	Signature []byte
+	Date      int64
+	Recipient []byte
+	Value     uint64
+	Fee       uint64
+	Mint      []byte
+}

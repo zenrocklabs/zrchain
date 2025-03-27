@@ -29,7 +29,8 @@ var (
 	LastUsedEthereumNonceKey             = collections.NewPrefix(10)
 	RequestedHistoricalBitcoinHeadersKey = collections.NewPrefix(11)
 	LastValidVEHeightKey                 = collections.NewPrefix(12)
-	SolanaNonceRequestedKey              = collections.NewPrefix(12)
+	SolanaNonceRequestedKey              = collections.NewPrefix(13)
+	SolanaAccountsRequestedKey           = collections.NewPrefix(14)
 
 	AssetPricesIndex                       = "asset_prices"
 	SlashEventsIndex                       = "slash_events"
@@ -45,6 +46,7 @@ var (
 	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
 	LastValidVEHeightIndex                 = "last_valid_ve_height"
 	SolanaNonceRequestedIndex              = "solana_nonce_requested"
+	SolanaAccountsRequestedIndex           = "solana_account_requested"
 )
 
 const (

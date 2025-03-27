@@ -60,6 +60,7 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ROCKUSDPrice:               fmt.Sprint(currentState.ROCKUSDPrice),
 		BTCUSDPrice:                fmt.Sprint(currentState.BTCUSDPrice),
 		ETHUSDPrice:                fmt.Sprint(currentState.ETHUSDPrice),
+		SolanaRockMintEvents:       currentState.SolanaRockMintEvents,
 	}, nil
 }
 
@@ -86,6 +87,7 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		ROCKUSDPrice:               fmt.Sprint(state.ROCKUSDPrice),
 		BTCUSDPrice:                fmt.Sprint(state.BTCUSDPrice),
 		ETHUSDPrice:                fmt.Sprint(state.ETHUSDPrice),
+		SolanaRockMintEvents:       state.SolanaRockMintEvents,
 	}, nil
 }
 
@@ -160,9 +162,10 @@ func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.Solan
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Solana account info: %w", err)
+		return nil, err
 	}
+	b := accountInfo.GetBinary()
 	return &api.SolanaAccountInfoResponse{
-		Account: accountInfo.GetBinary(),
+		Account: b,
 	}, nil
 }

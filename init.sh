@@ -173,12 +173,11 @@ if [ "$START_ONLY" = false ]; then
     jq '.app_state.zentp.params = {
         "solana": {
           "signer_key_id": 1,
-          "rpc_url": "https://api.devnet.solana.com",
           "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
           "nonce_authority_key": 8,
           "nonce_account_key": 9,
           "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-          "fee_wallet": "AvUu1UkvwgBcvCXMEseBdEns7BGF5tNYRcLmwegDcUCX",
+          "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
           "fee": 20
         }
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json

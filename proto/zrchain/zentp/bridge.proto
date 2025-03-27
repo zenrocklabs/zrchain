@@ -21,6 +21,8 @@ enum BridgeStatus {
 
   // Completed: The operation has been successfully finalized.
   BRIDGE_STATUS_COMPLETED = 3;
+
+  BRIDGE_STATUS_FAILED = 4;
 }
 
 message Bridge {
@@ -32,6 +34,7 @@ message Bridge {
   string destination_chain = 6;
   uint64 amount = 7;
   string recipient_address = 8;
-  string tx_hash = 9;
-  BridgeStatus state = 10;
+  uint64 tx_id = 9;
+  string tx_hash = 10;
+  BridgeStatus state = 11;
 }

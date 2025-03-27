@@ -73,6 +73,7 @@ message SidecarStateResponse {
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
+  repeated SolanaRockMintEvent SolanaRockMintEvents = 12 [(gogoproto.nullable) = false];;
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
@@ -84,3 +85,13 @@ message LatestEthereumNonceForAccountResponse { uint64 Nonce = 1; }
 message SolanaAccountInfoRequest { string PubKey = 1; }
 
 message SolanaAccountInfoResponse { bytes Account = 1; }
+
+
+message SolanaRockMintEvent {
+  bytes SigHash = 1;
+  bytes Recipient = 2;
+  int64 Date = 3;
+  uint64 Value = 4;
+  uint64 Fee = 5;
+  bytes Mint = 6;
+}

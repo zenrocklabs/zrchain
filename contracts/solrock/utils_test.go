@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var endpoint = rpc.LocalNet.RPC
+var endpoint = "https://api.devnet.solana.com" // rpc.LocalNet.RPC
 var authority, _ = LoadLocalWallet()
 var programID = solana.MustPublicKeyFromBase58("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
 
@@ -501,4 +501,48 @@ func TestDurableNonces(t *testing.T) {
 
 		require.NotEqual(t, nonceAccountBefore.Nonce, nonceAccountAfter.Nonce)
 	})
+}
+
+func TestGetTokenMintEvents(t *testing.T) {
+	limit := 1000
+
+	signatures, err := client.GetSignaturesForAddressWithOpts(context.Background(), programID, &rpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: rpc.CommitmentConfirmed,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, signatures)
+
+	var tokenMintEvents []TokenMintEvent
+
+	for _, signature := range signatures {
+		tx, err := client.GetTransaction(context.Background(), signature.Signature, &rpc.GetTransactionOpts{
+			Commitment: rpc.CommitmentConfirmed,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, tx)
+
+		events, err := rock_spl_token.DecodeEvents(tx, programID)
+		require.NoError(t, err)
+		solTX, err := tx.Transaction.GetTransaction()
+		_solTX.Signatures[0]
+		for _, event := range events {
+			if event.Name == "TokensMintedWithFee" {
+				event := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
+
+				tokenMintEvents = append(tokenMintEvents, TokenMintEvent{
+					Signature: signature.Signature[:],
+					Date:      tx.BlockTime.Time().Unix(),
+					Recipient: event.Recipient.Bytes(),
+					Value:     event.Value,
+					Fee:       event.Fee,
+					Mint:      event.Mint.Bytes(),
+				})
+			}
+		}
+	}
+
+	require.NotEmpty(t, tokenMintEvents)
+	require.Len(t, tokenMintEvents, 1)
+	//require.Equal(t, tokenMintEvents[0].Id.Cmp(big.NewInt(0)), 0)
 }

@@ -123,7 +123,7 @@ func (StakingHooksWrapper) IsOnePerModuleType() {}
 type ZentpKeeper interface {
 	GetSignerKeyID(ctx context.Context) uint64
 	GetParams(ctx context.Context) zentptypes.Params
-	GetNewMints(goCtx context.Context) ([]*zentptypes.Bridge, error)
+	GetMintsWithStatus(goCtx context.Context, status zentptypes.BridgeStatus) ([]*zentptypes.Bridge, error)
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
-	PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount) ([]byte, error)
+	PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount, fundReceiver bool) ([]byte, error)
 }

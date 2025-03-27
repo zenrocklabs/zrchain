@@ -20,8 +20,7 @@ message Solana {
   string program_id = 2;
   uint64 nonce_account_key = 3;
   uint64 nonce_authority_key = 4;
-  string rpc_url = 5;
-  string mint_address = 6;
-  string fee_wallet = 7;
-  uint64 fee = 8;
+  string mint_address = 5;
+  string fee_wallet = 6;
+  uint64 fee = 7;
 }

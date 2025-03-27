@@ -26,7 +26,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	bin "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v5/sidecar/proto/api"
@@ -98,6 +100,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		BTCUSDPrice:                BTCUSDPrice,
 		ETHUSDPrice:                ETHUSDPrice,
 		ConsensusData:              abci.ExtendedCommitInfo{},
+		SolanaROCKMintEvents:       resp.SolanaRockMintEvents,
 	}, nil
 }
 
@@ -134,7 +137,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolROCKMintNonce; i++ {
+	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolanaROCKMintEventsHash; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
@@ -268,7 +271,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+	for field := VEFieldZRChainBlockHeight; field <= VEFieldSolanaROCKMintEventsHash; field++ {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
 			continue
@@ -1007,6 +1010,16 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			invalidFields = append(invalidFields, VEFieldRedemptionsHash)
 		}
 	}
+	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
+		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
+			invalidFields = append(invalidFields, VEFieldSolanaAccountsHash)
+		}
+	}
+	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonceHash]; ok {
+		if err := validateHashField(VEFieldSolROCKMintNonceHash.String(), voteExt.SolROCKMintNonceHash, oracleData.SolROCKMintNonce); err != nil {
+			invalidFields = append(invalidFields, VEFieldSolROCKMintNonceHash)
+		}
+	}
 
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
 	if _, ok := fieldVotePowers[VEFieldRequestedBtcHeaderHash]; ok {
@@ -1065,11 +1078,6 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	if _, ok := fieldVotePowers[VEFieldRequestedCompleterNonce]; ok {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
 			invalidFields = append(invalidFields, VEFieldRequestedCompleterNonce)
-		}
-	}
-	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonce]; ok {
-		if voteExt.SolROCKMintNonce != oracleData.SolROCKMintNonce {
-			invalidFields = append(invalidFields, VEFieldSolROCKMintNonce)
 		}
 	}
 
@@ -1196,4 +1204,38 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context) (system.NonceAccoun
 		return nonceAccount, err
 	}
 	return nonceAccount, err
+}
+
+func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint string) (token.Account, error) {
+	recipientPubKey, err := solana.PublicKeyFromBase58(address)
+	if err != nil {
+		return token.Account{}, err
+	}
+	mintPubKey, err := solana.PublicKeyFromBase58(mint)
+	if err != nil {
+		return token.Account{}, err
+	}
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintPubKey)
+	if err != nil {
+		return token.Account{}, err
+	}
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: receiverAta.String(),
+	})
+	if err != nil {
+		if err.Error() == "rpc error: code = Unknown desc = not found" {
+			return token.Account{}, nil
+		}
+		return token.Account{}, err
+	}
+
+	tokenAccount := new(token.Account)
+	decoder := bin.NewBorshDecoder(resp.Account)
+
+	err = tokenAccount.UnmarshalWithDecoder(decoder)
+	if err != nil {
+		return token.Account{}, err
+	}
+
+	return *tokenAccount, nil
 }

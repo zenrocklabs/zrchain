@@ -42,4 +42,5 @@ type IdentityKeeper interface {
 
 type ValidationKeeper interface {
 	SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error
+	SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error
 }
