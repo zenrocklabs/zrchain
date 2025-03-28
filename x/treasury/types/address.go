@@ -89,3 +89,12 @@ func SolanaAddress(key *Key) (string, error) {
 	pk := solana.PublicKeyFromBytes(key.PublicKey)
 	return pk.String(), nil
 }
+
+func SolanaPubkey(key *Key) (*solana.PublicKey, error) {
+	_, err := key.ToEdDSAEd25519()
+	if err != nil {
+		return nil, err
+	}
+	pk := solana.PublicKeyFromBytes(key.PublicKey)
+	return &pk, nil
+}
