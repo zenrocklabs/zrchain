@@ -16,6 +16,8 @@ import (
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
 	"github.com/cometbft/cometbft/libs/protoio"
@@ -28,6 +30,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -1051,12 +1054,12 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
-			invalidFields = append(invalidFields, VEFieldSolanaAccountsHash)
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaAccountsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonceHash]; ok {
-		if err := validateHashField(VEFieldSolROCKMintNonceHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMinterNonces); err != nil {
-			invalidFields = append(invalidFields, VEFieldSolROCKMintNonceHash)
+	if _, ok := fieldVotePowers[VEFieldSolanaMintNoncesHash]; ok {
+		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaMintNoncesHash)
 		}
 	}
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
@@ -1213,10 +1216,9 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 	return err
 }
 
-func (k Keeper) GetSolanaNonceAccount(goCtx context.Context) (system.NonceAccount, error) {
+func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (system.NonceAccount, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	zParams := k.zentpKeeper.GetParams(goCtx)
-	key, err := k.treasuryKeeper.GetKey(ctx, zParams.Solana.NonceAccountKey)
+	key, err := k.treasuryKeeper.GetKey(ctx, keyID)
 	if err != nil {
 		return system.NonceAccount{}, err
 	}
@@ -1273,4 +1275,127 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	}
 
 	return *tokenAccount, nil
+}
+
+type solanaMintTxRequest struct {
+	amount            uint64
+	fee               uint64
+	recipient         string
+	nonce             *system.NonceAccount
+	fundReceiver      bool
+	programID         string
+	mintAddress       string
+	feeWallet         string
+	nonceAccountKey   uint64
+	nonceAuthorityKey uint64
+	signerKey         uint64
+}
+
+func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	programID, err := solana.PublicKeyFromBase58(req.programID)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, req.nonceAccountKey)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAccPubKey, err := treasurytypes.SolanaPubkey(nonceAccKey)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAuthKey, err := k.treasuryKeeper.GetKey(ctx, req.nonceAuthorityKey)
+	if err != nil {
+		return nil, err
+	}
+	nonceAuthPubKey, err := treasurytypes.SolanaPubkey(nonceAuthKey)
+	if err != nil {
+		return nil, err
+	}
+
+	signerKey, err := k.treasuryKeeper.GetKey(ctx, req.signerKey)
+	if err != nil {
+		return nil, err
+	}
+	signerPubKey, err := treasurytypes.SolanaPubkey(signerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	mintKey, err := solana.PublicKeyFromBase58(req.mintAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	feeKey, err := solana.PublicKeyFromBase58(req.feeWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	recipientPubKey, err := solana.PublicKeyFromBase58(req.recipient)
+	if err != nil {
+		return nil, err
+	}
+
+	var instructions []solana.Instruction
+
+	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
+		*nonceAccPubKey,
+		solana.SysVarRecentBlockHashesPubkey,
+		*nonceAuthPubKey,
+	).Build())
+
+	feeWalletAta, _, err := solana.FindAssociatedTokenAddress(feeKey, mintKey)
+	if err != nil {
+		return nil, err
+	}
+
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.fundReceiver {
+		instructions = append(
+			instructions,
+			ata.NewCreateInstruction(
+				*signerPubKey,
+				recipientPubKey,
+				mintKey,
+			).Build(),
+		)
+	}
+
+	instructions = append(instructions, solrock.Wrap(
+		programID,
+		rock_spl_token.WrapArgs{
+			Value: req.amount,
+			Fee:   req.fee,
+		},
+		*signerPubKey,
+		mintKey,
+		feeKey,
+		feeWalletAta,
+		recipientPubKey,
+		receiverAta,
+	))
+
+	tx, err := solana.NewTransaction(
+		instructions,
+		solana.Hash(req.nonce.Nonce),
+		solana.TransactionPayer(*signerPubKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	txBytes, err := tx.Message.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	return txBytes, nil
 }

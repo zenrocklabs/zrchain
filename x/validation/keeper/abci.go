@@ -23,7 +23,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
-	solana "github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
@@ -546,7 +545,8 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return &OracleData{}, err
 	}
 	if len(pendingSolROCKMints) == 0 {
-		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey)
+		solParams := k.zentpKeeper.GetParams(ctx).Solana
+		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, solParams.NonceAccountKey)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
 				return &OracleData{}, err
@@ -554,42 +554,45 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 			solNonceRequested = false
 		}
 		if solNonceRequested {
-			oracleData.SolanaMinterNonces, err = k.GetSolanaNonceAccount(ctx)
+			oracleData.SolanaMintNonces = map[uint64]*solSystem.NonceAccount{}
+			nonceAcc, err := k.GetSolanaNonceAccount(ctx, solParams.NonceAccountKey)
 			if err != nil {
 				return &OracleData{}, err
 			}
+			oracleData.SolanaMintNonces[solParams.NonceAccountKey] = &nonceAcc
 		}
-		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
-		if err != nil {
-			return &OracleData{}, err
-		}
-		solAccsKeys, err := solAccStore.Keys()
-		if err != nil {
-			return &OracleData{}, err
-		}
-		if len(solAccsKeys) > 0 {
-			oracleData.SolanaAccounts = map[string]solToken.Account{}
-			for _, key := range solAccsKeys {
-				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
+	}
+
+	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+	if err != nil {
+		return &OracleData{}, err
+	}
+	solAccsKeys, err := solAccStore.Keys()
+	if err != nil {
+		return &OracleData{}, err
+	}
+	if len(solAccsKeys) > 0 {
+		oracleData.SolanaAccounts = map[string]solToken.Account{}
+		for _, key := range solAccsKeys {
+			goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
+			if err != nil {
+				return &OracleData{}, err
+			}
+			if goGet {
+				acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
 				if err != nil {
 					return &OracleData{}, err
 				}
-				if goGet {
-					acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-					if err != nil {
-						return &OracleData{}, err
-					}
-					oracleData.SolanaAccounts[key] = acc
-				}
+				oracleData.SolanaAccounts[key] = acc
 			}
 		}
 	}
 
-	pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINT_PENDING, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
 	if err != nil {
 		return &OracleData{}, err
 	}
-	if len(pendingSolROCKMints) == 0 {
+	if len(pendingZenBTCMints) == 0 {
 		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -597,35 +600,14 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 			}
 			solNonceRequested = false
 		}
+		solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 		if solNonceRequested {
-			oracleData.SolanaMinterNonces, err = k.GetSolanaNonceAccount(ctx)
+			oracleData.SolanaMintNonces = map[uint64]*solSystem.NonceAccount{}
+			nonceAcc, err := k.GetSolanaNonceAccount(ctx, solParams.NonceAccountKey)
 			if err != nil {
 				return &OracleData{}, err
 			}
-		}
-		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
-		if err != nil {
-			return &OracleData{}, err
-		}
-		solAccsKeys, err := solAccStore.Keys()
-		if err != nil {
-			return &OracleData{}, err
-		}
-		if len(solAccsKeys) > 0 {
-			oracleData.SolanaAccounts = map[string]solToken.Account{}
-			for _, key := range solAccsKeys {
-				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
-				if err != nil {
-					return &OracleData{}, err
-				}
-				if goGet {
-					acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-					if err != nil {
-						return &OracleData{}, err
-					}
-					oracleData.SolanaAccounts[key] = acc
-				}
-			}
+			oracleData.SolanaMintNonces[solParams.NonceAccountKey] = &nonceAcc
 		}
 	}
 
@@ -1323,8 +1305,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		k,
 		ctx,
 		k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId,
-		&oracleData.SolanaMinterNonces,
 		nil,
+		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// Get pending mint transactions
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
@@ -1340,16 +1322,16 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 
 			// Check for consensus
-			requiredFields := []VoteExtensionField{VEFieldRequestedSolMinterNonceHash, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			requiredFields := []VoteExtensionField{VEFieldSolanaMintNoncesHash, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
 			}
 
-			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-			if err != nil {
-				return err
-			}
+			//exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			//if err != nil {
+			//	return err
+			//}
 
 			// Get decimal values from string representations
 			btcUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
@@ -1363,74 +1345,58 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return nil
 			}
 
-			feeZenBTC := k.CalculateZenBTCMintFee(
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-				oracleData.EthGasLimit,
-				btcUSDPrice,
-				ethUSDPrice,
-				exchangeRate,
-			)
-
-			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
-			if err != nil {
-				return fmt.Errorf("unsupported chain ID: %w", err)
+			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+			var txPrepReq solanaMintTxRequest
+			// add a solana instruction if we need to fund the ata
+			ata, ok := oracleData.SolanaAccounts[tx.RecipientAddress]
+			if !ok {
+				return fmt.Errorf("ata account not retrieved for address: %s", tx.RecipientAddress)
 			}
-
-			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
-				ctx,
-				tx.RecipientAddress,
-				chainID,
-				tx.Amount,
-				feeZenBTC,
-				oracleData.RequestedSolMinterNonce,
-				oracleData.EthGasLimit,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
+			if ata.State == solToken.Uninitialized {
+				txPrepReq.fundReceiver = true
 			}
+			// TODO: move zentp's prepare sol rock tx here and modify
+			//unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
+			//	ctx,
+			//	tx.RecipientAddress,
+			//	chainID,
+			//	tx.Amount,
+			//	feeZenBTC,
+			//	oracleData.SolanaMintNonces[],
+			//	oracleData.EthGasLimit,
+			//	oracleData.EthBaseFee,
+			//	oracleData.EthTipCap,
+			//)
+			//if err != nil {
+			//	return err
+			//}
 
 			k.Logger(ctx).Warn("processing zenBTC mint",
 				"recipient", tx.RecipientAddress,
 				"amount", tx.Amount,
-				"nonce", oracleData.RequestedSolMinterNonce,
+				"nonce", oracleData.SolanaMintNonces[solParams.NonceAccountKey],
 				"gas_limit", oracleData.EthGasLimit,
 				"base_fee", oracleData.EthBaseFee,
 				"tip_cap", oracleData.EthTipCap,
 			)
 
-			return k.submitSolanaTransaction(
+			txID, err := k.submitSolanaTransaction(
 				ctx,
 				tx.Creator,
-				k.zenBTCKeeper.GetSolMinterKeyID(ctx),
+				[]uint64{solParams.SignerKeyId, solParams.NonceAuthorityKey},
 				treasurytypes.WalletType(tx.ChainType),
-				chainID,
-				unsignedMintTx,
-				unsignedMintTxHash,
+				tx.Caip2ChainId,
+				nil,
 			)
-		},
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return err
 			}
-			supply.PendingZenBTC -= tx.Amount
-			supply.MintedZenBTC += tx.Amount
-			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				return err
-			}
-			k.Logger(ctx).Warn("pending mint supply updated",
-				"pending_mint_old", supply.PendingZenBTC+tx.Amount,
-				"pending_mint_new", supply.PendingZenBTC,
-			)
-			k.Logger(ctx).Warn("minted supply updated",
-				"minted_old", supply.MintedZenBTC-tx.Amount,
-				"minted_new", supply.MintedZenBTC,
-			)
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+			tx.ZrchainTxId = txID
+			k.zenBTCKeeper.Set
+			return nil
+		},
+		func(tx zenbtctypes.PendingMintTransaction) error {
+			return nil
 		},
 	)
 }
@@ -1442,7 +1408,7 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 		ctx,
 		k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey,
 		nil,
-		&oracleData.SolanaMinterNonces,
+		oracleData.SolanaMintNonces[k.zentpKeeper.GetParams(ctx).Solana.SignerKeyId],
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_NEW)
 		},
@@ -1479,8 +1445,8 @@ func (k *Keeper) processROCKMints(ctx sdk.Context, oracleData OracleData) {
 			if ata.State == solToken.Uninitialized {
 				fundReceiver = true
 			}
-
-			transaction, err := k.zentpKeeper.PrepareSolRockMintTx(ctx, tx.Amount, tx.RecipientAddress, &oracleData.SolanaMinterNonces, fundReceiver)
+			solParams := k.zentpKeeper.GetParams(ctx).Solana
+			transaction, err := k.zentpKeeper.PrepareSolRockMintTx(ctx, tx.Amount, tx.RecipientAddress, oracleData.SolanaMintNonces[solParams.NonceAccountKey], fundReceiver)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
 			}
