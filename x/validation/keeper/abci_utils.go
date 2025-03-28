@@ -1055,7 +1055,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 	if _, ok := fieldVotePowers[VEFieldSolROCKMintNonceHash]; ok {
-		if err := validateHashField(VEFieldSolROCKMintNonceHash.String(), voteExt.SolROCKMintNonceHash, oracleData.SolROCKMintNonce); err != nil {
+		if err := validateHashField(VEFieldSolROCKMintNonceHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMinterNonces); err != nil {
 			invalidFields = append(invalidFields, VEFieldSolROCKMintNonceHash)
 		}
 	}

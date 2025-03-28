@@ -16,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
-	solana "github.com/gagliardetto/solana-go/programs/system"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -48,15 +47,15 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
-		SolROCKMintNonceHash       []byte
+		SolanaMintNonceHashes      []byte
 		SolanaAccountsHash         []byte
 		SolanaROCKMintEventsHash   []byte
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
 	}
@@ -81,15 +80,15 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
-		SolROCKMintNonce           solSystem.NonceAccount
+		SolanaMinterNonces         map[uint64]solSystem.NonceAccount
 		SolanaAccounts             map[string]solToken.Account
 		SolanaLamportsPerSignature uint64
 		SolanaROCKMintEvents       []api.SolanaRockMintEvent
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
+		ROCKUSDPrice               string
+		BTCUSDPrice                string
+		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
 	}
@@ -359,7 +358,7 @@ func (f VoteExtensionField) String() string {
 	case VEFieldLatestBtcHeaderHash:
 		return "LatestBtcHeaderHash"
 	case VEFieldSolROCKMintNonceHash:
-		return "SolROCKMintNonceHash"
+		return "SolanaMintNonceHashes"
 	case VEFieldSolanaAccountsHash:
 		return "SolanaAccountsHash"
 	case VEFieldSolanaROCKMintEventsHash:
@@ -400,8 +399,8 @@ func initializeFieldHandlers() []FieldHandler {
 		},
 		{
 			Field:    VEFieldSolROCKMintNonceHash,
-			GetValue: func(ve VoteExtension) any { return ve.SolROCKMintNonceHash },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolROCKMintNonceHash = v.([]byte) },
+			GetValue: func(ve VoteExtension) any { return ve.SolanaMintNonceHashes },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolanaMintNonceHashes = v.([]byte) },
 		},
 		{
 			Field:    VEFieldSolanaAccountsHash,
