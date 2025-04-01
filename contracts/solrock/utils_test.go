@@ -524,8 +524,7 @@ func TestGetTokenMintEvents(t *testing.T) {
 
 		events, err := rock_spl_token.DecodeEvents(tx, programID)
 		require.NoError(t, err)
-		solTX, err := tx.Transaction.GetTransaction()
-		_solTX.Signatures[0]
+
 		for _, event := range events {
 			if event.Name == "TokensMintedWithFee" {
 				event := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)

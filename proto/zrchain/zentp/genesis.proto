@@ -5,7 +5,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zentp/params.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // GenesisState defines the zentp module's genesis state.
 message GenesisState {

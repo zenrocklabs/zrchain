@@ -9,7 +9,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "zrchain/zentp/params.proto";
 import "zrchain/zentp/bridge.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v5/x/zentp/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -28,7 +28,7 @@ service Query {
   
   // Queries a list of Burns items.
   rpc Burns (QueryBurnsRequest) returns (QueryBurnsResponse) {
-    option (google.api.http).get = "/zrchain/v5/zentp/burns/{id}/{denom}";
+    option (google.api.http).get = "/zrchain/v6/zentp/burns/{id}/{denom}";
   
   }
 }

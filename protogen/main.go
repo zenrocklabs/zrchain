@@ -112,7 +112,7 @@ func processProtoFiles() {
 	fmt.Println("Proto files generated.")
 
 	// Move proto files to the right places
-	srcDir := filepath.Join("github.com", "Zenrock-Foundation", "zrchain", "v5")
+	srcDir := filepath.Join("github.com", "Zenrock-Foundation", "zrchain", "v6")
 	if err := copyDir(srcDir, "./"); err != nil {
 		log.Fatalf("Failed to copy files: %v", err)
 	}
