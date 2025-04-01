@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -26,14 +28,15 @@ import (
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
-	solana "github.com/gagliardetto/solana-go/rpc"
+	solana "github.com/gagliardetto/solana-go"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 func NewOracle(
 	config sidecartypes.Config,
 	ethClient *ethclient.Client,
 	neutrinoServer *neutrino.NeutrinoServer,
-	solanaClient *solana.Client,
+	solanaClient *solrpc.Client,
 	zrChainQueryClient *client.QueryClient,
 	ticker *time.Ticker,
 ) *Oracle {
@@ -112,16 +115,16 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	type oracleStateUpdate struct {
-		eigenDelegations map[string]map[string]*big.Int
-		redemptions      []api.Redemption
-		suggestedTip     *big.Int
-		estimatedGas     uint64
-		ethBurnEvents    []api.BurnEvent
-		ROCKUSDPrice     math.LegacyDec
-		BTCUSDPrice      math.LegacyDec
-		ETHUSDPrice      math.LegacyDec
+		eigenDelegations           map[string]map[string]*big.Int
+		redemptions                []api.Redemption
+		suggestedTip               *big.Int
+		estimatedGas               uint64
+		ethBurnEvents              []api.BurnEvent
+		ROCKUSDPrice               math.LegacyDec
+		BTCUSDPrice                math.LegacyDec
+		ETHUSDPrice                math.LegacyDec
 		solanaLamportsPerSignature uint64
-		SolRockMintEvents []api.SolanaRockMintEvent
+		SolRockMintEvents          []api.SolanaRockMintEvent
 	}
 
 	update := &oracleStateUpdate{}
@@ -612,37 +615,57 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 // getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
 // Returns blockhash string, slot number, and lamports per signature
 func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
-	// Get the latest block height
-	resp, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
-	if err != nil {
-		return "", 0, 0, fmt.Errorf("failed to get recent blockhash: %w", err)
-	}
+	//// Get the latest block height
+	//resp, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return "", 0, 0, fmt.Errorf("failed to GetLatestBlockhash: %w", err)
+	//}
+	//
+	//dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111") // System Program ID (valid placeholder)
+	//dummyReceiver := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")
+	//recentBlockhash := resp.Value.Blockhash
+	//// Create a transaction
+	//tx := solana.NewTransactionBuilder()
+	//
+	//// Add a transfer instruction
+	//transferIx := solprogram.Transfer{
+	//	FromPubkey: fromPubKey,
+	//	ToPubkey:   toPubKey,
+	//	Lamports:   1000, // Transfer 1000 lamports
+	//}
+	//
+	//tx.AddInstruction(transferIx)
+	//
+	//respFee, err := o.solanaClient.GetFeeForMessage(ctx, serialized, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return "", 0, 0, fmt.Errorf("failed to GetFeeForMessage: %w", err)
+	//}
+	//// Default values from the recent block
+	//lamportsPerSignature := *respFee.Value
+	//
+	//// Get the slot for the recent blockhash
+	//slot, err := o.solanaClient.GetSlot(ctx, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
+	//}
+	//
+	//// Calculate the nearest slot that is divisible by the rounding factor
+	//targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
+	//
+	//// If we're at slot 0, use the current slot's blockhash
+	//if targetSlot == 0 {
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
+	//}
+	//
+	//// Get the blockhash for the target slot
+	//blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
+	//if err != nil {
+	//	// Fallback to the recent blockhash if we can't get the target block
+	//	log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
+	//}
+	//
+	//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
 
-	// Default values from the recent block
-	recentBlockhash := resp.Value.Blockhash.String()
-	lamportsPerSignature := resp.Value.FeeCalculator.LamportsPerSignature
-
-	// Get the slot for the recent blockhash
-	slot, err := o.solanaClient.GetSlot(ctx, solana.CommitmentFinalized)
-	if err != nil {
-		return recentBlockhash, slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
-	}
-
-	// Calculate the nearest slot that is divisible by the rounding factor
-	targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
-
-	// If we're at slot 0, use the current slot's blockhash
-	if targetSlot == 0 {
-		return recentBlockhash, slot, lamportsPerSignature, nil
-	}
-
-	// Get the blockhash for the target slot
-	blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
-	if err != nil {
-		// Fallback to the recent blockhash if we can't get the target block
-		log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
-		return recentBlockhash, slot, lamportsPerSignature, nil
-	}
-
-	return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
+	return "", 0, 0, nil
 }

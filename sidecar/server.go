@@ -148,17 +148,17 @@ func (s *oracleService) GetLatestEthereumNonceForAccount(ctx context.Context, re
 	}, nil
 }
 
-func (s *oracleService) GetSolanaRecentBlockhash(ctx context.Context, req *api.SolanaRecentBlockhashRequest) (*api.SolanaRecentBlockhashResponse, error) {
-	blockhash, slot, err := s.oracle.getSolanaRecentBlockhash(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get recent blockhash: %w", err)
-	}
-
-	return &api.SolanaRecentBlockhashResponse{
-		Blockhash: blockhash,
-		Slot:      slot,
-	}, nil
-}
+//func (s *oracleService) GetSolanaRecentBlockhash(ctx context.Context, req *api.SolanaRecentBlockhashRequest) (*api.SolanaRecentBlockhashResponse, error) {
+//	blockhash, slot, err := s.oracle.getSolanaRecentBlockhash(ctx)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to get recent blockhash: %w", err)
+//	}
+//
+//	return &api.SolanaRecentBlockhashResponse{
+//		Blockhash: blockhash,
+//		Slot:      slot,
+//	}, nil
+//}
 
 func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.SolanaAccountInfoRequest) (*api.SolanaAccountInfoResponse, error) {
 	recipientKey, err := solana.PublicKeyFromBase58(req.PubKey)
@@ -180,4 +180,3 @@ func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.Solan
 		Account: accountInfo.GetBinary(),
 	}, nil
 }
-

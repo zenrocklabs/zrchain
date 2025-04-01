@@ -137,7 +137,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 
 	var (
-		solNonce              solSystem.NonceAccount
+		solNonce              map[uint64]*solSystem.NonceAccount
 		solNonceHash          [32]byte
 		solAccsHash           [32]byte
 		solAccs               map[string]solToken.Account
@@ -149,15 +149,18 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 	if len(pendingSolROCKMints) == 0 {
-		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey)
+		solParams := k.zentpKeeper.GetParams(ctx).Solana
+		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, solParams.NonceAccountKey)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
 				return VoteExtension{}, err
 			}
 			solNonceRequested = false
 		}
+
 		if solNonceRequested {
-			solNonce, err = k.GetSolanaNonceAccount(ctx)
+			n, err := k.GetSolanaNonceAccount(ctx, solParams.NonceAccountKey)
+			solNonce[solParams.NonceAccountKey] = &n
 			if err != nil {
 				return VoteExtension{}, err
 			}
@@ -540,87 +543,42 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		}
 	}
 
-	pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-	if err != nil {
-		return &OracleData{}, err
-	}
-	if len(pendingSolROCKMints) == 0 {
-		solParams := k.zentpKeeper.GetParams(ctx).Solana
-		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, solParams.NonceAccountKey)
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
+		oracleData.SolanaMintNonces, err = k.collectSolanaNonces(ctx)
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				return &OracleData{}, err
-			}
-			solNonceRequested = false
+			return nil, fmt.Errorf("error collecting solana nonces: %w", err)
 		}
-		if solNonceRequested {
-			oracleData.SolanaMintNonces = map[uint64]*solSystem.NonceAccount{}
-			nonceAcc, err := k.GetSolanaNonceAccount(ctx, solParams.NonceAccountKey)
-			if err != nil {
-				return &OracleData{}, err
-			}
-			oracleData.SolanaMintNonces[solParams.NonceAccountKey] = &nonceAcc
-		}
+
 	}
 
-	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
-	if err != nil {
-		return &OracleData{}, err
-	}
-	solAccsKeys, err := solAccStore.Keys()
-	if err != nil {
-		return &OracleData{}, err
-	}
-	if len(solAccsKeys) > 0 {
-		oracleData.SolanaAccounts = map[string]solToken.Account{}
-		for _, key := range solAccsKeys {
-			goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
-			if err != nil {
-				return &OracleData{}, err
-			}
-			if goGet {
-				acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
+		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		solAccsKeys, err := solAccStore.Keys()
+		if err != nil {
+			return nil, err
+		}
+		if len(solAccsKeys) > 0 {
+			oracleData.SolanaAccounts = map[string]solToken.Account{}
+			for _, key := range solAccsKeys {
+				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
 				if err != nil {
-					return &OracleData{}, err
+					return nil, err
 				}
-				oracleData.SolanaAccounts[key] = acc
+				if goGet {
+					acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
+					if err != nil {
+						return nil, err
+					}
+					oracleData.SolanaAccounts[key] = acc
+				}
 			}
 		}
 	}
-
-	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINT_PENDING, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	if err != nil {
-		return &OracleData{}, err
-	}
-	if len(pendingZenBTCMints) == 0 {
-		solNonceRequested, err := k.SolanaNonceRequested.Get(ctx, k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey)
-		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				return &OracleData{}, err
-			}
-			solNonceRequested = false
-		}
-		solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-		if solNonceRequested {
-			oracleData.SolanaMintNonces = map[uint64]*solSystem.NonceAccount{}
-			nonceAcc, err := k.GetSolanaNonceAccount(ctx, solParams.NonceAccountKey)
-			if err != nil {
-				return &OracleData{}, err
-			}
-			oracleData.SolanaMintNonces[solParams.NonceAccountKey] = &nonceAcc
-		}
-	}
-
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
-
-	//if fieldHasConsensus(fieldVotePowers, VEFieldRequestedSolMinterNonceHash) {
-	//	solanaNonce, err := k.GetSolanaNonceAccount(ctx)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("error fetching Solana nonce account: %w", err)
-	//	}
-	//	oracleData.RequestedSolMinterNonce = solanaNonce
-	//}
 
 	// Call the standard validateOracleData to check other fields
 	k.validateOracleData(ctx, voteExt, oracleData, fieldVotePowers)
@@ -1317,12 +1275,20 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			if id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx); err != nil {
+				return fmt.Errorf("waiting for mint %d to finish", id)
+			}
 			if err := k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
 
 			// Check for consensus
-			requiredFields := []VoteExtensionField{VEFieldSolanaMintNoncesHash, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			requiredFields := []VoteExtensionField{
+				VEFieldSolanaMintNoncesHash,
+				VEFieldBTCUSDPrice,
+				VEFieldETHUSDPrice,
+				VEFieldSolanaAccountsHash,
+			}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
@@ -1392,7 +1358,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return err
 			}
 			tx.ZrchainTxId = txID
-			k.zenBTCKeeper.Set
+			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINT_PENDING
+			k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {

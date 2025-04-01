@@ -18,6 +18,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
 	"github.com/cometbft/cometbft/libs/protoio"
@@ -1205,7 +1206,7 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             creator,
-			KeyId:               keyID,
+			KeyIds:              []uint64{keyID},
 			WalletType:          walletType,
 			UnsignedTransaction: unsignedTx,
 			Metadata:            metadata,
@@ -1398,4 +1399,54 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 	return txBytes, nil
+}
+
+func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+	nonces := map[uint64]*system.NonceAccount{}
+	pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	if err != nil {
+		return nil, err
+	}
+	if len(pendingSolROCKMints) == 0 {
+		solParams := k.zentpKeeper.GetParams(goCtx).Solana
+		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				return nil, err
+			}
+		}
+		if solNonceRequested {
+			n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
+			nonces[solParams.NonceAccountKey] = &n
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINT_PENDING, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
+	if err != nil {
+		return nil, err
+	}
+	if len(pendingZenBTCMints) == 0 {
+		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, k.zentpKeeper.GetParams(goCtx).Solana.NonceAccountKey)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				return nil, err
+			}
+			solNonceRequested = false
+		}
+		solParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+		if solNonceRequested {
+
+			nonceAcc, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
+			if err != nil {
+				return nil, err
+			}
+			nonces[solParams.NonceAccountKey] = &nonceAcc
+		}
+	}
+
+	return nonces, nil
 }
