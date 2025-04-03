@@ -62,11 +62,12 @@ message SignedDataWithID {
 message SignTransactionRequest {
   uint64 id = 1;
   string creator = 2;
-  repeated uint64 key_ids = 3;
+  uint64 key_id = 3; // Deprecated
   WalletType wallet_type = 4;
   bytes unsigned_transaction = 5;
   uint64 sign_request_id = 6;
   bool no_broadcast = 7;
+  repeated uint64 key_ids = 8;
 }
 
 // format of a sign request response
@@ -93,12 +94,13 @@ message SignReqResponse {
 message SignTxReqResponse {
   uint64 id = 1;
   string creator = 2;
-  repeated uint64 key_ids = 3;
+  uint64 key_id = 3; // Deprecated
   string wallet_type = 4;
   bytes unsigned_transaction = 5;
   uint64 sign_request_id = 6;
   bool no_broadcast = 7;
   uint64 mpc_btl = 8;
+  repeated uint64 key_ids = 9;
 }
 
 // format of a sign transaction request for an InterChain Account transaction
