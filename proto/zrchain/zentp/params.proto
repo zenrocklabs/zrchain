@@ -14,6 +14,7 @@ message Params {
   Solana solana = 1;
 }
 
+// Solana represents the parameters for the Solana relayer configuration.
 message Solana {
   option (gogoproto.equal) = true;
   uint64 signer_key_id = 1;

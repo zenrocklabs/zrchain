@@ -2425,7 +2425,7 @@ func (x *fastReflection_QueryBurnsRequest) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], encoded)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x22
 		}
 		if x.Status != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.Status))
@@ -2563,7 +2563,7 @@ func (x *fastReflection_QueryBurnsRequest) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
-			case 5:
+			case 4:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
 				}
@@ -3284,6 +3284,7 @@ func (x *QueryParamsResponse) GetParams() *Params {
 	return nil
 }
 
+// QueryMintsRequest is request type for the Query/Mints RPC method.
 type QueryMintsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3334,7 +3335,7 @@ func (x *QueryMintsRequest) GetStatus() BridgeStatus {
 	if x != nil {
 		return x.Status
 	}
-	return BridgeStatus_BRIDGE_STATUS_UNDEFINED
+	return BridgeStatus_BRIDGE_STATUS_UNSPECIFIED
 }
 
 func (x *QueryMintsRequest) GetDenom() string {
@@ -3351,6 +3352,7 @@ func (x *QueryMintsRequest) GetPagination() *v1beta1.PageRequest {
 	return nil
 }
 
+// QueryMintsResponse is response type for the Query/Mints RPC method.
 type QueryMintsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3394,6 +3396,7 @@ func (x *QueryMintsResponse) GetPagination() *v1beta1.PageResponse {
 	return nil
 }
 
+// QueryBurnsRequest is request type for the Query/Burns RPC method.
 type QueryBurnsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3402,7 +3405,7 @@ type QueryBurnsRequest struct {
 	Id         uint64               `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Denom      string               `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 	Status     BridgeStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=zrchain.zentp.BridgeStatus" json:"status,omitempty"`
-	Pagination *v1beta1.PageRequest `protobuf:"bytes,5,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	Pagination *v1beta1.PageRequest `protobuf:"bytes,4,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (x *QueryBurnsRequest) Reset() {
@@ -3443,7 +3446,7 @@ func (x *QueryBurnsRequest) GetStatus() BridgeStatus {
 	if x != nil {
 		return x.Status
 	}
-	return BridgeStatus_BRIDGE_STATUS_UNDEFINED
+	return BridgeStatus_BRIDGE_STATUS_UNSPECIFIED
 }
 
 func (x *QueryBurnsRequest) GetPagination() *v1beta1.PageRequest {
@@ -3453,6 +3456,7 @@ func (x *QueryBurnsRequest) GetPagination() *v1beta1.PageRequest {
 	return nil
 }
 
+// QueryBurnsResponse is response type for the Query/Burns RPC method.
 type QueryBurnsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3548,7 +3552,7 @@ var file_zrchain_zentp_query_proto_rawDesc = []byte{
 	0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
 	0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x53,
 	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x46, 0x0a,
-	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e,
 	0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61,
 	0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,

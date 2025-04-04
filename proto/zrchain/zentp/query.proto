@@ -42,6 +42,7 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
+// QueryMintsRequest is request type for the Query/Mints RPC method.
 message QueryMintsRequest {
   uint64                                id         = 1;
   string                                creator    = 2;
@@ -50,18 +51,21 @@ message QueryMintsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
+// QueryMintsResponse is response type for the Query/Mints RPC method.
 message QueryMintsResponse {
   repeated Bridge                        mints      = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryBurnsRequest is request type for the Query/Burns RPC method.
 message QueryBurnsRequest {
-  uint64 id    = 1;
-  string denom = 2;
-  BridgeStatus  status     = 3;
-  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+  uint64                                id         = 1;
+  string                                denom      = 2;
+  BridgeStatus                          status     = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
 }
 
+// QueryBurnsResponse is response type for the Query/Burns RPC method.
 message QueryBurnsResponse {
   repeated Bridge                        burns      = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
