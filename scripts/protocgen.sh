@@ -21,24 +21,34 @@ for dir in $proto_dirs; do
     if grep -q "option go_package.*zenrock" "$file"; then
       echo "Processing file ${file}"
       buf generate --template proto/buf.gen.gogo.yaml "$file"
-      buf generate --template proto/buf.gen.python.yaml "$file"
+      # Only generate Python files if --python flag is provided
+      if [[ "$*" == *"--python"* ]]; then
+        buf generate --template proto/buf.gen.python.yaml "$file"
+      fi
     fi
   done
 done
-echo "All files done"
 
-# Generate dependencies for Python
-# yq '.deps[]' proto/buf.yaml | while read -r dep; do \
-#   echo "Generate python dependencies for ${dep}"
-#   buf generate --template proto/buf.gen.python.yaml "$dep"; \
-# done
-# echo "All dependencies done"
+# Always show proto files generated message
+echo "Proto files generated."
 
-# restore user permissions
-chown -R 1000:1000 proto/python
-chown -R 1000:1000 github.com/zenrocklabs
+# Show Python files message if they were generated
+if [[ "$*" == *"--python"* ]]; then
+  echo "Python files generated."
+fi
 
 # move proto files to the right places
-cp -ar github.com/Zenrock-Foundation/zrchain/v6/* ./
-rm -rf ./github.com
+if [ -d "github.com" ]; then
+  # Find the correct directory structure
+  GEN_DIR=$(find github.com -type d -name "zrchain" | head -n 1)
+  if [ -n "$GEN_DIR" ]; then
+    echo "Copying generated files from $GEN_DIR"
+    cp -a "$GEN_DIR"/* ./
+    rm -rf ./github.com
+  else
+    echo "Warning: Could not find generated files in expected location"
+  fi
+else
+  echo "Warning: No generated files found in github.com directory"
+fi
 

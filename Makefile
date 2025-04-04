@@ -1,5 +1,15 @@
 #!/usr/bin/make -f
 
+# Available commands:
+# make proto                  - Generate Go protobuf files only
+# make proto PYTHON_GEN=true  - Generate Go and Python protobuf files
+# make proto PULSAR_GEN=true  - Generate Go and Pulsar protobuf files
+# make proto PYTHON_GEN=true PULSAR_GEN=true  - Generate all protobuf files (Go, Python, and Pulsar)
+#
+# Note: If you hit rate limits with buf.build, wait a few minutes before retrying.
+# To avoid rate limits, you can set up a local cache by adding dependencies to buf.yaml
+# and running 'buf mod update' before generating files.
+
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -Ev 'vendor|importer|wasm|simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION ?= $(shell git describe --tags --exact-match 2>/dev/null || echo $(shell git describe --tags git rev-list --tags="v*" --max-count=1) | sed 's/^v//')
@@ -15,6 +25,9 @@ SIMAPP = ./app
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.0.0-rc8
+PYTHON_GEN ?= false
+PULSAR_GEN ?= false
+
 
 
 export GO111MODULE = on
@@ -147,9 +160,19 @@ protoImage=$(DOCKER) run --user root --rm -v $(CURDIR):/workspace --workdir /wor
 #
 proto-all: proto-format proto-lint proto-gen
 
+# Add new variables for Python and Pulsar generation
+
 proto proto-gen:
 	@echo "Generating Protobuf files"
-	go run ./protogen
+	go run ./protogen $(if $(filter true,$(PYTHON_GEN)),--python) $(if $(filter true,$(PULSAR_GEN)),--pulsar)
+ifeq ($(PYTHON_GEN),true)
+	@echo "Generating Python files"
+	./scripts/protocgen.sh --python
+endif
+ifeq ($(PULSAR_GEN),true)
+	@echo "Generating Pulsar files"
+	./scripts/pulsargen.sh --pulsar
+endif
 
 proto-lint:
 	@echo "Linting Protobuf files"

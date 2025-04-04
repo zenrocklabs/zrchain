@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -19,23 +20,37 @@ type BufConfig struct {
 }
 
 func main() {
-	var wg sync.WaitGroup
-	wg.Add(3)
+	// Parse command line flags
+	pythonGen := flag.Bool("python", false, "Generate Python files")
+	pulsarGen := flag.Bool("pulsar", false, "Generate Pulsar files")
+	flag.Parse()
 
+	var wg sync.WaitGroup
+
+	// Always run Go generation
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		processProtoFiles()
 	}()
 
-	go func() {
-		defer wg.Done()
-		generatePulsarCode()
-	}()
+	// Only run Pulsar generation if flag is set
+	if *pulsarGen {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			generatePulsarCode()
+		}()
+	}
 
-	go func() {
-		defer wg.Done()
-		generatePythonDependencies()
-	}()
+	// Only run Python generation if flag is set
+	if *pythonGen {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			generatePythonDependencies()
+		}()
+	}
 
 	wg.Wait()
 }
