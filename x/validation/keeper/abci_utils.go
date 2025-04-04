@@ -18,6 +18,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -455,7 +457,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, addr common.Address, c
 	if err != nil {
 		return nil, nil, err
 	}
-	chainIDBigInt := new(big.Int).SetUint64(validatedChainID)
+	chainIDBigInt := new(big.Int).SetUint64(validatedChainID.Uint64())
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -1290,6 +1292,8 @@ type solanaMintTxRequest struct {
 	nonceAccountKey   uint64
 	nonceAuthorityKey uint64
 	signerKey         uint64
+	rock              bool
+	zenbtc            bool
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
@@ -1372,19 +1376,40 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		)
 	}
 
-	instructions = append(instructions, solrock.Wrap(
-		programID,
-		rock_spl_token.WrapArgs{
-			Value: req.amount,
-			Fee:   req.fee,
-		},
-		*signerPubKey,
-		mintKey,
-		feeKey,
-		feeWalletAta,
-		recipientPubKey,
-		receiverAta,
-	))
+	if req.rock {
+		instructions = append(instructions, solrock.Wrap(
+			programID,
+			rock_spl_token.WrapArgs{
+				Value: req.amount,
+				Fee:   req.fee,
+			},
+			*signerPubKey,
+			mintKey,
+			feeKey,
+			feeWalletAta,
+			recipientPubKey,
+			receiverAta,
+		))
+	} else if req.zenbtc {
+		multiSigKey, err := solana.PublicKeyFromBase58(k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress)
+		if err != nil {
+			return nil, err
+		}
+		instructions = append(instructions, solzenbtc.Wrap(
+			programID,
+			zenbtc_spl_token.WrapArgs{
+				Value: req.amount,
+				Fee:   req.fee,
+			},
+			*signerPubKey,
+			mintKey,
+			multiSigKey,
+			feeKey,
+			feeWalletAta,
+			recipientPubKey,
+			receiverAta,
+		))
+	}
 
 	tx, err := solana.NewTransaction(
 		instructions,
@@ -1430,16 +1455,16 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 		return nil, err
 	}
 	if len(pendingZenBTCMints) == 0 {
-		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, k.zentpKeeper.GetParams(goCtx).Solana.NonceAccountKey)
+		solParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
 				return nil, err
 			}
 			solNonceRequested = false
 		}
-		solParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
-		if solNonceRequested {
 
+		if solNonceRequested {
 			nonceAcc, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
 			if err != nil {
 				return nil, err
