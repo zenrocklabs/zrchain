@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 // Network constants
@@ -67,6 +68,34 @@ var (
 	// SolanaSlotRoundingFactor is the value used to round Solana slots for consistent blockhash and fee querying
 	// Slots are rounded down to the nearest multiple of this value
 	SolanaSlotRoundingFactor = uint64(50)
+
+	// TODO: Add ZenBTC Solana program IDs for mainnet
+	ZenBTCSolanaProgramID = map[string]string{
+		"mainnet": "",
+		"devnet":  "zenpgkBpnNwgkYvHk2gSNzYJ6xT4b44u45Q8V76G8Yy",
+	}
+
+	// Solana RPC endpoints
+	SolanaRPCEndpoints = map[string]string{
+		"mainnet": solrpc.MainNetBeta_RPC,
+		"devnet":  solrpc.DevNet_RPC,
+	}
+
+	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
+	SolanaCAIP2 = map[string]string{
+		"mainnet": "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
+		"devnet":  "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
+	}
+
+	// Ethereum RPC endpoints (Chainlink Price Feeds are on mainnet)
+	EthereumMainnetRPC = "https://ethereum.publicnode.com"
+
+	// Chainlink Price Feed Addresses (Mainnet)
+	BTCUSDPriceFeedAddress = "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+	ETHUSDPriceFeedAddress = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+
+	// URLs
+	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 )
 
 type OracleState struct {
@@ -78,6 +107,8 @@ type OracleState struct {
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
 	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
 	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
+	SolanaBurnEvents           []api.BurnEvent                `json:"solanaBurnEvents"`
+	CleanedSolanaBurnEvents    map[string]bool                `json:"cleanedSolanaBurnEvents"`
 	Redemptions                []api.Redemption               `json:"redemptions"`
 	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`

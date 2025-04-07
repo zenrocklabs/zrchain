@@ -52,6 +52,7 @@ type (
 		SolanaROCKMintEventsHash   []byte
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
+		SolanaBurnEventsHash       []byte
 		RedemptionsHash            []byte
 		ROCKUSDPrice               string
 		BTCUSDPrice                string
@@ -85,6 +86,7 @@ type (
 		SolanaLamportsPerSignature uint64
 		SolanaROCKMintEvents       []api.SolanaRockMintEvent
 		EthBurnEvents              []api.BurnEvent
+		SolanaBurnEvents           []api.BurnEvent
 		Redemptions                []api.Redemption
 		ROCKUSDPrice               string
 		BTCUSDPrice                string
@@ -166,6 +168,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	}
 	if len(ve.EthBurnEventsHash) == 0 {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaBurnEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
 		invalid = true
 	}
 	if len(ve.RedemptionsHash) == 0 {
@@ -262,6 +268,7 @@ const (
 	VEFieldZRChainBlockHeight VoteExtensionField = iota
 	VEFieldEigenDelegationsHash
 	VEFieldEthBurnEventsHash
+	VEFieldSolanaBurnEventsHash
 	VEFieldRedemptionsHash
 	VEFieldRequestedBtcHeaderHash
 	VEFieldRequestedBtcBlockHeight
@@ -325,6 +332,8 @@ func (f VoteExtensionField) String() string {
 		return "EigenDelegationsHash"
 	case VEFieldEthBurnEventsHash:
 		return "EthBurnEventsHash"
+	case VEFieldSolanaBurnEventsHash:
+		return "SolanaBurnEventsHash"
 	case VEFieldRedemptionsHash:
 		return "RedemptionsHash"
 	case VEFieldRequestedBtcHeaderHash:
@@ -381,6 +390,11 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldEthBurnEventsHash,
 			GetValue: func(ve VoteExtension) any { return ve.EthBurnEventsHash },
 			SetValue: func(v any, ve *VoteExtension) { ve.EthBurnEventsHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldSolanaBurnEventsHash,
+			GetValue: func(ve VoteExtension) any { return ve.SolanaBurnEventsHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolanaBurnEventsHash = v.([]byte) },
 		},
 		{
 			Field:    VEFieldRedemptionsHash,

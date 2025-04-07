@@ -13,6 +13,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -120,6 +121,7 @@ func (o *Oracle) fetchAndProcessState(
 		suggestedTip               *big.Int
 		estimatedGas               uint64
 		ethBurnEvents              []api.BurnEvent
+		solanaBurnEvents           []api.BurnEvent
 		ROCKUSDPrice               math.LegacyDec
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
@@ -301,6 +303,21 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch Solana burn events
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		events, err := o.getSolanaBurnEvents(solanaProgramID)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaBurnEvents = events
+		updateMutex.Unlock()
+	}()
+
 	// Wait for all goroutines to complete
 	wg.Wait()
 	close(errChan)
@@ -324,6 +341,8 @@ func (o *Oracle) fetchAndProcessState(
 		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
+		SolanaBurnEvents:           update.solanaBurnEvents,
+		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
@@ -668,4 +687,59 @@ func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, u
 	//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
 
 	return "", 0, 0, nil
+}
+
+// getSolanaBurnEvents retrieves ZenBTC burn events from Solana.
+func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) {
+	limit := 1000
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
+	}
+
+	var burnEvents []api.BurnEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to get Solana ZenBTC burn transaction %s: %v", signature.Signature, err)
+			continue
+		}
+
+		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", signature.Signature, err)
+			continue
+		}
+
+		// Solana CAIP-2 Identifier (replace 'mainnet' if needed for other networks)
+		chainID := "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z"
+
+		for logIndex, event := range events {
+			if event.Name == "Burn" {
+				e := event.Data.(*zenbtc_spl_token.BurnEventData)
+
+				burnEvents = append(burnEvents, api.BurnEvent{
+					TxID:            signature.Signature.String(), // Use transaction signature as TxID
+					LogIndex:        uint64(logIndex),             // Use log index within the transaction
+					ChainID:         chainID,
+					DestinationAddr: e.DestinationAddress[:], // Assuming DestinationAddress is [32]byte
+					Amount:          e.Amount,
+				})
+			}
+		}
+	}
+	return burnEvents, nil
 }

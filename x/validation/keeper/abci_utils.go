@@ -88,6 +88,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ETHUSDPrice:          resp.ETHUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaROCKMintEvents: resp.SolanaRockMintEvents,
+		SolanaBurnEvents:     resp.SolanaBurnEvents,
 	}, nil
 }
 
@@ -1052,6 +1053,11 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	if fieldHasConsensus(fieldVotePowers, VEFieldRedemptionsHash) {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
 			mismatchedFields = append(mismatchedFields, VEFieldRedemptionsHash)
+		}
+	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaBurnEventsHash) {
+		if err := validateHashField(VEFieldSolanaBurnEventsHash.String(), voteExt.SolanaBurnEventsHash, oracleData.SolanaBurnEvents); err != nil {
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaBurnEventsHash)
 		}
 	}
 
