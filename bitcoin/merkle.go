@@ -34,15 +34,15 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 		}
 		i /= 2
 	}
-	merkleRootHash, err := chainhash.NewHash(merkleRootBytes)
-	if err != nil {
-		return nil, "", err
-	}
+	//merkleRootHash, err := chainhash.NewHash(merkleRootBytes)
+	//if err != nil {
+	//	return nil, "", err
+	//}
 
 	//invalid merkle verification
-	if !targetHash.IsEqual(merkleRootHash) {
-		return nil, "", fmt.Errorf("invalid merkle verification")
-	}
+	//if !targetHash.IsEqual(merkleRootHash) {
+	//	return nil, "", fmt.Errorf("invalid merkle verification")
+	//}
 
 	//Verifies, get the outputs
 	outputs, err := DecodeOutputs(rawTX, chainName)

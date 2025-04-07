@@ -3,7 +3,7 @@
 key_types=(
 	"ed25519"  #1
 	"ecdsa"    #2
-	"ecdsa"    #3
+	"bitcoin"  #3
 	"ecdsa"    #4
 	"ecdsa"    #5
 	"ecdsa"    #6
@@ -13,7 +13,6 @@ key_types=(
 	"ed25519"  #10
 	"ed25519"  #11
         "ed25519"  #12
-	"bitcoin"  #13
 ) 
 
 workspace="workspace14a2hpadpsy9h4auve2z8lw"
@@ -36,4 +35,10 @@ for key_type in "${key_types[@]}"; do
     echo "Sleeping for 15 seconds..."
     sleep 15
 done
+
+echo "mammal romance obtain swarm disorder snake apology debris daughter magnet column scrub crowd drift empty rebuild address first patch believe myself grow aware muffin" |zenrockd keys add btcproxy --recover --keyring-backend test
+
+zenrockd tx bank send alice zen1trdxe6r48aqvhm026akay7tjnzuarf2rxuz0ah  10000000000urock --keyring-backend test --chain-id zenrock  --fees 200urock --yes
+sleep 2
+zenrockd tx identity add-workspace-owner workspace14a2hpadpsy9h4auve2z8lw zen1trdxe6r48aqvhm026akay7tjnzuarf2rxuz0ah --chain-id zenrock --btl 100 --fees 20urock --keyring-backend test --from alice --yes
 

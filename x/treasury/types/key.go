@@ -112,9 +112,9 @@ func (k *Key) ToEdDSAEd25519() (*ed25519.PublicKey, error) {
 
 func Caip2ToKeyType(caip string) (KeyType, error) {
 	switch caip {
-	case "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:7S3P4HxJpyyigGzodYwHtCxZyUQe9JiBMHyRWXArAaKv", // solana mainnet
-		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1:DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKK", // solana devnet
-		"solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z:6LmSRCiu3z6NCSpF19oz1pHXkYkN4jWbj9K1nVELpDkT": // solana testnet
+	case "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // solana mainnet
+		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // solana devnet
+		"solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z": // solana testnet
 		return KeyType_KEY_TYPE_EDDSA_ED25519, nil
 	case "eip155:1", // eth mainnet
 		"eip155:11155111",  // sepolia
