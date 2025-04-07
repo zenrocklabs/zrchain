@@ -1,6 +1,3 @@
-from amino import amino_pb2 as _amino_pb2
-from gogoproto import gogo_pb2 as _gogo_pb2
-from zrchain.zentp import params_pb2 as _params_pb2
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -10,12 +7,12 @@ DESCRIPTOR: _descriptor.FileDescriptor
 
 class BridgeStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
-    BRIDGE_STATUS_UNDEFINED: _ClassVar[BridgeStatus]
+    BRIDGE_STATUS_UNSPECIFIED: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_NEW: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_PENDING: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_COMPLETED: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_FAILED: _ClassVar[BridgeStatus]
-BRIDGE_STATUS_UNDEFINED: BridgeStatus
+BRIDGE_STATUS_UNSPECIFIED: BridgeStatus
 BRIDGE_STATUS_NEW: BridgeStatus
 BRIDGE_STATUS_PENDING: BridgeStatus
 BRIDGE_STATUS_COMPLETED: BridgeStatus

@@ -69,6 +69,7 @@ func (m *Params) GetSolana() *Solana {
 	return nil
 }
 
+// Solana represents the parameters for the Solana relayer configuration.
 type Solana struct {
 	SignerKeyId       uint64 `protobuf:"varint,1,opt,name=signer_key_id,json=signerKeyId,proto3" json:"signer_key_id,omitempty"`
 	ProgramId         string `protobuf:"bytes,2,opt,name=program_id,json=programId,proto3" json:"program_id,omitempty"`
