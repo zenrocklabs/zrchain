@@ -108,7 +108,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
 
-	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, EthBlocksBeforeFinality)
+	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
 	if latestHeader.BaseFee == nil {
@@ -220,7 +220,7 @@ func (o *Oracle) fetchAndProcessState(
 		client := &http.Client{
 			Timeout: httpTimeout,
 		}
-		resp, err := client.Get(ROCKUSDPriceURL)
+		resp, err := client.Get(sidecartypes.ROCKUSDPriceURL)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to retrieve ROCK price data: %w", err)
 			return
@@ -252,7 +252,7 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
 			return
 		}
-		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 		// Fetch BTC price
 		btcPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
@@ -408,7 +408,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 }
 
 func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(EthBurnEventsBlockRange))
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
 	toBlock := latestHeader.Number
 	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {

@@ -75,7 +75,7 @@ func (o *Oracle) CacheState() {
 
 	// Cache the new state
 	o.stateCache = append(o.stateCache, newState)
-	if len(o.stateCache) > CacheSize {
+	if len(o.stateCache) > sidecartypes.OracleCacheSize {
 		o.stateCache = o.stateCache[1:]
 	}
 

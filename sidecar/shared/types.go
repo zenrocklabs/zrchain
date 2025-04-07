@@ -26,6 +26,8 @@ type ZenBTCToken struct {
 }
 
 // Contract address constants and other network-specific configuration values
+// NB: these constants should not be changed as they are important for synchronicity.
+// Modifying them will exponentially increase the risk of your validator being slashed
 var (
 	// ServiceManagerAddresses maps network names to service manager contract addresses
 	ServiceManagerAddresses = map[string]string{
@@ -87,15 +89,15 @@ var (
 		"devnet":  "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
 	}
 
-	// Ethereum RPC endpoints (Chainlink Price Feeds are on mainnet)
-	EthereumMainnetRPC = "https://ethereum.publicnode.com"
-
-	// Chainlink Price Feed Addresses (Mainnet)
-	BTCUSDPriceFeedAddress = "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-	ETHUSDPriceFeedAddress = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-
 	// URLs
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
+
+	// Oracle tuning parameters
+	MainLoopTickerIntervalSeconds = 10 // Seconds
+	OracleCacheSize               = 20
+	EthBurnEventsBlockRange       = 1000
+	// TODO: should this be increased?
+	EthBlocksBeforeFinality = int64(5) // Number of blocks before considering a state final
 )
 
 type OracleState struct {
