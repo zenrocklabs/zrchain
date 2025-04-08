@@ -15,6 +15,18 @@ The zentp module implements a token bridging system with the following key conce
 - **Cross-Chain Bridging**: The module supports bridging tokens from zrchain to other chains (like Solana) using CAIP-2 chain identifiers and chain-specific address validation.
 - **Governance Control**: Critical operations like burning tokens are gated through governance, ensuring proper control over token supply.
 
+### Sidecar Integration
+
+The zentp module relies on sidecar services to handle cross-chain operations, particularly for Solana integration. It continuously provides events form the solana ROCK contract and if zrchain sees an unhandled event it initiates the action. The sidecar services are responsible for:
+
+The sidecar services provide the following functionality:
+
+- **Mint Event Processing**: Provides mint events from Solana, enabling zrchain to initiate corresponding burn operations
+- **Burn Event Processing**: Provides burn events from Solana, enabling zrchain to initiate corresponding mint operations
+- **Account Information**: Supplies Solana durable nonce accounts and associated token accounts for recipients during transaction signing
+
+This sidecar architecture enables a clean separation between on-chain state management and off-chain cross-chain operations, ensuring reliable and secure token bridging between zrchain and Solana.
+
 ## State
 
 The `zentp` module uses the `collections` package which provides collection storage.
