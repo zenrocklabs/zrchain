@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,11 +14,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api" // Added import
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
@@ -1509,12 +1508,23 @@ func (k *Keeper) processROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 
 // storeNewZenBTCBurnEventsEthereum stores new burn events coming from Ethereum.
 func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData OracleData) {
+	k.storeNewZenBTCBurnEvents(ctx, oracleData.EthBurnEvents, "ethereum", "error setting EthereumNonceRequested state")
+}
+
+// storeNewZenBTCBurnEventsSolana stores new burn events coming from Solana.
+func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData OracleData) {
+	k.storeNewZenBTCBurnEvents(ctx, oracleData.SolanaBurnEvents, "solana", "error setting EthereumNonceRequested state for unstaker")
+}
+
+// storeNewZenBTCBurnEvents is a helper function to store new burn events from a given source.
+func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecarapitypes.BurnEvent, source string, nonceErrorMsg string) {
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
-	for _, burn := range oracleData.EthBurnEvents {
+	for _, burn := range burnEvents {
 		// Check if this burn event already exists
 		exists := false
 		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
+			// Compare fields from the input burn event data with the stored BurnEvent
 			if existingBurn.TxID == burn.TxID &&
 				existingBurn.LogIndex == burn.LogIndex &&
 				existingBurn.ChainID == burn.ChainID {
@@ -1523,11 +1533,12 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 			}
 			return false, nil
 		}); err != nil {
-			k.Logger(ctx).Error("error walking burn events", "error", err)
+			k.Logger(ctx).Error("error walking burn events", "source", source, "error", err)
 			continue
 		}
 
 		if !exists {
+			// Create a new BurnEvent using data from the input struct
 			newBurn := zenbtctypes.BurnEvent{
 				TxID:            burn.TxID,
 				LogIndex:        burn.LogIndex,
@@ -1538,22 +1549,24 @@ func (k *Keeper) storeNewZenBTCBurnEventsEthereum(ctx sdk.Context, oracleData Or
 			}
 			id, err := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
 			if err != nil {
-				k.Logger(ctx).Error("error creating burn event", "error", err)
+				k.Logger(ctx).Error("error creating burn event", "source", source, "error", err)
 				continue
 			}
-			k.Logger(ctx).Info("created new burn event", "id", id)
+			k.Logger(ctx).Info(fmt.Sprintf("created new %s burn event", source), "id", id)
 			foundNewBurn = true
 		}
 	}
 
+	// If a new burn event is found, we need to request the unstaker's Ethereum nonce
+	// because the unstaking transaction happens on Ethereum, regardless of the burn source.
 	if foundNewBurn {
 		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state", "error", err)
+			k.Logger(ctx).Error(nonceErrorMsg, "error", err)
 		}
 	}
 }
 
-// processZenBTCBurnEventsEthereum processes pending burn events by constructing unstake transactions.
+// processZenBTCBurnEvents processes pending burn events by constructing unstake transactions.
 func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	processTransaction(
 		k,
@@ -1617,31 +1630,6 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
 	)
-}
-
-// Helper function to submit Ethereum transactions
-func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
-	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
-		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
-	if err != nil {
-		return 0, err
-	}
-	resp, err := k.treasuryKeeper.HandleSignTransactionRequest(
-		ctx,
-		&treasurytypes.MsgNewSignTransactionRequest{
-			Creator:             creator,
-			KeyIds:              keyIDs,
-			WalletType:          walletType,
-			UnsignedTransaction: unsignedTx,
-			Metadata:            metadata,
-			NoBroadcast:         false,
-		},
-		[]byte(hex.EncodeToString(unsignedTx)),
-	)
-	if err != nil {
-		return 0, err
-	}
-	return resp.Id, nil
 }
 
 // storeNewZenBTCRedemptions processes new redemption events.
@@ -1880,52 +1868,4 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		k.Logger(ctx).Error("error updating zenBTC supply", "error", err)
 	}
 
-}
-
-// storeNewZenBTCBurnEventsSolana stores new burn events coming from Solana.
-func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData OracleData) {
-	foundNewBurn := false
-	// Loop over each burn event from oracle to check for new ones.
-	for _, burn := range oracleData.SolanaBurnEvents {
-		// Check if this burn event already exists
-		exists := false
-		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
-			if existingBurn.TxID == burn.TxID &&
-				existingBurn.LogIndex == burn.LogIndex &&
-				existingBurn.ChainID == burn.ChainID {
-				exists = true
-				return true, nil
-			}
-			return false, nil
-		}); err != nil {
-			k.Logger(ctx).Error("error walking burn events", "error", err)
-			continue
-		}
-
-		if !exists {
-			newBurn := zenbtctypes.BurnEvent{
-				TxID:            burn.TxID,
-				LogIndex:        burn.LogIndex,
-				ChainID:         burn.ChainID,
-				DestinationAddr: burn.DestinationAddr,
-				Amount:          burn.Amount,
-				Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
-			}
-			id, err := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
-			if err != nil {
-				k.Logger(ctx).Error("error creating burn event", "error", err)
-				continue
-			}
-			k.Logger(ctx).Info("created new solana burn event", "id", id)
-			foundNewBurn = true
-		}
-	}
-
-	// If a new burn event is found, we need to request the unstaker's Ethereum nonce
-	// because the unstaking transaction happens on Ethereum.
-	if foundNewBurn {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error("error setting EthereumNonceRequested state for unstaker", "error", err)
-		}
-	}
 }
