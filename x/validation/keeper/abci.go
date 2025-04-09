@@ -388,6 +388,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
+
 		k.processROCKMints(ctx, oracleData)
 		k.processROCKMintEvents(ctx, oracleData)
 	}

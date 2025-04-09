@@ -343,10 +343,10 @@ func (o *Oracle) fetchAndProcessState(
 		SolanaBurnEvents:           update.solanaBurnEvents,
 		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
+		SolanaRockMintEvents:       update.SolRockMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
-		SolanaRockMintEvents:       update.SolRockMintEvents,
 	}
 
 	log.Printf("\nState update: %+v\n", newState)
