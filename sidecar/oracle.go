@@ -86,7 +86,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
-			o.cleanUpEthBurnEvents()
+			o.cleanUpBurnEvents()
 		}
 	}
 }
@@ -438,49 +438,99 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 	return mergedEthBurnEvents, nil
 }
 
-func (o *Oracle) cleanUpEthBurnEvents() {
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
-	if len(currentState.EthBurnEvents) == 0 {
-		return
-	}
+// reconcileBurnEventsWithChain checks a list of burn events against the chain and returns the events
+// that should remain in the cache and an updated map of cleaned events.
+func (o *Oracle) reconcileBurnEventsWithZRChain(
+	ctx context.Context,
+	eventsToClean []api.BurnEvent,
+	cleanedEvents map[string]bool,
+	chainTypeName string, // For logging purposes (e.g., "Ethereum", "Solana")
+) ([]api.BurnEvent, map[string]bool) { // Removed error return for simplicity now
 
-	ctx := context.Background()
-	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+	remainingEvents := make([]api.BurnEvent, 0)
+	updatedCleanedEvents := make(map[string]bool)
+	if cleanedEvents != nil {
+		// Copy existing cleaned events map to avoid modifying the original directly in this loop
+		for k, v := range cleanedEvents {
+			updatedCleanedEvents[k] = v
+		}
+	} // No need for else, make initializes an empty map
 
-	// Check each Ethereum burn event against the chain
-	for _, event := range currentState.EthBurnEvents {
+	for _, event := range eventsToClean {
+		// Check if this specific event was already cleaned in a previous run but is still in the eventsToClean list for some reason
+		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
+			log.Printf("Skipping already cleaned %s burn event (txID: %s, logIndex: %d, chainID: %s)", chainTypeName, event.TxID, event.LogIndex, event.ChainID)
+			continue // Skip to next event if already marked as cleaned
+		}
+
 		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
 		if err != nil {
-			log.Printf("Error querying Ethereum burn event (txID: %s, logIndex: %d): %v", event.TxID, event.LogIndex, err)
-			// Keep events that we failed to query
-			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
-			continue
+			// Log the specific chain type in the error
+			log.Printf("Error querying %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
+			// Keep events that we failed to query, they might succeed next time
+			remainingEvents = append(remainingEvents, event)
+			continue // Continue checking other events even if one query fails
 		}
 
 		// If the event is not found on chain, keep it in our cache
 		if len(resp.BurnEvents) == 0 {
-			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
+			remainingEvents = append(remainingEvents, event)
 		} else {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			if currentState.CleanedEthBurnEvents == nil {
-				currentState.CleanedEthBurnEvents = make(map[string]bool)
-			}
-			currentState.CleanedEthBurnEvents[key] = true
-			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
+			// Event found on chain, mark it as cleaned by adding to the map
+			updatedCleanedEvents[key] = true
+			log.Printf("Removing %s burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", chainTypeName, event.TxID, event.LogIndex, event.ChainID)
+			// Do *not* add to remainingEvents
 		}
 	}
 
-	// Update the current state with remaining events if any were removed
-	if len(remainingEthBurnEvents) != len(currentState.EthBurnEvents) {
-		log.Printf("Removed %d Ethereum burn events from cache", len(currentState.EthBurnEvents)-len(remainingEthBurnEvents))
-		newState := *currentState
-		newState.EthBurnEvents = remainingEthBurnEvents
+	return remainingEvents, updatedCleanedEvents
+}
+
+func (o *Oracle) cleanUpBurnEvents() {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	// Check if there are any events to clean up at all
+	initialEthCount := len(currentState.EthBurnEvents)
+	initialSolCount := len(currentState.SolanaBurnEvents)
+	if initialEthCount == 0 && initialSolCount == 0 {
+		return // Nothing to clean
+	}
+
+	ctx := context.Background()
+	stateChanged := false
+
+	// Clean up Ethereum events
+	remainingEthEvents, updatedCleanedEthEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, "Ethereum")
+	if len(remainingEthEvents) != initialEthCount {
+		log.Printf("Removed %d Ethereum burn events from cache", initialEthCount-len(remainingEthEvents))
+		stateChanged = true
+	}
+
+	// Clean up Solana events
+	remainingSolEvents, updatedCleanedSolEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, "Solana")
+	if len(remainingSolEvents) != initialSolCount {
+		log.Printf("Removed %d Solana burn events from cache", initialSolCount-len(remainingSolEvents))
+		stateChanged = true
+	}
+
+	// Update the current state only if changes were made to either list
+	if stateChanged {
+		newState := *currentState // Copy existing state
+		newState.EthBurnEvents = remainingEthEvents
+		newState.CleanedEthBurnEvents = updatedCleanedEthEvents
+		newState.SolanaBurnEvents = remainingSolEvents
+		newState.CleanedSolanaBurnEvents = updatedCleanedSolEvents
+
 		o.currentState.Store(&newState)
-		o.CacheState()
+		o.CacheState() // Persist the updated state
+		log.Println("Burn event cache state updated and saved.")
+	} else {
+		log.Println("No burn events removed from cache during cleanup.")
 	}
 }
 
-// getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
+// getEthBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
 func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
