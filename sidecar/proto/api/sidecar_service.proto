@@ -72,7 +72,8 @@ message SidecarStateResponse {
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
-  repeated SolanaRockMintEvent SolanaRockMintEvents = 12 [(gogoproto.nullable) = false];;
+  repeated SolanaRockMintEvent SolanaRockMintEvents = 12 [(gogoproto.nullable) = false];
+  repeated BurnEvent SolanaBurnEvents = 13 [(gogoproto.nullable) = false];
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }

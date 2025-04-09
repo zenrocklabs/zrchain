@@ -88,6 +88,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ETHUSDPrice:          resp.ETHUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaROCKMintEvents: resp.SolanaRockMintEvents,
+		SolanaBurnEvents:     resp.SolanaBurnEvents,
 	}, nil
 }
 
@@ -1054,6 +1055,11 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			mismatchedFields = append(mismatchedFields, VEFieldRedemptionsHash)
 		}
 	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaBurnEventsHash) {
+		if err := validateHashField(VEFieldSolanaBurnEventsHash.String(), voteExt.SolanaBurnEventsHash, oracleData.SolanaBurnEvents); err != nil {
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaBurnEventsHash)
+		}
+	}
 
 	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
@@ -1217,6 +1223,31 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
 	return err
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
+		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+	if err != nil {
+		return 0, err
+	}
+	resp, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyIds:              keyIDs,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTx)),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Id, nil
 }
 
 func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (system.NonceAccount, error) {

@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 // Network constants
@@ -25,6 +26,8 @@ type ZenBTCToken struct {
 }
 
 // Contract address constants and other network-specific configuration values
+// NB: these constants should not be changed as they are important for synchronicity.
+// Modifying them will exponentially increase the risk of your validator being slashed
 var (
 	// ServiceManagerAddresses maps network names to service manager contract addresses
 	ServiceManagerAddresses = map[string]string{
@@ -67,6 +70,41 @@ var (
 	// SolanaSlotRoundingFactor is the value used to round Solana slots for consistent blockhash and fee querying
 	// Slots are rounded down to the nearest multiple of this value
 	SolanaSlotRoundingFactor = uint64(50)
+
+	// TODO: Add ZenBTC Solana program ID for mainnet
+	ZenBTCSolanaProgramID = map[string]string{
+		NetworkMainnet: "",
+		NetworkTestnet: "zenpgkBpnNwgkYvHk2gSNzYJ6xT4b44u45Q8V76G8Yy",
+	}
+
+	// TODO: Add SolRock program ID for mainnet
+	SolRockProgramID = map[string]string{
+		NetworkMainnet: "",
+		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+	}
+
+	// Solana RPC endpoints
+	SolanaRPCEndpoints = map[string]string{
+		NetworkMainnet: solrpc.MainNetBeta_RPC,
+		NetworkTestnet: solrpc.DevNet_RPC,
+	}
+
+	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
+	SolanaCAIP2 = map[string]string{
+		NetworkMainnet: "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
+		NetworkTestnet: "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
+	}
+
+	// ROCK Price feed URL
+	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
+
+	// Oracle tuning parameters
+	MainLoopTickerIntervalSeconds = 10 // Seconds
+	OracleCacheSize               = 20
+	EthBurnEventsBlockRange       = 1000
+	// TODO: should this be increased?
+	EthBlocksBeforeFinality = int64(5) // Number of blocks before considering a state final
+	SolanaEventScanTxLimit  = 1000
 )
 
 type OracleState struct {
@@ -78,6 +116,8 @@ type OracleState struct {
 	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
 	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
 	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
+	SolanaBurnEvents           []api.BurnEvent                `json:"solanaBurnEvents"`
+	CleanedSolanaBurnEvents    map[string]bool                `json:"cleanedSolanaBurnEvents"`
 	Redemptions                []api.Redemption               `json:"redemptions"`
 	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
