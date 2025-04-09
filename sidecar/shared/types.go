@@ -71,25 +71,31 @@ var (
 	// Slots are rounded down to the nearest multiple of this value
 	SolanaSlotRoundingFactor = uint64(50)
 
-	// TODO: Add ZenBTC Solana program IDs for mainnet
+	// TODO: Add ZenBTC Solana program ID for mainnet
 	ZenBTCSolanaProgramID = map[string]string{
-		"mainnet": "",
-		"devnet":  "zenpgkBpnNwgkYvHk2gSNzYJ6xT4b44u45Q8V76G8Yy",
+		NetworkMainnet: "",
+		NetworkTestnet: "zenpgkBpnNwgkYvHk2gSNzYJ6xT4b44u45Q8V76G8Yy",
+	}
+
+	// TODO: Add SolRock program ID for mainnet
+	SolRockProgramID = map[string]string{
+		NetworkMainnet: "",
+		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 	}
 
 	// Solana RPC endpoints
 	SolanaRPCEndpoints = map[string]string{
-		"mainnet": solrpc.MainNetBeta_RPC,
-		"devnet":  solrpc.DevNet_RPC,
+		NetworkMainnet: solrpc.MainNetBeta_RPC,
+		NetworkTestnet: solrpc.DevNet_RPC,
 	}
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
 	SolanaCAIP2 = map[string]string{
-		"mainnet": "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
-		"devnet":  "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
+		NetworkMainnet: "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
+		NetworkTestnet: "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
 	}
 
-	// URLs
+	// ROCK Price feed URL
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters

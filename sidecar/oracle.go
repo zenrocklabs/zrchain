@@ -292,8 +292,7 @@ func (o *Oracle) fetchAndProcessState(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// TODO: put id in config
-		events, err := o.getSolROCKMints("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
+		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
 			return
