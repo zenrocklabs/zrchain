@@ -45,7 +45,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		Amount:           req.Amount,
 		Denom:            req.Denom,
 		RecipientAddress: req.RecipientAddress,
-		State:            types.BridgeStatus_BRIDGE_STATUS_NEW,
+		State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
 	})
 	if err != nil {
 		return nil, err

@@ -87,7 +87,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		BTCUSDPrice:          resp.BTCUSDPrice,
 		ETHUSDPrice:          resp.ETHUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
-		SolanaROCKMintEvents: resp.SolanaRockMintEvents,
+		SolanaMintEvents:     resp.SolanaRockMintEvents,
 	}, nil
 }
 
@@ -1188,16 +1188,6 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 	return nil
 }
 
-// GetSolanaRecentBlockhash fetches the Solana recent blockhash from a block with height aligned to modulo 50
-// func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
-// 	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
-// 	if err != nil {
-// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
-// 		return "", err
-// 	}
-// 	return resp.Blockhash, nil
-// }
-
 // Helper function to submit Ethereum transactions
 func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
@@ -1450,7 +1440,7 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINT_PENDING, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
+	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
 	if err != nil {
 		return nil, err
 	}

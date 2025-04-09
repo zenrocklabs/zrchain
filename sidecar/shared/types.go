@@ -67,6 +67,23 @@ var (
 	// SolanaSlotRoundingFactor is the value used to round Solana slots for consistent blockhash and fee querying
 	// Slots are rounded down to the nearest multiple of this value
 	SolanaSlotRoundingFactor = uint64(50)
+
+	SolanaROCKProgramAddress = map[string]string{
+		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+		NetworkMainnet: "",
+	}
+	SolanaROCKMintAddress = map[string]string{
+		NetworkTestnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+		NetworkMainnet: "",
+	}
+	SolanaZenBTCProgramAddress = map[string]string{
+		NetworkTestnet: "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+		NetworkMainnet: "",
+	}
+	SolanaZenBTCMintAddress = map[string]string{
+		NetworkTestnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+		NetworkMainnet: "",
+	}
 )
 
 type OracleState struct {
@@ -82,7 +99,8 @@ type OracleState struct {
 	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
 	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
-	SolanaRockMintEvents       []api.SolanaRockMintEvent      `json:"solanaRockMintEvents"`
+	SolanaROCKMintEvents       []api.SolanaMintEvent          `json:"solanaROCKMintEvents"`
+	SolanaZenBTCMintEvents     []api.SolanaMintEvent          `json:"solanaZenBTCMintEvents"`
 }
 
 type Config struct {

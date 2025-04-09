@@ -50,6 +50,7 @@ type (
 		SolanaMintNonceHashes      []byte
 		SolanaAccountsHash         []byte
 		SolanaROCKMintEventsHash   []byte
+		SolanaZenBTCMintEventsHash []byte
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
 		RedemptionsHash            []byte
@@ -83,7 +84,8 @@ type (
 		SolanaMintNonces           map[uint64]*solSystem.NonceAccount
 		SolanaAccounts             map[string]solToken.Account
 		SolanaLamportsPerSignature uint64
-		SolanaROCKMintEvents       []api.SolanaRockMintEvent
+		SolanaMintEvents           []api.SolanaMintEvent
+		SolanaZenBTCMintEvents     []api.SolanaMintEvent
 		EthBurnEvents              []api.BurnEvent
 		Redemptions                []api.Redemption
 		ROCKUSDPrice               string
@@ -192,14 +194,6 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
 		invalid = true
 	}
-	//if ve.RequestedSolMinterNonceHash == nil {
-	//	logger.Error("invalid vote extension: RequestedSolMinterNonceHash is empty")
-	//	invalid = true
-	//}
-	// if ve.SolanaRecentBlockhash == "" {
-	// 	logger.Error("invalid vote extension: SolanaRecentBlockhash is empty")
-	// 	invalid = true
-	// }
 
 	return invalid
 }
@@ -281,6 +275,7 @@ const (
 	VEFieldSolanaMintNoncesHash
 	VEFieldSolanaAccountsHash
 	VEFieldSolanaROCKMintEventsHash
+	VEFieldSolanaZenBTCMintEventsHash
 )
 
 // FieldHandler defines operations for processing a specific vote extension field

@@ -13,6 +13,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -124,7 +125,8 @@ func (o *Oracle) fetchAndProcessState(
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
 		solanaLamportsPerSignature uint64
-		SolRockMintEvents          []api.SolanaRockMintEvent
+		SolanaROCKMintEvents       []api.SolanaMintEvent
+		SolanaZenBTCMintEvents     []api.SolanaMintEvent
 	}
 
 	update := &oracleStateUpdate{}
@@ -286,18 +288,33 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch SolROCK redemptions
+	// Fetch SolROCK Mints
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		// TODO: put id in config
-		events, err := o.getSolROCKMints("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
+		events, err := o.getSolROCKMints(sidecartypes.SolanaROCKProgramAddress[o.Config.Network])
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
 			return
 		}
 		updateMutex.Lock()
-		update.SolRockMintEvents = events
+		update.SolanaROCKMintEvents = events
+		updateMutex.Unlock()
+	}()
+
+	// Fetch SolZenBTC Mints
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// TODO: put id in config
+		events, err := o.getSolZenBTCMints(sidecartypes.SolanaZenBTCProgramAddress[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaZenBTCMintEvents = events
 		updateMutex.Unlock()
 	}()
 
@@ -328,7 +345,8 @@ func (o *Oracle) fetchAndProcessState(
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
-		SolanaRockMintEvents:       update.SolRockMintEvents,
+		SolanaROCKMintEvents:       update.SolanaROCKMintEvents,
+		SolanaZenBTCMintEvents:     update.SolanaZenBTCMintEvents,
 	}
 
 	log.Printf("\nState update: %+v\n", newState)
@@ -538,7 +556,7 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	return redemptions, nil
 }
 
-func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, error) {
+func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaMintEvent, error) {
 	limit := 1000
 
 	program, err := solana.PublicKeyFromBase58(programID)
@@ -553,7 +571,7 @@ func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, e
 		return nil, fmt.Errorf("failed to get SolROCK redemptions: %w", err)
 	}
 
-	var mintEvents []api.SolanaRockMintEvent
+	var mintEvents []api.SolanaMintEvent
 
 	for _, signature := range signatures {
 		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
@@ -577,8 +595,7 @@ func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, e
 		for _, event := range events {
 			if event.Name == "TokensMintedWithFee" {
 				e := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
-
-				mintEvents = append(mintEvents, api.SolanaRockMintEvent{
+				mintEvents = append(mintEvents, api.SolanaMintEvent{
 					SigHash:   sigHash[:],
 					Date:      tx.BlockTime.Time().Unix(),
 					Recipient: e.Recipient.Bytes(),
@@ -587,6 +604,61 @@ func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, e
 					Mint:      e.Mint.Bytes(),
 				})
 			}
+
+		}
+	}
+	return mintEvents, nil
+}
+
+func (o *Oracle) getSolZenBTCMints(programID string) ([]api.SolanaMintEvent, error) {
+	limit := 1000
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SolROCK redemptions: %w", err)
+	}
+
+	var mintEvents []api.SolanaMintEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get SolROCK redemption transaction: %w", err)
+		}
+
+		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode SolROCK redemption events: %w", err)
+		}
+
+		solTX, err := tx.Transaction.GetTransaction()
+		if len(solTX.Signatures) != 2 {
+			continue
+		}
+		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+		sigHash := sha256.Sum256(combined)
+		for _, event := range events {
+			if event.Name == "TokensMintedWithFee" {
+				e := event.Data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+				mintEvents = append(mintEvents, api.SolanaMintEvent{
+					SigHash:   sigHash[:],
+					Date:      tx.BlockTime.Time().Unix(),
+					Recipient: e.Recipient.Bytes(),
+					Value:     e.Value,
+					Fee:       e.Fee,
+					Mint:      e.Mint.Bytes(),
+				})
+			}
+
 		}
 	}
 	return mintEvents, nil

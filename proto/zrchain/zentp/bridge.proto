@@ -13,16 +13,13 @@ enum BridgeStatus {
   // Undefined: The status of the operation is not specified.
   BRIDGE_STATUS_UNDEFINED = 0;
 
-  // New: The operation has been created but not yet processed.
-  BRIDGE_STATUS_NEW = 1;
-
   // Pending: The operation is currently being processed.
-  BRIDGE_STATUS_PENDING = 2;
+  BRIDGE_STATUS_PENDING = 1;
 
   // Completed: The operation has been successfully finalized.
-  BRIDGE_STATUS_COMPLETED = 3;
+  BRIDGE_STATUS_COMPLETED = 2;
 
-  BRIDGE_STATUS_FAILED = 4;
+  BRIDGE_STATUS_FAILED = 3;
 }
 
 message Bridge {
@@ -37,4 +34,5 @@ message Bridge {
   uint64 tx_id = 9;
   string tx_hash = 10;
   BridgeStatus state = 11;
+  int64 block_height = 12;
 }

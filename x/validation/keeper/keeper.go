@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	solSystem "github.com/gagliardetto/solana-go/programs/system"
 
 	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
@@ -66,6 +67,7 @@ type Keeper struct {
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	SolanaAccountsRequested collections.Map[string, bool]
 	LastUsedEthereumNonce   collections.Map[uint64, zenbtctypes.NonceData]
+	LastUsedSolanaNonce     collections.Map[uint64, solSystem.NonceAccount]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }

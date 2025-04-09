@@ -3,12 +3,10 @@ package types
 import (
 	context "context"
 
-	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
-	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	"github.com/gagliardetto/solana-go/programs/system"
-
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/math"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
+	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -125,5 +123,4 @@ type ZentpKeeper interface {
 	GetParams(ctx context.Context) zentptypes.Params
 	GetMintsWithStatus(goCtx context.Context, status zentptypes.BridgeStatus) ([]*zentptypes.Bridge, error)
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
-	PrepareSolRockMintTx(goCtx context.Context, amount uint64, recipient string, nonce *system.NonceAccount, fundReceiver bool) ([]byte, error)
 }
