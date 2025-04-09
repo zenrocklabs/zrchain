@@ -724,8 +724,8 @@ func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) 
 			continue
 		}
 
-		// Solana CAIP-2 Identifier (replace 'mainnet' if needed for other networks)
-		chainID := "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z"
+		// Solana CAIP-2 Identifier
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
 		for logIndex, event := range events {
 			if event.Name == "TokenRedemption" {
