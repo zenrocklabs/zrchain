@@ -558,7 +558,7 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 }
 
 func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaRockMintEvent, error) {
-	limit := 1000
+	limit := sidecartypes.SolanaEventScanTxLimit
 
 	program, err := solana.PublicKeyFromBase58(programID)
 	if err != nil {
@@ -631,6 +631,61 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	return feeCalculator, nil
 }
 
+// getSolanaBurnEvents retrieves ZenBTC burn events from Solana.
+func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) {
+	limit := sidecartypes.SolanaEventScanTxLimit
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
+	}
+
+	var burnEvents []api.BurnEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to get Solana ZenBTC burn transaction %s: %v", signature.Signature, err)
+			continue
+		}
+
+		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", signature.Signature, err)
+			continue
+		}
+
+		// Solana CAIP-2 Identifier
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+
+		for logIndex, event := range events {
+			if event.Name == "TokenRedemption" {
+				e := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
+
+				burnEvents = append(burnEvents, api.BurnEvent{
+					TxID:            signature.Signature.String(), // Use transaction signature as TxID
+					LogIndex:        uint64(logIndex),             // Use log index within the transaction
+					ChainID:         chainID,
+					DestinationAddr: e.DestAddr[:],
+					Amount:          e.Value,
+				})
+			}
+		}
+	}
+	return burnEvents, nil
+}
+
 // getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
 // Returns blockhash string, slot number, and lamports per signature
 func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
@@ -687,59 +742,4 @@ func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, u
 	//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
 
 	return "", 0, 0, nil
-}
-
-// getSolanaBurnEvents retrieves ZenBTC burn events from Solana.
-func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) {
-	limit := 1000
-
-	program, err := solana.PublicKeyFromBase58(programID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
-	}
-	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
-		Limit:      &limit,
-		Commitment: solrpc.CommitmentConfirmed,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
-	}
-
-	var burnEvents []api.BurnEvent
-
-	for _, signature := range signatures {
-		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
-			Commitment: solrpc.CommitmentConfirmed,
-		})
-		if err != nil {
-			// Log error and continue to next signature
-			log.Printf("Failed to get Solana ZenBTC burn transaction %s: %v", signature.Signature, err)
-			continue
-		}
-
-		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
-		if err != nil {
-			// Log error and continue to next signature
-			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", signature.Signature, err)
-			continue
-		}
-
-		// Solana CAIP-2 Identifier
-		chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
-
-		for logIndex, event := range events {
-			if event.Name == "TokenRedemption" {
-				e := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
-
-				burnEvents = append(burnEvents, api.BurnEvent{
-					TxID:            signature.Signature.String(), // Use transaction signature as TxID
-					LogIndex:        uint64(logIndex),             // Use log index within the transaction
-					ChainID:         chainID,
-					DestinationAddr: e.DestAddr[:],
-					Amount:          e.Value,
-				})
-			}
-		}
-	}
-	return burnEvents, nil
 }

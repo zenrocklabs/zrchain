@@ -98,6 +98,7 @@ var (
 	EthBurnEventsBlockRange       = 1000
 	// TODO: should this be increased?
 	EthBlocksBeforeFinality = int64(5) // Number of blocks before considering a state final
+	SolanaEventScanTxLimit  = 1000
 )
 
 type OracleState struct {
