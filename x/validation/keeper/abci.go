@@ -181,6 +181,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
+	solanaBurnEventsHash, err := deriveHash(oracleData.SolanaBurnEvents)
+	if err != nil {
+		return VoteExtension{}, fmt.Errorf("error deriving solana burn events hash: %w", err)
+	}
+
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
 		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
@@ -205,6 +210,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
 		SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
+		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
 	}
 
 	return voteExt, nil
