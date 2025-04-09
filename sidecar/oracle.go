@@ -728,15 +728,15 @@ func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) 
 		chainID := "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z"
 
 		for logIndex, event := range events {
-			if event.Name == "Burn" {
-				e := event.Data.(*zenbtc_spl_token.BurnEventData)
+			if event.Name == "TokenRedemption" {
+				e := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
 
 				burnEvents = append(burnEvents, api.BurnEvent{
 					TxID:            signature.Signature.String(), // Use transaction signature as TxID
 					LogIndex:        uint64(logIndex),             // Use log index within the transaction
 					ChainID:         chainID,
-					DestinationAddr: e.DestinationAddress[:], // Assuming DestinationAddress is [32]byte
-					Amount:          e.Amount,
+					DestinationAddr: e.DestAddr[:],
+					Amount:          e.Value,
 				})
 			}
 		}
