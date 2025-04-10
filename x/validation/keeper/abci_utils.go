@@ -1270,8 +1270,7 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (syst
 	nonceAccount := system.NonceAccount{}
 	decoder := bin.NewBorshDecoder(resp.Account)
 
-	err = nonceAccount.UnmarshalWithDecoder(decoder)
-	if err != nil {
+	if err = nonceAccount.UnmarshalWithDecoder(decoder); err != nil {
 		return nonceAccount, err
 	}
 	return nonceAccount, err
