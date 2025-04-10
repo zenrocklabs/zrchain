@@ -87,7 +87,8 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		BTCUSDPrice:          resp.BTCUSDPrice,
 		ETHUSDPrice:          resp.ETHUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
-		SolanaMintEvents:     resp.SolanaRockMintEvents,
+		SolanaBurnEvents:     resp.SolanaBurnEvents,
+		SolanaMintEvents:     resp.SolanaMintEvents,
 	}, nil
 }
 
@@ -1188,6 +1189,16 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 	return nil
 }
 
+// GetSolanaRecentBlockhash fetches the Solana recent blockhash from a block with height aligned to modulo 50
+// func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
+// 	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
+// 	if err != nil {
+// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+// 		return "", err
+// 	}
+// 	return resp.Blockhash, nil
+// }
+
 // Helper function to submit Ethereum transactions
 func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
@@ -1207,6 +1218,31 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
 	return err
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
+		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+	if err != nil {
+		return 0, err
+	}
+	resp, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyIds:              keyIDs,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTx)),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Id, nil
 }
 
 func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (system.NonceAccount, error) {

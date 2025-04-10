@@ -1286,6 +1286,7 @@ func (x *Params) GetSolana() *Solana {
 	return nil
 }
 
+// Solana represents the parameters for the Solana relayer configuration.
 type Solana struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

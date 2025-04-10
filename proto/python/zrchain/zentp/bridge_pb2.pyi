@@ -10,11 +10,11 @@ DESCRIPTOR: _descriptor.FileDescriptor
 
 class BridgeStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
-    BRIDGE_STATUS_UNDEFINED: _ClassVar[BridgeStatus]
+    BRIDGE_STATUS_UNSPECIFIED: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_PENDING: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_COMPLETED: _ClassVar[BridgeStatus]
     BRIDGE_STATUS_FAILED: _ClassVar[BridgeStatus]
-BRIDGE_STATUS_UNDEFINED: BridgeStatus
+BRIDGE_STATUS_UNSPECIFIED: BridgeStatus
 BRIDGE_STATUS_PENDING: BridgeStatus
 BRIDGE_STATUS_COMPLETED: BridgeStatus
 BRIDGE_STATUS_FAILED: BridgeStatus

@@ -46,7 +46,7 @@ func (k Keeper) queryBridge(goCtx context.Context, pagination *query.PageRequest
 		k.mintStore,
 		pagination,
 		func(key uint64, value types.Bridge) (bool, error) {
-			statusMatch := status == types.BridgeStatus_BRIDGE_STATUS_UNDEFINED ||
+			statusMatch := status == types.BridgeStatus_BRIDGE_STATUS_UNSPECIFIED ||
 				status == value.State
 
 			creatorMatch := creator == "" || creator == value.Creator

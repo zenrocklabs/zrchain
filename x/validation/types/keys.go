@@ -31,6 +31,7 @@ var (
 	LastValidVEHeightKey                 = collections.NewPrefix(12)
 	SolanaNonceRequestedKey              = collections.NewPrefix(13)
 	SolanaAccountsRequestedKey           = collections.NewPrefix(14)
+	LastUsedSolanaNonceKey               = collections.NewPrefix(15)
 
 	AssetPricesIndex                       = "asset_prices"
 	SlashEventsIndex                       = "slash_events"
@@ -47,6 +48,7 @@ var (
 	LastValidVEHeightIndex                 = "last_valid_ve_height"
 	SolanaNonceRequestedIndex              = "solana_nonce_requested"
 	SolanaAccountsRequestedIndex           = "solana_account_requested"
+	LastUsedSolanaNonceIndex               = "last_used_solana_nonce"
 )
 
 const (

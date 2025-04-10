@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	solSystem "github.com/gagliardetto/solana-go/programs/system"
 
 	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
@@ -67,7 +66,7 @@ type Keeper struct {
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	SolanaAccountsRequested collections.Map[string, bool]
 	LastUsedEthereumNonce   collections.Map[uint64, zenbtctypes.NonceData]
-	LastUsedSolanaNonce     collections.Map[uint64, solSystem.NonceAccount]
+	LastUsedSolanaNonce     collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -150,6 +149,7 @@ func NewKeeper(
 		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaAccountsRequested:           collections.NewMap(sb, types.SolanaAccountsRequestedKey, types.SolanaAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
+		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 	}

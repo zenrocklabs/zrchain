@@ -44,7 +44,7 @@ func (o *Oracle) LoadFromFile(filename string) error {
 			ROCKUSDPrice:               latestState.ROCKUSDPrice,
 			BTCUSDPrice:                latestState.BTCUSDPrice,
 			ETHUSDPrice:                latestState.ETHUSDPrice,
-			SolanaROCKMintEvents:       latestState.SolanaROCKMintEvents,
+			SolanaMintEvents:           latestState.SolanaMintEvents,
 		}
 		o.stateCache = states
 	} else {
@@ -75,7 +75,7 @@ func (o *Oracle) CacheState() {
 
 	// Cache the new state
 	o.stateCache = append(o.stateCache, newState)
-	if len(o.stateCache) > CacheSize {
+	if len(o.stateCache) > sidecartypes.OracleCacheSize {
 		o.stateCache = o.stateCache[1:]
 	}
 

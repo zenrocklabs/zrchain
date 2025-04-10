@@ -60,7 +60,8 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ROCKUSDPrice:               currentState.ROCKUSDPrice.String(),
 		BTCUSDPrice:                currentState.BTCUSDPrice.String(),
 		ETHUSDPrice:                currentState.ETHUSDPrice.String(),
-		SolanaRockMintEvents:       currentState.SolanaROCKMintEvents,
+		SolanaBurnEvents:           currentState.SolanaBurnEvents,
+		SolanaMintEvents:           currentState.SolanaMintEvents,
 	}, nil
 }
 
@@ -87,7 +88,8 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		ROCKUSDPrice:               state.ROCKUSDPrice.String(),
 		BTCUSDPrice:                state.BTCUSDPrice.String(),
 		ETHUSDPrice:                state.ETHUSDPrice.String(),
-		SolanaRockMintEvents:       state.SolanaROCKMintEvents,
+		SolanaMintEvents:           state.SolanaMintEvents,
+		SolanaBurnEvents:           state.SolanaBurnEvents,
 	}, nil
 }
 
