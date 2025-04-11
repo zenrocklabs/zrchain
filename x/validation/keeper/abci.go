@@ -108,7 +108,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	requestedBtcBlockHeight := int64(0)
 	var requestedBtcHeaderHash []byte
 	if requestedHeader != nil {
-		// Get requested Bitcoin header hash
 		requestedBitcoinHeaderHash, err := deriveHash(requestedHeader.BlockHeader)
 		if err != nil {
 			return VoteExtension{}, err
@@ -135,19 +134,11 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
-	var (
-		solNonce              map[uint64]*solSystem.NonceAccount
-		solNonceHash          [32]byte
-		solAccsHash           [32]byte
-		solAccs               map[string]solToken.Account
-		solROCKMintEventsHash [32]byte
-	)
-
-	solNonce, err = k.collectSolanaNonces(ctx)
+	solNonce, err := k.collectSolanaNonces(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	solNonceHash, err = deriveHash(solNonce)
+	solNonceHash, err := deriveHash(solNonce)
 	if err != nil {
 		return VoteExtension{}, err
 	}
@@ -160,14 +151,15 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, err
 	}
+	solAccs := map[string]solToken.Account{}
+
 	if len(solAccsKeys) > 0 {
-		solAccs = map[string]solToken.Account{}
 		for _, key := range solAccsKeys {
-			goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
+			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
 			if err != nil {
 				return VoteExtension{}, err
 			}
-			if goGet {
+			if requested {
 				acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
 				if err != nil {
 					return VoteExtension{}, err
@@ -176,9 +168,14 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 			}
 		}
 	}
-	solAccsHash, err = deriveHash(solAccs)
+	solAccsHash, err := deriveHash(solAccs)
 	if err != nil {
 		return VoteExtension{}, err
+	}
+
+	solanaBurnEventsHash, err := deriveHash(oracleData.SolanaBurnEvents)
+	if err != nil {
+		return VoteExtension{}, fmt.Errorf("error deriving solana burn events hash: %w", err)
 	}
 
 	voteExt := VoteExtension{
@@ -204,7 +201,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
-		SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
+		// SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
+		SolanaBurnEventsHash: solanaBurnEventsHash[:],
 	}
 
 	return voteExt, nil
@@ -344,8 +342,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	// Update asset prices if there's consensus on the price fields
 	k.updateAssetPrices(ctx, oracleData)
 
-	// Process different subsystems based on field consensus
-
 	// Validator updates - only if EigenDelegationsHash has consensus
 	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
 		k.updateValidatorStakes(ctx, oracleData)
@@ -479,24 +475,6 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
-
-	// Verify Solana recent blockhash if there's consensus on it
-	// if fieldHasConsensus(fieldVotePowers, VEFieldSolanaRecentBlockhash) {
-	// 	currentBlockhash, err := k.GetSolanaRecentBlockhash(ctx)
-	// 	if err != nil {
-	// 		k.Logger(ctx).Error("error getting Solana recent blockhash for validation", "error", err)
-	// 		// Skip the rest of this validation block on error
-	// 	} else if currentBlockhash != "" && voteExt.SolanaRecentBlockhash != currentBlockhash {
-	// 		// Check for mismatch only if we have a valid current blockhash
-	// 		k.Logger(ctx).Warn("solana recent blockhash mismatch",
-	// 			"voteExt", voteExt.SolanaRecentBlockhash,
-	// 			"current", currentBlockhash)
-	// 		mismatchedFields = append(mismatchedFields, VEFieldSolanaRecentBlockhash)
-	// 	} else {
-	// 		// No mismatch or empty current blockhash, use the consensus value
-	// 		oracleData.SolanaRecentBlockhash = voteExt.SolanaRecentBlockhash
-	// 	}
-	// }
 
 	// Verify nonce fields and copy them if they have consensus
 	nonceFields := []struct {
