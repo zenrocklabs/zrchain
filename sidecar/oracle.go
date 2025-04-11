@@ -303,14 +303,27 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch SolRockBTC Mints
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
+
 	// Fetch SolZenBTC Mints
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// TODO: put id in config
-		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+		events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
 		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
 			return
 		}
 		updateMutex.Lock()

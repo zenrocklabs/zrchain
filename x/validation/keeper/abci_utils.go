@@ -1454,50 +1454,50 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 
 func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
 	nonces := map[uint64]*system.NonceAccount{}
-	pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(pendingSolROCKMints) == 0 {
+	solParams := k.zentpKeeper.GetParams(goCtx).Solana
+	solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
 	}
-	if len(pendingSolROCKMints) == 0 {
-		solParams := k.zentpKeeper.GetParams(goCtx).Solana
-		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
+	if solNonceRequested {
+		n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
+		nonces[solParams.NonceAccountKey] = &n
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				return nil, err
-			}
+			return nil, err
 		}
-		if solNonceRequested {
-			n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
-			nonces[solParams.NonceAccountKey] = &n
-			if err != nil {
-				return nil, err
-			}
+	}
+	//}
+
+	//ctx := sdk.UnwrapSDKContext(goCtx)
+	//pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(pendingZenBTCMints) == 0 {
+	zenBTCsolParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+	zenBTCsolNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, zenBTCsolParams.NonceAccountKey)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
 		}
+		zenBTCsolNonceRequested = false
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	if err != nil {
-		return nil, err
-	}
-	if len(pendingZenBTCMints) == 0 {
-		solParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
-		solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
+	if zenBTCsolNonceRequested {
+		nonceAcc, err := k.GetSolanaNonceAccount(goCtx, zenBTCsolParams.NonceAccountKey)
 		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				return nil, err
-			}
-			solNonceRequested = false
+			return nil, err
 		}
-
-		if solNonceRequested {
-			nonceAcc, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
-			if err != nil {
-				return nil, err
-			}
-			nonces[solParams.NonceAccountKey] = &nonceAcc
-		}
+		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
 	}
+	//}
 
 	return nonces, nil
 }

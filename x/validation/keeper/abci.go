@@ -388,9 +388,10 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
-		k.processZenBTCMintsSolana(ctx, oracleData)
+		k.processSolanaZenBTCMintEvents(ctx, oracleData)
 		k.processSolanaROCKMints(ctx, oracleData)
 		k.processSolanaROCKMintEvents(ctx, oracleData)
+		k.clearSolanaAccounts(ctx)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
@@ -1110,7 +1111,13 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				return err
 			}
 			if types.IsSolanaCAIP2(tx.Caip2ChainId) {
-				return k.SolanaNonceRequested.Set(ctx, k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey, true)
+				solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+					return err
+				}
+				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
+					return err
+				}
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
@@ -1340,11 +1347,15 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 			tx.ZrchainTxId = txID
 			tx.BlockHeight = ctx.BlockHeight()
+			k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
 			k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			if tx.BlockHeight == 0 {
+				return nil
+			}
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
 				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
@@ -1355,6 +1366,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				}
 				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
 					tx.BlockHeight = 0 // this will trigger the tx to get retried
+					k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 				}
 				// else the transaction has been included in a block, and we should wait for the mint event
 			}
@@ -1438,11 +1450,15 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			tx.State = zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING
 			tx.TxId = id
 			tx.BlockHeight = ctx.BlockHeight()
+			k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
 			k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 		func(tx *zentptypes.Bridge) error {
+			if tx.BlockHeight == 0 {
+				return nil
+			}
 			solParams := k.zentpKeeper.GetParams(ctx).Solana
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
 				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
@@ -1466,6 +1482,9 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return
+		}
 		k.Logger(ctx).Error("GetMintsWithStatus: ", err.Error())
 		return
 	}
@@ -1523,7 +1542,13 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
 	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("GetMintsWithStatus: ", err.Error())
+		if errors.Is(err, collections.ErrNotFound) {
+			return
+		}
+		k.Logger(ctx).Error("GetFirstPendingSolMintTransaction: ", err.Error())
+		return
+	}
+	if id == 0 {
 		return
 	}
 	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, id)

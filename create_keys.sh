@@ -37,8 +37,8 @@ for key_type in "${key_types[@]}"; do
 done
 
 echo "mammal romance obtain swarm disorder snake apology debris daughter magnet column scrub crowd drift empty rebuild address first patch believe myself grow aware muffin" |zenrockd keys add btcproxy --recover --keyring-backend test
-
+sleep 5
 zenrockd tx bank send alice zen1trdxe6r48aqvhm026akay7tjnzuarf2rxuz0ah  10000000000urock --keyring-backend test --chain-id zenrock  --fees 200urock --yes
-sleep 4
+sleep 5
 zenrockd tx identity add-workspace-owner workspace14a2hpadpsy9h4auve2z8lw zen1trdxe6r48aqvhm026akay7tjnzuarf2rxuz0ah --chain-id zenrock --btl 100 --fees 20urock --keyring-backend test --from alice --yes
 
