@@ -16,7 +16,9 @@ import (
 )
 
 var endpoint = rpc.LocalNet.RPC
-var authority, _ = LoadLocalWallet()
+
+// var authority, _ = LoadLocalWallet()
+var authority = solana.NewWallet().PrivateKey
 var programID = solana.MustPublicKeyFromBase58("3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT")
 
 var client = rpc.New(endpoint)
