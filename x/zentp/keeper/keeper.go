@@ -49,13 +49,16 @@ func NewKeeper(
 	identityKeeper types.IdentityKeeper,
 	validationKeeper types.ValidationKeeper,
 	memStoreService store.MemoryStoreService,
+	testMode bool,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
 	}
 	// ensure mint module account is set
-	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
-		panic(fmt.Sprintf("the x/%s module account has not been set", types.ModuleName))
+	if !testMode {
+		if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+			panic(fmt.Sprintf("the x/%s module account has not been set", types.ModuleName))
+		}
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
