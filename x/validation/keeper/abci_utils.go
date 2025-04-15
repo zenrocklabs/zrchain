@@ -1056,11 +1056,20 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		mismatch := validationMismatch{field: field}
 		if len(err) > 0 && err[0] != nil {
 			mismatch.err = err[0]
-			// Attempt to extract expected/actual from hash error if needed, or rely on err msg
-			// For now, just log the error itself in handleValidationMismatches
 		} else {
-			mismatch.expected = fmt.Sprintf("%v", expected)
-			mismatch.actual = fmt.Sprintf("%v", actual)
+			// Format expected value
+			if b, ok := expected.([]byte); ok {
+				mismatch.expected = "0x" + hex.EncodeToString(b)
+			} else {
+				mismatch.expected = fmt.Sprintf("%v", expected)
+			}
+
+			// Format actual value
+			if b, ok := actual.([]byte); ok {
+				mismatch.actual = "0x" + hex.EncodeToString(b)
+			} else {
+				mismatch.actual = fmt.Sprintf("%v", actual)
+			}
 		}
 		mismatches = append(mismatches, mismatch)
 	}
@@ -1179,13 +1188,8 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) {
-		// Explicitly handle nil case for hashing
-		var dataToHash any = nil
-		if oracleData.LatestBtcBlockHeader.MerkleRoot != "" { // Basic check if header is populated
-			dataToHash = oracleData.LatestBtcBlockHeader // Pass the struct value
-		}
-		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, dataToHash); err != nil {
-			recordMismatch(VEFieldLatestBtcHeaderHash, hex.EncodeToString(voteExt.LatestBtcHeaderHash), "derived_hash", err)
+		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, oracleData.LatestBtcBlockHeader); err != nil {
+			recordMismatch(VEFieldLatestBtcHeaderHash, voteExt.LatestBtcHeaderHash, oracleData.LatestBtcBlockHeader, err)
 		}
 	}
 
