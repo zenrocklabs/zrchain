@@ -36,6 +36,7 @@ import (
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
+	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -1531,4 +1532,44 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 	//}
 
 	return nonces, nil
+}
+
+// collectSolanaAccounts retrieves all requested Solana token accounts.
+func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
+	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to iterate SolanaAccountsRequested: %w", err)
+	}
+	solAccsKeys, err := solAccStore.Keys()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get keys from SolanaAccountsRequested store: %w", err)
+	}
+	solAccs := map[string]solToken.Account{}
+
+	if len(solAccsKeys) > 0 {
+		mintAddress := k.zentpKeeper.GetParams(ctx).Solana.MintAddress // Cache mint address
+		for _, key := range solAccsKeys {
+			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Should not happen if we got the key from Iterate, but handle defensively
+					k.Logger(ctx).Error("key not found during Solana account collection, skipping", "key", key)
+					continue
+				}
+				return nil, fmt.Errorf("failed to check if account %s is requested: %w", key, err)
+			}
+			if requested {
+				acc, err := k.GetSolanaTokenAccount(ctx, key, mintAddress)
+				if err != nil {
+					// Log error but continue if possible, maybe one account fetch fails
+					k.Logger(ctx).Error("failed to get Solana token account", "key", key, "mint", mintAddress, "error", err)
+					// Depending on requirements, might need to return error here instead
+					continue
+				}
+				solAccs[key] = acc
+			}
+		}
+	}
+
+	return solAccs, nil
 }

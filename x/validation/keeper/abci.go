@@ -143,30 +143,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
-	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+	solAccs, err := k.collectSolanaAccounts(ctx)
 	if err != nil {
-		return VoteExtension{}, err
-	}
-	solAccsKeys, err := solAccStore.Keys()
-	if err != nil {
-		return VoteExtension{}, err
-	}
-	solAccs := map[string]solToken.Account{}
-
-	if len(solAccsKeys) > 0 {
-		for _, key := range solAccsKeys {
-			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
-			if err != nil {
-				return VoteExtension{}, err
-			}
-			if requested {
-				acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-				if err != nil {
-					return VoteExtension{}, err
-				}
-				solAccs[key] = acc
-			}
-		}
+		return VoteExtension{}, fmt.Errorf("error collecting solana accounts: %w", err)
 	}
 	solAccsHash, err := deriveHash(solAccs)
 	if err != nil {
@@ -514,30 +493,11 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	}
 
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
-		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+		solAccs, err := k.collectSolanaAccounts(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error collecting solana accounts: %w", err)
 		}
-		solAccsKeys, err := solAccStore.Keys()
-		if err != nil {
-			return nil, err
-		}
-		if len(solAccsKeys) > 0 {
-			oracleData.SolanaAccounts = map[string]solToken.Account{}
-			for _, key := range solAccsKeys {
-				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
-				if err != nil {
-					return nil, err
-				}
-				if goGet {
-					acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-					if err != nil {
-						return nil, err
-					}
-					oracleData.SolanaAccounts[key] = acc
-				}
-			}
-		}
+		oracleData.SolanaAccounts = solAccs
 	}
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
