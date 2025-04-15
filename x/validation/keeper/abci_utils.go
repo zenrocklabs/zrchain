@@ -16,6 +16,11 @@ import (
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
 	"github.com/cometbft/cometbft/libs/protoio"
@@ -26,6 +31,11 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	bin "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go"
+	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
+	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -65,19 +75,20 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 	}
 
 	return &OracleData{
-		EigenDelegationsMap:        delegations,
-		ValidatorDelegations:       validatorDelegations,
-		EthBlockHeight:             resp.EthBlockHeight,
-		EthGasLimit:                resp.EthGasLimit,
-		EthBaseFee:                 resp.EthBaseFee,
-		EthTipCap:                  resp.EthTipCap,
-		SolanaLamportsPerSignature: resp.SolanaLamportsPerSignature,
-		EthBurnEvents:              resp.EthBurnEvents,
-		Redemptions:                resp.Redemptions,
-		ROCKUSDPrice:               resp.ROCKUSDPrice,
-		BTCUSDPrice:                resp.BTCUSDPrice,
-		ETHUSDPrice:                resp.ETHUSDPrice,
-		ConsensusData:              abci.ExtendedCommitInfo{},
+		EigenDelegationsMap:  delegations,
+		ValidatorDelegations: validatorDelegations,
+		EthBlockHeight:       resp.EthBlockHeight,
+		EthGasLimit:          resp.EthGasLimit,
+		EthBaseFee:           resp.EthBaseFee,
+		EthTipCap:            resp.EthTipCap,
+		EthBurnEvents:        resp.EthBurnEvents,
+		Redemptions:          resp.Redemptions,
+		ROCKUSDPrice:         resp.ROCKUSDPrice,
+		BTCUSDPrice:          resp.BTCUSDPrice,
+		ETHUSDPrice:          resp.ETHUSDPrice,
+		ConsensusData:        abci.ExtendedCommitInfo{},
+		SolanaBurnEvents:     resp.SolanaBurnEvents,
+		SolanaMintEvents:     resp.SolanaMintEvents,
 	}, nil
 }
 
@@ -114,7 +125,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldZRChainBlockHeight; i <= VEFieldLatestBtcHeaderHash; i++ {
+	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolanaROCKMintEventsHash; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
@@ -248,7 +259,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldZRChainBlockHeight; field <= VEFieldLatestBtcHeaderHash; field++ {
+	for field := VEFieldZRChainBlockHeight; field <= VEFieldSolanaROCKMintEventsHash; field++ {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
 			continue
@@ -447,7 +458,7 @@ func (k *Keeper) constructEthereumTx(ctx context.Context, addr common.Address, c
 	if err != nil {
 		return nil, nil, err
 	}
-	chainIDBigInt := new(big.Int).SetUint64(validatedChainID)
+	chainIDBigInt := new(big.Int).SetUint64(validatedChainID.Uint64())
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -695,7 +706,7 @@ func (k *Keeper) unmarshalOracleData(ctx sdk.Context, tx []byte) (OracleData, bo
 
 	var oracleData OracleData
 	if err := json.Unmarshal(tx, &oracleData); err != nil {
-		k.Logger(ctx).Error("error unmarshalling oracle data", "err", err)
+		k.Logger(ctx).Error("error unmarshalling oracle data JSON", "err", err)
 		return OracleData{}, false
 	}
 
@@ -865,13 +876,17 @@ func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error 
 }
 
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
-func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenbtctypes.MintTransactionStatus) ([]zenbtctypes.PendingMintTransaction, error) {
+func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.MintTransactionStatus, walletType zenbtctypes.WalletType) ([]zenbtctypes.PendingMintTransaction, error) {
 	firstPendingID := uint64(0)
 	var err error
 	if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
 		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingStakeTransaction(ctx)
 	} else if status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
-		firstPendingID, err = k.zenBTCKeeper.GetFirstPendingMintTransaction(ctx)
+		if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
+		} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+			firstPendingID, err = k.zenBTCKeeper.GetFirstPendingEthMintTransaction(ctx)
+		}
 	}
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -883,7 +898,17 @@ func (k *Keeper) getPendingMintTransactionsByStatus(ctx sdk.Context, status zenb
 		ctx,
 		k.zenBTCKeeper.GetPendingMintTransactionsStore(),
 		func(tx zenbtctypes.PendingMintTransaction) bool {
-			return tx.Status == status
+			isMatchingStatus := tx.Status == status
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED {
+				return isMatchingStatus
+			}
+			isMatchingNetwork := false
+			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+				isMatchingNetwork = types.IsSolanaCAIP2(tx.Caip2ChainId)
+			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+				isMatchingNetwork = types.IsEthereumCAIP2(tx.Caip2ChainId)
+			}
+			return isMatchingStatus && isMatchingNetwork
 		},
 		firstPendingID,
 		2,
@@ -1031,6 +1056,16 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 
+	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
+		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaAccountsHash)
+		}
+	}
+	if _, ok := fieldVotePowers[VEFieldSolanaMintNoncesHash]; ok {
+		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
+			mismatchedFields = append(mismatchedFields, VEFieldSolanaMintNoncesHash)
+		}
+	}
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
 		if oracleData.RequestedBtcBlockHeight != 0 {
@@ -1155,14 +1190,14 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 }
 
 // GetSolanaRecentBlockhash fetches the Solana recent blockhash from a block with height aligned to modulo 50
-func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
-	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
-	if err != nil {
-		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
-		return "", err
-	}
-	return resp.Blockhash, nil
-}
+// func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
+// 	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
+// 	if err != nil {
+// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
+// 		return "", err
+// 	}
+// 	return resp.Blockhash, nil
+// }
 
 // Helper function to submit Ethereum transactions
 func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
@@ -1174,7 +1209,7 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             creator,
-			KeyId:               keyID,
+			KeyIds:              []uint64{keyID},
 			WalletType:          walletType,
 			UnsignedTransaction: unsignedTx,
 			Metadata:            metadata,
@@ -1183,4 +1218,285 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
 	return err
+}
+
+// Helper function to submit Ethereum transactions
+func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
+	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
+		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+	if err != nil {
+		return 0, err
+	}
+	resp, err := k.treasuryKeeper.HandleSignTransactionRequest(
+		ctx,
+		&treasurytypes.MsgNewSignTransactionRequest{
+			Creator:             creator,
+			KeyIds:              keyIDs,
+			WalletType:          walletType,
+			UnsignedTransaction: unsignedTx,
+			Metadata:            metadata,
+			NoBroadcast:         false,
+		},
+		[]byte(hex.EncodeToString(unsignedTx)),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Id, nil
+}
+
+func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (system.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	key, err := k.treasuryKeeper.GetKey(ctx, keyID)
+	if err != nil {
+		return system.NonceAccount{}, err
+	}
+	publicKey, err := treasurytypes.SolanaPubkey(key)
+	if err != nil {
+		return system.NonceAccount{}, err
+	}
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: publicKey.String(),
+	})
+	if err != nil {
+		k.Logger(ctx).Error("failed to get solana account info from sidecar: ", err)
+		return system.NonceAccount{}, err
+	}
+	nonceAccount := system.NonceAccount{}
+	decoder := bin.NewBorshDecoder(resp.Account)
+
+	if err = nonceAccount.UnmarshalWithDecoder(decoder); err != nil {
+		return nonceAccount, err
+	}
+	return nonceAccount, err
+}
+
+func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint string) (token.Account, error) {
+	recipientPubKey, err := solana.PublicKeyFromBase58(address)
+	if err != nil {
+		return token.Account{}, err
+	}
+	mintPubKey, err := solana.PublicKeyFromBase58(mint)
+	if err != nil {
+		return token.Account{}, err
+	}
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintPubKey)
+	if err != nil {
+		return token.Account{}, err
+	}
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: receiverAta.String(),
+	})
+	if err != nil {
+		if err.Error() == "rpc error: code = Unknown desc = not found" {
+			return token.Account{}, nil
+		}
+		return token.Account{}, err
+	}
+
+	tokenAccount := new(token.Account)
+	decoder := bin.NewBorshDecoder(resp.Account)
+
+	err = tokenAccount.UnmarshalWithDecoder(decoder)
+	if err != nil {
+		return token.Account{}, err
+	}
+
+	return *tokenAccount, nil
+}
+
+type solanaMintTxRequest struct {
+	amount            uint64
+	fee               uint64
+	recipient         string
+	nonce             *system.NonceAccount
+	fundReceiver      bool
+	programID         string
+	mintAddress       string
+	feeWallet         string
+	nonceAccountKey   uint64
+	nonceAuthorityKey uint64
+	signerKey         uint64
+	rock              bool
+	zenbtc            bool
+}
+
+func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	programID, err := solana.PublicKeyFromBase58(req.programID)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAccKey, err := k.treasuryKeeper.GetKey(ctx, req.nonceAccountKey)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAccPubKey, err := treasurytypes.SolanaPubkey(nonceAccKey)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceAuthKey, err := k.treasuryKeeper.GetKey(ctx, req.nonceAuthorityKey)
+	if err != nil {
+		return nil, err
+	}
+	nonceAuthPubKey, err := treasurytypes.SolanaPubkey(nonceAuthKey)
+	if err != nil {
+		return nil, err
+	}
+
+	signerKey, err := k.treasuryKeeper.GetKey(ctx, req.signerKey)
+	if err != nil {
+		return nil, err
+	}
+	signerPubKey, err := treasurytypes.SolanaPubkey(signerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	mintKey, err := solana.PublicKeyFromBase58(req.mintAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	feeKey, err := solana.PublicKeyFromBase58(req.feeWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	recipientPubKey, err := solana.PublicKeyFromBase58(req.recipient)
+	if err != nil {
+		return nil, err
+	}
+
+	var instructions []solana.Instruction
+
+	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
+		*nonceAccPubKey,
+		solana.SysVarRecentBlockHashesPubkey,
+		*nonceAuthPubKey,
+	).Build())
+
+	feeWalletAta, _, err := solana.FindAssociatedTokenAddress(feeKey, mintKey)
+	if err != nil {
+		return nil, err
+	}
+
+	receiverAta, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.fundReceiver {
+		instructions = append(
+			instructions,
+			ata.NewCreateInstruction(
+				*signerPubKey,
+				recipientPubKey,
+				mintKey,
+			).Build(),
+		)
+	}
+
+	if req.rock {
+		instructions = append(instructions, solrock.Wrap(
+			programID,
+			rock_spl_token.WrapArgs{
+				Value: req.amount,
+				Fee:   req.fee,
+			},
+			*signerPubKey,
+			mintKey,
+			feeKey,
+			feeWalletAta,
+			recipientPubKey,
+			receiverAta,
+		))
+	} else if req.zenbtc {
+		multiSigKey, err := solana.PublicKeyFromBase58(k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress)
+		if err != nil {
+			return nil, err
+		}
+		instructions = append(instructions, solzenbtc.Wrap(
+			programID,
+			zenbtc_spl_token.WrapArgs{
+				Value: req.amount,
+				Fee:   req.fee,
+			},
+			*signerPubKey,
+			mintKey,
+			multiSigKey,
+			feeKey,
+			feeWalletAta,
+			recipientPubKey,
+			receiverAta,
+		))
+	}
+
+	tx, err := solana.NewTransaction(
+		instructions,
+		solana.Hash(req.nonce.Nonce),
+		solana.TransactionPayer(*signerPubKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	txBytes, err := tx.Message.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	return txBytes, nil
+}
+
+func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+	nonces := map[uint64]*system.NonceAccount{}
+	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(pendingSolROCKMints) == 0 {
+	solParams := k.zentpKeeper.GetParams(goCtx).Solana
+	solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+	}
+	if solNonceRequested {
+		n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
+		nonces[solParams.NonceAccountKey] = &n
+		if err != nil {
+			return nil, err
+		}
+	}
+	//}
+
+	//ctx := sdk.UnwrapSDKContext(goCtx)
+	//pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if len(pendingZenBTCMints) == 0 {
+	zenBTCsolParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+	zenBTCsolNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, zenBTCsolParams.NonceAccountKey)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		zenBTCsolNonceRequested = false
+	}
+
+	if zenBTCsolNonceRequested {
+		nonceAcc, err := k.GetSolanaNonceAccount(goCtx, zenBTCsolParams.NonceAccountKey)
+		if err != nil {
+			return nil, err
+		}
+		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
+	}
+	//}
+
+	return nonces, nil
 }

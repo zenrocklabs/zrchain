@@ -197,7 +197,7 @@ message MetadataSolana {
 message MsgNewSignTransactionRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
-  uint64 key_id = 2;
+  uint64 key_id = 2; // Deprecated
   WalletType wallet_type = 3;
   bytes unsigned_transaction = 4;
 
@@ -207,6 +207,7 @@ message MsgNewSignTransactionRequest {
   bytes cache_id = 7;
   bool no_broadcast = 8;
   uint64 mpc_btl = 9;
+  repeated uint64 key_ids = 10;
 }
 
 // MsgNewSignTransactionRequestResponse defines the response structure for

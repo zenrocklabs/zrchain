@@ -1650,7 +1650,7 @@ var (
 
 	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"zrchain", "v4", "treasury", "key_by_address"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v5", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v6", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

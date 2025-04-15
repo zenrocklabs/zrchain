@@ -69,7 +69,7 @@ class SignedDataWithID(_message.Message):
     def __init__(self, sign_request_id: _Optional[int] = ..., signed_data: _Optional[bytes] = ...) -> None: ...
 
 class SignTransactionRequest(_message.Message):
-    __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast")
+    __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast", "key_ids")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
@@ -77,6 +77,7 @@ class SignTransactionRequest(_message.Message):
     UNSIGNED_TRANSACTION_FIELD_NUMBER: _ClassVar[int]
     SIGN_REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
     NO_BROADCAST_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     key_id: int
@@ -84,7 +85,8 @@ class SignTransactionRequest(_message.Message):
     unsigned_transaction: bytes
     sign_request_id: int
     no_broadcast: bool
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ...) -> None: ...
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ..., key_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class SignReqResponse(_message.Message):
     __slots__ = ("id", "creator", "key_ids", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "mpc_btl", "fee", "zenbtc_tx_bytes")
@@ -123,7 +125,7 @@ class SignReqResponse(_message.Message):
     def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., key_type: _Optional[str] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[str] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ...) -> None: ...
 
 class SignTxReqResponse(_message.Message):
-    __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast", "mpc_btl")
+    __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast", "mpc_btl", "key_ids")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
@@ -132,6 +134,7 @@ class SignTxReqResponse(_message.Message):
     SIGN_REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
     NO_BROADCAST_FIELD_NUMBER: _ClassVar[int]
     MPC_BTL_FIELD_NUMBER: _ClassVar[int]
+    KEY_IDS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     key_id: int
@@ -140,7 +143,8 @@ class SignTxReqResponse(_message.Message):
     sign_request_id: int
     no_broadcast: bool
     mpc_btl: int
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[str] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ..., mpc_btl: _Optional[int] = ...) -> None: ...
+    key_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[str] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ..., mpc_btl: _Optional[int] = ..., key_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class ICATransactionRequest(_message.Message):
     __slots__ = ("id", "creator", "key_id", "key_type", "input_msg", "status", "signed_data", "keyring_party_signatures", "reject_reason")

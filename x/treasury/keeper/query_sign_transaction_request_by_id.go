@@ -22,7 +22,7 @@ func (k Keeper) SignTransactionRequestByID(goCtx context.Context, req *types.Que
 		SignTransactionRequest: &types.SignTxReqResponse{
 			Id:                  signTxReq.Id,
 			Creator:             signTxReq.Creator,
-			KeyId:               signTxReq.KeyId,
+			KeyIds:              signTxReq.KeyIds,
 			WalletType:          signTxReq.WalletType.String(),
 			UnsignedTransaction: signTxReq.UnsignedTransaction,
 			SignRequestId:       signTxReq.SignRequestId,

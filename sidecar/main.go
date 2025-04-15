@@ -90,10 +90,11 @@ func main() {
 		log.Fatalf("Error fetching NTP time: %v", err)
 	}
 	// Align the start time to the nearest MainLoopTickerInterval
-	alignedStart := ntpTime.Truncate(MainLoopTickerInterval).Add(MainLoopTickerInterval)
+	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
+	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
 	time.Sleep(alignedStart.Sub(ntpTime))
 
-	mainLoopTicker := time.NewTicker(MainLoopTickerInterval)
+	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 
 	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, mainLoopTicker)
@@ -101,7 +102,7 @@ func main() {
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
 	slog.Info("gRPC server listening on port", "port", cfg.GRPCPort)
-	slog.Info("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates", "seconds", MainLoopTickerInterval/time.Second)
+	slog.Info("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates", "seconds", sidecartypes.MainLoopTickerIntervalSeconds)
 
 	go func() {
 		if err := oracle.runAVSContractOracleLoop(ctx); err != nil {

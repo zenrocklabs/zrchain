@@ -180,7 +180,7 @@ func Test_msgServer_NewZrSignSignatureRequest_Transaction(t *testing.T) {
 			wantReq: &types.SignTransactionRequest{
 				Id:                  1,
 				Creator:             "zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq",
-				KeyId:               1,
+				KeyIds:              []uint64{1},
 				WalletType:          types.WalletType_WALLET_TYPE_EVM,
 				UnsignedTransaction: rawData,
 				SignRequestId:       1,

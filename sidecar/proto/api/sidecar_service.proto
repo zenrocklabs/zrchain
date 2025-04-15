@@ -17,8 +17,8 @@ service SidecarService {
       returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest)
       returns (LatestEthereumNonceForAccountResponse) {}
-  rpc GetSolanaRecentBlockhash(SolanaRecentBlockhashRequest)
-      returns (SolanaRecentBlockhashResponse) {}
+  rpc GetSolanaAccountInfo(SolanaAccountInfoRequest)
+      returns (SolanaAccountInfoResponse) {}
 }
 
 message LatestBitcoinBlockHeaderRequest { string ChainName = 1; }
@@ -72,6 +72,8 @@ message SidecarStateResponse {
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
+  repeated SolanaMintEvent SolanaMintEvents = 12 [(gogoproto.nullable) = false];
+  repeated BurnEvent SolanaBurnEvents = 13 [(gogoproto.nullable) = false];
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
@@ -80,9 +82,22 @@ message LatestEthereumNonceForAccountRequest { string Address = 1; }
 
 message LatestEthereumNonceForAccountResponse { uint64 Nonce = 1; }
 
-message SolanaRecentBlockhashRequest {}
+message SolanaAccountInfoRequest { string PubKey = 1; }
 
-message SolanaRecentBlockhashResponse { 
-  string Blockhash = 1;
-  uint64 Slot = 2;
+message SolanaAccountInfoResponse { bytes Account = 1; }
+
+enum Coin {
+  UNSPECIFIED = 0;
+  ZENBTC = 1;
+  ROCK = 2;
+}
+
+message SolanaMintEvent {
+  Coin Coint = 1;
+  bytes SigHash = 2;
+  bytes Recipient = 3;
+  int64 Date = 4;
+  uint64 Value = 5;
+  uint64 Fee = 6;
+  bytes Mint = 7;
 }

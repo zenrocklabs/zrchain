@@ -37,6 +37,7 @@ type Keeper struct {
 	txDecoder             sdk.TxDecoder
 	zrConfig              *params.ZRConfig
 	sidecarClient         sidecarClient
+	zentpKeeper           types.ZentpKeeper
 
 	// AVSDelegations - keys: validator addr + delegator addr (operator) | value: delegation amount
 	AVSDelegations collections.Map[collections.Pair[string, string], math.Int]
@@ -60,10 +61,12 @@ type Keeper struct {
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
 	// EthereumNonceRequested - key: key ID | value: bool (is requested)
 	EthereumNonceRequested collections.Map[uint64, bool]
+	// SolanaNonceRequested - key: key ID | value: bool (is requested)
+	SolanaNonceRequested collections.Map[uint64, bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
-	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
-	// SolanaBlockhashRequested - value: bool (is requested)
-	SolanaBlockhashRequested collections.Item[bool]
+	SolanaAccountsRequested collections.Map[string, bool]
+	LastUsedEthereumNonce   collections.Map[uint64, zenbtctypes.NonceData]
+	LastUsedSolanaNonce     collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -79,6 +82,7 @@ func NewKeeper(
 	zrConfig *params.ZRConfig,
 	treasuryKeeper *treasury.Keeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
+	zentpKeeper types.ZentpKeeper,
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
@@ -128,6 +132,7 @@ func NewKeeper(
 		sidecarClient:         oracleClient,
 		treasuryKeeper:        treasuryKeeper,
 		zenBTCKeeper:          zenBTCKeeper,
+		zentpKeeper:           zentpKeeper,
 		validatorAddressCodec: validatorAddressCodec,
 		consensusAddressCodec: consensusAddressCodec,
 
@@ -141,9 +146,11 @@ func NewKeeper(
 		ValidationInfos:                   collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
 		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
+		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
+		SolanaAccountsRequested:           collections.NewMap(sb, types.SolanaAccountsRequestedKey, types.SolanaAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
+		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
-		SolanaBlockhashRequested:          collections.NewItem(sb, types.SolanaBlockhashRequestedKey, types.SolanaBlockhashRequestedIndex, collections.BoolValue),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 	}
 }
@@ -242,4 +249,12 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 	}
 
 	return valUpdates.Updates, nil
+}
+
+func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
+	return k.SolanaNonceRequested.Set(ctx, keyID, state)
+}
+
+func (k Keeper) SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error {
+	return k.SolanaAccountsRequested.Set(ctx, address, state)
 }

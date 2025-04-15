@@ -89,7 +89,7 @@ service Query {
   rpc ZenbtcWallets(QueryZenbtcWalletsRequest)
       returns (QueryZenbtcWalletsResponse) {
     option (google.api.http).get =
-        "/zrchain/v5/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/"
+        "/zrchain/v6/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/"
         "{mint_chain_id}/{return_addr}";
   }
 }
