@@ -37,7 +37,7 @@ type TreasuryKeeper interface {
 }
 
 type IdentityKeeper interface {
-	GetWorkspaces(goCtx context.Context, user string) ([]*types.Workspace, error)
+	Workspaces(goCtx context.Context, req *types.QueryWorkspacesRequest) (*types.QueryWorkspacesResponse, error)
 }
 
 type ValidationKeeper interface {

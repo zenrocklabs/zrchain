@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
+	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,13 +91,13 @@ func (k Keeper) Logger() log.Logger {
 }
 
 func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTypes.Key) bool {
-	userWS, err := k.identityKeeper.GetWorkspaces(goCtx, user)
+	resp, err := k.identityKeeper.Workspaces(goCtx, &idTypes.QueryWorkspacesRequest{Creator: user, Owner: user})
 	if err != nil {
 		k.Logger().Error("failed to get workspaces for user: "+user, err.Error())
 		return false
 	}
 
-	for _, ws := range userWS {
+	for _, ws := range resp.Workspaces {
 		if key.WorkspaceAddr == ws.Address {
 			return true
 		}
@@ -125,14 +126,16 @@ func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) 
 	return mints, nil
 }
 
-func (k Keeper) GetBurns(goCtx context.Context, address string, chainID string) ([]*types.Bridge, error) {
+func (k Keeper) GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*types.Bridge, error) {
 	burns, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
 		goCtx,
 		k.burnStore,
 		nil,
 		func(key uint64, value types.Bridge) (bool, error) {
-			return value.RecipientAddress == address &&
-				value.SourceChain == chainID, nil
+			addressFilter := address == "" || address == value.RecipientAddress
+			chainFilter := chainID == "" || chainID == value.SourceChain
+			txHashFilter := txHash == "" || txHash == value.TxHash
+			return addressFilter && chainFilter && txHashFilter, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil
