@@ -1055,13 +1055,12 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			mismatchedFields = append(mismatchedFields, VEFieldRedemptionsHash)
 		}
 	}
-
-	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
 			mismatchedFields = append(mismatchedFields, VEFieldSolanaAccountsHash)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldSolanaMintNoncesHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
 		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
 			mismatchedFields = append(mismatchedFields, VEFieldSolanaMintNoncesHash)
 		}
