@@ -440,16 +440,37 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 }
 
 func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Called", "keyID", keyID)
+	if k.treasuryKeeper == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] PANIC RISK: k.treasuryKeeper is nil")
+		return 0, fmt.Errorf("internal error: treasuryKeeper is nil")
+	}
+	if k.sidecarClient == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] PANIC RISK: k.sidecarClient is nil")
+		return 0, fmt.Errorf("internal error: sidecarClient is nil")
+	}
+
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Calling getAddressByKeyID", "keyID", keyID)
 	addr, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_EVM)
 	if err != nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] getAddressByKeyID failed", "keyID", keyID, "error", err)
 		return 0, fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}
+	k.Logger(ctx).Warn("[lookupEthereumNonce] getAddressByKeyID returned", "keyID", keyID, "address", addr)
 
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Calling sidecarClient.GetLatestEthereumNonceForAccount", "keyID", keyID, "address", addr)
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] GetLatestEthereumNonceForAccount failed", "keyID", keyID, "address", addr, "error", err)
 		return 0, fmt.Errorf("error fetching Ethereum nonce: %w", err)
 	}
+	if nonceResp == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] GetLatestEthereumNonceForAccount returned nil response", "keyID", keyID, "address", addr)
+		return 0, fmt.Errorf("internal error: sidecar returned nil nonce response")
+	}
+	k.Logger(ctx).Warn("[lookupEthereumNonce] GetLatestEthereumNonceForAccount returned", "keyID", keyID, "address", addr, "nonce", nonceResp.Nonce)
 
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Returning successfully", "keyID", keyID, "nonce", nonceResp.Nonce)
 	return nonceResp.Nonce, nil
 }
 
@@ -1485,91 +1506,152 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 }
 
 func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Warn("[collectSolanaNonces] Called")
+	if k.zentpKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper is nil")
+	}
+	if k.zenBTCKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zenBTCKeeper is nil")
+		return nil, fmt.Errorf("internal error: zenBTCKeeper is nil")
+	}
+
 	nonces := map[uint64]*system.NonceAccount{}
-	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(pendingSolROCKMints) == 0 {
+
+	// Zentp Solana Nonce
+	k.Logger(ctx).Warn("[collectSolanaNonces] Processing Zentp Nonce")
 	solParams := k.zentpKeeper.GetParams(goCtx).Solana
+	if solParams == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
+	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Got Zentp Solana Params", "params", fmt.Sprintf("%+v", solParams))
+	k.Logger(ctx).Warn("[collectSolanaNonces] Checking Zentp SolanaNonceRequested status", "keyID", solParams.NonceAccountKey)
 	solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("[collectSolanaNonces] Error checking Zentp SolanaNonceRequested", "keyID", solParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] Zentp SolanaNonceRequested status not found (defaulting to false)", "keyID", solParams.NonceAccountKey)
+		solNonceRequested = false // Default to false if not found
 	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Zentp SolanaNonceRequested status result", "keyID", solParams.NonceAccountKey, "requested", solNonceRequested)
 	if solNonceRequested {
+		k.Logger(ctx).Warn("[collectSolanaNonces] Calling GetSolanaNonceAccount for Zentp", "keyID", solParams.NonceAccountKey)
 		n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
-		nonces[solParams.NonceAccountKey] = &n
 		if err != nil {
+			// Error should be logged within GetSolanaNonceAccount
+			k.Logger(ctx).Error("[collectSolanaNonces] GetSolanaNonceAccount for Zentp failed", "keyID", solParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] GetSolanaNonceAccount for Zentp returned", "keyID", solParams.NonceAccountKey, "nonce_value", n.Nonce.String())
+		nonces[solParams.NonceAccountKey] = &n
 	}
-	//}
 
-	//ctx := sdk.UnwrapSDKContext(goCtx)
-	//pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(pendingZenBTCMints) == 0 {
+	// ZenBTC Solana Nonce
+	k.Logger(ctx).Warn("[collectSolanaNonces] Processing ZenBTC Nonce")
 	zenBTCsolParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+	if zenBTCsolParams == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zenBTCKeeper.GetSolanaParams() is nil")
+		return nil, fmt.Errorf("internal error: zenBTCKeeper Solana params are nil")
+	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Got ZenBTC Solana Params", "params", fmt.Sprintf("%+v", zenBTCsolParams))
+	k.Logger(ctx).Warn("[collectSolanaNonces] Checking ZenBTC SolanaNonceRequested status", "keyID", zenBTCsolParams.NonceAccountKey)
 	zenBTCsolNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, zenBTCsolParams.NonceAccountKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("[collectSolanaNonces] Error checking ZenBTC SolanaNonceRequested", "keyID", zenBTCsolParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] ZenBTC SolanaNonceRequested status not found (defaulting to false)", "keyID", zenBTCsolParams.NonceAccountKey)
 		zenBTCsolNonceRequested = false
 	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] ZenBTC SolanaNonceRequested status result", "keyID", zenBTCsolParams.NonceAccountKey, "requested", zenBTCsolNonceRequested)
 
 	if zenBTCsolNonceRequested {
+		k.Logger(ctx).Warn("[collectSolanaNonces] Calling GetSolanaNonceAccount for ZenBTC", "keyID", zenBTCsolParams.NonceAccountKey)
 		nonceAcc, err := k.GetSolanaNonceAccount(goCtx, zenBTCsolParams.NonceAccountKey)
 		if err != nil {
+			// Error should be logged within GetSolanaNonceAccount
+			k.Logger(ctx).Error("[collectSolanaNonces] GetSolanaNonceAccount for ZenBTC failed", "keyID", zenBTCsolParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] GetSolanaNonceAccount for ZenBTC returned", "keyID", zenBTCsolParams.NonceAccountKey, "nonce_value", nonceAcc.Nonce.String())
 		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
 	}
-	//}
 
+	k.Logger(ctx).Warn("[collectSolanaNonces] Returning successfully", "nonces_map_size", len(nonces))
 	return nonces, nil
 }
 
 // collectSolanaAccounts retrieves all requested Solana token accounts.
 func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Called")
+	if k.zentpKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper is nil")
+	}
+	if k.sidecarClient == nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.sidecarClient is nil")
+		return nil, fmt.Errorf("internal error: sidecarClient is nil")
+	}
+
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Iterating SolanaAccountsRequested store")
 	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
 	if err != nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] Error iterating SolanaAccountsRequested", "error", err)
 		return nil, fmt.Errorf("failed to iterate SolanaAccountsRequested: %w", err)
 	}
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Iteration successful, getting keys")
 	solAccsKeys, err := solAccStore.Keys()
 	if err != nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] Error getting keys from SolanaAccountsRequested iterator", "error", err)
 		return nil, fmt.Errorf("failed to get keys from SolanaAccountsRequested store: %w", err)
 	}
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Got keys", "num_keys", len(solAccsKeys), "keys", solAccsKeys)
 	solAccs := map[string]solToken.Account{}
 
 	if len(solAccsKeys) > 0 {
-		mintAddress := k.zentpKeeper.GetParams(ctx).Solana.MintAddress // Cache mint address
+		k.Logger(ctx).Warn("[collectSolanaAccounts] Getting Zentp Solana params")
+		params := k.zentpKeeper.GetParams(ctx).Solana
+		if params == nil {
+			k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+			return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
+		}
+		mintAddress := params.MintAddress // Cache mint address
+		k.Logger(ctx).Warn("[collectSolanaAccounts] Got Zentp mint address", "mint_address", mintAddress)
 		for _, key := range solAccsKeys {
+			k.Logger(ctx).Warn("[collectSolanaAccounts] Checking request status for key", "key", key)
 			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
 			if err != nil {
 				if errors.Is(err, collections.ErrNotFound) {
 					// Should not happen if we got the key from Iterate, but handle defensively
-					k.Logger(ctx).Error("key not found during Solana account collection, skipping", "key", key)
+					k.Logger(ctx).Error("[collectSolanaAccounts] Key not found in SolanaAccountsRequested store during loop, skipping", "key", key)
 					continue
 				}
+				k.Logger(ctx).Error("[collectSolanaAccounts] Error checking SolanaAccountsRequested status", "key", key, "error", err)
 				return nil, fmt.Errorf("failed to check if account %s is requested: %w", key, err)
 			}
+			k.Logger(ctx).Warn("[collectSolanaAccounts] Request status result", "key", key, "requested", requested)
 			if requested {
+				k.Logger(ctx).Warn("[collectSolanaAccounts] Calling GetSolanaTokenAccount", "key", key, "mint", mintAddress)
 				acc, err := k.GetSolanaTokenAccount(ctx, key, mintAddress)
 				if err != nil {
 					// Log error but continue if possible, maybe one account fetch fails
-					k.Logger(ctx).Error("failed to get Solana token account", "key", key, "mint", mintAddress, "error", err)
+					k.Logger(ctx).Error("[collectSolanaAccounts] GetSolanaTokenAccount failed, continuing loop", "key", key, "mint", mintAddress, "error", err)
 					// Depending on requirements, might need to return error here instead
 					continue
 				}
+				k.Logger(ctx).Warn("[collectSolanaAccounts] GetSolanaTokenAccount returned", "key", key, "account_owner", acc.Owner.String(), "account_state", acc.State)
 				solAccs[key] = acc
 			}
 		}
+	} else {
+		k.Logger(ctx).Warn("[collectSolanaAccounts] No Solana accounts requested")
 	}
 
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Returning successfully", "accounts_collected", len(solAccs))
 	return solAccs, nil
 }
