@@ -1052,7 +1052,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	mismatches := make([]validationMismatch, 0)
 
 	// Helper function to add mismatch details
-	addMismatch := func(field VoteExtensionField, expected, actual any, err ...error) {
+	recordMismatch := func(field VoteExtensionField, expected, actual any, err ...error) {
 		mismatch := validationMismatch{field: field}
 		if len(err) > 0 && err[0] != nil {
 			mismatch.err = err[0]
@@ -1068,89 +1068,89 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	// Validate hashes only if fields have consensus
 	if fieldHasConsensus(fieldVotePowers, VEFieldEigenDelegationsHash) {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-			addMismatch(VEFieldEigenDelegationsHash, voteExt.EigenDelegationsHash, "derived_hash", err)
+			recordMismatch(VEFieldEigenDelegationsHash, voteExt.EigenDelegationsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBurnEventsHash) {
 		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-			addMismatch(VEFieldEthBurnEventsHash, voteExt.EthBurnEventsHash, "derived_hash", err)
+			recordMismatch(VEFieldEthBurnEventsHash, voteExt.EthBurnEventsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRedemptionsHash) {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-			addMismatch(VEFieldRedemptionsHash, voteExt.RedemptionsHash, "derived_hash", err)
+			recordMismatch(VEFieldRedemptionsHash, voteExt.RedemptionsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
-			addMismatch(VEFieldSolanaAccountsHash, voteExt.SolanaAccountsHash, "derived_hash", err)
+			recordMismatch(VEFieldSolanaAccountsHash, voteExt.SolanaAccountsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
 		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
-			addMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNonceHashes, "derived_hash", err)
+			recordMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNonceHashes, "derived_hash", err)
 		}
 	}
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
 		if oracleData.RequestedBtcBlockHeight != 0 {
 			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-				addMismatch(VEFieldRequestedBtcHeaderHash, voteExt.RequestedBtcHeaderHash, "derived_hash", err)
+				recordMismatch(VEFieldRequestedBtcHeaderHash, voteExt.RequestedBtcHeaderHash, "derived_hash", err)
 			}
 		} else if len(voteExt.RequestedBtcHeaderHash) > 0 {
 			// Mismatch if oracle has no requested height but VE has a hash
-			addMismatch(VEFieldRequestedBtcHeaderHash, hex.EncodeToString(voteExt.RequestedBtcHeaderHash), "nil (no requested height in oracleData)")
+			recordMismatch(VEFieldRequestedBtcHeaderHash, hex.EncodeToString(voteExt.RequestedBtcHeaderHash), "nil (no requested height in oracleData)")
 		}
 	}
 
 	// Check Ethereum-related fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBlockHeight) {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-			addMismatch(VEFieldEthBlockHeight, voteExt.EthBlockHeight, oracleData.EthBlockHeight)
+			recordMismatch(VEFieldEthBlockHeight, voteExt.EthBlockHeight, oracleData.EthBlockHeight)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthGasLimit) {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
-			addMismatch(VEFieldEthGasLimit, voteExt.EthGasLimit, oracleData.EthGasLimit)
+			recordMismatch(VEFieldEthGasLimit, voteExt.EthGasLimit, oracleData.EthGasLimit)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBaseFee) {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
-			addMismatch(VEFieldEthBaseFee, voteExt.EthBaseFee, oracleData.EthBaseFee)
+			recordMismatch(VEFieldEthBaseFee, voteExt.EthBaseFee, oracleData.EthBaseFee)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthTipCap) {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
-			addMismatch(VEFieldEthTipCap, voteExt.EthTipCap, oracleData.EthTipCap)
+			recordMismatch(VEFieldEthTipCap, voteExt.EthTipCap, oracleData.EthTipCap)
 		}
 	}
 
 	// Check Bitcoin height
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) {
 		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
-			addMismatch(VEFieldRequestedBtcBlockHeight, voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight)
+			recordMismatch(VEFieldRequestedBtcBlockHeight, voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight)
 		}
 	}
 
 	// Check nonce-related fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-			addMismatch(VEFieldRequestedStakerNonce, voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce)
+			recordMismatch(VEFieldRequestedStakerNonce, voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-			addMismatch(VEFieldRequestedEthMinterNonce, voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
+			recordMismatch(VEFieldRequestedEthMinterNonce, voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-			addMismatch(VEFieldRequestedUnstakerNonce, voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce)
+			recordMismatch(VEFieldRequestedUnstakerNonce, voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-			addMismatch(VEFieldRequestedCompleterNonce, voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce)
+			recordMismatch(VEFieldRequestedCompleterNonce, voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce)
 		}
 	}
 
@@ -1158,24 +1158,24 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
 		if voteExt.ROCKUSDPrice != oracleData.ROCKUSDPrice {
 			// Log the string mismatch; deeper decimal comparison could be added if needed
-			addMismatch(VEFieldROCKUSDPrice, voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
+			recordMismatch(VEFieldROCKUSDPrice, voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
 		if voteExt.BTCUSDPrice != oracleData.BTCUSDPrice {
-			addMismatch(VEFieldBTCUSDPrice, voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
+			recordMismatch(VEFieldBTCUSDPrice, voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
 		if voteExt.ETHUSDPrice != oracleData.ETHUSDPrice {
-			addMismatch(VEFieldETHUSDPrice, voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
+			recordMismatch(VEFieldETHUSDPrice, voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
 		}
 	}
 
 	// Check Latest Bitcoin height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) {
 		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-			addMismatch(VEFieldLatestBtcBlockHeight, voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight)
+			recordMismatch(VEFieldLatestBtcBlockHeight, voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) {
@@ -1185,7 +1185,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			dataToHash = oracleData.LatestBtcBlockHeader // Pass the struct value
 		}
 		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, dataToHash); err != nil {
-			addMismatch(VEFieldLatestBtcHeaderHash, hex.EncodeToString(voteExt.LatestBtcHeaderHash), "derived_hash", err)
+			recordMismatch(VEFieldLatestBtcHeaderHash, hex.EncodeToString(voteExt.LatestBtcHeaderHash), "derived_hash", err)
 		}
 	}
 
