@@ -1304,8 +1304,8 @@ github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock h1:XBVSukvo+6qoCKHg7bKVw2ijin
 github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoqcXVA7LSXq/6ztw97Q=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
-github.com/zenrocklabs/zenbtc v1.16.0 h1:O2o3Ng1/qcK2HE3yIEs2l/wm/amRL43Z1IZjJ/UYqNI=
-github.com/zenrocklabs/zenbtc v1.16.0/go.mod h1:2ZNLPNMIUhz8yQxCIznq87c1SDcSa3gX4pqONEtJW6c=
+github.com/zenrocklabs/zenbtc v1.16.1 h1:GVvLKEuyKDN8Ckv1nTEw/gtFp/X31My6LL53scEYpHg=
+github.com/zenrocklabs/zenbtc v1.16.1/go.mod h1:2ZNLPNMIUhz8yQxCIznq87c1SDcSa3gX4pqONEtJW6c=
 github.com/zenrocklabs/zenrock-avs v1.6.3 h1:M5pvyfta+2rp40SyhPehz2sv6MQeVJLBeEaZvJEQsFQ=
 github.com/zenrocklabs/zenrock-avs v1.6.3/go.mod h1:/uAfYn1LDDBwzuI8AbUzimR50Y4Y4N1j8DPuFyP2tRw=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
