@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package zrchain.validation;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types";
+
+message SolanaNonce {
+  bytes nonce = 1;
+}

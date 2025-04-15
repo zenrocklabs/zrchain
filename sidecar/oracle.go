@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -26,14 +29,15 @@ import (
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
-	solana "github.com/gagliardetto/solana-go/rpc"
+	solana "github.com/gagliardetto/solana-go"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 func NewOracle(
 	config sidecartypes.Config,
 	ethClient *ethclient.Client,
 	neutrinoServer *neutrino.NeutrinoServer,
-	solanaClient *solana.Client,
+	solanaClient *solrpc.Client,
 	zrChainQueryClient *client.QueryClient,
 	ticker *time.Ticker,
 ) *Oracle {
@@ -82,7 +86,7 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 			if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 			}
-			o.cleanUpEthBurnEvents()
+			o.cleanUpBurnEvents()
 		}
 	}
 }
@@ -104,7 +108,7 @@ func (o *Oracle) fetchAndProcessState(
 		return fmt.Errorf("failed to fetch latest block: %w", err)
 	}
 
-	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, EthBlocksBeforeFinality)
+	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
 	if latestHeader.BaseFee == nil {
@@ -117,10 +121,12 @@ func (o *Oracle) fetchAndProcessState(
 		suggestedTip               *big.Int
 		estimatedGas               uint64
 		ethBurnEvents              []api.BurnEvent
+		solanaBurnEvents           []api.BurnEvent
 		ROCKUSDPrice               math.LegacyDec
 		BTCUSDPrice                math.LegacyDec
 		ETHUSDPrice                math.LegacyDec
 		solanaLamportsPerSignature uint64
+		SolanaMintEvents           []api.SolanaMintEvent
 	}
 
 	update := &oracleStateUpdate{}
@@ -170,18 +176,18 @@ func (o *Oracle) fetchAndProcessState(
 	}()
 
 	// Fetch Solana lamports per signature
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.solanaLamportsPerSignature = lamportsPerSignature
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get Solana lamports per signature: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaLamportsPerSignature = lamportsPerSignature
+		updateMutex.Unlock()
+	}()
 
 	// Estimate gas for stake call
 	wg.Add(1)
@@ -214,7 +220,7 @@ func (o *Oracle) fetchAndProcessState(
 		client := &http.Client{
 			Timeout: httpTimeout,
 		}
-		resp, err := client.Get(ROCKUSDPriceURL)
+		resp, err := client.Get(sidecartypes.ROCKUSDPriceURL)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to retrieve ROCK price data: %w", err)
 			return
@@ -246,7 +252,7 @@ func (o *Oracle) fetchAndProcessState(
 			errChan <- fmt.Errorf("failed to fetch latest block: %w", err)
 			return
 		}
-		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, EthBlocksBeforeFinality)
+		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 		// Fetch BTC price
 		btcPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
@@ -282,6 +288,64 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
+	// Fetch SolROCK Mints
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// TODO: put id in config
+		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
+
+	// Fetch SolRockBTC Mints
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
+
+	// Fetch SolZenBTC Mints
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
+
+	// Fetch Solana burn events
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		events, err := o.getSolanaBurnEvents(solanaProgramID)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaBurnEvents = events
+		updateMutex.Unlock()
+	}()
+
 	// Wait for all goroutines to complete
 	wg.Wait()
 	close(errChan)
@@ -297,16 +361,18 @@ func (o *Oracle) fetchAndProcessState(
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations: update.eigenDelegations,
-		EthBlockHeight:   targetBlockNumber.Uint64(),
-		EthGasLimit:      update.estimatedGas,
-		EthBaseFee:       latestHeader.BaseFee.Uint64(),
-		EthTipCap:        update.suggestedTip.Uint64(),
-		// SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
-		SolanaLamportsPerSignature: 5000,
+		EigenDelegations:           update.eigenDelegations,
+		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthGasLimit:                update.estimatedGas,
+		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
+		EthTipCap:                  update.suggestedTip.Uint64(),
+		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
 		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
+		SolanaBurnEvents:           update.solanaBurnEvents,
+		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
+		SolanaMintEvents:           update.SolanaMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
@@ -370,7 +436,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 }
 
 func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(EthBurnEventsBlockRange))
+	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
 	toBlock := latestHeader.Number
 	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {
@@ -400,49 +466,99 @@ func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.Burn
 	return mergedEthBurnEvents, nil
 }
 
-func (o *Oracle) cleanUpEthBurnEvents() {
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
-	if len(currentState.EthBurnEvents) == 0 {
-		return
-	}
+// reconcileBurnEventsWithChain checks a list of burn events against the chain and returns the events
+// that should remain in the cache and an updated map of cleaned events.
+func (o *Oracle) reconcileBurnEventsWithZRChain(
+	ctx context.Context,
+	eventsToClean []api.BurnEvent,
+	cleanedEvents map[string]bool,
+	chainTypeName string, // For logging purposes (e.g., "Ethereum", "Solana")
+) ([]api.BurnEvent, map[string]bool) { // Removed error return for simplicity now
 
-	ctx := context.Background()
-	remainingEthBurnEvents := make([]api.BurnEvent, 0)
+	remainingEvents := make([]api.BurnEvent, 0)
+	updatedCleanedEvents := make(map[string]bool)
+	if cleanedEvents != nil {
+		// Copy existing cleaned events map to avoid modifying the original directly in this loop
+		for k, v := range cleanedEvents {
+			updatedCleanedEvents[k] = v
+		}
+	} // No need for else, make initializes an empty map
 
-	// Check each Ethereum burn event against the chain
-	for _, event := range currentState.EthBurnEvents {
+	for _, event := range eventsToClean {
+		// Check if this specific event was already cleaned in a previous run but is still in the eventsToClean list for some reason
+		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
+			log.Printf("Skipping already cleaned %s burn event (txID: %s, logIndex: %d, chainID: %s)", chainTypeName, event.TxID, event.LogIndex, event.ChainID)
+			continue // Skip to next event if already marked as cleaned
+		}
+
 		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
 		if err != nil {
-			log.Printf("Error querying Ethereum burn event (txID: %s, logIndex: %d): %v", event.TxID, event.LogIndex, err)
-			// Keep events that we failed to query
-			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
-			continue
+			// Log the specific chain type in the error
+			log.Printf("Error querying %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
+			// Keep events that we failed to query, they might succeed next time
+			remainingEvents = append(remainingEvents, event)
+			continue // Continue checking other events even if one query fails
 		}
 
 		// If the event is not found on chain, keep it in our cache
 		if len(resp.BurnEvents) == 0 {
-			remainingEthBurnEvents = append(remainingEthBurnEvents, event)
+			remainingEvents = append(remainingEvents, event)
 		} else {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			if currentState.CleanedEthBurnEvents == nil {
-				currentState.CleanedEthBurnEvents = make(map[string]bool)
-			}
-			currentState.CleanedEthBurnEvents[key] = true
-			log.Printf("Removing Ethereum burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", event.TxID, event.LogIndex, event.ChainID)
+			// Event found on chain, mark it as cleaned by adding to the map
+			updatedCleanedEvents[key] = true
+			log.Printf("Removing %s burn event from cache as it's now on chain (txID: %s, logIndex: %d, chainID: %s)", chainTypeName, event.TxID, event.LogIndex, event.ChainID)
+			// Do *not* add to remainingEvents
 		}
 	}
 
-	// Update the current state with remaining events if any were removed
-	if len(remainingEthBurnEvents) != len(currentState.EthBurnEvents) {
-		log.Printf("Removed %d Ethereum burn events from cache", len(currentState.EthBurnEvents)-len(remainingEthBurnEvents))
-		newState := *currentState
-		newState.EthBurnEvents = remainingEthBurnEvents
+	return remainingEvents, updatedCleanedEvents
+}
+
+func (o *Oracle) cleanUpBurnEvents() {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	// Check if there are any events to clean up at all
+	initialEthCount := len(currentState.EthBurnEvents)
+	initialSolCount := len(currentState.SolanaBurnEvents)
+	if initialEthCount == 0 && initialSolCount == 0 {
+		return // Nothing to clean
+	}
+
+	ctx := context.Background()
+	stateChanged := false
+
+	// Clean up Ethereum events
+	remainingEthEvents, updatedCleanedEthEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, "Ethereum")
+	if len(remainingEthEvents) != initialEthCount {
+		log.Printf("Removed %d Ethereum burn events from cache", initialEthCount-len(remainingEthEvents))
+		stateChanged = true
+	}
+
+	// Clean up Solana events
+	remainingSolEvents, updatedCleanedSolEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, "Solana")
+	if len(remainingSolEvents) != initialSolCount {
+		log.Printf("Removed %d Solana burn events from cache", initialSolCount-len(remainingSolEvents))
+		stateChanged = true
+	}
+
+	// Update the current state only if changes were made to either list
+	if stateChanged {
+		newState := *currentState // Copy existing state
+		newState.EthBurnEvents = remainingEthEvents
+		newState.CleanedEthBurnEvents = updatedCleanedEthEvents
+		newState.SolanaBurnEvents = remainingSolEvents
+		newState.CleanedSolanaBurnEvents = updatedCleanedSolEvents
+
 		o.currentState.Store(&newState)
-		o.CacheState()
+		o.CacheState() // Persist the updated state
+		log.Println("Burn event cache state updated and saved.")
+	} else {
+		log.Println("No burn events removed from cache during cleanup.")
 	}
 }
 
-// getBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
+// getEthBurnEvents retrieves all ZenBTCTokenRedemption (burn) events from the specified block range,
 // converts them into []api.BurnEvent with correctly populated fields, and formats the chainID in CAIP-2 format.
 func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {
 	ctx := context.Background()
@@ -519,6 +635,114 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	return redemptions, nil
 }
 
+func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaMintEvent, error) {
+	limit := sidecartypes.SolanaEventScanTxLimit
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SolROCK redemptions: %w", err)
+	}
+
+	var mintEvents []api.SolanaMintEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get SolROCK redemption transaction: %w", err)
+		}
+
+		events, err := rock_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode SolROCK redemption events: %w", err)
+		}
+
+		solTX, err := tx.Transaction.GetTransaction()
+		if len(solTX.Signatures) != 2 {
+			continue
+		}
+		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+		sigHash := sha256.Sum256(combined)
+		for _, event := range events {
+			if event.Name == "TokensMintedWithFee" {
+				e := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
+				mintEvents = append(mintEvents, api.SolanaMintEvent{
+					SigHash:   sigHash[:],
+					Date:      tx.BlockTime.Time().Unix(),
+					Recipient: e.Recipient.Bytes(),
+					Value:     e.Value,
+					Fee:       e.Fee,
+					Mint:      e.Mint.Bytes(),
+				})
+			}
+
+		}
+	}
+	return mintEvents, nil
+}
+
+func (o *Oracle) getSolZenBTCMints(programID string) ([]api.SolanaMintEvent, error) {
+	limit := 1000
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SolROCK redemptions: %w", err)
+	}
+
+	var mintEvents []api.SolanaMintEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get SolROCK redemption transaction: %w", err)
+		}
+
+		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode SolROCK redemption events: %w", err)
+		}
+
+		solTX, err := tx.Transaction.GetTransaction()
+		if len(solTX.Signatures) != 2 {
+			continue
+		}
+		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+		sigHash := sha256.Sum256(combined)
+		for _, event := range events {
+			if event.Name == "TokensMintedWithFee" {
+				e := event.Data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+				mintEvents = append(mintEvents, api.SolanaMintEvent{
+					SigHash:   sigHash[:],
+					Date:      tx.BlockTime.Time().Unix(),
+					Recipient: e.Recipient.Bytes(),
+					Value:     e.Value,
+					Fee:       e.Fee,
+					Mint:      e.Mint.Bytes(),
+				})
+			}
+
+		}
+	}
+	return mintEvents, nil
+}
+
 // getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
 // (i.e., a block height that's a multiple of the rounding factor) and returns both the blockhash and slot
 func (o *Oracle) getSolanaRecentBlockhash(ctx context.Context) (string, uint64, error) {
@@ -539,40 +763,115 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	return feeCalculator, nil
 }
 
+// getSolanaBurnEvents retrieves ZenBTC burn events from Solana.
+func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) {
+	limit := sidecartypes.SolanaEventScanTxLimit
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
+	}
+
+	var burnEvents []api.BurnEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to get Solana ZenBTC burn transaction %s: %v", signature.Signature, err)
+			continue
+		}
+
+		events, err := zenbtc_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", signature.Signature, err)
+			continue
+		}
+
+		// Solana CAIP-2 Identifier
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+
+		for logIndex, event := range events {
+			if event.Name == "TokenRedemption" {
+				e := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
+
+				burnEvents = append(burnEvents, api.BurnEvent{
+					TxID:            signature.Signature.String(), // Use transaction signature as TxID
+					LogIndex:        uint64(logIndex),             // Use log index within the transaction
+					ChainID:         chainID,
+					DestinationAddr: e.DestAddr[:],
+					Amount:          e.Value,
+				})
+			}
+		}
+	}
+	return burnEvents, nil
+}
+
 // getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
 // Returns blockhash string, slot number, and lamports per signature
 func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
-	// Get the latest block height
-	resp, err := o.solanaClient.GetRecentBlockhash(ctx, solana.CommitmentFinalized)
-	if err != nil {
-		return "", 0, 0, fmt.Errorf("failed to get recent blockhash: %w", err)
-	}
+	//// Get the latest block height
+	//resp, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return "", 0, 0, fmt.Errorf("failed to GetLatestBlockhash: %w", err)
+	//}
+	//
+	//dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111") // System Program ID (valid placeholder)
+	//dummyReceiver := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")
+	//recentBlockhash := resp.Value.Blockhash
+	//// Create a transaction
+	//tx := solana.NewTransactionBuilder()
+	//
+	//// Add a transfer instruction
+	//transferIx := solprogram.Transfer{
+	//	FromPubkey: fromPubKey,
+	//	ToPubkey:   toPubKey,
+	//	Lamports:   1000, // Transfer 1000 lamports
+	//}
+	//
+	//tx.AddInstruction(transferIx)
+	//
+	//respFee, err := o.solanaClient.GetFeeForMessage(ctx, serialized, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return "", 0, 0, fmt.Errorf("failed to GetFeeForMessage: %w", err)
+	//}
+	//// Default values from the recent block
+	//lamportsPerSignature := *respFee.Value
+	//
+	//// Get the slot for the recent blockhash
+	//slot, err := o.solanaClient.GetSlot(ctx, solrpc.CommitmentFinalized)
+	//if err != nil {
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
+	//}
+	//
+	//// Calculate the nearest slot that is divisible by the rounding factor
+	//targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
+	//
+	//// If we're at slot 0, use the current slot's blockhash
+	//if targetSlot == 0 {
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
+	//}
+	//
+	//// Get the blockhash for the target slot
+	//blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
+	//if err != nil {
+	//	// Fallback to the recent blockhash if we can't get the target block
+	//	log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
+	//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
+	//}
+	//
+	//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
 
-	// Default values from the recent block
-	recentBlockhash := resp.Value.Blockhash.String()
-	lamportsPerSignature := resp.Value.FeeCalculator.LamportsPerSignature
-
-	// Get the slot for the recent blockhash
-	slot, err := o.solanaClient.GetSlot(ctx, solana.CommitmentFinalized)
-	if err != nil {
-		return recentBlockhash, slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
-	}
-
-	// Calculate the nearest slot that is divisible by the rounding factor
-	targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
-
-	// If we're at slot 0, use the current slot's blockhash
-	if targetSlot == 0 {
-		return recentBlockhash, slot, lamportsPerSignature, nil
-	}
-
-	// Get the blockhash for the target slot
-	blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
-	if err != nil {
-		// Fallback to the recent blockhash if we can't get the target block
-		log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
-		return recentBlockhash, slot, lamportsPerSignature, nil
-	}
-
-	return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
+	return "", 0, 0, nil
 }

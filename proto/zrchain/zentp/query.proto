@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package zrchain.zentp;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "zrchain/zentp/params.proto";
+import "zrchain/zentp/bridge.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  
+  // Parameters queries the parameters of the module.
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/zrchain/zentp/params";
+  
+  }
+  
+  // Queries a list of Mints.
+  rpc Mints (QueryMintsRequest) returns (QueryMintsResponse) {
+    option (google.api.http).get = "/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}";
+  
+  }
+  
+  // Queries a list of Burns items.
+  rpc Burns (QueryBurnsRequest) returns (QueryBurnsResponse) {
+    option (google.api.http).get = "/zrchain/v6/zentp/burns/{id}/{denom}";
+  
+  }
+}
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+
+// QueryMintsRequest is request type for the Query/Mints RPC method.
+message QueryMintsRequest {
+  uint64                                id         = 1;
+  string                                creator    = 2;
+  BridgeStatus                          status     = 3;
+  string                                denom      = 4;
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+}
+
+// QueryMintsResponse is response type for the Query/Mints RPC method.
+message QueryMintsResponse {
+  repeated Bridge                        mints      = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBurnsRequest is request type for the Query/Burns RPC method.
+message QueryBurnsRequest {
+  uint64                                id         = 1;
+  string                                denom      = 2;
+  BridgeStatus                          status     = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
+}
+
+// QueryBurnsResponse is response type for the Query/Burns RPC method.
+message QueryBurnsResponse {
+  repeated Bridge                        burns      = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+

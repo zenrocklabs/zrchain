@@ -15,15 +15,6 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 )
 
-// NB: these constants should not be changed as they are important for synchronicity.
-// Modifying them will exponentially increase the risk of your validator being slashed
-const (
-	MainLoopTickerInterval  = 10 * time.Second
-	CacheSize               = 20
-	EthBurnEventsBlockRange = 1000
-	ROCKUSDPriceURL         = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
-)
-
 var (
 	EmptyOracleState = sidecartypes.OracleState{
 		EigenDelegations:           make(map[string]map[string]*big.Int),
@@ -39,7 +30,6 @@ var (
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
 	}
-	EthBlocksBeforeFinality = big.NewInt(5) // TODO: should this be increased?
 )
 
 type Oracle struct {

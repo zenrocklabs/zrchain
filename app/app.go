@@ -152,6 +152,9 @@ import (
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
+	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
 	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -203,6 +206,7 @@ var maccPerms = map[string][]string{
 	identitytypes.ModuleName:           nil,
 	treasurytypes.KeyringCollectorName: nil,
 	treasurytypes.KeyringEscrowName:    nil,
+	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 }
 
 var (
@@ -254,6 +258,7 @@ type ZenrockApp struct {
 	TreasuryKeeper treasurykeeper.Keeper
 	PolicyKeeper   policykeeper.Keeper
 	ZenBTCKeeper   zenbtckeeper.Keeper
+	ZentpKeeper    zentpkeeper.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -358,10 +363,11 @@ func NewZenrockApp(
 		identitytypes.StoreKey,
 		treasurytypes.StoreKey,
 		zenbtctypes.StoreKey,
+		zentptypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, zentptypes.MemStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -459,6 +465,7 @@ func NewZenrockApp(
 		zrConfig,
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
+		&app.ZentpKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -709,6 +716,21 @@ func NewZenrockApp(
 	)
 	zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
 
+	app.ZentpKeeper = zentpkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
+		logger,
+		authAddr,
+		app.TreasuryKeeper,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.IdentityKeeper,
+		app.ValidationKeeper,
+		runtime.NewMemStoreService(memKeys[zentptypes.MemStoreKey]),
+		false,
+	)
+
+	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -845,6 +867,7 @@ func NewZenrockApp(
 		treasuryModule,
 		policyModule,
 		zenBTCModule,
+		zentpModule,
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -894,6 +917,7 @@ func NewZenrockApp(
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
+		zentptypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -914,6 +938,7 @@ func NewZenrockApp(
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
+		zentptypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -943,6 +968,7 @@ func NewZenrockApp(
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
+		zentptypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1338,7 +1364,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(identitytypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
 	paramsKeeper.Subspace(zenbtctypes.ModuleName)
-
+	paramsKeeper.Subspace(zentptypes.ModuleName)
 	return paramsKeeper
 }
 

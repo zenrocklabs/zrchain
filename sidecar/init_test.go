@@ -8,6 +8,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 
 	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	// "github.com/ethereum/go-ethereum/common"
@@ -40,7 +41,7 @@ func initTestOracle() *sidecar.Oracle {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, time.NewTicker(sidecar.MainLoopTickerInterval))
+	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, time.NewTicker(time.Duration(sidecartypes.MainLoopTickerIntervalSeconds)*time.Second))
 }
 
 // func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -75,6 +76,10 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 		case types.WalletType_WALLET_TYPE_EVM:
 			if !common.IsHexAddress(metadata.RecipientAddr) {
 				return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
+			}
+		case types.WalletType_WALLET_TYPE_SOLANA:
+			if _, err := solana.PublicKeyFromBase58(metadata.RecipientAddr); err != nil {
+				return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Solana address")
 			}
 		case types.WalletType_WALLET_TYPE_UNSPECIFIED:
 			return nil, fmt.Errorf("chain type must be specified for zenBTC deposit key")

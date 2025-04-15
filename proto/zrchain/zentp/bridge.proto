@@ -1,0 +1,40 @@
+syntax = "proto3";
+package zrchain.zentp;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/zentp/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
+
+
+// MBStatus represents the different possible states of a mint/burn operation.
+enum BridgeStatus {
+  // Undefined: The status of the operation is not specified.
+  BRIDGE_STATUS_UNSPECIFIED = 0;
+
+  // Pending: The operation is currently being processed.
+  BRIDGE_STATUS_PENDING = 1;
+
+  // Completed: The operation has been successfully finalized.
+  BRIDGE_STATUS_COMPLETED = 2;
+
+  // Failed: The operation has failed.
+  BRIDGE_STATUS_FAILED = 4;
+}
+
+// Bridge represents a mint and burn operation between two networks.
+message Bridge {
+  uint64 id = 1;
+  string denom = 2;
+  string creator = 3;
+  string source_address = 4;
+  string source_chain = 5;
+  string destination_chain = 6;
+  uint64 amount = 7;
+  string recipient_address = 8;
+  uint64 tx_id = 9;
+  string tx_hash = 10;
+  BridgeStatus state = 11;
+  int64 block_height = 12;
+}

@@ -20,5 +20,13 @@ class Denom(_message.Message):
     BASE_FIELD_NUMBER: _ClassVar[int]
     TRACE_FIELD_NUMBER: _ClassVar[int]
     base: str
-    trace: _containers.RepeatedCompositeFieldContainer[_transfer_pb2.Hop]
-    def __init__(self, base: _Optional[str] = ..., trace: _Optional[_Iterable[_Union[_transfer_pb2.Hop, _Mapping]]] = ...) -> None: ...
+    trace: _containers.RepeatedCompositeFieldContainer[Hop]
+    def __init__(self, base: _Optional[str] = ..., trace: _Optional[_Iterable[_Union[Hop, _Mapping]]] = ...) -> None: ...
+
+class Hop(_message.Message):
+    __slots__ = ("port_id", "channel_id")
+    PORT_ID_FIELD_NUMBER: _ClassVar[int]
+    CHANNEL_ID_FIELD_NUMBER: _ClassVar[int]
+    port_id: str
+    channel_id: str
+    def __init__(self, port_id: _Optional[str] = ..., channel_id: _Optional[str] = ...) -> None: ...

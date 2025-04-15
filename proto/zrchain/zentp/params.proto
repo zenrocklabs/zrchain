@@ -1,0 +1,28 @@
+syntax = "proto3";
+package zrchain.zentp;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/zentp/Params";
+  option (gogoproto.equal) = true;
+
+  Solana solana = 1;
+}
+
+// Solana represents the parameters for the Solana relayer configuration.
+message Solana {
+  option (gogoproto.equal) = true;
+  uint64 signer_key_id = 1;
+  string program_id = 2;
+  uint64 nonce_account_key = 3;
+  uint64 nonce_authority_key = 4;
+  string mint_address = 5;
+  string fee_wallet = 6;
+  uint64 fee = 7;
+  int64 btl = 8;
+}

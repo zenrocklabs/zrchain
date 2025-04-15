@@ -12,11 +12,3 @@ class Params(_message.Message):
     send_enabled: bool
     receive_enabled: bool
     def __init__(self, send_enabled: bool = ..., receive_enabled: bool = ...) -> None: ...
-
-class Hop(_message.Message):
-    __slots__ = ("port_id", "channel_id")
-    PORT_ID_FIELD_NUMBER: _ClassVar[int]
-    CHANNEL_ID_FIELD_NUMBER: _ClassVar[int]
-    port_id: str
-    channel_id: str
-    def __init__(self, port_id: _Optional[str] = ..., channel_id: _Optional[str] = ...) -> None: ...
