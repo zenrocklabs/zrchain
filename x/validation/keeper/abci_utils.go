@@ -1655,3 +1655,21 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 	k.Logger(ctx).Warn("[collectSolanaAccounts] Returning successfully", "accounts_collected", len(solAccs))
 	return solAccs, nil
 }
+
+func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
+	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
+
+	pendingsZenBTC, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+	}
+
+	if len(pendingsROCK) == 0 && len(pendingsZenBTC) == 0 {
+		if err = k.SolanaAccountsRequested.Clear(ctx, nil); err != nil {
+			k.Logger(ctx).Error(err.Error())
+		}
+	}
+}

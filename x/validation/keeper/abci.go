@@ -1429,9 +1429,9 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 	processTransaction(
 		k,
 		ctx,
-		k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey,
+		k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		nil,
-		oracleData.SolanaMintNonces[k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey],
+		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 		},
@@ -1465,7 +1465,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if ata.State == solToken.Uninitialized {
 				fundReceiver = true
 			}
-			solParams := k.zentpKeeper.GetParams(ctx).Solana
+			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
 				amount:            tx.Amount,
 				fee:               solParams.Fee,
@@ -1484,11 +1484,10 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
 			}
 
-			params := k.zentpKeeper.GetParams(ctx)
 			id, err := k.submitSolanaTransaction(
 				ctx,
 				tx.Creator,
-				[]uint64{params.Solana.SignerKeyId, params.Solana.NonceAuthorityKey},
+				[]uint64{solParams.SignerKeyId, solParams.NonceAuthorityKey},
 				treasurytypes.WalletType_WALLET_TYPE_SOLANA,
 				tx.DestinationChain,
 				transaction,
@@ -1508,7 +1507,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if tx.BlockHeight == 0 {
 				return nil
 			}
-			solParams := k.zentpKeeper.GetParams(ctx).Solana
+			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
 				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
 				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
@@ -2023,20 +2022,4 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		k.Logger(ctx).Error("error updating zenBTC supply", "error", err)
 	}
 
-}
-
-func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
-	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-	if err != nil {
-		k.Logger(ctx).Error(err.Error())
-	}
-
-	pendingsZenBTC, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	if err != nil {
-		k.Logger(ctx).Error(err.Error())
-	}
-
-	if len(pendingsROCK) == 0 && len(pendingsZenBTC) == 0 {
-		err = k.SolanaAccountsRequested.Clear(ctx, nil)
-	}
 }
