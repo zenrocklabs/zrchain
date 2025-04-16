@@ -35,6 +35,7 @@ type (
 		MintCount        collections.Item[uint64]
 		burnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
+		ParamStore       collections.Item[types.Params]
 	}
 )
 
@@ -71,6 +72,7 @@ func NewKeeper(
 		burnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
+		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		authority:        authority,
 		logger:           logger,
 		treasuryKeeper:   treasuryKeeper,
@@ -152,9 +154,7 @@ func (k Keeper) GetBurns(goCtx context.Context, address, chainID, txHash string)
 }
 
 func (k Keeper) GetSignerKeyID(ctx context.Context) uint64 {
-	params := k.GetParams(ctx)
-
-	return params.Solana.SignerKeyId
+	return k.GetSolanaParams(ctx).SignerKeyId
 }
 
 func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeStatus) ([]*types.Bridge, error) {
