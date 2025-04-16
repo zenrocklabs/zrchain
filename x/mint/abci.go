@@ -16,54 +16,64 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 	// fetch stored minter & params
 	minter, err := k.Minter.Get(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get minter", "error", err)
+		return nil
 	}
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get params", "error", err)
+		return nil
 	}
 
 	// recalculate inflation rate
 	totalStakingSupply, err := k.StakingTokenSupply(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get staking token supply", "error", err)
+		return nil
 	}
 
 	bondedRatio, err := k.BondedRatio(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get bonded ratio", "error", err)
+		return nil
 	}
 
 	mintModuleBalance, err := k.GetMintModuleBalance(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get mint module balance", "error", err)
+		return nil
 	}
 
 	totalRewards, err := k.ClaimTotalRewards(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to claim total rewards", "error", err)
+		return nil
 	}
 
 	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to calculate base distribution", "error", err)
+		return nil
 	}
 
 	totalBondedTokens, err := k.TotalBondedTokens(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get total bonded tokens", "error", err)
+		return nil
 	}
 
 	totalBlockStakingReward, err := k.NextStakingReward(ctx, totalBondedTokens)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to get next staking reward", "error", err)
+		return nil
 	}
 
 	if totalBlockStakingReward.Amount.GT(totalRewardsRest.Amount) {
 		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
-			return err
+			k.Logger(ctx).Error("failed to calculate top up amount", "error", err)
+			return nil
 		}
 
 		// if totalRewardsRest enough - top up from mint module
@@ -71,46 +81,48 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			totalRewardsRest = totalBlockStakingReward
 		}
 
-		err = k.CheckModuleBalance(ctx, totalBlockStakingReward)
-		if err != nil {
-			return err
+		if err := k.CheckModuleBalance(ctx, totalBlockStakingReward); err != nil {
+			k.Logger(ctx).Error("failed to check module balance", "error", err)
+			return nil
 		}
 	} else {
 		excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, totalRewardsRest)
 		if err != nil {
-			return err
+			k.Logger(ctx).Error("failed to calculate excess", "error", err)
+			return nil
 		}
 
-		err = k.ExcessDistribution(ctx, excess)
-		if err != nil {
-			return err
+		if err := k.ExcessDistribution(ctx, excess); err != nil {
+			k.Logger(ctx).Error("failed during excess distribution", "error", err)
+			return nil
 		}
 	}
 
-	err = k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward))
-	if err != nil {
-		return err
+	if err := k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward)); err != nil {
+		k.Logger(ctx).Error("failed to add collected fees (staking reward)", "error", err)
+		return nil
 	}
 
 	minter.Inflation = ic(ctx, minter, params, bondedRatio)
 	minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)
-	if err = k.Minter.Set(ctx, minter); err != nil {
-		return err
+	if err := k.Minter.Set(ctx, minter); err != nil {
+		k.Logger(ctx).Error("failed to set minter", "error", err)
+		return nil
 	}
 
 	// mint coins, update supply
 	mintedCoin := minter.BlockProvision(params)
 	mintedCoins := sdk.NewCoins(mintedCoin)
 
-	err = k.MintCoins(ctx, mintedCoins)
-	if err != nil {
-		return err
+	if err := k.MintCoins(ctx, mintedCoins); err != nil {
+		k.Logger(ctx).Error("failed to mint coins", "error", err)
+		return nil
 	}
 
 	// send the minted coins to the fee collector account
-	err = k.AddCollectedFees(ctx, mintedCoins)
-	if err != nil {
-		return err
+	if err := k.AddCollectedFees(ctx, mintedCoins); err != nil {
+		k.Logger(ctx).Error("failed to add collected fees (minted coins)", "error", err)
+		return nil
 	}
 
 	if mintedCoin.Amount.IsInt64() {
