@@ -15,11 +15,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -36,9 +36,9 @@ import (
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
+	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
-	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	bindings "github.com/zenrocklabs/zenbtc/bindings"
@@ -106,7 +106,7 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 	for validator, totalStake := range validatorTotals {
 		validatorDelegations = append(validatorDelegations, ValidatorDelegations{
 			Validator: validator,
-			Stake:     sdkmath.NewIntFromBigInt(totalStake),
+			Stake:     math.NewIntFromBigInt(totalStake),
 		})
 	}
 
@@ -440,16 +440,37 @@ func validateExtendedCommitAgainstLastCommit(ec abci.ExtendedCommitInfo, lc come
 }
 
 func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64, error) {
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Called", "keyID", keyID)
+	if k.treasuryKeeper == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] PANIC RISK: k.treasuryKeeper is nil")
+		return 0, fmt.Errorf("internal error: treasuryKeeper is nil")
+	}
+	if k.sidecarClient == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] PANIC RISK: k.sidecarClient is nil")
+		return 0, fmt.Errorf("internal error: sidecarClient is nil")
+	}
+
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Calling getAddressByKeyID", "keyID", keyID)
 	addr, err := k.getAddressByKeyID(ctx, keyID, treasurytypes.WalletType_WALLET_TYPE_EVM)
 	if err != nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] getAddressByKeyID failed", "keyID", keyID, "error", err)
 		return 0, fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}
+	k.Logger(ctx).Warn("[lookupEthereumNonce] getAddressByKeyID returned", "keyID", keyID, "address", addr)
 
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Calling sidecarClient.GetLatestEthereumNonceForAccount", "keyID", keyID, "address", addr)
 	nonceResp, err := k.sidecarClient.GetLatestEthereumNonceForAccount(ctx, &sidecar.LatestEthereumNonceForAccountRequest{Address: addr})
 	if err != nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] GetLatestEthereumNonceForAccount failed", "keyID", keyID, "address", addr, "error", err)
 		return 0, fmt.Errorf("error fetching Ethereum nonce: %w", err)
 	}
+	if nonceResp == nil {
+		k.Logger(ctx).Error("[lookupEthereumNonce] GetLatestEthereumNonceForAccount returned nil response", "keyID", keyID, "address", addr)
+		return 0, fmt.Errorf("internal error: sidecar returned nil nonce response")
+	}
+	k.Logger(ctx).Warn("[lookupEthereumNonce] GetLatestEthereumNonceForAccount returned", "keyID", keyID, "address", addr, "nonce", nonceResp.Nonce)
 
+	k.Logger(ctx).Warn("[lookupEthereumNonce] Returning successfully", "keyID", keyID, "nonce", nonceResp.Nonce)
 	return nonceResp.Nonce, nil
 }
 
@@ -818,9 +839,9 @@ func (k Keeper) CalculateZenBTCMintFee(
 	ethBaseFee uint64,
 	ethTipCap uint64,
 	ethGasLimit uint64,
-	btcUSDPrice sdkmath.LegacyDec,
-	ethUSDPrice sdkmath.LegacyDec,
-	exchangeRate sdkmath.LegacyDec,
+	btcUSDPrice math.LegacyDec,
+	ethUSDPrice math.LegacyDec,
+	exchangeRate math.LegacyDec,
 ) uint64 {
 	if btcUSDPrice.IsZero() {
 		return 0
@@ -867,12 +888,6 @@ func (k Keeper) CalculateZenBTCMintFee(
 	feeZenBTC := math.LegacyNewDecFromInt(math.NewIntFromUint64(satoshis)).Quo(exchangeRate).TruncateInt().Uint64()
 
 	return feeZenBTC
-}
-
-// clearEthereumNonceRequest resets the nonce-request flag for a given key.
-func (k *Keeper) clearEthereumNonceRequest(ctx sdk.Context, keyID uint64) error {
-	k.Logger(ctx).Warn("set EthereumNonceRequested state to false", "keyID", keyID)
-	return k.EthereumNonceRequested.Set(ctx, keyID, false)
 }
 
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
@@ -999,20 +1014,37 @@ func getChainIDForEigen(ctx sdk.Context) uint64 {
 // =============================================================================
 //
 
-// nullifyMismatchedFields removes fields that failed validation from consensus consideration
-// and updates the oracle data's fieldVotePowers to reflect these changes.
-// This ensures that fields with validation mismatches aren't used in subsequent processing.
-func (k *Keeper) nullifyMismatchedFields(ctx context.Context, mismatchedFields []VoteExtensionField, fieldVotePowers map[VoteExtensionField]int64, oracleData *OracleData) {
-	if len(mismatchedFields) > 0 {
-		fieldNames := make([]string, 0, len(mismatchedFields))
-		for _, field := range mismatchedFields {
-			delete(fieldVotePowers, field)
-			fieldNames = append(fieldNames, field.String())
+// validationMismatch holds details about a validation failure.
+type validationMismatch struct {
+	field    VoteExtensionField
+	expected string
+	actual   string
+	err      error // Optional: Used for hash validation errors
+}
+
+// handleValidationMismatches processes fields that failed validation.
+// It logs detailed mismatch information and removes the fields from consensus consideration.
+func (k *Keeper) handleValidationMismatches(ctx context.Context, mismatches []validationMismatch, fieldVotePowers map[VoteExtensionField]int64, oracleData *OracleData) {
+	if len(mismatches) == 0 {
+		return
+	}
+
+	for _, mismatch := range mismatches {
+		logCtx := []any{
+			"field", mismatch.field.String(),
+			"consensus_status", "revoked",
+		}
+		if mismatch.err != nil {
+			// Primarily for hash mismatches where the error contains details
+			logCtx = append(logCtx, "error", mismatch.err)
+		} else {
+			// For direct value mismatches
+			logCtx = append(logCtx, "expected", mismatch.expected, "actual", mismatch.actual)
 		}
 
-		k.Logger(ctx).Warn("fields had consensus but failed data validation",
-			"fields", strings.Join(fieldNames, ","),
-			"consensus_status", "revoked")
+		k.Logger(ctx).Warn("field had consensus but failed data validation", logCtx...)
+
+		delete(fieldVotePowers, mismatch.field)
 	}
 
 	// Update FieldVotePowers in oracleData to reflect the validated fields
@@ -1022,147 +1054,169 @@ func (k *Keeper) nullifyMismatchedFields(ctx context.Context, mismatchedFields [
 }
 
 // validateHashField derives a hash from the given data and compares it with the expected value.
+// Returns a detailed error on mismatch.
 func validateHashField(fieldName string, expectedHash []byte, data any) error {
 	derivedHash, err := deriveHash(data)
 	if err != nil {
 		return fmt.Errorf("error deriving %s hash: %w", fieldName, err)
 	}
 	if !bytes.Equal(expectedHash, derivedHash[:]) {
-		return fmt.Errorf("%s hash mismatch, expected %x, got %x", fieldName, expectedHash, derivedHash)
+		// Ensure error message clearly shows expected vs actual
+		return fmt.Errorf("%s hash mismatch, expected %x, got %x", fieldName, expectedHash, derivedHash[:])
 	}
 	return nil
 }
 
 // validateOracleData verifies that the vote extension and oracle data match.
 // Only fields that have reached consensus (present in fieldVotePowers) are validated.
-// Fields that fail validation are nullified to prevent them from being used downstream.
+// Fields that fail validation are collected and handled by handleValidationMismatches.
 func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, oracleData *OracleData, fieldVotePowers map[VoteExtensionField]int64) {
-	mismatchedFields := make([]VoteExtensionField, 0)
+	mismatches := make([]validationMismatch, 0)
+
+	// Helper function to add mismatch details
+	recordMismatch := func(field VoteExtensionField, expected, actual any, err ...error) {
+		mismatch := validationMismatch{field: field}
+		if len(err) > 0 && err[0] != nil {
+			mismatch.err = err[0]
+		} else {
+			// Format expected value
+			if b, ok := expected.([]byte); ok {
+				mismatch.expected = "0x" + hex.EncodeToString(b)
+			} else {
+				mismatch.expected = fmt.Sprintf("%v", expected)
+			}
+
+			// Format actual value
+			if b, ok := actual.([]byte); ok {
+				mismatch.actual = "0x" + hex.EncodeToString(b)
+			} else {
+				mismatch.actual = fmt.Sprintf("%v", actual)
+			}
+		}
+		mismatches = append(mismatches, mismatch)
+	}
 
 	// Validate hashes only if fields have consensus
 	if fieldHasConsensus(fieldVotePowers, VEFieldEigenDelegationsHash) {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldEigenDelegationsHash)
+			recordMismatch(VEFieldEigenDelegationsHash, voteExt.EigenDelegationsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBurnEventsHash) {
 		if err := validateHashField(VEFieldEthBurnEventsHash.String(), voteExt.EthBurnEventsHash, oracleData.EthBurnEvents); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldEthBurnEventsHash)
+			recordMismatch(VEFieldEthBurnEventsHash, voteExt.EthBurnEventsHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRedemptionsHash) {
 		if err := validateHashField(VEFieldRedemptionsHash.String(), voteExt.RedemptionsHash, oracleData.Redemptions); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldRedemptionsHash)
+			recordMismatch(VEFieldRedemptionsHash, voteExt.RedemptionsHash, "derived_hash", err)
 		}
 	}
-
-	if _, ok := fieldVotePowers[VEFieldSolanaAccountsHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
 		if err := validateHashField(VEFieldSolanaAccountsHash.String(), voteExt.SolanaAccountsHash, oracleData.SolanaAccounts); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldSolanaAccountsHash)
+			recordMismatch(VEFieldSolanaAccountsHash, voteExt.SolanaAccountsHash, "derived_hash", err)
 		}
 	}
-	if _, ok := fieldVotePowers[VEFieldSolanaMintNoncesHash]; ok {
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
 		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldSolanaMintNoncesHash)
+			recordMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNonceHashes, "derived_hash", err)
 		}
 	}
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
 		if oracleData.RequestedBtcBlockHeight != 0 {
 			if err := validateHashField(VEFieldRequestedBtcHeaderHash.String(), voteExt.RequestedBtcHeaderHash, &oracleData.RequestedBtcBlockHeader); err != nil {
-				mismatchedFields = append(mismatchedFields, VEFieldRequestedBtcHeaderHash)
+				recordMismatch(VEFieldRequestedBtcHeaderHash, voteExt.RequestedBtcHeaderHash, "derived_hash", err)
 			}
+		} else if len(voteExt.RequestedBtcHeaderHash) > 0 {
+			// Mismatch if oracle has no requested height but VE has a hash
+			recordMismatch(VEFieldRequestedBtcHeaderHash, hex.EncodeToString(voteExt.RequestedBtcHeaderHash), "nil (no requested height in oracleData)")
 		}
 	}
 
 	// Check Ethereum-related fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBlockHeight) {
 		if voteExt.EthBlockHeight != oracleData.EthBlockHeight {
-			mismatchedFields = append(mismatchedFields, VEFieldEthBlockHeight)
+			recordMismatch(VEFieldEthBlockHeight, voteExt.EthBlockHeight, oracleData.EthBlockHeight)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthGasLimit) {
 		if voteExt.EthGasLimit != oracleData.EthGasLimit {
-			mismatchedFields = append(mismatchedFields, VEFieldEthGasLimit)
+			recordMismatch(VEFieldEthGasLimit, voteExt.EthGasLimit, oracleData.EthGasLimit)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthBaseFee) {
 		if voteExt.EthBaseFee != oracleData.EthBaseFee {
-			mismatchedFields = append(mismatchedFields, VEFieldEthBaseFee)
+			recordMismatch(VEFieldEthBaseFee, voteExt.EthBaseFee, oracleData.EthBaseFee)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldEthTipCap) {
 		if voteExt.EthTipCap != oracleData.EthTipCap {
-			mismatchedFields = append(mismatchedFields, VEFieldEthTipCap)
+			recordMismatch(VEFieldEthTipCap, voteExt.EthTipCap, oracleData.EthTipCap)
 		}
 	}
 
 	// Check Bitcoin height
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) {
 		if voteExt.RequestedBtcBlockHeight != oracleData.RequestedBtcBlockHeight {
-			mismatchedFields = append(mismatchedFields, VEFieldRequestedBtcBlockHeight)
+			recordMismatch(VEFieldRequestedBtcBlockHeight, voteExt.RequestedBtcBlockHeight, oracleData.RequestedBtcBlockHeight)
 		}
 	}
 
 	// Check nonce-related fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedStakerNonce) {
 		if voteExt.RequestedStakerNonce != oracleData.RequestedStakerNonce {
-			mismatchedFields = append(mismatchedFields, VEFieldRequestedStakerNonce)
+			recordMismatch(VEFieldRequestedStakerNonce, voteExt.RequestedStakerNonce, oracleData.RequestedStakerNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedEthMinterNonce) {
 		if voteExt.RequestedEthMinterNonce != oracleData.RequestedEthMinterNonce {
-			mismatchedFields = append(mismatchedFields, VEFieldRequestedEthMinterNonce)
+			recordMismatch(VEFieldRequestedEthMinterNonce, voteExt.RequestedEthMinterNonce, oracleData.RequestedEthMinterNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedUnstakerNonce) {
 		if voteExt.RequestedUnstakerNonce != oracleData.RequestedUnstakerNonce {
-			mismatchedFields = append(mismatchedFields, VEFieldRequestedUnstakerNonce)
+			recordMismatch(VEFieldRequestedUnstakerNonce, voteExt.RequestedUnstakerNonce, oracleData.RequestedUnstakerNonce)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedCompleterNonce) {
 		if voteExt.RequestedCompleterNonce != oracleData.RequestedCompleterNonce {
-			mismatchedFields = append(mismatchedFields, VEFieldRequestedCompleterNonce)
+			recordMismatch(VEFieldRequestedCompleterNonce, voteExt.RequestedCompleterNonce, oracleData.RequestedCompleterNonce)
 		}
 	}
 
-	// Check price fields
+	// Check price fields - compare as strings first for simplicity
 	if fieldHasConsensus(fieldVotePowers, VEFieldROCKUSDPrice) {
-		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ROCKUSDPrice)
-		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
-		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
-			mismatchedFields = append(mismatchedFields, VEFieldROCKUSDPrice)
+		if voteExt.ROCKUSDPrice != oracleData.ROCKUSDPrice {
+			// Log the string mismatch; deeper decimal comparison could be added if needed
+			recordMismatch(VEFieldROCKUSDPrice, voteExt.ROCKUSDPrice, oracleData.ROCKUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldBTCUSDPrice) {
-		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.BTCUSDPrice)
-		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
-		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
-			mismatchedFields = append(mismatchedFields, VEFieldBTCUSDPrice)
+		if voteExt.BTCUSDPrice != oracleData.BTCUSDPrice {
+			recordMismatch(VEFieldBTCUSDPrice, voteExt.BTCUSDPrice, oracleData.BTCUSDPrice)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
-		voteExtPrice, err1 := math.LegacyNewDecFromStr(voteExt.ETHUSDPrice)
-		oracleDataPrice, err2 := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
-		if err1 != nil || err2 != nil || !voteExtPrice.Equal(oracleDataPrice) {
-			mismatchedFields = append(mismatchedFields, VEFieldETHUSDPrice)
+		if voteExt.ETHUSDPrice != oracleData.ETHUSDPrice {
+			recordMismatch(VEFieldETHUSDPrice, voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
 		}
 	}
 
 	// Check Latest Bitcoin height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) {
 		if voteExt.LatestBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-			mismatchedFields = append(mismatchedFields, VEFieldLatestBtcBlockHeight)
+			recordMismatch(VEFieldLatestBtcBlockHeight, voteExt.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeight)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcHeaderHash) {
-		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, &oracleData.LatestBtcBlockHeader); err != nil {
-			mismatchedFields = append(mismatchedFields, VEFieldLatestBtcHeaderHash)
+		if err := validateHashField(VEFieldLatestBtcHeaderHash.String(), voteExt.LatestBtcHeaderHash, oracleData.LatestBtcBlockHeader); err != nil {
+			recordMismatch(VEFieldLatestBtcHeaderHash, voteExt.LatestBtcHeaderHash, oracleData.LatestBtcBlockHeader, err)
 		}
 	}
 
-	// Nullify mismatched fields from fieldVotePowers to prevent them from being used downstream
-	k.nullifyMismatchedFields(ctx, mismatchedFields, fieldVotePowers, oracleData)
+	// Handle all collected mismatches
+	k.handleValidationMismatches(ctx, mismatches, fieldVotePowers, oracleData)
 }
 
 // Helper function to validate consensus on multiple required fields for transactions
@@ -1452,51 +1506,152 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 }
 
 func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Warn("[collectSolanaNonces] Called")
+	if k.zentpKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper is nil")
+	}
+	if k.zenBTCKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zenBTCKeeper is nil")
+		return nil, fmt.Errorf("internal error: zenBTCKeeper is nil")
+	}
+
 	nonces := map[uint64]*system.NonceAccount{}
-	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(pendingSolROCKMints) == 0 {
+
+	// Zentp Solana Nonce
+	k.Logger(ctx).Warn("[collectSolanaNonces] Processing Zentp Nonce")
 	solParams := k.zentpKeeper.GetParams(goCtx).Solana
+	if solParams == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
+	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Got Zentp Solana Params", "params", fmt.Sprintf("%+v", solParams))
+	k.Logger(ctx).Warn("[collectSolanaNonces] Checking Zentp SolanaNonceRequested status", "keyID", solParams.NonceAccountKey)
 	solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("[collectSolanaNonces] Error checking Zentp SolanaNonceRequested", "keyID", solParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] Zentp SolanaNonceRequested status not found (defaulting to false)", "keyID", solParams.NonceAccountKey)
+		solNonceRequested = false // Default to false if not found
 	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Zentp SolanaNonceRequested status result", "keyID", solParams.NonceAccountKey, "requested", solNonceRequested)
 	if solNonceRequested {
+		k.Logger(ctx).Warn("[collectSolanaNonces] Calling GetSolanaNonceAccount for Zentp", "keyID", solParams.NonceAccountKey)
 		n, err := k.GetSolanaNonceAccount(goCtx, solParams.NonceAccountKey)
-		nonces[solParams.NonceAccountKey] = &n
 		if err != nil {
+			// Error should be logged within GetSolanaNonceAccount
+			k.Logger(ctx).Error("[collectSolanaNonces] GetSolanaNonceAccount for Zentp failed", "keyID", solParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] GetSolanaNonceAccount for Zentp returned", "keyID", solParams.NonceAccountKey, "nonce_value", n.Nonce.String())
+		nonces[solParams.NonceAccountKey] = &n
 	}
-	//}
 
-	//ctx := sdk.UnwrapSDKContext(goCtx)
-	//pendingZenBTCMints, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if len(pendingZenBTCMints) == 0 {
+	// ZenBTC Solana Nonce
+	k.Logger(ctx).Warn("[collectSolanaNonces] Processing ZenBTC Nonce")
 	zenBTCsolParams := k.zenBTCKeeper.GetSolanaParams(goCtx)
+	if zenBTCsolParams == nil {
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zenBTCKeeper.GetSolanaParams() is nil")
+		return nil, fmt.Errorf("internal error: zenBTCKeeper Solana params are nil")
+	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] Got ZenBTC Solana Params", "params", fmt.Sprintf("%+v", zenBTCsolParams))
+	k.Logger(ctx).Warn("[collectSolanaNonces] Checking ZenBTC SolanaNonceRequested status", "keyID", zenBTCsolParams.NonceAccountKey)
 	zenBTCsolNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, zenBTCsolParams.NonceAccountKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("[collectSolanaNonces] Error checking ZenBTC SolanaNonceRequested", "keyID", zenBTCsolParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] ZenBTC SolanaNonceRequested status not found (defaulting to false)", "keyID", zenBTCsolParams.NonceAccountKey)
 		zenBTCsolNonceRequested = false
 	}
+	k.Logger(ctx).Warn("[collectSolanaNonces] ZenBTC SolanaNonceRequested status result", "keyID", zenBTCsolParams.NonceAccountKey, "requested", zenBTCsolNonceRequested)
 
 	if zenBTCsolNonceRequested {
+		k.Logger(ctx).Warn("[collectSolanaNonces] Calling GetSolanaNonceAccount for ZenBTC", "keyID", zenBTCsolParams.NonceAccountKey)
 		nonceAcc, err := k.GetSolanaNonceAccount(goCtx, zenBTCsolParams.NonceAccountKey)
 		if err != nil {
+			// Error should be logged within GetSolanaNonceAccount
+			k.Logger(ctx).Error("[collectSolanaNonces] GetSolanaNonceAccount for ZenBTC failed", "keyID", zenBTCsolParams.NonceAccountKey, "error", err)
 			return nil, err
 		}
+		k.Logger(ctx).Warn("[collectSolanaNonces] GetSolanaNonceAccount for ZenBTC returned", "keyID", zenBTCsolParams.NonceAccountKey, "nonce_value", nonceAcc.Nonce.String())
 		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
 	}
-	//}
 
+	k.Logger(ctx).Warn("[collectSolanaNonces] Returning successfully", "nonces_map_size", len(nonces))
 	return nonces, nil
+}
+
+// collectSolanaAccounts retrieves all requested Solana token accounts.
+func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Called")
+	if k.zentpKeeper == nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper is nil")
+		return nil, fmt.Errorf("internal error: zentpKeeper is nil")
+	}
+	if k.sidecarClient == nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.sidecarClient is nil")
+		return nil, fmt.Errorf("internal error: sidecarClient is nil")
+	}
+
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Iterating SolanaAccountsRequested store")
+	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+	if err != nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] Error iterating SolanaAccountsRequested", "error", err)
+		return nil, fmt.Errorf("failed to iterate SolanaAccountsRequested: %w", err)
+	}
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Iteration successful, getting keys")
+	solAccsKeys, err := solAccStore.Keys()
+	if err != nil {
+		k.Logger(ctx).Error("[collectSolanaAccounts] Error getting keys from SolanaAccountsRequested iterator", "error", err)
+		return nil, fmt.Errorf("failed to get keys from SolanaAccountsRequested store: %w", err)
+	}
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Got keys", "num_keys", len(solAccsKeys), "keys", solAccsKeys)
+	solAccs := map[string]solToken.Account{}
+
+	if len(solAccsKeys) > 0 {
+		k.Logger(ctx).Warn("[collectSolanaAccounts] Getting Zentp Solana params")
+		params := k.zentpKeeper.GetParams(ctx).Solana
+		if params == nil {
+			k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+			return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
+		}
+		mintAddress := params.MintAddress // Cache mint address
+		k.Logger(ctx).Warn("[collectSolanaAccounts] Got Zentp mint address", "mint_address", mintAddress)
+		for _, key := range solAccsKeys {
+			k.Logger(ctx).Warn("[collectSolanaAccounts] Checking request status for key", "key", key)
+			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Should not happen if we got the key from Iterate, but handle defensively
+					k.Logger(ctx).Error("[collectSolanaAccounts] Key not found in SolanaAccountsRequested store during loop, skipping", "key", key)
+					continue
+				}
+				k.Logger(ctx).Error("[collectSolanaAccounts] Error checking SolanaAccountsRequested status", "key", key, "error", err)
+				return nil, fmt.Errorf("failed to check if account %s is requested: %w", key, err)
+			}
+			k.Logger(ctx).Warn("[collectSolanaAccounts] Request status result", "key", key, "requested", requested)
+			if requested {
+				k.Logger(ctx).Warn("[collectSolanaAccounts] Calling GetSolanaTokenAccount", "key", key, "mint", mintAddress)
+				acc, err := k.GetSolanaTokenAccount(ctx, key, mintAddress)
+				if err != nil {
+					// Log error but continue if possible, maybe one account fetch fails
+					k.Logger(ctx).Error("[collectSolanaAccounts] GetSolanaTokenAccount failed, continuing loop", "key", key, "mint", mintAddress, "error", err)
+					// Depending on requirements, might need to return error here instead
+					continue
+				}
+				k.Logger(ctx).Warn("[collectSolanaAccounts] GetSolanaTokenAccount returned", "key", key, "account_owner", acc.Owner.String(), "account_state", acc.State)
+				solAccs[key] = acc
+			}
+		}
+	} else {
+		k.Logger(ctx).Warn("[collectSolanaAccounts] No Solana accounts requested")
+	}
+
+	k.Logger(ctx).Warn("[collectSolanaAccounts] Returning successfully", "accounts_collected", len(solAccs))
+	return solAccs, nil
 }

@@ -73,7 +73,7 @@ var (
 
 	// TODO: Add ZenBTC Solana program ID for mainnet
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkMainnet: "",
+		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 		NetworkTestnet: "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
 	}
 	ZenBTCSolanaMintAddress = map[string]string{
@@ -83,7 +83,7 @@ var (
 
 	// TODO: Add SolRock program ID for mainnet
 	SolRockProgramID = map[string]string{
-		NetworkMainnet: "",
+		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 	}
 	SolnaRockMintAddress = map[string]string{
@@ -110,9 +110,9 @@ var (
 	MainLoopTickerIntervalSeconds = 10 // Seconds
 	OracleCacheSize               = 20
 	EthBurnEventsBlockRange       = 1000
-	// TODO: should this be increased?
-	EthBlocksBeforeFinality = int64(5) // Number of blocks before considering a state final
-	SolanaEventScanTxLimit  = 1000
+	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
+	SolanaEventScanTxLimit        = 1000
+	DebugMode                     = false
 )
 
 type OracleState struct {
