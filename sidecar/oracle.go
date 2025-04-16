@@ -378,7 +378,9 @@ func (o *Oracle) fetchAndProcessState(
 		ETHUSDPrice:                update.ETHUSDPrice,
 	}
 
-	log.Printf("\nState update: %+v\n", newState)
+	if sidecartypes.DebugMode {
+		log.Printf("\nState update: %+v\n", newState)
+	}
 
 	o.updateChan <- newState
 
