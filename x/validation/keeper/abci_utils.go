@@ -1521,9 +1521,9 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 
 	// Zentp Solana Nonce
 	k.Logger(ctx).Warn("[collectSolanaNonces] Processing Zentp Nonce")
-	solParams := k.zentpKeeper.GetParams(goCtx).Solana
+	solParams := k.zentpKeeper.GetSolanaParams(goCtx)
 	if solParams == nil {
-		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+		k.Logger(ctx).Error("[collectSolanaNonces] PANIC RISK: k.zentpKeeper.GetSolanaParams() is nil")
 		return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
 	}
 	k.Logger(ctx).Warn("[collectSolanaNonces] Got Zentp Solana Params", "params", fmt.Sprintf("%+v", solParams))
@@ -1615,12 +1615,12 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 
 	if len(solAccsKeys) > 0 {
 		k.Logger(ctx).Warn("[collectSolanaAccounts] Getting Zentp Solana params")
-		params := k.zentpKeeper.GetParams(ctx).Solana
-		if params == nil {
-			k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper.GetParams().Solana is nil")
+		solParams := k.zentpKeeper.GetSolanaParams(ctx)
+		if solParams == nil {
+			k.Logger(ctx).Error("[collectSolanaAccounts] PANIC RISK: k.zentpKeeper.GetSolanaParams() is nil")
 			return nil, fmt.Errorf("internal error: zentpKeeper Solana params are nil")
 		}
-		mintAddress := params.MintAddress // Cache mint address
+		mintAddress := solParams.MintAddress // Cache mint address
 		k.Logger(ctx).Warn("[collectSolanaAccounts] Got Zentp mint address", "mint_address", mintAddress)
 		for _, key := range solAccsKeys {
 			k.Logger(ctx).Warn("[collectSolanaAccounts] Checking request status for key", "key", key)
