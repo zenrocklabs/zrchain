@@ -53,217 +53,109 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 // ExtendVoteHandler is called by all validators to extend the consensus vote
 // with additional data to be voted on.
 func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Called", "height", req.Height)
-
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Calling GetSidecarState", "height", req.Height)
 	oracleData, err := k.GetSidecarState(ctx, req.Height)
 	if err != nil {
-		// Error already logged in GetSidecarState if it fails
-		k.Logger(ctx).Error("[ExtendVoteHandler] GetSidecarState failed", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error retrieving AVS delegations", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
-	k.Logger(ctx).Warn("[ExtendVoteHandler] GetSidecarState returned", "height", req.Height, "oracleData_nil", oracleData == nil)
-	if oracleData != nil {
-		k.Logger(ctx).Warn("[ExtendVoteHandler] GetSidecarState data", "eth_block_height", oracleData.EthBlockHeight, "btc_price", oracleData.BTCUSDPrice)
-	}
 
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Calling constructVoteExtension", "height", req.Height)
 	voteExt, err := k.constructVoteExtension(ctx, req.Height, oracleData)
 	if err != nil {
-		// Error already logged in constructVoteExtension if it fails
-		k.Logger(ctx).Error("[ExtendVoteHandler] constructVoteExtension failed", "height", req.Height, "error", err)
-		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
-	}
-	k.Logger(ctx).Warn("[ExtendVoteHandler] constructVoteExtension returned", "height", req.Height, "voteExt", fmt.Sprintf("%+v", voteExt)) // Log the full struct
-
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Calling IsInvalid", "height", req.Height)
-	isInvalid := voteExt.IsInvalid(k.Logger(ctx))
-	k.Logger(ctx).Warn("[ExtendVoteHandler] IsInvalid returned", "height", req.Height, "isInvalid", isInvalid)
-	if isInvalid {
-		k.Logger(ctx).Error("[ExtendVoteHandler] invalid vote extension detected", "height", req.Height)
+		k.Logger(ctx).Error("error creating vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Calling json.Marshal", "height", req.Height)
+	if voteExt.IsInvalid(k.Logger(ctx)) {
+		k.Logger(ctx).Error("invalid vote extension in ExtendVote", "height", req.Height)
+		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
+	}
+
 	voteExtBz, err := json.Marshal(voteExt)
 	if err != nil {
-		k.Logger(ctx).Error("[ExtendVoteHandler] error marshalling vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error marshalling vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
-	k.Logger(ctx).Warn("[ExtendVoteHandler] json.Marshal returned", "height", req.Height, "bytes_len", len(voteExtBz))
 
-	k.Logger(ctx).Warn("[ExtendVoteHandler] Returning successfully", "height", req.Height)
 	return &abci.ResponseExtendVote{VoteExtension: voteExtBz}, nil
 }
 
 // constructVoteExtension builds the vote extension based on oracle data and on-chain state.
 func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
-	k.Logger(ctx).Warn("[constructVoteExtension] Called", "height", height)
-	if k.zenBTCKeeper == nil {
-		k.Logger(ctx).Error("[constructVoteExtension] PANIC RISK: k.zenBTCKeeper is nil")
-		// Potentially panic here if accessed later, let's return error early if possible
-		return VoteExtension{}, fmt.Errorf("internal error: zenBTCKeeper is nil")
-	}
-	if k.zentpKeeper == nil {
-		k.Logger(ctx).Error("[constructVoteExtension] PANIC RISK: k.zentpKeeper is nil")
-		// Potentially panic here if accessed later, let's return error early if possible
-		return VoteExtension{}, fmt.Errorf("internal error: zentpKeeper is nil")
-	}
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving AVS hash", "height", height)
 	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving AVS hash", "height", height, "error", err)
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived AVS hash", "height", height, "hash", fmt.Sprintf("%x", avsDelegationsHash))
 
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving ETH burn events hash", "height", height)
 	ethBurnEventsHash, err := deriveHash(oracleData.EthBurnEvents)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving ETH burn events hash", "height", height, "error", err)
 		return VoteExtension{}, fmt.Errorf("error deriving ethereum burn events hash: %w", err)
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived ETH burn events hash", "height", height, "hash", fmt.Sprintf("%x", ethBurnEventsHash))
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving Redemptions hash", "height", height)
 	redemptionsHash, err := deriveHash(oracleData.Redemptions)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving Redemptions hash", "height", height, "error", err)
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived Redemptions hash", "height", height, "hash", fmt.Sprintf("%x", redemptionsHash))
 
-	k.Logger(ctx).Warn("[constructVoteExtension] Calling retrieveBitcoinHeaders", "height", height)
 	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error calling retrieveBitcoinHeaders", "height", height, "error", err)
 		return VoteExtension{}, err
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] retrieveBitcoinHeaders returned", "height", height, "latestHeader_nil", latestHeader == nil, "requestedHeader_nil", requestedHeader == nil)
-
-	if latestHeader == nil {
-		k.Logger(ctx).Error("[constructVoteExtension] PANIC RISK: latestHeader is nil after retrieveBitcoinHeaders")
-		return VoteExtension{}, fmt.Errorf("internal error: retrieved latest bitcoin header is nil")
-	}
-	if latestHeader.BlockHeader == nil {
-		k.Logger(ctx).Error("[constructVoteExtension] PANIC RISK: latestHeader.BlockHeader is nil")
-		return VoteExtension{}, fmt.Errorf("internal error: retrieved latest bitcoin header's BlockHeader field is nil")
-	}
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving latest BTC header hash", "height", height)
 	latestBitcoinHeaderHash, err := deriveHash(latestHeader.BlockHeader)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving latest BTC header hash", "height", height, "error", err)
 		return VoteExtension{}, err
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived latest BTC header hash", "height", height, "hash", fmt.Sprintf("%x", latestBitcoinHeaderHash))
 
 	// Only set requested header fields if there's a requested header
 	requestedBtcBlockHeight := int64(0)
 	var requestedBtcHeaderHash []byte
 	if requestedHeader != nil {
-		if requestedHeader.BlockHeader == nil {
-			k.Logger(ctx).Error("[constructVoteExtension] Error: requestedHeader is not nil, but requestedHeader.BlockHeader is nil", "height", height)
-			return VoteExtension{}, fmt.Errorf("internal error: retrieved requested bitcoin header's BlockHeader field is nil")
-		}
-		k.Logger(ctx).Warn("[constructVoteExtension] Deriving requested BTC header hash", "height", height)
-		requestedBitcoinHeaderHashDerived, err := deriveHash(requestedHeader.BlockHeader)
+		requestedBitcoinHeaderHash, err := deriveHash(requestedHeader.BlockHeader)
 		if err != nil {
-			k.Logger(ctx).Error("[constructVoteExtension] Error deriving requested BTC header hash", "height", height, "error", err)
 			return VoteExtension{}, err
 		}
 		requestedBtcBlockHeight = requestedHeader.BlockHeight
-		requestedBtcHeaderHash = requestedBitcoinHeaderHashDerived[:]
-		k.Logger(ctx).Warn("[constructVoteExtension] Derived requested BTC header hash", "height", height, "hash", fmt.Sprintf("%x", requestedBtcHeaderHash))
-	} else {
-		k.Logger(ctx).Warn("[constructVoteExtension] No requested BTC header found", "height", height)
+		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
 	nonces := make(map[uint64]uint64)
-	k.Logger(ctx).Warn("[constructVoteExtension] Starting Ethereum nonce lookup loop", "height", height)
-	keyIDs := k.getZenBTCKeyIDs(ctx)
-	k.Logger(ctx).Warn("[constructVoteExtension] Got ZenBTC Key IDs", "height", height, "keyIDs", keyIDs)
-	for _, key := range keyIDs {
-		k.Logger(ctx).Warn("[constructVoteExtension] Checking nonce request status", "height", height, "keyID", key)
+	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
-				k.Logger(ctx).Error("[constructVoteExtension] Error checking EthereumNonceRequested", "height", height, "keyID", key, "error", err)
 				return VoteExtension{}, err
 			}
-			k.Logger(ctx).Warn("[constructVoteExtension] Nonce request status not found (defaulting to false)", "height", height, "keyID", key)
 			requested = false
 		}
-		k.Logger(ctx).Warn("[constructVoteExtension] Nonce request status check result", "height", height, "keyID", key, "requested", requested)
-
 		if requested {
-			k.Logger(ctx).Warn("[constructVoteExtension] Calling lookupEthereumNonce", "height", height, "keyID", key)
 			nonce, err := k.lookupEthereumNonce(ctx, key)
 			if err != nil {
-				// Error already logged in lookupEthereumNonce if it fails
-				k.Logger(ctx).Error("[constructVoteExtension] lookupEthereumNonce failed", "height", height, "keyID", key, "error", err)
 				return VoteExtension{}, err
 			}
-			k.Logger(ctx).Warn("[constructVoteExtension] lookupEthereumNonce returned", "height", height, "keyID", key, "nonce", nonce)
 			nonces[key] = nonce
 		}
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Finished Ethereum nonce lookup loop", "height", height, "nonces_map_size", len(nonces))
 
-	k.Logger(ctx).Warn("[constructVoteExtension] Calling collectSolanaNonces", "height", height)
 	solNonce, err := k.collectSolanaNonces(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] collectSolanaNonces failed", "height", height, "error", err)
-		// Error likely logged within collectSolanaNonces
 		return VoteExtension{}, err
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] collectSolanaNonces returned", "height", height, "solNonce_map_size", len(solNonce))
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving Solana nonce hash", "height", height)
 	solNonceHash, err := deriveHash(solNonce)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving Solana nonce hash", "height", height, "error", err)
 		return VoteExtension{}, err
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived Solana nonce hash", "height", height, "hash", fmt.Sprintf("%x", solNonceHash))
 
-	k.Logger(ctx).Warn("[constructVoteExtension] Calling collectSolanaAccounts", "height", height)
 	solAccs, err := k.collectSolanaAccounts(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] collectSolanaAccounts failed", "height", height, "error", err)
-		// Error likely logged within collectSolanaAccounts
 		return VoteExtension{}, fmt.Errorf("error collecting solana accounts: %w", err)
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] collectSolanaAccounts returned", "height", height, "solAccs_map_size", len(solAccs))
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving Solana accounts hash", "height", height)
 	solAccsHash, err := deriveHash(solAccs)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving Solana accounts hash", "height", height, "error", err)
 		return VoteExtension{}, err
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived Solana accounts hash", "height", height, "hash", fmt.Sprintf("%x", solAccsHash))
 
-	k.Logger(ctx).Warn("[constructVoteExtension] Deriving Solana burn events hash", "height", height)
 	solanaBurnEventsHash, err := deriveHash(oracleData.SolanaBurnEvents)
 	if err != nil {
-		k.Logger(ctx).Error("[constructVoteExtension] Error deriving Solana burn events hash", "height", height, "error", err)
 		return VoteExtension{}, fmt.Errorf("error deriving solana burn events hash: %w", err)
 	}
-	k.Logger(ctx).Warn("[constructVoteExtension] Derived Solana burn events hash", "height", height, "hash", fmt.Sprintf("%x", solanaBurnEventsHash))
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Constructing VoteExtension struct", "height", height)
-	// Check zenBTCKeeper again right before access, although checked at start
-	if k.zenBTCKeeper == nil {
-		k.Logger(ctx).Error("[constructVoteExtension] PANIC RISK: k.zenBTCKeeper is nil right before VoteExtension struct creation")
-		return VoteExtension{}, fmt.Errorf("internal error: zenBTCKeeper became nil unexpectedly")
-	}
-	stakerKeyID := k.zenBTCKeeper.GetStakerKeyID(ctx)
-	minterKeyID := k.zenBTCKeeper.GetEthMinterKeyID(ctx)
-	unstakerKeyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
-	completerKeyID := k.zenBTCKeeper.GetCompleterKeyID(ctx)
-	k.Logger(ctx).Warn("[constructVoteExtension] Key IDs retrieved for nonces map access", "height", height, "staker", stakerKeyID, "minter", minterKeyID, "unstaker", unstakerKeyID, "completer", completerKeyID)
 
 	voteExt := VoteExtension{
 		ZRChainBlockHeight:         height,
@@ -282,19 +174,16 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		EthBaseFee:                 oracleData.EthBaseFee,
 		EthTipCap:                  oracleData.EthTipCap,
 		SolanaLamportsPerSignature: oracleData.SolanaLamportsPerSignature,
-		RequestedStakerNonce:       nonces[stakerKeyID],
-		RequestedEthMinterNonce:    nonces[minterKeyID],
-		RequestedUnstakerNonce:     nonces[unstakerKeyID],
-		RequestedCompleterNonce:    nonces[completerKeyID],
+		RequestedStakerNonce:       nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
+		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
+		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
+		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
-		// SolanaROCKMintEventsHash:   solROCKMintEventsHash[:], // Ensure this is commented out if not used
+		// SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
 		SolanaBurnEventsHash: solanaBurnEventsHash[:],
 	}
 
-	k.Logger(ctx).Warn("[constructVoteExtension] VoteExtension constructed", "height", height, "voteExt", fmt.Sprintf("%+v", voteExt)) // Repeat log before return
-
-	k.Logger(ctx).Warn("[constructVoteExtension] Returning successfully", "height", height)
 	return voteExt, nil
 }
 
