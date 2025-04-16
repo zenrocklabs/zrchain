@@ -13,6 +13,8 @@ func TestGetParams(t *testing.T) {
 	k, ctx := keepertest.ZentpKeeper(t)
 	params := types.DefaultParams()
 
-	require.NoError(t, k.SetParams(ctx, params))
-	require.EqualValues(t, params, k.GetParams(ctx))
+	require.NoError(t, k.ParamStore.Set(ctx, params))
+	p, err := k.ParamStore.Get(ctx)
+	require.NoError(t, err)
+	require.EqualValues(t, params, p)
 }

@@ -14,17 +14,17 @@ const (
 )
 
 var (
-	ParamsKey = []byte("p_zentp")
-
 	BurnsKey     = collections.NewPrefix(0)
 	MintsKey     = collections.NewPrefix(1)
 	MintCountKey = collections.NewPrefix(2)
 	BurnCountKey = collections.NewPrefix(3)
+	ParamsKey    = collections.NewPrefix(4)
 
 	BurnsIndex     = "burns"
 	MintsIndex     = "mints"
 	MintCountIndex = "mint_count"
 	BurnCountIndex = "burn_count"
+	ParamsIndex    = "params"
 )
 
 func KeyPrefix(p string) []byte {
