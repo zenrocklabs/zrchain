@@ -513,6 +513,8 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 
 	}
 
+	oracleData.SolanaAccounts = map[string]solToken.Account{}
+
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
 		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
 		if err != nil {
@@ -523,7 +525,6 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 			return nil, err
 		}
 		if len(solAccsKeys) > 0 {
-			oracleData.SolanaAccounts = map[string]solToken.Account{}
 			for _, key := range solAccsKeys {
 				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
 				if err != nil {
