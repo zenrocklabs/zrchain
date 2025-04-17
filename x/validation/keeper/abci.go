@@ -14,6 +14,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api" // Added import
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -21,6 +22,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gagliardetto/solana-go"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -387,6 +389,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processSolanaZenBTCMintEvents(ctx, oracleData)
 		k.processSolanaROCKMints(ctx, oracleData)
 		k.processSolanaROCKMintEvents(ctx, oracleData)
+		k.processSolanaROCKBurnEvents(ctx, oracleData)
 		k.clearSolanaAccounts(ctx)
 	}
 
@@ -514,7 +517,6 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	}
 
 	oracleData.SolanaAccounts = map[string]solToken.Account{}
-
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
 		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
 		if err != nil {
@@ -1953,6 +1955,42 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		k.Logger(ctx).Error("error updating zenBTC supply", "error", err)
 	}
 
+}
+
+func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
+	var toProcess []*sidecarapitypes.BurnEvent
+	for _, e := range oracleData.SolanaBurnEvents {
+		pk := solana.PublicKeyFromBytes(e.DestinationAddr)
+
+		burns, err := k.zentpKeeper.GetBurns(ctx, pk.String(), e.ChainID, e.TxID)
+		if err != nil {
+			k.Logger(ctx).Error(err.Error())
+			continue
+		}
+		if len(burns) > 0 {
+			continue // burn already processed
+		} else {
+			toProcess = append(toProcess, &e)
+		}
+	}
+
+	for _, burn := range toProcess {
+		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
+		err := k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, coins)
+		if err != nil {
+			k.Logger(ctx).Error(err.Error())
+			continue
+		}
+		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
+			k.Logger(ctx).Error(err.Error())
+			continue
+		}
+		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr)
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
+			k.Logger(ctx).Error(err.Error())
+		}
+	}
 }
 
 func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
