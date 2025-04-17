@@ -331,18 +331,33 @@ func (o *Oracle) fetchAndProcessState(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch Solana burn events
+	// Fetch Solana ZenBTC burn events
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
-		events, err := o.getSolanaBurnEvents(solanaProgramID)
+		events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
 			return
 		}
 		updateMutex.Lock()
-		update.solanaBurnEvents = events
+		update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
+		updateMutex.Unlock()
+	}()
+
+	// Fetch Solana ROCK burn events
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		solanaProgramID := sidecartypes.SolRockProgramID[o.Config.Network]
+		events, err := o.getSolanaRockBurnEvents(solanaProgramID)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
 		updateMutex.Unlock()
 	}()
 
@@ -763,8 +778,8 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	return feeCalculator, nil
 }
 
-// getSolanaBurnEvents retrieves ZenBTC burn events from Solana.
-func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) {
+// getSolanaZenBTCBurnEvents retrieves ZenBTC burn events from Solana.
+func (o *Oracle) getSolanaZenBTCBurnEvents(programID string) ([]api.BurnEvent, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
 
 	program, err := solana.PublicKeyFromBase58(programID)
@@ -804,6 +819,61 @@ func (o *Oracle) getSolanaBurnEvents(programID string) ([]api.BurnEvent, error) 
 		for logIndex, event := range events {
 			if event.Name == "TokenRedemption" {
 				e := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
+
+				burnEvents = append(burnEvents, api.BurnEvent{
+					TxID:            signature.Signature.String(), // Use transaction signature as TxID
+					LogIndex:        uint64(logIndex),             // Use log index within the transaction
+					ChainID:         chainID,
+					DestinationAddr: e.DestAddr[:],
+					Amount:          e.Value,
+				})
+			}
+		}
+	}
+	return burnEvents, nil
+}
+
+// getSolanaRockBurnEvents retrieves ZenBTC burn events from Solana.
+func (o *Oracle) getSolanaRockBurnEvents(programID string) ([]api.BurnEvent, error) {
+	limit := sidecartypes.SolanaEventScanTxLimit
+
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key: %w", err)
+	}
+	signatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
+	}
+
+	var burnEvents []api.BurnEvent
+
+	for _, signature := range signatures {
+		tx, err := o.solanaClient.GetTransaction(context.Background(), signature.Signature, &solrpc.GetTransactionOpts{
+			Commitment: solrpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to get Solana ZenBTC burn transaction %s: %v", signature.Signature, err)
+			continue
+		}
+
+		events, err := rock_spl_token.DecodeEvents(tx, program)
+		if err != nil {
+			// Log error and continue to next signature
+			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", signature.Signature, err)
+			continue
+		}
+
+		// Solana CAIP-2 Identifier
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+
+		for logIndex, event := range events {
+			if event.Name == "TokenRedemption" {
+				e := event.Data.(*rock_spl_token.TokenRedemptionEventData)
 
 				burnEvents = append(burnEvents, api.BurnEvent{
 					TxID:            signature.Signature.String(), // Use transaction signature as TxID
