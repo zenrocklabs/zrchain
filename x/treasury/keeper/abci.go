@@ -5,14 +5,12 @@ import (
 )
 
 func (k Keeper) BeginBlock(goCtx context.Context) error {
-	err := k.CheckForKeyMPCTimeouts(goCtx)
-	if err != nil {
-		return err
+	if err := k.CheckForKeyMPCTimeouts(goCtx); err != nil {
+		k.Logger().Error("error in BeginBlock: CheckForKeyMPCTimeouts", "error", err)
 	}
 
-	err = k.CheckForSignatureMPCTimeouts(goCtx)
-	if err != nil {
-		return err
+	if err := k.CheckForSignatureMPCTimeouts(goCtx); err != nil {
+		k.Logger().Error("error in BeginBlock: CheckForSignatureMPCTimeouts", "error", err)
 	}
 
 	return nil

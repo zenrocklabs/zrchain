@@ -14,17 +14,12 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
-	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api" // Added import
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gagliardetto/solana-go"
-	solSystem "github.com/gagliardetto/solana-go/programs/system"
-	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -145,30 +140,9 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, err
 	}
 
-	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+	solAccs, err := k.collectSolanaAccounts(ctx)
 	if err != nil {
-		return VoteExtension{}, err
-	}
-	solAccsKeys, err := solAccStore.Keys()
-	if err != nil {
-		return VoteExtension{}, err
-	}
-	solAccs := map[string]solToken.Account{}
-
-	if len(solAccsKeys) > 0 {
-		for _, key := range solAccsKeys {
-			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
-			if err != nil {
-				return VoteExtension{}, err
-			}
-			if requested {
-				acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-				if err != nil {
-					return VoteExtension{}, err
-				}
-				solAccs[key] = acc
-			}
-		}
+		return VoteExtension{}, fmt.Errorf("error collecting solana accounts: %w", err)
 	}
 	solAccsHash, err := deriveHash(solAccs)
 	if err != nil {
@@ -516,31 +490,12 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 
 	}
 
-	oracleData.SolanaAccounts = map[string]solToken.Account{}
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
-		solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+		solAccs, err := k.collectSolanaAccounts(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error collecting solana accounts: %w", err)
 		}
-		solAccsKeys, err := solAccStore.Keys()
-		if err != nil {
-			return nil, err
-		}
-		if len(solAccsKeys) > 0 {
-			for _, key := range solAccsKeys {
-				goGet, err := k.SolanaAccountsRequested.Get(ctx, key)
-				if err != nil {
-					return nil, err
-				}
-				if goGet {
-					acc, err := k.GetSolanaTokenAccount(ctx, key, k.zentpKeeper.GetParams(ctx).Solana.MintAddress)
-					if err != nil {
-						return nil, err
-					}
-					oracleData.SolanaAccounts[key] = acc
-				}
-			}
-		}
+		oracleData.SolanaAccounts = solAccs
 	}
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
@@ -1361,9 +1316,9 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 	processTransaction(
 		k,
 		ctx,
-		k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey,
+		k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		nil,
-		oracleData.SolanaMintNonces[k.zentpKeeper.GetParams(ctx).Solana.NonceAccountKey],
+		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 		},
@@ -1397,7 +1352,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if ata.State == solToken.Uninitialized {
 				fundReceiver = true
 			}
-			solParams := k.zentpKeeper.GetParams(ctx).Solana
+			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
 				amount:            tx.Amount,
 				fee:               solParams.Fee,
@@ -1416,11 +1371,10 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
 			}
 
-			params := k.zentpKeeper.GetParams(ctx)
 			id, err := k.submitSolanaTransaction(
 				ctx,
 				tx.Creator,
-				[]uint64{params.Solana.SignerKeyId, params.Solana.NonceAuthorityKey},
+				[]uint64{solParams.SignerKeyId, solParams.NonceAuthorityKey},
 				treasurytypes.WalletType_WALLET_TYPE_SOLANA,
 				tx.DestinationChain,
 				transaction,
@@ -1440,7 +1394,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if tx.BlockHeight == 0 {
 				return nil
 			}
-			solParams := k.zentpKeeper.GetParams(ctx).Solana
+			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
 				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
 				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)

@@ -3,31 +3,23 @@ package keeper
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
-// GetParams get all parameters as types.Params
-func (k Keeper) GetParams(ctx context.Context) (params types.Params) {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	bz := store.Get(types.ParamsKey)
-	if bz == nil {
-		return params
+func (k Keeper) GetSolanaParams(ctx context.Context) *types.Solana {
+	params, err := k.ParamStore.Get(ctx)
+	if err != nil ||
+		params.Solana == nil ||
+		params.Solana.SignerKeyId == 0 ||
+		params.Solana.ProgramId == "" ||
+		params.Solana.MintAddress == "" ||
+		// params.Solana.MultisigKeyAddress == "" ||
+		params.Solana.Btl == 0 ||
+		params.Solana.FeeWallet == "" ||
+		params.Solana.NonceAuthorityKey == 0 ||
+		params.Solana.NonceAccountKey == 0 {
+
+		return types.DefaultSolanaParams
 	}
-
-	k.cdc.MustUnmarshal(bz, &params)
-	return params
-}
-
-// SetParams set the params
-func (k Keeper) SetParams(ctx context.Context, params types.Params) error {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	bz, err := k.cdc.Marshal(&params)
-	if err != nil {
-		return err
-	}
-	store.Set(types.ParamsKey, bz)
-
-	return nil
+	return params.Solana
 }

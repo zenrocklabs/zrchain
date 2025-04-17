@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -13,6 +14,8 @@ import (
 )
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
+	return nil, fmt.Errorf("zentp module is currently disabled") // TODO: remove this
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	_, err := treasurytypes.Caip2ToKeyType(req.DestinationChain)
@@ -23,8 +26,8 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	if treasurytypes.ValidateChainAddress(req.DestinationChain, req.RecipientAddress) != nil {
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
-	p := k.GetParams(ctx)
-	totalAmount := req.Amount + p.Solana.Fee // TODO: do this chain agnostic
+	p := k.GetSolanaParams(ctx)
+	totalAmount := req.Amount + p.Fee // TODO: do this chain agnostic
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
 	if bal.IsLT(sdk.NewCoin("urock", sdkmath.NewIntFromUint64(totalAmount))) {
 		return nil, errors.New("not enough balance")
@@ -63,7 +66,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	if err := k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.Solana.NonceAccountKey, true); err != nil {
+	if err := k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.NonceAccountKey, true); err != nil {
 		return nil, err
 	}
 

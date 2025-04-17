@@ -12,7 +12,7 @@ import (
 func TestParamsQuery(t *testing.T) {
 	keeper, ctx := keepertest.ZentpKeeper(t)
 	params := types.DefaultParams()
-	require.NoError(t, keeper.SetParams(ctx, params))
+	require.NoError(t, keeper.ParamStore.Set(ctx, params))
 
 	response, err := keeper.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
