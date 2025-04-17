@@ -14,12 +14,16 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	solSystem "github.com/gagliardetto/solana-go/programs/system"
+	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
@@ -1914,9 +1918,13 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
 	for _, e := range oracleData.SolanaBurnEvents {
-		pk := solana.PublicKeyFromBytes(e.DestinationAddr)
 
-		burns, err := k.zentpKeeper.GetBurns(ctx, pk.String(), e.ChainID, e.TxID)
+		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())
+			continue
+		}
+		burns, err := k.zentpKeeper.GetBurns(ctx, addr, e.ChainID, e.TxID)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
 			continue
@@ -1928,37 +1936,37 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		}
 	}
 
+	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
 		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
-		err := k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, coins)
+		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
+			continue
+		}
+		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())
+			continue
+		}
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("AccAddressFromBech32: %w", err).Error())
+			continue
+		}
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
+		}
+		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
+			Denom:            params.BondDenom,
+			Amount:           burn.Amount,
+			RecipientAddress: accAddr.String(),
+			SourceChain:      burn.ChainID,
+			TxHash:           burn.TxID,
+			State:            zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED,
+			BlockHeight:      ctx.BlockHeight(),
+		})
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
-			continue
 		}
-		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
-			k.Logger(ctx).Error(err.Error())
-			continue
-		}
-		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr)
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
-			k.Logger(ctx).Error(err.Error())
-		}
-	}
-}
-
-func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
-	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-	if err != nil {
-		k.Logger(ctx).Error(err.Error())
-	}
-
-	pendingsZenBTC, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA)
-	if err != nil {
-		k.Logger(ctx).Error(err.Error())
-	}
-
-	if len(pendingsROCK) == 0 && len(pendingsZenBTC) == 0 {
-		err = k.SolanaAccountsRequested.Clear(ctx, nil)
 	}
 }

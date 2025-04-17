@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/collections"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ func (k Keeper) Mints(goCtx context.Context, req *types.QueryMintsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, req.Pagination, req.Creator, req.Denom, req.Status)
+	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, req.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, req.Pagination, "", req.Denom, req.Status)
+	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +41,10 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 	}, nil
 }
 
-func (k Keeper) queryBridge(goCtx context.Context, pagination *query.PageRequest, creator, denom string, status types.BridgeStatus) ([]*types.Bridge, *query.PageResponse, error) {
+func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64, types.Bridge], pagination *query.PageRequest, creator, denom string, status types.BridgeStatus) ([]*types.Bridge, *query.PageResponse, error) {
 	keys, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
-		k.mintStore,
+		store,
 		pagination,
 		func(key uint64, value types.Bridge) (bool, error) {
 			statusMatch := status == types.BridgeStatus_BRIDGE_STATUS_UNSPECIFIED ||

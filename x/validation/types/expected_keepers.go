@@ -126,4 +126,5 @@ type ZentpKeeper interface {
 	GetMintsWithStatus(goCtx context.Context, status zentptypes.BridgeStatus) ([]*zentptypes.Bridge, error)
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
 	GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*zentptypes.Bridge, error)
+	AddBurn(ctx context.Context, burn *zentptypes.Bridge) error
 }
