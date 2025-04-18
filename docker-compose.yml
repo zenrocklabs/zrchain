@@ -1,0 +1,479 @@
+---
+services:
+  redis:
+    container_name: redis
+    image: redis:alpine3.18
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - dummy
+    ports:
+    - published: 6379
+      target: 6379
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqadmin list queues | grep -q tss"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    ports:
+      - 5552:5552
+      - 5672:5672
+      - 15672:15672
+    environment:
+      STREAM_NAME: "tss"
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbitmq_stream advertised_host rabbitmq
+    volumes:
+      - ./scripts/rabbitmq-init.sh:/app/init.sh
+    entrypoint:
+      - /bin/sh
+    command:
+      - /app/init.sh
+
+  localstack:
+    image: localstack/localstack:3.3.0
+    container_name: localstack
+    environment:
+      SERVICES: kms
+    ports:
+    - published: 8888
+      target: 4566
+
+  localstack-setup:
+    image: python:3.11
+    depends_on:
+      - localstack
+    container_name: localstack-setup
+    entrypoint:
+      - /bin/sh
+    command:
+      - /localstack-setup.sh
+    environment:
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_SESSION_TOKEN: dummy
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ENPOINT_URL: http://localstack:4566
+    volumes:
+      - ./scripts/localstack-setup.sh:/localstack-setup.sh
+      - ./scripts/localstack-setup.py:/localstack-setup.py
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "sleep 5"]
+      interval: 5s
+      timeout: 6s
+      retries: 3
+    environment:
+      POSTGRES_USER: tss_user
+      POSTGRES_PASSWORD: dummy
+      POSTGRES_DB: tss_db
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_KEYS_TABLE1: party1
+      POSTGRES_KEYS_TABLE2: party2
+      POSTGRES_KEYS_TABLE3: party3
+      POSTGRES_REQUESTS_TABLE: requests
+    volumes:
+      - ./scripts/psql-init-script.sh:/docker-entrypoint-initdb.d/init-script.sh
+    ports:
+      - "5432:5432"
+
+  primecontroller:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/primecontroller:1.2.3-7db20d6b
+    container_name: primecontroller
+    depends_on:
+      localstack:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_SESSION_TOKEN: dummy
+      AWS_DEFAULT_REGION: eu-west-1
+      KMS_KEY_ARN: alias/party1
+      PRIMEENCLAVE_URL: http://primeenclave:8000
+      REDIS_STACK_KEY: prime_stack
+      REDIS_STACK_COUNT: 2000
+      REDIS_STACK_DELAY: 5
+      REDIS_HOST: redis
+      REDIS_PASSWORD: dummy
+
+  primeenclave:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/primeenclave:1.1.2-9633c634
+    container_name: primeenclave
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      USE_SOCAT: "false"
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+
+  tsscontroller_party_1:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tsscontroller:2.13.4-99a0e80d
+    pull_policy: always
+    container_name: tsscontroller_party_1
+    depends_on:
+      localstack:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DEBUG: "False"
+      PRIMECONTROLLER_URL: http://primecontroller:8000
+      NODE_NAME: default
+      POD_NAMESPACE: default
+      PORT: 8000
+      HOST: "0.0.0.0"
+      STREAM_NAME: tss
+      PARTY_ID: 1
+      CONNECTOR_ID: 100
+      THRESHOLD: 3
+      NUMBER_PARTIES: 3
+      TIMEOUT: 4
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_SESSION_TOKEN: dummy
+      AWS_DEFAULT_REGION: eu-west-1
+      TSSENCLAVE_URL: http://tssenclave-1:8000
+      KMS_KEY_ARN: alias/party1
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: tss_user
+      POSTGRES_PASSWORD: dummy
+      POSTGRES_DB: tss_db
+      POSTGRES_KEYS_TABLE: party1
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5552
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_URL: redis://redis
+      REDIS_PASSWORD: dummy
+      REDIS_DATA_DB: 0
+      REDIS_DATA_EXPIRES: 60
+      REDIS_PRIME_STACK_KEY: prime_stack
+      REDIS_PRIME_DB: 1
+      RSA_PUBLIC_KEYS: '{"1": "8eefd6339d9634e79e035128f554088ff58437d18edb1d87d03b76f81fcf1e991a5c2bfe0800d38dfdaeaedbd4718c39c51e3fa31c8407d9b4055a30ca0bca11068a6d42b23d29f88c1857a73a37a037633b2fb3e8b92ef5c7abfaac35fc0d105a6d397d82d706598d8d31436467a6b1f0ce57a0a89b7ad2e406338c76793869a459dc6efd14af8b9b02c196193e9afb00e9f6d442be3fc416f0bd551a4d0cf876320ce5ab8132a34b11664f471988c3fcb9e77f96897ac594ad7e8c3055d8bba217222e5a688c0a473bb48dd01aa6b8f6aad0cc9b9a7ea635598698e2ee9a82c0f88d9f3cfa3813a79fbb9f5701d0b14566311a4e752246c147f5fdee138de5","2": "8c1eb51a66d9d59cbd5d8d938a61b7d6056f585980368b8882511058c746bad1d16080178a3635cc46bd06ea9b81d34a73475d982677b31f51a936f781d2ec7b3639b8bca6e3b7263a9e7318bc4c92b6674f17578e44e509a8565585ed69237ff6a3b2fb6068a70654d02c1f77d9c461794049690086375115ddc95ba18d04ededb9029cb5596b9f55710adcb9a57e17aa8653fada28cb86a7ba78166085827e6827e4a4d635a6194b245bf2661450ac8776d09864ab4477b04df900edd74e81aff92aed18005edab9e40da09f172408d6c9a9f0b4fad53448ba9521ade75db5d0dd197825664b7541937c8136c438a7a6c558dc110c15d238e10fff2cf5fb31","3": "86aedc72691fa1becac0b84842f1b3b0cd841f19d79c7dca2258c3a100dbc3d86446ece1228a86f90091b5a5d7fb770ecaa5948749e8bd7cff679e8d4989cd8e9692305f080c7fc34462a899b99466c8c9ea9ac05e71f067520234ce900217b3e70d90ea86bfd7c94b6a7d2ba704344996dad00fcec4bcbe5724483a63a52b64b29de5f21e95885d6001ba2c5f9d9c8966c0efe9bc603ad4a8db0533c6864f9e276d5c43772ebf0631cd3057c8f2d3219e83228cace9b889bc0739426cc4c4f4c63aa27b70ec79f66533ccb2c3660809ca1d8a6b922a43e57525a7942c7d1542336484161130653d3d444a2238ab35d3a701beaf9e880035638552a6dd38a165"}'
+      CONNECTOR_KEY: "ad4dcc2a04255c7bbdde8ee8862df2ee8d57aea7f0e0e4a46270a68a220e373e075951fb62e4cc3d0143a9b5d15d1f968e5bb693b213f35f9a8d9072a468b63fe136137f24d7cf156a288e71e686ecae3e7aa86a4d11d4e3438f6b8eca01673056c69152ff7d55fc53f42920f4a6b7197ace03f36b3c391d9629fc3207f08163850d4eadd2619824f6c60f054dc460bc09f4ef5cf5a2c353f4c80e76de9b736f1158ebf65160288460840c91e55322f650409c8c7f5e7c82014a03d395fd58fb5d509bb7692b4b34a1173fc61a48e0c6e5b2086ac33a5e080fcda0f779f05c769efb90e14161fd65831eb432a00a824c2d19734e4d2b9625144fb8abd4ff9221"
+      RSA_PRIVATE_KEY: '{"p": "a03fd61c94165645b4f25964298e55f9b374d90ab292ce54dda06527413f085c1a6e62f8f776a99b0e5205df1dfbac11c7e7f24bcf70ad8732a828af2541e87837dd3d685dbd2bcf160193f3349a4bff046b1372be502155cfd3c50a7e8e9f22dc333b79320b9146e5d3e3831e649592dc2632262fb5abfb09d925ae3f5b315f","q": "e457d5c4f2c2ca40df395cc0ebd8c42f023facc9284671251c274e8d2b77a8c9abf8d2c85918de29744d1f1cc819b1aa06b26ccdd3f22d78ff5dabe87c9b9e23b1d6c95caac57358c4994ba3c1ef74538fa3589db5ffa7d4016a12cd8ea446364a5c309fa4222912a4c8e8ea35e50afb80195d200a7d34b0d1fbe57f8f0ef33b"}'
+
+  tsscontroller_party_2:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tsscontroller:2.13.4-99a0e80d
+    pull_policy: always
+    container_name: tsscontroller_party_2
+    depends_on:
+      localstack:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DEBUG: "False"
+      PRIMECONTROLLER_URL: "http://primecontroller:8000"
+      NODE_NAME: default
+      POD_NAMESPACE: default
+      PORT: 8000
+      HOST: "0.0.0.0"
+      STREAM_NAME: tss
+      PARTY_ID: 2
+      CONNECTOR_ID: 200
+      THRESHOLD: 3
+      NUMBER_PARTIES: 3
+      TIMEOUT: 4
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_SESSION_TOKEN: dummy
+      AWS_DEFAULT_REGION: eu-west-1
+      TSSENCLAVE_URL: http://tssenclave-2:8000
+      KMS_KEY_ARN: alias/party2
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: tss_user
+      POSTGRES_PASSWORD: dummy
+      POSTGRES_DB: tss_db
+      POSTGRES_KEYS_TABLE: party2
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5552
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_URL: redis://redis
+      REDIS_PASSWORD: dummy
+      REDIS_DATA_DB: 1
+      REDIS_DATA_EXPIRES: 60
+      REDIS_PRIME_STACK_KEY: prime_stack
+      REDIS_PRIME_DB: 1
+      RSA_PUBLIC_KEYS: '{"1": "8eefd6339d9634e79e035128f554088ff58437d18edb1d87d03b76f81fcf1e991a5c2bfe0800d38dfdaeaedbd4718c39c51e3fa31c8407d9b4055a30ca0bca11068a6d42b23d29f88c1857a73a37a037633b2fb3e8b92ef5c7abfaac35fc0d105a6d397d82d706598d8d31436467a6b1f0ce57a0a89b7ad2e406338c76793869a459dc6efd14af8b9b02c196193e9afb00e9f6d442be3fc416f0bd551a4d0cf876320ce5ab8132a34b11664f471988c3fcb9e77f96897ac594ad7e8c3055d8bba217222e5a688c0a473bb48dd01aa6b8f6aad0cc9b9a7ea635598698e2ee9a82c0f88d9f3cfa3813a79fbb9f5701d0b14566311a4e752246c147f5fdee138de5","2": "8c1eb51a66d9d59cbd5d8d938a61b7d6056f585980368b8882511058c746bad1d16080178a3635cc46bd06ea9b81d34a73475d982677b31f51a936f781d2ec7b3639b8bca6e3b7263a9e7318bc4c92b6674f17578e44e509a8565585ed69237ff6a3b2fb6068a70654d02c1f77d9c461794049690086375115ddc95ba18d04ededb9029cb5596b9f55710adcb9a57e17aa8653fada28cb86a7ba78166085827e6827e4a4d635a6194b245bf2661450ac8776d09864ab4477b04df900edd74e81aff92aed18005edab9e40da09f172408d6c9a9f0b4fad53448ba9521ade75db5d0dd197825664b7541937c8136c438a7a6c558dc110c15d238e10fff2cf5fb31","3": "86aedc72691fa1becac0b84842f1b3b0cd841f19d79c7dca2258c3a100dbc3d86446ece1228a86f90091b5a5d7fb770ecaa5948749e8bd7cff679e8d4989cd8e9692305f080c7fc34462a899b99466c8c9ea9ac05e71f067520234ce900217b3e70d90ea86bfd7c94b6a7d2ba704344996dad00fcec4bcbe5724483a63a52b64b29de5f21e95885d6001ba2c5f9d9c8966c0efe9bc603ad4a8db0533c6864f9e276d5c43772ebf0631cd3057c8f2d3219e83228cace9b889bc0739426cc4c4f4c63aa27b70ec79f66533ccb2c3660809ca1d8a6b922a43e57525a7942c7d1542336484161130653d3d444a2238ab35d3a701beaf9e880035638552a6dd38a165"}'
+      CONNECTOR_KEY: "c687c64b6f1a02cdfd7b6e85c87323ab3f078fb55cb14b6f61b3299e0413e43c7758566b7b4dad07652c4ed0587fd6bc0222b0ec3b74ccef55e59ac1db39628c8ba10a59dd156869fdfc1557e27389f490d9b224c9e241d86efb8976a54d85a642dd1c6a41aff3b9c2059e7fef63be8cee35a5fa54cdf9d35abc1a5bfef444d731eb9a784322c5b757c9a570de5d92461fb27036be894c15bfb9c45735aa81a53ee902155670af895584329a56bb6359ee3b4ad5aad56c64384ab433fdc3cf9d99d655b0c25fc5a78dc47d8478b480317586293d0b60351b6c622dbdc5bda1af5f7a91c26407d3a5add192de5dc6b546e812c6cc714500a0ac45167d1dacf399"
+      RSA_PRIVATE_KEY: '{"p": "fc5de0628111132077d515ac4455e5738aece265b9f4cd543f9a18b292fc4666b15d170347c23fdfa875125982475d2e34d024bd7577ca55085b7ac69be47020ec69189cb17871e4f69141ebb496f05801008679b3d873a1ae9c25b6abd938e1463dfac60ae1951652d884a8e2104851948a1fb7ec2fe4b58e94207a4cd4d2ef","q": "8e23224aad5079cf6c8dac488b97ee18d613a1f6f6e4464366d4b0d51bfdf57c3ef6738771cae6a1834b6352342e8b18d11fa173bbbd27250d639e19391ce1995445cbf29b99f5bc42e2b84c8b05267b41834f36dad5c2cc0b2f49d4861a23b9683f18d9851b400fc7c8bb6d0e1fd8f63454d54fb31097cee3e6420cb0bd93df"}'
+
+  tsscontroller_party_3:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tsscontroller:2.13.4-99a0e80d
+    pull_policy: always
+    container_name: tsscontroller_party_3
+    depends_on:
+      localstack:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DEBUG: "False"
+      NODE_NAME: default
+      POD_NAMESPACE: default
+      PORT: 8000
+      HOST: "0.0.0.0"
+      STREAM_NAME: tss
+      PARTY_ID: 3
+      CONNECTOR_ID: 300
+      THRESHOLD: 3
+      NUMBER_PARTIES: 3
+      TIMEOUT: 4
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_SESSION_TOKEN: dummy
+      AWS_DEFAULT_REGION: eu-west-1
+      KMS_KEY_ARN: alias/party3
+      TSSENCLAVE_URL: http://tssenclave-3:8000
+      PRIMECONTROLLER_URL: http://primecontroller:8000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: tss_user
+      POSTGRES_PASSWORD: dummy
+      POSTGRES_DB: tss_db
+      POSTGRES_KEYS_TABLE: party3
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5552
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_URL: redis://redis
+      REDIS_PASSWORD: dummy
+      REDIS_DATA_DB: 2
+      REDIS_DATA_EXPIRES: 60
+      REDIS_PRIME_STACK_KEY: prime_stack
+      REDIS_PRIME_DB: 1
+      RSA_PUBLIC_KEYS: '{"1": "8eefd6339d9634e79e035128f554088ff58437d18edb1d87d03b76f81fcf1e991a5c2bfe0800d38dfdaeaedbd4718c39c51e3fa31c8407d9b4055a30ca0bca11068a6d42b23d29f88c1857a73a37a037633b2fb3e8b92ef5c7abfaac35fc0d105a6d397d82d706598d8d31436467a6b1f0ce57a0a89b7ad2e406338c76793869a459dc6efd14af8b9b02c196193e9afb00e9f6d442be3fc416f0bd551a4d0cf876320ce5ab8132a34b11664f471988c3fcb9e77f96897ac594ad7e8c3055d8bba217222e5a688c0a473bb48dd01aa6b8f6aad0cc9b9a7ea635598698e2ee9a82c0f88d9f3cfa3813a79fbb9f5701d0b14566311a4e752246c147f5fdee138de5","2": "8c1eb51a66d9d59cbd5d8d938a61b7d6056f585980368b8882511058c746bad1d16080178a3635cc46bd06ea9b81d34a73475d982677b31f51a936f781d2ec7b3639b8bca6e3b7263a9e7318bc4c92b6674f17578e44e509a8565585ed69237ff6a3b2fb6068a70654d02c1f77d9c461794049690086375115ddc95ba18d04ededb9029cb5596b9f55710adcb9a57e17aa8653fada28cb86a7ba78166085827e6827e4a4d635a6194b245bf2661450ac8776d09864ab4477b04df900edd74e81aff92aed18005edab9e40da09f172408d6c9a9f0b4fad53448ba9521ade75db5d0dd197825664b7541937c8136c438a7a6c558dc110c15d238e10fff2cf5fb31","3": "86aedc72691fa1becac0b84842f1b3b0cd841f19d79c7dca2258c3a100dbc3d86446ece1228a86f90091b5a5d7fb770ecaa5948749e8bd7cff679e8d4989cd8e9692305f080c7fc34462a899b99466c8c9ea9ac05e71f067520234ce900217b3e70d90ea86bfd7c94b6a7d2ba704344996dad00fcec4bcbe5724483a63a52b64b29de5f21e95885d6001ba2c5f9d9c8966c0efe9bc603ad4a8db0533c6864f9e276d5c43772ebf0631cd3057c8f2d3219e83228cace9b889bc0739426cc4c4f4c63aa27b70ec79f66533ccb2c3660809ca1d8a6b922a43e57525a7942c7d1542336484161130653d3d444a2238ab35d3a701beaf9e880035638552a6dd38a165"}'
+      CONNECTOR_KEY: "e02bc25eb7cdc653e8db5841da394ea32ab7e186a9670bc61b2b92b1e3bad5c3eb4a8a5253bc12be4fc748d3ad118c778116cf73c731616879b103f5eb5c92ee375112631a215c3d502cb8947ce2fb3532cdb80ee1076a76702063e26fb65da6c676ca9a7625959c29e954d927145d384095c4d46edbba23fadabc332a6ceb128d8637a397991c04f57f2d094c612d33efab8c217a436de0a915715871bcfa8d7288eb5d19cd1e72b7a0ad4662792afd202e1b74877245540ff9ae63084181ff765ae211c2075cb671f3bfc9174fbed6c83c06f8ed877119bdeefc540949c6bd048ceb29883ff0d3b69260e471325c8e5834278418c02eed4fb0b91ad49f70b1"
+      RSA_PRIVATE_KEY: '{"p": "9f7c11dd6a4fedb16a793d0fb1f65a1c3cadcc6fbf3e60d07cf994b40516bf716948eb0b33c98d738a3d918b42de80dfaece16604c567e093cfe15d075700b8be65f4da2dee6a18fad36aab56580ba8b7a0de2ba029044e12bd57a72a2b8de4c205c7148aef2b21511a57dcf0f0b89bb3119d8bed7f919f700462fd1f1ca46e7","q": "d8307089fb8585983adc5f99f01e31e69c41882291b874e179ad9742066269d786f8450ac8916f205089740b0e12485089962a60573e701198080c6a5e43945e7ec91cad1252ebab3e92a92f2c4157517b495acf4bea39e9fbb805a5a840e62d85287645f3139ed18e94ae71e058f4c568ed024806de4d0efd433baa085527d3"}'
+
+  tssenclave-1:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tssenclave:2.11.0-cffb25c3
+    pull_policy: always
+    container_name: tssenclave-1
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      DEV_MODE: "True"
+      USE_SOCAT: "false"
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+
+  tssenclave-2:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tssenclave:2.11.0-cffb25c3
+    pull_policy: always
+    container_name: tssenclave-2
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      DEV_MODE: "True"
+      USE_SOCAT: "false"
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+
+  tssenclave-3:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tssenclave:2.11.0-cffb25c3
+    pull_policy: always
+    container_name: tssenclave-3
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      DEV_MODE: "True"
+      USE_SOCAT: "false"
+      USE_LOCALSTACK: "True"
+      LOCALSTACK: http://localstack:4566
+
+  zenrockd:
+    build:
+      context: "./"
+      dockerfile: "./Dockerfile"
+      args:
+        GITLAB_TOKEN: ${GITLAB_TOKEN:-default}
+    container_name: zenrockd
+    user: root
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --server-response localhost:26657/status 2>&1 | grep -q 'HTTP/1.1 200 OK' && sleep 25"]
+      interval: 5s
+      timeout: 26s
+      retries: 3
+    volumes:
+      - ./scripts/zenrock-init.sh:/app/init.sh
+    entrypoint:
+      - /bin/sh
+    command:
+      - /app/init.sh
+    ports:
+    - published: 9790
+      target: 9790
+    - published: 36657
+      target: 26657
+
+  zenrock-tss-connector-1:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/zenrock-tss-connector:v2.1.3
+    pull_policy: always
+    build:
+      context: "./"
+      dockerfile: "./Dockerfile"
+      args:
+        GITLAB_TOKEN: ${GITLAB_TOKEN:-default}
+    container_name: connector-1
+    depends_on:
+      zenrockd:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      LOG_LEVEL: "debug"
+      CONTROLLER_ID: 1
+      CONNECTOR_ID: 100
+      ZENROCK_URL: "zenrockd:9790"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5552
+      DB_PATH: ":memory:"
+      BROADCAST_CHANNEL: "tss"
+      SEED_PHRASE: "top decade spare horn skin actor balcony swim prefer hood divert run sick save excess siege market proud enforce wood lecture drive near odor"
+      KEYRING_ADDRESS: "keyring1k6vc6vhp6e6l3rxalue9v4ux"
+      RSA_PRIVATE_KEY: '{"p": "cce1425933ec98f7bc99e7020de0ce37f85c49b933503381bc77f65caca5a7661bac32852121d16b6e6a562b6b20781e95fc9fbd485f746a310f19b2ef4e16d732045c2bbc66bb7acf61a15a4cc8c48e46f4f10d3aaa2f5fa38d351d2c8b6ed98e2ff4173f02f9575efdcba9593eb70790244c3d7cc74cb406216bab1b3b31f3","q": "d88b9d47f2135b2047a7602308e084eadb56f501a580eb47e7944da42d61ad17449514e22b445b6b0022dddf5fc8ec1969a77513509ac0c772014d3cd30083eb1364cb7d7ddebcbcc2d3bb941111c2a02dcda7397e90884fd56b3cc20ae10afac25ac92bfccaf23e0cb303f54342bc144eab9ac46783ee6043614ed80d375c9b"}'
+      CONTROLLER_RSA_PUB_KEY: '8eefd6339d9634e79e035128f554088ff58437d18edb1d87d03b76f81fcf1e991a5c2bfe0800d38dfdaeaedbd4718c39c51e3fa31c8407d9b4055a30ca0bca11068a6d42b23d29f88c1857a73a37a037633b2fb3e8b92ef5c7abfaac35fc0d105a6d397d82d706598d8d31436467a6b1f0ce57a0a89b7ad2e406338c76793869a459dc6efd14af8b9b02c196193e9afb00e9f6d442be3fc416f0bd551a4d0cf876320ce5ab8132a34b11664f471988c3fcb9e77f96897ac594ad7e8c3055d8bba217222e5a688c0a473bb48dd01aa6b8f6aad0cc9b9a7ea635598698e2ee9a82c0f88d9f3cfa3813a79fbb9f5701d0b14566311a4e752246c147f5fdee138de5'
+      SYNCHRONIZER_RSA_PUB_KEY: '8f8cdc3a32c1ccdd32bdce390488b52e743e016bc34b45c99afee1a62792d364ddea45fb292fd8656c12b327e7cae9954805df3412a1c34419e9e4fce1f0e34b955e8c19483ee7a4e46240991521a312f796fb473a93eeeab6ca672199fc0b453075f997a97bf367069f83b3093620ffc18215addde5914eeae0d2e7746c3dda051a55a2db01e108399531fb25625f94a3e0abaa7b6ad193cd43e0c4d8ec680245ac9793d043b25b60f564210f5435dd110b9c64a5644e2c1b70e6af18d2e6fed14b1e8428d05d59cee11bc5939630a581fe30f8b0bcb7bda799b475bf4e5ce89fddf4cf6ab506236082a4d62b1186e25a5db02b27abcaf0bf6096c54be99e41'
+
+  zenrock-tss-connector-2:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/zenrock-tss-connector:v2.1.3
+    pull_policy: always
+    container_name: connector-2
+    depends_on:
+      zenrockd:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      LOG_LEVEL: "debug"
+      CONTROLLER_ID: 2
+      CONNECTOR_ID: 200
+      KEY_REQUESTS_PER_SECOND: 2
+      SIGN_REQUESTS_PER_SECOND: 2
+      RETRY_SECONDS: 10
+      ZENROCK_URL: "zenrockd:9790"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5552
+      DB_PATH: ":memory:"
+      BROADCAST_CHANNEL: "tss"
+      SEED_PHRASE: "sausage diesel never robot balcony tube typical clap scrap little few try shock charge plunge creek quiz advance hub bomb border tape ecology scale"
+      KEYRING_ADDRESS: "keyring1k6vc6vhp6e6l3rxalue9v4ux"
+      RSA_PRIVATE_KEY: '{"p": "d26992c90d96d03baa01ba339f61d529568c6692addd8092a041d820c7481a28e3a0d4df13e96f4c987d6fe4b5e1ac8d9e6baf969c9afb26e4bb497bfde9ab301126d40b3898b6f78dec18361b2ccd8095fa20092c97d946b1186964b993a6f5e7d95c4c6a50d91741f553218076292d5622e90b0c63b98ab18f78b53880fb9b","q": "f18b2b8a5e628a9713f80402f92c4f45204161ce9c82b8818f8f392a719ac5675bbdfc29deb0ff950ea62c2c4378ed7937713c411604fd7dfa1754d9f6b7c631ff33f8c03b3544cd97819e0d81c093fd4d2ba4b52bd85733fc8a65d1908380966944de674d35ef4d4cc76ffb805dbee4684d1e0198073f34e3b1cc612a4382db"}'
+      CONTROLLER_RSA_PUB_KEY: '8c1eb51a66d9d59cbd5d8d938a61b7d6056f585980368b8882511058c746bad1d16080178a3635cc46bd06ea9b81d34a73475d982677b31f51a936f781d2ec7b3639b8bca6e3b7263a9e7318bc4c92b6674f17578e44e509a8565585ed69237ff6a3b2fb6068a70654d02c1f77d9c461794049690086375115ddc95ba18d04ededb9029cb5596b9f55710adcb9a57e17aa8653fada28cb86a7ba78166085827e6827e4a4d635a6194b245bf2661450ac8776d09864ab4477b04df900edd74e81aff92aed18005edab9e40da09f172408d6c9a9f0b4fad53448ba9521ade75db5d0dd197825664b7541937c8136c438a7a6c558dc110c15d238e10fff2cf5fb31'
+      SYNCHRONIZER_RSA_PUB_KEY: '8f8cdc3a32c1ccdd32bdce390488b52e743e016bc34b45c99afee1a62792d364ddea45fb292fd8656c12b327e7cae9954805df3412a1c34419e9e4fce1f0e34b955e8c19483ee7a4e46240991521a312f796fb473a93eeeab6ca672199fc0b453075f997a97bf367069f83b3093620ffc18215addde5914eeae0d2e7746c3dda051a55a2db01e108399531fb25625f94a3e0abaa7b6ad193cd43e0c4d8ec680245ac9793d043b25b60f564210f5435dd110b9c64a5644e2c1b70e6af18d2e6fed14b1e8428d05d59cee11bc5939630a581fe30f8b0bcb7bda799b475bf4e5ce89fddf4cf6ab506236082a4d62b1186e25a5db02b27abcaf0bf6096c54be99e41'
+
+  zenrock-tss-connector-3:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/zenrock-tss-connector:v2.1.3
+    pull_policy: always
+    container_name: connector-3
+    depends_on:
+      zenrockd:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      LOG_LEVEL: "debug"
+      CONTROLLER_ID: 3
+      CONNECTOR_ID: 300
+      KEY_REQUESTS_PER_SECOND: 2
+      SIGN_REQUESTS_PER_SECOND: 2
+      RETRY_SECONDS: 10
+      ZENROCK_URL: "zenrockd:9790"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5552
+      DB_PATH: ":memory:"
+      BROADCAST_CHANNEL: "tss"
+      SEED_PHRASE: "peace gym gown lab hand lens grain tide faint actor artist desk guess length million clarify walnut foam satoshi alarm title elevator stairs fetch"
+      KEYRING_ADDRESS: "keyring1k6vc6vhp6e6l3rxalue9v4ux"
+      RSA_PRIVATE_KEY: '{"p": "e2e59ac828d9dc37cf7763f2a290cf14d383291fdddf9bd02085eb8aa5b6e34674184c09b045636f20cd1e24f0ab51d43556c2e51d0796e7b255522591d26d5ee6c42b70c20c066bb50aa6f4889a38739a12884351becc48ccfaabda7485ece035e9e08db9328bceadc9311a8b1931e4071917e4ce60ea4e8ceffdb6ce165917","q": "fceca51c378110665c17096731f94443f892b8a55eb6c855160b74517a4900bc957f07927c794b9f2b043fd1c1f0304529aed3483711425b68802f79f21d1ed0b7ffd87cc7ae880230759ff9fb3730081a15f7f6d2590a16598107aab2979c44ec5c735f9bd38f30a4ae1ceb2303b743897b047d1560d247307be1d78e2a9177"}'
+      CONTROLLER_RSA_PUB_KEY: '86aedc72691fa1becac0b84842f1b3b0cd841f19d79c7dca2258c3a100dbc3d86446ece1228a86f90091b5a5d7fb770ecaa5948749e8bd7cff679e8d4989cd8e9692305f080c7fc34462a899b99466c8c9ea9ac05e71f067520234ce900217b3e70d90ea86bfd7c94b6a7d2ba704344996dad00fcec4bcbe5724483a63a52b64b29de5f21e95885d6001ba2c5f9d9c8966c0efe9bc603ad4a8db0533c6864f9e276d5c43772ebf0631cd3057c8f2d3219e83228cace9b889bc0739426cc4c4f4c63aa27b70ec79f66533ccb2c3660809ca1d8a6b922a43e57525a7942c7d1542336484161130653d3d444a2238ab35d3a701beaf9e880035638552a6dd38a165'
+      SYNCHRONIZER_RSA_PUB_KEY: '8f8cdc3a32c1ccdd32bdce390488b52e743e016bc34b45c99afee1a62792d364ddea45fb292fd8656c12b327e7cae9954805df3412a1c34419e9e4fce1f0e34b955e8c19483ee7a4e46240991521a312f796fb473a93eeeab6ca672199fc0b453075f997a97bf367069f83b3093620ffc18215addde5914eeae0d2e7746c3dda051a55a2db01e108399531fb25625f94a3e0abaa7b6ad193cd43e0c4d8ec680245ac9793d043b25b60f564210f5435dd110b9c64a5644e2c1b70e6af18d2e6fed14b1e8428d05d59cee11bc5939630a581fe30f8b0bcb7bda799b475bf4e5ce89fddf4cf6ab506236082a4d62b1186e25a5db02b27abcaf0bf6096c54be99e41'
+
+  tss-synchronizer:
+    image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/tss-synchronizer:v1.0.2
+    pull_policy: always
+    container_name: synchronizer
+    depends_on:
+      zenrockd:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      LOG_LEVEL: debug
+      ZENROCK_URL: zenrockd:9790
+      KEYRING_ADDRESS: "keyring1k6vc6vhp6e6l3rxalue9v4ux"
+      REQUESTS_RATE_LIMIT: 0.1
+      NEXT_ATTEMPT_INTERVAL: 10
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_PORT: 5552
+      BROADCAST_CHANNEL: tss
+      PSQL_HOST: postgres
+      PSQL_PORT: 5432
+      PSQL_USER: tss_user
+      PSQL_PASSWORD: dummy
+      PSQL_DB: tss_db
+      RSA_PRIVATE_KEY: '{"p": "c82139fdbe2518a627f4813e883e84ccb528e13ecd4846d117b27a0fa7ec9e8571b97228a1b53886562cb8d42eb323a6152ba5d2c9ba5b7cc208e07cfff9e29c266a241556a66a758242de3e3291aa3a9d777e010e9fb933db4c94dabf38a0d614b71e7aa1747285aaee0f1edb163f9a3aae3e18b67d44910e308a2e4f4ead2f","q": "b7a008f646ff738ccb529b8caa0bc6197e79affc6d45347cf425b4e37eec328a4ee82a50fac4c590ad4a600c9135923e2db3837f4f5ca6a23492e5aa2d3e69b70a79ad2521e3ea22c4f46d23d8f6204ac3b118e7517b12629d2f6ed273062c8ee94aa242c0d3225b3500eb31742a7eec4a0c6d257d88f101b61e72e3a738ef8f"}'
+
+  curl:
+    image: alpine
+    container_name: curl
+    tty: true
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl && exec sh"]
