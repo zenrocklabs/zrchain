@@ -35,7 +35,7 @@ jobs:
   integration-test:
     if: github.repository == 'zenrocklabs/zrchain'
     name: integration-test
-    runs-on: zenrock-devops
+    runs-on: zrchain
     defaults:
       run:
         working-directory: ./
