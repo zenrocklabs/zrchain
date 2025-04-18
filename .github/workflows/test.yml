@@ -53,7 +53,7 @@ jobs:
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
       - name: Start Docker Compose stack
-        run: docker compose up -d --wait
+        run: docker compose up -d --force-recreate --build
       - name: Run integration tests
         run: go test -v --tags=integration ./tests/integration/...
       - name: Stop Docker Compose stack
