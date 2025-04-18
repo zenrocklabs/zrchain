@@ -45,10 +45,17 @@ jobs:
         with:
           go-version: '1.23.2'
           cache-dependency-path: "**/*.sum"
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+        with:
+          registries: ${{ secrets.ECR_REGISTRY }}
       - name: Start Docker Compose stack
         run: docker compose up -d --wait
       - name: Run integration tests
         run: go test -v --tags=integration ./tests/integration/...
       - name: Stop Docker Compose stack
         if: always()
-        run: docker compose -f docker-compose.test.yml down
+        run: docker compose -f docker-compose.yml down
