@@ -351,11 +351,6 @@ services:
   zenrock-tss-connector-1:
     image: 654654203227.dkr.ecr.eu-west-1.amazonaws.com/zenrock-tss-connector:v2.1.3
     pull_policy: always
-    build:
-      context: "./"
-      dockerfile: "./Dockerfile"
-      args:
-        GITLAB_TOKEN: ${GITLAB_TOKEN:-default}
     container_name: connector-1
     depends_on:
       zenrockd:
