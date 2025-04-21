@@ -596,8 +596,8 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 		func(key uint64, value types.KeyRequest) (bool, error) {
 			return value.MpcBtl > 0 &&
 				value.MpcBtl < uint64(blockHeight) &&
-				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING ||
-				value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL, nil
+				(value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PENDING ||
+					value.Status == types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL), nil
 		},
 		func(key uint64, value types.KeyRequest) (*types.KeyRequest, error) {
 			return &value, nil
@@ -645,8 +645,8 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 		func(key uint64, value types.SignRequest) (bool, error) {
 			return value.MpcBtl > 0 &&
 				value.MpcBtl < uint64(blockHeight) &&
-				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING ||
-				value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL, nil
+				(value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING ||
+					value.Status == types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL), nil
 		},
 		func(key uint64, value types.SignRequest) (*types.SignRequest, error) {
 			return &value, nil
