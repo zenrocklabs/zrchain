@@ -15,9 +15,9 @@ func UpdateParams(
 		return err
 	}
 
-	p.Solana.NonceAccountKey = 34
-	p.Solana.NonceAuthorityKey = 35
-	p.Solana.SignerKeyId = 36
+	p.Solana.NonceAccountKey = 10
+	p.Solana.NonceAuthorityKey = 11
+	p.Solana.SignerKeyId = 12
 
 	return params.Set(ctx, p)
 }
