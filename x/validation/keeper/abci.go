@@ -1324,16 +1324,14 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		nil,
 		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
-			return k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+			mints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+			return mints, err
 		},
 		func(tx *zentptypes.Bridge) error {
-			// Check for pending tx, if there are some - wait until they are completed, so that we can use the durable nonce
-			pendings, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
-			if err != nil {
-				return fmt.Errorf("cannot get pending mints: %w", err)
-			}
-			if len(pendings) > 0 {
-				return fmt.Errorf("waiting for pending mint to complete")
+			// Check whether this tx has already been processed, if it has been - we wait for it to complete (or timeout)
+			if tx.BlockHeight > 0 {
+				k.Logger(ctx).Info("waiting for pending zentp solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
+				return nil
 			}
 
 			// Check for consensus
