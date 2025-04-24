@@ -1328,6 +1328,10 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	}
 
 	tokenAccount := new(token.Account)
+
+	if resp.Account == nil {
+		return *tokenAccount, nil
+	}
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	err = tokenAccount.UnmarshalWithDecoder(decoder)
