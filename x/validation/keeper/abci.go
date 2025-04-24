@@ -1477,7 +1477,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Info("processSolanaZenBTCMintEvents, events#: %d", oracleData.SolanaMintEvents)
+	k.Logger(ctx).Info("processSolanaZenBTCMintEvents, events#: %d", len(oracleData.SolanaMintEvents))
 	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
