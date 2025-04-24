@@ -180,7 +180,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
-		// SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
+		//SolanaMintEventsHash:       solanaBurnEventsHash[:],
 		SolanaBurnEventsHash: solanaBurnEventsHash[:],
 	}
 
@@ -1477,6 +1477,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
+	k.Logger(ctx).Info("processSolanaZenBTCMintEvents, events#: %d", oracleData.SolanaMintEvents)
 	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -1485,6 +1486,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 		k.Logger(ctx).Error("GetFirstPendingSolMintTransaction: ", err.Error())
 		return
 	}
+	k.Logger(ctx).Info("GetFirstPendingSolMintTransaction: ", id)
 	if id == 0 {
 		return
 	}
@@ -1543,8 +1545,12 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 				"minted_new", supply.MintedZenBTC,
 			)
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint)
-			k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0)
+			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
+			}
+			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
+				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
+			}
 		}
 	}
 }
