@@ -143,6 +143,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, err
 	}
+	solanaMintEventsHash, err := deriveHash(oracleData.SolanaMintEvents)
 
 	solAccs, err := k.collectSolanaAccounts(ctx)
 	if err != nil {
@@ -181,8 +182,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
-		// SolanaROCKMintEventsHash:   solROCKMintEventsHash[:],
-		SolanaBurnEventsHash: solanaBurnEventsHash[:],
+		SolanaMintEventsHash:       solanaMintEventsHash[:],
+		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
 	}
 
 	return voteExt, nil
@@ -1450,6 +1451,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, id)
 			if err != nil {
 				k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+				return
 			}
 			if len(childReq.SignedData) != 1 {
 				continue
@@ -1503,6 +1505,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	sigReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, tx.SignRequestId)
 	if err != nil {
 		k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+		return
 	}
 
 	var (
@@ -1543,8 +1546,12 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 				"minted_new", supply.MintedZenBTC,
 			)
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint)
-			k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0)
+			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
+			}
+			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
+				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
+			}
 		}
 	}
 }

@@ -125,7 +125,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolanaROCKMintEventsHash; i++ {
+	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolanaMintEventsHash; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
@@ -259,7 +259,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldZRChainBlockHeight; field <= VEFieldSolanaROCKMintEventsHash; field++ {
+	for field := VEFieldZRChainBlockHeight; field <= VEFieldSolanaMintEventsHash; field++ {
 		// Skip logging the ZRChainBlockHeight field
 		if field == VEFieldZRChainBlockHeight {
 			continue
