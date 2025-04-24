@@ -350,23 +350,23 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
-		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
-			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
-		}
+		// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
+		// 	k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
+		// }
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
 			k.storeNewZenBTCRedemptions(ctx, oracleData)
 		}
 
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMintsEthereum(ctx, oracleData)
-		k.processZenBTCMintsSolana(ctx, oracleData)
+		// k.processZenBTCMintsSolana(ctx, oracleData)
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
-		k.processSolanaZenBTCMintEvents(ctx, oracleData)
-		k.processSolanaROCKMints(ctx, oracleData)
-		k.processSolanaROCKMintEvents(ctx, oracleData)
-		k.clearSolanaAccounts(ctx)
+		// k.processSolanaZenBTCMintEvents(ctx, oracleData)
+		// k.processSolanaROCKMints(ctx, oracleData)
+		// k.processSolanaROCKMintEvents(ctx, oracleData)
+		// k.clearSolanaAccounts(ctx)
 	}
 
 	k.recordNonVotingValidators(ctx, req)
