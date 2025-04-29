@@ -1419,7 +1419,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 
-	protocolWalletAddress, bridgeFee, err := k.GetBridgeFeeParams(ctx)
+	protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
 		return
@@ -1449,7 +1449,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.SplitBridgeAmount(ctx, pendingMint.Amount, bridgeFee)
+		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, pendingMint.Amount, bridgeFee)
 		if err != nil {
 			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
 			return
@@ -1978,13 +1978,13 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		protocolWalletAddress, bridgeFee, err := k.GetBridgeFeeParams(ctx)
+		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
 			return
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.SplitBridgeAmount(ctx, burn.Amount, bridgeFee)
+		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, burn.Amount, bridgeFee)
 		if err != nil {
 			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
 			return

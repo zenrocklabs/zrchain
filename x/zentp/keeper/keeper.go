@@ -8,13 +8,12 @@ import (
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/pkg/errors"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
@@ -34,6 +33,7 @@ type (
 		accountKeeper    types.AccountKeeper
 		identityKeeper   types.IdentityKeeper
 		validationKeeper types.ValidationKeeper
+		mintKeeper       types.MintKeeper
 		mintStore        collections.Map[uint64, types.Bridge]
 		MintCount        collections.Item[uint64]
 		burnStore        collections.Map[uint64, types.Bridge]
@@ -52,6 +52,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	identityKeeper types.IdentityKeeper,
 	validationKeeper types.ValidationKeeper,
+	mintKeeper types.MintKeeper,
 	memStoreService store.MemoryStoreService,
 	testMode bool,
 ) Keeper {
@@ -83,6 +84,7 @@ func NewKeeper(
 		accountKeeper:    accountKeeper,
 		identityKeeper:   identityKeeper,
 		validationKeeper: validationKeeper,
+		mintKeeper:       mintKeeper,
 	}
 
 	return k
@@ -196,17 +198,35 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 	return k.burnStore.Set(ctx, burnID, *burn)
 }
 
-func (k Keeper) GetBridgeFeeParam(ctx context.Context) (math.LegacyDec, error) {
+func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {
+
+	mintParams, err := k.mintKeeper.GetParams(ctx)
+	if err != nil {
+		return nil, math.LegacyDec{}, err
+	}
+	protocolWalletAddress := sdk.MustAccAddressFromBech32(mintParams.ProtocolWalletAddress)
 
 	params, err := k.ParamStore.Get(ctx)
-	if err != nil {
-		return math.LegacyDec{}, err
-	}
+
 	bridgeFee := params.BridgeFee
-
-	if bridgeFee.GT(sdkmath.LegacyNewDec(100)) {
-		return math.LegacyDec{}, errors.New("bridge fee cannot exceed 100%")
+	if err != nil {
+		return nil, math.LegacyDec{}, err
 	}
 
-	return bridgeFee, nil
+	return protocolWalletAddress, bridgeFee, nil
+}
+
+func (k Keeper) SplitBridgeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, sdk.Coins, error) {
+
+	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
+
+	bridgeFeeCoins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, bridgeFeeAmount))
+	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount).Sub(bridgeFeeAmount)))
+
+	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(math.NewIntFromUint64(amount)) {
+		return nil, nil, fmt.Errorf("bridge fee and amount cannot exceed original amount")
+	}
+
+	return bridgeFeeCoins, bridgeAmount, nil
+
 }

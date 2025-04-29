@@ -8,7 +8,6 @@ import (
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -128,9 +127,6 @@ type ZentpKeeper interface {
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
 	GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*zentptypes.Bridge, error)
 	AddBurn(ctx context.Context, burn *zentptypes.Bridge) error
-	GetBridgeFeeParam(ctx context.Context) (math.LegacyDec, error)
-}
-
-type MintKeeper interface {
-	GetParams(ctx context.Context) (minttypes.Params, error)
+	GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error)
+	SplitBridgeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, sdk.Coins, error)
 }

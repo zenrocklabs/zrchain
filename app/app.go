@@ -466,7 +466,6 @@ func NewZenrockApp(
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
 		&app.ZentpKeeper,
-		&app.MintKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -727,6 +726,7 @@ func NewZenrockApp(
 		app.AccountKeeper,
 		app.IdentityKeeper,
 		app.ValidationKeeper,
+		app.MintKeeper,
 		runtime.NewMemStoreService(memKeys[zentptypes.MemStoreKey]),
 		false,
 	)
