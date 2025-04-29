@@ -1481,7 +1481,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					return
 				}
 
-				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, sdk.MustAccAddressFromBech32(protocolWalletAddress), bridgeAmount)
+				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeAmount)
 				if err != nil {
 					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
 					return
@@ -1977,7 +1977,24 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			k.Logger(ctx).Error(fmt.Errorf("AccAddressFromBech32: %w", err).Error())
 			continue
 		}
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
+
+		protocolWalletAddress, bridgeFee, err := k.GetBridgeFeeParams(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
+			return
+		}
+
+		bridgeFeeCoins, bridgeAmount, err := k.SplitBridgeAmount(ctx, burn.Amount, bridgeFee)
+		if err != nil {
+			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			return
+		}
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
+		}
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{

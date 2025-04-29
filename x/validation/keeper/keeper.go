@@ -260,17 +260,17 @@ func (k Keeper) SetSolanaRequestedAccount(ctx context.Context, address string, s
 	return k.SolanaAccountsRequested.Set(ctx, address, state)
 }
 
-func (k Keeper) GetBridgeFeeParams(ctx context.Context) (string, math.LegacyDec, error) {
+func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {
 
 	params, err := k.mintKeeper.GetParams(ctx)
 	if err != nil {
-		return "", math.LegacyDec{}, err
+		return nil, math.LegacyDec{}, err
 	}
-	protocolWalletAddress := params.ProtocolWalletAddress
+	protocolWalletAddress := sdk.MustAccAddressFromBech32(params.ProtocolWalletAddress)
 
 	bridgeFee, err := k.zentpKeeper.GetBridgeFeeParam(ctx)
 	if err != nil {
-		return "", math.LegacyDec{}, err
+		return nil, math.LegacyDec{}, err
 	}
 
 	return protocolWalletAddress, bridgeFee, nil
