@@ -17,13 +17,6 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "params",
 					Short:     "Shows the parameters of the module",
 				},
-				{
-					RpcMethod:      "Burns",
-					Use:            "burns [id] [denom]",
-					Short:          "Query burns",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "id"}, {ProtoField: "denom"}},
-				},
-
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},

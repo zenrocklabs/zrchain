@@ -49,11 +49,10 @@ type (
 		RequestedCompleterNonce    uint64
 		SolanaMintNonceHashes      []byte
 		SolanaAccountsHash         []byte
-		SolanaROCKMintEventsHash   []byte
-		SolanaZenBTCMintEventsHash []byte
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
 		SolanaBurnEventsHash       []byte
+		SolanaMintEventsHash       []byte
 		RedemptionsHash            []byte
 		ROCKUSDPrice               string
 		BTCUSDPrice                string
@@ -281,8 +280,7 @@ const (
 	VEFieldLatestBtcHeaderHash
 	VEFieldSolanaMintNoncesHash
 	VEFieldSolanaAccountsHash
-	VEFieldSolanaROCKMintEventsHash
-	VEFieldSolanaZenBTCMintEventsHash
+	VEFieldSolanaMintEventsHash
 )
 
 // FieldHandler defines operations for processing a specific vote extension field
@@ -365,8 +363,8 @@ func (f VoteExtensionField) String() string {
 		return "SolanaMintNoncesHash"
 	case VEFieldSolanaAccountsHash:
 		return "SolanaAccountsHash"
-	case VEFieldSolanaROCKMintEventsHash:
-		return "SolanaROCKMintEventsHash"
+	case VEFieldSolanaMintEventsHash:
+		return "SolanaMintEventsHash"
 	default:
 		return "Unknown"
 	}
@@ -417,9 +415,9 @@ func initializeFieldHandlers() []FieldHandler {
 			SetValue: func(v any, ve *VoteExtension) { ve.SolanaAccountsHash = v.([]byte) },
 		},
 		{
-			Field:    VEFieldSolanaROCKMintEventsHash,
-			GetValue: func(ve VoteExtension) any { return ve.SolanaROCKMintEventsHash },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolanaROCKMintEventsHash = v.([]byte) },
+			Field:    VEFieldSolanaMintEventsHash,
+			GetValue: func(ve VoteExtension) any { return ve.SolanaMintEventsHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolanaMintEventsHash = v.([]byte) },
 		},
 
 		// Integer fields

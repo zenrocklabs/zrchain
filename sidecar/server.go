@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -176,6 +177,9 @@ func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.Solan
 		},
 	)
 	if err != nil {
+		if errors.Is(err, rpc.ErrNotFound) {
+			return &api.SolanaAccountInfoResponse{}, nil
+		}
 		return nil, fmt.Errorf("failed to get Solana account info: %w", err)
 	}
 	return &api.SolanaAccountInfoResponse{

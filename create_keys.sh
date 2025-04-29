@@ -13,6 +13,7 @@ key_types=(
 	"ed25519"  #10
 	"ed25519"  #11
         "ed25519"  #12
+        "ed25519"  #13
 ) 
 
 workspace="workspace14a2hpadpsy9h4auve2z8lw"
