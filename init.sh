@@ -175,7 +175,7 @@ if [ "$START_ONLY" = false ]; then
           "signer_key_id": 1,
           "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
           "nonce_authority_key": 8,
-          "nonce_account_key": 9
+          "nonce_account_key": 9,
           "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
           "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
           "fee": 20,
