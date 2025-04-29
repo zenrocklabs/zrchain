@@ -182,8 +182,8 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
 		SolanaMintNonceHashes:      solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
-		//SolanaMintEventsHash:       solanaBurnEventsHash[:],
-		SolanaBurnEventsHash: solanaBurnEventsHash[:],
+		SolanaMintEventsHash:       solanaMintEventsHash[:],
+		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
 	}
 
 	return voteExt, nil

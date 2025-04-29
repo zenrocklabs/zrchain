@@ -292,21 +292,6 @@ func (o *Oracle) fetchAndProcessState(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// TODO: put id in config
-		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		updateMutex.Unlock()
-	}()
-
-	// Fetch SolRockBTC Mints
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
@@ -336,7 +321,7 @@ func (o *Oracle) fetchAndProcessState(
 	go func() {
 		defer wg.Done()
 		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
-		events, err := o.getSolanaBurnEvents(solanaProgramID)
+		events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
 			return
