@@ -36,9 +36,11 @@ type BankKeeper interface {
 	GetSupply(ctx context.Context, denom string) sdk.Coin
 
 	SendCoinsFromModuleToModule(ctx context.Context, senderPool, recipientPool string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	UndelegateCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	DelegateCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 
+	MintCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
 	BurnCoins(ctx context.Context, name string, amt sdk.Coins) error
 }
 
@@ -123,4 +125,6 @@ type ZentpKeeper interface {
 	GetSolanaParams(ctx context.Context) *zentptypes.Solana
 	GetMintsWithStatus(goCtx context.Context, status zentptypes.BridgeStatus) ([]*zentptypes.Bridge, error)
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
+	GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*zentptypes.Bridge, error)
+	AddBurn(ctx context.Context, burn *zentptypes.Bridge) error
 }

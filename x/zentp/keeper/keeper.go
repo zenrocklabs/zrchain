@@ -179,3 +179,16 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
 	return k.mintStore.Set(ctx, id, *mint)
 }
+
+func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
+	burnID, err := k.BurnCount.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := k.BurnCount.Set(ctx, burnID+1); err != nil {
+		return err
+	}
+
+	return k.burnStore.Set(ctx, burnID, *burn)
+}
