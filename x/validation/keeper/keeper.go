@@ -38,7 +38,7 @@ type Keeper struct {
 	zrConfig              *params.ZRConfig
 	sidecarClient         sidecarClient
 	zentpKeeper           types.ZentpKeeper
-
+	mintKeeper            types.MintKeeper
 	// AVSDelegations - keys: validator addr + delegator addr (operator) | value: delegation amount
 	AVSDelegations collections.Map[collections.Pair[string, string], math.Int]
 	// ValidatorDelegations - key: validator addr | value: total amount delegated to validator
@@ -83,6 +83,7 @@ func NewKeeper(
 	treasuryKeeper *treasury.Keeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 	zentpKeeper types.ZentpKeeper,
+	mintKeeper types.MintKeeper,
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
@@ -121,21 +122,21 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		storeService:          storeService,
-		cdc:                   cdc,
-		authKeeper:            ak,
-		bankKeeper:            bk,
-		hooks:                 nil,
-		authority:             authority,
-		txDecoder:             txDecoder,
-		zrConfig:              zrConfig,
-		sidecarClient:         oracleClient,
-		treasuryKeeper:        treasuryKeeper,
-		zenBTCKeeper:          zenBTCKeeper,
-		zentpKeeper:           zentpKeeper,
-		validatorAddressCodec: validatorAddressCodec,
-		consensusAddressCodec: consensusAddressCodec,
-
+		storeService:                      storeService,
+		cdc:                               cdc,
+		authKeeper:                        ak,
+		bankKeeper:                        bk,
+		hooks:                             nil,
+		authority:                         authority,
+		txDecoder:                         txDecoder,
+		zrConfig:                          zrConfig,
+		sidecarClient:                     oracleClient,
+		treasuryKeeper:                    treasuryKeeper,
+		zenBTCKeeper:                      zenBTCKeeper,
+		zentpKeeper:                       zentpKeeper,
+		validatorAddressCodec:             validatorAddressCodec,
+		consensusAddressCodec:             consensusAddressCodec,
+		mintKeeper:                        mintKeeper,
 		AVSDelegations:                    collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
 		ValidatorDelegations:              collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
 		AVSRewardsPool:                    collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),
@@ -257,4 +258,35 @@ func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state
 
 func (k Keeper) SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error {
 	return k.SolanaAccountsRequested.Set(ctx, address, state)
+}
+
+func (k Keeper) GetBridgeFeeParams(ctx context.Context) (string, math.LegacyDec, error) {
+
+	params, err := k.mintKeeper.GetParams(ctx)
+	if err != nil {
+		return "", math.LegacyDec{}, err
+	}
+	protocolWalletAddress := params.ProtocolWalletAddress
+
+	bridgeFee, err := k.zentpKeeper.GetBridgeFeeParam(ctx)
+	if err != nil {
+		return "", math.LegacyDec{}, err
+	}
+
+	return protocolWalletAddress, bridgeFee, nil
+}
+
+func (k Keeper) SplitBridgeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, sdk.Coins, error) {
+
+	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
+
+	bridgeFeeCoins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, bridgeFeeAmount))
+	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount).Sub(bridgeFeeAmount)))
+
+	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(math.NewIntFromUint64(amount)) {
+		return nil, nil, fmt.Errorf("bridge fee and amount cannot exceed original amount")
+	}
+
+	return bridgeFeeCoins, bridgeAmount, nil
+
 }

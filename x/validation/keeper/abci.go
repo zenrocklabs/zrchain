@@ -1418,6 +1418,13 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
+
+	protocolWalletAddress, bridgeFee, err := k.GetBridgeFeeParams(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
+		return
+	}
+
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -1442,6 +1449,12 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
 		}
 
+		bridgeFeeCoins, bridgeAmount, err := k.SplitBridgeAmount(ctx, pendingMint.Amount, bridgeFee)
+		if err != nil {
+			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			return
+		}
+
 		var (
 			signatures []byte
 			sigHash    [32]byte
@@ -1461,10 +1474,16 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		sigHash = sha256.Sum256(signatures)
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
-				coins := sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, math.NewIntFromUint64(pendingMint.Amount)))
-				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, coins)
+
+				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeFeeCoins)
 				if err != nil {
 					k.Logger(ctx).Error("Burn %s: %s", pendingMint.Denom, err.Error())
+					return
+				}
+
+				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, sdk.MustAccAddressFromBech32(protocolWalletAddress), bridgeAmount)
+				if err != nil {
+					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
 					return
 				}
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED

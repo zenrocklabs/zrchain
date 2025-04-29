@@ -7,11 +7,14 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	treasuryTypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/pkg/errors"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
@@ -191,4 +194,19 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 	}
 
 	return k.burnStore.Set(ctx, burnID, *burn)
+}
+
+func (k Keeper) GetBridgeFeeParam(ctx context.Context) (math.LegacyDec, error) {
+
+	params, err := k.ParamStore.Get(ctx)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+	bridgeFee := params.BridgeFee
+
+	if bridgeFee.GT(sdkmath.LegacyNewDec(100)) {
+		return math.LegacyDec{}, errors.New("bridge fee cannot exceed 100%")
+	}
+
+	return bridgeFee, nil
 }
