@@ -45,7 +45,7 @@ func NewZenBTCQueryClient(c *grpc.ClientConn) *ZenBTCQueryClient {
 //	    // Handle error
 //	}
 func (c *ZenBTCQueryClient) LockTransactions(ctx context.Context) (*types.QueryLockTransactionsResponse, error) {
-	return c.client.LockTransactions(ctx, &types.QueryLockTransactionsRequest{})
+	return c.client.GetLockTransactions(ctx, &types.QueryLockTransactionsRequest{})
 }
 
 func (c *ZenBTCQueryClient) Redemptions(ctx context.Context, startIndex uint64, status types.RedemptionStatus) (*types.QueryRedemptionsResponse, error) {
