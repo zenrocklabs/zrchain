@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1478,34 +1479,36 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Info("processSolanaZenBTCMintEvents, events#: %d", len(oracleData.SolanaMintEvents))
+	k.Logger(ctx).Warn("starting processSolanaZenBTCMintEvents", "event_count", len(oracleData.SolanaMintEvents))
 	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: no pending Solana mint transactions found")
 			return
 		}
-		k.Logger(ctx).Error("GetFirstPendingSolMintTransaction: ", err.Error())
+		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting first pending Solana mint transaction", "error", err)
 		return
 	}
-	k.Logger(ctx).Info("GetFirstPendingSolMintTransaction: ", id)
+	k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: first pending Solana mint transaction", "id", id)
 	if id == 0 {
+		k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: no pending Solana mint transactions found")
 		return
 	}
 	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, id)
 	if err != nil {
-		k.Logger(ctx).Error("GetPendingMintTransactionsStore.Get: ", err.Error())
+		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting pending mint transaction", "id", id, "error", err)
 		return
 	}
 
 	tx, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, id)
 	if err != nil {
-		k.Logger(ctx).Error("SignTransactionRequestStore.Get: ", err.Error())
+		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting sign transaction request", "id", id, "error", err)
 		return
 	}
 
 	sigReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, tx.SignRequestId)
 	if err != nil {
-		k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting sign request", "id", tx.SignRequestId, "error", err)
 		return
 	}
 
@@ -1517,7 +1520,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	for _, id := range sigReq.ChildReqIds {
 		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, id)
 		if err != nil {
-			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+			k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting child sign request", "id", id, "error", err)
 		}
 		if len(childReq.SignedData) != 1 {
 			continue
@@ -1529,29 +1532,29 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 		if bytes.Equal(event.SigHash, sigHash[:]) {
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
-				k.Logger(ctx).Error("zenBTCKeeper.GetSupply: ", err.Error())
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting zenBTC supply", "error", err)
 				return
 			}
 			supply.PendingZenBTC -= pendingMint.Amount
 			supply.MintedZenBTC += pendingMint.Amount
 			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				k.Logger(ctx).Error("zenBTCKeeper.SetSupply: ", err.Error())
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error setting zenBTC supply", "error", err)
 				return
 			}
-			k.Logger(ctx).Warn("pending mint supply updated",
+			k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: pending mint supply updated",
 				"pending_mint_old", supply.PendingZenBTC+pendingMint.Amount,
 				"pending_mint_new", supply.PendingZenBTC,
 			)
-			k.Logger(ctx).Warn("minted supply updated",
+			k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: minted supply updated",
 				"minted_old", supply.MintedZenBTC-pendingMint.Amount,
 				"minted_new", supply.MintedZenBTC,
 			)
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
-				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error setting pending mint transaction", "error", err)
 			}
 			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
-				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error setting first pending Solana mint transaction", "error", err)
 			}
 		}
 	}
@@ -1569,26 +1572,31 @@ func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData Orac
 
 // storeNewZenBTCBurnEvents is a helper function to store new burn events from a given source.
 func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecarapitypes.BurnEvent, source string, nonceErrorMsg string) {
+	k.Logger(ctx).Warn("starting storeNewZenBTCBurnEvents", "source", source, "event_count", len(burnEvents))
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
-	for _, burn := range burnEvents {
+	for i, burn := range burnEvents {
+		k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: processing event", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex, "chain_id", burn.ChainID, "amount", burn.Amount)
 		// Check if this burn event already exists
 		exists := false
-		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
+		walkErr := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
 			// Compare fields from the input burn event data with the stored BurnEvent
 			if existingBurn.TxID == burn.TxID &&
 				existingBurn.LogIndex == burn.LogIndex &&
 				existingBurn.ChainID == burn.ChainID {
+				k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: event already exists", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex, "chain_id", burn.ChainID, "existing_id", id)
 				exists = true
-				return true, nil
+				return true, nil // Stop walking
 			}
-			return false, nil
-		}); err != nil {
-			k.Logger(ctx).Error("error walking burn events", "source", source, "error", err)
-			continue
+			return false, nil // Continue walking
+		})
+		if walkErr != nil {
+			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: error walking burn events", "index", i, "source", source, "error", walkErr)
+			continue // Process next event
 		}
 
 		if !exists {
+			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: event does not exist, creating new", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex, "chain_id", burn.ChainID)
 			// Create a new BurnEvent using data from the input struct
 			newBurn := zenbtctypes.BurnEvent{
 				TxID:            burn.TxID,
@@ -1598,22 +1606,28 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 				Amount:          burn.Amount,
 				Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
 			}
-			id, err := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
-			if err != nil {
-				k.Logger(ctx).Error("error creating burn event", "source", source, "error", err)
-				continue
+			createdID, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
+			if createErr != nil {
+				k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: error creating burn event", "index", i, "source", source, "tx_id", burn.TxID, "error", createErr)
+				continue // Process next event
 			}
-			k.Logger(ctx).Info(fmt.Sprintf("created new %s burn event", source), "id", id)
+			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: created new burn event", "index", i, "source", source, "new_id", createdID, "tx_id", burn.TxID, "log_index", burn.LogIndex)
 			foundNewBurn = true
+		} else {
+			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: skipping existing event", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex)
 		}
 	}
 
 	// If a new burn event is found, we need to request the unstaker's Ethereum nonce
 	// because the unstaking transaction happens on Ethereum, regardless of the burn source.
 	if foundNewBurn {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error(nonceErrorMsg, "error", err)
+		unstakerKeyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
+		k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: found new burn events, setting EthereumNonceRequested for unstaker", "source", source, "unstaker_key_id", unstakerKeyID)
+		if err := k.EthereumNonceRequested.Set(ctx, unstakerKeyID, true); err != nil {
+			k.Logger(ctx).Warn(fmt.Sprintf("storeNewZenBTCBurnEvents: %s", nonceErrorMsg), "source", source, "error", err)
 		}
+	} else {
+		k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: no new burn events found", "source", source)
 	}
 }
 
@@ -1922,47 +1936,73 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 }
 
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
+	k.Logger(ctx).Warn("starting processSolanaROCKBurnEvents", "event_count", len(oracleData.SolanaBurnEvents))
 	var toProcess []*sidecarapitypes.BurnEvent
-	for _, e := range oracleData.SolanaBurnEvents {
+	for i, e := range oracleData.SolanaBurnEvents {
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: processing event", "index", i, "tx_id", e.TxID, "chain_id", e.ChainID, "amount", e.Amount, "destination_bytes", hex.EncodeToString(e.DestinationAddr))
 
-		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())
+		// Try to parse destination address assuming it's the first 20 bytes for EVM-like addresses on Solana?
+		if len(e.DestinationAddr) < 20 {
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: destination address too short", "index", i, "tx_id", e.TxID, "len", len(e.DestinationAddr))
 			continue
 		}
+		destBytes := e.DestinationAddr[:20]
+		addr, err := sdk.Bech32ifyAddressBytes("zen", destBytes)
+		if err != nil {
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to Bech32ify destination address", "index", i, "tx_id", e.TxID, "dest_bytes", hex.EncodeToString(destBytes), "error", err)
+			continue
+		}
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: checking for existing burn record", "index", i, "tx_id", e.TxID, "chain_id", e.ChainID, "recipient_bech32", addr)
 		burns, err := k.zentpKeeper.GetBurns(ctx, addr, e.ChainID, e.TxID)
 		if err != nil {
-			k.Logger(ctx).Error(err.Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: error checking for existing burn record", "index", i, "tx_id", e.TxID, "error", err)
 			continue
 		}
 		if len(burns) > 0 {
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: burn already processed, skipping", "index", i, "tx_id", e.TxID, "existing_burn_count", len(burns))
 			continue // burn already processed
 		} else {
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: burn not yet processed, adding to list", "index", i, "tx_id", e.TxID)
 			toProcess = append(toProcess, &e)
 		}
 	}
 
+	k.Logger(ctx).Warn("processSolanaROCKBurnEvents: finished filtering events", "to_process_count", len(toProcess))
+
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
-	for _, burn := range toProcess {
+	for i, burn := range toProcess {
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: processing new burn", "index", i, "tx_id", burn.TxID, "amount", burn.Amount)
 		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: minting coins", "index", i, "tx_id", burn.TxID, "module", zentptypes.ModuleName, "coins", coins.String())
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to mint coins", "index", i, "tx_id", burn.TxID, "error", err)
 			continue
 		}
-		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
+
+		// Re-derive bech32 address for sending
+		if len(burn.DestinationAddr) < 20 {
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: destination address too short for sending", "index", i, "tx_id", burn.TxID)
+			continue // Should have been caught earlier, but double-check
+		}
+		destBytes := burn.DestinationAddr[:20]
+		addr, err := sdk.Bech32ifyAddressBytes("zen", destBytes)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to Bech32ify destination address for sending", "index", i, "tx_id", burn.TxID, "error", err)
 			continue
 		}
 		accAddr, err := sdk.AccAddressFromBech32(addr)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("AccAddressFromBech32: %w", err).Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to convert Bech32 to AccAddress", "index", i, "tx_id", burn.TxID, "bech32_addr", addr, "error", err)
 			continue
 		}
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: sending coins to recipient", "index", i, "tx_id", burn.TxID, "recipient", accAddr.String(), "coins", coins.String())
 		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to send coins", "index", i, "tx_id", burn.TxID, "recipient", accAddr.String(), "error", err)
+			// TODO: What should happen here? Burn the minted coins? Retry later?
+			continue // Continue to adding burn record for now
 		}
-		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
+
+		bridgeRecord := &zentptypes.Bridge{
 			Denom:            params.BondDenom,
 			Amount:           burn.Amount,
 			RecipientAddress: accAddr.String(),
@@ -1970,9 +2010,12 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			TxHash:           burn.TxID,
 			State:            zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED,
 			BlockHeight:      ctx.BlockHeight(),
-		})
+		}
+		k.Logger(ctx).Warn("processSolanaROCKBurnEvents: adding burn record", "index", i, "tx_id", burn.TxID, "record", fmt.Sprintf("%+v", bridgeRecord))
+		err = k.zentpKeeper.AddBurn(ctx, bridgeRecord)
 		if err != nil {
-			k.Logger(ctx).Error(err.Error())
+			k.Logger(ctx).Warn("processSolanaROCKBurnEvents: failed to add burn record", "index", i, "tx_id", burn.TxID, "error", err)
 		}
 	}
+	k.Logger(ctx).Warn("finished processSolanaROCKBurnEvents")
 }
