@@ -809,7 +809,10 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		nonceUpdatedCallback(pendingTxs[0])
+		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
+			return
+		}
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
@@ -1059,6 +1062,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
+				return nil
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
