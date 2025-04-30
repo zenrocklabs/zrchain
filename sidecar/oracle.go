@@ -78,25 +78,8 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
-	// Initial alignment: Fetch NTP time once at startup
-	ntpTime, err := ntp.Time("time.google.com")
-	if err != nil {
-		// If NTP fails at startup, log warning and proceed without alignment.
-		log.Printf("Warning: Failed to fetch NTP time at startup: %v. Initial ticker alignment skipped.", err)
-		ntpTime = time.Now() // Use local time as fallback for duration calculation
-	}
-
 	// Define ticker interval duration
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
-
-	// Align the start time to the nearest MainLoopTickerInterval if NTP succeeded
-	if err == nil { // Only align if NTP fetch was successful
-		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-		log.Printf("NTP alignment successful. First aligned update target: %s. Starting loop immediately.", alignedStart.Format("2006-01-02 15:04:05"))
-	} else {
-		log.Printf("NTP alignment skipped due to error. Starting loop immediately.")
-	}
-
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
@@ -134,10 +117,10 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			sleepDuration = time.Until(nextIntervalMark)
 
 			if sleepDuration > 0 {
-				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%s) to apply update.",
+				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
 					sleepDuration.Round(time.Millisecond),
 					alignmentSource,
-					nextIntervalMark.Round(time.Second).Format("2006-01-02 15:04:05"))
+					nextIntervalMark.Round(time.Second))
 				time.Sleep(sleepDuration)
 			} else {
 				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
