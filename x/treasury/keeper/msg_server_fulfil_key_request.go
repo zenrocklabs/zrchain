@@ -69,7 +69,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 				return nil, err
 			}
-			return nil, nil
+			return &types.MsgFulfilKeyRequestResponse{}, nil
 		}
 	}
 
