@@ -119,7 +119,7 @@ var (
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters
-	MainLoopTickerIntervalSeconds = 10 // Seconds
+	MainLoopTickerIntervalSeconds = 30 // Seconds
 	OracleCacheSize               = 20
 	EthBurnEventsBlockRange       = 1000
 	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
