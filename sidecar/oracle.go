@@ -172,7 +172,7 @@ func (o *Oracle) fetchAndProcessState(
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
-
+	log.Printf("Retrieved latest %s header (block %d) at: %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now())
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
