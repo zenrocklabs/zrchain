@@ -688,6 +688,7 @@ func (o *Oracle) getSolROCKMints(programID string) ([]api.SolanaMintEvent, error
 
 		}
 	}
+	log.Printf("retrieved %d rock solana mint events", len(mintEvents))
 	return mintEvents, nil
 }
 
@@ -742,6 +743,7 @@ func (o *Oracle) getSolZenBTCMints(programID string) ([]api.SolanaMintEvent, err
 
 		}
 	}
+	log.Printf("retrieved %d zenbtc solana mint events", len(mintEvents))
 	return mintEvents, nil
 }
 
