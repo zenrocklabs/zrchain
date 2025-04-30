@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
@@ -538,8 +539,19 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 					[]byte("0000000000000000000000000000000000000000000000000SecondSignature"),
 				),
 			},
+			wantKeyRequest: &types.KeyRequest{
+				Id:                     1,
+				Creator:                "testCreator",
+				WorkspaceAddr:          "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:            "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED,
+				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
+				RejectReason:           fmt.Sprintf("public key mismatch, expected %x, got %x", partialKeyRequest.PublicKey, differentECDSAKey),
+				PublicKey:              partialKeyRequest.PublicKey,
+			},
 			want:    &types.MsgFulfilKeyRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
