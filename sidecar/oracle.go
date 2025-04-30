@@ -168,6 +168,7 @@ func (o *Oracle) fetchAndProcessState(
 	ctx := context.Background()
 	var wg sync.WaitGroup
 
+	log.Printf("Retrieving latest %s header at %v", sidecartypes.NetworkNames[o.Config.Network], time.Now().Format("15:04:05.00"))
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
