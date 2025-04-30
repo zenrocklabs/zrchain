@@ -92,11 +92,9 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	// Align the start time to the nearest MainLoopTickerInterval if NTP succeeded
 	if err == nil { // Only align if NTP fetch was successful
 		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-		initialSleep := time.Until(alignedStart)
-		if initialSleep > 0 {
-			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart)
-			time.Sleep(initialSleep)
-		}
+		log.Printf("NTP alignment successful. First aligned update target: %s. Starting loop immediately.", alignedStart.Format("2006-01-02 15:04:05"))
+	} else {
+		log.Printf("NTP alignment skipped due to error. Starting loop immediately.")
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -136,10 +134,10 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			sleepDuration = time.Until(nextIntervalMark)
 
 			if sleepDuration > 0 {
-				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
+				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%s) to apply update.",
 					sleepDuration.Round(time.Millisecond),
 					alignmentSource,
-					nextIntervalMark.Round(time.Second))
+					nextIntervalMark.Round(time.Second).Format("2006-01-02 15:04:05"))
 				time.Sleep(sleepDuration)
 			} else {
 				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
