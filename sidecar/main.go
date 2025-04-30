@@ -16,8 +16,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
-
-	"github.com/beevik/ntp"
 )
 
 func main() {
@@ -85,19 +83,7 @@ func main() {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	ntpTime, err := ntp.Time("time.google.com")
-	if err != nil {
-		log.Fatalf("Error fetching NTP time: %v", err)
-	}
-	// Align the start time to the nearest MainLoopTickerInterval
-	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
-	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-	time.Sleep(alignedStart.Sub(ntpTime))
-
-	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
-	defer mainLoopTicker.Stop()
-
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, mainLoopTicker)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
@@ -105,7 +91,7 @@ func main() {
 	slog.Info("Waiting for initial state/price updates", "duration_seconds", sidecartypes.MainLoopTickerIntervalSeconds)
 
 	go func() {
-		if err := oracle.runAVSContractOracleLoop(ctx); err != nil {
+		if err := oracle.runOracleMainLoop(ctx); err != nil {
 			slog.Error("Error in Ethereum oracle loop", "error", err)
 		}
 	}()

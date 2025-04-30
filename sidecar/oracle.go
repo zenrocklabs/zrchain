@@ -19,6 +19,7 @@ import (
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/beevik/ntp"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum"
@@ -40,7 +41,6 @@ func NewOracle(
 	neutrinoServer *neutrino.NeutrinoServer,
 	solanaClient *solrpc.Client,
 	zrChainQueryClient *client.QueryClient,
-	ticker *time.Ticker,
 ) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
@@ -50,7 +50,6 @@ func NewOracle(
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
 		updateChan:         make(chan sidecartypes.OracleState, 32),
-		mainLoopTicker:     ticker,
 	}
 	o.currentState.Store(&EmptyOracleState)
 
@@ -62,7 +61,7 @@ func NewOracle(
 	return o
 }
 
-func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
+func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	serviceManager, err := middleware.NewContractZrServiceManager(
 		common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]),
 		o.EthClient,
@@ -79,22 +78,52 @@ func (o *Oracle) runAVSContractOracleLoop(ctx context.Context) error {
 	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
-	// Align and schedule updates to run precisely on each interval mark
-	interval := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
-	for {
-		now := time.Now()
-		next := now.Truncate(interval).Add(interval)
+	// Define ticker interval duration
+	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
+	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
+	defer mainLoopTicker.Stop()
+	o.mainLoopTicker = mainLoopTicker
 
+	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.After(time.Until(next)):
-		}
+		case <-o.mainLoopTicker.C: // Ticker fires to start the fetch cycle
+			// Fetch state first
+			newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+			if err != nil {
+				log.Printf("Error fetching and processing state: %v", err)
+				continue // Skip sending update on error
+			}
 
-		if err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient); err != nil {
-			log.Printf("Error fetching and processing state: %v", err)
+			// Fetch current NTP time to align the update sending
+			ntpTimeNow, err := ntp.Time("time.google.com")
+			var sleepDuration time.Duration
+			if err != nil {
+				log.Printf("Error fetching NTP time for alignment: %v. Sending update immediately.", err)
+				sleepDuration = 0 // Send immediately if NTP fails
+			} else {
+				// Calculate the next interval boundary (e.g., the next :00 mark) based on current NTP time.
+				nextIntervalMark := ntpTimeNow.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+
+				// Calculate how long to sleep until that mark
+				sleepDuration = time.Until(nextIntervalMark)
+			}
+
+			if sleepDuration > 0 {
+				log.Printf("State fetched. Waiting %v until next NTP-aligned interval mark to apply update.", sleepDuration.Round(time.Millisecond))
+				time.Sleep(sleepDuration)
+			} else {
+				// If fetching took longer than the interval OR NTP failed, log a warning. The update will be sent immediately.
+				log.Printf("Warning: State fetching/NTP took too long or NTP failed. Update applied immediately, potentially missing the precise :00 mark.")
+			}
+
+			// Send the fetched state exactly at the interval mark (or immediately if delayed/NTP failed)
+			o.updateChan <- newState
+
+			// Clean up burn events *after* sending state update
+			o.cleanUpBurnEvents()
 		}
-		o.cleanUpBurnEvents()
 	}
 }
 
@@ -104,7 +133,7 @@ func (o *Oracle) fetchAndProcessState(
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
-) error {
+) (sidecartypes.OracleState, error) {
 	const httpTimeout = 10 * time.Second
 
 	ctx := context.Background()
@@ -112,14 +141,14 @@ func (o *Oracle) fetchAndProcessState(
 
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to fetch latest block: %w", err)
+		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
 
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
 	if latestHeader.BaseFee == nil {
-		return fmt.Errorf("base fee not available (pre-London fork?)")
+		return sidecartypes.OracleState{}, fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
 	type oracleStateUpdate struct {
@@ -360,7 +389,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Check for any errors
 	for err := range errChan {
 		if err != nil {
-			return err
+			return sidecartypes.OracleState{}, err
 		}
 	}
 
@@ -386,12 +415,10 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	if sidecartypes.DebugMode {
-		log.Printf("\nState update: %+v\n", newState)
+		log.Printf("\nState fetched (pre-update send): %+v\n", newState)
 	}
 
-	o.updateChan <- newState
-
-	return nil
+	return newState, nil
 }
 
 func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
