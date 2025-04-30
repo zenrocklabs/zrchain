@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 	"math/big"
 	"net/http"
 	"sync"
@@ -479,12 +480,8 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 
 	remainingEvents := make([]api.BurnEvent, 0)
 	updatedCleanedEvents := make(map[string]bool)
-	if cleanedEvents != nil {
-		// Copy existing cleaned events map to avoid modifying the original directly in this loop
-		for k, v := range cleanedEvents {
-			updatedCleanedEvents[k] = v
-		}
-	} // No need for else, make initializes an empty map
+	// Copy existing cleaned events map to avoid modifying the original directly
+	maps.Copy(updatedCleanedEvents, cleanedEvents)
 
 	for _, event := range eventsToClean {
 		// Check if this specific event was already cleaned in a previous run but is still in the eventsToClean list for some reason
@@ -495,7 +492,7 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		}
 
 		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
-		if err != nil {
+		if err != nil || resp == nil {
 			// Log the specific chain type in the error
 			log.Printf("Error querying %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
 			// Keep events that we failed to query, they might succeed next time
