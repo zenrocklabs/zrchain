@@ -78,8 +78,27 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
+	// Initial alignment: Fetch NTP time once at startup
+	ntpTime, err := ntp.Time("time.google.com")
+	if err != nil {
+		// If NTP fails at startup, log warning and proceed without alignment.
+		log.Printf("Warning: Failed to fetch NTP time at startup: %v. Initial ticker alignment skipped.", err)
+		ntpTime = time.Now() // Use local time as fallback for duration calculation
+	}
+
 	// Define ticker interval duration
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
+
+	// Align the start time to the nearest MainLoopTickerInterval if NTP succeeded
+	if err == nil { // Only align if NTP fetch was successful
+		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+		initialSleep := time.Until(alignedStart)
+		if initialSleep > 0 {
+			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format(time.DateTime))
+			time.Sleep(initialSleep)
+		}
+	}
+
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
@@ -120,7 +139,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
 					sleepDuration.Round(time.Millisecond),
 					alignmentSource,
-					nextIntervalMark.Round(time.Second))
+					nextIntervalMark.Format(time.DateTime))
 				time.Sleep(sleepDuration)
 			} else {
 				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
@@ -153,7 +172,7 @@ func (o *Oracle) fetchAndProcessState(
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
-	log.Printf("Retrieved latest %s header (block %d) at: %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now())
+	log.Printf("Retrieved latest %s header (block %d) at: %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now().Format(time.DateTime))
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
