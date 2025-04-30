@@ -6,10 +6,10 @@ import (
 
 var DefaultSolanaParams = &Solana{
 	SignerKeyId:       10,
-	ProgramId:         "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+	ProgramId:         "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 	NonceAuthorityKey: 11,
 	NonceAccountKey:   12,
-	MintAddress:       "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+	MintAddress:       "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 	FeeWallet:         "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
 	Fee:               0,
 	Btl:               20,
