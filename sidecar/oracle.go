@@ -78,8 +78,27 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
+	// Initial alignment: Fetch NTP time once at startup
+	ntpTime, err := ntp.Time("time.google.com")
+	if err != nil {
+		// If NTP fails at startup, log warning and proceed without alignment.
+		log.Printf("Warning: Failed to fetch NTP time at startup: %v. Initial ticker alignment skipped.", err)
+		ntpTime = time.Now() // Use local time as fallback for duration calculation
+	}
+
 	// Define ticker interval duration
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
+
+	// Align the start time to the nearest MainLoopTickerInterval if NTP succeeded
+	if err == nil { // Only align if NTP fetch was successful
+		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+		initialSleep := time.Until(alignedStart)
+		if initialSleep > 0 {
+			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart)
+			time.Sleep(initialSleep)
+		}
+	}
+
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
@@ -88,37 +107,47 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-o.mainLoopTicker.C: // Ticker fires to start the fetch cycle
-			// Fetch state first
+		case tickTime := <-o.mainLoopTicker.C:
 			newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 			if err != nil {
 				log.Printf("Error fetching and processing state: %v", err)
 				continue // Skip sending update on error
 			}
 
-			// Fetch current NTP time to align the update sending
-			ntpTimeNow, err := ntp.Time("time.google.com")
+			// --- Intra-loop NTP check and wait (with fallback to ticker time) ---
 			var sleepDuration time.Duration
-			if err != nil {
-				log.Printf("Error fetching NTP time for alignment: %v. Sending update immediately.", err)
-				sleepDuration = 0 // Send immediately if NTP fails
-			} else {
-				// Calculate the next interval boundary (e.g., the next :00 mark) based on current NTP time.
-				nextIntervalMark := ntpTimeNow.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+			var nextIntervalMark time.Time
+			alignmentSource := "NTP"
 
-				// Calculate how long to sleep until that mark
-				sleepDuration = time.Until(nextIntervalMark)
+			// Attempt to fetch current NTP time *after* processing
+			ntpTimeNow, err := ntp.Time("time.google.com")
+			if err != nil {
+				// NTP Failed: Fallback to using the captured ticker time
+				log.Printf("Warning: Error fetching NTP time for alignment: %v. Falling back to ticker time.", err)
+				alignmentSource = "Local Ticker Fallback"
+				// Calculate the next interval boundary based on when the ticker fired.
+				nextIntervalMark = tickTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+			} else {
+				// NTP Succeeded: Calculate alignment based on NTP time.
+				nextIntervalMark = ntpTimeNow.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
 			}
+
+			// Calculate how long to sleep until the calculated mark
+			sleepDuration = time.Until(nextIntervalMark)
 
 			if sleepDuration > 0 {
-				log.Printf("State fetched. Waiting %v until next NTP-aligned interval mark to apply update.", sleepDuration.Round(time.Millisecond))
+				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
+					sleepDuration.Round(time.Millisecond),
+					alignmentSource,
+					nextIntervalMark.Round(time.Second))
 				time.Sleep(sleepDuration)
 			} else {
-				// If fetching took longer than the interval OR NTP failed, log a warning. The update will be sent immediately.
-				log.Printf("Warning: State fetching/NTP took too long or NTP failed. Update applied immediately, potentially missing the precise :00 mark.")
+				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
+				log.Printf("Warning: State fetching took too long relative to %s alignment. Update applied immediately.", alignmentSource)
 			}
+			// --- End of intra-loop wait ---
 
-			// Send the fetched state exactly at the interval mark (or immediately if delayed/NTP failed)
+			// Send the fetched state exactly at the interval mark (or immediately if delayed)
 			o.updateChan <- newState
 
 			// Clean up burn events *after* sending state update
