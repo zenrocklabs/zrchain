@@ -102,7 +102,7 @@ func main() {
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
 	slog.Info("gRPC server listening on port", "port", cfg.GRPCPort)
-	slog.Info("Please wait ~%ds before launching the zrChain node for the first Ethereum state and price updates", "seconds", sidecartypes.MainLoopTickerIntervalSeconds)
+	slog.Info("Waiting for initial state/price updates", "duration_seconds", sidecartypes.MainLoopTickerIntervalSeconds)
 
 	go func() {
 		if err := oracle.runAVSContractOracleLoop(ctx); err != nil {
