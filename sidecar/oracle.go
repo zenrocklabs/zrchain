@@ -94,7 +94,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
 		initialSleep := time.Until(alignedStart)
 		if initialSleep > 0 {
-			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format(time.DateTime))
+			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
 			time.Sleep(initialSleep)
 		}
 	}
@@ -139,7 +139,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
 					sleepDuration.Round(time.Millisecond),
 					alignmentSource,
-					nextIntervalMark.Format(time.DateTime))
+					nextIntervalMark.Format("15:04:05.00"))
 				time.Sleep(sleepDuration)
 			} else {
 				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
@@ -172,7 +172,7 @@ func (o *Oracle) fetchAndProcessState(
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
-	log.Printf("Retrieved latest %s header (block %d) at: %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now().Format(time.DateTime))
+	log.Printf("Retrieved latest %s header (block %d) at %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now().Format("15:04:05.00"))
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
