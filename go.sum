@@ -1306,8 +1306,6 @@ github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoq
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/zenrocklabs/zenbtc v1.16.7 h1:LR3eJ8e27rK3MzC2DGAYA459I7fd6Wc+nW/dl5FcBt4=
 github.com/zenrocklabs/zenbtc v1.16.7/go.mod h1:2ZNLPNMIUhz8yQxCIznq87c1SDcSa3gX4pqONEtJW6c=
-github.com/zenrocklabs/zenrock-avs v1.6.3 h1:M5pvyfta+2rp40SyhPehz2sv6MQeVJLBeEaZvJEQsFQ=
-github.com/zenrocklabs/zenrock-avs v1.6.3/go.mod h1:/uAfYn1LDDBwzuI8AbUzimR50Y4Y4N1j8DPuFyP2tRw=
 github.com/zenrocklabs/zenrock-avs v1.6.4 h1:x1tASFM9akwjHyJ4WOyRppNV7yKjrNN6uL0+91EeI3g=
 github.com/zenrocklabs/zenrock-avs v1.6.4/go.mod h1:gEGqbJsTeB+hU4DoMPQ1sslznsxKs3rz/VKycJelY+4=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
