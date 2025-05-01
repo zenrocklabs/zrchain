@@ -96,6 +96,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		if initialSleep > 0 {
 			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
 			time.Sleep(initialSleep)
+			log.Printf("Ticker synched, awaiting initial oracle data fetch (%ds interval)...", sidecartypes.MainLoopTickerIntervalSeconds)
 		}
 	}
 
