@@ -88,7 +88,6 @@ func main() {
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
 	slog.Info("gRPC server listening on port", "port", cfg.GRPCPort)
-	slog.Info("Waiting for initial state/price updates", "duration_seconds", sidecartypes.MainLoopTickerIntervalSeconds)
 
 	go func() {
 		if err := oracle.runOracleMainLoop(ctx); err != nil {
