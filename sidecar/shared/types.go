@@ -86,7 +86,7 @@ var (
 	ZenBTCSolanaMintAddress = map[string]string{
 		NetworkDevnet:  "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
 		NetworkTestnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
-		NetworkMainnet: "",
+		NetworkMainnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
 	}
 
 	// TODO: Add SolRock program ID for mainnet
@@ -98,7 +98,7 @@ var (
 	SolnaRockMintAddress = map[string]string{
 		NetworkDevnet:  "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 		NetworkTestnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkMainnet: "",
+		NetworkMainnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 	}
 
 	// Solana RPC endpoints
