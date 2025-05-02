@@ -81,28 +81,25 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	// Initial alignment: Fetch NTP time once at startup
 	ntpTime, err := ntp.Time("time.google.com")
 	if err != nil {
-		// If NTP fails at startup, log warning and proceed without alignment.
-		log.Printf("Warning: Failed to fetch NTP time at startup: %v. Initial ticker alignment skipped.", err)
-		ntpTime = time.Now() // Use local time as fallback for duration calculation
+		// If NTP fails at startup, panic. Sidecars require time sync to establish consensus.
+		log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
 	}
 
-	// Define ticker interval duration
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
 
-	// Align the start time to the nearest MainLoopTickerInterval if NTP succeeded
-	if err == nil { // Only align if NTP fetch was successful
-		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-		initialSleep := time.Until(alignedStart)
-		if initialSleep > 0 {
-			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
-			time.Sleep(initialSleep)
-			log.Printf("Ticker synched, awaiting initial oracle data fetch (%ds interval)...", sidecartypes.MainLoopTickerIntervalSeconds)
-		}
+	// Align the start time to the nearest MainLoopTickerInterval.
+	// This runs only if NTP succeeded (checked by the panic above)
+	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+	initialSleep := time.Until(alignedStart)
+	if initialSleep > 0 {
+		log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
+		time.Sleep(initialSleep)
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
+	log.Printf("Ticker synched, awaiting initial oracle data fetch (%ds interval)...", sidecartypes.MainLoopTickerIntervalSeconds)
 
 	for {
 		select {
@@ -356,62 +353,62 @@ func (o *Oracle) fetchAndProcessState(
 	}()
 
 	// Fetch SolROCK Mints
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		updateMutex.Unlock()
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+	// 	if err != nil {
+	// 		errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+	// 		return
+	// 	}
+	// 	updateMutex.Lock()
+	// 	update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+	// 	updateMutex.Unlock()
+	// }()
 
 	// Fetch SolZenBTC Mints
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		updateMutex.Unlock()
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
+	// 	if err != nil {
+	// 		errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
+	// 		return
+	// 	}
+	// 	updateMutex.Lock()
+	// 	update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+	// 	updateMutex.Unlock()
+	// }()
 
 	// Fetch Solana burn events
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
-		events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.solanaBurnEvents = events
-		updateMutex.Unlock()
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+	// 	events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
+	// 	if err != nil {
+	// 		errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+	// 		return
+	// 	}
+	// 	updateMutex.Lock()
+	// 	update.solanaBurnEvents = events
+	// 	updateMutex.Unlock()
+	// }()
 
 	// Fetch Solana ROCK burn events
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		solanaProgramID := sidecartypes.SolRockProgramID[o.Config.Network]
-		events, err := o.getSolanaRockBurnEvents(solanaProgramID)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
-		updateMutex.Unlock()
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	solanaProgramID := sidecartypes.SolRockProgramID[o.Config.Network]
+	// 	events, err := o.getSolanaRockBurnEvents(solanaProgramID)
+	// 	if err != nil {
+	// 		errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+	// 		return
+	// 	}
+	// 	updateMutex.Lock()
+	// 	update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
+	// 	updateMutex.Unlock()
+	// }()
 
 	// Wait for all goroutines to complete
 	wg.Wait()
