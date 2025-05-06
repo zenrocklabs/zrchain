@@ -353,62 +353,62 @@ func (o *Oracle) fetchAndProcessState(
 	}()
 
 	// Fetch SolROCK Mints
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
 
 	// Fetch SolZenBTC Mints
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		events, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network])
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		updateMutex.Unlock()
+	}()
 
 	// Fetch Solana burn events
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
-	// 	events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.solanaBurnEvents = events
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		solanaProgramID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		events, err := o.getSolanaZenBTCBurnEvents(solanaProgramID)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaBurnEvents = events
+		updateMutex.Unlock()
+	}()
 
 	// Fetch Solana ROCK burn events
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	solanaProgramID := sidecartypes.SolRockProgramID[o.Config.Network]
-	// 	events, err := o.getSolanaRockBurnEvents(solanaProgramID)
-	// 	if err != nil {
-	// 		errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
-	// 		return
-	// 	}
-	// 	updateMutex.Lock()
-	// 	update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
-	// 	updateMutex.Unlock()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		solanaProgramID := sidecartypes.SolRockProgramID[o.Config.Network]
+		events, err := o.getSolanaRockBurnEvents(solanaProgramID)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to process Solana burn events: %w", err)
+			return
+		}
+		updateMutex.Lock()
+		update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
+		updateMutex.Unlock()
+	}()
 
 	// Wait for all goroutines to complete
 	wg.Wait()
