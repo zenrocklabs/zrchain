@@ -815,6 +815,8 @@ func checkForUpdateAndDispatchTx[T any](
 			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
 			return
 		}
+
+		k.Logger(ctx).Error("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
@@ -1207,11 +1209,12 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
 				zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 			)
-			k.Logger(ctx).Error("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
+			k.Logger(ctx).Warn("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
 			return pendingMints, err
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Error("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zenbtc solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
 				return nil
@@ -1317,9 +1320,11 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 					return err
 				}
 				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
+					k.Logger(ctx).Error("nonce didn't update, retrying", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 					tx.BlockHeight = 0 // this will trigger the tx to get retried
 					k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 				}
+				k.Logger(ctx).Error("nonce updated, waiting for mint event", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				// else the transaction has been included in a block, and we should wait for the mint event
 			}
 			return nil
