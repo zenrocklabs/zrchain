@@ -1307,11 +1307,11 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
-			k.Logger(ctx).Error("processing solana nonce update", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight == 0 {
 				return nil
 			}
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+			k.Logger(ctx).Error("solana nonce update", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "block_height", tx.BlockHeight, "btl", solParams.Btl, "current_height", ctx.BlockHeight())
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
 				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
 				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
@@ -1319,6 +1319,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
 					return err
 				}
+				k.Logger(ctx).Error("nonces", "last", lastNonce.Nonce, "current", currentNonce)
 				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
 					k.Logger(ctx).Error("nonce didn't update, retrying", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 					tx.BlockHeight = 0 // this will trigger the tx to get retried
