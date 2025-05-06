@@ -23,10 +23,21 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	if treasurytypes.ValidateChainAddress(req.DestinationChain, req.RecipientAddress) != nil {
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
+
+	totalAmount, err := k.AddFeeToBridgeAmount(ctx, req.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	k.Logger().Warn("*******************************************************************************************************************************************************************************************************************************************")
+	k.Logger().Warn("Bridge amount with fees:", "amount", totalAmount)
+	k.Logger().Warn("Requested amount:", "amount", req.Amount)
+	k.Logger().Warn("*******************************************************************************************************************************************************************************************************************************************")
+
 	p := k.GetSolanaParams(ctx)
-	totalAmount := req.Amount + p.Fee // TODO: do this chain agnostic
+	totalAmount = totalAmount + p.Fee // TODO: do this chain agnostic
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
-	if bal.IsLT(sdk.NewCoin("urock", sdkmath.NewIntFromUint64(totalAmount))) {
+	if bal.IsLT(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))) {
 		return nil, errors.New("not enough balance")
 	}
 

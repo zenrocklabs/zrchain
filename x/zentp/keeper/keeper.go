@@ -200,11 +200,11 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 
 func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {
 
-	mintParams, err := k.mintKeeper.GetParams(ctx)
-	if err != nil {
-		return nil, math.LegacyDec{}, err
-	}
-	protocolWalletAddress := sdk.MustAccAddressFromBech32(mintParams.ProtocolWalletAddress)
+	// mintParams, err := k.mintKeeper.GetParams(ctx)
+	// if err != nil {
+	// 	return nil, math.LegacyDec{}, err
+	// }
+	protocolWalletAddress := sdk.MustAccAddressFromBech32("zen1xzelqmmauczfhwawmtwq35657sux9gh3zwfmdk")
 
 	params, err := k.ParamStore.Get(ctx)
 
@@ -216,17 +216,24 @@ func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.Le
 	return protocolWalletAddress, bridgeFee, nil
 }
 
-func (k Keeper) SplitBridgeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, sdk.Coins, error) {
+func (k Keeper) GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, error) {
 
 	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
 
 	bridgeFeeCoins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, bridgeFeeAmount))
-	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount).Sub(bridgeFeeAmount)))
 
-	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(math.NewIntFromUint64(amount)) {
-		return nil, nil, fmt.Errorf("bridge fee and amount cannot exceed original amount")
+	return bridgeFeeCoins, nil
+
+}
+
+func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64, error) {
+
+	_, bridgeFee, err := k.GetBridgeFeeParams(ctx)
+	if err != nil {
+		return 0, err
 	}
 
-	return bridgeFeeCoins, bridgeAmount, nil
-
+	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
+	totalAmount := bridgeFeeAmount.Add(math.NewIntFromUint64(amount))
+	return totalAmount.Uint64(), nil
 }

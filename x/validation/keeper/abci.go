@@ -1449,11 +1449,13 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, pendingMint.Amount, bridgeFee)
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
 		if err != nil {
-			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
 			return
 		}
+
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(pendingMint.Amount)))
 
 		var (
 			signatures []byte
@@ -1472,20 +1474,35 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			signatures = append(signatures, childReq.SignedData[0].SignedData...)
 		}
 		sigHash = sha256.Sum256(signatures)
-		for _, event := range oracleData.SolanaMintEvents {
+		for i, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
 				if err != nil {
-					k.Logger(ctx).Error("Burn %s: %s", pendingMint.Denom, err.Error())
+					k.Logger(ctx).Warn("Index of event", "index", i)
+					k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
+					k.Logger(ctx).Info("Oracle event received", "event", event)
+					k.Logger(ctx).Warn("Bridge amount for burn", "amount", bridgeAmount.String())
+					k.Logger(ctx).Warn("Bridge fee coins for burn", "amount", bridgeFeeCoins.String())
+					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
+					k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 					return
 				}
+
+				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
+				k.Logger(ctx).Warn("Index of event", "index", i)
+				k.Logger(ctx).Warn("Bridge coins burned", "amount", bridgeAmount.String())
+				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 
 				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins)
 				if err != nil {
 					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
 					return
 				}
+				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
+				k.Logger(ctx).Warn("Index of event", "index", i)
+				k.Logger(ctx).Warn("Bridge fee coins sent to protocol wallet", "amount", bridgeFeeCoins.String())
+				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
 				err = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
 				if err != nil {
@@ -1984,14 +2001,21 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			return
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, burn.Amount, bridgeFee)
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
 		if err != nil {
-			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
 			return
 		}
 
-		k.Logger(ctx).Info("bridgeFeeCoins %s to protocol wallet %s: ", bridgeFeeCoins.String(), protocolWalletAddress.String())
-		k.Logger(ctx).Info("bridgeAmount %s to account: ", bridgeAmount.String())
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
+
+		k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
+		k.Logger(ctx).Info(fmt.Sprintf("bridgeFeeCoins %s to protocol wallet %s", bridgeFeeCoins.String(), protocolWalletAddress.String()))
+		k.Logger(ctx).Info(fmt.Sprintf("bridgeAmount %d to account %s", burn.Amount, accAddr.String()))
+		k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
+		k.Logger(ctx).Warn(fmt.Sprintf("bridgeFeeCoins %s to protocol wallet %s", bridgeFeeCoins.String(), protocolWalletAddress.String()))
+		k.Logger(ctx).Warn(fmt.Sprintf("bridgeAmount %d to account %s", burn.Amount, accAddr.String()))
+		k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 
 		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
