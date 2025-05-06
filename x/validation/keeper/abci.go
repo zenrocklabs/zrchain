@@ -1477,11 +1477,11 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for i, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
+				k.Logger(ctx).Info("Oracle event received", "event", event)
+				k.Logger(ctx).Warn("Index of event", "index", i)
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
 				if err != nil {
-					k.Logger(ctx).Warn("Index of event", "index", i)
 					k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
-					k.Logger(ctx).Info("Oracle event received", "event", event)
 					k.Logger(ctx).Warn("Bridge amount for burn", "amount", bridgeAmount.String())
 					k.Logger(ctx).Warn("Bridge fee coins for burn", "amount", bridgeFeeCoins.String())
 					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
@@ -1490,7 +1490,6 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				}
 
 				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
-				k.Logger(ctx).Warn("Index of event", "index", i)
 				k.Logger(ctx).Warn("Bridge coins burned", "amount", bridgeAmount.String())
 				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 
@@ -1500,7 +1499,6 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					return
 				}
 				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
-				k.Logger(ctx).Warn("Index of event", "index", i)
 				k.Logger(ctx).Warn("Bridge fee coins sent to protocol wallet", "amount", bridgeFeeCoins.String())
 				k.Logger(ctx).Warn("*******************************************************************************************************************************************************************************************************************************************")
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
