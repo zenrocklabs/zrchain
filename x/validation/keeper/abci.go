@@ -797,6 +797,8 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 	} else if requestedSolNonce != nil {
+		k.Logger(ctx).Error("requested solana nonce", "nonce", requestedSolNonce.Nonce)
+
 		if requestedSolNonce.Nonce.IsZero() {
 			k.Logger(ctx).Error("solana nonce is zero")
 			return
@@ -1062,6 +1064,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
+				k.Logger(ctx).Error("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				return nil
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
@@ -1199,11 +1202,13 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// Get pending mint transactions
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactions(
+			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
 				zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 			)
+			k.Logger(ctx).Error("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
+			return pendingMints, err
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
@@ -1265,6 +1270,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq.nonceAuthorityKey = solParams.NonceAuthorityKey
 			txPrepReq.signerKey = solParams.SignerKeyId
 			txPrepReq.zenbtc = true
+			k.Logger(ctx).Error("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -1298,6 +1304,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Error("processing solana nonce update", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight == 0 {
 				return nil
 			}
