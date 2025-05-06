@@ -1501,57 +1501,87 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
-	k.Logger(ctx).Warn("starting processSolanaZenBTCMintEvents", "event_count", len(oracleData.SolanaMintEvents))
-	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Started.", "oracle_event_count", len(oracleData.SolanaMintEvents))
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: no pending Solana mint transactions found")
+			k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: No first pending Solana mint transaction ID found. Nothing to process.")
 			return
 		}
-		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting first pending Solana mint transaction", "error", err)
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting first pending Solana mint transaction ID.", "error", err)
 		return
 	}
-	k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: first pending Solana mint transaction", "id", id)
-	if id == 0 {
-		k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: no pending Solana mint transactions found")
+
+	if firstPendingID == 0 {
+		k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: First pending Solana mint transaction ID is 0. Nothing to process.")
 		return
 	}
-	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, id)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Processing with first pending ID.", "first_pending_id", firstPendingID)
+
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
 	if err != nil {
-		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting pending mint transaction", "id", id, "error", err)
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting pending mint transaction from store.", "id", firstPendingID, "error", err)
+		return
+	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved pending mint transaction.", "pending_mint_id", pendingMint.Id, "zrchain_tx_id", pendingMint.ZrchainTxId, "status", pendingMint.Status, "recipient", pendingMint.RecipientAddress, "amount", pendingMint.Amount)
+
+	if pendingMint.ZrchainTxId == 0 {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: PendingMint has ZrchainTxId == 0. Cannot match with treasury sign requests. Skipping.", "pending_mint_id", pendingMint.Id)
 		return
 	}
 
-	tx, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, id)
+	signTxReq, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, pendingMint.ZrchainTxId)
 	if err != nil {
-		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting sign transaction request", "id", id, "error", err)
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting SignTransactionRequest from treasury.", "zrchain_tx_id_searched", pendingMint.ZrchainTxId, "error", err)
 		return
 	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved SignTransactionRequest from treasury.", "zrchain_tx_id", signTxReq.Id, "sign_request_id", signTxReq.SignRequestId)
 
-	sigReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, tx.SignRequestId)
+	mainSignReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, signTxReq.SignRequestId)
 	if err != nil {
-		k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting sign request", "id", tx.SignRequestId, "error", err)
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting main SignRequest from treasury.", "sign_request_id_searched", signTxReq.SignRequestId, "error", err)
 		return
 	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved main SignRequest from treasury.", "main_sign_request_id", mainSignReq.Id, "child_req_count", len(mainSignReq.ChildReqIds), "status", mainSignReq.Status)
 
-	var (
-		signatures []byte
-		sigHash    [32]byte
-	)
-
-	for _, id := range sigReq.ChildReqIds {
-		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, id)
+	var signatures [][]byte
+	foundAllChildSignatures := true
+	for i, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, childReqID)
 		if err != nil {
-			k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting child sign request", "id", id, "error", err)
+			k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting child SignRequest.", "child_req_id", childReqID, "error", err)
+			foundAllChildSignatures = false
+			break
 		}
-		if len(childReq.SignedData) != 1 {
-			continue
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: Child SignRequest has no signed data or empty signature.", "child_req_id", childReqID, "signed_data_count", len(childReq.SignedData))
+			foundAllChildSignatures = false
+			break
 		}
-		signatures = append(signatures, childReq.SignedData[0].SignedData...)
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+		k.Logger(ctx).Debug("ProcessSolanaZenBTCMintEvents: Appended signature from child request.", "child_idx", i, "child_req_id", childReqID, "signature_hex", hex.EncodeToString(childReq.SignedData[0].SignedData))
 	}
-	sigHash = sha256.Sum256(signatures)
-	for _, event := range oracleData.SolanaMintEvents {
+
+	if !foundAllChildSignatures {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: Did not find all child signatures or some were empty. Cannot compute sigHash.", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: No signatures collected from child requests. Cannot compute sigHash.", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Computed local sigHash.", "concatenated_signature_len", len(concatenatedSignatures), "local_sig_hash_hex", hex.EncodeToString(sigHash[:]))
+
+	for i, event := range oracleData.SolanaMintEvents {
+		k.Logger(ctx).Debug("ProcessSolanaZenBTCMintEvents: Comparing with oracle event.", "oracle_event_idx", i, "oracle_sig_hash_hex", hex.EncodeToString(event.SigHash))
 		if bytes.Equal(event.SigHash, sigHash[:]) {
+			k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: MATCH FOUND! Oracle event sigHash matches local sigHash.", "oracle_event_idx", i, "pending_mint_id", pendingMint.Id)
+
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: error getting zenBTC supply", "error", err)
