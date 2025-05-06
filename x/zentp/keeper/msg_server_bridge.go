@@ -29,11 +29,6 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	k.Logger().Warn("*******************************************************************************************************************************************************************************************************************************************")
-	k.Logger().Warn("Bridge amount with fees:", "amount", totalAmount)
-	k.Logger().Warn("Requested amount:", "amount", req.Amount)
-	k.Logger().Warn("*******************************************************************************************************************************************************************************************************************************************")
-
 	p := k.GetSolanaParams(ctx)
 	totalAmount = totalAmount + p.Fee // TODO: do this chain agnostic
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)

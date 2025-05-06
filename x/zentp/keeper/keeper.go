@@ -200,11 +200,11 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 
 func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {
 
-	// mintParams, err := k.mintKeeper.GetParams(ctx)
-	// if err != nil {
-	// 	return nil, math.LegacyDec{}, err
-	// }
-	protocolWalletAddress := sdk.MustAccAddressFromBech32("zen1xzelqmmauczfhwawmtwq35657sux9gh3zwfmdk")
+	mintParams, err := k.mintKeeper.GetParams(ctx)
+	if err != nil {
+		return nil, math.LegacyDec{}, err
+	}
+	protocolWalletAddress := sdk.MustAccAddressFromBech32(mintParams.ProtocolWalletAddress)
 
 	params, err := k.ParamStore.Get(ctx)
 
