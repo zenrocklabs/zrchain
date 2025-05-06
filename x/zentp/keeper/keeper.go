@@ -221,6 +221,11 @@ func (k Keeper) GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee
 	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
 
 	bridgeFeeCoins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, bridgeFeeAmount))
+	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount).Sub(bridgeFeeAmount)))
+
+	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(math.NewIntFromUint64(amount)) {
+		return nil, fmt.Errorf("bridge fee %s and bridge amount %s cannot exceed original amount: %s", bridgeFeeCoins.String(), bridgeAmount.String(), math.NewIntFromUint64(amount).String())
+	}
 
 	return bridgeFeeCoins, nil
 
