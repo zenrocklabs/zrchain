@@ -797,6 +797,8 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 	} else if requestedSolNonce != nil {
+		k.Logger(ctx).Error("requested solana nonce", "nonce", requestedSolNonce.Nonce)
+
 		if requestedSolNonce.Nonce.IsZero() {
 			k.Logger(ctx).Error("solana nonce is zero")
 			return
@@ -813,6 +815,8 @@ func checkForUpdateAndDispatchTx[T any](
 			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
 			return
 		}
+
+		k.Logger(ctx).Error("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
@@ -1062,6 +1066,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
+				k.Logger(ctx).Error("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				return nil
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
@@ -1199,14 +1204,17 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// Get pending mint transactions
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactions(
+			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
 				zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 			)
+			k.Logger(ctx).Warn("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
+			return pendingMints, err
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Error("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zenbtc solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
 				return nil
@@ -1265,6 +1273,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq.nonceAuthorityKey = solParams.NonceAuthorityKey
 			txPrepReq.signerKey = solParams.SignerKeyId
 			txPrepReq.zenbtc = true
+			k.Logger(ctx).Error("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -1298,24 +1307,32 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			// If BlockHeight is 0, this transaction was either just dispatched in the current block
+			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
+			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
-				return nil
+				k.Logger(ctx).Debug("Solana Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
+				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			}
+
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+			k.Logger(ctx).Info("Solana Mint Status Check Begin", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
+			// --- Primary BTL Timeout Check (Blocks To Live) ---
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
-				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
-				if err != nil {
-					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
-					return err
-				}
-				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
-					tx.BlockHeight = 0 // this will trigger the tx to get retried
-					k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
-				}
-				// else the transaction has been included in a block, and we should wait for the mint event
+				tx = k.processBtlSolanaMint(ctx, tx, oracleData, *solParams)
 			}
-			return nil
+
+			// --- Secondary Event Arrival Timeout Check ---
+			// This check applies if tx.AwaitingEventSince was set (indicating nonce advanced)
+			// and was not subsequently cleared by the BTL check itself.
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutSolanaMint(ctx, tx, oracleData, *solParams)
+			}
+
+			k.Logger(ctx).Info("Solana Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			// Persist any modifications to the transaction state.
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
 }
@@ -1409,6 +1426,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
 					return err
 				}
+				k.Logger(ctx).Error("nonces", "last_hex", hex.EncodeToString(lastNonce.Nonce), "current_hex", hex.EncodeToString(currentNonce[:]))
 				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
 					tx.BlockHeight = 0 // this will trigger the tx to get retried
 				}
@@ -1939,6 +1957,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 }
 
+// TODO: why is this unused?
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	k.Logger(ctx).Warn("starting processSolanaROCKBurnEvents", "event_count", len(oracleData.SolanaBurnEvents))
 	var toProcess []*sidecarapitypes.BurnEvent

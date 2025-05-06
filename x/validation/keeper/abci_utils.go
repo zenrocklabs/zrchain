@@ -1692,3 +1692,70 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 		k.Logger(ctx).Warn("clearSolanaAccounts: pending Solana mints exist, not clearing store", "rock_count", rockCount, "zenbtc_count", zenBTCCount)
 	}
 }
+
+// Helper function to process BTL timeout for Solana mints
+func (k Keeper) processBtlSolanaMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, solParams zenbtctypes.Solana) zenbtctypes.PendingMintTransaction {
+	k.Logger(ctx).Debug("BTL Timeout Logic: Initiating checks.", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl)
+	currentLiveNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+
+	if currentLiveNonceAccount == nil || currentLiveNonceAccount.Nonce.IsZero() {
+		k.Logger(ctx).Warn("BTL Logic: Live Solana nonce is zero or unavailable in oracleData. Resetting transaction.", "tx_id", tx.Id)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		return tx
+	}
+
+	lastUsedNonceStored, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
+	if err != nil {
+		k.Logger(ctx).Error("BTL Logic: Failed to get LastUsedSolanaNonce from store. Resetting transaction.", "tx_id", tx.Id, "error", err)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		return tx
+	}
+
+	currentLiveNonceBytes := currentLiveNonceAccount.Nonce[:]
+	k.Logger(ctx).Info("BTL Logic: Comparing nonces.", "tx_id", tx.Id, "last_used_hex", hex.EncodeToString(lastUsedNonceStored.Nonce), "current_on_chain_hex", hex.EncodeToString(currentLiveNonceBytes))
+
+	if bytes.Equal(currentLiveNonceBytes, lastUsedNonceStored.Nonce) {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce matches LastUsedSolanaNonce (no advancement). Resetting transaction for full retry.", "tx_id", tx.Id)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+	} else {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce differs from LastUsedSolanaNonce (advanced). Setting AwaitingEventSince if not already set.", "tx_id", tx.Id)
+		if tx.AwaitingEventSince == 0 {
+			tx.AwaitingEventSince = ctx.BlockHeight()
+			k.Logger(ctx).Info("BTL Logic: Set AwaitingEventSince.", "tx_id", tx.Id, "awaiting_event_since_block", tx.AwaitingEventSince)
+		}
+		// CRITICAL: tx.BlockHeight is NOT reset here. Nonce advanced, so the original dispatch "consumed" its chance.
+	}
+	return tx
+}
+
+// Helper function to process secondary event timeout for Solana mints
+func (k Keeper) processSecondaryTimeoutSolanaMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, solParams zenbtctypes.Solana) zenbtctypes.PendingMintTransaction {
+	const eventConfirmationWindowBlocks = 100 // TODO: make this a configurable parameter
+	k.Logger(ctx).Debug("Secondary Timeout Logic: Checking for event arrival.", "tx_id", tx.Id, "awaiting_event_since", tx.AwaitingEventSince, "current_height", ctx.BlockHeight(), "confirmation_window", eventConfirmationWindowBlocks)
+
+	if ctx.BlockHeight() > tx.AwaitingEventSince+eventConfirmationWindowBlocks {
+		k.Logger(ctx).Warn("Secondary Timeout Logic: SolanaMintEvent not received within window. Resetting transaction for retry and attempting to update LastUsedSolanaNonce.",
+			"tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount,
+			"awaiting_since_block", tx.AwaitingEventSince, "timeout_window", eventConfirmationWindowBlocks)
+
+		currentLiveNonceForRetryUpdate := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+		if currentLiveNonceForRetryUpdate == nil || currentLiveNonceForRetryUpdate.Nonce.IsZero() {
+			k.Logger(ctx).Warn("Secondary Timeout Logic: Current on-chain Solana nonce is zero or unavailable in oracleData. Retry will use previously stored LastUsedSolanaNonce.", "tx_id", tx.Id)
+		} else {
+			newLastNonceToStore := types.SolanaNonce{Nonce: currentLiveNonceForRetryUpdate.Nonce[:]} // types.SolanaNonce is validation/types
+			if err := k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, newLastNonceToStore); err != nil {
+				k.Logger(ctx).Error("Secondary Timeout Logic: Failed to update LastUsedSolanaNonce for retry. Next retry will use older LastUsedSolanaNonce.", "tx_id", tx.Id, "error", err)
+			} else {
+				k.Logger(ctx).Info("Secondary Timeout Logic: Successfully updated LastUsedSolanaNonce before retry.", "tx_id", tx.Id, "new_last_used_nonce_hex", hex.EncodeToString(newLastNonceToStore.Nonce))
+			}
+		}
+
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		k.Logger(ctx).Info("Secondary Timeout Logic: Transaction has been reset for a full retry.", "tx_id", tx.Id)
+	}
+	return tx
+}
