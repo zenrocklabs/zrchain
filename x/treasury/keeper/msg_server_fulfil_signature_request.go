@@ -102,38 +102,55 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilSignatureRequest, req *types.SignRequest, key *types.Key) error {
 	sigData := msg.GetSignedData()
 	if len(sigData) == 0 {
-		return fmt.Errorf("missing signature data: %v", msg)
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = "missing signature data"
+		return nil
 	}
 
 	// Reject if a party tries to sign more than once
 	for _, sig := range req.KeyringPartySignatures {
 		if sig.Creator == msg.Creator {
 			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-			errMsg := fmt.Sprintf("Party %v already sent a fulfilment", msg.Creator)
+			errMsg := fmt.Sprintf("party %v already sent a fulfilment", msg.Creator)
 			req.RejectReason = errMsg
-			return fmt.Errorf("Party %v already sent a fulfilment", msg.Creator)
+			return nil
 		}
 	}
 
 	// Reject invalid signature
 	if msg.KeyringPartySignature == nil || len(msg.KeyringPartySignature) != 64 {
-		return fmt.Errorf("invalid mpc party signature")
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = "invalid length of mpc party signature"
+		return nil
+	}
+
+	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
+	if err != nil || !keyring.IsActive {
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = fmt.Sprintf("keyring %s is nil or is inactive", key.KeyringAddr)
+		return nil
 	}
 
 	if req.KeyType == types.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
 		sigDataBitcoin, err := bitcoinutils.ConvertECDSASigtoBitcoinSig(hex.EncodeToString(sigData))
 		if err != nil {
-			return err
+			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+			req.RejectReason = fmt.Sprintf("failed to convert ecdsa signature to bitcoin signature: %v", err)
+			return nil
 		}
 		sigData, err = hex.DecodeString(sigDataBitcoin)
 		if err != nil {
-			return err
+			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+			req.RejectReason = fmt.Sprintf("failed to decode bitcoin signature: %v", err)
+			return nil
 		}
 	}
 
 	if len(req.DataForSigning) == 1 {
 		if err := k.verifySignature(ctx, req, key, sigData); err != nil {
-			return err
+			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+			req.RejectReason = fmt.Sprintf("signature verification failed: %v", err)
+			return nil
 		}
 	}
 
@@ -142,11 +159,6 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		Creator:   msg.Creator,
 		Signature: msg.KeyringPartySignature,
 	})
-
-	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
-	if err != nil || !keyring.IsActive {
-		return fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
-	}
 
 	// Check against signed data from other parties
 	if len(req.SignedData) == 0 {
