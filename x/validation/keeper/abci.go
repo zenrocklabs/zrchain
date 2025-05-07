@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -1478,7 +1477,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			return
 		}
 
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(pendingMint.Amount)))
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(pendingMint.Amount)))
 
 		var (
 			signatures []byte
@@ -1516,6 +1515,15 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				if err != nil {
 					k.Logger(ctx).Error("UpdateMint: ", err.Error())
 				}
+
+				sdkCtx := sdk.UnwrapSDKContext(ctx)
+				sdkCtx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						types.EventTypeValidation,
+						sdk.NewAttribute(types.AttributeKeyBurnAmount, bridgeAmount.String()),
+						sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+					),
+				)
 			}
 		}
 	}
@@ -2079,7 +2087,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
-		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
+		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
 			continue
@@ -2107,7 +2115,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			return
 		}
 
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
 
 		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
@@ -2128,5 +2136,15 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
 		}
+
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		sdkCtx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeValidation,
+				sdk.NewAttribute(types.AttributeKeyBridgeAmount, bridgeAmount.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
+			),
+		)
 	}
 }
