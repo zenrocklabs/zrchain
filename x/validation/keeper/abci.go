@@ -1449,11 +1449,13 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, pendingMint.Amount, bridgeFee)
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
 		if err != nil {
-			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
 			return
 		}
+
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(pendingMint.Amount)))
 
 		var (
 			signatures []byte
@@ -1477,7 +1479,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
 				if err != nil {
-					k.Logger(ctx).Error("Burn %s: %s", pendingMint.Denom, err.Error())
+					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
 					return
 				}
 
@@ -1984,14 +1986,13 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			return
 		}
 
-		bridgeFeeCoins, bridgeAmount, err := k.zentpKeeper.SplitBridgeAmount(ctx, burn.Amount, bridgeFee)
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
 		if err != nil {
-			k.Logger(ctx).Error("SplitBridgeAmount: ", err.Error())
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
 			return
 		}
 
-		k.Logger(ctx).Info("bridgeFeeCoins %s to protocol wallet %s: ", bridgeFeeCoins.String(), protocolWalletAddress.String())
-		k.Logger(ctx).Info("bridgeAmount %s to account: ", bridgeAmount.String())
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
 
 		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
