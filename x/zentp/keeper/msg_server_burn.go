@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -11,7 +10,6 @@ import (
 )
 
 func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBurnResponse, error) {
-	return nil, fmt.Errorf("zentp module is currently disabled") // TODO: remove this
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
