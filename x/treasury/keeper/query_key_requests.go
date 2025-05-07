@@ -34,7 +34,7 @@ func (k Keeper) KeyRequests(goCtx context.Context, req *types.QueryKeyRequestsRe
 				KeyringAddr:            value.KeyringAddr,
 				KeyType:                value.KeyType.String(),
 				Status:                 value.Status.String(),
-				KeyringPartySignatures: value.KeyringPartySignatures,
+				KeyringPartySignatures: value.KeyringPartySigs,
 				RejectReason:           value.RejectReason,
 				Index:                  value.Index,
 				SignPolicyId:           value.SignPolicyId,

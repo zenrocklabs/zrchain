@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  unit-test:
-    name: test
+  unit-test-default:
+    name: Unit Tests (GitHub-hosted)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,3 +31,31 @@ jobs:
         run: go build -v ./...
       - name: Test
         run: go test -race -v -skip "Test_ProxyFunctions" ./...
+
+  integration-test:
+    if: github.repository == 'zenrocklabs/zrchain'
+    name: integration-test
+    runs-on: zrchain
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+          cache-dependency-path: "**/*.sum"
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-1
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+        with:
+          registries: ${{ secrets.ECR_REGISTRY }}
+      - name: Start Docker Compose stack
+        run: docker compose up -d --force-recreate --build
+      - name: Run integration tests
+        run: go test -v --tags=integration ./tests/integration/...
+      - name: Stop Docker Compose stack
+        if: always()
+        run: docker compose -f docker-compose.yml down

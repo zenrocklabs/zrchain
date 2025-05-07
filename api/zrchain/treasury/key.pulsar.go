@@ -12,6 +12,492 @@ import (
 	sync "sync"
 )
 
+var (
+	md_PartySignature           protoreflect.MessageDescriptor
+	fd_PartySignature_creator   protoreflect.FieldDescriptor
+	fd_PartySignature_signature protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_treasury_key_proto_init()
+	md_PartySignature = File_zrchain_treasury_key_proto.Messages().ByName("PartySignature")
+	fd_PartySignature_creator = md_PartySignature.Fields().ByName("creator")
+	fd_PartySignature_signature = md_PartySignature.Fields().ByName("signature")
+}
+
+var _ protoreflect.Message = (*fastReflection_PartySignature)(nil)
+
+type fastReflection_PartySignature PartySignature
+
+func (x *PartySignature) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_PartySignature)(x)
+}
+
+func (x *PartySignature) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_treasury_key_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_PartySignature_messageType fastReflection_PartySignature_messageType
+var _ protoreflect.MessageType = fastReflection_PartySignature_messageType{}
+
+type fastReflection_PartySignature_messageType struct{}
+
+func (x fastReflection_PartySignature_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_PartySignature)(nil)
+}
+func (x fastReflection_PartySignature_messageType) New() protoreflect.Message {
+	return new(fastReflection_PartySignature)
+}
+func (x fastReflection_PartySignature_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_PartySignature
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_PartySignature) Descriptor() protoreflect.MessageDescriptor {
+	return md_PartySignature
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_PartySignature) Type() protoreflect.MessageType {
+	return _fastReflection_PartySignature_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_PartySignature) New() protoreflect.Message {
+	return new(fastReflection_PartySignature)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_PartySignature) Interface() protoreflect.ProtoMessage {
+	return (*PartySignature)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_PartySignature) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Creator != "" {
+		value := protoreflect.ValueOfString(x.Creator)
+		if !f(fd_PartySignature_creator, value) {
+			return
+		}
+	}
+	if len(x.Signature) != 0 {
+		value := protoreflect.ValueOfBytes(x.Signature)
+		if !f(fd_PartySignature_signature, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_PartySignature) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		return x.Creator != ""
+	case "zrchain.treasury.PartySignature.signature":
+		return len(x.Signature) != 0
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_PartySignature) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		x.Creator = ""
+	case "zrchain.treasury.PartySignature.signature":
+		x.Signature = nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_PartySignature) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		value := x.Creator
+		return protoreflect.ValueOfString(value)
+	case "zrchain.treasury.PartySignature.signature":
+		value := x.Signature
+		return protoreflect.ValueOfBytes(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_PartySignature) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		x.Creator = value.Interface().(string)
+	case "zrchain.treasury.PartySignature.signature":
+		x.Signature = value.Bytes()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_PartySignature) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		panic(fmt.Errorf("field creator of message zrchain.treasury.PartySignature is not mutable"))
+	case "zrchain.treasury.PartySignature.signature":
+		panic(fmt.Errorf("field signature of message zrchain.treasury.PartySignature is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_PartySignature) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.treasury.PartySignature.creator":
+		return protoreflect.ValueOfString("")
+	case "zrchain.treasury.PartySignature.signature":
+		return protoreflect.ValueOfBytes(nil)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.PartySignature"))
+		}
+		panic(fmt.Errorf("message zrchain.treasury.PartySignature does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_PartySignature) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.treasury.PartySignature", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_PartySignature) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_PartySignature) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_PartySignature) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_PartySignature) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*PartySignature)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Creator)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.Signature)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*PartySignature)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.Signature) > 0 {
+			i -= len(x.Signature)
+			copy(dAtA[i:], x.Signature)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Signature)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if len(x.Creator) > 0 {
+			i -= len(x.Creator)
+			copy(dAtA[i:], x.Creator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Creator)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*PartySignature)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: PartySignature: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: PartySignature: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Creator = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+				}
+				var byteLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					byteLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if byteLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + byteLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Signature = append(x.Signature[:0], dAtA[iNdEx:postIndex]...)
+				if x.Signature == nil {
+					x.Signature = []byte{}
+				}
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 var _ protoreflect.List = (*_KeyRequest_7_list)(nil)
 
 type _KeyRequest_7_list struct {
@@ -58,6 +544,57 @@ func (x *_KeyRequest_7_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_KeyRequest_15_list)(nil)
+
+type _KeyRequest_15_list struct {
+	list *[]*PartySignature
+}
+
+func (x *_KeyRequest_15_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_KeyRequest_15_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_KeyRequest_15_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*PartySignature)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_KeyRequest_15_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*PartySignature)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_KeyRequest_15_list) AppendMutable() protoreflect.Value {
+	v := new(PartySignature)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_KeyRequest_15_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_KeyRequest_15_list) NewElement() protoreflect.Value {
+	v := new(PartySignature)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_KeyRequest_15_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_KeyRequest                          protoreflect.MessageDescriptor
 	fd_KeyRequest_id                       protoreflect.FieldDescriptor
@@ -74,6 +611,7 @@ var (
 	fd_KeyRequest_mpc_btl                  protoreflect.FieldDescriptor
 	fd_KeyRequest_fee                      protoreflect.FieldDescriptor
 	fd_KeyRequest_public_key               protoreflect.FieldDescriptor
+	fd_KeyRequest_keyring_party_sigs       protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -93,6 +631,7 @@ func init() {
 	fd_KeyRequest_mpc_btl = md_KeyRequest.Fields().ByName("mpc_btl")
 	fd_KeyRequest_fee = md_KeyRequest.Fields().ByName("fee")
 	fd_KeyRequest_public_key = md_KeyRequest.Fields().ByName("public_key")
+	fd_KeyRequest_keyring_party_sigs = md_KeyRequest.Fields().ByName("keyring_party_sigs")
 }
 
 var _ protoreflect.Message = (*fastReflection_KeyRequest)(nil)
@@ -104,7 +643,7 @@ func (x *KeyRequest) ProtoReflect() protoreflect.Message {
 }
 
 func (x *KeyRequest) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_treasury_key_proto_msgTypes[0]
+	mi := &file_zrchain_treasury_key_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -244,6 +783,12 @@ func (x *fastReflection_KeyRequest) Range(f func(protoreflect.FieldDescriptor, p
 			return
 		}
 	}
+	if len(x.KeyringPartySigs) != 0 {
+		value := protoreflect.ValueOfList(&_KeyRequest_15_list{list: &x.KeyringPartySigs})
+		if !f(fd_KeyRequest_keyring_party_sigs, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -287,6 +832,8 @@ func (x *fastReflection_KeyRequest) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.Fee != uint64(0)
 	case "zrchain.treasury.KeyRequest.public_key":
 		return len(x.PublicKey) != 0
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		return len(x.KeyringPartySigs) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.KeyRequest"))
@@ -331,6 +878,8 @@ func (x *fastReflection_KeyRequest) Clear(fd protoreflect.FieldDescriptor) {
 		x.Fee = uint64(0)
 	case "zrchain.treasury.KeyRequest.public_key":
 		x.PublicKey = nil
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		x.KeyringPartySigs = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.KeyRequest"))
@@ -392,6 +941,12 @@ func (x *fastReflection_KeyRequest) Get(descriptor protoreflect.FieldDescriptor)
 	case "zrchain.treasury.KeyRequest.public_key":
 		value := x.PublicKey
 		return protoreflect.ValueOfBytes(value)
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		if len(x.KeyringPartySigs) == 0 {
+			return protoreflect.ValueOfList(&_KeyRequest_15_list{})
+		}
+		listValue := &_KeyRequest_15_list{list: &x.KeyringPartySigs}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.KeyRequest"))
@@ -442,6 +997,10 @@ func (x *fastReflection_KeyRequest) Set(fd protoreflect.FieldDescriptor, value p
 		x.Fee = value.Uint()
 	case "zrchain.treasury.KeyRequest.public_key":
 		x.PublicKey = value.Bytes()
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		lv := value.List()
+		clv := lv.(*_KeyRequest_15_list)
+		x.KeyringPartySigs = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.KeyRequest"))
@@ -473,6 +1032,12 @@ func (x *fastReflection_KeyRequest) Mutable(fd protoreflect.FieldDescriptor) pro
 			x.ZenbtcMetadata = new(ZenBTCMetadata)
 		}
 		return protoreflect.ValueOfMessage(x.ZenbtcMetadata.ProtoReflect())
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		if x.KeyringPartySigs == nil {
+			x.KeyringPartySigs = []*PartySignature{}
+		}
+		value := &_KeyRequest_15_list{list: &x.KeyringPartySigs}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.treasury.KeyRequest.id":
 		panic(fmt.Errorf("field id of message zrchain.treasury.KeyRequest is not mutable"))
 	case "zrchain.treasury.KeyRequest.creator":
@@ -540,6 +1105,9 @@ func (x *fastReflection_KeyRequest) NewField(fd protoreflect.FieldDescriptor) pr
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.treasury.KeyRequest.public_key":
 		return protoreflect.ValueOfBytes(nil)
+	case "zrchain.treasury.KeyRequest.keyring_party_sigs":
+		list := []*PartySignature{}
+		return protoreflect.ValueOfList(&_KeyRequest_15_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.treasury.KeyRequest"))
@@ -660,6 +1228,12 @@ func (x *fastReflection_KeyRequest) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if len(x.KeyringPartySigs) > 0 {
+			for _, e := range x.KeyringPartySigs {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -688,6 +1262,22 @@ func (x *fastReflection_KeyRequest) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.KeyringPartySigs) > 0 {
+			for iNdEx := len(x.KeyringPartySigs) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.KeyringPartySigs[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x7a
+			}
 		}
 		if len(x.PublicKey) > 0 {
 			i -= len(x.PublicKey)
@@ -1194,6 +1784,40 @@ func (x *fastReflection_KeyRequest) ProtoMethods() *protoiface.Methods {
 					x.PublicKey = []byte{}
 				}
 				iNdEx = postIndex
+			case 15:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyringPartySigs", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.KeyringPartySigs = append(x.KeyringPartySigs, &PartySignature{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.KeyringPartySigs[len(x.KeyringPartySigs)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1232,7 +1856,7 @@ func (x *fastReflection_KeyRequest) ProtoMethods() *protoiface.Methods {
 var _ protoreflect.List = (*_KeyReqResponse_7_list)(nil)
 
 type _KeyReqResponse_7_list struct {
-	list *[][]byte
+	list *[]*PartySignature
 }
 
 func (x *_KeyReqResponse_7_list) Len() int {
@@ -1243,32 +1867,37 @@ func (x *_KeyReqResponse_7_list) Len() int {
 }
 
 func (x *_KeyReqResponse_7_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfBytes((*x.list)[i])
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
 func (x *_KeyReqResponse_7_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Bytes()
-	concreteValue := valueUnwrapped
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*PartySignature)
 	(*x.list)[i] = concreteValue
 }
 
 func (x *_KeyReqResponse_7_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Bytes()
-	concreteValue := valueUnwrapped
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*PartySignature)
 	*x.list = append(*x.list, concreteValue)
 }
 
 func (x *_KeyReqResponse_7_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message KeyReqResponse at list field KeyringPartySignatures as it is not of Message kind"))
+	v := new(PartySignature)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
 func (x *_KeyReqResponse_7_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
 	*x.list = (*x.list)[:n]
 }
 
 func (x *_KeyReqResponse_7_list) NewElement() protoreflect.Value {
-	var v []byte
-	return protoreflect.ValueOfBytes(v)
+	v := new(PartySignature)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
 func (x *_KeyReqResponse_7_list) IsValid() bool {
@@ -1321,7 +1950,7 @@ func (x *KeyReqResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *KeyReqResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_treasury_key_proto_msgTypes[1]
+	mi := &file_zrchain_treasury_key_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1681,7 +2310,7 @@ func (x *fastReflection_KeyReqResponse) Mutable(fd protoreflect.FieldDescriptor)
 	switch fd.FullName() {
 	case "zrchain.treasury.KeyReqResponse.keyring_party_signatures":
 		if x.KeyringPartySignatures == nil {
-			x.KeyringPartySignatures = [][]byte{}
+			x.KeyringPartySignatures = []*PartySignature{}
 		}
 		value := &_KeyReqResponse_7_list{list: &x.KeyringPartySignatures}
 		return protoreflect.ValueOfList(value)
@@ -1740,7 +2369,7 @@ func (x *fastReflection_KeyReqResponse) NewField(fd protoreflect.FieldDescriptor
 	case "zrchain.treasury.KeyReqResponse.status":
 		return protoreflect.ValueOfString("")
 	case "zrchain.treasury.KeyReqResponse.keyring_party_signatures":
-		list := [][]byte{}
+		list := []*PartySignature{}
 		return protoreflect.ValueOfList(&_KeyReqResponse_7_list{list: &list})
 	case "zrchain.treasury.KeyReqResponse.reject_reason":
 		return protoreflect.ValueOfString("")
@@ -1850,8 +2479,8 @@ func (x *fastReflection_KeyReqResponse) ProtoMethods() *protoiface.Methods {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if len(x.KeyringPartySignatures) > 0 {
-			for _, b := range x.KeyringPartySignatures {
-				l = len(b)
+			for _, e := range x.KeyringPartySignatures {
+				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
@@ -1958,9 +2587,16 @@ func (x *fastReflection_KeyReqResponse) ProtoMethods() *protoiface.Methods {
 		}
 		if len(x.KeyringPartySignatures) > 0 {
 			for iNdEx := len(x.KeyringPartySignatures) - 1; iNdEx >= 0; iNdEx-- {
-				i -= len(x.KeyringPartySignatures[iNdEx])
-				copy(dAtA[i:], x.KeyringPartySignatures[iNdEx])
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.KeyringPartySignatures[iNdEx])))
+				encoded, err := options.Marshal(x.KeyringPartySignatures[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
 				dAtA[i] = 0x3a
 			}
@@ -2237,7 +2873,7 @@ func (x *fastReflection_KeyReqResponse) ProtoMethods() *protoiface.Methods {
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field KeyringPartySignatures", wireType)
 				}
-				var byteLen int
+				var msglen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2247,23 +2883,25 @@ func (x *fastReflection_KeyReqResponse) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					byteLen |= int(b&0x7F) << shift
+					msglen |= int(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				if byteLen < 0 {
+				if msglen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + byteLen
+				postIndex := iNdEx + msglen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.KeyringPartySignatures = append(x.KeyringPartySignatures, make([]byte, postIndex-iNdEx))
-				copy(x.KeyringPartySignatures[len(x.KeyringPartySignatures)-1], dAtA[iNdEx:postIndex])
+				x.KeyringPartySignatures = append(x.KeyringPartySignatures, &PartySignature{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.KeyringPartySignatures[len(x.KeyringPartySignatures)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
 				iNdEx = postIndex
 			case 8:
 				if wireType != 2 {
@@ -2512,7 +3150,7 @@ func (x *Key) ProtoReflect() protoreflect.Message {
 }
 
 func (x *Key) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_treasury_key_proto_msgTypes[2]
+	mi := &file_zrchain_treasury_key_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3333,7 +3971,7 @@ func (x *KeyResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *KeyResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_treasury_key_proto_msgTypes[3]
+	mi := &file_zrchain_treasury_key_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4164,7 +4802,7 @@ func (x *ZenBTCMetadata) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ZenBTCMetadata) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_treasury_key_proto_msgTypes[4]
+	mi := &file_zrchain_treasury_key_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4916,32 +5554,77 @@ func (KeyType) EnumDescriptor() ([]byte, []int) {
 	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{1}
 }
 
+type PartySignature struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Creator   string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Signature []byte `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (x *PartySignature) Reset() {
+	*x = PartySignature{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_treasury_key_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PartySignature) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartySignature) ProtoMessage() {}
+
+// Deprecated: Use PartySignature.ProtoReflect.Descriptor instead.
+func (*PartySignature) Descriptor() ([]byte, []int) {
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PartySignature) GetCreator() string {
+	if x != nil {
+		return x.Creator
+	}
+	return ""
+}
+
+func (x *PartySignature) GetSignature() []byte {
+	if x != nil {
+		return x.Signature
+	}
+	return nil
+}
+
 // format of a key request
 type KeyRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                     uint64           `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Creator                string           `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	WorkspaceAddr          string           `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr            string           `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	KeyType                KeyType          `protobuf:"varint,5,opt,name=key_type,json=keyType,proto3,enum=zrchain.treasury.KeyType" json:"key_type,omitempty"`
-	Status                 KeyRequestStatus `protobuf:"varint,6,opt,name=status,proto3,enum=zrchain.treasury.KeyRequestStatus" json:"status,omitempty"`
-	KeyringPartySignatures [][]byte         `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
-	RejectReason           string           `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
-	Index                  uint64           `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	SignPolicyId           uint64           `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata         *ZenBTCMetadata  `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"` // Optional
-	MpcBtl                 uint64           `protobuf:"varint,12,opt,name=mpc_btl,json=mpcBtl,proto3" json:"mpc_btl,omitempty"`
-	Fee                    uint64           `protobuf:"varint,13,opt,name=fee,proto3" json:"fee,omitempty"`
-	PublicKey              []byte           `protobuf:"bytes,14,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Id            uint64           `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator       string           `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	WorkspaceAddr string           `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr   string           `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	KeyType       KeyType          `protobuf:"varint,5,opt,name=key_type,json=keyType,proto3,enum=zrchain.treasury.KeyType" json:"key_type,omitempty"`
+	Status        KeyRequestStatus `protobuf:"varint,6,opt,name=status,proto3,enum=zrchain.treasury.KeyRequestStatus" json:"status,omitempty"`
+	// Deprecated: Do not use.
+	KeyringPartySignatures [][]byte          `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
+	RejectReason           string            `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
+	Index                  uint64            `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
+	SignPolicyId           uint64            `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata         *ZenBTCMetadata   `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"` // Optional
+	MpcBtl                 uint64            `protobuf:"varint,12,opt,name=mpc_btl,json=mpcBtl,proto3" json:"mpc_btl,omitempty"`
+	Fee                    uint64            `protobuf:"varint,13,opt,name=fee,proto3" json:"fee,omitempty"`
+	PublicKey              []byte            `protobuf:"bytes,14,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	KeyringPartySigs       []*PartySignature `protobuf:"bytes,15,rep,name=keyring_party_sigs,json=keyringPartySigs,proto3" json:"keyring_party_sigs,omitempty"`
 }
 
 func (x *KeyRequest) Reset() {
 	*x = KeyRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_treasury_key_proto_msgTypes[0]
+		mi := &file_zrchain_treasury_key_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4955,7 +5638,7 @@ func (*KeyRequest) ProtoMessage() {}
 
 // Deprecated: Use KeyRequest.ProtoReflect.Descriptor instead.
 func (*KeyRequest) Descriptor() ([]byte, []int) {
-	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{0}
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *KeyRequest) GetId() uint64 {
@@ -5000,6 +5683,7 @@ func (x *KeyRequest) GetStatus() KeyRequestStatus {
 	return KeyRequestStatus_KEY_REQUEST_STATUS_UNSPECIFIED
 }
 
+// Deprecated: Do not use.
 func (x *KeyRequest) GetKeyringPartySignatures() [][]byte {
 	if x != nil {
 		return x.KeyringPartySignatures
@@ -5056,32 +5740,39 @@ func (x *KeyRequest) GetPublicKey() []byte {
 	return nil
 }
 
+func (x *KeyRequest) GetKeyringPartySigs() []*PartySignature {
+	if x != nil {
+		return x.KeyringPartySigs
+	}
+	return nil
+}
+
 // format of a key request response
 type KeyReqResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                     uint64          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Creator                string          `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	WorkspaceAddr          string          `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
-	KeyringAddr            string          `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
-	KeyType                string          `protobuf:"bytes,5,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
-	Status                 string          `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
-	KeyringPartySignatures [][]byte        `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
-	RejectReason           string          `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
-	Index                  uint64          `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
-	SignPolicyId           uint64          `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
-	ZenbtcMetadata         *ZenBTCMetadata `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"` // Optional
-	MpcBtl                 uint64          `protobuf:"varint,12,opt,name=mpc_btl,json=mpcBtl,proto3" json:"mpc_btl,omitempty"`
-	Fee                    uint64          `protobuf:"varint,13,opt,name=fee,proto3" json:"fee,omitempty"`
-	PublicKey              []byte          `protobuf:"bytes,14,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Id                     uint64            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Creator                string            `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
+	WorkspaceAddr          string            `protobuf:"bytes,3,opt,name=workspace_addr,json=workspaceAddr,proto3" json:"workspace_addr,omitempty"`
+	KeyringAddr            string            `protobuf:"bytes,4,opt,name=keyring_addr,json=keyringAddr,proto3" json:"keyring_addr,omitempty"`
+	KeyType                string            `protobuf:"bytes,5,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
+	Status                 string            `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	KeyringPartySignatures []*PartySignature `protobuf:"bytes,7,rep,name=keyring_party_signatures,json=keyringPartySignatures,proto3" json:"keyring_party_signatures,omitempty"`
+	RejectReason           string            `protobuf:"bytes,8,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
+	Index                  uint64            `protobuf:"varint,9,opt,name=index,proto3" json:"index,omitempty"`
+	SignPolicyId           uint64            `protobuf:"varint,10,opt,name=sign_policy_id,json=signPolicyId,proto3" json:"sign_policy_id,omitempty"`
+	ZenbtcMetadata         *ZenBTCMetadata   `protobuf:"bytes,11,opt,name=zenbtc_metadata,json=zenbtcMetadata,proto3" json:"zenbtc_metadata,omitempty"` // Optional
+	MpcBtl                 uint64            `protobuf:"varint,12,opt,name=mpc_btl,json=mpcBtl,proto3" json:"mpc_btl,omitempty"`
+	Fee                    uint64            `protobuf:"varint,13,opt,name=fee,proto3" json:"fee,omitempty"`
+	PublicKey              []byte            `protobuf:"bytes,14,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 }
 
 func (x *KeyReqResponse) Reset() {
 	*x = KeyReqResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_treasury_key_proto_msgTypes[1]
+		mi := &file_zrchain_treasury_key_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5095,7 +5786,7 @@ func (*KeyReqResponse) ProtoMessage() {}
 
 // Deprecated: Use KeyReqResponse.ProtoReflect.Descriptor instead.
 func (*KeyReqResponse) Descriptor() ([]byte, []int) {
-	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{1}
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *KeyReqResponse) GetId() uint64 {
@@ -5140,7 +5831,7 @@ func (x *KeyReqResponse) GetStatus() string {
 	return ""
 }
 
-func (x *KeyReqResponse) GetKeyringPartySignatures() [][]byte {
+func (x *KeyReqResponse) GetKeyringPartySignatures() []*PartySignature {
 	if x != nil {
 		return x.KeyringPartySignatures
 	}
@@ -5215,7 +5906,7 @@ type Key struct {
 func (x *Key) Reset() {
 	*x = Key{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_treasury_key_proto_msgTypes[2]
+		mi := &file_zrchain_treasury_key_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5229,7 +5920,7 @@ func (*Key) ProtoMessage() {}
 
 // Deprecated: Use Key.ProtoReflect.Descriptor instead.
 func (*Key) Descriptor() ([]byte, []int) {
-	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{2}
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Key) GetId() uint64 {
@@ -5307,7 +5998,7 @@ type KeyResponse struct {
 func (x *KeyResponse) Reset() {
 	*x = KeyResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_treasury_key_proto_msgTypes[3]
+		mi := &file_zrchain_treasury_key_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5321,7 +6012,7 @@ func (*KeyResponse) ProtoMessage() {}
 
 // Deprecated: Use KeyResponse.ProtoReflect.Descriptor instead.
 func (*KeyResponse) Descriptor() ([]byte, []int) {
-	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{3}
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *KeyResponse) GetId() uint64 {
@@ -5398,7 +6089,7 @@ type ZenBTCMetadata struct {
 func (x *ZenBTCMetadata) Reset() {
 	*x = ZenBTCMetadata{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_treasury_key_proto_msgTypes[4]
+		mi := &file_zrchain_treasury_key_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5412,7 +6103,7 @@ func (*ZenBTCMetadata) ProtoMessage() {}
 
 // Deprecated: Use ZenBTCMetadata.ProtoReflect.Descriptor instead.
 func (*ZenBTCMetadata) Descriptor() ([]byte, []int) {
-	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{4}
+	return file_zrchain_treasury_key_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ZenBTCMetadata) GetRecipientAddr() string {
@@ -5459,55 +6150,67 @@ var file_zrchain_treasury_key_proto_rawDesc = []byte{
 	0x72, 0x79, 0x2f, 0x6b, 0x65, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x10, 0x7a, 0x72,
 	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x1a, 0x1d,
 	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79,
-	0x2f, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xa2, 0x04,
-	0x0a, 0x0a, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07,
-	0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63,
-	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x25, 0x0a, 0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70,
-	0x61, 0x63, 0x65, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d,
-	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x41, 0x64, 0x64, 0x72, 0x12, 0x21, 0x0a,
-	0x0c, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0b, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x41, 0x64, 0x64, 0x72,
-	0x12, 0x34, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65,
-	0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x4b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x6b,
-	0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x3a, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x12, 0x38, 0x0a, 0x18, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61,
-	0x72, 0x74, 0x79, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x07,
-	0x20, 0x03, 0x28, 0x0c, 0x52, 0x16, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72,
-	0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d,
-	0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x08, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f,
-	0x6e, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x09, 0x20, 0x01, 0x28, 0x04,
-	0x52, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x24, 0x0a, 0x0e, 0x73, 0x69, 0x67, 0x6e, 0x5f,
-	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x04, 0x52,
-	0x0c, 0x73, 0x69, 0x67, 0x6e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x49, 0x64, 0x12, 0x49, 0x0a,
-	0x0f, 0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
-	0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43,
-	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x0e, 0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63,
-	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x17, 0x0a, 0x07, 0x6d, 0x70, 0x63, 0x5f,
-	0x62, 0x74, 0x6c, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x6d, 0x70, 0x63, 0x42, 0x74,
-	0x6c, 0x12, 0x10, 0x0a, 0x03, 0x66, 0x65, 0x65, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x04, 0x52, 0x03,
-	0x66, 0x65, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x5f, 0x6b, 0x65,
-	0x79, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b,
-	0x65, 0x79, 0x22, 0xe7, 0x03, 0x0a, 0x0e, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x71, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12,
-	0x25, 0x0a, 0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x61, 0x64, 0x64,
-	0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x41, 0x64, 0x64, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e,
-	0x67, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6b, 0x65,
-	0x79, 0x72, 0x69, 0x6e, 0x67, 0x41, 0x64, 0x64, 0x72, 0x12, 0x19, 0x0a, 0x08, 0x6b, 0x65, 0x79,
-	0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6b, 0x65, 0x79,
-	0x54, 0x79, 0x70, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x38, 0x0a, 0x18,
+	0x2f, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x48, 0x0a,
+	0x0e, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67,
+	0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69,
+	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0xf6, 0x04, 0x0a, 0x0a, 0x4b, 0x65, 0x79, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f,
+	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72,
+	0x12, 0x25, 0x0a, 0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x61, 0x64,
+	0x64, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x41, 0x64, 0x64, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6b, 0x65, 0x79, 0x72, 0x69,
+	0x6e, 0x67, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6b,
+	0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x41, 0x64, 0x64, 0x72, 0x12, 0x34, 0x0a, 0x08, 0x6b, 0x65,
+	0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e,
+	0x4b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x3a, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73,
+	0x75, 0x72, 0x79, 0x2e, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x3c, 0x0a, 0x18,
 	0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f, 0x73, 0x69,
-	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x16,
+	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0c, 0x42, 0x02,
+	0x18, 0x01, 0x52, 0x16, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79,
+	0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65,
+	0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x08, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12,
+	0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x09, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05,
+	0x69, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x24, 0x0a, 0x0e, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x70, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0c, 0x73,
+	0x69, 0x67, 0x6e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x49, 0x64, 0x12, 0x49, 0x0a, 0x0f, 0x7a,
+	0x65, 0x6e, 0x62, 0x74, 0x63, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0b,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74,
+	0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x5a, 0x65, 0x6e, 0x42, 0x54, 0x43, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x0e, 0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x17, 0x0a, 0x07, 0x6d, 0x70, 0x63, 0x5f, 0x62, 0x74,
+	0x6c, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x6d, 0x70, 0x63, 0x42, 0x74, 0x6c, 0x12,
+	0x10, 0x0a, 0x03, 0x66, 0x65, 0x65, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x04, 0x52, 0x03, 0x66, 0x65,
+	0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x18,
+	0x0e, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79,
+	0x12, 0x4e, 0x0a, 0x12, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61, 0x72, 0x74,
+	0x79, 0x5f, 0x73, 0x69, 0x67, 0x73, 0x18, 0x0f, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e,
+	0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52, 0x10,
+	0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x73,
+	0x22, 0x89, 0x04, 0x0a, 0x0e, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x71, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x25, 0x0a,
+	0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x41, 0x64, 0x64, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f,
+	0x61, 0x64, 0x64, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6b, 0x65, 0x79, 0x72,
+	0x69, 0x6e, 0x67, 0x41, 0x64, 0x64, 0x72, 0x12, 0x19, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x74,
+	0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x54, 0x79,
+	0x70, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x5a, 0x0a, 0x18, 0x6b, 0x65,
+	0x79, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x70, 0x61, 0x72, 0x74, 0x79, 0x5f, 0x73, 0x69, 0x67, 0x6e,
+	0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e,
+	0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52, 0x16,
 	0x6b, 0x65, 0x79, 0x72, 0x69, 0x6e, 0x67, 0x50, 0x61, 0x72, 0x74, 0x79, 0x53, 0x69, 0x67, 0x6e,
 	0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74,
 	0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72,
@@ -5623,31 +6326,34 @@ func file_zrchain_treasury_key_proto_rawDescGZIP() []byte {
 }
 
 var file_zrchain_treasury_key_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_zrchain_treasury_key_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_zrchain_treasury_key_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_zrchain_treasury_key_proto_goTypes = []interface{}{
 	(KeyRequestStatus)(0),  // 0: zrchain.treasury.KeyRequestStatus
 	(KeyType)(0),           // 1: zrchain.treasury.KeyType
-	(*KeyRequest)(nil),     // 2: zrchain.treasury.KeyRequest
-	(*KeyReqResponse)(nil), // 3: zrchain.treasury.KeyReqResponse
-	(*Key)(nil),            // 4: zrchain.treasury.Key
-	(*KeyResponse)(nil),    // 5: zrchain.treasury.KeyResponse
-	(*ZenBTCMetadata)(nil), // 6: zrchain.treasury.ZenBTCMetadata
-	(WalletType)(0),        // 7: zrchain.treasury.WalletType
+	(*PartySignature)(nil), // 2: zrchain.treasury.PartySignature
+	(*KeyRequest)(nil),     // 3: zrchain.treasury.KeyRequest
+	(*KeyReqResponse)(nil), // 4: zrchain.treasury.KeyReqResponse
+	(*Key)(nil),            // 5: zrchain.treasury.Key
+	(*KeyResponse)(nil),    // 6: zrchain.treasury.KeyResponse
+	(*ZenBTCMetadata)(nil), // 7: zrchain.treasury.ZenBTCMetadata
+	(WalletType)(0),        // 8: zrchain.treasury.WalletType
 }
 var file_zrchain_treasury_key_proto_depIdxs = []int32{
-	1, // 0: zrchain.treasury.KeyRequest.key_type:type_name -> zrchain.treasury.KeyType
-	0, // 1: zrchain.treasury.KeyRequest.status:type_name -> zrchain.treasury.KeyRequestStatus
-	6, // 2: zrchain.treasury.KeyRequest.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
-	6, // 3: zrchain.treasury.KeyReqResponse.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
-	1, // 4: zrchain.treasury.Key.type:type_name -> zrchain.treasury.KeyType
-	6, // 5: zrchain.treasury.Key.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
-	6, // 6: zrchain.treasury.KeyResponse.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
-	7, // 7: zrchain.treasury.ZenBTCMetadata.chain_type:type_name -> zrchain.treasury.WalletType
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	1,  // 0: zrchain.treasury.KeyRequest.key_type:type_name -> zrchain.treasury.KeyType
+	0,  // 1: zrchain.treasury.KeyRequest.status:type_name -> zrchain.treasury.KeyRequestStatus
+	7,  // 2: zrchain.treasury.KeyRequest.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
+	2,  // 3: zrchain.treasury.KeyRequest.keyring_party_sigs:type_name -> zrchain.treasury.PartySignature
+	2,  // 4: zrchain.treasury.KeyReqResponse.keyring_party_signatures:type_name -> zrchain.treasury.PartySignature
+	7,  // 5: zrchain.treasury.KeyReqResponse.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
+	1,  // 6: zrchain.treasury.Key.type:type_name -> zrchain.treasury.KeyType
+	7,  // 7: zrchain.treasury.Key.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
+	7,  // 8: zrchain.treasury.KeyResponse.zenbtc_metadata:type_name -> zrchain.treasury.ZenBTCMetadata
+	8,  // 9: zrchain.treasury.ZenBTCMetadata.chain_type:type_name -> zrchain.treasury.WalletType
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_treasury_key_proto_init() }
@@ -5658,7 +6364,7 @@ func file_zrchain_treasury_key_proto_init() {
 	file_zrchain_treasury_wallet_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_zrchain_treasury_key_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KeyRequest); i {
+			switch v := v.(*PartySignature); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5670,7 +6376,7 @@ func file_zrchain_treasury_key_proto_init() {
 			}
 		}
 		file_zrchain_treasury_key_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KeyReqResponse); i {
+			switch v := v.(*KeyRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5682,7 +6388,7 @@ func file_zrchain_treasury_key_proto_init() {
 			}
 		}
 		file_zrchain_treasury_key_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Key); i {
+			switch v := v.(*KeyReqResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5694,7 +6400,7 @@ func file_zrchain_treasury_key_proto_init() {
 			}
 		}
 		file_zrchain_treasury_key_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KeyResponse); i {
+			switch v := v.(*Key); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5706,6 +6412,18 @@ func file_zrchain_treasury_key_proto_init() {
 			}
 		}
 		file_zrchain_treasury_key_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*KeyResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_treasury_key_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ZenBTCMetadata); i {
 			case 0:
 				return &v.state
@@ -5724,7 +6442,7 @@ func file_zrchain_treasury_key_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_treasury_key_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

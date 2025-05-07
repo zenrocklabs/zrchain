@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -13,6 +14,8 @@ import (
 )
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
+	return nil, fmt.Errorf("zentp module is currently disabled") // TODO: remove this
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	_, err := treasurytypes.Caip2ToKeyType(req.DestinationChain)
