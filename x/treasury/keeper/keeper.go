@@ -232,7 +232,7 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 				KeyringAddr:            value.KeyringAddr,
 				KeyType:                value.KeyType.String(),
 				Status:                 value.Status.String(),
-				KeyringPartySignatures: value.KeyringPartySignatures,
+				KeyringPartySignatures: value.KeyringPartySigs,
 				RejectReason:           value.RejectReason,
 			}, nil
 		},
