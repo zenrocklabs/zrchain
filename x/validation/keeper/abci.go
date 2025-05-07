@@ -1624,7 +1624,15 @@ func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData Orac
 
 // storeNewZenBTCBurnEvents is a helper function to store new burn events from a given source.
 func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecarapitypes.BurnEvent, source string, nonceErrorMsg string) {
-	k.Logger(ctx).Warn("starting storeNewZenBTCBurnEvents", "source", source, "event_count", len(burnEvents))
+	k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Started.", "source", source, "incoming_event_count", len(burnEvents))
+	if source == "solana" && len(burnEvents) > 0 {
+		for i, dbgEvent := range burnEvents {
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Solana event details from oracle.",
+				"source", source, "idx", i, "tx_id", dbgEvent.TxID, "log_idx", dbgEvent.LogIndex,
+				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr))
+		}
+	}
+
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
 	for i, burn := range burnEvents {
@@ -1636,19 +1644,19 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			if existingBurn.TxID == burn.TxID &&
 				existingBurn.LogIndex == burn.LogIndex &&
 				existingBurn.ChainID == burn.ChainID {
-				k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: event already exists", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex, "chain_id", burn.ChainID, "existing_id", id)
+				k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Event already exists in store.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "existing_burn_id", id)
 				exists = true
 				return true, nil // Stop walking
 			}
 			return false, nil // Continue walking
 		})
 		if walkErr != nil {
-			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: error walking burn events", "index", i, "source", source, "error", walkErr)
+			k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error walking burn events. Skipping event.", "source", source, "tx_id", burn.TxID, "error", walkErr)
 			continue // Process next event
 		}
 
 		if !exists {
-			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: event does not exist, creating new", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex, "chain_id", burn.ChainID)
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New event, creating BurnEvent.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "amount", burn.Amount, "destination_addr_hex", hex.EncodeToString(burn.DestinationAddr))
 			// Create a new BurnEvent using data from the input struct
 			newBurn := zenbtctypes.BurnEvent{
 				TxID:            burn.TxID,
@@ -1660,13 +1668,13 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			}
 			createdID, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
 			if createErr != nil {
-				k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: error creating burn event", "index", i, "source", source, "tx_id", burn.TxID, "error", createErr)
+				k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error creating burn event in store.", "source", source, "tx_id", burn.TxID, "error", createErr)
 				continue // Process next event
 			}
-			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: created new burn event", "index", i, "source", source, "new_id", createdID, "tx_id", burn.TxID, "log_index", burn.LogIndex)
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Successfully created new burn event in store.", "source", source, "new_burn_id", createdID, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 			foundNewBurn = true
 		} else {
-			k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: skipping existing event", "index", i, "source", source, "tx_id", burn.TxID, "log_index", burn.LogIndex)
+			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping pre-existing event.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 		}
 	}
 
@@ -1674,17 +1682,18 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	// because the unstaking transaction happens on Ethereum, regardless of the burn source.
 	if foundNewBurn {
 		unstakerKeyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
-		k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: found new burn events, setting EthereumNonceRequested for unstaker", "source", source, "unstaker_key_id", unstakerKeyID)
+		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New burn events found. Setting EthereumNonceRequested for unstaker.", "source", source, "unstaker_key_id", unstakerKeyID)
 		if err := k.EthereumNonceRequested.Set(ctx, unstakerKeyID, true); err != nil {
 			k.Logger(ctx).Warn(fmt.Sprintf("storeNewZenBTCBurnEvents: %s", nonceErrorMsg), "source", source, "error", err)
 		}
 	} else {
-		k.Logger(ctx).Warn("storeNewZenBTCBurnEvents: no new burn events found", "source", source)
+		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: No new burn events found to store.", "source", source)
 	}
 }
 
 // processZenBTCBurnEvents processes pending burn events by constructing unstake transactions.
 func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
+	k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Started.")
 	processTransaction(
 		k,
 		ctx,
@@ -1692,20 +1701,59 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		&oracleData.RequestedUnstakerNonce,
 		nil,
 		func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-			return k.getPendingBurnEvents(ctx)
+			pendingBurns, err := k.getPendingBurnEvents(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Error in getPendingBurnEvents.", "error", err)
+				return nil, err
+			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Pending burn events fetched.", "count", len(pendingBurns))
+			if len(pendingBurns) > 0 {
+				for i, pb := range pendingBurns {
+					k.Logger(ctx).Debug("ProcessZenBTCBurnEvents: Pending burn event details.",
+						"idx", i, "burn_id", pb.Id, "tx_id", pb.TxID, "log_idx", pb.LogIndex, "chain_id", pb.ChainID,
+						"amount", pb.Amount, "destination_addr_hex", hex.EncodeToString(pb.DestinationAddr), "status", pb.Status)
+				}
+			}
+			return pendingBurns, nil
 		},
 		// Dispatch unstake transaction
 		func(be zenbtctypes.BurnEvent) error {
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Dispatching unstake for burn event.",
+				"burn_id", be.Id, "origin_tx_id", be.TxID, "origin_chain_id", be.ChainID,
+				"amount", be.Amount, "destination_addr_hex", hex.EncodeToString(be.DestinationAddr))
+
 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
-				return err
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to set first pending burn event.", "burn_id", be.Id, "error", err)
+				return err // Return error to potentially halt or indicate failure
 			}
 
 			// Check for consensus
-			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
-				"zenBTC burn unstake", fmt.Sprintf("burn_id: %d, origin: %s, destination: %s, amount: %d", be.Id, be.ChainID, be.DestinationAddr, be.Amount)); err != nil {
-				return err
+			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			consensusCheckDetails := fmt.Sprintf("burn_id: %d, origin_chain: %s, destination_addr_hex: %s, amount: %d", be.Id, be.ChainID, hex.EncodeToString(be.DestinationAddr), be.Amount)
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Validating consensus for unstake.", "burn_id", be.Id, "required_fields", fmt.Sprintf("%v", requiredFields), "details_for_log", consensusCheckDetails)
+			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", consensusCheckDetails); err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Consensus validation failed for unstake.", "burn_id", be.Id, "error", err)
+				// If consensus fails, we don't proceed with this burn event in this block.
+				// It will be retried in the next block if it's still the first pending.
+				// To ensure it *is* retried and doesn't block others if it's a persistent consensus issue for *this* event,
+				// we might need a mechanism to advance FirstPendingBurnEvent or mark this event as unprocessable.
+				// For now, returning nil to let processTransaction handle it as a non-dispatch,
+				// but this could lead to a stuck event if consensus is permanently missing for its required fields.
+				// A more robust solution might involve a temporary "unprocessable" status.
+				return nil // Returning nil, as per current validateConsensusForTxFields behavior (logs error, returns nil if missing consensus)
+			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Consensus validated for unstake.", "burn_id", be.Id)
+
+			// Ensure DestinationAddr is not empty, as it's critical for the unstake transaction
+			if len(be.DestinationAddr) == 0 {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Burn event has empty DestinationAddr. Cannot construct unstake tx.", "burn_id", be.Id)
+				// This is a critical data issue. This burn event cannot be processed.
+				// Consider moving it to a failed/error status and advancing the FirstPendingBurnEvent.
+				// For now, returning an error to signify failure for this specific event.
+				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
 			}
 
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Constructing unstake Ethereum transaction.", "burn_id", be.Id, "destination_addr_hex", hex.EncodeToString(be.DestinationAddr), "amount", be.Amount, "unstaker_nonce", oracleData.RequestedUnstakerNonce)
 			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 				ctx,
 				getChainIDForEigen(ctx),
@@ -1716,20 +1764,20 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				oracleData.EthTipCap,
 			)
 			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to construct unstake Ethereum transaction.", "burn_id", be.Id, "error", err)
 				return err
 			}
 
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to get creator address for unstake tx.", "burn_id", be.Id, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx), "error", err)
 				return err
 			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Creator address for unstake tx.", "burn_id", be.Id, "creator", creator)
 
-			k.Logger(ctx).Warn("processing zenBTC burn unstake",
-				"burn_event", be,
-				"nonce", oracleData.RequestedUnstakerNonce,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Submitting Ethereum transaction for unstake.",
+				"burn_id", be.Id, "creator", creator, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+				"eigen_chain_id", getChainIDForEigen(ctx))
 
 			return k.submitEthereumTransaction(
 				ctx,
@@ -1743,6 +1791,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		},
 		// Successfully processed unstake transaction
 		func(be zenbtctypes.BurnEvent) error {
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Nonce advanced for unstake. Updating burn event status.", "burn_id", be.Id, "old_status", be.Status, "new_status", zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING)
 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
