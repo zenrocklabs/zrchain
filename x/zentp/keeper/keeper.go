@@ -207,11 +207,11 @@ func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.Le
 	protocolWalletAddress := sdk.MustAccAddressFromBech32(mintParams.ProtocolWalletAddress)
 
 	params, err := k.ParamStore.Get(ctx)
-
-	bridgeFee := params.BridgeFee
 	if err != nil {
 		return nil, math.LegacyDec{}, err
 	}
+
+	bridgeFee := params.BridgeFee
 
 	return protocolWalletAddress, bridgeFee, nil
 }

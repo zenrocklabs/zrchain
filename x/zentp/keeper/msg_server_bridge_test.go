@@ -4,91 +4,15 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
-	zentptestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 )
 
-type IntegrationTestSuite struct {
-	suite.Suite
-
-	zentpKeeper      keeper.Keeper
-	ctx              sdk.Context
-	msgServer        types.MsgServer
-	bankKeeper       *zentptestutil.MockBankKeeper
-	accountKeeper    *zentptestutil.MockAccountKeeper
-	treasuryKeeper   *zentptestutil.MockTreasuryKeeper
-	identityKeeper   *zentptestutil.MockIdentityKeeper
-	validationKeeper *zentptestutil.MockValidationKeeper
-	mintKeeper       *zentptestutil.MockMintKeeper
-}
-
-func TestKeeperTestSuite(t *testing.T) {
+func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
-}
-
-func (s *IntegrationTestSuite) SetupTest() {
-	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
-	key := storetypes.NewKVStoreKey(types.StoreKey)
-	memKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
-	storeService := runtime.NewKVStoreService(key)
-	memStoreService := runtime.NewMemStoreService(memKey)
-	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
-	s.ctx = testCtx.Ctx
-
-	// gomock initializations
-	ctrl := gomock.NewController(s.T())
-	accountKeeper := zentptestutil.NewMockAccountKeeper(ctrl)
-	bankKeeper := zentptestutil.NewMockBankKeeper(ctrl)
-	treasuryKeeper := zentptestutil.NewMockTreasuryKeeper(ctrl)
-	identityKeeper := zentptestutil.NewMockIdentityKeeper(ctrl)
-	validationKeeper := zentptestutil.NewMockValidationKeeper(ctrl)
-	mintKeeper := zentptestutil.NewMockMintKeeper(ctrl)
-	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
-
-	// Assign the mock keepers to the suite fields
-	s.accountKeeper = accountKeeper
-	s.bankKeeper = bankKeeper
-	s.treasuryKeeper = treasuryKeeper
-	s.identityKeeper = identityKeeper
-	s.validationKeeper = validationKeeper
-	s.mintKeeper = mintKeeper
-	s.zentpKeeper = keeper.NewKeeper(
-		encCfg.Codec,
-		storeService,
-		testCtx.Ctx.Logger(),
-		"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-		treasuryKeeper,
-		bankKeeper,
-		accountKeeper,
-		identityKeeper,
-		validationKeeper,
-		mintKeeper,
-		memStoreService,
-		false,
-	)
-
-	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
-		s.zentpKeeper.Logger())
-
-	err := s.zentpKeeper.ParamStore.Set(s.ctx, types.DefaultParams())
-	s.Require().NoError(err)
-
-	// Initialize MintCount to 0
-	err = s.zentpKeeper.MintCount.Set(s.ctx, 0)
-	s.Require().NoError(err)
-
-	s.msgServer = keeper.NewMsgServerImpl(s.zentpKeeper)
 }
 
 func (s *IntegrationTestSuite) TestBridge() {
