@@ -553,7 +553,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				workspace:  &defaultWs,
 				keyRequest: &partialKeyRequest,
 				msg: types.NewMsgFulfilKeyRequest(
-					"testCreator",
+					"testCreator2",
 					1,
 					types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED,
 					&types.MsgFulfilKeyRequest_Key{Key: &types.MsgNewKey{PublicKey: differentECDSAKey}},
