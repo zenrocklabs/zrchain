@@ -15,8 +15,27 @@ permissions:
   contents: read
 
 jobs:
-  unit-test:
-    name: test
+  unit-test-selfhosted:
+    if: github.repository == 'zenrocklabs/zrchain'
+    name: Unit Tests (Self-hosted)
+    runs-on: zrchain
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+          cache-dependency-path: "**/*.sum"
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -race -v -skip "Test_ProxyFunctions" ./...
+
+  unit-test-default:
+    if: github.repository != 'zenrocklabs/zrchain'
+    name: Unit Tests (GitHub-hosted)
     runs-on: ubuntu-latest
     defaults:
       run:
