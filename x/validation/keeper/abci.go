@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -797,6 +798,8 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 	} else if requestedSolNonce != nil {
+		k.Logger(ctx).Error("requested solana nonce", "nonce", requestedSolNonce.Nonce)
+
 		if requestedSolNonce.Nonce.IsZero() {
 			k.Logger(ctx).Error("solana nonce is zero")
 			return
@@ -809,7 +812,12 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		nonceUpdatedCallback(pendingTxs[0])
+		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
+			return
+		}
+
+		k.Logger(ctx).Error("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
@@ -1059,6 +1067,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
+				k.Logger(ctx).Error("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+				return nil
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
@@ -1195,14 +1205,17 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// Get pending mint transactions
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactions(
+			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
 				zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 			)
+			k.Logger(ctx).Warn("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
+			return pendingMints, err
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Error("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zenbtc solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
 				return nil
@@ -1261,6 +1274,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq.nonceAuthorityKey = solParams.NonceAuthorityKey
 			txPrepReq.signerKey = solParams.SignerKeyId
 			txPrepReq.zenbtc = true
+			k.Logger(ctx).Error("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -1294,24 +1308,32 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			return nil
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			// If BlockHeight is 0, this transaction was either just dispatched in the current block
+			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
+			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
-				return nil
+				k.Logger(ctx).Debug("Solana Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
+				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			}
+
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+			k.Logger(ctx).Info("Solana Mint Status Check Begin", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
+			// --- Primary BTL Timeout Check (Blocks To Live) ---
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
-				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
-				if err != nil {
-					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
-					return err
-				}
-				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
-					tx.BlockHeight = 0 // this will trigger the tx to get retried
-					k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
-				}
-				// else the transaction has been included in a block, and we should wait for the mint event
+				tx = k.processBtlSolanaMint(ctx, tx, oracleData, *solParams)
 			}
-			return nil
+
+			// --- Secondary Event Arrival Timeout Check ---
+			// This check applies if tx.AwaitingEventSince was set (indicating nonce advanced)
+			// and was not subsequently cleared by the BTL check itself.
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutSolanaMint(ctx, tx, oracleData, *solParams)
+			}
+
+			k.Logger(ctx).Info("Solana Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			// Persist any modifications to the transaction state.
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
 }
@@ -1405,6 +1427,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
 					return err
 				}
+				k.Logger(ctx).Error("nonces", "last_hex", hex.EncodeToString(lastNonce.Nonce), "current_hex", hex.EncodeToString(currentNonce[:]))
 				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
 					tx.BlockHeight = 0 // this will trigger the tx to get retried
 				}
@@ -1500,53 +1523,87 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData OracleData) {
-	id, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Started.", "oracle_event_count", len(oracleData.SolanaMintEvents))
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingSolMintTransaction(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: No first pending Solana mint transaction ID found. Nothing to process.")
 			return
 		}
-		k.Logger(ctx).Error("GetFirstPendingSolMintTransaction: ", err.Error())
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting first pending Solana mint transaction ID.", "error", err)
 		return
 	}
-	if id == 0 {
+
+	if firstPendingID == 0 {
+		k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: First pending Solana mint transaction ID is 0. Nothing to process.")
 		return
 	}
-	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, id)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Processing with first pending ID.", "first_pending_id", firstPendingID)
+
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
 	if err != nil {
-		k.Logger(ctx).Error("GetPendingMintTransactionsStore.Get: ", err.Error())
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting pending mint transaction from store.", "id", firstPendingID, "error", err)
+		return
+	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved pending mint transaction.", "pending_mint_id", pendingMint.Id, "zrchain_tx_id", pendingMint.ZrchainTxId, "status", pendingMint.Status, "recipient", pendingMint.RecipientAddress, "amount", pendingMint.Amount)
+
+	if pendingMint.ZrchainTxId == 0 {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: PendingMint has ZrchainTxId == 0. Cannot match with treasury sign requests. Skipping.", "pending_mint_id", pendingMint.Id)
 		return
 	}
 
-	tx, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, id)
+	signTxReq, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, pendingMint.ZrchainTxId)
 	if err != nil {
-		k.Logger(ctx).Error("SignTransactionRequestStore.Get: ", err.Error())
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting SignTransactionRequest from treasury.", "zrchain_tx_id_searched", pendingMint.ZrchainTxId, "error", err)
 		return
 	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved SignTransactionRequest from treasury.", "zrchain_tx_id", signTxReq.Id, "sign_request_id", signTxReq.SignRequestId)
 
-	sigReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, tx.SignRequestId)
+	mainSignReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, signTxReq.SignRequestId)
 	if err != nil {
-		k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting main SignRequest from treasury.", "sign_request_id_searched", signTxReq.SignRequestId, "error", err)
 		return
 	}
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved main SignRequest from treasury.", "main_sign_request_id", mainSignReq.Id, "child_req_count", len(mainSignReq.ChildReqIds), "status", mainSignReq.Status)
 
-	var (
-		signatures []byte
-		sigHash    [32]byte
-	)
-
-	for _, id := range sigReq.ChildReqIds {
-		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, id)
+	var signatures [][]byte
+	foundAllChildSignatures := true
+	for i, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, childReqID)
 		if err != nil {
-			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+			k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting child SignRequest.", "child_req_id", childReqID, "error", err)
+			foundAllChildSignatures = false
+			break
 		}
-		if len(childReq.SignedData) != 1 {
-			continue
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: Child SignRequest has no signed data or empty signature.", "child_req_id", childReqID, "signed_data_count", len(childReq.SignedData))
+			foundAllChildSignatures = false
+			break
 		}
-		signatures = append(signatures, childReq.SignedData[0].SignedData...)
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+		k.Logger(ctx).Debug("ProcessSolanaZenBTCMintEvents: Appended signature from child request.", "child_idx", i, "child_req_id", childReqID, "signature_hex", hex.EncodeToString(childReq.SignedData[0].SignedData))
 	}
-	sigHash = sha256.Sum256(signatures)
-	for _, event := range oracleData.SolanaMintEvents {
+
+	if !foundAllChildSignatures {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: Did not find all child signatures or some were empty. Cannot compute sigHash.", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("ProcessSolanaZenBTCMintEvents: No signatures collected from child requests. Cannot compute sigHash.", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Computed local sigHash.", "concatenated_signature_len", len(concatenatedSignatures), "local_sig_hash_hex", hex.EncodeToString(sigHash[:]))
+
+	for i, event := range oracleData.SolanaMintEvents {
+		k.Logger(ctx).Debug("ProcessSolanaZenBTCMintEvents: Comparing with oracle event.", "oracle_event_idx", i, "oracle_sig_hash_hex", hex.EncodeToString(event.SigHash))
 		if bytes.Equal(event.SigHash, sigHash[:]) {
+			k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: MATCH FOUND! Oracle event sigHash matches local sigHash.", "oracle_event_idx", i, "pending_mint_id", pendingMint.Id)
+
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.GetSupply: ", err.Error())
@@ -1589,6 +1646,15 @@ func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData Orac
 
 // storeNewZenBTCBurnEvents is a helper function to store new burn events from a given source.
 func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecarapitypes.BurnEvent, source string, nonceErrorMsg string) {
+	k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Started.", "source", source, "incoming_event_count", len(burnEvents))
+	if source == "solana" && len(burnEvents) > 0 {
+		for i, dbgEvent := range burnEvents {
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Solana event details from oracle.",
+				"source", source, "idx", i, "tx_id", dbgEvent.TxID, "log_idx", dbgEvent.LogIndex,
+				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr))
+		}
+	}
+
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
@@ -1599,16 +1665,18 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			if existingBurn.TxID == burn.TxID &&
 				existingBurn.LogIndex == burn.LogIndex &&
 				existingBurn.ChainID == burn.ChainID {
+				k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Event already exists in store.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "existing_burn_id", id)
 				exists = true
 				return true, nil
 			}
-			return false, nil
+			return false, nil // Continue walking
 		}); err != nil {
-			k.Logger(ctx).Error("error walking burn events", "source", source, "error", err)
-			continue
+			k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error walking burn events. Skipping event.", "source", source, "tx_id", burn.TxID, "error", err)
+			continue // Process next event
 		}
 
 		if !exists {
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New event, creating BurnEvent.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "amount", burn.Amount, "destination_addr_hex", hex.EncodeToString(burn.DestinationAddr))
 			// Create a new BurnEvent using data from the input struct
 			newBurn := zenbtctypes.BurnEvent{
 				TxID:            burn.TxID,
@@ -1618,27 +1686,34 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 				Amount:          burn.Amount,
 				Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
 			}
-			id, err := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
-			if err != nil {
-				k.Logger(ctx).Error("error creating burn event", "source", source, "error", err)
-				continue
+			createdID, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
+			if createErr != nil {
+				k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error creating burn event in store.", "source", source, "tx_id", burn.TxID, "error", createErr)
+				continue // Process next event
 			}
-			k.Logger(ctx).Info(fmt.Sprintf("created new %s burn event", source), "id", id)
+			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Successfully created new burn event in store.", "source", source, "new_burn_id", createdID, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 			foundNewBurn = true
+		} else {
+			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping pre-existing event.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 		}
 	}
 
 	// If a new burn event is found, we need to request the unstaker's Ethereum nonce
 	// because the unstaking transaction happens on Ethereum, regardless of the burn source.
 	if foundNewBurn {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error(nonceErrorMsg, "error", err)
+		unstakerKeyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
+		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New burn events found. Setting EthereumNonceRequested for unstaker.", "source", source, "unstaker_key_id", unstakerKeyID)
+		if err := k.EthereumNonceRequested.Set(ctx, unstakerKeyID, true); err != nil {
+			k.Logger(ctx).Warn(fmt.Sprintf("storeNewZenBTCBurnEvents: %s", nonceErrorMsg), "source", source, "error", err)
 		}
+	} else {
+		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: No new burn events found to store.", "source", source)
 	}
 }
 
 // processZenBTCBurnEvents processes pending burn events by constructing unstake transactions.
 func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
+	k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Started.")
 	processTransaction(
 		k,
 		ctx,
@@ -1646,20 +1721,59 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		&oracleData.RequestedUnstakerNonce,
 		nil,
 		func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-			return k.getPendingBurnEvents(ctx)
+			pendingBurns, err := k.getPendingBurnEvents(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Error in getPendingBurnEvents.", "error", err)
+				return nil, err
+			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Pending burn events fetched.", "count", len(pendingBurns))
+			if len(pendingBurns) > 0 {
+				for i, pb := range pendingBurns {
+					k.Logger(ctx).Debug("ProcessZenBTCBurnEvents: Pending burn event details.",
+						"idx", i, "burn_id", pb.Id, "tx_id", pb.TxID, "log_idx", pb.LogIndex, "chain_id", pb.ChainID,
+						"amount", pb.Amount, "destination_addr_hex", hex.EncodeToString(pb.DestinationAddr), "status", pb.Status)
+				}
+			}
+			return pendingBurns, nil
 		},
 		// Dispatch unstake transaction
 		func(be zenbtctypes.BurnEvent) error {
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Dispatching unstake for burn event.",
+				"burn_id", be.Id, "origin_tx_id", be.TxID, "origin_chain_id", be.ChainID,
+				"amount", be.Amount, "destination_addr_hex", hex.EncodeToString(be.DestinationAddr))
+
 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
-				return err
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to set first pending burn event.", "burn_id", be.Id, "error", err)
+				return err // Return error to potentially halt or indicate failure
 			}
 
 			// Check for consensus
-			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
-				"zenBTC burn unstake", fmt.Sprintf("burn_id: %d, origin: %s, destination: %s, amount: %d", be.Id, be.ChainID, be.DestinationAddr, be.Amount)); err != nil {
-				return err
+			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			consensusCheckDetails := fmt.Sprintf("burn_id: %d, origin_chain: %s, destination_addr_hex: %s, amount: %d", be.Id, be.ChainID, hex.EncodeToString(be.DestinationAddr), be.Amount)
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Validating consensus for unstake.", "burn_id", be.Id, "required_fields", fmt.Sprintf("%v", requiredFields), "details_for_log", consensusCheckDetails)
+			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", consensusCheckDetails); err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Consensus validation failed for unstake.", "burn_id", be.Id, "error", err)
+				// If consensus fails, we don't proceed with this burn event in this block.
+				// It will be retried in the next block if it's still the first pending.
+				// To ensure it *is* retried and doesn't block others if it's a persistent consensus issue for *this* event,
+				// we might need a mechanism to advance FirstPendingBurnEvent or mark this event as unprocessable.
+				// For now, returning nil to let processTransaction handle it as a non-dispatch,
+				// but this could lead to a stuck event if consensus is permanently missing for its required fields.
+				// A more robust solution might involve a temporary "unprocessable" status.
+				return nil // Returning nil, as per current validateConsensusForTxFields behavior (logs error, returns nil if missing consensus)
+			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Consensus validated for unstake.", "burn_id", be.Id)
+
+			// Ensure DestinationAddr is not empty, as it's critical for the unstake transaction
+			if len(be.DestinationAddr) == 0 {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Burn event has empty DestinationAddr. Cannot construct unstake tx.", "burn_id", be.Id)
+				// This is a critical data issue. This burn event cannot be processed.
+				// Consider moving it to a failed/error status and advancing the FirstPendingBurnEvent.
+				// For now, returning an error to signify failure for this specific event.
+				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
 			}
 
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Constructing unstake Ethereum transaction.", "burn_id", be.Id, "destination_addr_hex", hex.EncodeToString(be.DestinationAddr), "amount", be.Amount, "unstaker_nonce", oracleData.RequestedUnstakerNonce)
 			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
 				ctx,
 				getChainIDForEigen(ctx),
@@ -1670,20 +1784,20 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				oracleData.EthTipCap,
 			)
 			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to construct unstake Ethereum transaction.", "burn_id", be.Id, "error", err)
 				return err
 			}
 
 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
 			if err != nil {
+				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to get creator address for unstake tx.", "burn_id", be.Id, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx), "error", err)
 				return err
 			}
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Creator address for unstake tx.", "burn_id", be.Id, "creator", creator)
 
-			k.Logger(ctx).Warn("processing zenBTC burn unstake",
-				"burn_event", be,
-				"nonce", oracleData.RequestedUnstakerNonce,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Submitting Ethereum transaction for unstake.",
+				"burn_id", be.Id, "creator", creator, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+				"eigen_chain_id", getChainIDForEigen(ctx))
 
 			return k.submitEthereumTransaction(
 				ctx,
@@ -1697,6 +1811,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		},
 		// Successfully processed unstake transaction
 		func(be zenbtctypes.BurnEvent) error {
+			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Nonce advanced for unstake. Updating burn event status.", "burn_id", be.Id, "old_status", be.Status, "new_status", zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING)
 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},

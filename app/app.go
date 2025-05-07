@@ -393,7 +393,7 @@ func NewZenrockApp(
 	)
 
 	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
-	//authAddr := "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty" // alice
+	adminAuthAddr := "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3" // zenbtc key
 
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
@@ -710,7 +710,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
 		logger,
-		authAddr,
+		adminAuthAddr,
 		app.ValidationKeeper,
 		&app.TreasuryKeeper,
 	)
@@ -720,7 +720,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
 		logger,
-		authAddr,
+		adminAuthAddr,
 		app.TreasuryKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,

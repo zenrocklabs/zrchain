@@ -171,15 +171,16 @@ if [ "$START_ONLY" = false ]; then
 
   # Set initial zentp parameters
     jq '.app_state.zentp.params = {
+        "bridge_fee": "0.010000000000000000",
         "solana": {
-          "signer_key_id": 1,
+          "signer_key_id": 10,
           "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
-          "nonce_authority_key": 8,
-          "nonce_account_key": 9
+          "nonce_authority_key": 11,
+          "nonce_account_key": 12,
           "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
           "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
-          "fee": 20,
-          "btl": 21
+          "fee": 0,
+          "btl": 20
         }
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {

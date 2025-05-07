@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -70,7 +69,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 				return nil, err
 			}
-			return nil, errors.New(errMsg)
+			return &types.MsgFulfilKeyRequestResponse{}, nil
 		}
 	}
 

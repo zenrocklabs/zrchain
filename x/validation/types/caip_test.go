@@ -59,3 +59,25 @@ func TestExtractCAIP2Parts(t *testing.T) {
 		})
 	}
 }
+
+func TestIsSolanaCAIP2(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{"Valid Solana Devnet", "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", true},
+		{"Valid Solana Mainnet", "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", true},
+		{"Valid Solana Testnet", "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", true},
+		{"Invalid Solana Network", "solana:invalidnetwork", false},
+		{"Invalid Namespace", "eth:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", false},
+		{"Invalid Format", "solana-EtWTRABZaYq6iMfeYKouRu166VU2xqa1", false},
+		{"Empty String", "", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, IsSolanaCAIP2(tc.input))
+		})
+	}
+}
