@@ -1638,7 +1638,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	for _, burn := range burnEvents {
 		// Check if this burn event already exists
 		exists := false
-		walkErr := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
+		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
 			// Compare fields from the input burn event data with the stored BurnEvent
 			if existingBurn.TxID == burn.TxID &&
 				existingBurn.LogIndex == burn.LogIndex &&
@@ -1648,9 +1648,8 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 				return true, nil
 			}
 			return false, nil // Continue walking
-		})
-		if walkErr != nil {
-			k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error walking burn events. Skipping event.", "source", source, "tx_id", burn.TxID, "error", walkErr)
+		}); err != nil {
+			k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error walking burn events. Skipping event.", "source", source, "tx_id", burn.TxID, "error", err)
 			continue // Process next event
 		}
 
