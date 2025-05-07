@@ -108,7 +108,7 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 	}
 
 	// Reject if a party tries to sign more than once
-	for _, sig := range req.KeyringPartySignatures {
+	for _, sig := range req.KeyringPartySigs {
 		if sig.Creator == msg.Creator {
 			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
 			errMsg := fmt.Sprintf("party %v already sent a fulfilment", msg.Creator)
@@ -155,7 +155,7 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 	}
 
 	// Append party signature
-	req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+	req.KeyringPartySigs = append(req.KeyringPartySigs, &types.PartySignature{
 		Creator:   msg.Creator,
 		Signature: msg.KeyringPartySignature,
 	})
@@ -176,7 +176,7 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		}
 	}
 
-	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
+	if len(req.KeyringPartySigs) >= int(keyring.PartyThreshold) {
 		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED
 
 		if req.ParentReqId != 0 {

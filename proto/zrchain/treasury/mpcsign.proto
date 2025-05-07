@@ -35,12 +35,12 @@ enum SignRequestStatus {
 message SignRequest {
   uint64 id = 1;
   string creator = 2;
-  uint64 key_id = 3; // Deprecated
+  uint64 key_id = 3 [deprecated = true];
   KeyType key_type = 4;
   repeated bytes data_for_signing = 5;
   SignRequestStatus status = 6;
   repeated SignedDataWithID signed_data = 7;
-  repeated PartySignature keyring_party_signatures = 8;
+  repeated bytes keyring_party_signatures = 8 [deprecated = true];
   string reject_reason = 9;
   google.protobuf.Any metadata = 10;
   uint64 parent_req_id = 11;
@@ -50,6 +50,7 @@ message SignRequest {
   uint64 mpc_btl = 15;
   uint64 fee = 16;
   bytes zenbtc_tx_bytes = 17; // Optional
+  repeated PartySignature keyring_party_sigs = 18;
 }
 
 // format of a signed data with an id value used to sort the signed data
@@ -79,7 +80,7 @@ message SignReqResponse {
   repeated bytes data_for_signing = 5;
   string status = 6;
   repeated SignedDataWithID signed_data = 7;
-  repeated PartySignature keyring_party_signatures = 8;
+  repeated PartySignature keyring_party_sigs = 8;
   string reject_reason = 9;
   google.protobuf.Any metadata = 10;
   uint64 parent_req_id = 11;

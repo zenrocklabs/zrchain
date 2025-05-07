@@ -60,7 +60,7 @@ func (k msgServer) validateKeyRequest(msg *types.MsgFulfilKeyRequest, req *types
 
 func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
 	// Reject if a party tries to sign more than once
-	for _, sig := range req.KeyringPartySignatures {
+	for _, sig := range req.KeyringPartySigs {
 		if sig.Creator == msg.Creator {
 			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
 			errMsg := fmt.Sprintf("party %v already sent a fulfilment", msg.Creator)
@@ -86,7 +86,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 	}
 
 	// Append party signature
-	req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+	req.KeyringPartySigs = append(req.KeyringPartySigs, &types.PartySignature{
 		Creator:   msg.Creator,
 		Signature: msg.KeyringPartySignature,
 	})

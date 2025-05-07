@@ -83,13 +83,13 @@ func (k msgServer) validateICATransactionRequest(ctx sdk.Context, req *types.Sig
 
 func (k msgServer) handleICATransactionRequestFulfilment(ctx sdk.Context, req *types.SignRequest, key *types.Key, sigData []byte, keyringPartySignature []byte, creator string, requestId uint64) error {
 	sigExists := false
-	for _, sig := range req.KeyringPartySignatures {
+	for _, sig := range req.KeyringPartySigs {
 		if bytes.Equal(sig.Signature, keyringPartySignature) {
 			sigExists = true
 		}
 	}
 	if !sigExists {
-		req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+		req.KeyringPartySigs = append(req.KeyringPartySigs, &types.PartySignature{
 			Creator:   creator,
 			Signature: keyringPartySignature,
 		})

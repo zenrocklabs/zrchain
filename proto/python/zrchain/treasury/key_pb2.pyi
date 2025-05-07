@@ -40,7 +40,7 @@ class PartySignature(_message.Message):
     def __init__(self, creator: _Optional[str] = ..., signature: _Optional[bytes] = ...) -> None: ...
 
 class KeyRequest(_message.Message):
-    __slots__ = ("id", "creator", "workspace_addr", "keyring_addr", "key_type", "status", "keyring_party_signatures", "reject_reason", "index", "sign_policy_id", "zenbtc_metadata", "mpc_btl", "fee", "public_key")
+    __slots__ = ("id", "creator", "workspace_addr", "keyring_addr", "key_type", "status", "keyring_party_signatures", "reject_reason", "index", "sign_policy_id", "zenbtc_metadata", "mpc_btl", "fee", "public_key", "keyring_party_sigs")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_ADDR_FIELD_NUMBER: _ClassVar[int]
@@ -55,13 +55,14 @@ class KeyRequest(_message.Message):
     MPC_BTL_FIELD_NUMBER: _ClassVar[int]
     FEE_FIELD_NUMBER: _ClassVar[int]
     PUBLIC_KEY_FIELD_NUMBER: _ClassVar[int]
+    KEYRING_PARTY_SIGS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     workspace_addr: str
     keyring_addr: str
     key_type: KeyType
     status: KeyRequestStatus
-    keyring_party_signatures: _containers.RepeatedCompositeFieldContainer[PartySignature]
+    keyring_party_signatures: _containers.RepeatedScalarFieldContainer[bytes]
     reject_reason: str
     index: int
     sign_policy_id: int
@@ -69,7 +70,8 @@ class KeyRequest(_message.Message):
     mpc_btl: int
     fee: int
     public_key: bytes
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[_Union[KeyType, str]] = ..., status: _Optional[_Union[KeyRequestStatus, str]] = ..., keyring_party_signatures: _Optional[_Iterable[_Union[PartySignature, _Mapping]]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., public_key: _Optional[bytes] = ...) -> None: ...
+    keyring_party_sigs: _containers.RepeatedCompositeFieldContainer[PartySignature]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., workspace_addr: _Optional[str] = ..., keyring_addr: _Optional[str] = ..., key_type: _Optional[_Union[KeyType, str]] = ..., status: _Optional[_Union[KeyRequestStatus, str]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., index: _Optional[int] = ..., sign_policy_id: _Optional[int] = ..., zenbtc_metadata: _Optional[_Union[ZenBTCMetadata, _Mapping]] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., public_key: _Optional[bytes] = ..., keyring_party_sigs: _Optional[_Iterable[_Union[PartySignature, _Mapping]]] = ...) -> None: ...
 
 class KeyReqResponse(_message.Message):
     __slots__ = ("id", "creator", "workspace_addr", "keyring_addr", "key_type", "status", "keyring_party_signatures", "reject_reason", "index", "sign_policy_id", "zenbtc_metadata", "mpc_btl", "fee", "public_key")
