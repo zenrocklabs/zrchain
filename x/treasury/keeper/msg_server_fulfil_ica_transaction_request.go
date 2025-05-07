@@ -18,7 +18,7 @@ func (k msgServer) FulfilICATransactionRequest(goCtx context.Context, msg *types
 		return nil, err
 	}
 
-	if err = k.processICATransactionRequest(ctx, msg.Status, req, key, msg.GetSignedData(), msg.KeyringPartySignature, msg.GetRejectReason(), msg.RequestId); err != nil {
+	if err = k.processICATransactionRequest(ctx, msg.Status, req, key, msg.GetSignedData(), msg.KeyringPartySignature, msg.Creator, msg.GetRejectReason(), msg.RequestId); err != nil {
 		return nil, err
 	}
 
@@ -41,14 +41,14 @@ func (k msgServer) FulfilICATransactionRequest(goCtx context.Context, msg *types
 	return &types.MsgFulfilICATransactionRequestResponse{}, nil
 }
 
-func (k msgServer) processICATransactionRequest(ctx sdk.Context, status types.SignRequestStatus, req *types.SignRequest, key *types.Key, sigData []byte, keyringPartySignature []byte, rejectReason string, requestId uint64) error {
+func (k msgServer) processICATransactionRequest(ctx sdk.Context, status types.SignRequestStatus, req *types.SignRequest, key *types.Key, sigData []byte, keyringPartySignature []byte, creator string, rejectReason string, requestId uint64) error {
 	if err := k.validateICATransactionRequest(ctx, req, key, sigData, keyringPartySignature, status); err != nil {
 		return err
 	}
 
 	switch status {
 	case types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED, types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL:
-		if err := k.handleICATransactionRequestFulfilment(ctx, req, key, sigData, keyringPartySignature, requestId); err != nil {
+		if err := k.handleICATransactionRequestFulfilment(ctx, req, key, sigData, keyringPartySignature, creator, requestId); err != nil {
 			return err
 		}
 	case types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED:
@@ -81,15 +81,18 @@ func (k msgServer) validateICATransactionRequest(ctx sdk.Context, req *types.Sig
 	return k.verifySignature(ctx, req, key, sigData)
 }
 
-func (k msgServer) handleICATransactionRequestFulfilment(ctx sdk.Context, req *types.SignRequest, key *types.Key, sigData []byte, keyringPartySignature []byte, requestId uint64) error {
+func (k msgServer) handleICATransactionRequestFulfilment(ctx sdk.Context, req *types.SignRequest, key *types.Key, sigData []byte, keyringPartySignature []byte, creator string, requestId uint64) error {
 	sigExists := false
 	for _, sig := range req.KeyringPartySignatures {
-		if bytes.Equal(sig, keyringPartySignature) {
+		if bytes.Equal(sig.Signature, keyringPartySignature) {
 			sigExists = true
 		}
 	}
 	if !sigExists {
-		req.KeyringPartySignatures = append(req.KeyringPartySignatures, keyringPartySignature)
+		req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+			Creator:   creator,
+			Signature: keyringPartySignature,
+		})
 	}
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)

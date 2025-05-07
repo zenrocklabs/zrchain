@@ -40,7 +40,7 @@ message SignRequest {
   repeated bytes data_for_signing = 5;
   SignRequestStatus status = 6;
   repeated SignedDataWithID signed_data = 7;
-  repeated bytes keyring_party_signatures = 8;
+  repeated PartySignature keyring_party_signatures = 8;
   string reject_reason = 9;
   google.protobuf.Any metadata = 10;
   uint64 parent_req_id = 11;
@@ -79,7 +79,7 @@ message SignReqResponse {
   repeated bytes data_for_signing = 5;
   string status = 6;
   repeated SignedDataWithID signed_data = 7;
-  repeated bytes keyring_party_signatures = 8;
+  repeated PartySignature keyring_party_signatures = 8;
   string reject_reason = 9;
   google.protobuf.Any metadata = 10;
   uint64 parent_req_id = 11;
@@ -113,6 +113,6 @@ message ICATransactionRequest {
   // ibc.applications.interchain_accounts.v1.MsgSendTx input_msg = 5;
   SignRequestStatus status = 6;
   repeated bytes signed_data = 7;
-  repeated bytes keyring_party_signatures = 8;
+  repeated PartySignature keyring_party_signatures = 8;
   string reject_reason = 9;
 }

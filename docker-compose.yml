@@ -1,4 +1,5 @@
 ---
+name: zrchain
 services:
   redis:
     container_name: redis

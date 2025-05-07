@@ -105,6 +105,17 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		return fmt.Errorf("missing signature data: %v", msg)
 	}
 
+	// Reject if a party tries to sign more than once
+	for _, sig := range req.KeyringPartySignatures {
+		if sig.Creator == msg.Creator {
+			req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+			errMsg := fmt.Sprintf("Party %v already sent a fulfilment", msg.Creator)
+			req.RejectReason = errMsg
+			return fmt.Errorf("Party %v already sent a fulfilment", msg.Creator)
+		}
+	}
+
+	// Reject invalid signature
 	if msg.KeyringPartySignature == nil || len(msg.KeyringPartySignature) != 64 {
 		return fmt.Errorf("invalid mpc party signature")
 	}
@@ -126,15 +137,11 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 		}
 	}
 
-	sigExists := false
-	for _, sig := range req.KeyringPartySignatures {
-		if bytes.Equal(sig, msg.KeyringPartySignature) {
-			sigExists = true
-		}
-	}
-	if !sigExists {
-		req.KeyringPartySignatures = append(req.KeyringPartySignatures, msg.KeyringPartySignature)
-	}
+	// Append party signature
+	req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+		Creator:   msg.Creator,
+		Signature: msg.KeyringPartySignature,
+	})
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {

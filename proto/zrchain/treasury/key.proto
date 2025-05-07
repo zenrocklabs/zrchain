@@ -27,6 +27,11 @@ enum KeyRequestStatus {
   KEY_REQUEST_STATUS_REJECTED = 4;
 }
 
+message PartySignature {
+  string creator = 1;
+  bytes signature = 2;
+}
+
 // format of a key request
 message KeyRequest {
   uint64 id = 1;
@@ -35,7 +40,7 @@ message KeyRequest {
   string keyring_addr = 4;
   KeyType key_type = 5;
   KeyRequestStatus status = 6;
-  repeated bytes keyring_party_signatures = 7;
+  repeated PartySignature keyring_party_signatures = 7;
   string reject_reason = 8;
   uint64 index = 9;
   uint64 sign_policy_id = 10;
@@ -53,7 +58,7 @@ message KeyReqResponse {
   string keyring_addr = 4;
   string key_type = 5;
   string status = 6;
-  repeated bytes keyring_party_signatures = 7;
+  repeated PartySignature keyring_party_signatures = 7;
   string reject_reason = 8;
   uint64 index = 9;
   uint64 sign_policy_id = 10;

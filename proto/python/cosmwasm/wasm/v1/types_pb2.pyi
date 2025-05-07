@@ -65,13 +65,14 @@ class CodeInfo(_message.Message):
     def __init__(self, code_hash: _Optional[bytes] = ..., creator: _Optional[str] = ..., instantiate_config: _Optional[_Union[AccessConfig, _Mapping]] = ...) -> None: ...
 
 class ContractInfo(_message.Message):
-    __slots__ = ("code_id", "creator", "admin", "label", "created", "ibc_port_id", "extension")
+    __slots__ = ("code_id", "creator", "admin", "label", "created", "ibc_port_id", "ibc2_port_id", "extension")
     CODE_ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     ADMIN_FIELD_NUMBER: _ClassVar[int]
     LABEL_FIELD_NUMBER: _ClassVar[int]
     CREATED_FIELD_NUMBER: _ClassVar[int]
     IBC_PORT_ID_FIELD_NUMBER: _ClassVar[int]
+    IBC2_PORT_ID_FIELD_NUMBER: _ClassVar[int]
     EXTENSION_FIELD_NUMBER: _ClassVar[int]
     code_id: int
     creator: str
@@ -79,8 +80,9 @@ class ContractInfo(_message.Message):
     label: str
     created: AbsoluteTxPosition
     ibc_port_id: str
+    ibc2_port_id: str
     extension: _any_pb2.Any
-    def __init__(self, code_id: _Optional[int] = ..., creator: _Optional[str] = ..., admin: _Optional[str] = ..., label: _Optional[str] = ..., created: _Optional[_Union[AbsoluteTxPosition, _Mapping]] = ..., ibc_port_id: _Optional[str] = ..., extension: _Optional[_Union[_any_pb2.Any, _Mapping]] = ...) -> None: ...
+    def __init__(self, code_id: _Optional[int] = ..., creator: _Optional[str] = ..., admin: _Optional[str] = ..., label: _Optional[str] = ..., created: _Optional[_Union[AbsoluteTxPosition, _Mapping]] = ..., ibc_port_id: _Optional[str] = ..., ibc2_port_id: _Optional[str] = ..., extension: _Optional[_Union[_any_pb2.Any, _Mapping]] = ...) -> None: ...
 
 class ContractCodeHistoryEntry(_message.Message):
     __slots__ = ("operation", "code_id", "updated", "msg")

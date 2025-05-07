@@ -41,14 +41,19 @@ var keyRequestWithKeyring3 = types.KeyRequest{
 }
 
 var partialKeyRequest = types.KeyRequest{
-	Id:                     1,
-	Creator:                "testCreator",
-	WorkspaceAddr:          "workspace14a2hpadpsy9h4auve2z8lw",
-	KeyringAddr:            "keyring1pfnq7r04rept47gaf5cpdew2",
-	KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
-	Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
-	KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
-	PublicKey:              defaultECDSAKey.PublicKey,
+	Id:            1,
+	Creator:       "testCreator",
+	WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+	KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+	KeyType:       types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+	Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
+	KeyringPartySignatures: []*types.PartySignature{
+		{
+			Creator:   "testCreator",
+			Signature: []byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
+		},
+	},
+	PublicKey: defaultECDSAKey.PublicKey,
 }
 
 var defaultKeyReqResponse = types.KeyReqResponse{
@@ -113,14 +118,19 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				),
 			},
 			wantKeyRequest: &types.KeyRequest{
-				Id:                     1,
-				Creator:                "testCreator",
-				WorkspaceAddr:          "workspace14a2hpadpsy9h4auve2z8lw",
-				KeyringAddr:            "keyring1pfnq7r04rept47gaf5cpdew2",
-				KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
-				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
-				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
-				PublicKey:              defaultECDSAKey.PublicKey,
+				Id:            1,
+				Creator:       "testCreator",
+				WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:       types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
+					},
+				},
+				PublicKey: defaultECDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
 		},
@@ -171,14 +181,19 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				),
 			},
 			wantKeyRequest: &types.KeyRequest{
-				Id:                     1,
-				Creator:                "testCreator",
-				WorkspaceAddr:          "workspace14a2hpadpsy9h4auve2z8lw",
-				KeyringAddr:            "keyring1pfnq7r04rept47gaf5cpdew2",
-				KeyType:                types.KeyType_KEY_TYPE_EDDSA_ED25519,
-				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
-				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
-				PublicKey:              defaultEdDSAKey.PublicKey,
+				Id:            1,
+				Creator:       "testCreator",
+				WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:       types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_PARTIAL,
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
+					},
+				},
+				PublicKey: defaultEdDSAKey.PublicKey,
 			},
 			want: &types.MsgFulfilKeyRequestResponse{},
 		},
@@ -503,7 +518,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				workspace:  &defaultWs,
 				keyRequest: &partialKeyRequest,
 				msg: types.NewMsgFulfilKeyRequest(
-					"testCreator",
+					"testCreator2",
 					1,
 					types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED,
 					&types.MsgFulfilKeyRequest_Key{Key: &types.MsgNewKey{PublicKey: defaultECDSAKey.PublicKey}},
@@ -517,9 +532,15 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
 				KeyType:       types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED,
-				KeyringPartySignatures: [][]byte{
-					[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
-					[]byte("0000000000000000000000000000000000000000000000000SecondSignature"),
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
+					},
+					{
+						Creator:   "testCreator2",
+						Signature: []byte("0000000000000000000000000000000000000000000000000SecondSignature"),
+					},
 				},
 				PublicKey: defaultECDSAKey.PublicKey,
 			},
@@ -540,15 +561,20 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 				),
 			},
 			wantKeyRequest: &types.KeyRequest{
-				Id:                     1,
-				Creator:                "testCreator",
-				WorkspaceAddr:          "workspace14a2hpadpsy9h4auve2z8lw",
-				KeyringAddr:            "keyring1pfnq7r04rept47gaf5cpdew2",
-				KeyType:                types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
-				Status:                 types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED,
-				KeyringPartySignatures: [][]byte{[]byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur")},
-				RejectReason:           fmt.Sprintf("public key mismatch, expected %x, got %x", partialKeyRequest.PublicKey, differentECDSAKey),
-				PublicKey:              partialKeyRequest.PublicKey,
+				Id:            1,
+				Creator:       "testCreator",
+				WorkspaceAddr: "workspace14a2hpadpsy9h4auve2z8lw",
+				KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+				KeyType:       types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				Status:        types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED,
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("TestSignatureTestSignatureTestSignatureTestSignatureTestSignatur"),
+					},
+				},
+				RejectReason: fmt.Sprintf("public key mismatch, expected %x, got %x", partialKeyRequest.PublicKey, differentECDSAKey),
+				PublicKey:    partialKeyRequest.PublicKey,
 			},
 			want:    &types.MsgFulfilKeyRequestResponse{},
 			wantErr: false,

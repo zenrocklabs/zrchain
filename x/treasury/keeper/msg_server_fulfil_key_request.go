@@ -59,9 +59,22 @@ func (k msgServer) validateKeyRequest(msg *types.MsgFulfilKeyRequest, req *types
 }
 
 func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
+	// Reject if a party tries to sign more than once
+	for _, sig := range req.KeyringPartySignatures {
+		if sig.Creator == msg.Creator {
+			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
+			errMsg := fmt.Sprintf("Party %v already sent a fulfilment", msg.Creator)
+			req.RejectReason = errMsg
+			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
+				return nil, err
+			}
+			return &types.MsgFulfilKeyRequestResponse{}, nil
+		}
+	}
+
+	// Check against public key from other parties
 	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
 	if len(req.PublicKey) > 0 {
-		// Check against public key from other parties
 		if !bytes.Equal(req.PublicKey, pubKey) {
 			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
 			errMsg := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
@@ -77,17 +90,11 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		return nil, err
 	}
 
-	sigExists := false
-	for _, sig := range req.KeyringPartySignatures {
-		if bytes.Equal(sig, msg.KeyringPartySignature) {
-			sigExists = true
-			break
-		}
-	}
-
-	if !sigExists {
-		req.KeyringPartySignatures = append(req.KeyringPartySignatures, msg.KeyringPartySignature)
-	}
+	// Append party signature
+	req.KeyringPartySignatures = append(req.KeyringPartySignatures, &types.PartySignature{
+		Creator:   msg.Creator,
+		Signature: msg.KeyringPartySignature,
+	})
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, req.KeyringAddr)
 	if err != nil || !keyring.IsActive {
