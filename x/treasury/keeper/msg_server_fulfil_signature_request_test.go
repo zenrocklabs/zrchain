@@ -39,13 +39,13 @@ var defaultECDSAKey = types.Key{
 	PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
 }
 
-var defaultBTCKey = types.Key{
-	Id:            1,
-	WorkspaceAddr: "testWorkspace",
-	KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
-	Type:          types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
-	PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
-}
+// var defaultBTCKey = types.Key{
+// 	Id:            1,
+// 	WorkspaceAddr: "testWorkspace",
+// 	KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
+// 	Type:          types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
+// 	PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
+// }
 
 var defaultBitcoinKey = types.Key{
 	Id:            1,
@@ -335,8 +335,17 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 				},
 				msg: &defaultResponseECDSA,
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				RejectReason:   "signature verification failed: verifySignature- invalid signature d8350130b68fdc9512c3fa28d4a7b9c4ab50e08ef1e2d8e46c3ee72ff78eecbd1e7ed73041de7748f85db724395e7624baaaa620700e76ae0e5383bf8d2ba2db from keyring keyring1pfnq7r04rept47gaf5cpdew2",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: signature request status is already fulfilled",
@@ -401,10 +410,20 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					SignedData:
 					// added 11 on top to max out on length
 					[]byte{11, 173, 224, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				RejectReason:   "signature verification failed: verifySignature- invalid ecdsa signature 0bade0679f37fbffd43291ebb5130e78a8d09721cca14f76e54b16b9ea737daa6537c5da5eac208b158d68a36d2d2f506e27059c581f527bf64315c77e4bde417301 of length 66",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: invalid key type",
@@ -419,14 +438,24 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					KeyType:        types.KeyType_KEY_TYPE_UNSPECIFIED,
 				},
 				msg: &types.MsgFulfilSignatureRequest{
-					Creator:    "testCreator",
-					RequestId:  1,
-					Status:     types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
-					SignedData: []byte{173, 224, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					Creator:               "testCreator",
+					RequestId:             1,
+					Status:                types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
+					SignedData:            []byte{173, 224, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_UNSPECIFIED,
+				RejectReason:   "signature verification failed: verifySignature- invalid key type: KEY_TYPE_UNSPECIFIED",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: invalid ecdsa signature",
@@ -445,12 +474,22 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					RequestId: 1,
 					Status:    types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					SignedData:
-					// added 11 on top to max out on length
+					// invalid signature data
 					[]byte{175, 224, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				RejectReason:   "signature verification failed: verifySignature- invalid signature afe0679f37fbffd43291ebb5130e78a8d09721cca14f76e54b16b9ea737daa6537c5da5eac208b158d68a36d2d2f506e27059c581f527bf64315c77e4bde417301 from keyring keyring1pfnq7r04rept47gaf5cpdew2",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: invalid eddsa signature",
@@ -469,12 +508,22 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					RequestId: 1,
 					Status:    types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					SignedData:
-					// added 11 on top to max out on length
+					// invalid signature data
 					[]byte{225, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				RejectReason:   "signature verification failed: verifySignature- invalid signature e1679f37fbffd43291ebb5130e78a8d09721cca14f76e54b16b9ea737daa6537c5da5eac208b158d68a36d2d2f506e27059c581f527bf64315c77e4bde417301 from keyring keyring1pfnq7r04rept47gaf5cpdew2",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: invalid eddsa signature length",
@@ -493,12 +542,22 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					RequestId: 1,
 					Status:    types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					SignedData:
-					// added 11 on top to max out on length
+					// invalid length for eddsa sig
 					[]byte{225, 103, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				RejectReason:   "signature verification failed: verifySignature- invalid eddsa signature e167ffd43291ebb5130e78a8d09721cca14f76e54b16b9ea737daa6537c5da5eac208b158d68a36d2d2f506e27059c581f527bf64315c77e4bde417301 of length 61",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: no mpc party signature",
@@ -517,10 +576,20 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					RequestId:  1,
 					Status:     types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					SignedData: []byte{173, 224, 103, 159, 55, 251, 255, 212, 50, 145, 235, 181, 19, 14, 120, 168, 208, 151, 33, 204, 161, 79, 118, 229, 75, 22, 185, 234, 115, 125, 170, 101, 55, 197, 218, 94, 172, 32, 139, 21, 141, 104, 163, 109, 45, 47, 80, 110, 39, 5, 156, 88, 31, 82, 123, 246, 67, 21, 199, 126, 75, 222, 65, 115, 1},
+					// KeyringPartySignature is missing
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				RejectReason:   "invalid length of mpc party signature",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: invalid mpc party signature",
@@ -542,8 +611,17 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					KeyringPartySignature: []byte("InvalidLengthSignature"), // should be 64 bytes long, will fail
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
+				RejectReason:   "invalid length of mpc party signature",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "FAIL: signed data mismatch on partial request",
@@ -572,8 +650,70 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 				},
 			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				SignedData:     sigPayloadECDSA,
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("0TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
+					},
+				},
+				RejectReason: "party testCreator already sent a fulfilment",
+			},
 			want:    &types.MsgFulfilSignatureRequestResponse{},
-			wantErr: true,
+			wantErr: false,
+		},
+		{
+			name: "FAIL: party testCreator already sent a fulfilment",
+			args: args{
+				key: &defaultECDSAKey,
+				req: &types.SignRequest{
+					Id:             1,
+					Creator:        "testCreator",
+					KeyIds:         []uint64{1},
+					DataForSigning: sigRequestPayload,
+					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL,
+					KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+					SignedData:     sigPayloadECDSA,
+					KeyringPartySignatures: []*types.PartySignature{
+						{
+							Creator:   "testCreator",
+							Signature: []byte("0TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
+						},
+					},
+				},
+				msg: &types.MsgFulfilSignatureRequest{
+					Creator:               "testCreator",
+					RequestId:             1,
+					Status:                types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
+					SignedData:            differentSigPayloadECDSA,
+					KeyringPartySignature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
+				},
+			},
+			wantSigReq: &types.SignRequest{
+				Id:             1,
+				Creator:        "testCreator",
+				KeyIds:         []uint64{1},
+				DataForSigning: sigRequestPayload,
+				Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED,
+				KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
+				SignedData:     sigPayloadECDSA,
+				KeyringPartySignatures: []*types.PartySignature{
+					{
+						Creator:   "testCreator",
+						Signature: []byte("0TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
+					},
+				},
+				RejectReason: "party testCreator already sent a fulfilment",
+			},
+			want:    &types.MsgFulfilSignatureRequestResponse{},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
