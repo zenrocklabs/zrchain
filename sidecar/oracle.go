@@ -979,30 +979,62 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
-	limit := 1000
+	limit := sidecartypes.SolanaEventScanTxLimit // Use constant
 
 	program, err := solana.PublicKeyFromBase58(programID)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to obtain program public key: %w", err)
+		return nil, solana.Signature{}, fmt.Errorf("failed to obtain program public key for SolZenBTC: %w", err)
 	}
-	signaturesForAddress, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+
+	// Fetch latest signatures for the program address
+	allSignatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: solrpc.CommitmentConfirmed,
 	})
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to get SolZenBTC mint signatures: %w", err)
+		// Return existing watermark on error
+		return nil, lastKnownSig, fmt.Errorf("failed to get SolZenBTC mint signatures: %w", err)
 	}
 
-	if len(signaturesForAddress) == 0 {
+	if len(allSignatures) == 0 {
 		log.Printf("retrieved 0 zenbtc solana mint events (no signatures found)")
+		// No signatures found at all, return existing watermark
 		return []api.SolanaMintEvent{}, lastKnownSig, nil
 	}
 
-	var mintEvents []api.SolanaMintEvent
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(signaturesForAddress))
+	// The newest signature from the node's perspective for this program address
+	newestSigFromNode := allSignatures[0].Signature
+	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
 
-	// Prepare batch requests
-	for i, sigInfo := range signaturesForAddress {
+	// Filter signatures: find signatures newer than the last one we processed.
+	// Signatures are returned newest first.
+	for _, sigInfo := range allSignatures {
+		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
+			break // Found the last processed signature, stop collecting.
+		}
+		newSignaturesToFetchDetails = append(newSignaturesToFetchDetails, sigInfo)
+	}
+
+	if len(newSignaturesToFetchDetails) == 0 {
+		// No *new* signatures since the last check.
+		log.Printf("No new SolZenBTC mint signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		// Return the newest signature seen from the node to update the watermark
+		return []api.SolanaMintEvent{}, newestSigFromNode, nil
+	}
+
+	log.Printf("Found %d new SolZenBTC mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+
+	// Reverse the slice so we process the oldest *new* signature first.
+	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
+		newSignaturesToFetchDetails[i], newSignaturesToFetchDetails[j] = newSignaturesToFetchDetails[j], newSignaturesToFetchDetails[i]
+	}
+
+	var mintEvents []api.SolanaMintEvent
+	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
+	v0 := uint64(0) // Define v0 for pointer for maxSupportedTransactionVersion
+
+	// Build the batch request for GetTransaction
+	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
 			Params: []interface{}{
@@ -1010,64 +1042,86 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				map[string]interface{}{
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": 0,
+					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 				},
 			},
-			ID:      uint64(i),
+			ID:      uint64(i), // Use index to map response
 			JSONRPC: "2.0",
 		})
 	}
 
+	// Execute the batch request
 	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to get SolZenBTC mint transactions via batch: %w", err)
+		// If batch fails, return existing watermark; maybe retry logic is needed?
+		return nil, lastKnownSig, fmt.Errorf("SolZenBTC mints batch GetTransaction failed: %w", err)
 	}
 
-	if len(batchResponses) != len(signaturesForAddress) {
-		return nil, solana.Signature{}, fmt.Errorf("batch request and response length mismatch: %d requests, %d responses", len(batchRequests), len(batchResponses))
-	}
+	// Process the results
+	for _, resp := range batchResponses { // Iterate over RPCResponses
 
-	for i, resp := range batchResponses {
-		originalSignature := signaturesForAddress[i].Signature
-		if resp == nil {
-			log.Printf("Nil RPCResponse object in batch response for ZenBTC burn signature %s (request ID %d)", originalSignature.String(), i)
-			continue
-		}
-		if resp.Error != nil {
-			log.Printf("Error in batch response for ZenBTC burn signature %s (request ID %d): %v", originalSignature.String(), resp.ID, resp.Error)
-			continue
-		}
-		if resp.Result == nil {
-			log.Printf("Nil result in batch response for ZenBTC burn signature %s (request ID %d)", originalSignature.String(), resp.ID)
+		if resp == nil { // Check if response object itself is nil
+			log.Printf("Nil RPCResponse object in batch response (SolZenBTC mint)")
 			continue
 		}
 
+		// Use resp.ID for mapping and getting original signature
+		var requestIndex int
+		switch id := resp.ID.(type) {
+		case float64: // JSON numbers often decode to float64
+			requestIndex = int(id)
+		case int:
+			requestIndex = id
+		case uint64: // Match the type we put in the request
+			requestIndex = int(id)
+		default:
+			log.Printf("Invalid response ID type %T received (SolZenBTC mint)", resp.ID)
+			continue
+		}
+
+		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
+			log.Printf("Invalid response ID %d received (SolZenBTC mint)", requestIndex)
+			continue
+		}
+		sig := newSignaturesToFetchDetails[requestIndex].Signature
+
+		if resp.Error != nil { // Check for RPC error in the response
+			log.Printf("Error in batch GetTransaction result for tx %s (SolZenBTC mint): %v", sig, resp.Error)
+			continue // Skip this transaction
+		}
+		if resp.Result == nil { // Check if the Result field is nil
+			log.Printf("Nil result field in batch response for tx %s (SolZenBTC mint)", sig)
+			continue
+		}
+
+		// Unmarshal the json.RawMessage result into GetTransactionResult
 		var txResult solrpc.GetTransactionResult
-		if err = json.Unmarshal(resp.Result, &txResult); err != nil {
-			log.Printf("Failed to unmarshal transaction result for ZenBTC burn signature %s (request ID %d): %v", originalSignature.String(), resp.ID, err)
+		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC mint): %v", sig, err)
 			continue
 		}
 
+		// Decode events using the result
 		events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
 		if err != nil {
-			log.Printf("Failed to decode SolZenBTC mint events for tx %s: %v", originalSignature.String(), err)
-			continue
+			log.Printf("Failed to decode SolZenBTC mint events for tx %s: %v", sig, err)
+			continue // Skip this transaction
 		}
 
+		// Extract transaction details for SigHash calculation
 		if txResult.Transaction == nil {
-			log.Printf("Transaction data is nil in GetTransactionResult for signature %s", originalSignature.String())
+			log.Printf("Transaction envelope is nil in GetTransactionResult for tx %s (SolZenBTC mint)", sig)
 			continue
 		}
-
 		solTX, err := txResult.Transaction.GetTransaction()
 		if err != nil || solTX == nil {
-			log.Printf("Failed to get solana.Transaction from GetTransactionResult for sig %s: %v", originalSignature.String(), err)
-			continue
+			log.Printf("Failed to get solana.Transaction from GetTransactionResult for SolZenBTC sig %s: %v", sig, err)
+			continue // Skip this transaction
 		}
 
 		// Sighash calculation from original logic - requires 2 signatures
 		if len(solTX.Signatures) != 2 {
-			log.Printf("Expected 2 signatures for sighash calculation for SolZenBTC mint, got %d for sig %s", len(solTX.Signatures), originalSignature.String())
+			log.Printf("Expected 2 signatures for sighash calculation for SolZenBTC mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
 			continue
 		}
 		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
@@ -1082,12 +1136,12 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			if event.Name == "TokensMintedWithFee" {
 				e, ok := event.Data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
 				if !ok {
-					log.Printf("Type assertion failed for SolZenBTC TokensMintedWithFeeEventData on tx %s", originalSignature.String())
+					log.Printf("Type assertion failed for SolZenBTC TokensMintedWithFeeEventData on tx %s", sig)
 					continue
 				}
 				mintEvents = append(mintEvents, api.SolanaMintEvent{
-					SigHash:   sigHash[:],    // Use sigHash defined above
-					Date:      blockTimeUnix, // Use blockTimeUnix defined above
+					SigHash:   sigHash[:],
+					Date:      blockTimeUnix,
 					Recipient: e.Recipient.Bytes(),
 					Value:     e.Value,
 					Fee:       e.Fee,
@@ -1096,8 +1150,10 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			}
 		}
 	}
-	log.Printf("Retrieved %d new SolZenBTC mint events. Newest signature from node: %s", len(mintEvents), lastKnownSig)
-	return mintEvents, lastKnownSig, nil
+
+	log.Printf("Retrieved %d new SolZenBTC mint events. Newest signature from node: %s", len(mintEvents), newestSigFromNode)
+	// Return the collected events and the newest signature seen from the node to update the watermark
+	return mintEvents, newestSigFromNode, nil
 }
 
 // getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
@@ -1140,25 +1196,58 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 	program, err := solana.PublicKeyFromBase58(programID)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to obtain program public key: %w", err)
+		return nil, solana.Signature{}, fmt.Errorf("failed to obtain program public key for SolZenBTC burn: %w", err)
 	}
-	signaturesForAddress, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+
+	// Fetch latest signatures for the program address
+	allSignatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: solrpc.CommitmentConfirmed,
 	})
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
+		// Return existing watermark on error
+		return nil, lastKnownSig, fmt.Errorf("failed to get Solana ZenBTC burn signatures: %w", err)
 	}
 
-	if len(signaturesForAddress) == 0 {
+	if len(allSignatures) == 0 {
+		log.Printf("retrieved 0 zenbtc solana burn events (no signatures found)")
+		// No signatures found at all, return existing watermark
 		return []api.BurnEvent{}, lastKnownSig, nil
 	}
 
-	var burnEvents []api.BurnEvent
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(signaturesForAddress))
+	// The newest signature from the node's perspective for this program address
+	newestSigFromNode := allSignatures[0].Signature
+	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
 
-	// Prepare batch requests
-	for i, sigInfo := range signaturesForAddress {
+	// Filter signatures: find signatures newer than the last one we processed.
+	// Signatures are returned newest first.
+	for _, sigInfo := range allSignatures {
+		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
+			break // Found the last processed signature, stop collecting.
+		}
+		newSignaturesToFetchDetails = append(newSignaturesToFetchDetails, sigInfo)
+	}
+
+	if len(newSignaturesToFetchDetails) == 0 {
+		// No *new* signatures since the last check.
+		log.Printf("No new SolZenBTC burn signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		// Return the newest signature seen from the node to update the watermark
+		return []api.BurnEvent{}, newestSigFromNode, nil
+	}
+
+	log.Printf("Found %d new SolZenBTC burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+
+	// Reverse the slice so we process the oldest *new* signature first.
+	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
+		newSignaturesToFetchDetails[i], newSignaturesToFetchDetails[j] = newSignaturesToFetchDetails[j], newSignaturesToFetchDetails[i]
+	}
+
+	var burnEvents []api.BurnEvent
+	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
+	v0 := uint64(0) // Define v0 for pointer for maxSupportedTransactionVersion
+
+	// Build the batch request for GetTransaction
+	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
 			Params: []interface{}{
@@ -1166,64 +1255,84 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 				map[string]interface{}{
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": 0,
+					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 				},
 			},
-			ID:      uint64(i),
+			ID:      uint64(i), // Use index to map response
 			JSONRPC: "2.0",
 		})
 	}
 
+	// Execute the batch request
 	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("failed to get Solana ZenBTC burn transactions via batch: %w", err)
-	}
-
-	if len(batchResponses) != len(signaturesForAddress) {
-		return nil, solana.Signature{}, fmt.Errorf("batch request and response length mismatch: %d requests, %d responses", len(batchRequests), len(batchResponses))
+		// If batch fails, return existing watermark
+		return nil, lastKnownSig, fmt.Errorf("SolZenBTC burn batch GetTransaction failed: %w", err)
 	}
 
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
-	for i, resp := range batchResponses {
-		originalSignature := signaturesForAddress[i].Signature
-		if resp == nil {
-			log.Printf("Nil RPCResponse object in batch response for ZenBTC burn signature %s (request ID %d)", originalSignature.String(), i)
-			continue
-		}
-		if resp.Error != nil {
-			log.Printf("Error in batch response for ZenBTC burn signature %s (request ID %d): %v", originalSignature.String(), resp.ID, resp.Error)
-			continue
-		}
-		if resp.Result == nil {
-			log.Printf("Nil result in batch response for ZenBTC burn signature %s (request ID %d)", originalSignature.String(), resp.ID)
+	// Process the results
+	for _, resp := range batchResponses { // Iterate over RPCResponses
+		if resp == nil { // Check if response object itself is nil
+			log.Printf("Nil RPCResponse object in batch response (SolZenBTC burn)")
 			continue
 		}
 
+		// Use resp.ID for mapping and getting original signature
+		var requestIndex int
+		switch id := resp.ID.(type) {
+		case float64:
+			requestIndex = int(id)
+		case int:
+			requestIndex = id
+		case uint64:
+			requestIndex = int(id)
+		default:
+			log.Printf("Invalid response ID type %T received (SolZenBTC burn)", resp.ID)
+			continue
+		}
+
+		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
+			log.Printf("Invalid response ID %d received (SolZenBTC burn)", requestIndex)
+			continue
+		}
+		originalSignature := newSignaturesToFetchDetails[requestIndex].Signature
+
+		if resp.Error != nil { // Check for RPC error in the response
+			log.Printf("Error in batch GetTransaction result for tx %s (SolZenBTC burn): %v", originalSignature, resp.Error)
+			continue // Skip this transaction
+		}
+		if resp.Result == nil { // Check if the Result field is nil
+			log.Printf("Nil result field in batch response for tx %s (SolZenBTC burn)", originalSignature)
+			continue
+		}
+
+		// Unmarshal the json.RawMessage result into GetTransactionResult
 		var txResult solrpc.GetTransactionResult
-		err = json.Unmarshal(resp.Result, &txResult)
-		if err != nil {
-			log.Printf("Failed to unmarshal transaction result for ZenBTC burn signature %s (request ID %d): %v", originalSignature.String(), resp.ID, err)
+		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC burn): %v", originalSignature, err)
 			continue
 		}
 
+		// Decode events using the result
 		events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
 		if err != nil {
-			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", originalSignature.String(), err)
-			continue
+			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", originalSignature, err)
+			continue // Skip this transaction
 		}
 
 		// Process burn events for this transaction
-		for logIndex, event := range events { // Re-introduce logIndex
+		for logIndex, event := range events {
 			if event.Name == "TokenRedemption" {
 				e, ok := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
 				if !ok {
-					log.Printf("Type assertion failed for SolZenBTC TokenRedemptionEventData on tx %s", originalSignature.String())
+					log.Printf("Type assertion failed for SolZenBTC TokenRedemptionEventData on tx %s", originalSignature)
 					continue
 				}
 				burnEvents = append(burnEvents, api.BurnEvent{
 					TxID:            originalSignature.String(),
-					LogIndex:        uint64(logIndex), // Use logIndex from loop
+					LogIndex:        uint64(logIndex),
 					ChainID:         chainID,
 					DestinationAddr: e.DestAddr[:],
 					Amount:          e.Value,
@@ -1231,9 +1340,10 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			}
 		}
 	}
-	// Use newestSigFromNode (captured earlier) for the log and return
-	log.Printf("Retrieved %d new SolZenBTC burn events. Newest signature from node: %s", len(burnEvents), lastKnownSig)
-	return burnEvents, lastKnownSig, nil
+
+	log.Printf("Retrieved %d new SolZenBTC burn events. Newest signature from node: %s", len(burnEvents), newestSigFromNode)
+	// Return the collected events and the newest signature seen from the node to update the watermark
+	return burnEvents, newestSigFromNode, nil
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
