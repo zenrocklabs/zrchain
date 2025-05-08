@@ -126,3 +126,17 @@ func (o *Oracle) GetSidecarState() *sidecartypes.OracleState {
 func (o *Oracle) GetZrChainQueryClient() *client.QueryClient {
 	return o.zrChainQueryClient
 }
+
+// SetStateCacheForTesting allows setting the oracle's state cache and current state for testing.
+// If states is not empty, the last state in the slice becomes the current state.
+// If states is empty or nil, it initializes with an empty state.
+func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
+	if len(states) > 0 {
+		o.stateCache = make([]sidecartypes.OracleState, len(states))
+		copy(o.stateCache, states)
+		o.currentState.Store(&o.stateCache[len(o.stateCache)-1])
+	} else {
+		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+		o.currentState.Store(&EmptyOracleState)
+	}
+}

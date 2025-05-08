@@ -1659,64 +1659,6 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	return burnEvents, newestSigFromNode, nil
 }
 
-// getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
-// Returns blockhash string, slot number, and lamports per signature
-// func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
-//// Get the latest block height
-//resp, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return "", 0, 0, fmt.Errorf("failed to GetLatestBlockhash: %w", err)
-//}
-//
-//dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111") // System Program ID (valid placeholder)
-//dummyReceiver := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")
-//recentBlockhash := resp.Value.Blockhash
-//// Create a transaction
-//tx := solana.NewTransactionBuilder()
-//
-//// Add a transfer instruction
-//transferIx := solprogram.Transfer{
-//	FromPubkey: fromPubKey,
-//	ToPubkey:   toPubKey,
-//	Lamports:   1000, // Transfer 1000 lamports
-//}
-//
-//tx.AddInstruction(transferIx)
-//
-//respFee, err := o.solanaClient.GetFeeForMessage(ctx, serialized, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return "", 0, 0, fmt.Errorf("failed to GetFeeForMessage: %w", err)
-//}
-//// Default values from the recent block
-//lamportsPerSignature := *respFee.Value
-//
-//// Get the slot for the recent blockhash
-//slot, err := o.solanaClient.GetSlot(ctx, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return recentBlockhash.String(), slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
-//}
-//
-//// Calculate the nearest slot that is divisible by the rounding factor
-//targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
-//
-//// If we're at slot 0, use the current slot's blockhash
-//if targetSlot == 0 {
-//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
-//}
-//
-//// Get the blockhash for the target slot
-//blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
-//if err != nil {
-//	// Fallback to the recent blockhash if we can't get the target block
-//	log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
-//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
-//}
-//
-//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
-
-// 	return "", 0, 0, nil
-// }
-
 // Helper to get typed last processed Solana signature
 func (o *Oracle) GetLastProcessedSolSignature(eventType string) solana.Signature {
 	var sigStr string
