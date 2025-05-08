@@ -72,15 +72,3 @@ func TestMigrateFail(t *testing.T) {
 
 	require.NoError(t, v2.UpdateParams(ctx, params))
 }
-
-// type mockSubspace struct {
-// 	ps types.HVParams
-// }
-
-// func newMockSubspace(ps types.HVParams) mockSubspace {
-// 	return mockSubspace{ps: ps}
-// }
-
-// func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
-// 	*ps.(*types.Params) = ms.ps
-// }
