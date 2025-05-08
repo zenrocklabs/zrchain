@@ -56,22 +56,31 @@ func NewOracle(
 		zrChainQueryClient: zrChainQueryClient,
 		updateChan:         make(chan sidecartypes.OracleState, 32),
 	}
-	o.currentState.Store(&EmptyOracleState)
+	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
 
 	// Load initial state from cache file
-	if err := o.LoadFromFile(o.Config.StateFile); err != nil {
-		log.Printf("Error loading state from file: %v", err)
+	latestDiskState, historicalStates, err := loadStateDataFromFile(o.Config.StateFile)
+	if err != nil {
+		log.Printf("Critical error loading state from file %s: %v. Initializing with empty state.", o.Config.StateFile, err)
+		o.currentState.Store(&EmptyOracleState)
+		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+		// lastSol*SigStr fields will remain empty strings (zero value)
 	} else {
-		// If LoadFromFile successfully populates o.currentState
-		if loadedState, ok := o.currentState.Load().(*sidecartypes.OracleState); ok && loadedState != nil {
-			o.lastSolRockMintSigStr = loadedState.LastSolRockMintSig
-			o.lastSolZenBTCMintSigStr = loadedState.LastSolZenBTCMintSig
-			o.lastSolZenBTCBurnSigStr = loadedState.LastSolZenBTCBurnSig
-			o.lastSolRockBurnSigStr = loadedState.LastSolRockBurnSig
-			log.Printf("Loaded last Solana signatures from state: RockMint=%s, ZenBTCMint=%s, ZenBTCBurn=%s, RockBurn=%s",
+		if latestDiskState != nil {
+			o.currentState.Store(latestDiskState)
+			o.stateCache = historicalStates
+			o.lastSolRockMintSigStr = latestDiskState.LastSolRockMintSig
+			o.lastSolZenBTCMintSigStr = latestDiskState.LastSolZenBTCMintSig
+			o.lastSolZenBTCBurnSigStr = latestDiskState.LastSolZenBTCBurnSig
+			o.lastSolRockBurnSigStr = latestDiskState.LastSolRockBurnSig
+			log.Printf("Loaded state from file. Last Solana signatures: RockMint='%s', ZenBTCMint='%s', ZenBTCBurn='%s', RockBurn='%s'",
 				o.lastSolRockMintSigStr, o.lastSolZenBTCMintSigStr, o.lastSolZenBTCBurnSigStr, o.lastSolRockBurnSigStr)
 		} else {
-			log.Println("Loaded state was nil or not OracleState type, initializing Solana signatures as empty.")
+			// File didn't exist, was empty, or had non-critical parse issues treated as fresh start
+			log.Printf("State file %s not found or empty/invalid. Initializing with empty state.", o.Config.StateFile)
+			o.currentState.Store(&EmptyOracleState)
+			o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+			// lastSol*SigStr fields will remain empty strings
 		}
 	}
 
@@ -545,7 +554,7 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	// Store the new state into the Oracle's current state immediately.
-	o.currentState.Store(&newState)
+	// o.currentState.Store(&newState) // REMOVED: This should be handled by processUpdates via updateChan
 	// Optional: Cache state immediately after updating it, if persistence per cycle is desired.
 	// o.CacheState() // Uncomment if CacheState should run here instead of only in cleanUpBurnEvents
 
@@ -1649,64 +1658,6 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	log.Printf("Retrieved %d new SolRock burn events. Newest signature from node: %s", len(burnEvents), newestSigFromNode)
 	return burnEvents, newestSigFromNode, nil
 }
-
-// getSolanaBlockInfoAtRoundedSlot gets Solana block information from a slot divisible by SolanaSlotRoundingFactor
-// Returns blockhash string, slot number, and lamports per signature
-// func (o *Oracle) getSolanaBlockInfoAtRoundedSlot(ctx context.Context) (string, uint64, uint64, error) {
-//// Get the latest block height
-//resp, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return "", 0, 0, fmt.Errorf("failed to GetLatestBlockhash: %w", err)
-//}
-//
-//dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111") // System Program ID (valid placeholder)
-//dummyReceiver := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")
-//recentBlockhash := resp.Value.Blockhash
-//// Create a transaction
-//tx := solana.NewTransactionBuilder()
-//
-//// Add a transfer instruction
-//transferIx := solprogram.Transfer{
-//	FromPubkey: fromPubKey,
-//	ToPubkey:   toPubKey,
-//	Lamports:   1000, // Transfer 1000 lamports
-//}
-//
-//tx.AddInstruction(transferIx)
-//
-//respFee, err := o.solanaClient.GetFeeForMessage(ctx, serialized, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return "", 0, 0, fmt.Errorf("failed to GetFeeForMessage: %w", err)
-//}
-//// Default values from the recent block
-//lamportsPerSignature := *respFee.Value
-//
-//// Get the slot for the recent blockhash
-//slot, err := o.solanaClient.GetSlot(ctx, solrpc.CommitmentFinalized)
-//if err != nil {
-//	return recentBlockhash.String(), slot, lamportsPerSignature, fmt.Errorf("failed to get current slot: %w", err)
-//}
-//
-//// Calculate the nearest slot that is divisible by the rounding factor
-//targetSlot := slot - (slot % sidecartypes.SolanaSlotRoundingFactor)
-//
-//// If we're at slot 0, use the current slot's blockhash
-//if targetSlot == 0 {
-//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
-//}
-//
-//// Get the blockhash for the target slot
-//blockInfo, err := o.solanaClient.GetBlock(ctx, targetSlot)
-//if err != nil {
-//	// Fallback to the recent blockhash if we can't get the target block
-//	log.Printf("Failed to get block at slot %d, using recent blockhash: %v", targetSlot, err)
-//	return recentBlockhash.String(), slot, lamportsPerSignature, nil
-//}
-//
-//return blockInfo.Blockhash.String(), targetSlot, lamportsPerSignature, nil
-
-// 	return "", 0, 0, nil
-// }
 
 // Helper to get typed last processed Solana signature
 func (o *Oracle) GetLastProcessedSolSignature(eventType string) solana.Signature {

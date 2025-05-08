@@ -116,7 +116,7 @@ func (o *Oracle) processUpdates() {
 	for update := range o.updateChan {
 		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", update.EthBlockHeight)
 		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
-
+		log.Printf("%v", update)
 		o.currentState.Store(&update)
 		o.CacheState()
 	}
