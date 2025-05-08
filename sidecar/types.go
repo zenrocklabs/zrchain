@@ -42,6 +42,12 @@ type Oracle struct {
 	zrChainQueryClient *client.QueryClient
 	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
+
+	// Last processed Solana signatures (managed as strings for persistence)
+	lastSolRockMintSigStr   string
+	lastSolZenBTCMintSigStr string
+	lastSolZenBTCBurnSigStr string
+	lastSolRockBurnSigStr   string
 }
 
 type PriceData struct {
