@@ -56,22 +56,31 @@ func NewOracle(
 		zrChainQueryClient: zrChainQueryClient,
 		updateChan:         make(chan sidecartypes.OracleState, 32),
 	}
-	o.currentState.Store(&EmptyOracleState)
+	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
 
 	// Load initial state from cache file
-	if err := o.LoadFromFile(o.Config.StateFile); err != nil {
-		log.Printf("Error loading state from file: %v", err)
+	latestDiskState, historicalStates, err := loadStateDataFromFile(o.Config.StateFile)
+	if err != nil {
+		log.Printf("Critical error loading state from file %s: %v. Initializing with empty state.", o.Config.StateFile, err)
+		o.currentState.Store(&EmptyOracleState)
+		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+		// lastSol*SigStr fields will remain empty strings (zero value)
 	} else {
-		// If LoadFromFile successfully populates o.currentState
-		if loadedState, ok := o.currentState.Load().(*sidecartypes.OracleState); ok && loadedState != nil {
-			o.lastSolRockMintSigStr = loadedState.LastSolRockMintSig
-			o.lastSolZenBTCMintSigStr = loadedState.LastSolZenBTCMintSig
-			o.lastSolZenBTCBurnSigStr = loadedState.LastSolZenBTCBurnSig
-			o.lastSolRockBurnSigStr = loadedState.LastSolRockBurnSig
-			log.Printf("Loaded last Solana signatures from state: RockMint=%s, ZenBTCMint=%s, ZenBTCBurn=%s, RockBurn=%s",
+		if latestDiskState != nil {
+			o.currentState.Store(latestDiskState)
+			o.stateCache = historicalStates
+			o.lastSolRockMintSigStr = latestDiskState.LastSolRockMintSig
+			o.lastSolZenBTCMintSigStr = latestDiskState.LastSolZenBTCMintSig
+			o.lastSolZenBTCBurnSigStr = latestDiskState.LastSolZenBTCBurnSig
+			o.lastSolRockBurnSigStr = latestDiskState.LastSolRockBurnSig
+			log.Printf("Loaded state from file. Last Solana signatures: RockMint='%s', ZenBTCMint='%s', ZenBTCBurn='%s', RockBurn='%s'",
 				o.lastSolRockMintSigStr, o.lastSolZenBTCMintSigStr, o.lastSolZenBTCBurnSigStr, o.lastSolRockBurnSigStr)
 		} else {
-			log.Println("Loaded state was nil or not OracleState type, initializing Solana signatures as empty.")
+			// File didn't exist, was empty, or had non-critical parse issues treated as fresh start
+			log.Printf("State file %s not found or empty/invalid. Initializing with empty state.", o.Config.StateFile)
+			o.currentState.Store(&EmptyOracleState)
+			o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+			// lastSol*SigStr fields will remain empty strings
 		}
 	}
 
@@ -110,7 +119,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	initialSleep := time.Until(alignedStart)
 	if initialSleep > 0 {
 		log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
-		time.Sleep(initialSleep)
+		// time.Sleep(initialSleep)
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -545,7 +554,7 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	// Store the new state into the Oracle's current state immediately.
-	o.currentState.Store(&newState)
+	// o.currentState.Store(&newState) // REMOVED: This should be handled by processUpdates via updateChan
 	// Optional: Cache state immediately after updating it, if persistence per cycle is desired.
 	// o.CacheState() // Uncomment if CacheState should run here instead of only in cleanUpBurnEvents
 

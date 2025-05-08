@@ -11,49 +11,43 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (o *Oracle) LoadFromFile(filename string) error {
+// loadStateDataFromFile reads the state file and returns the latest state,
+// all historical states, and any error.
+// If the file does not exist or is empty/invalid, it returns (nil, nil, nil)
+// to indicate a fresh start, unless a critical error occurs.
+func loadStateDataFromFile(filename string) (latestState *sidecartypes.OracleState, historicalStates []sidecartypes.OracleState, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Initialize with empty state if file doesn't exist
-			o.updateChan <- EmptyOracleState
-			o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
-			return nil
+			// File not found, signal fresh start, not an error for the caller
+			return nil, nil, nil
 		}
-		return err
+		// Other error opening file
+		return nil, nil, fmt.Errorf("failed to open state file %s: %w", filename, err)
 	}
 	defer file.Close()
 
 	var states []sidecartypes.OracleState
 	if err := json.NewDecoder(file).Decode(&states); err != nil {
-		return fmt.Errorf("failed to decode state file: %w", err)
-	}
-
-	if len(states) > 0 {
-		latestState := &states[len(states)-1]
-		o.updateChan <- sidecartypes.OracleState{
-			EigenDelegations:           latestState.EigenDelegations,
-			EthBlockHeight:             latestState.EthBlockHeight,
-			EthGasLimit:                latestState.EthGasLimit,
-			EthBaseFee:                 latestState.EthBaseFee,
-			EthTipCap:                  latestState.EthTipCap,
-			SolanaLamportsPerSignature: latestState.SolanaLamportsPerSignature,
-			EthBurnEvents:              latestState.EthBurnEvents,
-			CleanedEthBurnEvents:       latestState.CleanedEthBurnEvents,
-			Redemptions:                latestState.Redemptions,
-			ROCKUSDPrice:               latestState.ROCKUSDPrice,
-			BTCUSDPrice:                latestState.BTCUSDPrice,
-			ETHUSDPrice:                latestState.ETHUSDPrice,
-			SolanaMintEvents:           latestState.SolanaMintEvents,
+		// Check for EOF which might mean an empty JSON array `[]` or just empty file
+		// For an empty array or truly empty file, we treat it as a fresh start.
+		// For other decode errors, it's a problem.
+		// Common empty/malformed cases for json.Decoder include "EOF" for completely empty or non-JSON file,
+		// and "unexpected end of JSON input" for incomplete JSON.
+		if err.Error() == "EOF" || err.Error() == "unexpected end of JSON input" {
+			log.Printf("State file %s is empty or contains invalid JSON, treating as fresh start.", filename)
+			return nil, nil, nil
 		}
-		o.stateCache = states
-	} else {
-		// Initialize with empty state if the file is empty
-		o.updateChan <- EmptyOracleState
-		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+		return nil, nil, fmt.Errorf("failed to decode state file %s: %w", filename, err)
 	}
 
-	return nil
+	if len(states) == 0 {
+		// File contained an empty list of states
+		log.Printf("State file %s contained no states, treating as fresh start.", filename)
+		return nil, nil, nil
+	}
+
+	return &states[len(states)-1], states, nil
 }
 
 func (o *Oracle) SaveToFile(filename string) error {
@@ -70,8 +64,8 @@ func (o *Oracle) CacheState() {
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 	newState := *currentState // Create a copy of the current state
 
-	// Update the ID and store the new state
-	o.currentState.Store(&newState)
+	// o.currentState is already updated by processUpdates before CacheState is called.
+	// The line o.currentState.Store(&newState) was redundant here.
 
 	// Cache the new state
 	o.stateCache = append(o.stateCache, newState)
