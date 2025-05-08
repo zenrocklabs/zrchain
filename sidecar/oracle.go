@@ -95,22 +95,22 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	// Initial alignment: Fetch NTP time once at startup
-	ntpTime, err := ntp.Time("time.google.com")
-	if err != nil {
-		// If NTP fails at startup, panic. Sidecars require time sync to establish consensus.
-		log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
-	}
+	// ntpTime, err := ntp.Time("time.google.com")
+	// if err != nil {
+	// 	// If NTP fails at startup, panic. Sidecars require time sync to establish consensus.
+	// 	log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
+	// }
 
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	// This runs only if NTP succeeded (checked by the panic above)
-	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-	initialSleep := time.Until(alignedStart)
-	if initialSleep > 0 {
-		log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
-		time.Sleep(initialSleep)
-	}
+	// alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+	// initialSleep := time.Until(alignedStart)
+	// if initialSleep > 0 {
+	// 	log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
+	// 	time.Sleep(initialSleep)
+	// }
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
@@ -871,7 +871,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{ // Use map for options
-						"encoding":                       solana.EncodingJSONParsed,
+						"encoding":                       solana.EncodingJSON,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1067,7 +1067,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{
-						"encoding":                       solana.EncodingJSONParsed,
+						"encoding":                       solana.EncodingJSON,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1205,8 +1205,8 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	// Create a simple dummy transaction to estimate fees.
 	// Using placeholder public keys. These don't need to exist or have funds
 	// as the transaction is not actually sent, only used for fee calculation.
-	dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")   // A known valid public key (System Program)
-	dummyReceiver := solana.MustPublicKeyFromBase58("21111111111111111111111111111111") // Another valid public key format
+	dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")              // A known valid public key (System Program)
+	dummyReceiver := solana.MustPublicKeyFromBase58("Stake11111111111111111111111111111111111111") // Use StakeProgramID as another valid key
 
 	// Get a recent blockhash
 	recentBlockhashResult, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentConfirmed)
@@ -1356,7 +1356,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{
-						"encoding":                       solana.EncodingJSONParsed,
+						"encoding":                       solana.EncodingJSON,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1521,7 +1521,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{ // Use map for options
-						"encoding":                       solana.EncodingJSONParsed,
+						"encoding":                       solana.EncodingJSON,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
