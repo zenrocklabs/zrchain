@@ -861,7 +861,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	var mintEvents []api.SolanaMintEvent
-	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
+	const internalBatchSize = 50 // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)              // Define v0 for pointer
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
@@ -966,16 +966,14 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 				continue // Skip this transaction
 			}
 
-			// New SigHash logic: SHA256 of the transaction's own signature.
-			// 'sig' is currentBatchSignatures[requestIndex].Signature (the transaction ID)
-			if len(solTX.Signatures) == 0 {
-				log.Printf("Transaction %s has no signatures. Skipping for SolROCK mint.", sig)
+			if len(solTX.Signatures) != 2 {
+				log.Printf("Transaction %s for SolROCK mint does not have exactly 2 signatures (%d found). Skipping SigHash calculation.", sig, len(solTX.Signatures))
 				continue
 			}
-			transactionSignatureBytes := sig[:]
-			sigHash := sha256.Sum256(transactionSignatureBytes) // sigHash is [32]byte array
+			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+			sigHash := sha256.Sum256(combined)
 
-			blockTimeUnix := int64(0) // Define blockTimeUnix here for this transaction
+			blockTimeUnix := int64(0)
 			if txResult.BlockTime != nil {
 				blockTimeUnix = txResult.BlockTime.Time().Unix()
 			}
@@ -1168,16 +1166,14 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				continue // Skip this transaction
 			}
 
-			// New SigHash logic: SHA256 of the transaction's own signature.
-			// 'sig' is currentBatchSignatures[requestIndex].Signature (the transaction ID)
-			if len(solTX.Signatures) == 0 {
-				log.Printf("Transaction %s has no signatures. Skipping for SolZenBTC mint.", sig)
+			if len(solTX.Signatures) != 2 {
+				log.Printf("Transaction %s for SolZenBTC mint does not have exactly 2 signatures (%d found). Skipping SigHash calculation.", sig, len(solTX.Signatures))
 				continue
 			}
-			transactionSignatureBytes := sig[:]
-			sigHash := sha256.Sum256(transactionSignatureBytes) // sigHash is [32]byte array
+			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+			sigHash := sha256.Sum256(combined)
 
-			blockTimeUnix := int64(0) // Define blockTimeUnix for this transaction
+			blockTimeUnix := int64(0)
 			if txResult.BlockTime != nil {
 				blockTimeUnix = txResult.BlockTime.Time().Unix()
 			}
