@@ -100,7 +100,7 @@ func (k msgServer) handleICATransactionRequestFulfilment(ctx sdk.Context, req *t
 		return fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
 	}
 
-	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
+	if len(req.KeyringPartySigs) >= int(keyring.PartyThreshold) {
 		req.SignedData = append(req.SignedData, &types.SignedDataWithID{
 			SignRequestId: requestId,
 			SignedData:    sigData,

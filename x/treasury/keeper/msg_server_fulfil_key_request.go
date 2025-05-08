@@ -96,7 +96,7 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("keyring %s is nil or is inactive", req.KeyringAddr))
 	}
 
-	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
+	if len(req.KeyringPartySigs) >= int(keyring.PartyThreshold) {
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED
 
 		key := &types.Key{
