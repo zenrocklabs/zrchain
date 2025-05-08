@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"maps"
 	"math/big"
 	"net/http"
@@ -967,7 +968,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 			}
 
 			if len(solTX.Signatures) != 2 {
-				log.Printf("Transaction %s for SolROCK mint does not have exactly 2 signatures (%d found). Skipping SigHash calculation.", sig, len(solTX.Signatures))
+				slog.Debug("Transaction %s for SolROCK mint does not have exactly 2 signatures (%d found). Skipping SigHash calculation.", sig.String(), len(solTX.Signatures))
 				continue
 			}
 			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
@@ -1167,7 +1168,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			}
 
 			if len(solTX.Signatures) != 2 {
-				log.Printf("Transaction %s for SolZenBTC mint does not have exactly 2 signatures (%d found). Skipping SigHash calculation.", sig, len(solTX.Signatures))
+				slog.Debug("Transaction %s for SolZenBTC mint does not have exactly 2 signatures (%d found); skipping", sig.String(), len(solTX.Signatures))
 				continue
 			}
 			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
