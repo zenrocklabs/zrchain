@@ -25,7 +25,11 @@ func (k msgServer) FulfilKeyRequest(goCtx context.Context, msg *types.MsgFulfilK
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, req.KeyringAddr)
 	if err != nil || !keyring.IsActive {
-		return nil, fmt.Errorf("keyring %s is nil or is inactive", req.KeyringAddr)
+		return k.rejectKeyRequest(ctx, &req, fmt.Sprintf("keyring %s is nil or is inactive", req.KeyringAddr))
+	}
+
+	if len(msg.KeyringPartySignature) != 64 {
+		return k.rejectKeyRequest(ctx, &req, fmt.Sprintf("invalid mpc party signature, should be 64 bytes, is %d", len(msg.KeyringPartySignature)))
 	}
 
 	if err := k.validateKeyRequest(msg, &req, keyring); err != nil {
@@ -51,20 +55,15 @@ func (k msgServer) validateKeyRequest(msg *types.MsgFulfilKeyRequest, req *types
 		return fmt.Errorf("request %v is not pending/partial, can't be updated", req.Status)
 	}
 
-	if len(msg.KeyringPartySignature) != 64 {
-		return fmt.Errorf("invalid mpc party signature, should be 64 bytes, is %d", len(msg.KeyringPartySignature))
-	}
-
 	return nil
 }
 
 func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
-	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
-	if len(req.PublicKey) > 0 {
-		// Check against public key from other parties
-		if !bytes.Equal(req.PublicKey, pubKey) {
+	// Reject if a party tries to sign more than once
+	for _, sig := range req.KeyringPartySigs {
+		if sig.Creator == msg.Creator {
 			req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
-			errMsg := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
+			errMsg := fmt.Sprintf("party %v already sent a fulfilment", msg.Creator)
 			req.RejectReason = errMsg
 			if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 				return nil, err
@@ -73,28 +72,31 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		}
 	}
 
-	if err := k.validatePublicKey(req.KeyType, pubKey); err != nil {
-		return nil, err
-	}
-
-	sigExists := false
-	for _, sig := range req.KeyringPartySignatures {
-		if bytes.Equal(sig, msg.KeyringPartySignature) {
-			sigExists = true
-			break
+	// Check against public key from other parties
+	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
+	if len(req.PublicKey) > 0 {
+		if !bytes.Equal(req.PublicKey, pubKey) {
+			rejectReason := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
+			return k.rejectKeyRequest(ctx, req, rejectReason)
 		}
 	}
 
-	if !sigExists {
-		req.KeyringPartySignatures = append(req.KeyringPartySignatures, msg.KeyringPartySignature)
+	if res, err := k.validatePublicKey(ctx, req, req.KeyType, pubKey); err != nil || res != nil {
+		return res, err
 	}
+
+	// Append party signature
+	req.KeyringPartySigs = append(req.KeyringPartySigs, &types.PartySignature{
+		Creator:   msg.Creator,
+		Signature: msg.KeyringPartySignature,
+	})
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, req.KeyringAddr)
 	if err != nil || !keyring.IsActive {
-		return nil, fmt.Errorf("keyring %s is nil or is inactive", req.KeyringAddr)
+		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("keyring %s is nil or is inactive", req.KeyringAddr))
 	}
 
-	if len(req.KeyringPartySignatures) >= int(keyring.PartyThreshold) {
+	if len(req.KeyringPartySigs) >= int(keyring.PartyThreshold) {
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED
 
 		key := &types.Key{
@@ -172,22 +174,62 @@ func (k msgServer) handleKeyRequestRejection(ctx sdk.Context, msg *types.MsgFulf
 	return &types.MsgFulfilKeyRequestResponse{}, nil
 }
 
-func (k msgServer) validatePublicKey(keyType types.KeyType, pubKey []byte) error {
+// validateECDSAKeyDetails performs common validation for ECDSA-based public keys.
+func (k msgServer) validateECDSAKeyDetails(ctx sdk.Context, req *types.KeyRequest, pubKey []byte, keyTypeStr string) (*types.MsgFulfilKeyRequestResponse, error) {
+	keyLen := len(pubKey)
+	if keyLen != 33 && keyLen != 65 {
+		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid %s public key %x of length %v, expected 33 or 65 bytes", keyTypeStr, pubKey, keyLen))
+	}
+
+	// Constraint 1: PK must start with prefix 0x02 or 0x03 if ECDSA type.
+	// This applies to all ECDSA types passed to this function, regardless of length.
+	if pubKey[0] != 0x02 && pubKey[0] != 0x03 {
+		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid %s public key %x: prefix must be 0x02 or 0x03, got %x", keyTypeStr, pubKey, pubKey[0]))
+	}
+
+	// Constraint 2: It should not contain more than 4 leading zeros after the prefix.
+	// This means if pubKey[1] through pubKey[5] are all zero, it's a violation.
+	// (i.e., 5 or more leading zeros after the prefix is not allowed).
+	// This check is relevant as keyLen is guaranteed to be 33 or 65.
+	numLeadingZerosAfterPrefix := 0
+	for i := 1; i <= 5; i++ { // Check byte indices 1 through 5
+		if pubKey[i] == 0 {
+			numLeadingZerosAfterPrefix++
+		} else {
+			break // Stop counting at the first non-zero byte
+		}
+	}
+
+	if numLeadingZerosAfterPrefix >= 5 {
+		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid %s public key %x: contains %d leading zeros after prefix (max 4 allowed)", keyTypeStr, pubKey, numLeadingZerosAfterPrefix))
+	}
+
+	return nil, nil
+}
+
+func (k msgServer) validatePublicKey(ctx sdk.Context, req *types.KeyRequest, keyType types.KeyType, pubKey []byte) (*types.MsgFulfilKeyRequestResponse, error) {
 	switch keyType {
 	case types.KeyType_KEY_TYPE_ECDSA_SECP256K1:
-		if l := len(pubKey); l != 33 && l != 65 {
-			return fmt.Errorf("invalid ecdsa public key %x of length %v", pubKey, l)
-		}
+		return k.validateECDSAKeyDetails(ctx, req, pubKey, "ecdsa_secp256k1")
 	case types.KeyType_KEY_TYPE_EDDSA_ED25519:
 		if l := len(pubKey); l != ed25519.PublicKeySize {
-			return fmt.Errorf("invalid eddsa public key %x of length %v", pubKey, l)
+			return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid eddsa_ed25519 public key %x of length %v, expected %d bytes", pubKey, l, ed25519.PublicKeySize))
 		}
 	case types.KeyType_KEY_TYPE_BITCOIN_SECP256K1:
-		if l := len(pubKey); l != 33 && l != 65 {
-			return fmt.Errorf("invalid bitcoin public key %x of length %v", pubKey, l)
-		}
+		return k.validateECDSAKeyDetails(ctx, req, pubKey, "bitcoin_secp256k1")
 	default:
-		return fmt.Errorf("invalid key type: %v", keyType.String())
+		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid key type: %v", keyType.String()))
 	}
-	return nil
+	return nil, nil // Should be unreachable due to default case, but good practice.
+}
+
+func (k msgServer) rejectKeyRequest(ctx sdk.Context, req *types.KeyRequest, rejectReason string) (*types.MsgFulfilKeyRequestResponse, error) {
+	req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
+	req.RejectReason = rejectReason
+
+	if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgFulfilKeyRequestResponse{}, nil
 }

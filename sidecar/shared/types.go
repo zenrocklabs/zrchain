@@ -143,6 +143,11 @@ type OracleState struct {
 	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
 	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
 	SolanaMintEvents           []api.SolanaMintEvent          `json:"solanaMintEvents"`
+	// Fields for watermarking Solana events
+	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
+	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
+	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
+	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
 }
 
 type Config struct {

@@ -22,11 +22,10 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-from ibc.applications.transfer.v1 import transfer_pb2 as ibc_dot_applications_dot_transfer_dot_v1_dot_transfer__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(ibc/applications/transfer/v1/token.proto\x12\x1cibc.applications.transfer.v1\x1a+ibc/applications/transfer/v1/transfer.proto\x1a\x14gogoproto/gogo.proto\"`\n\x05Token\x12?\n\x05\x64\x65nom\x18\x01 \x01(\x0b\x32#.ibc.applications.transfer.v1.DenomB\x04\xc8\xde\x1f\x00R\x05\x64\x65nom\x12\x16\n\x06\x61mount\x18\x02 \x01(\tR\x06\x61mount\"Z\n\x05\x44\x65nom\x12\x12\n\x04\x62\x61se\x18\x01 \x01(\tR\x04\x62\x61se\x12=\n\x05trace\x18\x03 \x03(\x0b\x32!.ibc.applications.transfer.v1.HopB\x04\xc8\xde\x1f\x00R\x05trace\"C\n\x03Hop\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId:\x04\x98\xa0\x1f\x00\x42:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n(ibc/applications/transfer/v1/token.proto\x12\x1cibc.applications.transfer.v1\x1a\x14gogoproto/gogo.proto\"`\n\x05Token\x12?\n\x05\x64\x65nom\x18\x01 \x01(\x0b\x32#.ibc.applications.transfer.v1.DenomB\x04\xc8\xde\x1f\x00R\x05\x64\x65nom\x12\x16\n\x06\x61mount\x18\x02 \x01(\tR\x06\x61mount\"Z\n\x05\x44\x65nom\x12\x12\n\x04\x62\x61se\x18\x01 \x01(\tR\x04\x62\x61se\x12=\n\x05trace\x18\x03 \x03(\x0b\x32!.ibc.applications.transfer.v1.HopB\x04\xc8\xde\x1f\x00R\x05trace\"C\n\x03Hop\x12\x17\n\x07port_id\x18\x01 \x01(\tR\x06portId\x12\x1d\n\nchannel_id\x18\x02 \x01(\tR\tchannelId:\x04\x98\xa0\x1f\x00\x42:Z8github.com/cosmos/ibc-go/v10/modules/apps/transfer/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -40,10 +39,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_DENOM'].fields_by_name['trace']._serialized_options = b'\310\336\037\000'
   _globals['_HOP']._loaded_options = None
   _globals['_HOP']._serialized_options = b'\230\240\037\000'
-  _globals['_TOKEN']._serialized_start=141
-  _globals['_TOKEN']._serialized_end=237
-  _globals['_DENOM']._serialized_start=239
-  _globals['_DENOM']._serialized_end=329
-  _globals['_HOP']._serialized_start=331
-  _globals['_HOP']._serialized_end=398
+  _globals['_TOKEN']._serialized_start=96
+  _globals['_TOKEN']._serialized_end=192
+  _globals['_DENOM']._serialized_start=194
+  _globals['_DENOM']._serialized_end=284
+  _globals['_HOP']._serialized_start=286
+  _globals['_HOP']._serialized_end=353
 # @@protoc_insertion_point(module_scope)

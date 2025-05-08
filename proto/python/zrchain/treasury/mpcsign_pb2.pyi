@@ -23,7 +23,7 @@ SIGN_REQUEST_STATUS_FULFILLED: SignRequestStatus
 SIGN_REQUEST_STATUS_REJECTED: SignRequestStatus
 
 class SignRequest(_message.Message):
-    __slots__ = ("id", "creator", "key_id", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "key_ids", "mpc_btl", "fee", "zenbtc_tx_bytes")
+    __slots__ = ("id", "creator", "key_id", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "key_ids", "mpc_btl", "fee", "zenbtc_tx_bytes", "keyring_party_sigs")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
@@ -41,6 +41,7 @@ class SignRequest(_message.Message):
     MPC_BTL_FIELD_NUMBER: _ClassVar[int]
     FEE_FIELD_NUMBER: _ClassVar[int]
     ZENBTC_TX_BYTES_FIELD_NUMBER: _ClassVar[int]
+    KEYRING_PARTY_SIGS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     key_id: int
@@ -58,7 +59,8 @@ class SignRequest(_message.Message):
     mpc_btl: int
     fee: int
     zenbtc_tx_bytes: bytes
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., key_ids: _Optional[_Iterable[int]] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ...) -> None: ...
+    keyring_party_sigs: _containers.RepeatedCompositeFieldContainer[_key_pb2.PartySignature]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., key_ids: _Optional[_Iterable[int]] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ..., keyring_party_sigs: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ...) -> None: ...
 
 class SignedDataWithID(_message.Message):
     __slots__ = ("sign_request_id", "signed_data")
@@ -89,7 +91,7 @@ class SignTransactionRequest(_message.Message):
     def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ..., key_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class SignReqResponse(_message.Message):
-    __slots__ = ("id", "creator", "key_ids", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_signatures", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "mpc_btl", "fee", "zenbtc_tx_bytes")
+    __slots__ = ("id", "creator", "key_ids", "key_type", "data_for_signing", "status", "signed_data", "keyring_party_sigs", "reject_reason", "metadata", "parent_req_id", "child_req_ids", "cache_id", "mpc_btl", "fee", "zenbtc_tx_bytes")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_IDS_FIELD_NUMBER: _ClassVar[int]
@@ -97,7 +99,7 @@ class SignReqResponse(_message.Message):
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     SIGNED_DATA_FIELD_NUMBER: _ClassVar[int]
-    KEYRING_PARTY_SIGNATURES_FIELD_NUMBER: _ClassVar[int]
+    KEYRING_PARTY_SIGS_FIELD_NUMBER: _ClassVar[int]
     REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     PARENT_REQ_ID_FIELD_NUMBER: _ClassVar[int]
@@ -113,7 +115,7 @@ class SignReqResponse(_message.Message):
     data_for_signing: _containers.RepeatedScalarFieldContainer[bytes]
     status: str
     signed_data: _containers.RepeatedCompositeFieldContainer[SignedDataWithID]
-    keyring_party_signatures: _containers.RepeatedScalarFieldContainer[bytes]
+    keyring_party_sigs: _containers.RepeatedCompositeFieldContainer[_key_pb2.PartySignature]
     reject_reason: str
     metadata: _any_pb2.Any
     parent_req_id: int
@@ -122,7 +124,7 @@ class SignReqResponse(_message.Message):
     mpc_btl: int
     fee: int
     zenbtc_tx_bytes: bytes
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., key_type: _Optional[str] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[str] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_ids: _Optional[_Iterable[int]] = ..., key_type: _Optional[str] = ..., data_for_signing: _Optional[_Iterable[bytes]] = ..., status: _Optional[str] = ..., signed_data: _Optional[_Iterable[_Union[SignedDataWithID, _Mapping]]] = ..., keyring_party_sigs: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ..., reject_reason: _Optional[str] = ..., metadata: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., parent_req_id: _Optional[int] = ..., child_req_ids: _Optional[_Iterable[int]] = ..., cache_id: _Optional[bytes] = ..., mpc_btl: _Optional[int] = ..., fee: _Optional[int] = ..., zenbtc_tx_bytes: _Optional[bytes] = ...) -> None: ...
 
 class SignTxReqResponse(_message.Message):
     __slots__ = ("id", "creator", "key_id", "wallet_type", "unsigned_transaction", "sign_request_id", "no_broadcast", "mpc_btl", "key_ids")
@@ -164,6 +166,6 @@ class ICATransactionRequest(_message.Message):
     input_msg: bytes
     status: SignRequestStatus
     signed_data: _containers.RepeatedScalarFieldContainer[bytes]
-    keyring_party_signatures: _containers.RepeatedScalarFieldContainer[bytes]
+    keyring_party_signatures: _containers.RepeatedCompositeFieldContainer[_key_pb2.PartySignature]
     reject_reason: str
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., input_msg: _Optional[bytes] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[bytes]] = ..., keyring_party_signatures: _Optional[_Iterable[bytes]] = ..., reject_reason: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., input_msg: _Optional[bytes] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[bytes]] = ..., keyring_party_signatures: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ..., reject_reason: _Optional[str] = ...) -> None: ...
