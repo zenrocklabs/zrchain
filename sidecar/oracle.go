@@ -858,9 +858,9 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
-			Params: []interface{}{
+			Params: []any{
 				sigInfo.Signature.String(),
-				map[string]interface{}{ // Use map for options
+				map[string]any{ // Use map for options
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
 					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
@@ -1037,9 +1037,9 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
-			Params: []interface{}{
+			Params: []any{
 				sigInfo.Signature.String(),
-				map[string]interface{}{
+				map[string]any{
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
 					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
@@ -1250,9 +1250,9 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
-			Params: []interface{}{
+			Params: []any{
 				sigInfo.Signature.String(),
-				map[string]interface{}{
+				map[string]any{
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
 					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
@@ -1400,9 +1400,9 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	for i, sigInfo := range newSignaturesToFetchDetails {
 		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 			Method: "getTransaction",
-			Params: []interface{}{
+			Params: []any{
 				sigInfo.Signature.String(),
-				map[string]interface{}{ // Use map for options
+				map[string]any{ // Use map for options
 					"encoding":                       solana.EncodingJSONParsed,
 					"commitment":                     solrpc.CommitmentConfirmed,
 					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
