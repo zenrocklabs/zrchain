@@ -720,7 +720,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
 		logger,
-		adminAuthAddr,
+		authAddr,
 		app.TreasuryKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,

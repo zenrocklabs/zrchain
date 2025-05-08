@@ -20,6 +20,8 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type IntegrationTestSuite struct {
@@ -57,7 +59,10 @@ func (s *IntegrationTestSuite) SetupTest() {
 	identityKeeper := zentptestutil.NewMockIdentityKeeper(ctrl)
 	validationKeeper := zentptestutil.NewMockValidationKeeper(ctrl)
 	mintKeeper := zentptestutil.NewMockMintKeeper(ctrl)
-	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
+
+	// Set up the initial module address mock expectation for NewKeeper
+	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
 
 	// Assign the mock keepers to the suite fields
 	s.accountKeeper = accountKeeper
@@ -70,7 +75,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		encCfg.Codec,
 		storeService,
 		testCtx.Ctx.Logger(),
-		"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		treasuryKeeper,
 		bankKeeper,
 		accountKeeper,
