@@ -895,6 +895,13 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 			requestIndex = id
 		case uint64: // Match the type we put in the request
 			requestIndex = int(id)
+		case json.Number:
+			idInt64, err := id.Int64()
+			if err != nil {
+				log.Printf("Failed to convert json.Number ID to int64 (SolROCK mint): %v", err)
+				continue
+			}
+			requestIndex = int(idInt64)
 		default:
 			log.Printf("Invalid response ID type %T received (SolROCK mint)", resp.ID)
 			continue
@@ -1074,6 +1081,13 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			requestIndex = id
 		case uint64: // Match the type we put in the request
 			requestIndex = int(id)
+		case json.Number:
+			idInt64, err := id.Int64()
+			if err != nil {
+				log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC mint): %v", err)
+				continue
+			}
+			requestIndex = int(idInt64)
 		default:
 			log.Printf("Invalid response ID type %T received (SolZenBTC mint)", resp.ID)
 			continue
@@ -1288,6 +1302,13 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			requestIndex = id
 		case uint64:
 			requestIndex = int(id)
+		case json.Number:
+			idInt64, err := id.Int64()
+			if err != nil {
+				log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC burn): %v", err)
+				continue
+			}
+			requestIndex = int(idInt64)
 		default:
 			log.Printf("Invalid response ID type %T received (SolZenBTC burn)", resp.ID)
 			continue
@@ -1436,6 +1457,13 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 			requestIndex = id
 		case uint64:
 			requestIndex = int(id)
+		case json.Number:
+			idInt64, err := id.Int64()
+			if err != nil {
+				log.Printf("Failed to convert json.Number ID to int64 (SolRock burn): %v", err)
+				continue
+			}
+			requestIndex = int(idInt64)
 		default:
 			log.Printf("Invalid response ID type %T received (SolRock burn)", resp.ID)
 			continue
