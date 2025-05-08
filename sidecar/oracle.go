@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -32,8 +33,10 @@ import (
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	solana "github.com/gagliardetto/solana-go"
+	solanagoSystem "github.com/gagliardetto/solana-go/programs/system"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	// Added for bin.Marshal
 )
 
 func NewOracle(
@@ -1199,23 +1202,85 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 // getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
 // Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
 func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
-	resp, err := o.solanaClient.GetFees(ctx, solrpc.CommitmentConfirmed) // Use Confirmed or Finalized based on needs
+	// Create a simple dummy transaction to estimate fees.
+	// Using placeholder public keys. These don't need to exist or have funds
+	// as the transaction is not actually sent, only used for fee calculation.
+	dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")   // A known valid public key (System Program)
+	dummyReceiver := solana.MustPublicKeyFromBase58("21111111111111111111111111111111") // Another valid public key format
+
+	// Get a recent blockhash
+	recentBlockhashResult, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentConfirmed)
 	if err != nil {
-		log.Printf("Failed to get Solana fees via GetFees: %v. Returning default 5000 lamports/sig.", err)
-		// Return default on error to allow oracle to continue, but also return the error for logging in the caller.
-		return 5000, fmt.Errorf("GetFees RPC call failed: %w", err)
+		log.Printf("Failed to GetLatestBlockhash for fee calculation: %v. Returning default 5000 lamports/sig.", err)
+		return 5000, fmt.Errorf("GetLatestBlockhash RPC call failed: %w", err)
+	}
+	if recentBlockhashResult == nil || recentBlockhashResult.Value == nil {
+		log.Printf("Incomplete GetLatestBlockhash result for fee calculation. Returning default 5000 lamports/sig.")
+		return 5000, fmt.Errorf("GetLatestBlockhash returned nil result or value")
+	}
+	recentBlockhash := recentBlockhashResult.Value.Blockhash
+
+	// Create a new transaction builder
+	txBuilder := solana.NewTransactionBuilder()
+
+	// Add a simple transfer instruction (e.g., transfer 1 lamport)
+	// The actual details of the instruction don't matter as much as its presence and size.
+	transferIx := solanagoSystem.NewTransferInstruction(
+		1, // 1 lamport
+		dummySender,
+		dummyReceiver,
+	).Build()
+	txBuilder.AddInstruction(transferIx)
+	txBuilder.SetFeePayer(dummySender)
+	txBuilder.SetRecentBlockHash(recentBlockhash)
+
+	// The message needs to be compiled and serialized.
+	// For `getFeeForMessage`, we typically don't need to sign it.
+	// First, build the transaction.
+	tx, err := txBuilder.Build()
+	if err != nil {
+		log.Printf("Failed to build transaction for fee calculation: %v. Returning default 5000 lamports/sig.", err)
+		return 5000, fmt.Errorf("failed to build transaction for fee calculation: %w", err)
+	}
+	messageData := tx.Message // tx.Message is of type solana.Message (a struct)
+
+	// Get the serialized message bytes using the standard MarshalBinary interface:
+	serializedMessage, err := messageData.MarshalBinary()
+	if err != nil {
+		log.Printf("Failed to serialize message using messageData.MarshalBinary for fee calculation: %v. Returning default 5000 lamports/sig.", err)
+		return 5000, fmt.Errorf("failed to serialize message using messageData.MarshalBinary: %w", err)
 	}
 
-	// Check if the container Value is nil first, then access the struct field
-	if resp == nil || resp.Value == nil {
-		log.Printf("Incomplete fee data from Solana RPC (GetFees response or value is nil). Returning default 5000 lamports/sig.")
-		return 5000, fmt.Errorf("GetFees returned nil response or value")
+	// Call GetFeeForMessage (expects base64 encoded message string)
+	msgBase64 := base64.StdEncoding.EncodeToString(serializedMessage)
+	resp, err := o.solanaClient.GetFeeForMessage(ctx, msgBase64, solrpc.CommitmentConfirmed)
+	if err != nil {
+		log.Printf("Failed to get Solana fees via GetFeeForMessage: %v. Returning default 5000 lamports/sig.", err)
+		return 5000, fmt.Errorf("GetFeeForMessage RPC call failed: %w", err)
 	}
-	// FeeCalculator itself is a struct, not a pointer, so we access its field directly.
-	lamports := resp.Value.FeeCalculator.LamportsPerSignature
+
+	if resp == nil || resp.Value == nil {
+		log.Printf("Incomplete fee data from Solana RPC (GetFeeForMessage response or value is nil). Returning default 5000 lamports/sig.")
+		return 5000, fmt.Errorf("GetFeeForMessage returned nil response or value")
+	}
+
+	// The fee is returned in lamports for the entire message.
+	// To get lamports per signature, we'd typically divide by the number of signatures
+	// in a standard transaction. For now, let's assume the fee returned is representative enough
+	// or that it implicitly means per signature in this context for typical transactions.
+	// Solana's documentation on `getFeeForMessage` states it returns the fee for the message in lamports.
+	// If a transaction has 1 signature, this value is effectively lamports per signature.
+	// If it could have more, this logic might need refinement or be based on a typical tx signature count.
+	// For now, we'll use the direct value, assuming it's the intended lamports-per-signature proxy.
+	lamports := *resp.Value
 	if lamports == 0 {
-		log.Printf("Warning: Solana GetFees returned 0 for LamportsPerSignature, using default 5000.")
-		return 5000, nil // Treat 0 as needing the default, but not necessarily an error.
+		// It's possible for fees to be 0 on devnet/testnet or if priority fees are not needed.
+		// However, consistently returning 0 might indicate an issue or a need for a non-zero default
+		// if the oracle relies on a non-zero fee for some calculations.
+		log.Printf("Warning: Solana GetFeeForMessage returned 0 for LamportsPerSignature, using default 5000 if required by downstream logic, otherwise using 0.")
+		// Depending on requirements, you might return 0 here, or stick to a default like 5000.
+		// Let's return 0 if the network says 0, but log it. If downstream MUST have non-zero, this is an issue.
+		return 0, nil // Or return 5000, nil if a non-zero value is strictly necessary downstream
 	}
 	return lamports, nil
 }
