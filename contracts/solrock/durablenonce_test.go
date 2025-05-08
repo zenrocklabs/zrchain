@@ -16,8 +16,8 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 
 	var client = rpc.New("https://api.devnet.solana.com")
 
-	nonceAuthPubKey := solana.MustPublicKeyFromBase58("8mrtAg5itwNpZ9HxyGvn6Bmn8p81fujxxs8ZZqvaW5Tr")
-	nonceAccPubKey := solana.MustPublicKeyFromBase58("BmBq1BASQ4RevLRDGSnb773d1cMthykTkySEGKfnHkMB")
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("B7eW7kqiLyZW1LhkVHvG3MuPzdE3cT4QAXPkTCvHjg37")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("7fhyeA7SrrjBs4cMJewYeN3KLgP9aja86dyuRX4SDwV")
 	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 	require.NoError(t, err)
 	require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 	bin, err := tx.Message.MarshalBinary()
 	require.NoError(t, err)
 
-	fmt.Printf("transaction : %s", hex.EncodeToString(bin))
+	fmt.Printf("transaction: %s", hex.EncodeToString(bin))
 }
 
 func TestParseDurableNonceTransaction(t *testing.T) {
