@@ -850,132 +850,141 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	var mintEvents []api.SolanaMintEvent
-	// Use RPCCallBatch - prepare the requests manually
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
-	v0 := uint64(0) // Define v0 for pointer
+	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)              // Define v0 for pointer
 
-	// Build the batch request for GetTransaction
-	for i, sigInfo := range newSignaturesToFetchDetails {
-		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
-			Method: "getTransaction",
-			Params: []any{
-				sigInfo.Signature.String(),
-				map[string]any{ // Use map for options
-					"encoding":                       solana.EncodingJSONParsed,
-					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
+		end := i + internalBatchSize
+		if end > len(newSignaturesToFetchDetails) {
+			end = len(newSignaturesToFetchDetails)
+		}
+		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
+
+		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
+		// Build the batch request for GetTransaction
+		for j, sigInfo := range currentBatchSignatures {
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+				Method: "getTransaction",
+				Params: []any{
+					sigInfo.Signature.String(),
+					map[string]any{ // Use map for options
+						"encoding":                       solana.EncodingJSONParsed,
+						"commitment":                     solrpc.CommitmentConfirmed,
+						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+					},
 				},
-			},
-			ID:      uint64(i), // Use index to map response
-			JSONRPC: "2.0",
-		})
-	}
-
-	// Execute the batch request
-	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
-	if err != nil {
-		// If batch fails, return existing watermark; maybe retry logic is needed?
-		return nil, lastKnownSig, fmt.Errorf("SolROCK mints batch GetTransaction failed: %w", err)
-	}
-
-	// Process the results
-	for _, resp := range batchResponses { // Iterate over RPCResponses
-
-		if resp == nil { // Check if response object itself is nil
-			log.Printf("Nil RPCResponse object in batch response (SolROCK mint)")
-			continue
+				ID:      uint64(j), // Use index within the current sub-batch for ID
+				JSONRPC: "2.0",
+			})
 		}
 
-		// Use resp.ID for mapping and getting original signature
-		var requestIndex int
-		switch id := resp.ID.(type) {
-		case float64: // JSON numbers often decode to float64
-			requestIndex = int(id)
-		case int:
-			requestIndex = id
-		case uint64: // Match the type we put in the request
-			requestIndex = int(id)
-		case json.Number:
-			idInt64, err := id.Int64()
-			if err != nil {
-				log.Printf("Failed to convert json.Number ID to int64 (SolROCK mint): %v", err)
+		// Execute the batch request
+		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+		if err != nil {
+			log.Printf("SolROCK mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
+			// Potentially return lastKnownSig here if we want to stop processing further sub-batches on error
+			// return nil, lastKnownSig, fmt.Errorf("SolROCK mints sub-batch GetTransaction failed: %w", err)
+			continue // Skip to the next sub-batch
+		}
+
+		// Process the results
+		for _, resp := range batchResponses { // Iterate over RPCResponses
+			if resp == nil { // Check if response object itself is nil
+				log.Printf("Nil RPCResponse object in sub-batch response (SolROCK mint)")
 				continue
 			}
-			requestIndex = int(idInt64)
-		default:
-			log.Printf("Invalid response ID type %T received (SolROCK mint)", resp.ID)
-			continue
-		}
 
-		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
-			log.Printf("Invalid response ID %d received (SolROCK mint)", requestIndex)
-			continue
-		}
-		sig := newSignaturesToFetchDetails[requestIndex].Signature
-
-		if resp.Error != nil { // Check for RPC error in the response
-			log.Printf("Error in batch GetTransaction result for tx %s (SolROCK mint): %v", sig, resp.Error)
-			continue // Skip this transaction
-		}
-		if resp.Result == nil { // Check if the Result field is nil
-			log.Printf("Nil result field in batch response for tx %s (SolROCK mint)", sig)
-			continue
-		}
-
-		// Unmarshal the json.RawMessage result into GetTransactionResult
-		var txResult solrpc.GetTransactionResult
-		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
-			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolROCK mint): %v", sig, err)
-			continue
-		}
-
-		// Decode events using the result
-		events, err := rock_spl_token.DecodeEvents(&txResult, program)
-		if err != nil {
-			log.Printf("Failed to decode SolROCK mint events for tx %s: %v", sig, err)
-			continue // Skip this transaction
-		}
-
-		// Extract transaction details for SigHash calculation
-		if txResult.Transaction == nil {
-			log.Printf("Transaction envelope is nil in GetTransactionResult for tx %s (SolROCK mint)", sig)
-			continue
-		}
-		solTX, err := txResult.Transaction.GetTransaction()
-		if err != nil || solTX == nil {
-			log.Printf("Failed to get solana.Transaction from GetTransactionResult for SolROCK sig %s: %v", sig, err)
-			continue // Skip this transaction
-		}
-
-		// Original SigHash logic requiring 2 signatures
-		if len(solTX.Signatures) != 2 {
-			log.Printf("Expected 2 signatures for sighash calculation for SolROCK mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
-			continue
-		}
-		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
-		sigHash := sha256.Sum256(combined) // Define sigHash here for this transaction
-
-		blockTimeUnix := int64(0) // Define blockTimeUnix here for this transaction
-		if txResult.BlockTime != nil {
-			blockTimeUnix = txResult.BlockTime.Time().Unix()
-		}
-
-		// Append valid events from this transaction
-		for _, event := range events {
-			if event.Name == "TokensMintedWithFee" {
-				e, ok := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
-				if !ok {
-					log.Printf("Type assertion failed for SolROCK TokensMintedWithFeeEventData on tx %s", sig)
+			// Use resp.ID for mapping and getting original signature from currentBatchSignatures
+			var requestIndex int // This index is relative to currentBatchSignatures
+			switch id := resp.ID.(type) {
+			case float64: // JSON numbers often decode to float64
+				requestIndex = int(id)
+			case int:
+				requestIndex = id
+			case uint64: // Match the type we put in the request
+				requestIndex = int(id)
+			case json.Number:
+				idInt64, err := id.Int64()
+				if err != nil {
+					log.Printf("Failed to convert json.Number ID to int64 (SolROCK mint): %v", err)
 					continue
 				}
-				mintEvents = append(mintEvents, api.SolanaMintEvent{
-					SigHash:   sigHash[:],
-					Date:      blockTimeUnix,
-					Recipient: e.Recipient.Bytes(),
-					Value:     e.Value,
-					Fee:       e.Fee,
-					Mint:      e.Mint.Bytes(),
-				})
+				requestIndex = int(idInt64)
+			default:
+				log.Printf("Invalid response ID type %T received (SolROCK mint)", resp.ID)
+				continue
+			}
+
+			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
+				log.Printf("Invalid response ID %d received for sub-batch (SolROCK mint)", requestIndex)
+				continue
+			}
+			sig := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
+
+			if resp.Error != nil { // Check for RPC error in the response
+				log.Printf("Error in sub-batch GetTransaction result for tx %s (SolROCK mint): %v", sig, resp.Error)
+				continue // Skip this transaction
+			}
+			if resp.Result == nil { // Check if the Result field is nil
+				log.Printf("Nil result field in sub-batch response for tx %s (SolROCK mint)", sig)
+				continue
+			}
+
+			// Unmarshal the json.RawMessage result into GetTransactionResult
+			var txResult solrpc.GetTransactionResult
+			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+				log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolROCK mint): %v", sig, err)
+				continue
+			}
+
+			// Decode events using the result
+			events, err := rock_spl_token.DecodeEvents(&txResult, program)
+			if err != nil {
+				log.Printf("Failed to decode SolROCK mint events for tx %s: %v", sig, err)
+				continue // Skip this transaction
+			}
+
+			// Extract transaction details for SigHash calculation
+			if txResult.Transaction == nil {
+				log.Printf("Transaction envelope is nil in GetTransactionResult for tx %s (SolROCK mint)", sig)
+				continue
+			}
+			solTX, err := txResult.Transaction.GetTransaction()
+			if err != nil || solTX == nil {
+				log.Printf("Failed to get solana.Transaction from GetTransactionResult for SolROCK sig %s: %v", sig, err)
+				continue // Skip this transaction
+			}
+
+			// Original SigHash logic requiring 2 signatures
+			if len(solTX.Signatures) != 2 {
+				log.Printf("Expected 2 signatures for sighash calculation for SolROCK mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
+				continue
+			}
+			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+			sigHash := sha256.Sum256(combined) // Define sigHash here for this transaction
+
+			blockTimeUnix := int64(0) // Define blockTimeUnix here for this transaction
+			if txResult.BlockTime != nil {
+				blockTimeUnix = txResult.BlockTime.Time().Unix()
+			}
+
+			// Append valid events from this transaction
+			for _, event := range events {
+				if event.Name == "TokensMintedWithFee" {
+					e, ok := event.Data.(*rock_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						log.Printf("Type assertion failed for SolROCK TokensMintedWithFeeEventData on tx %s", sig)
+						continue
+					}
+					mintEvents = append(mintEvents, api.SolanaMintEvent{
+						SigHash:   sigHash[:],
+						Date:      blockTimeUnix,
+						Recipient: e.Recipient.Bytes(),
+						Value:     e.Value,
+						Fee:       e.Fee,
+						Mint:      e.Mint.Bytes(),
+					})
+				}
 			}
 		}
 	}
@@ -1037,130 +1046,137 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	var mintEvents []api.SolanaMintEvent
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
-	v0 := uint64(0) // Define v0 for pointer for maxSupportedTransactionVersion
+	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
 
-	// Build the batch request for GetTransaction
-	for i, sigInfo := range newSignaturesToFetchDetails {
-		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
-			Method: "getTransaction",
-			Params: []any{
-				sigInfo.Signature.String(),
-				map[string]any{
-					"encoding":                       solana.EncodingJSONParsed,
-					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
+		end := i + internalBatchSize
+		if end > len(newSignaturesToFetchDetails) {
+			end = len(newSignaturesToFetchDetails)
+		}
+		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
+
+		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
+		// Build the batch request for GetTransaction
+		for j, sigInfo := range currentBatchSignatures {
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+				Method: "getTransaction",
+				Params: []any{
+					sigInfo.Signature.String(),
+					map[string]any{
+						"encoding":                       solana.EncodingJSONParsed,
+						"commitment":                     solrpc.CommitmentConfirmed,
+						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+					},
 				},
-			},
-			ID:      uint64(i), // Use index to map response
-			JSONRPC: "2.0",
-		})
-	}
-
-	// Execute the batch request
-	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
-	if err != nil {
-		// If batch fails, return existing watermark; maybe retry logic is needed?
-		return nil, lastKnownSig, fmt.Errorf("SolZenBTC mints batch GetTransaction failed: %w", err)
-	}
-
-	// Process the results
-	for _, resp := range batchResponses { // Iterate over RPCResponses
-
-		if resp == nil { // Check if response object itself is nil
-			log.Printf("Nil RPCResponse object in batch response (SolZenBTC mint)")
-			continue
+				ID:      uint64(j), // Use index within the current sub-batch for ID
+				JSONRPC: "2.0",
+			})
 		}
 
-		// Use resp.ID for mapping and getting original signature
-		var requestIndex int
-		switch id := resp.ID.(type) {
-		case float64: // JSON numbers often decode to float64
-			requestIndex = int(id)
-		case int:
-			requestIndex = id
-		case uint64: // Match the type we put in the request
-			requestIndex = int(id)
-		case json.Number:
-			idInt64, err := id.Int64()
-			if err != nil {
-				log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC mint): %v", err)
+		// Execute the batch request
+		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+		if err != nil {
+			log.Printf("SolZenBTC mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
+			continue // Skip to the next sub-batch
+		}
+
+		// Process the results
+		for _, resp := range batchResponses { // Iterate over RPCResponses
+			if resp == nil { // Check if response object itself is nil
+				log.Printf("Nil RPCResponse object in sub-batch response (SolZenBTC mint)")
 				continue
 			}
-			requestIndex = int(idInt64)
-		default:
-			log.Printf("Invalid response ID type %T received (SolZenBTC mint)", resp.ID)
-			continue
-		}
 
-		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
-			log.Printf("Invalid response ID %d received (SolZenBTC mint)", requestIndex)
-			continue
-		}
-		sig := newSignaturesToFetchDetails[requestIndex].Signature
-
-		if resp.Error != nil { // Check for RPC error in the response
-			log.Printf("Error in batch GetTransaction result for tx %s (SolZenBTC mint): %v", sig, resp.Error)
-			continue // Skip this transaction
-		}
-		if resp.Result == nil { // Check if the Result field is nil
-			log.Printf("Nil result field in batch response for tx %s (SolZenBTC mint)", sig)
-			continue
-		}
-
-		// Unmarshal the json.RawMessage result into GetTransactionResult
-		var txResult solrpc.GetTransactionResult
-		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
-			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC mint): %v", sig, err)
-			continue
-		}
-
-		// Decode events using the result
-		events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
-		if err != nil {
-			log.Printf("Failed to decode SolZenBTC mint events for tx %s: %v", sig, err)
-			continue // Skip this transaction
-		}
-
-		// Extract transaction details for SigHash calculation
-		if txResult.Transaction == nil {
-			log.Printf("Transaction envelope is nil in GetTransactionResult for tx %s (SolZenBTC mint)", sig)
-			continue
-		}
-		solTX, err := txResult.Transaction.GetTransaction()
-		if err != nil || solTX == nil {
-			log.Printf("Failed to get solana.Transaction from GetTransactionResult for SolZenBTC sig %s: %v", sig, err)
-			continue // Skip this transaction
-		}
-
-		// Sighash calculation from original logic - requires 2 signatures
-		if len(solTX.Signatures) != 2 {
-			log.Printf("Expected 2 signatures for sighash calculation for SolZenBTC mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
-			continue
-		}
-		combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
-		sigHash := sha256.Sum256(combined) // Define sigHash for this transaction
-
-		blockTimeUnix := int64(0) // Define blockTimeUnix for this transaction
-		if txResult.BlockTime != nil {
-			blockTimeUnix = txResult.BlockTime.Time().Unix()
-		}
-
-		for _, event := range events {
-			if event.Name == "TokensMintedWithFee" {
-				e, ok := event.Data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
-				if !ok {
-					log.Printf("Type assertion failed for SolZenBTC TokensMintedWithFeeEventData on tx %s", sig)
+			var requestIndex int // This index is relative to currentBatchSignatures
+			switch id := resp.ID.(type) {
+			case float64: // JSON numbers often decode to float64
+				requestIndex = int(id)
+			case int:
+				requestIndex = id
+			case uint64: // Match the type we put in the request
+				requestIndex = int(id)
+			case json.Number:
+				idInt64, err := id.Int64()
+				if err != nil {
+					log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC mint): %v", err)
 					continue
 				}
-				mintEvents = append(mintEvents, api.SolanaMintEvent{
-					SigHash:   sigHash[:],
-					Date:      blockTimeUnix,
-					Recipient: e.Recipient.Bytes(),
-					Value:     e.Value,
-					Fee:       e.Fee,
-					Mint:      e.Mint.Bytes(),
-				})
+				requestIndex = int(idInt64)
+			default:
+				log.Printf("Invalid response ID type %T received (SolZenBTC mint)", resp.ID)
+				continue
+			}
+
+			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
+				log.Printf("Invalid response ID %d received for sub-batch (SolZenBTC mint)", requestIndex)
+				continue
+			}
+			sig := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
+
+			if resp.Error != nil { // Check for RPC error in the response
+				log.Printf("Error in sub-batch GetTransaction result for tx %s (SolZenBTC mint): %v", sig, resp.Error)
+				continue // Skip this transaction
+			}
+			if resp.Result == nil { // Check if the Result field is nil
+				log.Printf("Nil result field in sub-batch response for tx %s (SolZenBTC mint)", sig)
+				continue
+			}
+
+			// Unmarshal the json.RawMessage result into GetTransactionResult
+			var txResult solrpc.GetTransactionResult
+			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+				log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC mint): %v", sig, err)
+				continue
+			}
+
+			// Decode events using the result
+			events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
+			if err != nil {
+				log.Printf("Failed to decode SolZenBTC mint events for tx %s: %v", sig, err)
+				continue // Skip this transaction
+			}
+
+			// Extract transaction details for SigHash calculation
+			if txResult.Transaction == nil {
+				log.Printf("Transaction envelope is nil in GetTransactionResult for tx %s (SolZenBTC mint)", sig)
+				continue
+			}
+			solTX, err := txResult.Transaction.GetTransaction()
+			if err != nil || solTX == nil {
+				log.Printf("Failed to get solana.Transaction from GetTransactionResult for SolZenBTC sig %s: %v", sig, err)
+				continue // Skip this transaction
+			}
+
+			// Sighash calculation from original logic - requires 2 signatures
+			if len(solTX.Signatures) != 2 {
+				log.Printf("Expected 2 signatures for sighash calculation for SolZenBTC mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
+				continue
+			}
+			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
+			sigHash := sha256.Sum256(combined) // Define sigHash for this transaction
+
+			blockTimeUnix := int64(0) // Define blockTimeUnix for this transaction
+			if txResult.BlockTime != nil {
+				blockTimeUnix = txResult.BlockTime.Time().Unix()
+			}
+
+			for _, event := range events {
+				if event.Name == "TokensMintedWithFee" {
+					e, ok := event.Data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						log.Printf("Type assertion failed for SolZenBTC TokensMintedWithFeeEventData on tx %s", sig)
+						continue
+					}
+					mintEvents = append(mintEvents, api.SolanaMintEvent{
+						SigHash:   sigHash[:],
+						Date:      blockTimeUnix,
+						Recipient: e.Recipient.Bytes(),
+						Value:     e.Value,
+						Fee:       e.Fee,
+						Mint:      e.Mint.Bytes(),
+					})
+				}
 			}
 		}
 	}
@@ -1257,107 +1273,115 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	var burnEvents []api.BurnEvent
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
-	v0 := uint64(0) // Define v0 for pointer for maxSupportedTransactionVersion
+	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
 
-	// Build the batch request for GetTransaction
-	for i, sigInfo := range newSignaturesToFetchDetails {
-		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
-			Method: "getTransaction",
-			Params: []any{
-				sigInfo.Signature.String(),
-				map[string]any{
-					"encoding":                       solana.EncodingJSONParsed,
-					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
+		end := i + internalBatchSize
+		if end > len(newSignaturesToFetchDetails) {
+			end = len(newSignaturesToFetchDetails)
+		}
+		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
+
+		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
+		// Build the batch request for GetTransaction
+		for j, sigInfo := range currentBatchSignatures {
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+				Method: "getTransaction",
+				Params: []any{
+					sigInfo.Signature.String(),
+					map[string]any{
+						"encoding":                       solana.EncodingJSONParsed,
+						"commitment":                     solrpc.CommitmentConfirmed,
+						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+					},
 				},
-			},
-			ID:      uint64(i), // Use index to map response
-			JSONRPC: "2.0",
-		})
-	}
-
-	// Execute the batch request
-	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
-	if err != nil {
-		// If batch fails, return existing watermark
-		return nil, lastKnownSig, fmt.Errorf("SolZenBTC burn batch GetTransaction failed: %w", err)
-	}
-
-	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
-
-	// Process the results
-	for _, resp := range batchResponses { // Iterate over RPCResponses
-		if resp == nil { // Check if response object itself is nil
-			log.Printf("Nil RPCResponse object in batch response (SolZenBTC burn)")
-			continue
+				ID:      uint64(j), // Use index within the current sub-batch for ID
+				JSONRPC: "2.0",
+			})
 		}
 
-		// Use resp.ID for mapping and getting original signature
-		var requestIndex int
-		switch id := resp.ID.(type) {
-		case float64:
-			requestIndex = int(id)
-		case int:
-			requestIndex = id
-		case uint64:
-			requestIndex = int(id)
-		case json.Number:
-			idInt64, err := id.Int64()
-			if err != nil {
-				log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC burn): %v", err)
+		// Execute the batch request
+		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+		if err != nil {
+			log.Printf("SolZenBTC burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
+			continue // Skip to the next sub-batch
+		}
+
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here as it's needed per batch processing if successful
+
+		// Process the results
+		for _, resp := range batchResponses { // Iterate over RPCResponses
+			if resp == nil { // Check if response object itself is nil
+				log.Printf("Nil RPCResponse object in sub-batch response (SolZenBTC burn)")
 				continue
 			}
-			requestIndex = int(idInt64)
-		default:
-			log.Printf("Invalid response ID type %T received (SolZenBTC burn)", resp.ID)
-			continue
-		}
 
-		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
-			log.Printf("Invalid response ID %d received (SolZenBTC burn)", requestIndex)
-			continue
-		}
-		originalSignature := newSignaturesToFetchDetails[requestIndex].Signature
-
-		if resp.Error != nil { // Check for RPC error in the response
-			log.Printf("Error in batch GetTransaction result for tx %s (SolZenBTC burn): %v", originalSignature, resp.Error)
-			continue // Skip this transaction
-		}
-		if resp.Result == nil { // Check if the Result field is nil
-			log.Printf("Nil result field in batch response for tx %s (SolZenBTC burn)", originalSignature)
-			continue
-		}
-
-		// Unmarshal the json.RawMessage result into GetTransactionResult
-		var txResult solrpc.GetTransactionResult
-		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
-			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC burn): %v", originalSignature, err)
-			continue
-		}
-
-		// Decode events using the result
-		events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
-		if err != nil {
-			log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", originalSignature, err)
-			continue // Skip this transaction
-		}
-
-		// Process burn events for this transaction
-		for logIndex, event := range events {
-			if event.Name == "TokenRedemption" {
-				e, ok := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
-				if !ok {
-					log.Printf("Type assertion failed for SolZenBTC TokenRedemptionEventData on tx %s", originalSignature)
+			var requestIndex int // This index is relative to currentBatchSignatures
+			switch id := resp.ID.(type) {
+			case float64:
+				requestIndex = int(id)
+			case int:
+				requestIndex = id
+			case uint64:
+				requestIndex = int(id)
+			case json.Number:
+				idInt64, err := id.Int64()
+				if err != nil {
+					log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC burn): %v", err)
 					continue
 				}
-				burnEvents = append(burnEvents, api.BurnEvent{
-					TxID:            originalSignature.String(),
-					LogIndex:        uint64(logIndex),
-					ChainID:         chainID,
-					DestinationAddr: e.DestAddr[:],
-					Amount:          e.Value,
-				})
+				requestIndex = int(idInt64)
+			default:
+				log.Printf("Invalid response ID type %T received (SolZenBTC burn)", resp.ID)
+				continue
+			}
+
+			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
+				log.Printf("Invalid response ID %d received for sub-batch (SolZenBTC burn)", requestIndex)
+				continue
+			}
+			originalSignature := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
+
+			if resp.Error != nil { // Check for RPC error in the response
+				log.Printf("Error in sub-batch GetTransaction result for tx %s (SolZenBTC burn): %v", originalSignature, resp.Error)
+				continue // Skip this transaction
+			}
+			if resp.Result == nil { // Check if the Result field is nil
+				log.Printf("Nil result field in sub-batch response for tx %s (SolZenBTC burn)", originalSignature)
+				continue
+			}
+
+			// Unmarshal the json.RawMessage result into GetTransactionResult
+			var txResult solrpc.GetTransactionResult
+			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+				log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolZenBTC burn): %v", originalSignature, err)
+				continue
+			}
+
+			// Decode events using the result
+			events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
+			if err != nil {
+				log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", originalSignature, err)
+				continue // Skip this transaction
+			}
+
+			// Process burn events for this transaction
+			for logIndex, event := range events {
+				if event.Name == "TokenRedemption" {
+					e, ok := event.Data.(*zenbtc_spl_token.TokenRedemptionEventData)
+					if !ok {
+						log.Printf("Type assertion failed for SolZenBTC TokenRedemptionEventData on tx %s", originalSignature)
+						continue
+					}
+					burnEvents = append(burnEvents, api.BurnEvent{
+						TxID:            originalSignature.String(),
+						LogIndex:        uint64(logIndex),
+						ChainID:         chainID,
+						DestinationAddr: e.DestAddr[:],
+						Amount:          e.Value,
+					})
+				}
 			}
 		}
 	}
@@ -1414,104 +1438,114 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	var burnEvents []api.BurnEvent
-	batchRequests := make(jsonrpc.RPCRequests, 0, len(newSignaturesToFetchDetails))
-	v0 := uint64(0) // Define v0 for pointer
+	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)              // Define v0 for pointer
 
-	// Build batch request
-	for i, sigInfo := range newSignaturesToFetchDetails {
-		batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
-			Method: "getTransaction",
-			Params: []any{
-				sigInfo.Signature.String(),
-				map[string]any{ // Use map for options
-					"encoding":                       solana.EncodingJSONParsed,
-					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
+		end := i + internalBatchSize
+		if end > len(newSignaturesToFetchDetails) {
+			end = len(newSignaturesToFetchDetails)
+		}
+		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
+
+		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
+		// Build batch request
+		for j, sigInfo := range currentBatchSignatures {
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+				Method: "getTransaction",
+				Params: []any{
+					sigInfo.Signature.String(),
+					map[string]any{ // Use map for options
+						"encoding":                       solana.EncodingJSONParsed,
+						"commitment":                     solrpc.CommitmentConfirmed,
+						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
+					},
 				},
-			},
-			ID:      uint64(i),
-			JSONRPC: "2.0",
-		})
-	}
-
-	// Execute batch request
-	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
-	if err != nil {
-		return nil, lastKnownSig, fmt.Errorf("SolRock burn batch GetTransaction failed: %w", err)
-	}
-
-	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
-
-	// Process results
-	for _, resp := range batchResponses {
-		if resp == nil {
-			log.Printf("Nil RPCResponse object in batch response (SolRock burn)")
-			continue
+				ID:      uint64(j), // Use index within the current sub-batch for ID
+				JSONRPC: "2.0",
+			})
 		}
 
-		var requestIndex int
-		switch id := resp.ID.(type) {
-		case float64:
-			requestIndex = int(id)
-		case int:
-			requestIndex = id
-		case uint64:
-			requestIndex = int(id)
-		case json.Number:
-			idInt64, err := id.Int64()
-			if err != nil {
-				log.Printf("Failed to convert json.Number ID to int64 (SolRock burn): %v", err)
+		// Execute batch request
+		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+		if err != nil {
+			log.Printf("SolRock burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
+			continue // Skip to the next sub-batch
+		}
+
+		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here
+
+		// Process results
+		for _, resp := range batchResponses {
+			if resp == nil {
+				log.Printf("Nil RPCResponse object in sub-batch response (SolRock burn)")
 				continue
 			}
-			requestIndex = int(idInt64)
-		default:
-			log.Printf("Invalid response ID type %T received (SolRock burn)", resp.ID)
-			continue
-		}
 
-		if requestIndex < 0 || requestIndex >= len(newSignaturesToFetchDetails) {
-			log.Printf("Invalid response ID %d received (SolRock burn)", requestIndex)
-			continue
-		}
-		originalSignature := newSignaturesToFetchDetails[requestIndex].Signature
-
-		if resp.Error != nil {
-			log.Printf("Error in batch GetTransaction result for tx %s (SolRock burn): %v", originalSignature, resp.Error)
-			continue
-		}
-		if resp.Result == nil {
-			log.Printf("Nil result field in batch response for tx %s (SolRock burn)", originalSignature)
-			continue
-		}
-
-		var txResult solrpc.GetTransactionResult
-		if err := json.Unmarshal(resp.Result, &txResult); err != nil {
-			log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolRock burn): %v", originalSignature, err)
-			continue
-		}
-
-		// Decode events
-		events, err := rock_spl_token.DecodeEvents(&txResult, program)
-		if err != nil {
-			log.Printf("Failed to decode Solana Rock burn events for tx %s: %v", originalSignature, err)
-			continue
-		}
-
-		// Process burn events
-		for logIndex, event := range events {
-			if event.Name == "TokenRedemption" {
-				e, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
-				if !ok {
-					log.Printf("Type assertion failed for SolRock TokenRedemptionEventData on tx %s", originalSignature)
+			var requestIndex int // This index is relative to currentBatchSignatures
+			switch id := resp.ID.(type) {
+			case float64:
+				requestIndex = int(id)
+			case int:
+				requestIndex = id
+			case uint64:
+				requestIndex = int(id)
+			case json.Number:
+				idInt64, err := id.Int64()
+				if err != nil {
+					log.Printf("Failed to convert json.Number ID to int64 (SolRock burn): %v", err)
 					continue
 				}
-				burnEvents = append(burnEvents, api.BurnEvent{
-					TxID:            originalSignature.String(),
-					LogIndex:        uint64(logIndex),
-					ChainID:         chainID,
-					DestinationAddr: e.DestAddr[:],
-					Amount:          e.Value,
-				})
+				requestIndex = int(idInt64)
+			default:
+				log.Printf("Invalid response ID type %T received (SolRock burn)", resp.ID)
+				continue
+			}
+
+			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
+				log.Printf("Invalid response ID %d received for sub-batch (SolRock burn)", requestIndex)
+				continue
+			}
+			originalSignature := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
+
+			if resp.Error != nil {
+				log.Printf("Error in sub-batch GetTransaction result for tx %s (SolRock burn): %v", originalSignature, resp.Error)
+				continue
+			}
+			if resp.Result == nil {
+				log.Printf("Nil result field in sub-batch response for tx %s (SolRock burn)", originalSignature)
+				continue
+			}
+
+			var txResult solrpc.GetTransactionResult
+			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+				log.Printf("Failed to unmarshal GetTransactionResult for tx %s (SolRock burn): %v", originalSignature, err)
+				continue
+			}
+
+			// Decode events
+			events, err := rock_spl_token.DecodeEvents(&txResult, program)
+			if err != nil {
+				log.Printf("Failed to decode Solana Rock burn events for tx %s: %v", originalSignature, err)
+				continue
+			}
+
+			// Process burn events
+			for logIndex, event := range events {
+				if event.Name == "TokenRedemption" {
+					e, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
+					if !ok {
+						log.Printf("Type assertion failed for SolRock TokenRedemptionEventData on tx %s", originalSignature)
+						continue
+					}
+					burnEvents = append(burnEvents, api.BurnEvent{
+						TxID:            originalSignature.String(),
+						LogIndex:        uint64(logIndex),
+						ChainID:         chainID,
+						DestinationAddr: e.DestAddr[:],
+						Amount:          e.Value,
+					})
+				}
 			}
 		}
 	}
