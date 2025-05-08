@@ -95,22 +95,22 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	// Initial alignment: Fetch NTP time once at startup
-	// ntpTime, err := ntp.Time("time.google.com")
-	// if err != nil {
-	// 	// If NTP fails at startup, panic. Sidecars require time sync to establish consensus.
-	// 	log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
-	// }
+	ntpTime, err := ntp.Time("time.google.com")
+	if err != nil {
+		// If NTP fails at startup, panic. Sidecars require time sync to establish consensus.
+		log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
+	}
 
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	// This runs only if NTP succeeded (checked by the panic above)
-	// alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-	// initialSleep := time.Until(alignedStart)
-	// if initialSleep > 0 {
-	// 	log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
-	// 	time.Sleep(initialSleep)
-	// }
+	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+	initialSleep := time.Until(alignedStart)
+	if initialSleep > 0 {
+		log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
+		time.Sleep(initialSleep)
+	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
@@ -840,12 +840,20 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		log.Printf("No new SolROCK mint signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		lastSigCheckStr := "the beginning"
+		if !lastKnownSig.IsZero() {
+			lastSigCheckStr = lastKnownSig.String()
+		}
+		log.Printf("No new SolROCK mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// Return the newest signature seen from the node to update the watermark
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
-	log.Printf("Found %d new SolROCK mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+	lastSigStr := "the beginning"
+	if !lastKnownSig.IsZero() {
+		lastSigStr = lastKnownSig.String()
+	}
+	log.Printf("Found %d new SolROCK mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -958,13 +966,14 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 				continue // Skip this transaction
 			}
 
-			// Original SigHash logic requiring 2 signatures
-			if len(solTX.Signatures) != 2 {
-				log.Printf("Expected 2 signatures for sighash calculation for SolROCK mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
+			// New SigHash logic: SHA256 of the transaction's own signature.
+			// 'sig' is currentBatchSignatures[requestIndex].Signature (the transaction ID)
+			if len(solTX.Signatures) == 0 {
+				log.Printf("Transaction %s has no signatures. Skipping for SolROCK mint.", sig)
 				continue
 			}
-			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
-			sigHash := sha256.Sum256(combined) // Define sigHash here for this transaction
+			transactionSignatureBytes := sig[:]
+			sigHash := sha256.Sum256(transactionSignatureBytes) // sigHash is [32]byte array
 
 			blockTimeUnix := int64(0) // Define blockTimeUnix here for this transaction
 			if txResult.BlockTime != nil {
@@ -1036,12 +1045,20 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		log.Printf("No new SolZenBTC mint signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		lastSigCheckStr := "the beginning"
+		if !lastKnownSig.IsZero() {
+			lastSigCheckStr = lastKnownSig.String()
+		}
+		log.Printf("No new SolZenBTC mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// Return the newest signature seen from the node to update the watermark
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
-	log.Printf("Found %d new SolZenBTC mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+	lastSigStr := "the beginning"
+	if !lastKnownSig.IsZero() {
+		lastSigStr = lastKnownSig.String()
+	}
+	log.Printf("Found %d new SolZenBTC mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1151,13 +1168,14 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				continue // Skip this transaction
 			}
 
-			// Sighash calculation from original logic - requires 2 signatures
-			if len(solTX.Signatures) != 2 {
-				log.Printf("Expected 2 signatures for sighash calculation for SolZenBTC mint, got %d for sig %s. Skipping event.", len(solTX.Signatures), sig)
+			// New SigHash logic: SHA256 of the transaction's own signature.
+			// 'sig' is currentBatchSignatures[requestIndex].Signature (the transaction ID)
+			if len(solTX.Signatures) == 0 {
+				log.Printf("Transaction %s has no signatures. Skipping for SolZenBTC mint.", sig)
 				continue
 			}
-			combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
-			sigHash := sha256.Sum256(combined) // Define sigHash for this transaction
+			transactionSignatureBytes := sig[:]
+			sigHash := sha256.Sum256(transactionSignatureBytes) // sigHash is [32]byte array
 
 			blockTimeUnix := int64(0) // Define blockTimeUnix for this transaction
 			if txResult.BlockTime != nil {
@@ -1205,7 +1223,7 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	// Create a simple dummy transaction to estimate fees.
 	// Using placeholder public keys. These don't need to exist or have funds
 	// as the transaction is not actually sent, only used for fee calculation.
-	dummySender := solana.MustPublicKeyFromBase58("11111111111111111111111111111111")              // A known valid public key (System Program)
+	dummySigner := solana.MustPublicKeyFromBase58("1nc1nerator11111111111111111111111111111111")   // Use Sol Incinerator or other valid non-program ID
 	dummyReceiver := solana.MustPublicKeyFromBase58("Stake11111111111111111111111111111111111111") // Use StakeProgramID as another valid key
 
 	// Get a recent blockhash
@@ -1226,12 +1244,12 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	// Add a simple transfer instruction (e.g., transfer 1 lamport)
 	// The actual details of the instruction don't matter as much as its presence and size.
 	transferIx := solanagoSystem.NewTransferInstruction(
-		1, // 1 lamport
-		dummySender,
+		1,           // 1 lamport
+		dummySigner, // Use dummySigner as the source of the transfer
 		dummyReceiver,
 	).Build()
 	txBuilder.AddInstruction(transferIx)
-	txBuilder.SetFeePayer(dummySender)
+	txBuilder.SetFeePayer(dummySigner) // dummySigner is also the fee payer
 	txBuilder.SetRecentBlockHash(recentBlockhash)
 
 	// The message needs to be compiled and serialized.
@@ -1325,12 +1343,20 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		log.Printf("No new SolZenBTC burn signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		lastSigCheckStr := "the beginning"
+		if !lastKnownSig.IsZero() {
+			lastSigCheckStr = lastKnownSig.String()
+		}
+		log.Printf("No new SolZenBTC burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// Return the newest signature seen from the node to update the watermark
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
-	log.Printf("Found %d new SolZenBTC burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+	lastSigStr := "the beginning"
+	if !lastKnownSig.IsZero() {
+		lastSigStr = lastKnownSig.String()
+	}
+	log.Printf("Found %d new SolZenBTC burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1491,11 +1517,19 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	if len(newSignaturesToFetchDetails) == 0 {
-		log.Printf("No new SolRock burn signatures since last check (%s). Newest from node: %s", lastKnownSig, newestSigFromNode)
+		lastSigCheckStr := "the beginning"
+		if !lastKnownSig.IsZero() {
+			lastSigCheckStr = lastKnownSig.String()
+		}
+		log.Printf("No new SolRock burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
-	log.Printf("Found %d new SolRock burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastKnownSig)
+	lastSigStr := "the beginning"
+	if !lastKnownSig.IsZero() {
+		lastSigStr = lastKnownSig.String()
+	}
+	log.Printf("Found %d new SolRock burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse to process oldest first
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
