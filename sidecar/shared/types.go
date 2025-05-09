@@ -80,24 +80,24 @@ var (
 	// TODO: Add ZenBTC Solana program ID for mainnet
 	ZenBTCSolanaProgramID = map[string]string{
 		NetworkDevnet:  "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
-		NetworkTestnet: "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 	ZenBTCSolanaMintAddress = map[string]string{
 		NetworkDevnet:  "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
-		NetworkTestnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
 		NetworkMainnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
 	}
 
 	// TODO: Add SolRock program ID for mainnet
 	SolRockProgramID = map[string]string{
 		NetworkDevnet:  "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
-		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
+		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 	}
 	SolnaRockMintAddress = map[string]string{
 		NetworkDevnet:  "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
+		NetworkTestnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 		NetworkMainnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 	}
 
