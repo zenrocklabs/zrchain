@@ -3,6 +3,7 @@ package types_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/stretchr/testify/require"
 )
@@ -19,8 +20,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state",
+			desc: "valid genesis state",
 			genState: &types.GenesisState{
+				Params: types.Params{
+					Solana:    types.DefaultSolanaParams,
+					BridgeFee: math.LegacyNewDecWithPrec(1, 2),
+				},
 
 				// this line is used by starport scaffolding # types/genesis/validField
 			},

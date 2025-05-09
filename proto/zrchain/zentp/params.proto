@@ -3,6 +3,8 @@ package zrchain.zentp;
 
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
@@ -12,6 +14,12 @@ message Params {
   option (gogoproto.equal) = true;
 
   Solana solana = 1;
+  string bridge_fee = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // Solana represents the parameters for the Solana relayer configuration.

@@ -14,6 +14,7 @@ package solrock
 // )
 
 // func TestBurn(t *testing.T) {
+// 	t.SkipNow()
 // 	signer, err := solana.PublicKeyFromBase58("5pVWFKJtfA52zJZ9zeHVSn1CzSZJAMGG82iS8VYwfyV5")
 // 	require.NoError(t, err)
 // 	feeWallet, err := solana.PublicKeyFromBase58("FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd")

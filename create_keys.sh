@@ -1,7 +1,7 @@
 #!/bin/sh
 
 key_types=(
-	"ed25519"  #1
+	"ecdsa"    #1
 	"ecdsa"    #2
 	"bitcoin"  #3
 	"ecdsa"    #4

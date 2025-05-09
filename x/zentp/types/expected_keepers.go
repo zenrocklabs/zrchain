@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -43,4 +44,8 @@ type IdentityKeeper interface {
 type ValidationKeeper interface {
 	SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error
 	SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error
+}
+
+type MintKeeper interface {
+	GetParams(ctx context.Context) (minttypes.Params, error)
 }

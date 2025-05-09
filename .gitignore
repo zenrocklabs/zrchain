@@ -25,3 +25,7 @@ sidecar/sidecar
 sidecar/sidecar.log
 sidecar/cache.json
 sidecar/cache_alt.json
+
+.env
+sidecar/config.yaml
+sidecar/eigen_operator_config.yaml
