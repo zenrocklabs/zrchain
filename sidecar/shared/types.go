@@ -92,12 +92,12 @@ var (
 	// TODO: Add SolRock program ID for mainnet
 	SolRockProgramID = map[string]string{
 		NetworkDevnet:  "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
-		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 	}
 	SolnaRockMintAddress = map[string]string{
 		NetworkDevnet:  "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkTestnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
 		NetworkMainnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 	}
 
