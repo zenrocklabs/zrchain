@@ -330,7 +330,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 
 		// Use the new helper function to calculate power
 		// Pass validator.TokensAVS directly, assuming it corresponds to primaryAVSAssetData (e.g. BTC)
-		newPowerVal, nativePowerDebug, avsPowerDebug := k.calculateValidatorPowerComponents( // Removed errCalc as the new function signature doesn't return it
+		newPowerVal, nativePowerDebug, avsPowerDebug := k.calculateValidatorPowerComponents(
 			validator,
 			powerReduction,
 			nativeAssetData,
@@ -339,9 +339,6 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 			avsExchangeRate,
 			pricesAreValid,
 		)
-		// if errCalc != nil { // যদিও calculateValidatorPowerComponents বর্তমানে কোনো ত্রুটি ফেরত দেয় না - This comment is in Bengali, removing it as per instructions to avoid comments unless non-trivial. The function indeed does not return an error.
-		// 	return nil, errCalc
-		// }
 
 		consAddr, err := validator.GetConsAddr()
 		if err != nil {
