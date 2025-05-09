@@ -50,7 +50,7 @@ func TestMigrate(t *testing.T) {
 	expectedParams, err := paramsCol.Get(ctx)
 	require.NoError(t, err)
 
-	var res types.Params
+	var res types.Solana
 	bz, err := store.Get(types.ParamsKey)
 	require.NoError(t, err)
 	require.NoError(t, cdc.Unmarshal(bz, &res))
