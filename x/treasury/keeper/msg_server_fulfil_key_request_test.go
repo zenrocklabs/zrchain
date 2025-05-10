@@ -663,7 +663,7 @@ func Test_msgServer_FulfilKeyRequest(t *testing.T) {
 			}
 			treasury.InitGenesis(ctx, *tk, tGenesis)
 
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			got, err := msgSer.FulfilKeyRequest(ctx, tt.args.msg)
 			if tt.wantErr {

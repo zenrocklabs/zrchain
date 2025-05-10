@@ -274,7 +274,7 @@ func Test_msgServer_NewKeyRequest(t *testing.T) {
 			tk := keepers.TreasuryKeeper
 			pk := keepers.PolicyKeeper
 			ctx := keepers.Ctx
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			polGenesis := policytypes.GenesisState{
 				PortId:   policytypes.PortID,

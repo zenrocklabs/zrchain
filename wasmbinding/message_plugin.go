@@ -147,7 +147,7 @@ func (m *CustomMessageInterceptor) newKey(ctx sdk.Context, req *newKeyRequest) (
 		KeyType:       req.KeyType,
 	}
 
-	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury)
+	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury, false)
 	if _, err = treasuryMsgServer.NewKeyRequest(ctx, internalReq); err != nil {
 		return cosmoserrors.Wrap(err, "NewKey")
 	}
@@ -170,7 +170,7 @@ func (m *CustomMessageInterceptor) signData(ctx sdk.Context, req *signDataReques
 		internalReq.KeyIds = append(internalReq.KeyIds, uintKeyID)
 	}
 
-	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury)
+	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury, false)
 	if _, err = treasuryMsgServer.NewSignatureRequest(ctx, internalReq); err != nil {
 		return cosmoserrors.Wrap(err, "SignData")
 	}
@@ -214,7 +214,7 @@ func (m *CustomMessageInterceptor) signTx(ctx sdk.Context, req *signTransactionR
 		internalReq.WalletType = treasurytypes.WalletType_WALLET_TYPE_SOLANA
 	}
 
-	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury)
+	treasuryMsgServer := treasurykeeper.NewMsgServerImpl(*m.treasury, false)
 	if _, err = treasuryMsgServer.NewSignTransactionRequest(ctx, internalReq); err != nil {
 		return cosmoserrors.Wrap(err, "SignTransaction")
 	}

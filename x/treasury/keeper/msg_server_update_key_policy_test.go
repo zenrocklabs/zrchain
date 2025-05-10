@@ -49,7 +49,7 @@ func Test_msgServer_UpdateKeyPolicy(t *testing.T) {
 			pk := keepers.PolicyKeeper
 			ik := keepers.IdentityKeeper
 			ctx := keepers.Ctx
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			// create workspace
 			idGenesis := idtypes.GenesisState{
