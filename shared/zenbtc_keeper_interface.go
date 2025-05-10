@@ -11,6 +11,7 @@ import (
 type ZenBTCKeeper interface {
 	GetStakerKeyID(ctx context.Context) uint64
 	GetEthMinterKeyID(ctx context.Context) uint64
+	GetParams(ctx context.Context) (types.Params, error)
 	GetSolanaParams(ctx context.Context) *types.Solana
 	GetUnstakerKeyID(ctx context.Context) uint64
 	GetCompleterKeyID(ctx context.Context) uint64

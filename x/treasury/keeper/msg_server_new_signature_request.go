@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
@@ -44,11 +46,6 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
-	if err != nil {
-		return nil, err
-	}
-
 	var dataForSigning [][]byte
 	for _, p := range payload {
 		data, decodeErr := hex.DecodeString(p)
@@ -65,6 +62,30 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	if err != nil {
 		return nil, fmt.Errorf("error whilst verifying transaction & hashes %s", err.Error())
 	}
+
+	params, err := k.zenBTCKeeper.GetParams(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting zenbtc params: %s", err.Error())
+	}
+	for _, keyID := range msg.KeyIds {
+		if keyID == params.StakerKeyID ||
+			keyID == params.EthMinterKeyID ||
+			keyID == params.UnstakerKeyID ||
+			keyID == params.CompleterKeyID ||
+			keyID == params.Solana.SignerKeyId ||
+			keyID == params.Solana.NonceAuthorityKey ||
+			keyID == params.Solana.NonceAccountKey ||
+			keyID == params.RewardsDepositKeyID ||
+			slices.Contains(params.ChangeAddressKeyIDs, keyID) {
+			return nil, fmt.Errorf("key %v is reserved for internal zenbtc use", keyID)
+		}
+	}
+
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
+	if err != nil {
+		return nil, err
+	}
+
 	return k.NewSignatureRequestActionHandler(ctx, act)
 }
 
