@@ -4,7 +4,7 @@
 # docker run -e DOCKER_ENV=true -p 8080:8080 zenrockd:0.0.1
 
 # Use a  golang alpine as the base image
-FROM public.ecr.aws/docker/library/golang:1.23.2-alpine3.20 AS go_builder
+FROM public.ecr.aws/docker/library/golang:1.24.3-alpine3.21 AS go_builder
 RUN apk update
 RUN apk add make cmake git alpine-sdk linux-headers
 
