@@ -1300,8 +1300,8 @@ github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
-github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock h1:XBVSukvo+6qoCKHg7bKVw2ijin90FfIKEFIG9cmQk9g=
-github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
+github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2 h1:Tb1R2MIcL6c3A7eZbnptemT1lywhEKqim02HvEoLSyo=
+github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoqcXVA7LSXq/6ztw97Q=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/zenrocklabs/zenbtc v1.17.1 h1:1EQJNSiqyhJGOb2RWzp3/nRIEjFQeA9SzQe5bZa4GRA=
