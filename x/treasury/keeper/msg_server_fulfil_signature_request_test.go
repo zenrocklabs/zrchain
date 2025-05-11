@@ -722,7 +722,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 			ik := keepers.IdentityKeeper
 			tk := keepers.TreasuryKeeper
 			ctx := keepers.Ctx
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			idGenesis := idTypes.GenesisState{
 				PortId:     idTypes.PortID,

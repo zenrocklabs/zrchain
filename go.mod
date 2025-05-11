@@ -1,13 +1,13 @@
 module github.com/Zenrock-Foundation/zrchain/v6
 
-go 1.23.2
+go 1.24.3
 
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.3.4
-	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock
+	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
 	// fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
@@ -70,7 +70,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zenrocklabs/zenbtc v1.17.0
+	github.com/zenrocklabs/zenbtc v1.17.1
 	github.com/zenrocklabs/zenrock-avs v1.6.4
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.29.0

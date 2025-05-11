@@ -123,7 +123,7 @@ func Test_msgServer_NewZrSignSignatureRequest_Hash_OrData(t *testing.T) {
 				},
 			}
 			treasury.InitGenesis(ctx, *tk, tGenesis)
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 			got, err := msgSer.NewZrSignSignatureRequest(ctx, tt.args.msg)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -234,7 +234,7 @@ func Test_msgServer_NewZrSignSignatureRequest_Transaction(t *testing.T) {
 				},
 			}
 			treasury.InitGenesis(ctx, *tk, tGenesis)
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 			got, err := msgSer.NewZrSignSignatureRequest(ctx, tt.args.msg)
 			if tt.wantErr {
 				require.Error(t, err)

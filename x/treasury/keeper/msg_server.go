@@ -7,14 +7,15 @@ import (
 
 type msgServer struct {
 	Keeper
+	TestMode bool
 }
 
 var _ types.MsgServer = (*msgServer)(nil)
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	s := &msgServer{Keeper: keeper}
+func NewMsgServerImpl(keeper Keeper, testMode bool) types.MsgServer {
+	s := &msgServer{Keeper: keeper, TestMode: testMode}
 
 	policy.RegisterActionHandler(
 		keeper.policyKeeper,
