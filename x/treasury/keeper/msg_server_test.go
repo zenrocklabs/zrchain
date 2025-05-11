@@ -16,7 +16,7 @@ func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Conte
 	keepers := keepertest.NewTest(t)
 	tk := keepers.TreasuryKeeper
 	ctx := keepers.Ctx
-	return *tk, keeper.NewMsgServerImpl(*tk), ctx
+	return *tk, keeper.NewMsgServerImpl(*tk, true), ctx
 }
 
 func TestMsgServer(t *testing.T) {

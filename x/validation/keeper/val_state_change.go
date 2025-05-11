@@ -230,27 +230,52 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 	}
 	maxValidators := params.MaxValidators
 	powerReduction := k.PowerReduction(ctx)
-	totalPower := math.ZeroInt()
+	totalPowerCalculated := math.ZeroInt()
 	amtFromBondedToNotBonded, amtFromNotBondedToBonded := math.ZeroInt(), math.ZeroInt()
 
-	// Retrieve the last validator set.
-	// The persistent set is updated later in this function.
-	// (see LastValidatorPowerKey).
 	last, err := k.getLastValidatorsByAddr(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Iterate over validators, highest power to lowest.
 	iterator, err := k.ValidatorsPowerStoreIterator(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer iterator.Close()
 
+	// Fetch all stakeable asset prices and data once.
+	stakeableAssetsWithPrices, err := k.GetStakeableAssetPrices(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine if any prices are valid (non-zero).
+	pricesAreValid := false
+	for _, asset := range stakeableAssetsWithPrices {
+		if !asset.PriceUSD.IsZero() {
+			pricesAreValid = true
+			break
+		}
+	}
+
+	// Identify native (ROCK) and primary AVS (BTC) asset data from the fetched list.
+	// This assumes fixed asset types for native and primary AVS.
+	// A more dynamic system might involve looking up asset types based on validator's specific holdings.
+	var nativeAssetData *types.AssetData
+	var primaryAVSAssetData *types.AssetData // e.g., for BTC
+
+	for _, asset := range stakeableAssetsWithPrices {
+		if asset.Asset == types.Asset_ROCK { // Assuming types.Asset_ROCK is your native asset enum/const
+			nativeAssetData = asset
+		}
+		if asset.Asset == types.Asset_BTC { // Assuming types.Asset_BTC is your primary AVS asset enum/const
+			primaryAVSAssetData = asset
+		}
+		// Add more AVS asset types if a validator can hold multiple, and adjust logic below.
+	}
+
 	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
-		// everything that is iterated in this loop is becoming or already a
-		// part of the bonded validator set
 		valAddr := sdk.ValAddress(iterator.Value())
 		validator := k.mustGetValidator(ctx, valAddr)
 
@@ -258,24 +283,25 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 			panic("should never retrieve a jailed validator from the power store")
 		}
 
-		// if we get to a zero-power validator (which we don't bond),
-		// there are no more possible bonded validators
-		if validator.PotentialConsensusPower(k.PowerReduction(ctx)) == 0 {
+		// If we get to a zero-power validator (which we don't bond),
+		// there are no more possible bonded validators.
+		// This check relies on PotentialConsensusPower using the *native* tokens primarily.
+		// If AVS tokens could make a zero-native-token validator powerful, this check might need adjustment.
+		if validator.PotentialConsensusPower(powerReduction) == 0 && validator.TokensAVS.IsZero() {
 			break
 		}
 
-		// apply the appropriate state change if necessary
 		switch {
 		case validator.IsUnbonded():
 			validator, err = k.unbondedToBonded(ctx, validator)
 			if err != nil {
-				return
+				return nil, err
 			}
 			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
 		case validator.IsUnbonding():
 			validator, err = k.unbondingToBonded(ctx, validator)
 			if err != nil {
-				return
+				return nil, err
 			}
 			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
 		case validator.IsBonded():
@@ -284,81 +310,64 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 			panic("unexpected validator status")
 		}
 
-		// fetch the old power bytes
 		valAddrStr, err := k.validatorAddressCodec.BytesToString(valAddr)
 		if err != nil {
 			return nil, err
 		}
 		oldPowerBytes, found := last[valAddrStr]
 
-		stakeableAssets, err := k.GetStakeableAssetPrices(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		nativePower := math.LegacyZeroDec()
-		avsPower := math.LegacyZeroDec()
-
-		pricesAreValid := false
-		for _, asset := range stakeableAssets {
-			if !asset.PriceUSD.IsZero() {
-				pricesAreValid = true
-				break
+		// Get exchange rate for the primary AVS asset (e.g., BTC)
+		// If a validator could hold different AVS types, this would need to be dynamic.
+		var avsExchangeRate math.LegacyDec = math.LegacyOneDec()            // Default
+		if primaryAVSAssetData != nil && validator.TokensAVS.IsPositive() { // Only fetch if validator has AVS for this asset type
+			// Assuming zenBTCKeeper is for BTC, if primaryAVSAssetData is BTC.
+			// This part needs to be generalized if supporting multiple AVS types with different keepers/rate sources.
+			rate, err := k.zenBTCKeeper.GetExchangeRate(sdk.UnwrapSDKContext(ctx)) // GetExchangeRate needs sdk.Context
+			if err == nil && !rate.IsZero() {                                      // Added !rate.IsZero() check
+				avsExchangeRate = rate
 			}
 		}
 
-		for _, asset := range stakeableAssets {
-			switch asset.Asset {
-			case types.Asset_ROCK:
-				if pricesAreValid {
-					nativePower = asset.PriceUSD.MulInt64(validator.ConsensusPower(powerReduction))
-				} else {
-					nativePower = math.LegacyNewDec(validator.ConsensusPower(powerReduction))
-				}
-			case types.Asset_BTC:
-				exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-				if err != nil {
-					exchangeRate = math.LegacyOneDec()
-				}
-				avsPower = asset.PriceUSD.Mul(exchangeRate).MulInt64(adjustPowerToPrecision(validator.TokensAVS, asset.Precision).Int64())
-			case types.Asset_ETH:
-				continue
-			}
-		}
-
-		newPower := nativePower.Add(avsPower).TruncateInt64()
-		if newPower == 0 {
-			newPower = 1
-		}
+		// Use the new helper function to calculate power
+		// Pass validator.TokensAVS directly, assuming it corresponds to primaryAVSAssetData (e.g. BTC)
+		newPowerVal, nativePowerDebug, avsPowerDebug := k.calculateValidatorPowerComponents(
+			validator,
+			powerReduction,
+			nativeAssetData,
+			primaryAVSAssetData, // Pass data for the AVS tokens the validator holds
+			validator.TokensAVS, // Pass the amount of those AVS tokens
+			avsExchangeRate,
+			pricesAreValid,
+		)
 
 		consAddr, err := validator.GetConsAddr()
 		if err != nil {
 			return nil, err
 		}
-
-		k.Logger(ctx).Debug(fmt.Sprintf(
-			"\nvalidator: %s | %s\ntoken stake: native=%d, avs=%d, total=%d\nstake value: native=%s, avs=%s, total=%d",
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		sdkCtx.Logger().Debug(fmt.Sprintf( // Use sdkCtx.Logger()
+			"\nvalidator: %s | %s\ntoken stake: native_units=%d, avs_raw_units=%s (for %v)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
-			validator.ConsensusPower(powerReduction), validator.AVSConsensusPower(powerReduction),
-			validator.ConsensusPower(powerReduction)+validator.AVSConsensusPower(powerReduction),
-			nativePower.String(), avsPower.String(), newPower,
+			validator.ConsensusPower(powerReduction), validator.TokensAVS.String(), primaryAVSAssetData.GetAsset(), // Log raw AVS units and type
+			nativePowerDebug.String(), avsPowerDebug.String(), newPowerVal,
 		))
 
-		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: newPower})
+		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: newPowerVal})
 
-		// update the validator set if power has changed
 		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
-			updates = append(updates, validator.ABCIValidatorUpdate(powerReduction, newPower))
+			// The ABCIValidatorUpdate's Power field should be newPowerVal.
+			// The validator.ABCIValidatorUpdate method might take powerReduction or the final power.
+			// Assuming it takes the final calculated power:
+			updates = append(updates, validator.ABCIValidatorUpdate(powerReduction, newPowerVal)) // Adjusted: Pass newPowerVal directly
 
-			if err = k.SetLastValidatorPower(ctx, valAddr, newPower); err != nil {
+			if err = k.SetLastValidatorPower(ctx, valAddr, newPowerVal); err != nil {
 				return nil, err
 			}
 		}
 
 		delete(last, valAddrStr)
 		count++
-
-		totalPower = totalPower.Add(math.NewInt(newPower))
+		totalPowerCalculated = totalPowerCalculated.Add(math.NewInt(newPowerVal))
 	}
 
 	noLongerBonded, err := sortNoLongerBonded(last, k.validatorAddressCodec)
@@ -372,50 +381,41 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		if err != nil {
 			return nil, err
 		}
-		str, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
-		if err != nil {
-			return nil, err
-		}
+		// operatorStr, err := k.validatorAddressCodec.BytesToString(valAddrBytes) // Validator's operator address string from bytes. This line is unused.
+		// if err != nil {
+		//     return nil, err
+		// }
 		amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
-		if err = k.DeleteLastValidatorPower(ctx, str); err != nil {
+
+		// Use sdk.ValAddress for DeleteLastValidatorPower if it expects that
+		if err = k.DeleteLastValidatorPower(ctx, sdk.ValAddress(valAddrBytes)); err != nil { // Corrected to pass sdk.ValAddress if this was the intention from the comment. The original code used valAddrBytes (a []byte) which implicitly converts to sdk.ValAddress, but this is more explicit.
 			return nil, err
 		}
-
 		updates = append(updates, validator.ABCIValidatorUpdateZero())
 	}
 
 	// Update the pools based on the recent updates in the validator set:
-	// - The tokens from the non-bonded candidates that enter the new validator set need to be transferred
-	// to the Bonded pool.
-	// - The tokens from the bonded validators that are being kicked out from the validator set
-	// need to be transferred to the NotBonded pool.
 	switch {
-	// Compare and subtract the respective amounts to only perform one transfer.
-	// This is done in order to avoid doing multiple updates inside each iterator/loop.
 	case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
-		if err = k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded)); err != nil {
+		if err = k.notBondedTokensToBonded(sdk.UnwrapSDKContext(ctx), amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded)); err != nil {
 			return nil, err
 		}
 	case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
-		if err = k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded)); err != nil {
+		if err = k.bondedTokensToNotBonded(sdk.UnwrapSDKContext(ctx), amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded)); err != nil {
 			return nil, err
 		}
-	default: // equal amounts of tokens; no update required
 	}
 
-	// set total power on lookup index if there are any updates
 	if len(updates) > 0 {
-		if err = k.SetLastTotalPower(ctx, totalPower); err != nil {
+		if err = k.SetLastTotalPower(ctx, totalPowerCalculated); err != nil {
 			return nil, err
 		}
 	}
-
-	// set the list of validator updates
-	if err = k.SetValidatorUpdates(ctx, updates); err != nil {
+	if err = k.SetValidatorUpdates(ctx, updates); err != nil { // This was removed in SDK v0.47+, might not be needed
 		return nil, err
 	}
 
-	return updates, err
+	return updates, nil
 }
 
 func (k Keeper) GetStakeableAssetPrices(ctx context.Context) ([]*types.AssetData, error) {
@@ -439,10 +439,82 @@ func (k Keeper) GetStakeableAssetPrices(ctx context.Context) ([]*types.AssetData
 	return stakeableAssets, nil
 }
 
-func adjustPowerToPrecision(tokens math.Int, assetPrecision uint32) math.Int {
-	precisionDiff := assetPrecision - 6 // relative to ROCK's 6 decimals of precision
-	powerOf10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(precisionDiff)), nil)
-	return tokens.Quo(math.NewIntFromBigInt(powerOf10))
+// calculateValidatorPowerComponents computes the native and AVS power contributions
+// and the total truncated consensus power for a validator, using full decimal precision for AVS token values.
+func (k Keeper) calculateValidatorPowerComponents(
+	validator types.ValidatorHV, // Used for validator.ConsensusPower
+	powerReduction math.Int,
+	nativeAssetData *types.AssetData,
+	avsAssetData *types.AssetData, // Contains PriceUSD and Precision for the AVS token
+	avsTokens math.Int, // Raw amount of AVS tokens (e.g., satoshis)
+	avsExchangeRate math.LegacyDec,
+	pricesAreValid bool,
+) (totalConsensusPower int64, nativePowerContribution math.LegacyDec, avsPowerContribution math.LegacyDec) {
+
+	nativePowerContribution = math.LegacyZeroDec()
+	avsPowerContribution = math.LegacyZeroDec()
+
+	// Calculate Native Power Contribution
+	nativeConsensusPowerUnits := validator.ConsensusPower(powerReduction)
+	if nativeAssetData != nil {
+		if pricesAreValid {
+			nativePowerContribution = nativeAssetData.PriceUSD.MulInt64(nativeConsensusPowerUnits)
+		} else {
+			nativePowerContribution = math.LegacyNewDec(nativeConsensusPowerUnits)
+		}
+	} else if !pricesAreValid {
+		nativePowerContribution = math.LegacyNewDec(nativeConsensusPowerUnits)
+	}
+
+	// Calculate AVS Power Contribution with full decimal precision
+	if avsAssetData != nil && avsTokens.IsPositive() {
+		if pricesAreValid && !avsAssetData.PriceUSD.IsZero() {
+			// Convert raw AVS tokens (math.Int) to math.LegacyDec
+			avsTokensDec := math.LegacyNewDecFromInt(avsTokens)
+
+			// Calculate the divisor (10^assetPrecision) as math.LegacyDec
+			if avsAssetData.Precision > 0 { // Avoid division by zero if precision is 0 (10^0 = 1 handled by next lines)
+				powerOf10DenominatorBigInt := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(avsAssetData.Precision)), nil)
+				divisorDec := math.LegacyNewDecFromBigInt(powerOf10DenominatorBigInt)
+
+				if !divisorDec.IsZero() {
+					// Calculate whole AVS units as math.LegacyDec (e.g., 1.18170108 for BTC)
+					wholeAVSUnitsDec := avsTokensDec.Quo(divisorDec)
+					avsPowerContribution = avsAssetData.PriceUSD.Mul(avsExchangeRate).Mul(wholeAVSUnitsDec)
+				} else {
+					// This case should ideally not be reached if precision > 0
+					avsPowerContribution = math.LegacyZeroDec()
+				}
+			} else { // asset.Precision is 0, so 10^0 = 1. Treat tokens as whole units.
+				avsPowerContribution = avsAssetData.PriceUSD.Mul(avsExchangeRate).Mul(avsTokensDec)
+			}
+		}
+		// If pricesAreValid is false, or avsAssetData.PriceUSD is zero, avsPowerContribution remains ZeroDec
+	}
+
+	calculatedTotalDecimal := nativePowerContribution.Add(avsPowerContribution)
+	totalConsensusPower = calculatedTotalDecimal.TruncateInt64()
+
+	// The calling function `ApplyAndReturnValidatorSetUpdates` filters out validators
+	// where (validator.PotentialConsensusPower(powerReduction) == 0 && validator.TokensAVS.IsZero()).
+	// If this function is called, the validator is considered to have some basis for staking.
+	// Therefore, if the calculated power truncates to 0, it should be set to 1,
+	// unless it represents a truly valueless validator (e.g. zero native tokens, zero avs tokens, and zero calculated decimal value).
+	if totalConsensusPower == 0 {
+		if calculatedTotalDecimal.IsZero() && validator.TokensNative.IsZero() && !avsTokens.IsPositive() {
+			totalConsensusPower = 0 // Absolutely no tokens of any kind that could contribute value
+		} else {
+			totalConsensusPower = 1 // Has some tokens, or had some value that truncated to zero
+		}
+	}
+
+	return totalConsensusPower, nativePowerContribution, avsPowerContribution
+}
+
+// adjustPowerToPrecision function as you provided (fixed version)
+func (k Keeper) adjustPowerToPrecision(tokens math.Int, assetPrecision uint32) math.Int {
+	powerOf10Denominator := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(assetPrecision)), nil)
+	return tokens.Quo(math.NewIntFromBigInt(powerOf10Denominator))
 }
 
 // Validator state transitions

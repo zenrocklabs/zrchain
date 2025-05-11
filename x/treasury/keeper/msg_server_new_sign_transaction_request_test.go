@@ -233,7 +233,7 @@ func Test_msgServer_NewSignTransactionRequest(t *testing.T) {
 			}
 			policymodule.InitGenesis(ctx, *pk, pGenesis)
 
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			got, err := msgSer.NewSignTransactionRequest(ctx, tt.args.msg)
 			if tt.wantErr {

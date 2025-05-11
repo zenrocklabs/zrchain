@@ -15,7 +15,7 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 	//1st Check the blockheader is valid
 	err := CheckBlockHeader(blockHeader)
 	if err != nil {
-		return nil, "", fmt.Errorf("Fail to Check BlockHeader " + err.Error())
+		return nil, "", fmt.Errorf("Fail to Check BlockHeader: %w", err)
 	}
 
 	merkleRootBytes, err := hex.DecodeString(blockHeader.MerkleRoot)

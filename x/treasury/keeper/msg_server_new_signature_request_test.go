@@ -338,7 +338,7 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			}
 			policymodule.InitGenesis(ctx, *pk, pGenesis)
 
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 			got, err := msgSer.NewSignatureRequest(ctx, tt.args.msg)
 
 			if tt.wantErr {

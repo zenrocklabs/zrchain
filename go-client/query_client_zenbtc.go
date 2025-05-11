@@ -53,7 +53,7 @@ func (c *ZenBTCQueryClient) Redemptions(ctx context.Context, startIndex uint64, 
 }
 
 func (c *ZenBTCQueryClient) Params(ctx context.Context) (*types.QueryParamsResponse, error) {
-	return c.client.GetParams(ctx, &types.QueryParamsRequest{})
+	return c.client.QueryParams(ctx, &types.QueryParamsRequest{})
 }
 
 func (c *ZenBTCQueryClient) BurnEvents(ctx context.Context, startIndex uint64, txID string, logIndex uint64, chainID string) (*types.QueryBurnEventsResponse, error) {
