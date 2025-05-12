@@ -56,7 +56,7 @@ jobs:
         run: |
           go clean -cache -modcache -i -r
           go mod tidy
-          go get github.com/zenrocklabs/zenbtc@v1.17.2
+          go get github.com/zenrocklabs/zenbtc
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
       - name: Run integration tests
