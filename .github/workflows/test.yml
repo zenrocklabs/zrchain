@@ -52,10 +52,6 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      - name: Fetch libwasmvm
-        run: |
-          curl -LO https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm_muslc.x86_64.a
-          mv libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
       - name: Run integration tests
