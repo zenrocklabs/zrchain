@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23.2'
+          go-version: '1.24.3'
           cache-dependency-path: "**/*.sum"
       - name: Build
         run: go build -v ./...
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23.2'
+          go-version: '1.24.3'
           cache-dependency-path: "**/*.sum"
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -52,6 +52,9 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
+      - name: Tidy and vendor
+        run: |
+          go mod tidy
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
       - name: Run integration tests
