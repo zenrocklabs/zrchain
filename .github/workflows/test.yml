@@ -56,7 +56,12 @@ jobs:
         run: |
           go clean -cache -modcache -i -r
           go mod tidy
-          go get github.com/zenrocklabs/zenbtc
+          go list -m all > local-modules.txt
+      - name: Upload modules list
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-modules
+          path: modules.txt
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
       - name: Run integration tests
