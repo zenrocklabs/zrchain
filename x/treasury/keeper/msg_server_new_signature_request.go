@@ -67,20 +67,16 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		if k.zenBTCKeeper == nil {
 			return nil, fmt.Errorf("zenbtc keeper is not set")
 		}
-		params, err := k.zenBTCKeeper.GetParams(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error getting zenbtc params: %s", err.Error())
-		}
 		for _, keyID := range msg.KeyIds {
-			if keyID == params.StakerKeyID ||
-				keyID == params.EthMinterKeyID ||
-				keyID == params.UnstakerKeyID ||
-				keyID == params.CompleterKeyID ||
-				keyID == params.Solana.SignerKeyId ||
-				keyID == params.Solana.NonceAuthorityKey ||
-				keyID == params.Solana.NonceAccountKey ||
-				keyID == params.RewardsDepositKeyID ||
-				slices.Contains(params.ChangeAddressKeyIDs, keyID) {
+			if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
+				keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
+				slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
 				return nil, fmt.Errorf("key %v is reserved for internal zenbtc use", keyID)
 			}
 		}
