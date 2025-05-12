@@ -54,6 +54,7 @@ jobs:
           registries: ${{ secrets.ECR_REGISTRY }}
       - name: Tidy and vendor
         run: |
+          go clean -cache -modcache -i -r
           go mod tidy
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
