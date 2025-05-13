@@ -225,6 +225,10 @@ if [ "$START_ONLY" = false ]; then
         ssed -i 's|9091|9791|g' $HOME_DIR/config/app.toml
     fi
 
+    # Configure CORS to allow cross-origin requests
+    ssed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = ["*"]/' $HOME_DIR/config/config.toml
+    ssed -i 's/unsafe = false/unsafe = true/' $HOME_DIR/config/config.toml
+    
     # Configure persistent peers
     if [ "$LOCALNET" = "2" ] || [ "$NON_VALIDATOR" = true ]; then
         # Get the first node's ID and P2P address
