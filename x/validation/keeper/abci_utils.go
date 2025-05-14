@@ -1325,6 +1325,7 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 		"receiverAta", receiverAta.String(),
 		"mint", mintPubKey.String(),
 		"recipient", recipientPubKey.String(),
+		"resp.Account", resp.Account,
 		"err", err,
 	)
 	if err != nil {
