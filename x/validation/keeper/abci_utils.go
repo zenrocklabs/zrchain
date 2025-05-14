@@ -1539,41 +1539,122 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 }
 
 // collectSolanaAccounts retrieves all requested Solana token accounts.
+// The returned map keys are ATA addresses.
 func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
-	solAccStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to iterate SolanaAccountsRequested: %w", err)
-	}
-	solAccsKeys, err := solAccStore.Keys()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get keys from SolanaAccountsRequested store: %w", err)
-	}
-	solAccs := map[string]solToken.Account{}
+	solAccs := make(map[string]solToken.Account) // Key: ATA Address string
 
-	if len(solAccsKeys) > 0 {
-		mintAddress := k.zenBTCKeeper.GetSolanaParams(ctx).MintAddress // Cache mint address
-		for _, key := range solAccsKeys {
-			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
+	// 1. Process ZenBTC related accounts from SolanaAccountsRequested
+	zenBTCMintAddress := ""
+	if k.zenBTCKeeper != nil && k.zenBTCKeeper.GetSolanaParams(ctx) != nil {
+		zenBTCMintAddress = k.zenBTCKeeper.GetSolanaParams(ctx).MintAddress
+	}
+
+	if zenBTCMintAddress == "" {
+		k.Logger(ctx).Warn("ZenBTC Solana mint address is not configured. Skipping ZenBTC account collection.")
+	} else {
+		zenBTCStore, err := k.SolanaAccountsRequested.Iterate(ctx, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate SolanaAccountsRequested (ZenBTC): %w", err)
+		}
+		defer zenBTCStore.Close()
+
+		zenBTCOwnerKeys, err := zenBTCStore.Keys()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get keys from SolanaAccountsRequested store (ZenBTC): %w", err)
+		}
+
+		for _, ownerAddressStr := range zenBTCOwnerKeys {
+			requested, err := k.SolanaAccountsRequested.Get(ctx, ownerAddressStr)
 			if err != nil {
 				if errors.Is(err, collections.ErrNotFound) {
-					// Should not happen if we got the key from Iterate, but handle defensively
-					k.Logger(ctx).Error("key not found during Solana account collection, skipping", "key", key)
+					k.Logger(ctx).Error("Owner address key not found during ZenBTC Solana account collection, skipping", "key", ownerAddressStr)
 					continue
 				}
-				return nil, fmt.Errorf("failed to check if account %s is requested: %w", key, err)
+				return nil, fmt.Errorf("failed to check if ZenBTC account %s is requested: %w", ownerAddressStr, err)
 			}
+
 			if requested {
-				acc, err := k.GetSolanaTokenAccount(ctx, key, mintAddress)
+				ownerPubKey, err := solana.PublicKeyFromBase58(ownerAddressStr)
 				if err != nil {
-					// Log error but continue if possible, maybe one account fetch fails
-					k.Logger(ctx).Error("failed to get Solana token account", "key", key, "mint", mintAddress, "error", err)
-					// Depending on requirements, might need to return error here instead
+					k.Logger(ctx).Error("Invalid owner address for ZenBTC, cannot derive ATA", "owner", ownerAddressStr, "error", err)
 					continue
 				}
-				solAccs[key] = acc
+				mintPubKey, err := solana.PublicKeyFromBase58(zenBTCMintAddress)
+				if err != nil {
+					k.Logger(ctx).Error("Invalid ZenBTC mint address, cannot derive ATA", "mint", zenBTCMintAddress, "error", err)
+					continue
+				}
+				ataAddress, _, err := solana.FindAssociatedTokenAddress(ownerPubKey, mintPubKey)
+				if err != nil {
+					k.Logger(ctx).Error("Failed to derive ATA for ZenBTC account", "owner", ownerAddressStr, "mint", zenBTCMintAddress, "error", err)
+					continue
+				}
+
+				acc, err := k.GetSolanaTokenAccount(ctx, ownerAddressStr, zenBTCMintAddress)
+				if err != nil {
+					k.Logger(ctx).Error("Failed to get Solana token account for ZenBTC", "owner", ownerAddressStr, "mint", zenBTCMintAddress, "ata", ataAddress.String(), "error", err)
+				}
+				solAccs[ataAddress.String()] = acc
 			}
 		}
 	}
+
+	// 2. Process ZenTP related accounts from SolanaZenTPAccountsRequested
+	zenTPMintAddress := ""
+	if k.zentpKeeper != nil && k.zentpKeeper.GetSolanaParams(ctx) != nil { // Assuming zentpKeeper has GetSolanaParams
+		zenTPMintAddress = k.zentpKeeper.GetSolanaParams(ctx).MintAddress
+	}
+
+	if zenTPMintAddress == "" {
+		k.Logger(ctx).Warn("ZenTP Solana mint address is not configured. Skipping ZenTP account collection.")
+	} else {
+		zenTPStore, err := k.SolanaZenTPAccountsRequested.Iterate(ctx, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate SolanaZenTPAccountsRequested: %w", err)
+		}
+		defer zenTPStore.Close()
+
+		zenTPOwnerKeys, err := zenTPStore.Keys()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get keys from SolanaZenTPAccountsRequested store: %w", err)
+		}
+
+		for _, ownerAddressStr := range zenTPOwnerKeys {
+			requested, err := k.SolanaZenTPAccountsRequested.Get(ctx, ownerAddressStr)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					k.Logger(ctx).Error("Owner address key not found during ZenTP Solana account collection, skipping", "key", ownerAddressStr)
+					continue
+				}
+				return nil, fmt.Errorf("failed to check if ZenTP account %s is requested: %w", ownerAddressStr, err)
+			}
+
+			if requested {
+				ownerPubKey, err := solana.PublicKeyFromBase58(ownerAddressStr)
+				if err != nil {
+					k.Logger(ctx).Error("Invalid owner address for ZenTP, cannot derive ATA", "owner", ownerAddressStr, "error", err)
+					continue
+				}
+				mintPubKey, err := solana.PublicKeyFromBase58(zenTPMintAddress)
+				if err != nil {
+					k.Logger(ctx).Error("Invalid ZenTP mint address, cannot derive ATA", "mint", zenTPMintAddress, "error", err)
+					continue
+				}
+				ataAddress, _, err := solana.FindAssociatedTokenAddress(ownerPubKey, mintPubKey)
+				if err != nil {
+					k.Logger(ctx).Error("Failed to derive ATA for ZenTP account", "owner", ownerAddressStr, "mint", zenTPMintAddress, "error", err)
+					continue
+				}
+
+				acc, err := k.GetSolanaTokenAccount(ctx, ownerAddressStr, zenTPMintAddress)
+				if err != nil {
+					k.Logger(ctx).Error("Failed to get Solana token account for ZenTP", "owner", ownerAddressStr, "mint", zenTPMintAddress, "ata", ataAddress.String(), "error", err)
+				}
+				solAccs[ataAddress.String()] = acc
+			}
+		}
+	}
+
 	return solAccs, nil
 }
 
@@ -1588,9 +1669,17 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 		k.Logger(ctx).Error(err.Error())
 	}
 
-	if len(pendingsROCK) == 0 && len(pendingsZenBTC) == 0 {
+	// Clear ZenBTC related requests if no pending ZenBTC Solana mints
+	if len(pendingsZenBTC) == 0 {
 		if err = k.SolanaAccountsRequested.Clear(ctx, nil); err != nil {
-			k.Logger(ctx).Error(err.Error())
+			k.Logger(ctx).Error("Error clearing SolanaAccountsRequested (ZenBTC): " + err.Error())
+		}
+	}
+
+	// Clear ZenTP related requests if no pending ROCK Solana mints (assuming pendingsROCK is for ZenTP)
+	if len(pendingsROCK) == 0 {
+		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
+			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
 		}
 	}
 }

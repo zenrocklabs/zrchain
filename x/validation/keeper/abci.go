@@ -1063,7 +1063,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
 					return err
 				}
-				if err := k.SetSolanaRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
+				if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
 				k.Logger(ctx).Error("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
