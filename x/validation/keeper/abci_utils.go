@@ -1503,7 +1503,26 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		))
 	}
 
-	k.Logger(ctx).Error("Preparing Solana mint transaction", "instructions", fmt.Sprintf("%+v", instructions))
+	for i, inst := range instructions {
+
+		data, err := inst.Data()
+		if err != nil {
+			k.Logger(ctx).Error("Preparing Solana mint transaction", "cannot read instruction", fmt.Sprintf("%d - %+v", i, inst))
+			continue
+		}
+
+		bs58Data := solana.Base58(data)
+
+		accounts := []string{}
+		for _, acc := range inst.Accounts() {
+			accounts = append(accounts, acc.PublicKey.String())
+		}
+
+		msg := fmt.Sprintf("instruction data: %s | accs: %s ", bs58Data.String(), accounts)
+		k.Logger(ctx).Error("Preparing Solana mint transaction", "instructions ", msg)
+	}
+
+	// k.Logger(ctx).Error("Preparing Solana mint transaction", "instructions", fmt.Sprintf("%+v", instructions))
 
 	tx, err := solana.NewTransaction(
 		instructions,
