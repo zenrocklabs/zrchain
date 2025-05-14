@@ -1320,6 +1320,13 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
 		PubKey: receiverAta.String(),
 	})
+	k.Logger(goCtx).Error(
+		"GetSolanaTokenAccount",
+		"receiverAta", receiverAta.String(),
+		"mint", mintPubKey.String(),
+		"recipient", recipientPubKey.String(),
+		"err", err,
+	)
 	if err != nil {
 		if err.Error() == "rpc error: code = Unknown desc = not found" {
 			return token.Account{}, nil
