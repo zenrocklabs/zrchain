@@ -2,6 +2,7 @@ package testclient
 
 import (
 	"context"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -61,7 +62,7 @@ func (c *TestClient) CreateSignETHTransactionRequest(ctx context.Context, keyId 
 
 	msg := &treasurytypes.MsgNewSignTransactionRequest{
 		Creator:             c.IdentitySigner.Address.String(),
-		KeyId:               keyId,
+		KeyIds:              []uint64{keyId},
 		WalletType:          treasurytypes.WalletType_WALLET_TYPE_EVM,
 		UnsignedTransaction: unsignedTx,
 		Metadata:            anyMeta,
@@ -225,4 +226,15 @@ func (c *TestClient) GetSignatureRequest(ctx context.Context, id uint64) (*treas
 		return nil, err
 	}
 	return res.SignRequest, nil
+}
+
+func (c *TestClient) IncrementKeyCount(ctx context.Context, keyCount uint64, wsAddr string) error {
+	for i := keyCount; i < 10; i++ {
+		_, _, err := c.CreateKey(ctx, wsAddr, c.Keyring, "ecdsa", 0)
+		if err != nil {
+			return err
+		}
+		time.Sleep(time.Second * 2)
+	}
+	return nil
 }
