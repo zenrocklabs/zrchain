@@ -42,7 +42,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:          nativeAssetDataROCK,
 			avsAssetData:             avsAssetDataBTC,
 			avsTokensHeld:            math.NewInt(118170108), // 1.18170108 BTC
-			avsExchangeRate:          math.LegacyOneDec(),
 			pricesAreValid:           true,
 			expectedTotalPower:       307047,
 			expectedNativeContribStr: "185503.000000000000000000",
@@ -54,7 +53,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:          nativeAssetDataROCK,
 			avsAssetData:             nil, // No AVS asset data as no AVS tokens relevant
 			avsTokensHeld:            math.NewInt(0),
-			avsExchangeRate:          math.LegacyOneDec(),
 			pricesAreValid:           true,
 			expectedTotalPower:       185503,
 			expectedNativeContribStr: "185503.288160000000000000",
@@ -66,7 +64,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:          &types.AssetData{Asset: types.Asset_ROCK, PriceUSD: zeroPrice, Precision: 6},
 			avsAssetData:             &types.AssetData{Asset: types.Asset_BTC, PriceUSD: zeroPrice, Precision: 8},
 			avsTokensHeld:            math.NewInt(118170108),
-			avsExchangeRate:          math.LegacyOneDec(),
 			pricesAreValid:           false,
 			expectedTotalPower:       10300000, // Native consensus units, AVS is 0
 			expectedNativeContribStr: "10300000.000000000000000000",
@@ -78,7 +75,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:          nil,
 			avsAssetData:             avsAssetDataETH,
 			avsTokensHeld:            math.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)), // 1 ETH in Wei
-			avsExchangeRate:          math.LegacyOneDec(),
 			pricesAreValid:           true,
 			expectedTotalPower:       3000,
 			expectedNativeContribStr: "0.000000000000000000",
@@ -90,7 +86,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:       nativeAssetDataROCK,
 			avsAssetData:          nil,
 			avsTokensHeld:         math.NewInt(0),
-			avsExchangeRate:       math.LegacyOneDec(),
 			pricesAreValid:        true,
 			// nativeConsensusUnits = 0 (from 500000 / 1000000)
 			// nativePowerContribution = 0.01801 * 0 = 0
@@ -105,7 +100,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:       nil,
 			avsAssetData:          &types.AssetData{Asset: types.Asset_BTC, PriceUSD: math.LegacyMustNewDecFromStr("0.00000001"), Precision: 8},
 			avsTokensHeld:         math.NewInt(118170108), // 1.18170108 BTC
-			avsExchangeRate:       math.LegacyOneDec(),
 			pricesAreValid:        true,
 			// avsPower = 0.00000001 * 1.18170108 = 0.0000000118170108. total = 0 (truncates). Bumped to 1.
 			expectedTotalPower:       1,
@@ -118,7 +112,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 			nativeAssetData:          nativeAssetDataROCK, // Price info available
 			avsAssetData:             avsAssetDataBTC,     // Price info available
 			avsTokensHeld:            math.NewInt(0),
-			avsExchangeRate:          math.LegacyOneDec(),
 			pricesAreValid:           true,
 			expectedTotalPower:       0, // Genuinely no stake, so power is 0
 			expectedNativeContribStr: "0.000000000000000000",
@@ -138,7 +131,6 @@ func TestCalculateValidatorPowerComponents_FullAVSPrecision(t *testing.T) {
 				tt.nativeAssetData,
 				tt.avsAssetData,
 				tt.avsTokensHeld,
-				tt.avsExchangeRate,
 				tt.pricesAreValid,
 			)
 
