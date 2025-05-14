@@ -149,8 +149,13 @@ func TestGetSolanaAccountInfo(t *testing.T) {
 		expectedError string
 	}{
 		{
-			recipient:   "HvD2fkmc19X2HMMzxpf2hN7HBHLyeftWof2hwVcbHiWK",
+			recipient:   "HvD2fkmc19X2HMMzxpf2hN7HBHLyeftWof2hwVcbHiWK (current)",
 			pubKey:      "GeHPYFhNxKdcoP1Kbf2Twc3RKEsgVh2x1aYrLb7hd63d",
+			expectError: false,
+		},
+		{
+			recipient:   "HvD2fkmc19X2HMMzxpf2hN7HBHLyeftWof2hwVcbHiWK (correct)",
+			pubKey:      "B3ZjSXnczNYXQyhQft6wiNk99sW4NfW3Fe2TwhF7wTH8",
 			expectError: false,
 		},
 		{
