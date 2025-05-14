@@ -137,7 +137,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		}
 	}
 
-	solNonce, err := k.collectSolanaNonces(ctx)
+	solNonce, err := k.retrieveSolanaNonces(ctx)
 	if err != nil {
 		return VoteExtension{}, err
 	}
@@ -147,7 +147,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 	solanaMintEventsHash, err := deriveHash(oracleData.SolanaMintEvents)
 
-	solAccs, err := k.collectSolanaAccounts(ctx)
+	solAccs, err := k.retrieveSolanaAccounts(ctx)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error collecting solana accounts: %w", err)
 	}
@@ -489,7 +489,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	}
 
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
-		oracleData.SolanaMintNonces, err = k.collectSolanaNonces(ctx)
+		oracleData.SolanaMintNonces, err = k.retrieveSolanaNonces(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error collecting solana nonces: %w", err)
 		}
@@ -497,7 +497,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 	}
 
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaAccountsHash) {
-		solAccs, err := k.collectSolanaAccounts(ctx)
+		solAccs, err := k.retrieveSolanaAccounts(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error collecting solana accounts: %w", err)
 		}

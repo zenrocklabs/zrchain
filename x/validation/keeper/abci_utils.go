@@ -1488,7 +1488,7 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 	return txBytes, nil
 }
 
-func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
 	nonces := map[uint64]*system.NonceAccount{}
 	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	//if err != nil {
@@ -1538,9 +1538,9 @@ func (k Keeper) collectSolanaNonces(goCtx context.Context) (map[uint64]*system.N
 	return nonces, nil
 }
 
-// processAccountRequestsForFlow is a helper to collect Solana token accounts for a specific flow (e.g., ZenBTC or ZenTP).
+// populateAccountsForSolanaMints is a helper to collect Solana token accounts for a specific mint and request store.
 // It populates the provided solAccs map with accounts keyed by their ATA addresses.
-func (k Keeper) processAccountRequestsForFlow(
+func (k Keeper) populateAccountsForSolanaMints(
 	ctx context.Context,
 	requestStore collections.Map[string, bool],
 	mintAddress string,
@@ -1598,9 +1598,9 @@ func (k Keeper) processAccountRequestsForFlow(
 	return nil
 }
 
-// collectSolanaAccounts retrieves all requested Solana token accounts.
+// retrieveSolanaAccounts retrieves all requested Solana token accounts.
 // The returned map keys are ATA addresses.
-func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
+func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
 	solAccs := make(map[string]solToken.Account) // Key: ATA Address string
 
 	// 1. Process ZenBTC related accounts
@@ -1612,7 +1612,7 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 	if zenBTCMintAddress == "" {
 		k.Logger(ctx).Warn("ZenBTC Solana mint address is not configured. Skipping ZenBTC account collection.")
 	} else {
-		if err := k.processAccountRequestsForFlow(ctx, k.SolanaAccountsRequested, zenBTCMintAddress, "ZenBTC", solAccs); err != nil {
+		if err := k.populateAccountsForSolanaMints(ctx, k.SolanaAccountsRequested, zenBTCMintAddress, "ZenBTC", solAccs); err != nil {
 			// The helper function already logs specifics, so we just bubble up a general error here if needed.
 			return nil, fmt.Errorf("error processing ZenBTC Solana account requests: %w", err)
 		}
@@ -1627,7 +1627,7 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 	if zenTPMintAddress == "" {
 		k.Logger(ctx).Warn("ZenTP Solana mint address is not configured. Skipping ZenTP account collection.")
 	} else {
-		if err := k.processAccountRequestsForFlow(ctx, k.SolanaZenTPAccountsRequested, zenTPMintAddress, "ZenTP", solAccs); err != nil {
+		if err := k.populateAccountsForSolanaMints(ctx, k.SolanaZenTPAccountsRequested, zenTPMintAddress, "ZenTP", solAccs); err != nil {
 			return nil, fmt.Errorf("error processing ZenTP Solana account requests: %w", err)
 		}
 	}
