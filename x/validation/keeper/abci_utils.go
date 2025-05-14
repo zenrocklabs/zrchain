@@ -1360,6 +1360,13 @@ type solanaMintTxRequest struct {
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
 
+	k.Logger(goCtx).Error(
+		"Preparing Solana mint transaction",
+		"req", fmt.Sprintf("%+v", req),
+		"nonce", req.nonce.Nonce.String(),
+		"noncepk", req.nonce.AuthorizedPubkey.String(),
+	)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	programID, err := solana.PublicKeyFromBase58(req.programID)
 	if err != nil {
@@ -1409,6 +1416,16 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 
+	k.Logger(ctx).Error(
+		"keys",
+		"nonceAccPubKey", nonceAccPubKey.String(),
+		"nonceAuthPubKey", nonceAuthPubKey.String(),
+		"signerPubKey", signerPubKey.String(),
+		"mintKey", mintKey.String(),
+		"feeKey", feeKey.String(),
+		"recipientPubKey", recipientPubKey.String(),
+	)
+
 	var instructions []solana.Instruction
 
 	instructions = append(instructions, system.NewAdvanceNonceAccountInstruction(
@@ -1426,6 +1443,12 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 	if err != nil {
 		return nil, err
 	}
+
+	k.Logger(ctx).Error(
+		"associated token addresses",
+		"feeWalletAta", feeWalletAta.String(),
+		"receiverAta", receiverAta.String(),
+	)
 
 	if req.fundReceiver {
 		instructions = append(
@@ -1457,6 +1480,13 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		if err != nil {
 			return nil, err
 		}
+
+		k.Logger(ctx).Error(
+			"zenbtc",
+			"programID", programID.String(),
+			"multiSigKey", multiSigKey.String(),
+		)
+
 		instructions = append(instructions, solzenbtc.Wrap(
 			programID,
 			zenbtc_spl_token.WrapArgs{
@@ -1472,6 +1502,8 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			receiverAta,
 		))
 	}
+
+	k.Logger(ctx).Error("Preparing Solana mint transaction", "instructions", fmt.Sprintf("%+v", instructions))
 
 	tx, err := solana.NewTransaction(
 		instructions,
