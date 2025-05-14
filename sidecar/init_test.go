@@ -136,3 +136,58 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 // 	require.NoError(t, err)
 // 	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
 // }
+
+func TestGetSolanaAccountInfo(t *testing.T) {
+	oracle := initTestOracle()
+	service := sidecar.NewOracleService(oracle)
+	require.NotNil(t, service)
+
+	tests := []struct {
+		recipient     string
+		pubKey        string
+		expectError   bool
+		expectedError string
+	}{
+		{
+			recipient:   "HvD2fkmc19X2HMMzxpf2hN7HBHLyeftWof2hwVcbHiWK",
+			pubKey:      "GeHPYFhNxKdcoP1Kbf2Twc3RKEsgVh2x1aYrLb7hd63d",
+			expectError: false,
+		},
+		{
+			recipient:   "2RoRSPwFmMcFDd3DLgoomMRFkhUSaVNSDo7XyH2tw6de",
+			pubKey:      "FYsom9kuL835ZcRtHCiNtKeb7qr6h8NJ5fwfZA8Rsa3y",
+			expectError: false,
+		},
+		{
+			recipient:     "2RoRSPwFmMcFDd3DLgoomMRFkhUSaVNSDo7XyH2tw6de",
+			pubKey:        "InvalidPubKey",
+			expectError:   true,
+			expectedError: "decode: invalid base58 digit ('I')",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.recipient, func(t *testing.T) {
+			req := &api.SolanaAccountInfoRequest{PubKey: tt.pubKey}
+			resp, err := service.GetSolanaAccountInfo(context.Background(), req)
+
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.expectedError != "" {
+					require.Contains(t, err.Error(), tt.expectedError)
+				}
+				log.Printf("\nTest %s (expected error): Received error: %v\n", tt.recipient, err)
+				require.Nil(t, resp)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				log.Printf("\nTest %s: Received account info: %v\n", tt.recipient, resp.Account)
+				// If the account is not found, resp.Account will be nil or empty
+				// The original function returns an empty response if rpc.ErrNotFound, so resp itself is not nil
+				if resp.Account == nil || len(resp.Account) == 0 {
+					log.Printf("Test %s: Account not found or has no data.\n", tt.recipient)
+				}
+			}
+		})
+	}
+}
