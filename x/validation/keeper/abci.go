@@ -23,6 +23,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	solana "github.com/gagliardetto/solana-go"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
@@ -1253,12 +1254,30 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 			txPrepReq := &solanaMintTxRequest{}
-			// add a solana instruction if we need to fund the ata
-			ata, ok := oracleData.SolanaAccounts[tx.RecipientAddress]
-			if !ok {
-				return fmt.Errorf("ata account not retrieved for address: %s", tx.RecipientAddress)
+
+			// Derive the ATA for the recipient and check its state
+			recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
+			if err != nil {
+				return fmt.Errorf("invalid recipient address %s for ZenBTC mint: %w", tx.RecipientAddress, err)
 			}
-			if ata.State == solToken.Uninitialized {
+			mintPubKey, err := solana.PublicKeyFromBase58(solParams.MintAddress)
+			if err != nil {
+				return fmt.Errorf("invalid ZenBTC mint address %s: %w", solParams.MintAddress, err)
+			}
+			expectedATA, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintPubKey)
+			if err != nil {
+				return fmt.Errorf("failed to derive ATA for recipient %s, mint %s: %w", tx.RecipientAddress, solParams.MintAddress, err)
+			}
+
+			ata, ok := oracleData.SolanaAccounts[expectedATA.String()]
+			if !ok {
+				// This means the ATA was not requested or not found by collectSolanaAccounts.
+				// Depending on strictness, this could be an error or imply it needs funding.
+				// For safety, if it's not in oracleData, we can assume it needs creation/funding.
+				// However, collectSolanaAccounts should have fetched it if it was SetSolanaZenBTCRequestedAccount.
+				k.Logger(ctx).Warn("ATA not found in oracleData.SolanaAccounts, assuming it might need funding", "ata", expectedATA.String(), "recipient", tx.RecipientAddress)
+				txPrepReq.fundReceiver = true // If not found in map, assume it needs to be created.
+			} else if ata.State == solToken.Uninitialized {
 				txPrepReq.fundReceiver = true
 			}
 
@@ -1356,40 +1375,60 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return nil
 			}
 
-			// Check for consensus
-			requiredFields := []VoteExtensionField{VEFieldSolanaAccountsHash}
+			// Check for consensus - VEFieldSolanaMintNoncesHash is also needed for the nonce in PrepareSolanaMintTx
+			requiredFields := []VoteExtensionField{VEFieldSolanaAccountsHash, VEFieldSolanaMintNoncesHash}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"solROCK mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return fmt.Errorf("validateConsensusForTxFields: %w", err)
 			}
-			val, err := k.SolanaAccountsRequested.Get(ctx, tx.RecipientAddress)
-			if err == nil {
-				_ = val // TODO: fix!
+
+			// val, err := k.SolanaAccountsRequested.Get(ctx, tx.RecipientAddress) // This was part of old logic and not directly used here for funding decision
+			// if err == nil { // k.SolanaZenTPAccountsRequested should be checked if direct check is needed
+			// 	_ = val
+			// }
+
+			solParams := k.zentpKeeper.GetSolanaParams(ctx)
+			// Derive the ATA for the recipient and check its state
+			recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
+			if err != nil {
+				return fmt.Errorf("invalid recipient address %s for ZenTP mint: %w", tx.RecipientAddress, err)
+			}
+			mintPubKey, err := solana.PublicKeyFromBase58(solParams.MintAddress)
+			if err != nil {
+				return fmt.Errorf("invalid ZenTP mint address %s: %w", solParams.MintAddress, err)
+			}
+			expectedATA, _, err := solana.FindAssociatedTokenAddress(recipientPubKey, mintPubKey)
+			if err != nil {
+				return fmt.Errorf("failed to derive ATA for ZenTP recipient %s, mint %s: %w", tx.RecipientAddress, solParams.MintAddress, err)
 			}
 
-			// add a solana instruction if we need to fund the ata
 			fundReceiver := false
-			ata, ok := oracleData.SolanaAccounts[tx.RecipientAddress]
+			ata, ok := oracleData.SolanaAccounts[expectedATA.String()]
 			if !ok {
-				return fmt.Errorf("ata account not retrieved for address: %s", tx.RecipientAddress)
-			}
-			if ata.State == solToken.Uninitialized {
+				// If the ATA is not in oracleData.SolanaAccounts, it means it wasn't requested via SetSolanaZenTPRequestedAccount
+				// or collectSolanaAccounts failed to fetch it. This is a state mismatch if a transaction is being prepared for it.
+				// For robustness, one might assume it needs funding, but it could also indicate an issue.
+				k.Logger(ctx).Warn("ATA not found in oracleData.SolanaAccounts for ZenTP, tx will proceed assuming it needs funding or creation", "ata", expectedATA.String(), "recipient", tx.RecipientAddress)
+				fundReceiver = true
+			} else if ata.State == solToken.Uninitialized {
 				fundReceiver = true
 			}
-			solParams := k.zentpKeeper.GetSolanaParams(ctx)
+
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
-				amount:            tx.Amount,
-				fee:               solParams.Fee,
-				recipient:         tx.RecipientAddress,
-				nonce:             oracleData.SolanaMintNonces[solParams.NonceAccountKey],
-				fundReceiver:      fundReceiver,
-				programID:         solParams.ProgramId,
-				mintAddress:       solParams.MintAddress,
-				feeWallet:         solParams.FeeWallet,
+				amount:       tx.Amount,
+				fee:          solParams.Fee,
+				recipient:    tx.RecipientAddress,
+				nonce:        oracleData.SolanaMintNonces[solParams.NonceAccountKey], // Ensure NonceAccountKey is correct for zentpKeeper
+				fundReceiver: fundReceiver,
+				programID:    solParams.ProgramId,
+				mintAddress:  solParams.MintAddress,
+				feeWallet:    solParams.FeeWallet,
+
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:         solParams.SignerKeyId,
-				rock:              true,
+
+				signerKey: solParams.SignerKeyId,
+				rock:      true,
 			})
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -1410,9 +1449,9 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			tx.TxId = id
 			tx.BlockHeight = ctx.BlockHeight()
 			k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
+			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]} // Ensure NonceAccountKey is correct
 			k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
-			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx) // Called twice? Review: This seems to be fine as UpdateMint is idempotent.
 		},
 		func(tx *zentptypes.Bridge) error {
 			if tx.BlockHeight == 0 {
@@ -1420,17 +1459,34 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonce := oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce
-				lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
+				currentNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey] // Ensure NonceAccountKey is correct
+				if currentNonceAccount == nil || currentNonceAccount.Nonce.IsZero() {
+					k.Logger(ctx).Warn("processSolanaROCKMints BTL: Live Solana nonce is zero or unavailable. Resetting transaction for full retry.", "tx_id", tx.Id)
+					tx.BlockHeight = 0
+					// tx.AwaitingEventSince = 0 // If you had AwaitingEventSince for ROCK mints
+					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+				}
+				currentNonceBytes := currentNonceAccount.Nonce[:]
+
+				lastNonceStored, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
 				if err != nil {
-					k.Logger(ctx).Error("error getting last used solana nonce", "error", err)
-					return err
+					k.Logger(ctx).Error("processSolanaROCKMints BTL: Failed to get LastUsedSolanaNonce. Resetting transaction.", "tx_id", tx.Id, "error", err)
+					tx.BlockHeight = 0
+					// tx.AwaitingEventSince = 0
+					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 				}
-				k.Logger(ctx).Error("nonces", "last_hex", hex.EncodeToString(lastNonce.Nonce), "current_hex", hex.EncodeToString(currentNonce[:]))
-				if bytes.Equal(currentNonce[:], lastNonce.Nonce[:]) {
-					tx.BlockHeight = 0 // this will trigger the tx to get retried
+
+				k.Logger(ctx).Info("processSolanaROCKMints BTL: Comparing nonces.", "tx_id", tx.Id, "last_used_hex", hex.EncodeToString(lastNonceStored.Nonce), "current_on_chain_hex", hex.EncodeToString(currentNonceBytes))
+				if bytes.Equal(currentNonceBytes, lastNonceStored.Nonce) {
+					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce matches LastUsedSolanaNonce (no advancement). Resetting transaction for full retry.", "tx_id", tx.Id)
+					tx.BlockHeight = 0
+					// tx.AwaitingEventSince = 0
+				} else {
+					// Nonce advanced. If ROCK mints have a secondary timeout like ZenBTC, set AwaitingEventSince here.
+					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce advanced. Original dispatch consumed its chance.", "tx_id", tx.Id)
+					// if tx.AwaitingEventSince == 0 { tx.AwaitingEventSince = ctx.BlockHeight() }
 				}
-				// else the transaction has been included in a block, and we should wait for the mint event
+				return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 			}
 			return nil
 		},
