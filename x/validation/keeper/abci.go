@@ -1046,7 +1046,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				ctx,
 				tx.Creator,
 				k.zenBTCKeeper.GetStakerKeyID(ctx),
-				treasurytypes.WalletType_WALLET_TYPE_EVM, //treasurytypes.WalletType(tx.ChainType),
+				treasurytypes.WalletType_WALLET_TYPE_EVM,
 				getChainIDForEigen(ctx),
 				unsignedTx,
 				unsignedTxHash,

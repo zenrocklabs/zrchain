@@ -1551,7 +1551,7 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 	solAccs := map[string]solToken.Account{}
 
 	if len(solAccsKeys) > 0 {
-		mintAddress := k.zentpKeeper.GetSolanaParams(ctx).MintAddress // Cache mint address
+		mintAddress := k.zenBTCKeeper.GetSolanaParams(ctx).MintAddress // Cache mint address
 		for _, key := range solAccsKeys {
 			requested, err := k.SolanaAccountsRequested.Get(ctx, key)
 			if err != nil {
@@ -1574,7 +1574,6 @@ func (k Keeper) collectSolanaAccounts(ctx context.Context) (map[string]solToken.
 			}
 		}
 	}
-
 	return solAccs, nil
 }
 
