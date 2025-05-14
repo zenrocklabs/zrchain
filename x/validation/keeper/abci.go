@@ -1255,6 +1255,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq := &solanaMintTxRequest{}
 			// add a solana instruction if we need to fund the ata
 			ata, ok := oracleData.SolanaAccounts[tx.RecipientAddress]
+			k.Logger(ctx).Error("oracleData.SolanaAccounts", "accounts", fmt.Sprintf("%+v", oracleData.SolanaAccounts))
+			k.Logger(ctx).Error("ata", "ata", fmt.Sprintf("%+v", ata), "ok", ok, "uninitialized", ata.State == solToken.Uninitialized)
 			if !ok {
 				return fmt.Errorf("ata account not retrieved for address: %s", tx.RecipientAddress)
 			}
