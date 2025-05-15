@@ -70,7 +70,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	if err := k.validationKeeper.SetSolanaRequestedAccount(goCtx, req.RecipientAddress, true); err != nil {
+	if err := k.validationKeeper.SetSolanaZenTPRequestedAccount(goCtx, req.RecipientAddress, true); err != nil {
 		return nil, err
 	}
 
