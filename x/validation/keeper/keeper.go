@@ -38,7 +38,6 @@ type Keeper struct {
 	zrConfig              *params.ZRConfig
 	sidecarClient         sidecarClient
 	zentpKeeper           types.ZentpKeeper
-
 	// AVSDelegations - keys: validator addr + delegator addr (operator) | value: delegation amount
 	AVSDelegations collections.Map[collections.Pair[string, string], math.Int]
 	// ValidatorDelegations - key: validator addr | value: total amount delegated to validator
@@ -122,21 +121,20 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		storeService:          storeService,
-		cdc:                   cdc,
-		authKeeper:            ak,
-		bankKeeper:            bk,
-		hooks:                 nil,
-		authority:             authority,
-		txDecoder:             txDecoder,
-		zrConfig:              zrConfig,
-		sidecarClient:         oracleClient,
-		treasuryKeeper:        treasuryKeeper,
-		zenBTCKeeper:          zenBTCKeeper,
-		zentpKeeper:           zentpKeeper,
-		validatorAddressCodec: validatorAddressCodec,
-		consensusAddressCodec: consensusAddressCodec,
-
+		storeService:                      storeService,
+		cdc:                               cdc,
+		authKeeper:                        ak,
+		bankKeeper:                        bk,
+		hooks:                             nil,
+		authority:                         authority,
+		txDecoder:                         txDecoder,
+		zrConfig:                          zrConfig,
+		sidecarClient:                     oracleClient,
+		treasuryKeeper:                    treasuryKeeper,
+		zenBTCKeeper:                      zenBTCKeeper,
+		zentpKeeper:                       zentpKeeper,
+		validatorAddressCodec:             validatorAddressCodec,
+		consensusAddressCodec:             consensusAddressCodec,
 		AVSDelegations:                    collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),
 		ValidatorDelegations:              collections.NewMap(sb, types.ValidatorDelegationsKey, types.ValidatorDelegationsIndex, collections.StringKey, sdk.IntValue),
 		AVSRewardsPool:                    collections.NewMap(sb, types.AVSRewardsPoolKey, types.AVSRewardsPoolIndex, collections.StringKey, sdk.IntValue),

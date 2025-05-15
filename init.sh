@@ -168,6 +168,21 @@ if [ "$START_ONLY" = false ]; then
         "additional_burn_rate": "0.250000000000000000"
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
+
+  # Set initial zentp parameters
+    jq '.app_state.zentp.params = {
+        "bridge_fee": "0.010000000000000000",
+        "solana": {
+          "signer_key_id": 10,
+          "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+          "nonce_authority_key": 11,
+          "nonce_account_key": 12,
+          "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+          "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+          "fee": 0,
+          "btl": 20
+        }
+    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {
         if [[ "$OSTYPE" == "darwin"* ]]; then
             gsed "$@"
@@ -210,6 +225,10 @@ if [ "$START_ONLY" = false ]; then
         ssed -i 's|9091|9791|g' $HOME_DIR/config/app.toml
     fi
 
+    # Configure CORS to allow cross-origin requests
+    ssed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = ["*"]/' $HOME_DIR/config/config.toml
+    ssed -i 's/unsafe = false/unsafe = true/' $HOME_DIR/config/config.toml
+    
     # Configure persistent peers
     if [ "$LOCALNET" = "2" ] || [ "$NON_VALIDATOR" = true ]; then
         # Get the first node's ID and P2P address
