@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	"golang.org/x/exp/slices"
 
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
@@ -15,10 +16,19 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if len(msg.KeyIds) == 0 {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "key ids cannot be empty")
+	}
+
+	if msg.DataForSigning == "" {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "data for signing cannot be empty")
+	}
 
 	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
