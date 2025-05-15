@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
@@ -11,14 +12,20 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) NewSignTransactionRequest(goCtx context.Context, msg *types.MsgNewSignTransactionRequest) (*types.MsgNewSignTransactionRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if len(msg.KeyIds) == 0 {
-		return nil, fmt.Errorf("no keys specified")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "key ids cannot be empty")
 	}
+
+	if len(msg.UnsignedTransaction) == 0 {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unsigned transaction cannot be empty")
+	}
+
 	var keys []types.Key
 	for _, keyId := range msg.KeyIds {
 		key, err := k.KeyStore.Get(ctx, keyId)
