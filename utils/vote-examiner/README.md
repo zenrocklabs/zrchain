@@ -55,7 +55,13 @@ This mode analyzes the vote extensions submitted by validators in a given block.
 
 ### 2. Block Consensus Report Mode
 
-This mode provides a report on which validators in the active set agreed (voted) on a specific block. It's similar to checking the `last_commit` signatures for a block.
+This mode provides a detailed report on validator participation for a specific block, based on the commit signatures found in the subsequent block. It categorizes validators from the active set by their recorded voting status:
+*   **COMMIT**: Voted for the specific block hash.
+*   **NIL**: Voted NIL, indicating abstention or disagreement with the proposed block.
+*   **ABSENT**: Recorded by the system with an ABSENT status (vote not received).
+*   **NO SIGNATURE FOUND**: No signature was found in the commit data from the next block.
+
+The report also includes voting power percentages for each category.
 
 **Usage:**
 
