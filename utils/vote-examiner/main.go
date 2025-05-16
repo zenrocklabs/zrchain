@@ -849,10 +849,10 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 			fmt.Printf("  - %d signatures marked as %s (BlockIDFlag=%d)\n", count, flagDesc, flag)
 		}
 		if anomalousEmptyAddrCounts[1] > 0 { // Check if there were any anomalous ABSENT votes (Flag = 1)
-			fmt.Println("  RPC Anomaly: Empty-address ABSENT votes likely for 'NO SIGNATURE FOUND' validators.")
+			fmt.Println("  Empty-address ABSENT votes likely for 'NO SIGNATURE FOUND' validators.")
 		} else {
 			// If there are anomalous votes but NONE are ABSENT, print a more generic RPC issue message.
-			fmt.Println("  RPC Anomaly: Detected signatures with empty addresses.")
+			fmt.Println("  Detected signatures with empty addresses.")
 		}
 	}
 
