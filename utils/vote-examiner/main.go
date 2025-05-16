@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gopkg.in/yaml.v2"
@@ -385,7 +387,11 @@ func buildValidatorMappings(rpcNode string) (map[string]string, error) {
 	// Build address to moniker mapping
 	for _, val := range valSetResp.Validators {
 		if moniker, ok := pubkeyToMoniker[val.PubKey.Value]; ok {
-			addressToMoniker[val.Address] = moniker
+			if strings.HasPrefix(val.Address, "zenvalcons") {
+				addressToMoniker[val.Address] = moniker
+			} else {
+				fmt.Printf("Warning (buildValidatorMappings): validator address %s from validator-set does not have expected prefix. Moniker will not be mapped.\n", val.Address)
+			}
 		}
 	}
 
@@ -428,6 +434,18 @@ func decodeValidatorAddress(base64Addr string) string {
 	}
 
 	return sdk.MustBech32ifyAddressBytes("zenvalcons", decoded)
+}
+
+// hexAddressToBech32ConsensusAddress converts a Tendermint hex address to a bech32 zenvalcons address
+func hexAddressToBech32ConsensusAddress(hexAddr string) (string, error) {
+	// Tendermint addresses are typically uppercase hex. Remove "0x" prefix if present.
+	hexAddr = strings.TrimPrefix(hexAddr, "0x")
+	rawAddrBytes, err := hex.DecodeString(hexAddr)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode hex address '%s': %v", hexAddr, err)
+	}
+	// Assuming "zenvalcons" is the correct prefix for your chain's consensus addresses
+	return sdk.MustBech32ifyAddressBytes("zenvalcons", rawAddrBytes), nil
 }
 
 // findDifferences finds and displays differences between vote extensions
@@ -695,14 +713,24 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 
 // analyzeConsensusData processes fetched data and builds the report structure
 func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string) (*ConsensusReportData, error) {
+	proposerHexAddr := currentBlock.Result.Block.Header.ProposerAddress
+	proposerBech32AddrForLookup, err := hexAddressToBech32ConsensusAddress(proposerHexAddr)
+	var proposerMoniker string
+	if err != nil {
+		fmt.Printf("Warning (analyzeConsensusData): could not convert proposer hex address %s to bech32 for moniker lookup: %v\n", proposerHexAddr, err)
+		proposerMoniker = "Unknown (addr conv err)" // Or try direct hex lookup if that was a fallback: addrToMoniker[proposerHexAddr]
+	} else {
+		proposerMoniker = addrToMoniker[proposerBech32AddrForLookup]
+	}
+	if proposerMoniker == "" {
+		proposerMoniker = "Unknown"
+	}
+
 	report := ConsensusReportData{
 		Height:          height,
 		AppHash:         currentBlock.Result.Block.Header.AppHash,
-		ProposerAddress: currentBlock.Result.Block.Header.ProposerAddress,
-		ProposerMoniker: addrToMoniker[currentBlock.Result.Block.Header.ProposerAddress], // Moniker for proposer
-	}
-	if report.ProposerMoniker == "" {
-		report.ProposerMoniker = "Unknown"
+		ProposerAddress: proposerHexAddr, // Keep original HEX for this field in the report
+		ProposerMoniker: proposerMoniker,
 	}
 
 	activeValidators := make(map[string]ValidatorVoteInfo)
@@ -715,12 +743,19 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 			// Skip validator or assign 0 power if parsing fails
 			continue
 		}
-		moniker := addrToMoniker[val.Address]
+		valHexAddr := val.Address // Original hex address from /validators RPC
+		valBech32Addr, err := hexAddressToBech32ConsensusAddress(valHexAddr)
+		if err != nil {
+			fmt.Printf("Warning (analyzeConsensusData): could not convert validator hex address %s to bech32: %v\n", valHexAddr, err)
+			valBech32Addr = valHexAddr // Use original hex for display if conversion fails
+		}
+
+		moniker := addrToMoniker[valBech32Addr] // Look up with Bech32 address
 		if moniker == "" {
 			moniker = "Unknown"
 		}
-		activeValidators[val.Address] = ValidatorVoteInfo{
-			Address:     val.Address,
+		activeValidators[valHexAddr] = ValidatorVoteInfo{ // Key activeValidators map with original HEX for direct mapping from signatures
+			Address:     valBech32Addr, // Store and display Bech32 address
 			Moniker:     moniker,
 			VotingPower: votingPower,
 		}
@@ -730,6 +765,20 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 	report.TotalVotingPower = totalOverallVotingPower
 
 	signatures := nextBlock.Result.Block.LastCommit.Signatures
+
+	var nextBlockHeightForLog int64
+	var currentBlockHeightForLog int64 = height // height is already int64 (targetHeight)
+
+	if nextBlock.Result.Block.Header.Height != "" {
+		parsedNextHeight, err := strconv.ParseInt(nextBlock.Result.Block.Header.Height, 10, 64)
+		if err == nil {
+			nextBlockHeightForLog = parsedNextHeight
+		}
+	}
+	// If currentBlock.Result.Block.Header.Height is also available and needed, parse similarly
+	// For now, using targetHeight (passed as 'height') for current block is sufficient.
+
+	fmt.Printf("Found %d signatures in block %d (last_commit height from RPC) for previous block %d.\n", len(signatures), nextBlockHeightForLog, currentBlockHeightForLog)
 	agreedValidatorMap := make(map[string]bool)
 	var agreedVotingPower int64 = 0
 
