@@ -5,6 +5,7 @@ go 1.24.3
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.3
+	github.com/Layr-Labs/eigenlayer-contracts => github.com/Layr-Labs/eigenlayer-contracts v1.3.0
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2
@@ -70,7 +71,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zenrocklabs/zenbtc v1.17.2
+	github.com/zenrocklabs/zenbtc v1.17.3
 	github.com/zenrocklabs/zenrock-avs v1.6.4
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.29.0
