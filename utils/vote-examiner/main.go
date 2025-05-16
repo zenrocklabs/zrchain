@@ -57,7 +57,6 @@ func main() {
 	fmt.Printf("Using %s network (%s)\n", config.Network, config.RPCNode)
 
 	// Get validator information
-	fmt.Println("Fetching validator information...")
 	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
 	if err != nil {
 		fmt.Printf("Warning: Failed to get validator information: %v\n", err)
@@ -66,7 +65,6 @@ func main() {
 	}
 
 	if config.ConsensusReportMode {
-		fmt.Println("Generating block consensus report...")
 		err := processConsensusReport(config, addrToMoniker)
 		if err != nil {
 			fmt.Printf("Error generating consensus report: %v\n", err)
@@ -93,6 +91,7 @@ func parseFlags() Config {
 	blockHeightFlag := flag.String("height", "", "Block height (default: latest)")
 	missingOnlyFlag := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
 	consensusReportFlag := flag.Bool("consensus-report", false, "Generate a block consensus report (alternative to vote extension analysis)")
+	debugFlag := flag.Bool("debug", false, "Enable detailed RPC signature debugging output")
 	flag.Parse()
 
 	// Map network to RPC URL if node is not explicitly provided
@@ -122,6 +121,7 @@ func parseFlags() Config {
 		BlockHeight:         *blockHeightFlag,
 		MissingOnly:         *missingOnlyFlag,
 		ConsensusReportMode: *consensusReportFlag,
+		DebugMode:           *debugFlag,
 	}
 }
 
@@ -638,10 +638,10 @@ func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []
 func processConsensusReport(config Config, addrToMoniker map[string]string) error {
 	var targetHeight int64
 	var err error
+	originalRequestedHeight := config.BlockHeight // Keep track of what user asked for
 
 	// Determine block height
 	if config.BlockHeight == "" || config.BlockHeight == "latest" {
-		// Fetch status to get the latest block height
 		statusURL := fmt.Sprintf("%s/status", config.RPCNode)
 		var statusResp struct {
 			Result struct {
@@ -657,7 +657,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 		if err != nil {
 			return fmt.Errorf("failed to parse latest block height: %v", err)
 		}
-		fmt.Printf("Latest block height: %d\n", targetHeight)
+		// fmt.Printf("Latest block height: %d\n", targetHeight) // Made quieter
 	} else {
 		targetHeight, err = strconv.ParseInt(config.BlockHeight, 10, 64)
 		if err != nil {
@@ -670,7 +670,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 	}
 
 	// Fetch block data for targetHeight
-	fmt.Printf("Fetching block %d...\n", targetHeight)
+	// fmt.Printf("Fetching block %d...\n", targetHeight) // Made quieter
 	blockURL := fmt.Sprintf("%s/block?height=%d", config.RPCNode, targetHeight)
 	var blockResp RPCBlockResponse
 	if err := fetchRPCData(blockURL, &blockResp); err != nil {
@@ -679,23 +679,22 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 
 	// Fetch block data for targetHeight + 1 to get signatures for targetHeight
 	nextHeight := targetHeight + 1
-	fmt.Printf("Fetching block %d for signatures...\n", nextHeight)
+	// fmt.Printf("Fetching block %d for signatures...\n", nextHeight) // Made quieter
 	nextBlockURL := fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
 	var nextBlockResp RPCBlockResponse
 	if err := fetchRPCData(nextBlockURL, &nextBlockResp); err != nil {
-		// Check if the error is due to requesting a block height beyond the current chain height
-		// and if the original request was for the latest block or if the specified height IS the latest block.
 		isHeightTooHighError := strings.Contains(err.Error(), "must be less than or equal to the current blockchain height")
-		// We also need to know if targetHeight was the actual latest block identified.
-		// This can be inferred if config.BlockHeight was "" or "latest", or if the error confirms targetHeight+1 is too high.
+		requestedLatest := originalRequestedHeight == "" || originalRequestedHeight == "latest"
+		// Check if the error confirms targetHeight+1 is indeed too high relative to an identified targetHeight.
+		isConfirmedTip := strings.Contains(err.Error(), fmt.Sprintf("height %d must be less than or equal to the current blockchain height %d", nextHeight, targetHeight))
 
-		if isHeightTooHighError && targetHeight > 1 && (config.BlockHeight == "" || config.BlockHeight == "latest" || strings.Contains(err.Error(), fmt.Sprintf("height %d must be less than or equal to the current blockchain height %d", nextHeight, targetHeight))) {
-			fmt.Printf("Warning: Block %d (for signatures) is beyond current chain height %d.\n", nextHeight, targetHeight)
-			fmt.Printf("Attempting to get consensus report for the latest fully available block (height %d).\n", targetHeight-1)
+		if isHeightTooHighError && targetHeight > 1 && (requestedLatest || isConfirmedTip) {
+			fmt.Printf("Warning: Chain tip reached. Signatures for block %d require block %d, which is not yet available.\n", targetHeight, nextHeight)
+			fmt.Printf("Adjusting to report on block %d (signatures from %d).\n", targetHeight-1, targetHeight)
 			targetHeight-- // Decrement targetHeight to get consensus for the previous block
 
 			// Re-fetch block data for the new targetHeight (L-1)
-			fmt.Printf("Re-fetching block %d...\n", targetHeight)
+			// fmt.Printf("Re-fetching block %d...\n", targetHeight) // Made quieter
 			blockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, targetHeight)
 			if errBlock := fetchRPCData(blockURL, &blockResp); errBlock != nil {
 				return fmt.Errorf("failed to get block data for fallback height %d: %v", targetHeight, errBlock)
@@ -703,24 +702,23 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 
 			// Re-fetch block data for new nextHeight (L-1)+1 = L
 			nextHeight = targetHeight + 1
-			fmt.Printf("Re-fetching block %d for signatures...\n", nextHeight)
+			// fmt.Printf("Re-fetching block %d for signatures...\n", nextHeight) // Made quieter
 			nextBlockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
 			if errNextBlock := fetchRPCData(nextBlockURL, &nextBlockResp); errNextBlock != nil {
-				// If this still fails, it's an unexpected issue or a very short chain.
 				return fmt.Errorf("failed to get next block data for fallback height %d (expected %d): %v", targetHeight, nextHeight, errNextBlock)
 			}
-			// Successfully fetched L-1 and L. Proceed with these.
 		} else {
-			// Original error handling: Proceed with empty signatures if it's not the specific "height too high" error for auto-fallback
-			fmt.Printf("Warning: Failed to get block data for height %d (may be latest block or other issue): %v\n", nextHeight, err)
+			fmt.Printf("Warning: Failed to get block data for height %d (needed for signatures, may be latest block or other issue): %v\n", nextHeight, err)
 			nextBlockResp.Result.Block.LastCommit.Signatures = []RPCSignature{}
 		}
 	}
 
+	fmt.Printf("Processing consensus for H=%d (signatures from H+1=%d, validators for H=%d)...\n", targetHeight, nextHeight, targetHeight)
+
 	// Fetch validator set for targetHeight (which might have been adjusted)
 	// Tendermint RPC /validators endpoint can be paginated. Assuming <=100 active validators for now.
 	// For more robust solution, handle pagination (max per_page is 100).
-	fmt.Printf("Fetching validators for block %d...\n", targetHeight)
+	// fmt.Printf("Fetching validators for block %d...\n", targetHeight) // Made quieter
 	validatorsURL := fmt.Sprintf("%s/validators?height=%d&per_page=100", config.RPCNode, targetHeight)
 	var validatorsResp RPCValidatorsResponse
 	if err := fetchRPCData(validatorsURL, &validatorsResp); err != nil {
@@ -728,7 +726,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 	}
 
 	// Process data
-	reportData, err := analyzeConsensusData(targetHeight, blockResp, nextBlockResp, validatorsResp, addrToMoniker)
+	reportData, err := analyzeConsensusData(targetHeight, blockResp, nextBlockResp, validatorsResp, addrToMoniker, config)
 	if err != nil {
 		return fmt.Errorf("failed to analyze consensus data: %v", err)
 	}
@@ -740,7 +738,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 }
 
 // analyzeConsensusData processes fetched data and builds the report structure
-func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string) (*ConsensusReportData, error) {
+func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string, config Config) (*ConsensusReportData, error) {
 	proposerHexAddr := currentBlock.Result.Block.Header.ProposerAddress
 	proposerBech32AddrForLookup, err := hexAddressToBech32ConsensusAddress(proposerHexAddr)
 	var proposerMoniker string
@@ -811,9 +809,51 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 
 	// Store HEX addresses of validators whose signatures are found in the commit
 	signaturesPresent := make(map[string]bool)
+	rawSignaturesFromRPC := nextBlock.Result.Block.LastCommit.Signatures // Keep original for reference if needed
 
-	for _, sig := range signatures {
-		signaturesPresent[sig.ValidatorAddress] = true // Mark signature as present
+	if config.DebugMode {
+		fmt.Println("--- BEGIN DEBUG: Raw Signatures from RPC Commit Data ---")
+		for i, sig := range rawSignaturesFromRPC {
+			fmt.Printf("DEBUG_RPC_SIG[%d]: Address=\"%s\", BlockIDFlag=%d, Signature=\"%s\"\n", i, sig.ValidatorAddress, sig.BlockIDFlag, sig.Signature)
+		}
+		fmt.Println("--- END DEBUG: Raw Signatures from RPC Commit Data ---")
+	}
+
+	validSignatures := make([]RPCSignature, 0, len(rawSignaturesFromRPC))
+	anomalousEmptyAddrCounts := make(map[int]int)
+	totalAnomalousSignatures := 0
+
+	for _, sig := range rawSignaturesFromRPC {
+		if sig.ValidatorAddress == "" {
+			anomalousEmptyAddrCounts[sig.BlockIDFlag]++
+			totalAnomalousSignatures++
+		} else {
+			validSignatures = append(validSignatures, sig)
+		}
+	}
+
+	if totalAnomalousSignatures > 0 {
+		fmt.Printf("Warning: Found %d anomalous signatures with EMPTY validator addresses in commit data for block %s:\n", totalAnomalousSignatures, nextBlockInfoForLog)
+		for flag, count := range anomalousEmptyAddrCounts {
+			var flagDesc string
+			switch flag {
+			case ProtoBlockIDFlagCommit:
+				flagDesc = "COMMIT"
+			case 1: // Absent
+				flagDesc = "ABSENT"
+			case 3: // Nil
+				flagDesc = "NIL"
+			default:
+				flagDesc = fmt.Sprintf("UNKNOWN_FLAG_%d", flag)
+			}
+			fmt.Printf("  - %d signatures marked as %s (BlockIDFlag=%d)\n", count, flagDesc, flag)
+		}
+		fmt.Println("  This could indicate an issue with data from the RPC node.")
+	}
+
+	// Process validSignatures for the report
+	for _, sig := range validSignatures {
+		signaturesPresent[sig.ValidatorAddress] = true // Mark signature as present using the non-empty address
 
 		if sig.BlockIDFlag == ProtoBlockIDFlagCommit { // Voted COMMIT
 			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {

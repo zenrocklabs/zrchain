@@ -82,6 +82,7 @@ type Config struct {
 	BlockHeight         string
 	MissingOnly         bool
 	ConsensusReportMode bool
+	DebugMode           bool
 }
 
 // Stats holds the statistics from vote processing
