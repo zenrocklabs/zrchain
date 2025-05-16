@@ -27,7 +27,7 @@ const (
 )
 
 // fetchRPCData performs an HTTP GET request and unmarshals the JSON response
-func fetchRPCData(url string, target interface{}) error {
+func fetchRPCData(url string, target any) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("failed to fetch data from %s: %v", url, err)
@@ -794,7 +794,7 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 
 	signatures := nextBlock.Result.Block.LastCommit.Signatures
 
-	var currentBlockHeightForLog int64 = height // height is already int64 (targetHeight)
+	var currentBlockHeightForLog int64 = height
 	var nextBlockInfoForLog string = "N/A (next block data not available or error during fetch)"
 
 	if nextBlock.Result.Block.Header.Height != "" { // If Header.Height is populated
@@ -808,29 +808,39 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 	// No specific 'else if' needed here because if Header.Height is empty, the default string is used.
 
 	fmt.Printf("Found %d signatures in commit data (from block: %s) for previous block %d.\n", len(signatures), nextBlockInfoForLog, currentBlockHeightForLog)
-	agreedValidatorMap := make(map[string]bool)
-	var agreedVotingPower int64 = 0
+
+	// Store HEX addresses of validators whose signatures are found in the commit
+	signaturesPresent := make(map[string]bool)
 
 	for _, sig := range signatures {
-		// block_id_flag == 2 (BLOCK_ID_FLAG_COMMIT) means the validator signed the commit
-		if sig.BlockIDFlag == ProtoBlockIDFlagCommit {
-			agreedValidatorMap[sig.ValidatorAddress] = true
+		signaturesPresent[sig.ValidatorAddress] = true // Mark signature as present
+
+		if sig.BlockIDFlag == ProtoBlockIDFlagCommit { // Voted COMMIT
 			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
-				agreedVotingPower += valInfo.VotingPower
+				report.AgreedValidators = append(report.AgreedValidators, valInfo)
+				report.AgreedVotingPower += valInfo.VotingPower
 			} else {
-				// This case is like the Python script's "WARNING: Validator ... signed but is not in the validators list!"
-				// For now, we just note they agreed but don't add to agreed list if not in active set from /validators
-				fmt.Printf("Warning: Validator %s signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+				fmt.Printf("Warning: Validator %s (COMMIT vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+			}
+		} else if sig.BlockIDFlag == 3 { // Voted NIL (3)
+			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
+				report.VotedNilValidators = append(report.VotedNilValidators, valInfo)
+			} else {
+				fmt.Printf("Warning: Validator %s (NIL vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+			}
+		} else if sig.BlockIDFlag == 1 { // Voted ABSENT (1)
+			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
+				report.AbsentValidators = append(report.AbsentValidators, valInfo)
+			} else {
+				fmt.Printf("Warning: Validator %s (ABSENT vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
 			}
 		}
 	}
-	report.AgreedVotingPower = agreedVotingPower
 
-	for addr, valInfo := range activeValidators {
-		if agreedValidatorMap[addr] {
-			report.AgreedValidators = append(report.AgreedValidators, valInfo)
-		} else {
-			report.DisagreedValidators = append(report.DisagreedValidators, valInfo)
+	// Populate MissingSignatureValidators
+	for valHexAddr, valInfo := range activeValidators {
+		if !signaturesPresent[valHexAddr] { // If no signature of any type was found for this active validator
+			report.MissingSignatureValidators = append(report.MissingSignatureValidators, valInfo)
 		}
 	}
 
@@ -838,8 +848,14 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 	sort.Slice(report.AgreedValidators, func(i, j int) bool {
 		return report.AgreedValidators[i].VotingPower > report.AgreedValidators[j].VotingPower
 	})
-	sort.Slice(report.DisagreedValidators, func(i, j int) bool {
-		return report.DisagreedValidators[i].VotingPower > report.DisagreedValidators[j].VotingPower
+	sort.Slice(report.VotedNilValidators, func(i, j int) bool {
+		return report.VotedNilValidators[i].VotingPower > report.VotedNilValidators[j].VotingPower
+	})
+	sort.Slice(report.AbsentValidators, func(i, j int) bool {
+		return report.AbsentValidators[i].VotingPower > report.AbsentValidators[j].VotingPower
+	})
+	sort.Slice(report.MissingSignatureValidators, func(i, j int) bool {
+		return report.MissingSignatureValidators[i].VotingPower > report.MissingSignatureValidators[j].VotingPower
 	})
 
 	return &report, nil
@@ -856,7 +872,8 @@ func printConsensusReport(report *ConsensusReportData) {
 	if report.TotalValidators > 0 {
 		agreementPercentage = (float64(len(report.AgreedValidators)) / float64(report.TotalValidators)) * 100
 	}
-	fmt.Printf("Consensus: %d/%d validators agreed (%.2f%%)\n", len(report.AgreedValidators), report.TotalValidators, agreementPercentage)
+	// Adjusted consensus line wording
+	fmt.Printf("Validators who cast COMMIT vote: %d/%d (%.2f%% of active set)\n", len(report.AgreedValidators), report.TotalValidators, agreementPercentage)
 
 	votingPowerPercentage := 0.0
 	if report.TotalVotingPower > 0 {
@@ -864,22 +881,43 @@ func printConsensusReport(report *ConsensusReportData) {
 	}
 	fmt.Printf("Consensus by Voting Power: %d/%d (%.2f%%)\n", report.AgreedVotingPower, report.TotalVotingPower, votingPowerPercentage)
 
-	fmt.Printf("\n----- VALIDATORS WHO AGREED (%d) -----\n", len(report.AgreedValidators))
+	fmt.Printf("\n----- VALIDATORS WHO VOTED <COMMIT> (for this block hash) (%d) -----\n", len(report.AgreedValidators))
 	if len(report.AgreedValidators) > 0 {
 		for i, v := range report.AgreedValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
 		}
 	} else {
-		fmt.Println("No validators agreed on this block.")
+		fmt.Println("No validators explicitly cast a COMMIT vote for this block hash.")
 	}
 
-	fmt.Printf("\n----- VALIDATORS WHO DID NOT AGREE (%d) -----\n", len(report.DisagreedValidators))
-	if len(report.DisagreedValidators) > 0 {
-		for i, v := range report.DisagreedValidators {
+	// Section for NIL votes
+	fmt.Printf("\n--- VALIDATORS WHO VOTED <NIL> (abstained/disagreed with proposed block) (%d) ---\n", len(report.VotedNilValidators))
+	if len(report.VotedNilValidators) > 0 {
+		for i, v := range report.VotedNilValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
 		}
 	} else {
-		fmt.Println("All active validators agreed on this block.")
+		fmt.Println("No validators explicitly voted NIL (based on found signatures).")
+	}
+
+	// Section for ABSENT votes
+	fmt.Printf("\n--- VALIDATORS RECORDED WITH <ABSENT> STATUS (vote not received) (%d) ---\n", len(report.AbsentValidators))
+	if len(report.AbsentValidators) > 0 {
+		for i, v := range report.AbsentValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("No validators were recorded with an <ABSENT> status (vote not received).")
+	}
+
+	// Section for MISSING SIGNATURES (already good)
+	fmt.Printf("\n----- VALIDATORS WITH NO SIGNATURE FOUND (in active set) (%d) -----\n", len(report.MissingSignatureValidators))
+	if len(report.MissingSignatureValidators) > 0 {
+		for i, v := range report.MissingSignatureValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("All validators in the active set had a signature in the commit data (either COMMIT, NIL, or ABSENT).")
 	}
 	fmt.Println()
 }

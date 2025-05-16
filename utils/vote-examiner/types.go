@@ -146,15 +146,17 @@ type RPCValidator struct {
 
 // ConsensusReportData holds processed information for the consensus report
 type ConsensusReportData struct {
-	Height              int64
-	AppHash             string
-	ProposerAddress     string
-	ProposerMoniker     string
-	TotalValidators     int
-	AgreedValidators    []ValidatorVoteInfo
-	DisagreedValidators []ValidatorVoteInfo
-	TotalVotingPower    int64
-	AgreedVotingPower   int64
+	Height                     int64
+	AppHash                    string
+	ProposerAddress            string
+	ProposerMoniker            string
+	TotalValidators            int
+	AgreedValidators           []ValidatorVoteInfo
+	VotedNilValidators         []ValidatorVoteInfo
+	AbsentValidators           []ValidatorVoteInfo
+	MissingSignatureValidators []ValidatorVoteInfo
+	TotalVotingPower           int64
+	AgreedVotingPower          int64
 }
 
 // ValidatorVoteInfo stores validator info for the consensus report
