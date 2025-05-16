@@ -683,13 +683,41 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 	nextBlockURL := fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
 	var nextBlockResp RPCBlockResponse
 	if err := fetchRPCData(nextBlockURL, &nextBlockResp); err != nil {
-		// This can fail if targetHeight is the absolute latest. Allow to proceed but warn.
-		fmt.Printf("Warning: Failed to get block data for height %d (may be latest block): %v\n", nextHeight, err)
-		// Set empty signatures if next block fetch fails
-		nextBlockResp.Result.Block.LastCommit.Signatures = []RPCSignature{}
+		// Check if the error is due to requesting a block height beyond the current chain height
+		// and if the original request was for the latest block or if the specified height IS the latest block.
+		isHeightTooHighError := strings.Contains(err.Error(), "must be less than or equal to the current blockchain height")
+		// We also need to know if targetHeight was the actual latest block identified.
+		// This can be inferred if config.BlockHeight was "" or "latest", or if the error confirms targetHeight+1 is too high.
+
+		if isHeightTooHighError && targetHeight > 1 && (config.BlockHeight == "" || config.BlockHeight == "latest" || strings.Contains(err.Error(), fmt.Sprintf("height %d must be less than or equal to the current blockchain height %d", nextHeight, targetHeight))) {
+			fmt.Printf("Warning: Block %d (for signatures) is beyond current chain height %d.\n", nextHeight, targetHeight)
+			fmt.Printf("Attempting to get consensus report for the latest fully available block (height %d).\n", targetHeight-1)
+			targetHeight-- // Decrement targetHeight to get consensus for the previous block
+
+			// Re-fetch block data for the new targetHeight (L-1)
+			fmt.Printf("Re-fetching block %d...\n", targetHeight)
+			blockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, targetHeight)
+			if errBlock := fetchRPCData(blockURL, &blockResp); errBlock != nil {
+				return fmt.Errorf("failed to get block data for fallback height %d: %v", targetHeight, errBlock)
+			}
+
+			// Re-fetch block data for new nextHeight (L-1)+1 = L
+			nextHeight = targetHeight + 1
+			fmt.Printf("Re-fetching block %d for signatures...\n", nextHeight)
+			nextBlockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
+			if errNextBlock := fetchRPCData(nextBlockURL, &nextBlockResp); errNextBlock != nil {
+				// If this still fails, it's an unexpected issue or a very short chain.
+				return fmt.Errorf("failed to get next block data for fallback height %d (expected %d): %v", targetHeight, nextHeight, errNextBlock)
+			}
+			// Successfully fetched L-1 and L. Proceed with these.
+		} else {
+			// Original error handling: Proceed with empty signatures if it's not the specific "height too high" error for auto-fallback
+			fmt.Printf("Warning: Failed to get block data for height %d (may be latest block or other issue): %v\n", nextHeight, err)
+			nextBlockResp.Result.Block.LastCommit.Signatures = []RPCSignature{}
+		}
 	}
 
-	// Fetch validator set for targetHeight
+	// Fetch validator set for targetHeight (which might have been adjusted)
 	// Tendermint RPC /validators endpoint can be paginated. Assuming <=100 active validators for now.
 	// For more robust solution, handle pagination (max per_page is 100).
 	fmt.Printf("Fetching validators for block %d...\n", targetHeight)
@@ -766,19 +794,20 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 
 	signatures := nextBlock.Result.Block.LastCommit.Signatures
 
-	var nextBlockHeightForLog int64
 	var currentBlockHeightForLog int64 = height // height is already int64 (targetHeight)
+	var nextBlockInfoForLog string = "N/A (next block data not available or error during fetch)"
 
-	if nextBlock.Result.Block.Header.Height != "" {
+	if nextBlock.Result.Block.Header.Height != "" { // If Header.Height is populated
 		parsedNextHeight, err := strconv.ParseInt(nextBlock.Result.Block.Header.Height, 10, 64)
 		if err == nil {
-			nextBlockHeightForLog = parsedNextHeight
+			nextBlockInfoForLog = fmt.Sprintf("%d", parsedNextHeight)
+		} else {
+			nextBlockInfoForLog = fmt.Sprintf("Error parsing height '%s' (defaulting display)", nextBlock.Result.Block.Header.Height)
 		}
 	}
-	// If currentBlock.Result.Block.Header.Height is also available and needed, parse similarly
-	// For now, using targetHeight (passed as 'height') for current block is sufficient.
+	// No specific 'else if' needed here because if Header.Height is empty, the default string is used.
 
-	fmt.Printf("Found %d signatures in block %d (last_commit height from RPC) for previous block %d.\n", len(signatures), nextBlockHeightForLog, currentBlockHeightForLog)
+	fmt.Printf("Found %d signatures in commit data (from block: %s) for previous block %d.\n", len(signatures), nextBlockInfoForLog, currentBlockHeightForLog)
 	agreedValidatorMap := make(map[string]bool)
 	var agreedVotingPower int64 = 0
 
