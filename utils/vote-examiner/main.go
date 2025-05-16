@@ -868,20 +868,18 @@ func printConsensusReport(report *ConsensusReportData) {
 	fmt.Printf("App Hash: %s\n", report.AppHash)
 	fmt.Printf("Proposer: %s (%s)\n", report.ProposerAddress, report.ProposerMoniker)
 
-	agreementPercentage := 0.0
-	if report.TotalValidators > 0 {
-		agreementPercentage = (float64(len(report.AgreedValidators)) / float64(report.TotalValidators)) * 100
-	}
-	// Adjusted consensus line wording
-	fmt.Printf("Validators who cast COMMIT vote: %d/%d (%.2f%% of active set)\n", len(report.AgreedValidators), report.TotalValidators, agreementPercentage)
-
-	votingPowerPercentage := 0.0
-	if report.TotalVotingPower > 0 {
-		votingPowerPercentage = (float64(report.AgreedVotingPower) / float64(report.TotalVotingPower)) * 100
-	}
-	fmt.Printf("Consensus by Voting Power: %d/%d (%.2f%%)\n", report.AgreedVotingPower, report.TotalVotingPower, votingPowerPercentage)
-
+	// AGREED/COMMIT section
 	fmt.Printf("\n----- VALIDATORS WHO VOTED <COMMIT> (for this block hash) (%d) -----\n", len(report.AgreedValidators))
+	agreementValidatorPercentage := 0.0
+	if report.TotalValidators > 0 {
+		agreementValidatorPercentage = (float64(len(report.AgreedValidators)) / float64(report.TotalValidators)) * 100
+	}
+	agreementPowerPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		agreementPowerPercentage = (float64(report.AgreedVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.AgreedValidators), report.TotalValidators, agreementValidatorPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", report.AgreedVotingPower, report.TotalVotingPower, agreementPowerPercentage)
 	if len(report.AgreedValidators) > 0 {
 		for i, v := range report.AgreedValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
@@ -892,6 +890,20 @@ func printConsensusReport(report *ConsensusReportData) {
 
 	// Section for NIL votes
 	fmt.Printf("\n--- VALIDATORS WHO VOTED <NIL> (abstained/disagreed with proposed block) (%d) ---\n", len(report.VotedNilValidators))
+	var nilVotingPower int64
+	for _, v := range report.VotedNilValidators {
+		nilVotingPower += v.VotingPower
+	}
+	validatorNilPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorNilPercentage = (float64(len(report.VotedNilValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerNilPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerNilPercentage = (float64(nilVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.VotedNilValidators), report.TotalValidators, validatorNilPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", nilVotingPower, report.TotalVotingPower, powerNilPercentage)
 	if len(report.VotedNilValidators) > 0 {
 		for i, v := range report.VotedNilValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
@@ -902,6 +914,20 @@ func printConsensusReport(report *ConsensusReportData) {
 
 	// Section for ABSENT votes
 	fmt.Printf("\n--- VALIDATORS RECORDED WITH <ABSENT> STATUS (vote not received) (%d) ---\n", len(report.AbsentValidators))
+	var absentVotingPower int64
+	for _, v := range report.AbsentValidators {
+		absentVotingPower += v.VotingPower
+	}
+	validatorAbsentPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorAbsentPercentage = (float64(len(report.AbsentValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerAbsentPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerAbsentPercentage = (float64(absentVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.AbsentValidators), report.TotalValidators, validatorAbsentPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", absentVotingPower, report.TotalVotingPower, powerAbsentPercentage)
 	if len(report.AbsentValidators) > 0 {
 		for i, v := range report.AbsentValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
@@ -910,8 +936,22 @@ func printConsensusReport(report *ConsensusReportData) {
 		fmt.Println("No validators were recorded with an <ABSENT> status (vote not received).")
 	}
 
-	// Section for MISSING SIGNATURES (already good)
+	// Section for MISSING SIGNATURES
 	fmt.Printf("\n----- VALIDATORS WITH NO SIGNATURE FOUND (in active set) (%d) -----\n", len(report.MissingSignatureValidators))
+	var missingSignatureVotingPower int64
+	for _, v := range report.MissingSignatureValidators {
+		missingSignatureVotingPower += v.VotingPower
+	}
+	validatorMissingPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorMissingPercentage = (float64(len(report.MissingSignatureValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerMissingPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerMissingPercentage = (float64(missingSignatureVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.MissingSignatureValidators), report.TotalValidators, validatorMissingPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", missingSignatureVotingPower, report.TotalVotingPower, powerMissingPercentage)
 	if len(report.MissingSignatureValidators) > 0 {
 		for i, v := range report.MissingSignatureValidators {
 			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
