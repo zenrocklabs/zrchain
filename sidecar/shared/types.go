@@ -73,11 +73,6 @@ var (
 		NetworkMainnet: "Ethereum Mainnet",
 	}
 
-	// SolanaSlotRoundingFactor is the value used to round Solana slots for consistent blockhash and fee querying
-	// Slots are rounded down to the nearest multiple of this value
-	// SolanaSlotRoundingFactor = uint64(50)
-
-	// TODO: Add ZenBTC Solana program ID for mainnet
 	ZenBTCSolanaProgramID = map[string]string{
 		NetworkDevnet:  "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
 		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
@@ -86,19 +81,18 @@ var (
 	ZenBTCSolanaMintAddress = map[string]string{
 		NetworkDevnet:  "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
 		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
-		NetworkMainnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+		NetworkMainnet: "9hX59xHHnaZXLU6quvm5uGY2iDiT3jczaReHy6A6TYKw",
 	}
 
-	// TODO: Add SolRock program ID for mainnet
 	SolRockProgramID = map[string]string{
 		NetworkDevnet:  "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
-		NetworkTestnet: "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 	}
 	SolnaRockMintAddress = map[string]string{
 		NetworkDevnet:  "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkTestnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkMainnet: "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+		NetworkTestnet: "5bHHVh9j9RG6oXSL5DfAA3XrykdTX6a7A6xbfkF2PVR5",
+		NetworkMainnet: "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf",
 	}
 
 	// Solana RPC endpoints
