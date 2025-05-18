@@ -59,7 +59,7 @@ func (s *IntegrationTestSuite) TestBridge() {
 	).Return(nil)
 
 	// Mock validation keeper SetSolanaRequestedAccount
-	s.validationKeeper.EXPECT().SetSolanaRequestedAccount(
+	s.validationKeeper.EXPECT().SetSolanaZenTPRequestedAccount(
 		s.ctx,
 		msg.RecipientAddress,
 		true,
@@ -136,7 +136,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 					true,
 				).Return(nil).AnyTimes()
 
-				s.validationKeeper.EXPECT().SetSolanaRequestedAccount(
+				s.validationKeeper.EXPECT().SetSolanaZenTPRequestedAccount(
 					s.ctx,
 					msg.RecipientAddress,
 					true,

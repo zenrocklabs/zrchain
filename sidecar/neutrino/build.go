@@ -127,7 +127,7 @@ func (ns *NeutrinoServer) Stop() {
 	for name, liteNode := range ns.Nodes {
 		liteNode.Node.Stop()
 		liteNode.DB.Close()
-		log.Printf("Shutdown Neutrino Node %s \n" + name)
+		log.Printf("Shutdown Neutrino Node %s \n", name)
 	}
 }
 

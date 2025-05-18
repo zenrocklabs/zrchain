@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	"golang.org/x/exp/slices"
+
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
@@ -13,10 +16,19 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewSignatureRequest) (*types.MsgNewSignatureRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if len(msg.KeyIds) == 0 {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "key ids cannot be empty")
+	}
+
+	if msg.DataForSigning == "" {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "data for signing cannot be empty")
+	}
 
 	key, err := k.KeyStore.Get(ctx, msg.KeyIds[0])
 	if err != nil {
@@ -44,11 +56,6 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		return nil, fmt.Errorf("keyring %s is nil or is inactive", keyring.Address)
 	}
 
-	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
-	if err != nil {
-		return nil, err
-	}
-
 	var dataForSigning [][]byte
 	for _, p := range payload {
 		data, decodeErr := hex.DecodeString(p)
@@ -65,6 +72,31 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 	if err != nil {
 		return nil, fmt.Errorf("error whilst verifying transaction & hashes %s", err.Error())
 	}
+
+	if !k.TestMode {
+		if k.zenBTCKeeper == nil {
+			return nil, fmt.Errorf("zenbtc keeper is not set")
+		}
+		for _, keyID := range msg.KeyIds {
+			if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
+				keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
+				slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
+				return nil, fmt.Errorf("key %v is reserved for internal zenbtc use", keyID)
+			}
+		}
+	}
+
+	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
+	if err != nil {
+		return nil, err
+	}
+
 	return k.NewSignatureRequestActionHandler(ctx, act)
 }
 

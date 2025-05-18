@@ -80,12 +80,12 @@ var (
 	// TODO: Add ZenBTC Solana program ID for mainnet
 	ZenBTCSolanaProgramID = map[string]string{
 		NetworkDevnet:  "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
-		NetworkTestnet: "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 	ZenBTCSolanaMintAddress = map[string]string{
 		NetworkDevnet:  "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
-		NetworkTestnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
 		NetworkMainnet: "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
 	}
 

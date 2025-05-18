@@ -319,20 +319,6 @@ func (m *MockValidationKeeper) EXPECT() *MockValidationKeeperMockRecorder {
 	return m.recorder
 }
 
-// SetSolanaRequestedAccount mocks base method.
-func (m *MockValidationKeeper) SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetSolanaRequestedAccount", ctx, address, state)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetSolanaRequestedAccount indicates an expected call of SetSolanaRequestedAccount.
-func (mr *MockValidationKeeperMockRecorder) SetSolanaRequestedAccount(ctx, address, state interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSolanaRequestedAccount", reflect.TypeOf((*MockValidationKeeper)(nil).SetSolanaRequestedAccount), ctx, address, state)
-}
-
 // SetSolanaRequestedNonce mocks base method.
 func (m *MockValidationKeeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
 	m.ctrl.T.Helper()
@@ -345,6 +331,20 @@ func (m *MockValidationKeeper) SetSolanaRequestedNonce(ctx context.Context, keyI
 func (mr *MockValidationKeeperMockRecorder) SetSolanaRequestedNonce(ctx, keyID, state interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSolanaRequestedNonce", reflect.TypeOf((*MockValidationKeeper)(nil).SetSolanaRequestedNonce), ctx, keyID, state)
+}
+
+// SetSolanaZenTPRequestedAccount mocks base method.
+func (m *MockValidationKeeper) SetSolanaZenTPRequestedAccount(ctx context.Context, address string, state bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSolanaZenTPRequestedAccount", ctx, address, state)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSolanaZenTPRequestedAccount indicates an expected call of SetSolanaZenTPRequestedAccount.
+func (mr *MockValidationKeeperMockRecorder) SetSolanaZenTPRequestedAccount(ctx, address, state interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSolanaZenTPRequestedAccount", reflect.TypeOf((*MockValidationKeeper)(nil).SetSolanaZenTPRequestedAccount), ctx, address, state)
 }
 
 // MockMintKeeper is a mock of MintKeeper interface.

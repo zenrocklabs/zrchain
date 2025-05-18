@@ -63,9 +63,10 @@ type Keeper struct {
 	// SolanaNonceRequested - key: key ID | value: bool (is requested)
 	SolanaNonceRequested collections.Map[uint64, bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
-	SolanaAccountsRequested collections.Map[string, bool]
-	LastUsedEthereumNonce   collections.Map[uint64, zenbtctypes.NonceData]
-	LastUsedSolanaNonce     collections.Map[uint64, types.SolanaNonce]
+	SolanaAccountsRequested      collections.Map[string, bool]
+	SolanaZenTPAccountsRequested collections.Map[string, bool]
+	LastUsedEthereumNonce        collections.Map[uint64, zenbtctypes.NonceData]
+	LastUsedSolanaNonce          collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 }
@@ -146,6 +147,7 @@ func NewKeeper(
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaAccountsRequested:           collections.NewMap(sb, types.SolanaAccountsRequestedKey, types.SolanaAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
+		SolanaZenTPAccountsRequested:      collections.NewMap(sb, types.SolanaZenTPAccountsRequestedKey, types.SolanaZenTPAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
@@ -249,10 +251,16 @@ func (k Keeper) GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate
 	return valUpdates.Updates, nil
 }
 
-func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
-	return k.SolanaNonceRequested.Set(ctx, keyID, state)
+// SetSolanaZenBTCRequestedAccount sets the requested state for a Solana account (owner address) for ZenBTC.
+func (k Keeper) SetSolanaZenBTCRequestedAccount(ctx context.Context, ownerAddress string, state bool) error {
+	return k.SolanaAccountsRequested.Set(ctx, ownerAddress, state)
 }
 
-func (k Keeper) SetSolanaRequestedAccount(ctx context.Context, address string, state bool) error {
-	return k.SolanaAccountsRequested.Set(ctx, address, state)
+// SetSolanaZenTPRequestedAccount sets the requested state for a Solana account (owner address) for ZenTP.
+func (k Keeper) SetSolanaZenTPRequestedAccount(ctx context.Context, ownerAddress string, state bool) error {
+	return k.SolanaZenTPAccountsRequested.Set(ctx, ownerAddress, state)
+}
+
+func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
+	return k.SolanaNonceRequested.Set(ctx, keyID, state)
 }

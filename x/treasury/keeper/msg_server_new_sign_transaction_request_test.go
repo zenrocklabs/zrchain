@@ -205,6 +205,26 @@ func Test_msgServer_NewSignTransactionRequest(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "FAIL: empty key ids",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key:       &defaultKey,
+				msg:       types.NewMsgNewSignTransactionRequest("testOwner", []uint64{}, types.WalletType_WALLET_TYPE_EVM, unsignedTx1, metadataAny, 1000),
+			},
+			wantErr: true,
+		},
+		{
+			name: "FAIL: empty unsigned transaction",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key:       &defaultKey,
+				msg:       types.NewMsgNewSignTransactionRequest("testOwner", []uint64{1}, types.WalletType_WALLET_TYPE_EVM, []byte{}, metadataAny, 1000),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -233,7 +253,7 @@ func Test_msgServer_NewSignTransactionRequest(t *testing.T) {
 			}
 			policymodule.InitGenesis(ctx, *pk, pGenesis)
 
-			msgSer := keeper.NewMsgServerImpl(*tk)
+			msgSer := keeper.NewMsgServerImpl(*tk, true)
 
 			got, err := msgSer.NewSignTransactionRequest(ctx, tt.args.msg)
 			if tt.wantErr {

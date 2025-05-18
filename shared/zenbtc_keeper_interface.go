@@ -11,9 +11,12 @@ import (
 type ZenBTCKeeper interface {
 	GetStakerKeyID(ctx context.Context) uint64
 	GetEthMinterKeyID(ctx context.Context) uint64
+	GetParams(ctx context.Context) (types.Params, error)
 	GetSolanaParams(ctx context.Context) *types.Solana
 	GetUnstakerKeyID(ctx context.Context) uint64
 	GetCompleterKeyID(ctx context.Context) uint64
+	GetRewardsDepositKeyID(ctx context.Context) uint64
+	GetChangeAddressKeyIDs(ctx context.Context) []uint64
 	GetControllerAddr(ctx context.Context) string
 	GetEthTokenAddr(ctx context.Context) string
 	GetBitcoinProxyAddress(ctx context.Context) string

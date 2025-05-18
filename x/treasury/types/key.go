@@ -119,7 +119,7 @@ func Caip2ToKeyType(caip string) (KeyType, error) {
 	case "eip155:1", // eth mainnet
 		"eip155:11155111",  // sepolia
 		"eip155:137",       // polygon main
-		" eip155:80002",    // polygon amoy
+		"eip155:80002",     // polygon amoy
 		"eip155:56",        // bnb smartchan main
 		"eip155:97",        // bnb smartchain test
 		"eip155:43114",     // avalanche main
