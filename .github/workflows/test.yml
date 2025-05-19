@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" ./...
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v 'tests/integration')
 
   integration-test:
     if: github.repository == 'zenrocklabs/zrchain'
@@ -68,7 +68,9 @@ jobs:
       - name: Start Docker Compose stack
         run: docker compose up -d --force-recreate --build
       - name: Run integration tests
-        run: go test -v --tags=integration ./tests/integration/...
+        run: ./scripts/integration-test.sh
       - name: Stop Docker Compose stack
         if: always()
         run: docker compose -f docker-compose.yml down
+      - name: Integration tests completed successfully
+        run: echo "Integration tests completed successfully!"
