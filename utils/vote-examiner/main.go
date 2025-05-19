@@ -3,17 +3,52 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gopkg.in/yaml.v2"
 )
+
+const (
+	// BlockIDFlagCommit = "BLOCK_ID_FLAG_COMMIT" // String representation for commit (Removed)
+	// BlockIDFlagCommitOld = "2" // Numeric string representation for commit in some versions (Removed)
+	ProtoBlockIDFlagCommit = 2 // Standard Tendermint proto value for a commit signature
+)
+
+// fetchRPCData performs an HTTP GET request and unmarshals the JSON response
+func fetchRPCData(url string, target any) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to fetch data from %s: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body) // Changed from ioutil.ReadAll
+		return fmt.Errorf("failed to fetch data from %s: status %s, body: %s", url, resp.Status, string(bodyBytes))
+	}
+
+	body, err := io.ReadAll(resp.Body) // Changed from ioutil.ReadAll
+	if err != nil {
+		return fmt.Errorf("failed to read response body from %s: %v", url, err)
+	}
+
+	if err := json.Unmarshal(body, target); err != nil {
+		return fmt.Errorf("failed to unmarshal JSON from %s: %v. Body: %s", url, err, string(body))
+	}
+	return nil
+}
 
 func main() {
 	config := parseFlags()
@@ -22,7 +57,6 @@ func main() {
 	fmt.Printf("Using %s network (%s)\n", config.Network, config.RPCNode)
 
 	// Get validator information
-	fmt.Println("Fetching validator information...")
 	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
 	if err != nil {
 		fmt.Printf("Warning: Failed to get validator information: %v\n", err)
@@ -30,15 +64,23 @@ func main() {
 		addrToMoniker = make(map[string]string)
 	}
 
-	// Get block data
-	blockData, err := getBlockData(config)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
+	if config.ConsensusReportMode {
+		err := processConsensusReport(config, addrToMoniker)
+		if err != nil {
+			fmt.Printf("Error generating consensus report: %v\n", err)
+			return
+		}
+	} else {
+		// Get block data for vote extension mode
+		blockData, err := getBlockData(config)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			return
+		}
 
-	// Process block data
-	processBlockData(blockData, addrToMoniker, config.MissingOnly)
+		// Process block data for vote extension mode
+		processBlockData(blockData, addrToMoniker, config.MissingOnly)
+	}
 }
 
 // parseFlags parses command line flags and returns a Config
@@ -48,6 +90,8 @@ func parseFlags() Config {
 	rpcNodeFlag := flag.String("node", "", "RPC node URL (overrides network selection)")
 	blockHeightFlag := flag.String("height", "", "Block height (default: latest)")
 	missingOnlyFlag := flag.Bool("missing-only", false, "Only show validators missing vote extensions")
+	consensusReportFlag := flag.Bool("consensus-report", false, "Generate a block consensus report (alternative to vote extension analysis)")
+	debugFlag := flag.Bool("debug", false, "Enable detailed RPC signature debugging output")
 	flag.Parse()
 
 	// Map network to RPC URL if node is not explicitly provided
@@ -71,11 +115,13 @@ func parseFlags() Config {
 	}
 
 	return Config{
-		UseFile:     *useFileFlag,
-		RPCNode:     rpcURL,
-		Network:     *networkFlag,
-		BlockHeight: *blockHeightFlag,
-		MissingOnly: *missingOnlyFlag,
+		UseFile:             *useFileFlag,
+		RPCNode:             rpcURL,
+		Network:             *networkFlag,
+		BlockHeight:         *blockHeightFlag,
+		MissingOnly:         *missingOnlyFlag,
+		ConsensusReportMode: *consensusReportFlag,
+		DebugMode:           *debugFlag,
 	}
 }
 
@@ -341,7 +387,11 @@ func buildValidatorMappings(rpcNode string) (map[string]string, error) {
 	// Build address to moniker mapping
 	for _, val := range valSetResp.Validators {
 		if moniker, ok := pubkeyToMoniker[val.PubKey.Value]; ok {
-			addressToMoniker[val.Address] = moniker
+			if strings.HasPrefix(val.Address, "zenvalcons") {
+				addressToMoniker[val.Address] = moniker
+			} else {
+				fmt.Printf("Warning (buildValidatorMappings): validator address %s from validator-set does not have expected prefix. Moniker will not be mapped.\n", val.Address)
+			}
 		}
 	}
 
@@ -384,6 +434,18 @@ func decodeValidatorAddress(base64Addr string) string {
 	}
 
 	return sdk.MustBech32ifyAddressBytes("zenvalcons", decoded)
+}
+
+// hexAddressToBech32ConsensusAddress converts a Tendermint hex address to a bech32 zenvalcons address
+func hexAddressToBech32ConsensusAddress(hexAddr string) (string, error) {
+	// Tendermint addresses are typically uppercase hex. Remove "0x" prefix if present.
+	hexAddr = strings.TrimPrefix(hexAddr, "0x")
+	rawAddrBytes, err := hex.DecodeString(hexAddr)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode hex address '%s': %v", hexAddr, err)
+	}
+	// Assuming "zenvalcons" is the correct prefix for your chain's consensus addresses
+	return sdk.MustBech32ifyAddressBytes("zenvalcons", rawAddrBytes), nil
 }
 
 // findDifferences finds and displays differences between vote extensions
@@ -571,4 +633,376 @@ func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []
 		}
 		fmt.Println()
 	}
+}
+
+func processConsensusReport(config Config, addrToMoniker map[string]string) error {
+	var targetHeight int64
+	var err error
+	originalRequestedHeight := config.BlockHeight // Keep track of what user asked for
+
+	// Determine block height
+	if config.BlockHeight == "" || config.BlockHeight == "latest" {
+		statusURL := fmt.Sprintf("%s/status", config.RPCNode)
+		var statusResp struct {
+			Result struct {
+				SyncInfo struct {
+					LatestBlockHeight string `json:"latest_block_height"`
+				} `json:"sync_info"`
+			} `json:"result"`
+		}
+		if err := fetchRPCData(statusURL, &statusResp); err != nil {
+			return fmt.Errorf("failed to get latest block height from status: %v", err)
+		}
+		targetHeight, err = strconv.ParseInt(statusResp.Result.SyncInfo.LatestBlockHeight, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse latest block height: %v", err)
+		}
+		// fmt.Printf("Latest block height: %d\n", targetHeight) // Made quieter
+	} else {
+		targetHeight, err = strconv.ParseInt(config.BlockHeight, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid block height provided '%s': %v", config.BlockHeight, err)
+		}
+	}
+
+	if targetHeight <= 0 {
+		return fmt.Errorf("block height must be greater than 0")
+	}
+
+	// Fetch block data for targetHeight
+	// fmt.Printf("Fetching block %d...\n", targetHeight) // Made quieter
+	blockURL := fmt.Sprintf("%s/block?height=%d", config.RPCNode, targetHeight)
+	var blockResp RPCBlockResponse
+	if err := fetchRPCData(blockURL, &blockResp); err != nil {
+		return fmt.Errorf("failed to get block data for height %d: %v", targetHeight, err)
+	}
+
+	// Fetch block data for targetHeight + 1 to get signatures for targetHeight
+	nextHeight := targetHeight + 1
+	// fmt.Printf("Fetching block %d for signatures...\n", nextHeight) // Made quieter
+	nextBlockURL := fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
+	var nextBlockResp RPCBlockResponse
+	if err := fetchRPCData(nextBlockURL, &nextBlockResp); err != nil {
+		isHeightTooHighError := strings.Contains(err.Error(), "must be less than or equal to the current blockchain height")
+		requestedLatest := originalRequestedHeight == "" || originalRequestedHeight == "latest"
+		// Check if the error confirms targetHeight+1 is indeed too high relative to an identified targetHeight.
+		isConfirmedTip := strings.Contains(err.Error(), fmt.Sprintf("height %d must be less than or equal to the current blockchain height %d", nextHeight, targetHeight))
+
+		if isHeightTooHighError && targetHeight > 1 && (requestedLatest || isConfirmedTip) {
+			fmt.Printf("Warning: Chain tip reached. Signatures for block %d require block %d, which is not yet available.\n", targetHeight, nextHeight)
+			fmt.Printf("Adjusting to report on block %d (signatures from %d).\n", targetHeight-1, targetHeight)
+			targetHeight-- // Decrement targetHeight to get consensus for the previous block
+
+			// Re-fetch block data for the new targetHeight (L-1)
+			// fmt.Printf("Re-fetching block %d...\n", targetHeight) // Made quieter
+			blockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, targetHeight)
+			if errBlock := fetchRPCData(blockURL, &blockResp); errBlock != nil {
+				return fmt.Errorf("failed to get block data for fallback height %d: %v", targetHeight, errBlock)
+			}
+
+			// Re-fetch block data for new nextHeight (L-1)+1 = L
+			nextHeight = targetHeight + 1
+			// fmt.Printf("Re-fetching block %d for signatures...\n", nextHeight) // Made quieter
+			nextBlockURL = fmt.Sprintf("%s/block?height=%d", config.RPCNode, nextHeight)
+			if errNextBlock := fetchRPCData(nextBlockURL, &nextBlockResp); errNextBlock != nil {
+				return fmt.Errorf("failed to get next block data for fallback height %d (expected %d): %v", targetHeight, nextHeight, errNextBlock)
+			}
+		} else {
+			fmt.Printf("Warning: Failed to get block data for height %d (needed for signatures, may be latest block or other issue): %v\n", nextHeight, err)
+			nextBlockResp.Result.Block.LastCommit.Signatures = []RPCSignature{}
+		}
+	}
+
+	fmt.Printf("Processing consensus for H=%d (signatures from H+1=%d, validators for H=%d)...\n", targetHeight, nextHeight, targetHeight)
+
+	// Fetch validator set for targetHeight (which might have been adjusted)
+	// Tendermint RPC /validators endpoint can be paginated. Assuming <=100 active validators for now.
+	// For more robust solution, handle pagination (max per_page is 100).
+	// fmt.Printf("Fetching validators for block %d...\n", targetHeight) // Made quieter
+	validatorsURL := fmt.Sprintf("%s/validators?height=%d&per_page=100", config.RPCNode, targetHeight)
+	var validatorsResp RPCValidatorsResponse
+	if err := fetchRPCData(validatorsURL, &validatorsResp); err != nil {
+		return fmt.Errorf("failed to get validators for height %d: %v", targetHeight, err)
+	}
+
+	// Process data
+	reportData, err := analyzeConsensusData(targetHeight, blockResp, nextBlockResp, validatorsResp, addrToMoniker, config)
+	if err != nil {
+		return fmt.Errorf("failed to analyze consensus data: %v", err)
+	}
+
+	// Display report
+	printConsensusReport(reportData)
+
+	return nil
+}
+
+// analyzeConsensusData processes fetched data and builds the report structure
+func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string, config Config) (*ConsensusReportData, error) {
+	proposerHexAddr := currentBlock.Result.Block.Header.ProposerAddress
+	proposerBech32AddrForLookup, err := hexAddressToBech32ConsensusAddress(proposerHexAddr)
+	var proposerMoniker string
+	if err != nil {
+		fmt.Printf("Warning (analyzeConsensusData): could not convert proposer hex address %s to bech32 for moniker lookup: %v\n", proposerHexAddr, err)
+		proposerMoniker = "Unknown (addr conv err)" // Or try direct hex lookup if that was a fallback: addrToMoniker[proposerHexAddr]
+	} else {
+		proposerMoniker = addrToMoniker[proposerBech32AddrForLookup]
+	}
+	if proposerMoniker == "" {
+		proposerMoniker = "Unknown"
+	}
+
+	report := ConsensusReportData{
+		Height:          height,
+		AppHash:         currentBlock.Result.Block.Header.AppHash,
+		ProposerAddress: proposerHexAddr, // Keep original HEX for this field in the report
+		ProposerMoniker: proposerMoniker,
+	}
+
+	activeValidators := make(map[string]ValidatorVoteInfo)
+	var totalOverallVotingPower int64 = 0
+
+	for _, val := range rpcValidators.Result.Validators {
+		votingPower, err := strconv.ParseInt(val.VotingPower, 10, 64)
+		if err != nil {
+			fmt.Printf("Warning: could not parse voting power '%s' for validator %s: %v\n", val.VotingPower, val.Address, err)
+			// Skip validator or assign 0 power if parsing fails
+			continue
+		}
+		valHexAddr := val.Address // Original hex address from /validators RPC
+		valBech32Addr, err := hexAddressToBech32ConsensusAddress(valHexAddr)
+		if err != nil {
+			fmt.Printf("Warning (analyzeConsensusData): could not convert validator hex address %s to bech32: %v\n", valHexAddr, err)
+			valBech32Addr = valHexAddr // Use original hex for display if conversion fails
+		}
+
+		moniker := addrToMoniker[valBech32Addr] // Look up with Bech32 address
+		if moniker == "" {
+			moniker = "Unknown"
+		}
+		activeValidators[valHexAddr] = ValidatorVoteInfo{ // Key activeValidators map with original HEX for direct mapping from signatures
+			Address:     valBech32Addr, // Store and display Bech32 address
+			Moniker:     moniker,
+			VotingPower: votingPower,
+		}
+		totalOverallVotingPower += votingPower
+	}
+	report.TotalValidators = len(activeValidators)
+	report.TotalVotingPower = totalOverallVotingPower
+
+	signatures := nextBlock.Result.Block.LastCommit.Signatures
+
+	var currentBlockHeightForLog int64 = height
+	var nextBlockInfoForLog string = "N/A (next block data not available or error during fetch)"
+
+	if nextBlock.Result.Block.Header.Height != "" { // If Header.Height is populated
+		parsedNextHeight, err := strconv.ParseInt(nextBlock.Result.Block.Header.Height, 10, 64)
+		if err == nil {
+			nextBlockInfoForLog = fmt.Sprintf("%d", parsedNextHeight)
+		} else {
+			nextBlockInfoForLog = fmt.Sprintf("Error parsing height '%s' (defaulting display)", nextBlock.Result.Block.Header.Height)
+		}
+	}
+	// No specific 'else if' needed here because if Header.Height is empty, the default string is used.
+
+	fmt.Printf("Found %d signatures in commit data (from block: %s) for previous block %d.\n", len(signatures), nextBlockInfoForLog, currentBlockHeightForLog)
+
+	// Store HEX addresses of validators whose signatures are found in the commit
+	signaturesPresent := make(map[string]bool)
+	rawSignaturesFromRPC := nextBlock.Result.Block.LastCommit.Signatures // Keep original for reference if needed
+
+	if config.DebugMode {
+		fmt.Println("--- BEGIN DEBUG: Raw Signatures from RPC Commit Data ---")
+		for i, sig := range rawSignaturesFromRPC {
+			fmt.Printf("DEBUG_RPC_SIG[%d]: Address=\"%s\", BlockIDFlag=%d, Signature=\"%s\"\n", i, sig.ValidatorAddress, sig.BlockIDFlag, sig.Signature)
+		}
+		fmt.Println("--- END DEBUG: Raw Signatures from RPC Commit Data ---")
+	}
+
+	validSignatures := make([]RPCSignature, 0, len(rawSignaturesFromRPC))
+	anomalousEmptyAddrCounts := make(map[int]int)
+	totalAnomalousSignatures := 0
+
+	for _, sig := range rawSignaturesFromRPC {
+		if sig.ValidatorAddress == "" {
+			anomalousEmptyAddrCounts[sig.BlockIDFlag]++
+			totalAnomalousSignatures++
+		} else {
+			validSignatures = append(validSignatures, sig)
+		}
+	}
+
+	if totalAnomalousSignatures > 0 {
+		fmt.Printf("Warning: Found %d anomalous signatures with EMPTY validator addresses in commit data for block %s:\n", totalAnomalousSignatures, nextBlockInfoForLog)
+		for flag, count := range anomalousEmptyAddrCounts {
+			var flagDesc string
+			switch flag {
+			case ProtoBlockIDFlagCommit:
+				flagDesc = "COMMIT"
+			case 1: // Absent
+				flagDesc = "ABSENT"
+			case 3: // Nil
+				flagDesc = "NIL"
+			default:
+				flagDesc = fmt.Sprintf("UNKNOWN_FLAG_%d", flag)
+			}
+			fmt.Printf("  - %d signatures marked as %s (BlockIDFlag=%d)\n", count, flagDesc, flag)
+		}
+		if anomalousEmptyAddrCounts[1] > 0 { // Check if there were any anomalous ABSENT votes (Flag = 1)
+			fmt.Println("  Empty-address ABSENT votes likely for 'NO SIGNATURE FOUND' validators.")
+		} else {
+			// If there are anomalous votes but NONE are ABSENT, print a more generic RPC issue message.
+			fmt.Println("  Detected signatures with empty addresses.")
+		}
+	}
+
+	// Process validSignatures for the report
+	for _, sig := range validSignatures {
+		signaturesPresent[sig.ValidatorAddress] = true // Mark signature as present using the non-empty address
+
+		if sig.BlockIDFlag == ProtoBlockIDFlagCommit { // Voted COMMIT
+			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
+				report.AgreedValidators = append(report.AgreedValidators, valInfo)
+				report.AgreedVotingPower += valInfo.VotingPower
+			} else {
+				fmt.Printf("Warning: Validator %s (COMMIT vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+			}
+		} else if sig.BlockIDFlag == 3 { // Voted NIL (3)
+			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
+				report.VotedNilValidators = append(report.VotedNilValidators, valInfo)
+			} else {
+				fmt.Printf("Warning: Validator %s (NIL vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+			}
+		} else if sig.BlockIDFlag == 1 { // Voted ABSENT (1)
+			if valInfo, ok := activeValidators[sig.ValidatorAddress]; ok {
+				report.AbsentValidators = append(report.AbsentValidators, valInfo)
+			} else {
+				fmt.Printf("Warning: Validator %s (ABSENT vote) signed but was not found in the active validator set for height %d.\n", sig.ValidatorAddress, height)
+			}
+		}
+	}
+
+	// Populate MissingSignatureValidators
+	for valHexAddr, valInfo := range activeValidators {
+		if !signaturesPresent[valHexAddr] { // If no signature of any type was found for this active validator
+			report.MissingSignatureValidators = append(report.MissingSignatureValidators, valInfo)
+		}
+	}
+
+	// Sort validators by voting power (descending)
+	sort.Slice(report.AgreedValidators, func(i, j int) bool {
+		return report.AgreedValidators[i].VotingPower > report.AgreedValidators[j].VotingPower
+	})
+	sort.Slice(report.VotedNilValidators, func(i, j int) bool {
+		return report.VotedNilValidators[i].VotingPower > report.VotedNilValidators[j].VotingPower
+	})
+	sort.Slice(report.AbsentValidators, func(i, j int) bool {
+		return report.AbsentValidators[i].VotingPower > report.AbsentValidators[j].VotingPower
+	})
+	sort.Slice(report.MissingSignatureValidators, func(i, j int) bool {
+		return report.MissingSignatureValidators[i].VotingPower > report.MissingSignatureValidators[j].VotingPower
+	})
+
+	return &report, nil
+}
+
+// printConsensusReport displays the formatted consensus report
+func printConsensusReport(report *ConsensusReportData) {
+	fmt.Printf("\n===== BLOCK CONSENSUS REPORT =====\n")
+	fmt.Printf("Block Height: %d\n", report.Height)
+	fmt.Printf("App Hash: %s\n", report.AppHash)
+	fmt.Printf("Proposer: %s (%s)\n", report.ProposerAddress, report.ProposerMoniker)
+
+	// AGREED/COMMIT section
+	fmt.Printf("\n----- VALIDATORS WHO VOTED <COMMIT> (for this block hash) (%d) -----\n", len(report.AgreedValidators))
+	agreementValidatorPercentage := 0.0
+	if report.TotalValidators > 0 {
+		agreementValidatorPercentage = (float64(len(report.AgreedValidators)) / float64(report.TotalValidators)) * 100
+	}
+	agreementPowerPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		agreementPowerPercentage = (float64(report.AgreedVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.AgreedValidators), report.TotalValidators, agreementValidatorPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", report.AgreedVotingPower, report.TotalVotingPower, agreementPowerPercentage)
+	if len(report.AgreedValidators) > 0 {
+		for i, v := range report.AgreedValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("No validators explicitly cast a COMMIT vote for this block hash.")
+	}
+
+	// Section for NIL votes
+	fmt.Printf("\n--- VALIDATORS WHO VOTED <NIL> (abstained/disagreed with proposed block) (%d) ---\n", len(report.VotedNilValidators))
+	var nilVotingPower int64
+	for _, v := range report.VotedNilValidators {
+		nilVotingPower += v.VotingPower
+	}
+	validatorNilPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorNilPercentage = (float64(len(report.VotedNilValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerNilPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerNilPercentage = (float64(nilVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.VotedNilValidators), report.TotalValidators, validatorNilPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", nilVotingPower, report.TotalVotingPower, powerNilPercentage)
+	if len(report.VotedNilValidators) > 0 {
+		for i, v := range report.VotedNilValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("No validators explicitly voted NIL (based on found signatures).")
+	}
+
+	// Section for ABSENT votes
+	fmt.Printf("\n--- VALIDATORS RECORDED WITH <ABSENT> STATUS (vote not received) (%d) ---\n", len(report.AbsentValidators))
+	var absentVotingPower int64
+	for _, v := range report.AbsentValidators {
+		absentVotingPower += v.VotingPower
+	}
+	validatorAbsentPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorAbsentPercentage = (float64(len(report.AbsentValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerAbsentPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerAbsentPercentage = (float64(absentVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.AbsentValidators), report.TotalValidators, validatorAbsentPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", absentVotingPower, report.TotalVotingPower, powerAbsentPercentage)
+	if len(report.AbsentValidators) > 0 {
+		for i, v := range report.AbsentValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("No validators were recorded with an <ABSENT> status (vote not received).")
+	}
+
+	// Section for MISSING SIGNATURES
+	fmt.Printf("\n----- VALIDATORS WITH NO SIGNATURE FOUND (in active set) (%d) -----\n", len(report.MissingSignatureValidators))
+	var missingSignatureVotingPower int64
+	for _, v := range report.MissingSignatureValidators {
+		missingSignatureVotingPower += v.VotingPower
+	}
+	validatorMissingPercentage := 0.0
+	if report.TotalValidators > 0 {
+		validatorMissingPercentage = (float64(len(report.MissingSignatureValidators)) / float64(report.TotalValidators)) * 100
+	}
+	powerMissingPercentage := 0.0
+	if report.TotalVotingPower > 0 {
+		powerMissingPercentage = (float64(missingSignatureVotingPower) / float64(report.TotalVotingPower)) * 100
+	}
+	fmt.Printf("  Validator Count: %d/%d (%.2f%% of active set)\n", len(report.MissingSignatureValidators), report.TotalValidators, validatorMissingPercentage)
+	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", missingSignatureVotingPower, report.TotalVotingPower, powerMissingPercentage)
+	if len(report.MissingSignatureValidators) > 0 {
+		for i, v := range report.MissingSignatureValidators {
+			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+		}
+	} else {
+		fmt.Println("All validators in the active set had a signature in the commit data (either COMMIT, NIL, or ABSENT).")
+	}
+	fmt.Println()
 }
