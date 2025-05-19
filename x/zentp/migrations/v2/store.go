@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"strings"
 
 	"cosmossdk.io/collections"
@@ -8,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func UpdateParams(ctx sdk.Context, params collections.Item[types.Solana]) error {
+func UpdateParams(ctx sdk.Context, params collections.Item[types.Params]) error {
 	paramsMap := map[string]types.Solana{
 		"zenrock": { // local
 			SignerKeyId:       10,
@@ -60,13 +61,20 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.Solana]) error 
 		chainID = "zenrock"
 	}
 
-	newParams := types.Solana{}
+	newParams := types.Params{
+		Solana:    &types.Solana{},
+		BridgeFee: types.DefaultParams().BridgeFee,
+	}
 
 	for prefix, paramSet := range paramsMap {
 		if strings.HasPrefix(chainID, prefix) {
-			newParams = paramSet
+			newParams.Solana = &paramSet
 			break
 		}
+	}
+
+	if newParams.Solana == nil || newParams.BridgeFee.IsNil() || newParams.BridgeFee.IsNegative() {
+		return fmt.Errorf("failed to update params for chain %s", chainID)
 	}
 
 	if err := params.Set(ctx, newParams); err != nil {

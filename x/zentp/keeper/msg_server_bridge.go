@@ -58,8 +58,10 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	// TODO check err
-	k.MintCount.Set(ctx, mintsCount)
+	err = k.MintCount.Set(ctx, mintsCount)
+	if err != nil {
+		return nil, err
+	}
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
