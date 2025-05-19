@@ -471,8 +471,9 @@ services:
       PSQL_DB: tss_db
       RSA_PRIVATE_KEY: '{"p": "c82139fdbe2518a627f4813e883e84ccb528e13ecd4846d117b27a0fa7ec9e8571b97228a1b53886562cb8d42eb323a6152ba5d2c9ba5b7cc208e07cfff9e29c266a241556a66a758242de3e3291aa3a9d777e010e9fb933db4c94dabf38a0d614b71e7aa1747285aaee0f1edb163f9a3aae3e18b67d44910e308a2e4f4ead2f","q": "b7a008f646ff738ccb529b8caa0bc6197e79affc6d45347cf425b4e37eec328a4ee82a50fac4c590ad4a600c9135923e2db3837f4f5ca6a23492e5aa2d3e69b70a79ad2521e3ea22c4f46d23d8f6204ac3b118e7517b12629d2f6ed273062c8ee94aa242c0d3225b3500eb31742a7eec4a0c6d257d88f101b61e72e3a738ef8f"}'
 
-  curl:
-    image: alpine
-    container_name: curl
-    tty: true
-    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl && exec sh"]
+  # curl:
+  #   image: alpine
+  #   container_name: curl
+  #   tty: true
+  #   entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl && exec sh"]
+
