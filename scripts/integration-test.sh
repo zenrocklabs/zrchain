@@ -1,9 +1,6 @@
 #!/usr/bin/env sh
 set -e
 
-# install jq
-apk add jq
-
 # Clean up previous config
 rm -rf ~/.zrchain
 
