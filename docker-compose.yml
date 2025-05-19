@@ -342,7 +342,10 @@ services:
     entrypoint:
       - /bin/sh
     command:
-      - /app/init.sh
+      - -c
+      - |
+        chmod +x /app/init.sh
+        /app/init.sh
     ports:
     - published: 9790
       target: 9790
