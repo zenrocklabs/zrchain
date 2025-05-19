@@ -76,7 +76,7 @@ func GetTestClient() (context.Context, *TestClient) {
 		timeout = time.Second * 60
 	} else if env == "gardia" {
 		url = "grpc.gardia.zenrocklabs.io"
-		chainId = "gardia-2"
+		chainId = "gardia-5"
 		insecure = false
 		keyring = "keyring1k6vc6vhp6e6l3rxalue9v4ux"
 		timeout = time.Second * 60
