@@ -23,6 +23,14 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
+      - name: Inspect Environment
+        run: |
+          echo "=== System Information ==="
+          uname -a
+          echo "=== Environment Variables ==="
+          env | sort
+          echo "=== Memory Info ==="
+          free -h
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
@@ -41,6 +49,14 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
+      - name: Inspect Environment
+        run: |
+          echo "=== System Information ==="
+          uname -a
+          echo "=== Environment Variables ==="
+          env | sort
+          echo "=== Memory Info ==="
+          free -h
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
