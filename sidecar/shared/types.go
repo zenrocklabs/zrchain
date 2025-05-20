@@ -104,9 +104,9 @@ var (
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
 	SolanaCAIP2 = map[string]string{
-		NetworkDevnet:  "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
-		NetworkTestnet: "solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K",
-		NetworkMainnet: "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z",
+		NetworkDevnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkTestnet: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkMainnet: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
 	// ROCK Price feed URL
