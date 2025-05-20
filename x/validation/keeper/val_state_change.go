@@ -316,27 +316,14 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 		oldPowerBytes, found := last[valAddrStr]
 
-		// Get exchange rate for the primary AVS asset (e.g., BTC)
-		// If a validator could hold different AVS types, this would need to be dynamic.
-		var avsExchangeRate math.LegacyDec = math.LegacyOneDec()            // Default
-		if primaryAVSAssetData != nil && validator.TokensAVS.IsPositive() { // Only fetch if validator has AVS for this asset type
-			// Assuming zenBTCKeeper is for BTC, if primaryAVSAssetData is BTC.
-			// This part needs to be generalized if supporting multiple AVS types with different keepers/rate sources.
-			rate, err := k.zenBTCKeeper.GetExchangeRate(sdk.UnwrapSDKContext(ctx)) // GetExchangeRate needs sdk.Context
-			if err == nil && !rate.IsZero() {                                      // Added !rate.IsZero() check
-				avsExchangeRate = rate
-			}
-		}
-
 		// Use the new helper function to calculate power
 		// Pass validator.TokensAVS directly, assuming it corresponds to primaryAVSAssetData (e.g. BTC)
-		newPowerVal, nativePowerDebug, avsPowerDebug := k.calculateValidatorPowerComponents(
+		finalConsensusPower, nativeValueDecimal, avsValueDecimal := k.calculateValidatorPowerComponents(
 			validator,
 			powerReduction,
 			nativeAssetData,
 			primaryAVSAssetData, // Pass data for the AVS tokens the validator holds
 			validator.TokensAVS, // Pass the amount of those AVS tokens
-			avsExchangeRate,
 			pricesAreValid,
 		)
 
@@ -344,30 +331,34 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		if err != nil {
 			return nil, err
 		}
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		sdkCtx.Logger().Debug(fmt.Sprintf( // Use sdkCtx.Logger()
-			"\nvalidator: %s | %s\ntoken stake: native_units=%d, avs_raw_units=%s (for %v)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
+
+		configuredAVSAssetType := "AVS_STAKE_DISABLED" // Default if AVS asset isn't configured/found
+		if primaryAVSAssetData != nil {
+			configuredAVSAssetType = primaryAVSAssetData.GetAsset().String()
+		}
+
+		k.Logger(ctx).Info(fmt.Sprintf(
+			"\nvalidator: %s | %s\ntoken stake: native_units=%d, avs_raw_units=%s (for %s)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
-			validator.ConsensusPower(powerReduction), validator.TokensAVS.String(), primaryAVSAssetData.GetAsset(), // Log raw AVS units and type
-			nativePowerDebug.String(), avsPowerDebug.String(), newPowerVal,
+			validator.ConsensusPower(powerReduction), validator.TokensAVS.String(), configuredAVSAssetType,
+			nativeValueDecimal.String(), avsValueDecimal.String(), finalConsensusPower,
 		))
 
-		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: newPowerVal})
+		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: finalConsensusPower})
 
 		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
-			// The ABCIValidatorUpdate's Power field should be newPowerVal.
-			// The validator.ABCIValidatorUpdate method might take powerReduction or the final power.
-			// Assuming it takes the final calculated power:
-			updates = append(updates, validator.ABCIValidatorUpdate(powerReduction, newPowerVal)) // Adjusted: Pass newPowerVal directly
+			// The ABCIValidatorUpdate's Power field should be finalConsensusPower.
+			// The validator.ABCIValidatorUpdate method takes the final calculated power directly.
+			updates = append(updates, validator.ABCIValidatorUpdate(powerReduction, finalConsensusPower))
 
-			if err = k.SetLastValidatorPower(ctx, valAddr, newPowerVal); err != nil {
+			if err = k.SetLastValidatorPower(ctx, valAddr, finalConsensusPower); err != nil {
 				return nil, err
 			}
 		}
 
 		delete(last, valAddrStr)
 		count++
-		totalPowerCalculated = totalPowerCalculated.Add(math.NewInt(newPowerVal))
+		totalPowerCalculated = totalPowerCalculated.Add(math.NewInt(finalConsensusPower))
 	}
 
 	noLongerBonded, err := sortNoLongerBonded(last, k.validatorAddressCodec)
@@ -381,10 +372,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		if err != nil {
 			return nil, err
 		}
-		// operatorStr, err := k.validatorAddressCodec.BytesToString(valAddrBytes) // Validator's operator address string from bytes. This line is unused.
-		// if err != nil {
-		//     return nil, err
-		// }
+
 		amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
 
 		// Use sdk.ValAddress for DeleteLastValidatorPower if it expects that
@@ -447,7 +435,6 @@ func (k Keeper) calculateValidatorPowerComponents(
 	nativeAssetData *types.AssetData,
 	avsAssetData *types.AssetData, // Contains PriceUSD and Precision for the AVS token
 	avsTokens math.Int, // Raw amount of AVS tokens (e.g., satoshis)
-	avsExchangeRate math.LegacyDec,
 	pricesAreValid bool,
 ) (totalConsensusPower int64, nativePowerContribution math.LegacyDec, avsPowerContribution math.LegacyDec) {
 
@@ -480,13 +467,13 @@ func (k Keeper) calculateValidatorPowerComponents(
 				if !divisorDec.IsZero() {
 					// Calculate whole AVS units as math.LegacyDec (e.g., 1.18170108 for BTC)
 					wholeAVSUnitsDec := avsTokensDec.Quo(divisorDec)
-					avsPowerContribution = avsAssetData.PriceUSD.Mul(avsExchangeRate).Mul(wholeAVSUnitsDec)
+					avsPowerContribution = avsAssetData.PriceUSD.Mul(wholeAVSUnitsDec)
 				} else {
 					// This case should ideally not be reached if precision > 0
 					avsPowerContribution = math.LegacyZeroDec()
 				}
 			} else { // asset.Precision is 0, so 10^0 = 1. Treat tokens as whole units.
-				avsPowerContribution = avsAssetData.PriceUSD.Mul(avsExchangeRate).Mul(avsTokensDec)
+				avsPowerContribution = avsAssetData.PriceUSD.Mul(avsTokensDec)
 			}
 		}
 		// If pricesAreValid is false, or avsAssetData.PriceUSD is zero, avsPowerContribution remains ZeroDec
@@ -509,12 +496,6 @@ func (k Keeper) calculateValidatorPowerComponents(
 	}
 
 	return totalConsensusPower, nativePowerContribution, avsPowerContribution
-}
-
-// adjustPowerToPrecision function as you provided (fixed version)
-func (k Keeper) adjustPowerToPrecision(tokens math.Int, assetPrecision uint32) math.Int {
-	powerOf10Denominator := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(assetPrecision)), nil)
-	return tokens.Quo(math.NewIntFromBigInt(powerOf10Denominator))
 }
 
 // Validator state transitions

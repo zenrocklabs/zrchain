@@ -309,6 +309,26 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "FAIL: empty data for signing",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key:       &defaultKey,
+				msg:       types.NewMsgNewSignatureRequest("testOwner", []uint64{1}, "", 1000, 0),
+			},
+			wantErr: true,
+		},
+		{
+			name: "FAIL: empty key ids",
+			args: args{
+				keyring:   &defaultKr,
+				workspace: &defaultWs,
+				key:       &defaultKey,
+				msg:       types.NewMsgNewSignatureRequest("testOwner", []uint64{}, "778f572f", 1000, 0),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
