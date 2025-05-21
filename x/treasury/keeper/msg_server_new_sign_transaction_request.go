@@ -73,6 +73,10 @@ func (k msgServer) NewSignTransactionRequest(goCtx context.Context, msg *types.M
 
 	ctx.Logger().Debug("parsed layer 1 tx", "wallet", w, "tx", tx)
 
+	if err := k.checkReservedKeyIDs(ctx, msg.KeyIds); err != nil {
+		return nil, err
+	}
+
 	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyId, msg.Btl, map[string][]byte{
 		types.TxValueKey:        []byte(tx.Amount.String()),
 		types.DataForSigningKey: tx.DataForSigning,
