@@ -13,14 +13,13 @@ import (
 )
 
 func TestCreateDurableNonceAccount(t *testing.T) {
+	var client = rpc.New("https://api.testnet.solana.com")
 
-	var client = rpc.New("https://api.mainnet-beta.solana.com/")
-
-	nonceAuthPubKey := solana.MustPublicKeyFromBase58("2jGUsSXkWsqH7aGf35XZJTqs6LrW3V7SiCfXoYn2p1F5")
-	nonceAccPubKey := solana.MustPublicKeyFromBase58("3RLAw8Tyxy4uLELom7gUtYmqm1As37uiijbZMR5a9vRU")
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("6WpfcRsb87eSrTz4qc4GAcmYQv7xS6mHszndAFrSngSD")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("CHZ5nVk6acDiqbiB44qLUcPddvt1o7Sm8X1wkSEFvE8o")
 	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 	require.NoError(t, err)
-	require.NoError(t, err)
+
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{
 			system.NewCreateAccountInstruction(
@@ -45,7 +44,62 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 	bin, err := tx.Message.MarshalBinary()
 	require.NoError(t, err)
 
-	fmt.Printf("transaction hex data: %s", hex.EncodeToString(bin))
+	fmt.Printf("unsigned transaction hex: %s", hex.EncodeToString(bin))
+}
+
+func TestCreateDurableNonceAccount_CreateOnly(t *testing.T) {
+	var client = rpc.New("https://api.devnet.solana.com")
+
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("6WpfcRsb87eSrTz4qc4GAcmYQv7xS6mHszndAFrSngSD")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("CHZ5nVk6acDiqbiB44qLUcPddvt1o7Sm8X1wkSEFvE8o")
+	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
+	require.NoError(t, err)
+
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{
+			system.NewCreateAccountInstruction(
+				uint64(0.0015*float64(solana.LAMPORTS_PER_SOL)),
+				NONCE_ACCOUNT_LENGTH,
+				solana.SystemProgramID,
+				nonceAuthPubKey,
+				nonceAccPubKey,
+			).Build(),
+		},
+		recent.Value.Blockhash,
+		solana.TransactionPayer(nonceAuthPubKey),
+	)
+	require.NoError(t, err)
+	bin, err := tx.Message.MarshalBinary()
+	require.NoError(t, err)
+
+	fmt.Printf("unsigned transaction create only: %s", hex.EncodeToString(bin))
+}
+
+func TestCreateDurableNonceAccount_InitializeOnly(t *testing.T) {
+	var client = rpc.New("https://api.devnet.solana.com")
+
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("6WpfcRsb87eSrTz4qc4GAcmYQv7xS6mHszndAFrSngSD")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("CHZ5nVk6acDiqbiB44qLUcPddvt1o7Sm8X1wkSEFvE8o")
+	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
+	require.NoError(t, err)
+
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{
+			system.NewInitializeNonceAccountInstruction(
+				nonceAuthPubKey,
+				nonceAccPubKey,
+				solana.SysVarRecentBlockHashesPubkey,
+				solana.SysVarRentPubkey,
+			).Build(),
+		},
+		recent.Value.Blockhash,
+		solana.TransactionPayer(nonceAuthPubKey),
+	)
+	require.NoError(t, err)
+	bin, err := tx.Message.MarshalBinary()
+	require.NoError(t, err)
+
+	fmt.Printf("unsigned transaction initialize only: %s", hex.EncodeToString(bin))
 }
 
 func TestParseDurableNonceTransaction(t *testing.T) {
