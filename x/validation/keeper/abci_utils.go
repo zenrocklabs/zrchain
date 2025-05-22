@@ -898,7 +898,7 @@ func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.
 			}
 			isMatchingNetwork := false
 			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
-				isMatchingNetwork = types.IsSolanaCAIP2(tx.Caip2ChainId)
+				isMatchingNetwork = types.IsSolanaCAIP2(ctx, tx.Caip2ChainId)
 			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
 				isMatchingNetwork = types.IsEthereumCAIP2(tx.Caip2ChainId)
 			}
