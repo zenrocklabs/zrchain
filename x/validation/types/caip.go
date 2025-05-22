@@ -53,10 +53,11 @@ func ExtractEVMChainID(input string) (ZChainID, error) {
 
 // TODO(Sasha): add support for Solana
 // ValidateChainID validates a chain ID that can be either a CAIP-2 string or a uint64.
-// For CAIP-2 strings, currently only EVM chains (eip155 namespace) are supported.
-// Returns the validated uint64 chain ID and any error.
+// For CAIP-2 strings, EVM (eip155 namespace) and Solana chains are supported.
+// Returns the validated ZChainID and any error.
 func ValidateChainID(ctx context.Context, chainID any) (ZChainID, error) {
 	var chID ZChainID
+	isEVM := false // Flag to determine if the context is EVM for final validation
 
 	switch chainIDInput := chainID.(type) {
 	case string:
@@ -66,42 +67,56 @@ func ValidateChainID(ctx context.Context, chainID any) (ZChainID, error) {
 			if err != nil {
 				return "", fmt.Errorf("invalid CAIP-2 chain ID: %w", err)
 			}
+
 			if namespace == "eip155" {
 				chID, err = ExtractEVMChainID(chainIDInput)
 				if err != nil {
 					return "", fmt.Errorf("invalid EVM chain ID: %w", err)
 				}
+				isEVM = true
 			} else if namespace == "solana" {
-				chID, err = ExtractSolanaNetwork(chainIDInput)
+				// ExtractSolanaNetwork already validates against its own allowed list of networks
+				solanaChID, err := ExtractSolanaNetwork(ctx, chainIDInput)
 				if err != nil {
 					return "", fmt.Errorf("invalid Solana chain ID: %w", err)
 				}
+				return solanaChID, nil // Solana ID is validated, return directly
 			} else {
-				return "", fmt.Errorf("unsupported chain type: %s (only EVM/eip155 chains are supported)", namespace)
+				return "", fmt.Errorf("unsupported CAIP-2 namespace: %s (supported: eip155, solana)", namespace)
 			}
 		} else {
-			return "", fmt.Errorf("invalid chain ID format: %s (expected uint64 or CAIP-2 format with eip155 namespace)", chainIDInput)
+			// Updated error message for non-CAIP2 strings
+			return "", fmt.Errorf("invalid chain ID format: %s (expected uint64 or CAIP-2, e.g., eip155:1, solana:network-id)", chainIDInput)
 		}
 	case uint64:
 		chID = ZChainID(strconv.FormatUint(chainIDInput, 10))
+		isEVM = true
 	default:
 		return "", fmt.Errorf("unsupported chain ID type: %T (expected uint64 or string)", chainID)
 	}
 
-	allowedChainIDs := []ZChainID{"17000", "EtWTRABZaYq6iMfeYKouRu166VU2xqa1"}
-	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
-		allowedChainIDs = append(allowedChainIDs, "1")
+	// This validation is now specifically for EVM chain IDs
+	if isEVM {
+		allowedEVMChainIDs := []ZChainID{"17000"}
+		if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
+			allowedEVMChainIDs = append(allowedEVMChainIDs, "1")
+		}
+
+		if !slices.Contains(allowedEVMChainIDs, chID) {
+			// Use chID in the error message, as chainID is the raw input
+			return "", fmt.Errorf("unsupported EVM chain ID: %s (allowed: %v)", chID, allowedEVMChainIDs)
+		}
 	}
-	if !slices.Contains(allowedChainIDs, chID) {
-		return "", fmt.Errorf("unsupported EVM chain ID: %s (allowed values: %v)", chainID, allowedChainIDs)
-	}
+	// If it was Solana, it returned early.
+	// If it was an unsupported CAIP-2 namespace or invalid format, it returned an error early.
+	// If it was EVM, it has now been validated.
 
 	return chID, nil
 }
 
 // ExtractSolanaNetwork checks if a CAIP-2 string is Solana-based and extracts the network type.
 // Returns the network type (mainnet, testnet, or devnet) and an error if not a valid Solana CAIP-2.
-func ExtractSolanaNetwork(input string) (ZChainID, error) {
+func ExtractSolanaNetwork(ctx context.Context, input string) (ZChainID, error) {
 	namespace, reference, err := ExtractCAIP2Parts(input)
 	if err != nil {
 		return "", err
@@ -113,9 +128,11 @@ func ExtractSolanaNetwork(input string) (ZChainID, error) {
 
 	// Validate that the reference is one of the allowed Solana networks
 	allowedNetworks := []string{
-		"5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // mainnet
 		"EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // devnet
 		"4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", // testnet
+	}
+	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
+		allowedNetworks = append(allowedNetworks, "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp") // mainnet
 	}
 	if !slices.Contains(allowedNetworks, reference) {
 		return "", fmt.Errorf("invalid Solana network: %s (allowed values: %v)", reference, allowedNetworks)
@@ -125,8 +142,8 @@ func ExtractSolanaNetwork(input string) (ZChainID, error) {
 }
 
 // IsSolanaCAIP2 checks if a CAIP-2 string represents a Solana network (mainnet, testnet, or devnet).
-func IsSolanaCAIP2(input string) bool {
-	network, err := ExtractSolanaNetwork(input)
+func IsSolanaCAIP2(ctx context.Context, input string) bool {
+	network, err := ExtractSolanaNetwork(ctx, input)
 	return err == nil && network != ""
 }
 

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestValidCAIP2(t *testing.T) {
@@ -77,7 +79,7 @@ func TestIsSolanaCAIP2(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expected, IsSolanaCAIP2(tc.input))
+			require.Equal(t, tc.expected, IsSolanaCAIP2(sdk.Context{}.WithChainID("diamond-1"), tc.input))
 		})
 	}
 }
