@@ -51,7 +51,6 @@ func ExtractEVMChainID(input string) (ZChainID, error) {
 	return ZChainID(id), nil
 }
 
-// TODO(Sasha): add support for Solana
 // ValidateChainID validates a chain ID that can be either a CAIP-2 string or a uint64.
 // For CAIP-2 strings, EVM (eip155 namespace) and Solana chains are supported.
 // Returns the validated ZChainID and any error.
