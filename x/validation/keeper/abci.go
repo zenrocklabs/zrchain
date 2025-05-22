@@ -1059,7 +1059,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
-			if types.IsSolanaCAIP2(tx.Caip2ChainId) {
+			if types.IsSolanaCAIP2(ctx, tx.Caip2ChainId) {
 				solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
 					return err
