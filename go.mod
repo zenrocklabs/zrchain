@@ -9,7 +9,6 @@ replace (
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
-	github.com/gagliardetto/solana-go => github.com/zenrocklabs/solana-go v1.12.0-zenrock
 	// fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2

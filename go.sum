@@ -605,6 +605,8 @@ github.com/gagliardetto/binary v0.8.0 h1:U9ahc45v9HW0d15LoN++vIXSJyqR/pWw8DDlhd7
 github.com/gagliardetto/binary v0.8.0/go.mod h1:2tfj51g5o9dnvsc+fL3Jxr22MuWzYXwx9wEoN0XQ7/c=
 github.com/gagliardetto/gofuzz v1.2.2 h1:XL/8qDMzcgvR4+CyRQW9UGdwPRPMHVJfqQ/uMvSUuQw=
 github.com/gagliardetto/gofuzz v1.2.2/go.mod h1:bkH/3hYLZrMLbfYWA0pWzXmi5TTRZnu4pMGZBkqMKvY=
+github.com/gagliardetto/solana-go v1.11.0 h1:g6mR7uRNVT0Y0LVR0bvJNfKV6TyO6oUzBYu03ZmkEmY=
+github.com/gagliardetto/solana-go v1.11.0/go.mod h1:afBEcIRrDLJst3lvAahTr63m6W2Ns6dajZxe2irF7Jg=
 github.com/gagliardetto/treeout v0.1.4 h1:ozeYerrLCmCubo1TcIjFiOWTTGteOOHND1twdFpgwaw=
 github.com/gagliardetto/treeout v0.1.4/go.mod h1:loUefvXTrlRG5rYmJmExNryyBRh8f89VZhmMOyCyqok=
 github.com/getsentry/sentry-go v0.29.1 h1:DyZuChN8Hz3ARxGVV8ePaNXh1dQ7d76AiB117xcREwA=
@@ -1308,8 +1310,6 @@ github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2 h1:Tb1R2MIcL6c3A7eZbnptemT1l
 github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoqcXVA7LSXq/6ztw97Q=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
-github.com/zenrocklabs/solana-go v1.12.0-zenrock h1:YIQJNiejECj3BB9ZlxyIy1iNWlZA26Xr3ZK5AMk6RRI=
-github.com/zenrocklabs/solana-go v1.12.0-zenrock/go.mod h1:l/qqqIN6qJJPtxW/G1PF4JtcE3Zg2vD2EliZrr9Gn5k=
 github.com/zenrocklabs/zenbtc v1.17.4 h1:k5BoXRUdSuGWHNwYdeuO4dhKThL7fwUj/7xXYujdhNo=
 github.com/zenrocklabs/zenbtc v1.17.4/go.mod h1:GEcvVJo5wEFCYCFnB2tsaS6WFXreh//7a68hbBMt6Oc=
 github.com/zenrocklabs/zenrock-avs v1.6.4 h1:x1tASFM9akwjHyJ4WOyRppNV7yKjrNN6uL0+91EeI3g=
