@@ -620,6 +620,7 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 			}
 		}
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
+		req.RejectReason = "Key request timed out"
 		if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 			return err
 		}
@@ -689,6 +690,7 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 			}
 		}
 		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = "Signature request timed out"
 		if err := k.SignRequestStore.Set(ctx, req.Id, *req); err != nil {
 			return err
 		}

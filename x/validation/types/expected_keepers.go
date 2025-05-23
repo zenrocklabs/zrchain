@@ -127,4 +127,6 @@ type ZentpKeeper interface {
 	UpdateMint(ctx context.Context, id uint64, mint *zentptypes.Bridge) error
 	GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*zentptypes.Bridge, error)
 	AddBurn(ctx context.Context, burn *zentptypes.Bridge) error
+	GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error)
+	GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, error)
 }
