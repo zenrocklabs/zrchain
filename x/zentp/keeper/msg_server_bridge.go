@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -14,7 +13,6 @@ import (
 )
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
-	return nil, fmt.Errorf("zentp module is currently disabled") // TODO: remove this
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -26,10 +24,16 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	if treasurytypes.ValidateChainAddress(req.DestinationChain, req.RecipientAddress) != nil {
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
+
+	totalAmount, err := k.AddFeeToBridgeAmount(ctx, req.Amount)
+	if err != nil {
+		return nil, err
+	}
+
 	p := k.GetSolanaParams(ctx)
-	totalAmount := req.Amount + p.Fee // TODO: do this chain agnostic
+	totalAmount = totalAmount + p.Fee // TODO: do this chain agnostic
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
-	if bal.IsLT(sdk.NewCoin("urock", sdkmath.NewIntFromUint64(totalAmount))) {
+	if bal.IsLT(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))) {
 		return nil, errors.New("not enough balance")
 	}
 
@@ -54,8 +58,10 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	// TODO check err
-	k.MintCount.Set(ctx, mintsCount)
+	err = k.MintCount.Set(ctx, mintsCount)
+	if err != nil {
+		return nil, err
+	}
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,

@@ -400,3 +400,7 @@ func (k Keeper) GetModuleAccountPerms(ctx context.Context) []string {
 	moduleAccount := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
 	return moduleAccount.GetPermissions()
 }
+
+func (k Keeper) GetParams(ctx context.Context) (types.Params, error) {
+	return k.Params.Get(ctx)
+}

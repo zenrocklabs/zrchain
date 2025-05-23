@@ -1,6 +1,9 @@
 package types
 
 import (
+	fmt "fmt"
+
+	"cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -25,7 +28,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams() Params {
-	return Params{Solana: DefaultSolanaParams}
+	return Params{
+		Solana:    DefaultSolanaParams,
+		BridgeFee: math.LegacyNewDecWithPrec(1, 2),
+	}
 }
 
 // DefaultParams returns a default set of parameters
@@ -40,5 +46,27 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if err := validateBridgeFee(p.BridgeFee); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateBridgeFee(i interface{}) error {
+	v, ok := i.(math.LegacyDec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if v.IsNil() {
+		return fmt.Errorf("bridge fee must have a value: %s", v)
+	}
+	if v.IsNegative() || v.IsZero() {
+		return fmt.Errorf("bridge fee must be non-negative: %s", v)
+	}
+	if v.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("bridge fee too large: %s", v)
+	}
+
 	return nil
 }

@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -368,8 +367,10 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
-		// k.processSolanaROCKMints(ctx, oracleData)
-		// k.processSolanaROCKMintEvents(ctx, oracleData)
+		k.processSolanaZenBTCMintEvents(ctx, oracleData)
+		k.processSolanaROCKMints(ctx, oracleData)
+		k.processSolanaROCKMintEvents(ctx, oracleData)
+		k.processSolanaROCKBurnEvents(ctx, oracleData)
 		k.clearSolanaAccounts(ctx)
 	}
 
@@ -1496,6 +1497,13 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
+
+	protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
+		return
+	}
+
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -1520,6 +1528,14 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
 		}
 
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
+			return
+		}
+
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(pendingMint.Amount)))
+
 		var (
 			signatures []byte
 			sigHash    [32]byte
@@ -1539,10 +1555,16 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		sigHash = sha256.Sum256(signatures)
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
-				coins := sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, math.NewIntFromUint64(pendingMint.Amount)))
-				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, coins)
+
+				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
 				if err != nil {
-					k.Logger(ctx).Error("Burn %s: %s", pendingMint.Denom, err.Error())
+					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
+					return
+				}
+
+				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins)
+				if err != nil {
+					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
 					return
 				}
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
@@ -1550,6 +1572,15 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				if err != nil {
 					k.Logger(ctx).Error("UpdateMint: ", err.Error())
 				}
+
+				sdkCtx := sdk.UnwrapSDKContext(ctx)
+				sdkCtx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						types.EventTypeValidation,
+						sdk.NewAttribute(types.AttributeKeyBurnAmount, bridgeAmount.String()),
+						sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+					),
+				)
 			}
 		}
 	}
@@ -2090,7 +2121,6 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 }
 
-// TODO: why is this unused?
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
 	for _, e := range oracleData.SolanaBurnEvents {
@@ -2114,7 +2144,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
-		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(burn.Amount)))
+		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
 			continue
@@ -2129,7 +2159,26 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			k.Logger(ctx).Error(fmt.Errorf("AccAddressFromBech32: %w", err).Error())
 			continue
 		}
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
+
+		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
+			return
+		}
+
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
+			return
+		}
+
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
+		}
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
@@ -2144,5 +2193,15 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
 		}
+
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		sdkCtx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeValidation,
+				sdk.NewAttribute(types.AttributeKeyBridgeAmount, bridgeAmount.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
+			),
+		)
 	}
 }
