@@ -73,23 +73,8 @@ func (k msgServer) NewSignatureRequest(goCtx context.Context, msg *types.MsgNewS
 		return nil, fmt.Errorf("error whilst verifying transaction & hashes %s", err.Error())
 	}
 
-	if !k.TestMode {
-		if k.zenBTCKeeper == nil {
-			return nil, fmt.Errorf("zenbtc keeper is not set")
-		}
-		for _, keyID := range msg.KeyIds {
-			if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
-				keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
-				slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
-				return nil, fmt.Errorf("key %v is reserved for internal zenbtc use", keyID)
-			}
-		}
+	if err := k.checkReservedKeyIDs(ctx, msg.KeyIds); err != nil {
+		return nil, err
 	}
 
 	act, err := k.policyKeeper.AddAction(ctx, msg.Creator, msg, signPolicyID, msg.Btl, nil, ws.Owners)
@@ -122,6 +107,28 @@ func (k msgServer) NewSignatureRequestActionHandler(ctx sdk.Context, act *policy
 		act,
 		k.HandleSignatureRequest,
 	)
+}
+
+func (k msgServer) checkReservedKeyIDs(ctx sdk.Context, keyIds []uint64) error {
+	if !k.TestMode {
+		if k.zenBTCKeeper == nil {
+			return fmt.Errorf("zenbtc keeper is not set")
+		}
+		for _, keyID := range keyIds {
+			if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
+				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
+				keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
+				slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
+				return fmt.Errorf("key %d is reserved for internal zenbtc use", keyID)
+			}
+		}
+	}
+	return nil
 }
 
 // VerifyDataForSigning - checks dataforSigning against any supplied verification data
