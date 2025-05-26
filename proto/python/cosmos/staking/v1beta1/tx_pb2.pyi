@@ -127,15 +127,3 @@ class MsgUpdateParams(_message.Message):
 class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
-
-class MsgRotateConsPubKey(_message.Message):
-    __slots__ = ("validator_address", "new_pubkey")
-    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    NEW_PUBKEY_FIELD_NUMBER: _ClassVar[int]
-    validator_address: str
-    new_pubkey: _any_pb2.Any
-    def __init__(self, validator_address: _Optional[str] = ..., new_pubkey: _Optional[_Union[_any_pb2.Any, _Mapping]] = ...) -> None: ...
-
-class MsgRotateConsPubKeyResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...

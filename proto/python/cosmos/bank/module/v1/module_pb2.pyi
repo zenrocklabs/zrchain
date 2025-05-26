@@ -7,9 +7,11 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Op
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Module(_message.Message):
-    __slots__ = ("blocked_module_accounts_override", "authority")
+    __slots__ = ("blocked_module_accounts_override", "authority", "restrictions_order")
     BLOCKED_MODULE_ACCOUNTS_OVERRIDE_FIELD_NUMBER: _ClassVar[int]
     AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    RESTRICTIONS_ORDER_FIELD_NUMBER: _ClassVar[int]
     blocked_module_accounts_override: _containers.RepeatedScalarFieldContainer[str]
     authority: str
-    def __init__(self, blocked_module_accounts_override: _Optional[_Iterable[str]] = ..., authority: _Optional[str] = ...) -> None: ...
+    restrictions_order: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, blocked_module_accounts_override: _Optional[_Iterable[str]] = ..., authority: _Optional[str] = ..., restrictions_order: _Optional[_Iterable[str]] = ...) -> None: ...

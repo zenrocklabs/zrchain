@@ -149,7 +149,7 @@ class SignTxReqResponse(_message.Message):
     def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., wallet_type: _Optional[str] = ..., unsigned_transaction: _Optional[bytes] = ..., sign_request_id: _Optional[int] = ..., no_broadcast: bool = ..., mpc_btl: _Optional[int] = ..., key_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class ICATransactionRequest(_message.Message):
-    __slots__ = ("id", "creator", "key_id", "key_type", "input_msg", "status", "signed_data", "keyring_party_signatures", "reject_reason")
+    __slots__ = ("id", "creator", "key_id", "key_type", "input_msg", "status", "signed_data", "keyring_party_signatures", "reject_reason", "keyring_party_sigs")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
@@ -159,6 +159,7 @@ class ICATransactionRequest(_message.Message):
     SIGNED_DATA_FIELD_NUMBER: _ClassVar[int]
     KEYRING_PARTY_SIGNATURES_FIELD_NUMBER: _ClassVar[int]
     REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
+    KEYRING_PARTY_SIGS_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     key_id: int
@@ -168,4 +169,5 @@ class ICATransactionRequest(_message.Message):
     signed_data: _containers.RepeatedScalarFieldContainer[bytes]
     keyring_party_signatures: _containers.RepeatedCompositeFieldContainer[_key_pb2.PartySignature]
     reject_reason: str
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., input_msg: _Optional[bytes] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[bytes]] = ..., keyring_party_signatures: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ..., reject_reason: _Optional[str] = ...) -> None: ...
+    keyring_party_sigs: _containers.RepeatedCompositeFieldContainer[_key_pb2.PartySignature]
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., key_id: _Optional[int] = ..., key_type: _Optional[_Union[_key_pb2.KeyType, str]] = ..., input_msg: _Optional[bytes] = ..., status: _Optional[_Union[SignRequestStatus, str]] = ..., signed_data: _Optional[_Iterable[bytes]] = ..., keyring_party_signatures: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ..., reject_reason: _Optional[str] = ..., keyring_party_sigs: _Optional[_Iterable[_Union[_key_pb2.PartySignature, _Mapping]]] = ...) -> None: ...

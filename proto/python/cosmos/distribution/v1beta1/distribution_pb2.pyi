@@ -64,12 +64,10 @@ class ValidatorSlashEvents(_message.Message):
     def __init__(self, validator_slash_events: _Optional[_Iterable[_Union[ValidatorSlashEvent, _Mapping]]] = ...) -> None: ...
 
 class FeePool(_message.Message):
-    __slots__ = ("community_pool", "decimal_pool")
+    __slots__ = ("community_pool",)
     COMMUNITY_POOL_FIELD_NUMBER: _ClassVar[int]
-    DECIMAL_POOL_FIELD_NUMBER: _ClassVar[int]
     community_pool: _containers.RepeatedCompositeFieldContainer[_coin_pb2.DecCoin]
-    decimal_pool: _containers.RepeatedCompositeFieldContainer[_coin_pb2.DecCoin]
-    def __init__(self, community_pool: _Optional[_Iterable[_Union[_coin_pb2.DecCoin, _Mapping]]] = ..., decimal_pool: _Optional[_Iterable[_Union[_coin_pb2.DecCoin, _Mapping]]] = ...) -> None: ...
+    def __init__(self, community_pool: _Optional[_Iterable[_Union[_coin_pb2.DecCoin, _Mapping]]] = ...) -> None: ...
 
 class CommunityPoolSpendProposal(_message.Message):
     __slots__ = ("title", "description", "recipient", "amount")

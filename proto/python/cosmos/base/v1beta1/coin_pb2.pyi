@@ -22,3 +22,15 @@ class DecCoin(_message.Message):
     denom: str
     amount: str
     def __init__(self, denom: _Optional[str] = ..., amount: _Optional[str] = ...) -> None: ...
+
+class IntProto(_message.Message):
+    __slots__ = ("int",)
+    INT_FIELD_NUMBER: _ClassVar[int]
+    int: str
+    def __init__(self, int: _Optional[str] = ...) -> None: ...
+
+class DecProto(_message.Message):
+    __slots__ = ("dec",)
+    DEC_FIELD_NUMBER: _ClassVar[int]
+    dec: str
+    def __init__(self, dec: _Optional[str] = ...) -> None: ...

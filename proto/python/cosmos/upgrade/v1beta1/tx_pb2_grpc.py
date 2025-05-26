@@ -33,8 +33,6 @@ class MsgServicer(object):
 
     def SoftwareUpgrade(self, request, context):
         """SoftwareUpgrade is a governance operation for initiating a software upgrade.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -43,8 +41,6 @@ class MsgServicer(object):
     def CancelUpgrade(self, request, context):
         """CancelUpgrade is a governance operation for cancelling a previously
         approved software upgrade.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

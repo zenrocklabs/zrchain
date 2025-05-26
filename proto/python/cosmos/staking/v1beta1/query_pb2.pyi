@@ -189,12 +189,10 @@ class QueryHistoricalInfoRequest(_message.Message):
     def __init__(self, height: _Optional[int] = ...) -> None: ...
 
 class QueryHistoricalInfoResponse(_message.Message):
-    __slots__ = ("hist", "historical_record")
+    __slots__ = ("hist",)
     HIST_FIELD_NUMBER: _ClassVar[int]
-    HISTORICAL_RECORD_FIELD_NUMBER: _ClassVar[int]
     hist: _staking_pb2.HistoricalInfo
-    historical_record: _staking_pb2.HistoricalRecord
-    def __init__(self, hist: _Optional[_Union[_staking_pb2.HistoricalInfo, _Mapping]] = ..., historical_record: _Optional[_Union[_staking_pb2.HistoricalRecord, _Mapping]] = ...) -> None: ...
+    def __init__(self, hist: _Optional[_Union[_staking_pb2.HistoricalInfo, _Mapping]] = ...) -> None: ...
 
 class QueryPoolRequest(_message.Message):
     __slots__ = ()

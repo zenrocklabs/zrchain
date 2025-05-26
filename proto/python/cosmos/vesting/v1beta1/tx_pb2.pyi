@@ -12,20 +12,18 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MsgCreateVestingAccount(_message.Message):
-    __slots__ = ("from_address", "to_address", "amount", "end_time", "delayed", "start_time")
+    __slots__ = ("from_address", "to_address", "amount", "end_time", "delayed")
     FROM_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     TO_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     END_TIME_FIELD_NUMBER: _ClassVar[int]
     DELAYED_FIELD_NUMBER: _ClassVar[int]
-    START_TIME_FIELD_NUMBER: _ClassVar[int]
     from_address: str
     to_address: str
     amount: _containers.RepeatedCompositeFieldContainer[_coin_pb2.Coin]
     end_time: int
     delayed: bool
-    start_time: int
-    def __init__(self, from_address: _Optional[str] = ..., to_address: _Optional[str] = ..., amount: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ..., end_time: _Optional[int] = ..., delayed: bool = ..., start_time: _Optional[int] = ...) -> None: ...
+    def __init__(self, from_address: _Optional[str] = ..., to_address: _Optional[str] = ..., amount: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ..., end_time: _Optional[int] = ..., delayed: bool = ...) -> None: ...
 
 class MsgCreateVestingAccountResponse(_message.Message):
     __slots__ = ()

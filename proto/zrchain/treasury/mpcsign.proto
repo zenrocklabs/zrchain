@@ -114,6 +114,7 @@ message ICATransactionRequest {
   // ibc.applications.interchain_accounts.v1.MsgSendTx input_msg = 5;
   SignRequestStatus status = 6;
   repeated bytes signed_data = 7;
-  repeated PartySignature keyring_party_signatures = 8;
+  repeated PartySignature keyring_party_signatures = 8 [deprecated = true];
   string reject_reason = 9;
+  repeated PartySignature keyring_party_sigs = 10;
 }

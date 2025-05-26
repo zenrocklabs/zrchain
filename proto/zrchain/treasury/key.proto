@@ -59,7 +59,7 @@ message KeyReqResponse {
   string keyring_addr = 4;
   string key_type = 5;
   string status = 6;
-  repeated PartySignature keyring_party_signatures = 7;
+  repeated PartySignature keyring_party_signatures = 7 [deprecated = true];
   string reject_reason = 8;
   uint64 index = 9;
   uint64 sign_policy_id = 10;
@@ -67,6 +67,7 @@ message KeyReqResponse {
   uint64 mpc_btl = 12;
   uint64 fee = 13;
   bytes public_key = 14;
+  repeated PartySignature keyring_party_sigs = 15;
 }
 
 // KeyType indicates what crypto key algo will be used by this key (e.g. ECDSA
