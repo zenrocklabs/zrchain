@@ -21,12 +21,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
-			Service:              modulev1.Msg_ServiceDesc.ServiceName,
-			EnhanceCustomCommand: true, // only required if you want to use the custom command
+			Service: modulev1.Msg_ServiceDesc.ServiceName,
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
 					RpcMethod: "UpdateParams",
-					Skip:      true, // skipped because authority gated
+					Use:       `update-params [params]`,
+					Short:     "Update the parameters of the zentp module",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "params"},
+					},
 				},
 				{
 					RpcMethod: "Bridge",
@@ -42,7 +45,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "Burn",
-					Skip:      true, // skipped because authority gated
+					Use:       `burn [module-account] [denom] [amount]`,
+					Short:     "Burn tokens from a zrchain module account",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "module_account"},
+						{ProtoField: "denom"},
+						{ProtoField: "amount"},
+					},
 				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
