@@ -73,6 +73,8 @@ jobs:
             "https://github.com/CosmWasm/wasmvm/releases/download/${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a"
           rm -f ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.so
       - name: Run integration tests
+        env:
+          TEST_GRPC_URL: localhost:9790
         run: |
           CGO_ENABLED=1 go test -mod=vendor -v --tags=integration ./tests/integration/... -ldflags="-extldflags=-lm"
       - name: Stop Docker Compose stack
