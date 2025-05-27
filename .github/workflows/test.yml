@@ -63,16 +63,19 @@ jobs:
       - name: Go mod tidy
         run: |
           go clean -cache -modcache -i -r
-          go mod tidy
+          go mod vendor
       # - name: Start Docker Compose stack
       #   run: docker compose up -d --force-recreate --build
       # - name: Run integration tests
       #   run: ./scripts/integration-test.sh
+      - name: Download libwasmvm.a into vendor
+        run: |
+          wget -O ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.a \
+            https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm_muslc.x86_64.a
+          rm -f ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.so
       - name: Run integration tests
         run: |
-          wget -O $(go env GOPATH)/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.1.5/internal/api/libwasmvm.x86_64.a https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm_muslc.x86_64.a
-          rm /go/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.1.5/internal/api/libwasmvm.x86_64.so
-          CGO_ENABLED=1 go test -v --tags=integration ./tests/integration/...
+          CGO_ENABLED=1 go test -mod=vendor -v --tags=integration ./tests/integration/...
       # - name: Stop Docker Compose stack
       #   if: always()
       #   run: docker compose -f docker-compose.yml down
