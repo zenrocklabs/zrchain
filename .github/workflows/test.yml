@@ -75,7 +75,7 @@ jobs:
           rm -f ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.so
       - name: Run integration tests
         run: |
-          CGO_ENABLED=1 CGO_LDFLAGS="-lm" go test -mod=vendor -v --tags=integration ./tests/integration/...
+          CGO_ENABLED=1 go test -mod=vendor -v --tags=integration ./tests/integration/... -ldflags="-extldflags=-lm"
       # - name: Stop Docker Compose stack
       #   if: always()
       #   run: docker compose -f docker-compose.yml down
