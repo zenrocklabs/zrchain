@@ -60,12 +60,12 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
+      - name: Start Docker Compose stack
+        run: docker compose up -d --force-recreate --build
       - name: Go mod vendor
         run: |
           go clean -cache -modcache -i -r
           go mod vendor
-      - name: Start Docker Compose stack
-        run: docker compose up -d --force-recreate --build
       - name: Download libwasmvm.a into vendor
         run: |
           wget -qO ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.a \
