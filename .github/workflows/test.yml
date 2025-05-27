@@ -68,8 +68,9 @@ jobs:
           go mod vendor
       - name: Download libwasmvm.a into vendor
         run: |
+          WASMVM_VERSION=$(grep -E '^ENV WASMVM_VERSION=' Dockerfile | cut -d= -f2)
           wget -qO ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.a \
-            https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm_muslc.x86_64.a
+            "https://github.com/CosmWasm/wasmvm/releases/download/${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a"
           rm -f ./vendor/github.com/CosmWasm/wasmvm/v2/internal/api/libwasmvm.x86_64.so
       - name: Run integration tests
         run: |
