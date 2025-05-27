@@ -49,14 +49,6 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect Environment
-        run: |
-          echo "=== System Information ==="
-          uname -a
-          echo "=== Environment Variables ==="
-          env | sort
-          echo "=== Memory Info ==="
-          free -h
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
@@ -68,25 +60,19 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      - name: Tidy and vendor
+      - name: Go mod tidy
         run: |
           go clean -cache -modcache -i -r
           go mod tidy
-      - name: dump modules list
-        run: |
-          go list -m all > modules.txt
-          go list -m -json all | grep -A20 'github.com/CosmWasm/wasmd'
-      - name: Upload modules list
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-modules
-          path: modules.txt
-      - name: Start Docker Compose stack
-        run: docker compose up -d --force-recreate --build
+      # - name: Start Docker Compose stack
+      #   run: docker compose up -d --force-recreate --build
+      # - name: Run integration tests
+      #   run: ./scripts/integration-test.sh
       - name: Run integration tests
-        run: ./scripts/integration-test.sh
-      - name: Stop Docker Compose stack
-        if: always()
-        run: docker compose -f docker-compose.yml down
-      - name: Integration tests completed successfully
-        run: echo "Integration tests completed successfully!"
+        run: |
+          wget -O $(go env GOPATH)/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.1.5/internal/api/libwasmvm.x86_64.a https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm_muslc.x86_64.a
+          rm /go/pkg/mod/github.com/!cosm!wasm/wasmvm/v2@v2.1.5/internal/api/libwasmvm.x86_64.so
+          CGO_ENABLED=1 go test -v --tags=integration ./tests/integration/...
+      # - name: Stop Docker Compose stack
+      #   if: always()
+      #   run: docker compose -f docker-compose.yml down
