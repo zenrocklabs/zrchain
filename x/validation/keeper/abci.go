@@ -364,7 +364,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
 		k.processSolanaZenBTCMintEvents(ctx, oracleData)
-		// k.processZenBTCBurnEvents(ctx, oracleData)
+		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
