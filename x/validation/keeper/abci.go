@@ -1284,7 +1284,10 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq.amount = tx.Amount
 			txPrepReq.fee = solParams.Fee
 			txPrepReq.recipient = tx.RecipientAddress
-			txPrepReq.nonce = oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+			txPrepReq.nonce, ok = oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+			if !ok {
+				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for solParams.NonceAccountKey: %d", solParams.NonceAccountKey)
+			}
 			txPrepReq.programID = solParams.ProgramId
 			txPrepReq.mintAddress = solParams.MintAddress
 			txPrepReq.feeWallet = solParams.FeeWallet
@@ -1320,10 +1323,11 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 			tx.ZrchainTxId = txID
 			tx.BlockHeight = ctx.BlockHeight()
-			k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
+				return err
+			}
 			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
-			k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
-			return nil
+			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
 		},
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
@@ -1414,11 +1418,16 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				fundReceiver = true
 			}
 
+			nonce, ok := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+			if !ok {
+				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for solParams.NonceAccountKey: %d", solParams.NonceAccountKey)
+			}
+
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
 				amount:       tx.Amount,
 				fee:          solParams.Fee,
 				recipient:    tx.RecipientAddress,
-				nonce:        oracleData.SolanaMintNonces[solParams.NonceAccountKey], // Ensure NonceAccountKey is correct for zentpKeeper
+				nonce:        nonce,
 				fundReceiver: fundReceiver,
 				programID:    solParams.ProgramId,
 				mintAddress:  solParams.MintAddress,
@@ -1448,10 +1457,11 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			tx.State = zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING
 			tx.TxId = id
 			tx.BlockHeight = ctx.BlockHeight()
-			k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]} // Ensure NonceAccountKey is correct
-			k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
-			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx) // Called twice? Review: This seems to be fine as UpdateMint is idempotent.
+			solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
+			if err = k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce); err != nil {
+				return fmt.Errorf("LastUsedSolanaNonce.Set: %w", err)
+			}
+			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 		func(tx *zentptypes.Bridge) error {
 			if tx.BlockHeight == 0 {
@@ -1459,7 +1469,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey] // Ensure NonceAccountKey is correct
+				currentNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
 				if currentNonceAccount == nil || currentNonceAccount.Nonce.IsZero() {
 					k.Logger(ctx).Warn("processSolanaROCKMints BTL: Live Solana nonce is zero or unavailable. Resetting transaction for full retry.", "tx_id", tx.Id)
 					tx.BlockHeight = 0
