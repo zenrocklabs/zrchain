@@ -24,6 +24,8 @@ func main() {
 	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
 	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
+	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
+	debug := flag.Bool("debug", false, "Enable debug mode for verbose logging")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -83,7 +85,7 @@ func main() {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
@@ -97,11 +99,13 @@ func main() {
 
 	go oracle.processUpdates()
 
-	go func() {
-		if err := oracle.runEigenOperator(); err != nil {
-			log.Fatalf("Error starting EigenLayer Operator: %v", err)
-		}
-	}()
+	if !*noAVS {
+		go func() {
+			if err := oracle.runEigenOperator(); err != nil {
+				log.Fatalf("Error starting EigenLayer Operator: %v", err)
+			}
+		}()
+	}
 
 	// Graceful shutdown
 	sigChan := make(chan os.Signal, 1)

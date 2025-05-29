@@ -46,6 +46,7 @@ func NewOracle(
 	neutrinoServer *neutrino.NeutrinoServer,
 	solanaClient *solrpc.Client,
 	zrChainQueryClient *client.QueryClient,
+	debugMode bool,
 ) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
@@ -55,6 +56,7 @@ func NewOracle(
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
 		updateChan:         make(chan sidecartypes.OracleState, 32),
+		DebugMode:          debugMode,
 	}
 	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
 
@@ -553,12 +555,7 @@ func (o *Oracle) fetchAndProcessState(
 		LastSolRockBurnSig:   o.lastSolRockBurnSigStr,
 	}
 
-	// Store the new state into the Oracle's current state immediately.
-	// o.currentState.Store(&newState) // REMOVED: This should be handled by processUpdates via updateChan
-	// Optional: Cache state immediately after updating it, if persistence per cycle is desired.
-	// o.CacheState() // Uncomment if CacheState should run here instead of only in cleanUpBurnEvents
-
-	if sidecartypes.DebugMode {
+	if o.DebugMode {
 		log.Printf("\nState fetched (pre-update send): %+v\n", newState)
 	}
 
