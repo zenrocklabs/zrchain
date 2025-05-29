@@ -353,9 +353,9 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
-		// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
-		// 	k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
-		// }
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
+			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
+		}
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
 			k.storeNewZenBTCRedemptions(ctx, oracleData)
 		}

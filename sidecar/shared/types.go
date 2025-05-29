@@ -74,25 +74,14 @@ var (
 	}
 
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkDevnet:  "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+		NetworkDevnet:  "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
 		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
-	ZenBTCSolanaMintAddress = map[string]string{
-		NetworkDevnet:  "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
-		NetworkTestnet: "J5dgqV9tpafjT4HtqHorrDZqt11gk62eXtmBcvT98Bx9",
-		NetworkMainnet: "9hX59xHHnaZXLU6quvm5uGY2iDiT3jczaReHy6A6TYKw",
-	}
-
 	SolRockProgramID = map[string]string{
 		NetworkDevnet:  "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
-	}
-	SolnaRockMintAddress = map[string]string{
-		NetworkDevnet:  "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-		NetworkTestnet: "5bHHVh9j9RG6oXSL5DfAA3XrykdTX6a7A6xbfkF2PVR5",
-		NetworkMainnet: "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf",
 	}
 
 	// Solana RPC endpoints
@@ -103,6 +92,7 @@ var (
 	}
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
+	// Solana devnet is used for both devnet and testnet environments
 	SolanaCAIP2 = map[string]string{
 		NetworkDevnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 		NetworkTestnet: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
