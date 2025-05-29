@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	m "math"
 	"math/big"
 	"sort"
 
@@ -480,20 +481,38 @@ func (k Keeper) calculateValidatorPowerComponents(
 	}
 
 	calculatedTotalDecimal := nativePowerContribution.Add(avsPowerContribution)
-	totalConsensusPower = calculatedTotalDecimal.TruncateInt64()
+
+	// Prevent panic from TruncateInt64 and ensure power is not negative.
+	// m.MaxInt64 comes from the standard "math" package (aliased as 'm').
+	// math.LegacyNewDec and math.LegacyZeroDec come from "cosmossdk.io/math".
+	maxInt64AsDec := math.LegacyNewDec(m.MaxInt64)
+
+	if calculatedTotalDecimal.GT(maxInt64AsDec) {
+		totalConsensusPower = m.MaxInt64
+	} else if calculatedTotalDecimal.IsNegative() {
+		totalConsensusPower = 0
+	} else {
+		// It's safe to truncate now, and it's not negative.
+		totalConsensusPower = calculatedTotalDecimal.TruncateInt64()
+	}
 
 	// The calling function `ApplyAndReturnValidatorSetUpdates` filters out validators
 	// where (validator.PotentialConsensusPower(powerReduction) == 0 && validator.TokensAVS.IsZero()).
 	// If this function is called, the validator is considered to have some basis for staking.
-	// Therefore, if the calculated power truncates to 0, it should be set to 1,
-	// unless it represents a truly valueless validator (e.g. zero native tokens, zero avs tokens, and zero calculated decimal value).
-	if totalConsensusPower == 0 {
+	// Therefore, if the calculated power truncates to 0 (and was not negative), it should be set to 1,
+	// unless it represents a truly valueless validator.
+	// This logic applies if calculatedTotalDecimal was >= 0.
+	if totalConsensusPower == 0 && !calculatedTotalDecimal.IsNegative() {
 		if calculatedTotalDecimal.IsZero() && validator.TokensNative.IsZero() && !avsTokens.IsPositive() {
-			totalConsensusPower = 0 // Absolutely no tokens of any kind that could contribute value
+			// Truly valueless or original was exactly zero, power remains 0.
+			// totalConsensusPower is already 0.
 		} else {
-			totalConsensusPower = 1 // Has some tokens, or had some value that truncated to zero
+			// Had some small positive value that truncated to 0, or was zero but had some tokens, gets power 1.
+			totalConsensusPower = 1
 		}
 	}
+	// If calculatedTotalDecimal was negative, totalConsensusPower was set to 0 and remains 0 due to the
+	// '!calculatedTotalDecimal.IsNegative()' condition above.
 
 	return totalConsensusPower, nativePowerContribution, avsPowerContribution
 }
