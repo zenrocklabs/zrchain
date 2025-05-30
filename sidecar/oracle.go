@@ -860,7 +860,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	if !lastKnownSig.IsZero() {
 		lastSigStr = lastKnownSig.String()
 	}
-	log.Printf("Found %d new SolROCK mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
+	log.Printf("Found %d new potential SolROCK mint transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -872,10 +872,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	v0 := uint64(0)              // Define v0 for pointer
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
-		end := i + internalBatchSize
-		if end > len(newSignaturesToFetchDetails) {
-			end = len(newSignaturesToFetchDetails)
-		}
+		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
 
 		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
@@ -1017,7 +1014,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		}
 	}
 
-	log.Printf("Retrieved %d new SolROCK mint events. Newest signature from node: %s", len(mintEvents), newestSigFromNode)
+	log.Printf("From inspected transactions, retrieved %d new SolROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
 	// Return the collected events and the newest signature seen from the node to update the watermark
 	return mintEvents, newestSigFromNode, nil
 }
@@ -1074,7 +1071,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	if !lastKnownSig.IsZero() {
 		lastSigStr = lastKnownSig.String()
 	}
-	log.Printf("Found %d new SolZenBTC mint signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
+	log.Printf("Found %d new potential SolZenBTC mint transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1086,10 +1083,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
-		end := i + internalBatchSize
-		if end > len(newSignaturesToFetchDetails) {
-			end = len(newSignaturesToFetchDetails)
-		}
+		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
 
 		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
@@ -1227,7 +1221,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 		}
 	}
 
-	log.Printf("Retrieved %d new SolZenBTC mint events. Newest signature from node: %s", len(mintEvents), newestSigFromNode)
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
 	// Return the collected events and the newest signature seen from the node to update the watermark
 	return mintEvents, newestSigFromNode, nil
 }
@@ -1381,7 +1375,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	if !lastKnownSig.IsZero() {
 		lastSigStr = lastKnownSig.String()
 	}
-	log.Printf("Found %d new SolZenBTC burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
+	log.Printf("Found %d new potential SolZenBTC burn transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1393,10 +1387,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
-		end := i + internalBatchSize
-		if end > len(newSignaturesToFetchDetails) {
-			end = len(newSignaturesToFetchDetails)
-		}
+		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
 
 		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
@@ -1482,6 +1473,13 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 				continue // Skip this transaction
 			}
 
+			if o.DebugMode {
+				log.Printf("SolZenBTC burn - Processing tx %s: found %d events", originalSignature, len(events))
+				for i, event := range events {
+					log.Printf("  Event %d: Name='%s', Type=%T", i, event.Name, event.Data)
+				}
+			}
+
 			// Process burn events for this transaction
 			for logIndex, event := range events {
 				if event.Name == "TokenRedemption" {
@@ -1511,7 +1509,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 		}
 	}
 
-	log.Printf("Retrieved %d new SolZenBTC burn events. Newest signature from node: %s", len(burnEvents), newestSigFromNode)
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
 	// Return the collected events and the newest signature seen from the node to update the watermark
 	return burnEvents, newestSigFromNode, nil
 }
@@ -1563,7 +1561,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	if !lastKnownSig.IsZero() {
 		lastSigStr = lastKnownSig.String()
 	}
-	log.Printf("Found %d new SolRock burn signatures to process since %s.", len(newSignaturesToFetchDetails), lastSigStr)
+	log.Printf("Found %d new potential SolRock burn transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse to process oldest first
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1575,10 +1573,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	v0 := uint64(0)              // Define v0 for pointer
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
-		end := i + internalBatchSize
-		if end > len(newSignaturesToFetchDetails) {
-			end = len(newSignaturesToFetchDetails)
-		}
+		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
 
 		batchRequests := make(jsonrpc.RPCRequests, 0, len(currentBatchSignatures))
@@ -1663,6 +1658,13 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 				continue
 			}
 
+			if o.DebugMode {
+				log.Printf("SolRock burn - Processing tx %s: found %d events", originalSignature, len(events))
+				for i, event := range events {
+					log.Printf("  Event %d: Name='%s', Type=%T", i, event.Name, event.Data)
+				}
+			}
+
 			// Process burn events
 			for logIndex, event := range events {
 				if event.Name == "TokenRedemption" {
@@ -1692,7 +1694,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 		}
 	}
 
-	log.Printf("Retrieved %d new SolRock burn events. Newest signature from node: %s", len(burnEvents), newestSigFromNode)
+	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
 	return burnEvents, newestSigFromNode, nil
 }
 
