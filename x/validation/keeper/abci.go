@@ -203,7 +203,7 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 
 	var voteExt VoteExtension
 	if err := json.Unmarshal(req.VoteExtension, &voteExt); err != nil {
-		k.Logger(ctx).Debug("error unmarshalling vote extension", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error unmarshalling vote extension", "height", req.Height, "error", err)
 		return REJECT_VOTE, nil
 	}
 
@@ -798,7 +798,7 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 	} else if requestedSolNonce != nil {
-		k.Logger(ctx).Error("requested solana nonce", "nonce", requestedSolNonce.Nonce)
+		k.Logger(ctx).Warn("requested solana nonce", "nonce", requestedSolNonce.Nonce)
 
 		if requestedSolNonce.Nonce.IsZero() {
 			k.Logger(ctx).Error("solana nonce is zero")
@@ -817,7 +817,7 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		k.Logger(ctx).Error("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
+		k.Logger(ctx).Warn("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
@@ -1067,7 +1067,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 					return err
 				}
-				k.Logger(ctx).Error("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+				k.Logger(ctx).Warn("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				return nil
 			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
@@ -1215,7 +1215,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		},
 		// Dispatch mint transaction
 		func(tx zenbtctypes.PendingMintTransaction) error {
-			k.Logger(ctx).Error("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+			k.Logger(ctx).Warn("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zenbtc solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
 				return nil
@@ -1295,7 +1295,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			txPrepReq.nonceAuthorityKey = solParams.NonceAuthorityKey
 			txPrepReq.signerKey = solParams.SignerKeyId
 			txPrepReq.zenbtc = true
-			k.Logger(ctx).Error("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)

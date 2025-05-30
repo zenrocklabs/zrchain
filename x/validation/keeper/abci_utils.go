@@ -1222,16 +1222,6 @@ func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData Oracle
 	return nil
 }
 
-// GetSolanaRecentBlockhash fetches the Solana recent blockhash from a block with height aligned to modulo 50
-// func (k Keeper) GetSolanaRecentBlockhash(ctx context.Context) (string, error) {
-// 	resp, err := k.sidecarClient.GetSolanaRecentBlockhash(ctx, &sidecar.SolanaRecentBlockhashRequest{})
-// 	if err != nil {
-// 		k.Logger(ctx).Error("error getting Solana recent blockhash", "error", err)
-// 		return "", err
-// 	}
-// 	return resp.Blockhash, nil
-// }
-
 // Helper function to submit Ethereum transactions
 func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
