@@ -338,7 +338,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 			configuredAVSAssetType = primaryAVSAssetData.GetAsset().String()
 		}
 
-		k.Logger(ctx).Info(fmt.Sprintf(
+		k.Logger(ctx).Debug(fmt.Sprintf(
 			"\nvalidator: %s | %s\ntoken stake: native_units=%d, avs_raw_units=%s (for %s)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
 			validator.ConsensusPower(powerReduction), validator.TokensAVS.String(), configuredAVSAssetType,
