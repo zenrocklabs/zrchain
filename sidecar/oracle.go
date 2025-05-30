@@ -993,14 +993,18 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 						log.Printf("Type assertion failed for SolROCK TokensMintedWithFeeEventData on tx %s", sig)
 						continue
 					}
-					mintEvents = append(mintEvents, api.SolanaMintEvent{
+					mintEvent := api.SolanaMintEvent{
 						SigHash:   sigHash[:],
 						Date:      blockTimeUnix,
 						Recipient: e.Recipient.Bytes(),
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
-					})
+					}
+					mintEvents = append(mintEvents, mintEvent)
+					if o.DebugMode {
+						log.Printf("SolROCK Mint Event: %+v", mintEvent)
+					}
 				}
 			}
 		}
@@ -1192,14 +1196,18 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 						log.Printf("Type assertion failed for SolZenBTC TokensMintedWithFeeEventData on tx %s", sig)
 						continue
 					}
-					mintEvents = append(mintEvents, api.SolanaMintEvent{
+					mintEvent := api.SolanaMintEvent{
 						SigHash:   sigHash[:],
 						Date:      blockTimeUnix,
 						Recipient: e.Recipient.Bytes(),
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
-					})
+					}
+					mintEvents = append(mintEvents, mintEvent)
+					if o.DebugMode {
+						log.Printf("SolZenBTC Mint Event: %+v", mintEvent)
+					}
 				}
 			}
 		}
@@ -1468,13 +1476,17 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 						log.Printf("Type assertion failed for SolZenBTC TokenRedemptionEventData on tx %s", originalSignature)
 						continue
 					}
-					burnEvents = append(burnEvents, api.BurnEvent{
+					burnEvent := api.BurnEvent{
 						TxID:            originalSignature.String(),
 						LogIndex:        uint64(logIndex),
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr[:],
 						Amount:          e.Value,
-					})
+					}
+					burnEvents = append(burnEvents, burnEvent)
+					if o.DebugMode {
+						log.Printf("SolZenBTC Burn Event: %+v", burnEvent)
+					}
 				}
 			}
 		}
@@ -1640,13 +1652,17 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 						log.Printf("Type assertion failed for SolRock TokenRedemptionEventData on tx %s", originalSignature)
 						continue
 					}
-					burnEvents = append(burnEvents, api.BurnEvent{
+					burnEvent := api.BurnEvent{
 						TxID:            originalSignature.String(),
 						LogIndex:        uint64(logIndex),
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr[:],
 						Amount:          e.Value,
-					})
+					}
+					burnEvents = append(burnEvents, burnEvent)
+					if o.DebugMode {
+						log.Printf("SolRock Burn Event: %+v", burnEvent)
+					}
 				}
 			}
 		}
