@@ -44,7 +44,7 @@ func TestCreateDurableNonceAccount(t *testing.T) {
 	bin, err := tx.Message.MarshalBinary()
 	require.NoError(t, err)
 
-	fmt.Printf("unsigned transaction data: %s", hex.EncodeToString(bin))
+	fmt.Printf("unsigned transaction: %s", hex.EncodeToString(bin))
 }
 
 func TestParseDurableNonceTransaction(t *testing.T) {
