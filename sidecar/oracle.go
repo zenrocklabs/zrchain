@@ -1003,7 +1003,14 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {
-						log.Printf("SolROCK Mint Event: %+v", mintEvent)
+						log.Printf("SolROCK Mint Event: TxSig=%s, SigHash=%x, Recipient=%s, Date=%d, Value=%d, Fee=%d, Mint=%s",
+							sig.String(),
+							mintEvent.SigHash,
+							solana.PublicKeyFromBytes(mintEvent.Recipient).String(),
+							mintEvent.Date,
+							mintEvent.Value,
+							mintEvent.Fee,
+							solana.PublicKeyFromBytes(mintEvent.Mint).String())
 					}
 				}
 			}
@@ -1206,7 +1213,14 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {
-						log.Printf("SolZenBTC Mint Event: %+v", mintEvent)
+						log.Printf("SolZenBTC Mint Event: TxSig=%s, SigHash=%x, Recipient=%s, Date=%d, Value=%d, Fee=%d, Mint=%s",
+							sig.String(),
+							mintEvent.SigHash,
+							solana.PublicKeyFromBytes(mintEvent.Recipient).String(),
+							mintEvent.Date,
+							mintEvent.Value,
+							mintEvent.Fee,
+							solana.PublicKeyFromBytes(mintEvent.Mint).String())
 					}
 				}
 			}
@@ -1485,7 +1499,12 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
-						log.Printf("SolZenBTC Burn Event: %+v", burnEvent)
+						log.Printf("SolZenBTC Burn Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
+							burnEvent.TxID,
+							burnEvent.LogIndex,
+							burnEvent.ChainID,
+							burnEvent.DestinationAddr,
+							burnEvent.Amount)
 					}
 				}
 			}
@@ -1661,7 +1680,12 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
-						log.Printf("SolRock Burn Event: %+v", burnEvent)
+						log.Printf("SolRock Burn Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
+							burnEvent.TxID,
+							burnEvent.LogIndex,
+							burnEvent.ChainID,
+							burnEvent.DestinationAddr,
+							burnEvent.Amount)
 					}
 				}
 			}
