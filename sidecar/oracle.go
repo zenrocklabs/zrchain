@@ -556,7 +556,13 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	if o.DebugMode {
-		log.Printf("\nState fetched (pre-update send): %+v\n", newState)
+		jsonData, err := json.MarshalIndent(newState, "", "  ")
+		if err != nil {
+			log.Printf("\nError marshalling state to JSON for logging: %v\n", err)
+			log.Printf("\nState fetched (pre-update send - fallback): %+v\n", newState) // Fallback to original logging
+		} else {
+			log.Printf("\nState fetched (pre-update send):\n%s\n", string(jsonData))
+		}
 	}
 
 	return newState, nil
