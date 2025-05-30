@@ -43,7 +43,7 @@ func initTestOracle() *sidecar.Oracle {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient)
+	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, true)
 }
 
 func TestGetSidecarStateByEthHeight(t *testing.T) {

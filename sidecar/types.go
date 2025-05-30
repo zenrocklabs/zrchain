@@ -42,6 +42,7 @@ type Oracle struct {
 	zrChainQueryClient *client.QueryClient
 	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
+	DebugMode          bool
 
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
