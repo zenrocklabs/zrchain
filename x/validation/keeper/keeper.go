@@ -18,7 +18,6 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
-	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
@@ -30,7 +29,7 @@ type Keeper struct {
 	bankKeeper            types.BankKeeper
 	hooks                 types.StakingHooks
 	authority             string
-	treasuryKeeper        *treasury.Keeper
+	treasuryKeeper        types.TreasuryKeeper
 	zenBTCKeeper          shared.ZenBTCKeeper
 	validatorAddressCodec addresscodec.Codec
 	consensusAddressCodec addresscodec.Codec
@@ -80,7 +79,7 @@ func NewKeeper(
 	authority string,
 	txDecoder sdk.TxDecoder,
 	zrConfig *params.ZRConfig,
-	treasuryKeeper *treasury.Keeper,
+	treasuryKeeper types.TreasuryKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 	zentpKeeper types.ZentpKeeper,
 	validatorAddressCodec addresscodec.Codec,

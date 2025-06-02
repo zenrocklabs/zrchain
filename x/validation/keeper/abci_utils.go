@@ -626,20 +626,12 @@ func (k *Keeper) EncodeCompleteCallData(ctx context.Context, redemptionID uint64
 }
 
 func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType treasurytypes.WalletType) (string, error) {
-	q, err := k.treasuryKeeper.KeyByID(ctx, &treasurytypes.QueryKeyByIDRequest{
-		Id:         keyID,
-		WalletType: walletType,
-		Prefixes:   make([]string, 0),
-	})
+	address, err := k.treasuryKeeper.QueryKeyById(sdk.UnwrapSDKContext(ctx), keyID, walletType, make([]string, 0))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}
 
-	if len(q.Wallets) == 0 {
-		return "", fmt.Errorf("no wallets found for key ID %d", keyID)
-	}
-
-	return q.Wallets[0].Address, nil
+	return address, nil
 }
 
 func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
