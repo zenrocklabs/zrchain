@@ -986,34 +986,13 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 
 		// Process the results
 		for _, resp := range batchResponses { // Iterate over RPCResponses
-			if resp == nil { // Check if response object itself is nil
-				log.Printf("Nil RPCResponse object in sub-batch response (SolROCK mint)")
+			// Parse and validate RPC response ID
+			requestIndex, ok := parseRPCResponseID(resp, "SolROCK mint")
+			if !ok {
 				continue
 			}
 
-			// Use resp.ID for mapping and getting original signature from currentBatchSignatures
-			var requestIndex int // This index is relative to currentBatchSignatures
-			switch id := resp.ID.(type) {
-			case float64: // JSON numbers often decode to float64
-				requestIndex = int(id)
-			case int:
-				requestIndex = id
-			case uint64: // Match the type we put in the request
-				requestIndex = int(id)
-			case json.Number:
-				idInt64, err := id.Int64()
-				if err != nil {
-					log.Printf("Failed to convert json.Number ID to int64 (SolROCK mint): %v", err)
-					continue
-				}
-				requestIndex = int(idInt64)
-			default:
-				log.Printf("Invalid response ID type %T received (SolROCK mint)", resp.ID)
-				continue
-			}
-
-			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
-				log.Printf("Invalid response ID %d received for sub-batch (SolROCK mint)", requestIndex)
+			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), "SolROCK mint") {
 				continue
 			}
 			sig := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
@@ -1195,33 +1174,13 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 
 		// Process the results
 		for _, resp := range batchResponses { // Iterate over RPCResponses
-			if resp == nil { // Check if response object itself is nil
-				log.Printf("Nil RPCResponse object in sub-batch response (SolZenBTC mint)")
+			// Parse and validate RPC response ID
+			requestIndex, ok := parseRPCResponseID(resp, "SolZenBTC mint")
+			if !ok {
 				continue
 			}
 
-			var requestIndex int // This index is relative to currentBatchSignatures
-			switch id := resp.ID.(type) {
-			case float64: // JSON numbers often decode to float64
-				requestIndex = int(id)
-			case int:
-				requestIndex = id
-			case uint64: // Match the type we put in the request
-				requestIndex = int(id)
-			case json.Number:
-				idInt64, err := id.Int64()
-				if err != nil {
-					log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC mint): %v", err)
-					continue
-				}
-				requestIndex = int(idInt64)
-			default:
-				log.Printf("Invalid response ID type %T received (SolZenBTC mint)", resp.ID)
-				continue
-			}
-
-			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
-				log.Printf("Invalid response ID %d received for sub-batch (SolZenBTC mint)", requestIndex)
+			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), "SolZenBTC mint") {
 				continue
 			}
 			sig := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
@@ -1501,33 +1460,13 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 		// Process the results
 		for _, resp := range batchResponses { // Iterate over RPCResponses
-			if resp == nil { // Check if response object itself is nil
-				log.Printf("Nil RPCResponse object in sub-batch response (SolZenBTC burn)")
+			// Parse and validate RPC response ID
+			requestIndex, ok := parseRPCResponseID(resp, "SolZenBTC burn")
+			if !ok {
 				continue
 			}
 
-			var requestIndex int // This index is relative to currentBatchSignatures
-			switch id := resp.ID.(type) {
-			case float64:
-				requestIndex = int(id)
-			case int:
-				requestIndex = id
-			case uint64:
-				requestIndex = int(id)
-			case json.Number:
-				idInt64, err := id.Int64()
-				if err != nil {
-					log.Printf("Failed to convert json.Number ID to int64 (SolZenBTC burn): %v", err)
-					continue
-				}
-				requestIndex = int(idInt64)
-			default:
-				log.Printf("Invalid response ID type %T received (SolZenBTC burn)", resp.ID)
-				continue
-			}
-
-			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
-				log.Printf("Invalid response ID %d received for sub-batch (SolZenBTC burn)", requestIndex)
+			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), "SolZenBTC burn") {
 				continue
 			}
 			originalSignature := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
@@ -1687,33 +1626,13 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 
 		// Process results
 		for _, resp := range batchResponses {
-			if resp == nil {
-				log.Printf("Nil RPCResponse object in sub-batch response (SolRock burn)")
+			// Parse and validate RPC response ID
+			requestIndex, ok := parseRPCResponseID(resp, "SolRock burn")
+			if !ok {
 				continue
 			}
 
-			var requestIndex int // This index is relative to currentBatchSignatures
-			switch id := resp.ID.(type) {
-			case float64:
-				requestIndex = int(id)
-			case int:
-				requestIndex = id
-			case uint64:
-				requestIndex = int(id)
-			case json.Number:
-				idInt64, err := id.Int64()
-				if err != nil {
-					log.Printf("Failed to convert json.Number ID to int64 (SolRock burn): %v", err)
-					continue
-				}
-				requestIndex = int(idInt64)
-			default:
-				log.Printf("Invalid response ID type %T received (SolRock burn)", resp.ID)
-				continue
-			}
-
-			if requestIndex < 0 || requestIndex >= len(currentBatchSignatures) {
-				log.Printf("Invalid response ID %d received for sub-batch (SolRock burn)", requestIndex)
+			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), "SolRock burn") {
 				continue
 			}
 			originalSignature := currentBatchSignatures[requestIndex].Signature // Get sig from the current sub-batch
@@ -1807,4 +1726,42 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType string) solana.Signature
 		return solana.Signature{}
 	}
 	return sig
+}
+
+// Helper function to parse RPC response ID into request index
+func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool) {
+	if resp == nil {
+		log.Printf("Nil RPCResponse object in sub-batch response (%s)", eventType)
+		return 0, false
+	}
+
+	var requestIndex int
+	switch id := resp.ID.(type) {
+	case float64: // JSON numbers often decode to float64
+		requestIndex = int(id)
+	case int:
+		requestIndex = id
+	case uint64: // Match the type we put in the request
+		requestIndex = int(id)
+	case json.Number:
+		idInt64, err := id.Int64()
+		if err != nil {
+			log.Printf("Failed to convert json.Number ID to int64 (%s): %v", eventType, err)
+			return 0, false
+		}
+		requestIndex = int(idInt64)
+	default:
+		log.Printf("Invalid response ID type %T received (%s)", resp.ID, eventType)
+		return 0, false
+	}
+	return requestIndex, true
+}
+
+// Helper function to validate request index bounds
+func validateRequestIndex(requestIndex int, batchSize int, eventType string) bool {
+	if requestIndex < 0 || requestIndex >= batchSize {
+		log.Printf("Invalid response ID %d received for sub-batch (%s)", requestIndex, eventType)
+		return false
+	}
+	return true
 }
