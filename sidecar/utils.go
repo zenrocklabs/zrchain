@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	solana "github.com/gagliardetto/solana-go"
 	"gopkg.in/yaml.v3"
 )
 
@@ -138,5 +141,16 @@ func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
 	} else {
 		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 		o.currentState.Store(&EmptyOracleState)
+	}
+}
+
+func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
+	return &oracleStateUpdate{
+		latestSolanaSigs: make(map[string]solana.Signature),
+		SolanaMintEvents: []api.SolanaMintEvent{},
+		solanaBurnEvents: []api.BurnEvent{},
+		eigenDelegations: make(map[string]map[string]*big.Int),
+		redemptions:      []api.Redemption{},
+		ethBurnEvents:    []api.BurnEvent{},
 	}
 }

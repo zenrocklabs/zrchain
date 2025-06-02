@@ -16,7 +16,7 @@ import (
 type TokenRedemptionEventData struct {
 	Redeemer ag_solanago.PublicKey
 	Value    uint64
-	DestAddr [25]uint8
+	DestAddr []byte
 	Fee      uint64
 	Mint     ag_solanago.PublicKey
 	Id       ag_binary.Uint128

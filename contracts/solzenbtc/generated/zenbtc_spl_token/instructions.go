@@ -28,13 +28,9 @@ func init() {
 }
 
 var (
-	Instruction_AddFeeAuthority = ag_binary.TypeID([8]byte{180, 129, 243, 196, 90, 220, 193, 177})
-
 	Instruction_AddMintAuthority = ag_binary.TypeID([8]byte{41, 254, 251, 123, 155, 68, 213, 8})
 
 	Instruction_Initialize = ag_binary.TypeID([8]byte{175, 175, 109, 31, 13, 152, 155, 237})
-
-	Instruction_RemoveFeeAuthority = ag_binary.TypeID([8]byte{236, 26, 96, 137, 204, 5, 197, 156})
 
 	Instruction_RemoveMintAuthority = ag_binary.TypeID([8]byte{33, 207, 52, 111, 106, 97, 9, 63})
 
@@ -44,20 +40,18 @@ var (
 
 	Instruction_UpdateFeeWallet = ag_binary.TypeID([8]byte{236, 164, 201, 6, 176, 37, 80, 17})
 
+	Instruction_UpdateGlobalAuthority = ag_binary.TypeID([8]byte{227, 181, 74, 196, 208, 21, 97, 213})
+
 	Instruction_Wrap = ag_binary.TypeID([8]byte{178, 40, 10, 189, 228, 129, 186, 140})
 )
 
 // InstructionIDToName returns the name of the instruction given its ID.
 func InstructionIDToName(id ag_binary.TypeID) string {
 	switch id {
-	case Instruction_AddFeeAuthority:
-		return "AddFeeAuthority"
 	case Instruction_AddMintAuthority:
 		return "AddMintAuthority"
 	case Instruction_Initialize:
 		return "Initialize"
-	case Instruction_RemoveFeeAuthority:
-		return "RemoveFeeAuthority"
 	case Instruction_RemoveMintAuthority:
 		return "RemoveMintAuthority"
 	case Instruction_Unwrap:
@@ -66,6 +60,8 @@ func InstructionIDToName(id ag_binary.TypeID) string {
 		return "UpdateBurnFeeBps"
 	case Instruction_UpdateFeeWallet:
 		return "UpdateFeeWallet"
+	case Instruction_UpdateGlobalAuthority:
+		return "UpdateGlobalAuthority"
 	case Instruction_Wrap:
 		return "Wrap"
 	default:
@@ -89,16 +85,10 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 	ag_binary.AnchorTypeIDEncoding,
 	[]ag_binary.VariantType{
 		{
-			Name: "add_fee_authority", Type: (*AddFeeAuthority)(nil),
-		},
-		{
 			Name: "add_mint_authority", Type: (*AddMintAuthority)(nil),
 		},
 		{
 			Name: "initialize", Type: (*Initialize)(nil),
-		},
-		{
-			Name: "remove_fee_authority", Type: (*RemoveFeeAuthority)(nil),
 		},
 		{
 			Name: "remove_mint_authority", Type: (*RemoveMintAuthority)(nil),
@@ -111,6 +101,9 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 		},
 		{
 			Name: "update_fee_wallet", Type: (*UpdateFeeWallet)(nil),
+		},
+		{
+			Name: "update_global_authority", Type: (*UpdateGlobalAuthority)(nil),
 		},
 		{
 			Name: "wrap", Type: (*Wrap)(nil),
