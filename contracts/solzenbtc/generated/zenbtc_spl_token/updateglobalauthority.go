@@ -10,51 +10,53 @@ import (
 	ag_treeout "github.com/gagliardetto/treeout"
 )
 
-// AddFeeAuthority is the `add_fee_authority` instruction.
-type AddFeeAuthority struct {
-	Args *AddFeeAuthorityArgs
+// UpdateGlobalAuthority is the `update_global_authority` instruction.
+type UpdateGlobalAuthority struct {
+	Args *UpdateGlobalAuthorityArgs
 
 	// [0] = [WRITE, SIGNER] signer
+	// ··········· Signer must be the global authority
 	//
 	// [1] = [WRITE] global_config
-	//
-	// [2] = [] system_program
+	// ··········· Global configuration account storing authorities
 	ag_solanago.AccountMetaSlice `bin:"-"`
 }
 
-// NewAddFeeAuthorityInstructionBuilder creates a new `AddFeeAuthority` instruction builder.
-func NewAddFeeAuthorityInstructionBuilder() *AddFeeAuthority {
-	nd := &AddFeeAuthority{
-		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 3),
+// NewUpdateGlobalAuthorityInstructionBuilder creates a new `UpdateGlobalAuthority` instruction builder.
+func NewUpdateGlobalAuthorityInstructionBuilder() *UpdateGlobalAuthority {
+	nd := &UpdateGlobalAuthority{
+		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 2),
 	}
-	nd.AccountMetaSlice[2] = ag_solanago.Meta(Addresses["11111111111111111111111111111111"])
 	return nd
 }
 
 // SetArgs sets the "args" parameter.
-func (inst *AddFeeAuthority) SetArgs(args AddFeeAuthorityArgs) *AddFeeAuthority {
+func (inst *UpdateGlobalAuthority) SetArgs(args UpdateGlobalAuthorityArgs) *UpdateGlobalAuthority {
 	inst.Args = &args
 	return inst
 }
 
 // SetSignerAccount sets the "signer" account.
-func (inst *AddFeeAuthority) SetSignerAccount(signer ag_solanago.PublicKey) *AddFeeAuthority {
+// Signer must be the global authority
+func (inst *UpdateGlobalAuthority) SetSignerAccount(signer ag_solanago.PublicKey) *UpdateGlobalAuthority {
 	inst.AccountMetaSlice[0] = ag_solanago.Meta(signer).WRITE().SIGNER()
 	return inst
 }
 
 // GetSignerAccount gets the "signer" account.
-func (inst *AddFeeAuthority) GetSignerAccount() *ag_solanago.AccountMeta {
+// Signer must be the global authority
+func (inst *UpdateGlobalAuthority) GetSignerAccount() *ag_solanago.AccountMeta {
 	return inst.AccountMetaSlice.Get(0)
 }
 
 // SetGlobalConfigAccount sets the "global_config" account.
-func (inst *AddFeeAuthority) SetGlobalConfigAccount(globalConfig ag_solanago.PublicKey) *AddFeeAuthority {
+// Global configuration account storing authorities
+func (inst *UpdateGlobalAuthority) SetGlobalConfigAccount(globalConfig ag_solanago.PublicKey) *UpdateGlobalAuthority {
 	inst.AccountMetaSlice[1] = ag_solanago.Meta(globalConfig).WRITE()
 	return inst
 }
 
-func (inst *AddFeeAuthority) findFindGlobalConfigAddress(knownBumpSeed uint8) (pda ag_solanago.PublicKey, bumpSeed uint8, err error) {
+func (inst *UpdateGlobalAuthority) findFindGlobalConfigAddress(knownBumpSeed uint8) (pda ag_solanago.PublicKey, bumpSeed uint8, err error) {
 	var seeds [][]byte
 	// const: global_config
 	seeds = append(seeds, []byte{byte(0x67), byte(0x6c), byte(0x6f), byte(0x62), byte(0x61), byte(0x6c), byte(0x5f), byte(0x63), byte(0x6f), byte(0x6e), byte(0x66), byte(0x69), byte(0x67)})
@@ -69,12 +71,12 @@ func (inst *AddFeeAuthority) findFindGlobalConfigAddress(knownBumpSeed uint8) (p
 }
 
 // FindGlobalConfigAddressWithBumpSeed calculates GlobalConfig account address with given seeds and a known bump seed.
-func (inst *AddFeeAuthority) FindGlobalConfigAddressWithBumpSeed(bumpSeed uint8) (pda ag_solanago.PublicKey, err error) {
+func (inst *UpdateGlobalAuthority) FindGlobalConfigAddressWithBumpSeed(bumpSeed uint8) (pda ag_solanago.PublicKey, err error) {
 	pda, _, err = inst.findFindGlobalConfigAddress(bumpSeed)
 	return
 }
 
-func (inst *AddFeeAuthority) MustFindGlobalConfigAddressWithBumpSeed(bumpSeed uint8) (pda ag_solanago.PublicKey) {
+func (inst *UpdateGlobalAuthority) MustFindGlobalConfigAddressWithBumpSeed(bumpSeed uint8) (pda ag_solanago.PublicKey) {
 	pda, _, err := inst.findFindGlobalConfigAddress(bumpSeed)
 	if err != nil {
 		panic(err)
@@ -83,12 +85,12 @@ func (inst *AddFeeAuthority) MustFindGlobalConfigAddressWithBumpSeed(bumpSeed ui
 }
 
 // FindGlobalConfigAddress finds GlobalConfig account address with given seeds.
-func (inst *AddFeeAuthority) FindGlobalConfigAddress() (pda ag_solanago.PublicKey, bumpSeed uint8, err error) {
+func (inst *UpdateGlobalAuthority) FindGlobalConfigAddress() (pda ag_solanago.PublicKey, bumpSeed uint8, err error) {
 	pda, bumpSeed, err = inst.findFindGlobalConfigAddress(0)
 	return
 }
 
-func (inst *AddFeeAuthority) MustFindGlobalConfigAddress() (pda ag_solanago.PublicKey) {
+func (inst *UpdateGlobalAuthority) MustFindGlobalConfigAddress() (pda ag_solanago.PublicKey) {
 	pda, _, err := inst.findFindGlobalConfigAddress(0)
 	if err != nil {
 		panic(err)
@@ -97,39 +99,29 @@ func (inst *AddFeeAuthority) MustFindGlobalConfigAddress() (pda ag_solanago.Publ
 }
 
 // GetGlobalConfigAccount gets the "global_config" account.
-func (inst *AddFeeAuthority) GetGlobalConfigAccount() *ag_solanago.AccountMeta {
+// Global configuration account storing authorities
+func (inst *UpdateGlobalAuthority) GetGlobalConfigAccount() *ag_solanago.AccountMeta {
 	return inst.AccountMetaSlice.Get(1)
 }
 
-// SetSystemProgramAccount sets the "system_program" account.
-func (inst *AddFeeAuthority) SetSystemProgramAccount(systemProgram ag_solanago.PublicKey) *AddFeeAuthority {
-	inst.AccountMetaSlice[2] = ag_solanago.Meta(systemProgram)
-	return inst
-}
-
-// GetSystemProgramAccount gets the "system_program" account.
-func (inst *AddFeeAuthority) GetSystemProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(2)
-}
-
-func (inst AddFeeAuthority) Build() *Instruction {
+func (inst UpdateGlobalAuthority) Build() *Instruction {
 	return &Instruction{BaseVariant: ag_binary.BaseVariant{
 		Impl:   inst,
-		TypeID: Instruction_AddFeeAuthority,
+		TypeID: Instruction_UpdateGlobalAuthority,
 	}}
 }
 
 // ValidateAndBuild validates the instruction parameters and accounts;
 // if there is a validation error, it returns the error.
 // Otherwise, it builds and returns the instruction.
-func (inst AddFeeAuthority) ValidateAndBuild() (*Instruction, error) {
+func (inst UpdateGlobalAuthority) ValidateAndBuild() (*Instruction, error) {
 	if err := inst.Validate(); err != nil {
 		return nil, err
 	}
 	return inst.Build(), nil
 }
 
-func (inst *AddFeeAuthority) Validate() error {
+func (inst *UpdateGlobalAuthority) Validate() error {
 	// Check whether all (required) parameters are set:
 	{
 		if inst.Args == nil {
@@ -145,18 +137,15 @@ func (inst *AddFeeAuthority) Validate() error {
 		if inst.AccountMetaSlice[1] == nil {
 			return errors.New("accounts.GlobalConfig is not set")
 		}
-		if inst.AccountMetaSlice[2] == nil {
-			return errors.New("accounts.SystemProgram is not set")
-		}
 	}
 	return nil
 }
 
-func (inst *AddFeeAuthority) EncodeToTree(parent ag_treeout.Branches) {
+func (inst *UpdateGlobalAuthority) EncodeToTree(parent ag_treeout.Branches) {
 	parent.Child(ag_format.Program(ProgramName, ProgramID)).
 		//
 		ParentFunc(func(programBranch ag_treeout.Branches) {
-			programBranch.Child(ag_format.Instruction("AddFeeAuthority")).
+			programBranch.Child(ag_format.Instruction("UpdateGlobalAuthority")).
 				//
 				ParentFunc(func(instructionBranch ag_treeout.Branches) {
 
@@ -166,16 +155,15 @@ func (inst *AddFeeAuthority) EncodeToTree(parent ag_treeout.Branches) {
 					})
 
 					// Accounts of the instruction:
-					instructionBranch.Child("Accounts[len=3]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
-						accountsBranch.Child(ag_format.Meta("        signer", inst.AccountMetaSlice.Get(0)))
-						accountsBranch.Child(ag_format.Meta(" global_config", inst.AccountMetaSlice.Get(1)))
-						accountsBranch.Child(ag_format.Meta("system_program", inst.AccountMetaSlice.Get(2)))
+					instructionBranch.Child("Accounts[len=2]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
+						accountsBranch.Child(ag_format.Meta("       signer", inst.AccountMetaSlice.Get(0)))
+						accountsBranch.Child(ag_format.Meta("global_config", inst.AccountMetaSlice.Get(1)))
 					})
 				})
 		})
 }
 
-func (obj AddFeeAuthority) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+func (obj UpdateGlobalAuthority) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	// Serialize `Args` param:
 	err = encoder.Encode(obj.Args)
 	if err != nil {
@@ -183,7 +171,7 @@ func (obj AddFeeAuthority) MarshalWithEncoder(encoder *ag_binary.Encoder) (err e
 	}
 	return nil
 }
-func (obj *AddFeeAuthority) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+func (obj *UpdateGlobalAuthority) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
 	// Deserialize `Args`:
 	err = decoder.Decode(&obj.Args)
 	if err != nil {
@@ -192,17 +180,15 @@ func (obj *AddFeeAuthority) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (er
 	return nil
 }
 
-// NewAddFeeAuthorityInstruction declares a new AddFeeAuthority instruction with the provided parameters and accounts.
-func NewAddFeeAuthorityInstruction(
+// NewUpdateGlobalAuthorityInstruction declares a new UpdateGlobalAuthority instruction with the provided parameters and accounts.
+func NewUpdateGlobalAuthorityInstruction(
 	// Parameters:
-	args AddFeeAuthorityArgs,
+	args UpdateGlobalAuthorityArgs,
 	// Accounts:
 	signer ag_solanago.PublicKey,
-	globalConfig ag_solanago.PublicKey,
-	systemProgram ag_solanago.PublicKey) *AddFeeAuthority {
-	return NewAddFeeAuthorityInstructionBuilder().
+	globalConfig ag_solanago.PublicKey) *UpdateGlobalAuthority {
+	return NewUpdateGlobalAuthorityInstructionBuilder().
 		SetArgs(args).
 		SetSignerAccount(signer).
-		SetGlobalConfigAccount(globalConfig).
-		SetSystemProgramAccount(systemProgram)
+		SetGlobalConfigAccount(globalConfig)
 }

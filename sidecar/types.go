@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/ethclient"
+	sol "github.com/gagliardetto/solana-go"
 	solana "github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
@@ -49,6 +50,21 @@ type Oracle struct {
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+}
+
+type oracleStateUpdate struct {
+	eigenDelegations           map[string]map[string]*big.Int
+	redemptions                []api.Redemption
+	suggestedTip               *big.Int
+	estimatedGas               uint64
+	ethBurnEvents              []api.BurnEvent
+	solanaBurnEvents           []api.BurnEvent
+	ROCKUSDPrice               math.LegacyDec
+	BTCUSDPrice                math.LegacyDec
+	ETHUSDPrice                math.LegacyDec
+	solanaLamportsPerSignature uint64
+	SolanaMintEvents           []api.SolanaMintEvent
+	latestSolanaSigs           map[string]sol.Signature
 }
 
 type PriceData struct {

@@ -7,28 +7,6 @@ import (
 	ag_solanago "github.com/gagliardetto/solana-go"
 )
 
-type AddFeeAuthorityArgs struct {
-	NewFeeAuthority ag_solanago.PublicKey
-}
-
-func (obj AddFeeAuthorityArgs) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
-	// Serialize `NewFeeAuthority` param:
-	err = encoder.Encode(obj.NewFeeAuthority)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (obj *AddFeeAuthorityArgs) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
-	// Deserialize `NewFeeAuthority`:
-	err = decoder.Decode(&obj.NewFeeAuthority)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type AddMintAuthorityArgs struct {
 	NewMintAuthority ag_solanago.PublicKey
 }
@@ -272,28 +250,6 @@ func (obj *InitializeArgs) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err
 	return nil
 }
 
-type RemoveFeeAuthorityArgs struct {
-	FeeAuthorityToRemove ag_solanago.PublicKey
-}
-
-func (obj RemoveFeeAuthorityArgs) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
-	// Serialize `FeeAuthorityToRemove` param:
-	err = encoder.Encode(obj.FeeAuthorityToRemove)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (obj *RemoveFeeAuthorityArgs) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
-	// Deserialize `FeeAuthorityToRemove`:
-	err = decoder.Decode(&obj.FeeAuthorityToRemove)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type RemoveMintAuthorityArgs struct {
 	MintAuthorityToRemove ag_solanago.PublicKey
 }
@@ -319,7 +275,7 @@ func (obj *RemoveMintAuthorityArgs) UnmarshalWithDecoder(decoder *ag_binary.Deco
 type TokenRedemption struct {
 	Redeemer ag_solanago.PublicKey
 	Value    uint64
-	DestAddr [25]uint8
+	DestAddr []byte
 	Fee      uint64
 	Mint     ag_solanago.PublicKey
 	Id       ag_binary.Uint128
@@ -461,7 +417,7 @@ func (obj *TokensMintedWithFee) UnmarshalWithDecoder(decoder *ag_binary.Decoder)
 
 type UnwrapArgs struct {
 	Value    uint64
-	DestAddr [25]uint8
+	DestAddr []byte
 }
 
 func (obj UnwrapArgs) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
@@ -530,6 +486,29 @@ func (obj UpdateFeeWalletArgs) MarshalWithEncoder(encoder *ag_binary.Encoder) (e
 func (obj *UpdateFeeWalletArgs) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
 	// Deserialize `NewFeeWallet`:
 	err = decoder.Decode(&obj.NewFeeWallet)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type UpdateGlobalAuthorityArgs struct {
+	// Public key of the new global authority
+	NewGlobalAuthority ag_solanago.PublicKey
+}
+
+func (obj UpdateGlobalAuthorityArgs) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Serialize `NewGlobalAuthority` param:
+	err = encoder.Encode(obj.NewGlobalAuthority)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *UpdateGlobalAuthorityArgs) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Deserialize `NewGlobalAuthority`:
+	err = decoder.Decode(&obj.NewGlobalAuthority)
 	if err != nil {
 		return err
 	}
