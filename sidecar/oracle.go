@@ -189,8 +189,6 @@ func (o *Oracle) fetchAndProcessState(
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
 ) (sidecartypes.OracleState, error) {
-	const httpTimeout = 10 * time.Second
-
 	ctx := context.Background()
 	var wg sync.WaitGroup
 
@@ -207,33 +205,78 @@ func (o *Oracle) fetchAndProcessState(
 		return sidecartypes.OracleState{}, fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
-	type oracleStateUpdate struct {
-		eigenDelegations           map[string]map[string]*big.Int
-		redemptions                []api.Redemption
-		suggestedTip               *big.Int
-		estimatedGas               uint64
-		ethBurnEvents              []api.BurnEvent
-		solanaBurnEvents           []api.BurnEvent
-		ROCKUSDPrice               math.LegacyDec
-		BTCUSDPrice                math.LegacyDec
-		ETHUSDPrice                math.LegacyDec
-		solanaLamportsPerSignature uint64
-		SolanaMintEvents           []api.SolanaMintEvent
-		latestSolanaSigs           map[string]solana.Signature // To store newest sigs from Solana event fetchers
+	update := o.initializeStateUpdate()
+	var updateMutex sync.Mutex
+	errChan := make(chan error, 16)
+
+	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
+	o.fetchEthereumContractData(&wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+
+	// Fetch network data (gas estimates, tips, Solana fees)
+	o.fetchNetworkData(&wg, ctx, update, &updateMutex, errChan)
+
+	// Fetch price data (ROCK, BTC, ETH)
+	o.fetchPriceData(&wg, btcPriceFeed, ethPriceFeed, tempEthClient, ctx, update, &updateMutex, errChan)
+
+	// Fetch burn events
+	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
+
+	// Fetch Solana mint events
+	o.fetchSolanaMintEvents(&wg, update, &updateMutex, errChan)
+
+	// Fetch Solana burn events
+	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+
+	wg.Wait()
+	close(errChan)
+
+	// Check for errors
+	for err := range errChan {
+		if err != nil {
+			log.Printf("Error during state fetch: %v", err)
+			return sidecartypes.OracleState{}, err
+		}
 	}
 
-	update := &oracleStateUpdate{
+	// Update signature strings and build final state
+	return o.buildFinalState(update, latestHeader, targetBlockNumber)
+}
+
+type oracleStateUpdate struct {
+	eigenDelegations           map[string]map[string]*big.Int
+	redemptions                []api.Redemption
+	suggestedTip               *big.Int
+	estimatedGas               uint64
+	ethBurnEvents              []api.BurnEvent
+	solanaBurnEvents           []api.BurnEvent
+	ROCKUSDPrice               math.LegacyDec
+	BTCUSDPrice                math.LegacyDec
+	ETHUSDPrice                math.LegacyDec
+	solanaLamportsPerSignature uint64
+	SolanaMintEvents           []api.SolanaMintEvent
+	latestSolanaSigs           map[string]solana.Signature
+}
+
+func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
+	return &oracleStateUpdate{
 		latestSolanaSigs: make(map[string]solana.Signature),
-		// Initialize slices/maps to avoid nil issues if goroutines don't return anything
 		SolanaMintEvents: []api.SolanaMintEvent{},
 		solanaBurnEvents: []api.BurnEvent{},
 		eigenDelegations: make(map[string]map[string]*big.Int),
 		redemptions:      []api.Redemption{},
 		ethBurnEvents:    []api.BurnEvent{},
 	}
-	var updateMutex sync.Mutex
-	errChan := make(chan error, 16)
+}
 
+func (o *Oracle) fetchEthereumContractData(
+	wg *sync.WaitGroup,
+	serviceManager *middleware.ContractZrServiceManager,
+	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	targetBlockNumber *big.Int,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
 	// Fetch eigen delegations
 	wg.Add(1)
 	go func() {
@@ -261,7 +304,15 @@ func (o *Oracle) fetchAndProcessState(
 		update.redemptions = redemptions
 		updateMutex.Unlock()
 	}()
+}
 
+func (o *Oracle) fetchNetworkData(
+	wg *sync.WaitGroup,
+	ctx context.Context,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
 	// Get suggested priority fee
 	wg.Add(1)
 	go func() {
@@ -280,16 +331,11 @@ func (o *Oracle) fetchAndProcessState(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// Use the dedicated function which now handles potential errors and fallback
 		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
 		if err != nil {
-			// Log the error but let the default value (or potentially last known value) be used
 			log.Printf("Warning: getSolanaLamportsPerSignature failed: %v. Using potentially stale/default value.", err)
-			// Don't push to errChan here, as getSolanaLamportsPerSignature provides a fallback
 		}
 		updateMutex.Lock()
-		// Only update if we got a valid value (getSolanaLamportsPerSignature returns 5000 on error)
-		// Or decide if we always want to update with the returned value (including fallback)
 		update.solanaLamportsPerSignature = lamportsPerSignature
 		updateMutex.Unlock()
 	}()
@@ -314,10 +360,22 @@ func (o *Oracle) fetchAndProcessState(
 			return
 		}
 		updateMutex.Lock()
-		// Apply buffer (original logic)
 		update.estimatedGas = (estimatedGas * 110) / 100
 		updateMutex.Unlock()
 	}()
+}
+
+func (o *Oracle) fetchPriceData(
+	wg *sync.WaitGroup,
+	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
+	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
+	tempEthClient *ethclient.Client,
+	ctx context.Context,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
+	const httpTimeout = 10 * time.Second
 
 	// Fetch ROCK price
 	wg.Add(1)
@@ -333,13 +391,12 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		defer resp.Body.Close()
 
-		var priceData []PriceData // Remove sidecartypes qualifier
+		var priceData []PriceData
 		if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil || len(priceData) == 0 {
 			errChan <- fmt.Errorf("failed to decode ROCK price data or empty data: %w", err)
 			return
 		}
 		priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
-
 		if err != nil {
 			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
 			return
@@ -360,7 +417,6 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
-		// Check if price feeds are initialized
 		if btcPriceFeed == nil || ethPriceFeed == nil {
 			errChan <- fmt.Errorf("BTC or ETH price feed not initialized")
 			return
@@ -383,12 +439,20 @@ func (o *Oracle) fetchAndProcessState(
 		update.ETHUSDPrice = ethPrice
 		updateMutex.Unlock()
 	}()
+}
 
+func (o *Oracle) fetchEthereumBurnEvents(
+	wg *sync.WaitGroup,
+	latestHeader *ethtypes.Header,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
 	// Process ETH burn events
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		events, err := o.processEthBurnEvents(latestHeader)
+		events, err := o.processEthereumBurnEvents(latestHeader)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process Ethereum burn events: %w", err)
 			return
@@ -397,7 +461,14 @@ func (o *Oracle) fetchAndProcessState(
 		update.ethBurnEvents = events
 		updateMutex.Unlock()
 	}()
+}
 
+func (o *Oracle) fetchSolanaMintEvents(
+	wg *sync.WaitGroup,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
 	// Fetch SolROCK Mints using watermarking
 	wg.Add(1)
 	go func() {
@@ -412,7 +483,7 @@ func (o *Oracle) fetchAndProcessState(
 		if len(events) > 0 {
 			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
 		}
-		if !newestSig.IsZero() { // Update latest sig even if no new events, to advance watermark
+		if !newestSig.IsZero() {
 			update.latestSolanaSigs["solRockMint"] = newestSig
 		}
 		updateMutex.Unlock()
@@ -437,7 +508,14 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		updateMutex.Unlock()
 	}()
+}
 
+func (o *Oracle) fetchSolanaBurnEvents(
+	wg *sync.WaitGroup,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
 	// Fetch Solana ZenBTC burn events using watermarking
 	wg.Add(1)
 	go func() {
@@ -477,20 +555,14 @@ func (o *Oracle) fetchAndProcessState(
 		}
 		updateMutex.Unlock()
 	}()
+}
 
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			// Log the first error encountered and return
-			log.Printf("Error during state fetch: %v", err)
-			return sidecartypes.OracleState{}, err
-		}
-	}
-
-	// Update the main Oracle's last signature strings *before* creating newState
-	// This ensures that if CacheState is called with newState, it has the latest signatures.
+func (o *Oracle) buildFinalState(
+	update *oracleStateUpdate,
+	latestHeader *ethtypes.Header,
+	targetBlockNumber *big.Int,
+) (sidecartypes.OracleState, error) {
+	// Update the main Oracle's last signature strings
 	if len(update.latestSolanaSigs) > 0 {
 		if sig, ok := update.latestSolanaSigs["solRockMint"]; ok && !sig.IsZero() {
 			o.lastSolRockMintSigStr = sig.String()
@@ -510,27 +582,8 @@ func (o *Oracle) fetchAndProcessState(
 
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-	// Ensure update fields that might not have been populated are not nil
-	if update.suggestedTip == nil {
-		update.suggestedTip = big.NewInt(0) // Or use last known value from currentState?
-		log.Println("Warning: suggestedTip was nil, using 0.")
-	}
-	if update.ROCKUSDPrice.IsNil() {
-		update.ROCKUSDPrice = currentState.ROCKUSDPrice // Use last known good price
-		log.Println("Warning: ROCKUSDPrice was nil, using last known state value.")
-	}
-	if update.BTCUSDPrice.IsNil() {
-		update.BTCUSDPrice = currentState.BTCUSDPrice // Use last known good price
-		log.Println("Warning: BTCUSDPrice was nil, using last known state value.")
-	}
-	if update.ETHUSDPrice.IsNil() {
-		update.ETHUSDPrice = currentState.ETHUSDPrice // Use last known good price
-		log.Println("Warning: ETHUSDPrice was nil, using last known state value.")
-	}
-	if update.solanaLamportsPerSignature == 0 {
-		update.solanaLamportsPerSignature = currentState.SolanaLamportsPerSignature // Use last known good value
-		log.Println("Warning: solanaLamportsPerSignature was 0, using last known state value.")
-	}
+	// Apply fallbacks for nil values
+	o.applyFallbacks(update, currentState)
 
 	newState := sidecartypes.OracleState{
 		EigenDelegations:           update.eigenDelegations,
@@ -540,32 +593,55 @@ func (o *Oracle) fetchAndProcessState(
 		EthTipCap:                  update.suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
-		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents, // Preserve cleaned events
+		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		SolanaBurnEvents:           update.solanaBurnEvents,
-		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents, // Preserve cleaned events
+		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
 		SolanaMintEvents:           update.SolanaMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
-		// Persist latest Solana signatures
-		LastSolRockMintSig:   o.lastSolRockMintSigStr,
-		LastSolZenBTCMintSig: o.lastSolZenBTCMintSigStr,
-		LastSolZenBTCBurnSig: o.lastSolZenBTCBurnSigStr,
-		LastSolRockBurnSig:   o.lastSolRockBurnSigStr,
+		LastSolRockMintSig:         o.lastSolRockMintSigStr,
+		LastSolZenBTCMintSig:       o.lastSolZenBTCMintSigStr,
+		LastSolZenBTCBurnSig:       o.lastSolZenBTCBurnSigStr,
+		LastSolRockBurnSig:         o.lastSolRockBurnSigStr,
 	}
 
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
 		if err != nil {
 			log.Printf("\nError marshalling state to JSON for logging: %v\n", err)
-			log.Printf("\nState fetched (pre-update send - fallback): %+v\n", newState) // Fallback to original logging
+			log.Printf("\nState fetched (pre-update send - fallback): %+v\n", newState)
 		} else {
 			log.Printf("\nState fetched (pre-update send):\n%s\n", string(jsonData))
 		}
 	}
 
 	return newState, nil
+}
+
+func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecartypes.OracleState) {
+	// Ensure update fields that might not have been populated are not nil
+	if update.suggestedTip == nil {
+		update.suggestedTip = big.NewInt(0)
+		log.Println("Warning: suggestedTip was nil, using 0.")
+	}
+	if update.ROCKUSDPrice.IsNil() {
+		update.ROCKUSDPrice = currentState.ROCKUSDPrice
+		log.Println("Warning: ROCKUSDPrice was nil, using last known state value.")
+	}
+	if update.BTCUSDPrice.IsNil() {
+		update.BTCUSDPrice = currentState.BTCUSDPrice
+		log.Println("Warning: BTCUSDPrice was nil, using last known state value.")
+	}
+	if update.ETHUSDPrice.IsNil() {
+		update.ETHUSDPrice = currentState.ETHUSDPrice
+		log.Println("Warning: ETHUSDPrice was nil, using last known state value.")
+	}
+	if update.solanaLamportsPerSignature == 0 {
+		update.solanaLamportsPerSignature = currentState.SolanaLamportsPerSignature
+		log.Println("Warning: solanaLamportsPerSignature was 0, using last known state value.")
+	}
 }
 
 func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
@@ -618,7 +694,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 	return delegations, nil
 }
 
-func (o *Oracle) processEthBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
+func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
 	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
 	toBlock := latestHeader.Number
 	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
@@ -1498,7 +1574,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 						TxID:            originalSignature.String(),
 						LogIndex:        uint64(logIndex),
 						ChainID:         chainID,
-						DestinationAddr: e.DestAddr[:],
+						DestinationAddr: e.DestAddr,
 						Amount:          e.Value,
 					}
 					burnEvents = append(burnEvents, burnEvent)
