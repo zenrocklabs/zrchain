@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"bytes"
+	"math"
+	"strings"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -332,6 +335,476 @@ func TestHasRequiredGasFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			valid := HasRequiredGasFields(tt.fieldVotePowers)
 			require.Equal(t, tt.valid, valid)
+		})
+	}
+}
+
+func TestIsGasField(t *testing.T) {
+	tests := []struct {
+		name  string
+		field VoteExtensionField
+		valid bool
+	}{
+		{
+			name:  "valid gas field: eth gas limit",
+			field: VEFieldEthGasLimit,
+			valid: true,
+		},
+		{
+			name:  "valid gas field: eth base fee",
+			field: VEFieldEthBaseFee,
+			valid: true,
+		},
+		{
+			name:  "valid gas field: eth tip cap",
+			field: VEFieldEthTipCap,
+			valid: true,
+		},
+		{
+			name:  "invalid gas field: solana lamports per signature",
+			field: VEFieldRequestedBtcBlockHeight,
+			valid: false,
+		},
+		{
+			name:  "invalid gas field: nil",
+			valid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := isGasField(tt.field)
+			require.Equal(t, tt.valid, valid)
+		})
+	}
+}
+
+func TestFieldHasConsensus(t *testing.T) {
+	tests := []struct {
+		name            string
+		fieldVotePowers map[VoteExtensionField]int64
+		field           VoteExtensionField
+		hasConsensus    bool
+	}{
+		{
+			name: "valid field: eth gas limit",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+			},
+			field:        VEFieldEthGasLimit,
+			hasConsensus: true,
+		},
+		{
+			name: "valid field: eth base fee",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthBaseFee: 100,
+			},
+			field:        VEFieldEthBaseFee,
+			hasConsensus: true,
+		},
+		{
+			name: "unvalid field: nil",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+			},
+			hasConsensus: false,
+		},
+		{
+			name:            "unvalid fieldvotepowers: nil",
+			fieldVotePowers: nil,
+			field:           VEFieldEthGasLimit,
+			hasConsensus:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := fieldHasConsensus(tt.fieldVotePowers, tt.field)
+			require.Equal(t, tt.hasConsensus, valid)
+		})
+	}
+}
+
+func TestAllFieldsHaveConsensus(t *testing.T) {
+	tests := []struct {
+		name            string
+		fieldVotePowers map[VoteExtensionField]int64
+		fields          []VoteExtensionField
+		hasConsensus    []VoteExtensionField
+	}{
+		{
+			name: "valid fields",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+				VEFieldEthBaseFee:  100,
+				VEFieldEthTipCap:   100,
+			},
+			fields:       []VoteExtensionField{},
+			hasConsensus: nil,
+		},
+		{
+			name:            "empty field vote powers",
+			fieldVotePowers: map[VoteExtensionField]int64{},
+			fields:          []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+			hasConsensus:    []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+		},
+		{
+			name: "missing some fields",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+				VEFieldEthBaseFee:  100,
+			},
+			fields:       []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+			hasConsensus: []VoteExtensionField{VEFieldEthTipCap},
+		},
+		{
+			name: "all fields have consensus",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+				VEFieldEthBaseFee:  100,
+				VEFieldEthTipCap:   100,
+			},
+			fields:       []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+			hasConsensus: nil,
+		},
+		{
+			name: "zero vote power fields",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 0,
+				VEFieldEthBaseFee:  0,
+				VEFieldEthTipCap:   0,
+			},
+			fields:       []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+			hasConsensus: nil,
+		},
+		{
+			name: "mixed vote powers",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+				VEFieldEthBaseFee:  0,
+				VEFieldEthTipCap:   50,
+			},
+			fields:       []VoteExtensionField{VEFieldEthGasLimit, VEFieldEthBaseFee, VEFieldEthTipCap},
+			hasConsensus: nil,
+		},
+		{
+			name: "nil fields slice",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+				VEFieldEthBaseFee:  100,
+				VEFieldEthTipCap:   100,
+			},
+			fields:       nil,
+			hasConsensus: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := allFieldsHaveConsensus(tt.fieldVotePowers, tt.fields)
+			require.Equal(t, tt.hasConsensus, valid)
+		})
+	}
+}
+
+func TestAnyFieldHasConsensus(t *testing.T) {
+	tests := []struct {
+		name            string
+		fieldVotePowers map[VoteExtensionField]int64
+		fields          []VoteExtensionField
+		hasConsensus    bool
+	}{
+		{
+			name: "valid fields",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+				VEFieldEthBaseFee,
+				VEFieldEthTipCap,
+			},
+			hasConsensus: true,
+		},
+		{
+			name: "empty fields slice",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+			},
+		},
+		{
+			name: "nil field vote powers",
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: false,
+		},
+		{
+			name: "zero vote power",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 0,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: true,
+		},
+		{
+			name: "negative vote power",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: -100,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: true,
+		},
+		{
+			name: "max int64 vote power",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: math.MaxInt64,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: true,
+		},
+		{
+			name: "min int64 vote power",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: math.MinInt64,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: true,
+		},
+		{
+			name: "duplicate fields",
+			fieldVotePowers: map[VoteExtensionField]int64{
+				VEFieldEthGasLimit: 100,
+			},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: true,
+		},
+		{
+			name:            "empty map with fields",
+			fieldVotePowers: map[VoteExtensionField]int64{},
+			fields: []VoteExtensionField{
+				VEFieldEthGasLimit,
+			},
+			hasConsensus: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := anyFieldHasConsensus(tt.fieldVotePowers, tt.fields)
+			require.Equal(t, tt.hasConsensus, valid)
+		})
+	}
+}
+
+func TestGenericGetKey(t *testing.T) {
+	tests := []struct {
+		name  string
+		value any
+		key   string
+	}{
+		{
+			name:  "valid value",
+			value: []byte("randomhash"),
+			key:   "72616e646f6d68617368",
+		},
+		{
+			name:  "valid value: int64",
+			value: int64(100),
+			key:   "100",
+		},
+		{
+			name:  "valid value: uint64",
+			value: uint64(100),
+			key:   "100",
+		},
+		{
+			name:  "empty value",
+			value: nil,
+			key:   "",
+		},
+		{
+			name:  "empty byte slice",
+			value: []byte{},
+			key:   "",
+		},
+		{
+			name:  "max int64",
+			value: int64(math.MaxInt64),
+			key:   "9223372036854775807",
+		},
+		{
+			name:  "min int64",
+			value: int64(math.MinInt64),
+			key:   "-9223372036854775808",
+		},
+		{
+			name:  "max uint64",
+			value: uint64(math.MaxUint64),
+			key:   "18446744073709551615",
+		},
+		{
+			name:  "zero values",
+			value: int64(0),
+			key:   "0",
+		},
+		{
+			name:  "negative value",
+			value: int64(-100),
+			key:   "-100",
+		},
+		{
+			name:  "special characters in byte slice",
+			value: []byte{0, 1, 2, 3, 255},
+			key:   "00010203ff",
+		},
+		{
+			name:  "unicode characters in byte slice",
+			value: []byte("世界"),
+			key:   "e4b896e7958c",
+		},
+		{
+			name:  "very long byte slice",
+			value: bytes.Repeat([]byte{1}, 1000),
+			key:   strings.Repeat("01", 1000),
+		},
+		{
+			name:  "struct value",
+			value: struct{}{},
+			key:   "{}",
+		},
+		{
+			name:  "pointer value",
+			value: new(int),
+			key:   "0",
+		},
+		{
+			name:  "slice value",
+			value: []int{1, 2, 3},
+			key:   "[1,2,3]",
+		},
+		{
+			name:  "map value",
+			value: map[string]int{"a": 1},
+			key:   "{\"a\":1}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key := genericGetKey(tt.value)
+			require.Equal(t, tt.key, key)
+		})
+	}
+}
+
+func TestVoteExtensionFieldString(t *testing.T) {
+	tests := []struct {
+		name  string
+		field VoteExtensionField
+		str   string
+	}{
+		{
+			name:  "valid field: zr chain block height",
+			field: VEFieldZRChainBlockHeight,
+			str:   "ZRChainBlockHeight",
+		},
+		{
+			name:  "valid field: eigen delegations hash",
+			field: VEFieldEigenDelegationsHash,
+			str:   "EigenDelegationsHash",
+		},
+		{
+			name:  "valid field: eth gas limit",
+			field: VEFieldEthGasLimit,
+			str:   "EthGasLimit",
+		},
+		{
+			name:  "valid field: eth base fee",
+			field: VEFieldEthBaseFee,
+			str:   "EthBaseFee",
+		},
+		{
+			name:  "valid field: eth tip cap",
+			field: VEFieldEthTipCap,
+			str:   "EthTipCap",
+		},
+		{
+			name:  "invalid field",
+			field: 1111,
+			str:   "Unknown",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			str := tt.field.String()
+			require.Equal(t, tt.str, str)
+		})
+	}
+}
+
+func TestFieldHandlerSetValue(t *testing.T) {
+	handlers := initializeFieldHandlers()
+	ve := defaultVe
+
+	for _, handler := range handlers {
+		t.Run(handler.Field.String(), func(t *testing.T) {
+			// Get the original value
+			originalValue := handler.GetValue(ve)
+
+			// Create a new VoteExtension to set the value in
+			newVe := defaultVe
+
+			// Set the value
+			handler.SetValue(originalValue, &newVe)
+
+			// Get the value back and verify it matches
+			gotValue := handler.GetValue(newVe)
+			require.Equal(t, originalValue, gotValue, "value mismatch for field %s", handler.Field.String())
+		})
+	}
+}
+
+func TestNewSidecarClient(t *testing.T) {
+	tests := []struct {
+		name       string
+		serverAddr string
+		expectErr  bool
+	}{
+		{
+			name:       "valid server address",
+			serverAddr: "localhost:50051",
+			expectErr:  false,
+		},
+		{
+			name:       "invalid server address",
+			serverAddr: "localhost:50052",
+			expectErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sidecarClient, err := NewSidecarClient(tt.serverAddr)
+			if tt.expectErr {
+				require.Error(t, err)
+				require.Nil(t, sidecarClient)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, sidecarClient)
+			}
 		})
 	}
 }
