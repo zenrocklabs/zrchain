@@ -242,32 +242,6 @@ func (o *Oracle) fetchAndProcessState(
 	return o.buildFinalState(update, latestHeader, targetBlockNumber)
 }
 
-type oracleStateUpdate struct {
-	eigenDelegations           map[string]map[string]*big.Int
-	redemptions                []api.Redemption
-	suggestedTip               *big.Int
-	estimatedGas               uint64
-	ethBurnEvents              []api.BurnEvent
-	solanaBurnEvents           []api.BurnEvent
-	ROCKUSDPrice               math.LegacyDec
-	BTCUSDPrice                math.LegacyDec
-	ETHUSDPrice                math.LegacyDec
-	solanaLamportsPerSignature uint64
-	SolanaMintEvents           []api.SolanaMintEvent
-	latestSolanaSigs           map[string]solana.Signature
-}
-
-func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
-	return &oracleStateUpdate{
-		latestSolanaSigs: make(map[string]solana.Signature),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		ethBurnEvents:    []api.BurnEvent{},
-	}
-}
-
 func (o *Oracle) fetchEthereumContractData(
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
