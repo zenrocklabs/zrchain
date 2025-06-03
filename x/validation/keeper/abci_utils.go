@@ -233,13 +233,13 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	}
 
 	// Log consensus results
-	k.logConsensusResults(ctx, fieldVotePowers, superMajorityThreshold, simpleMajorityThreshold)
+	k.logConsensusResults(ctx, fieldVotePowers)
 
 	return consensusVE, fieldVotePowers, nil
 }
 
 // logConsensusResults logs information about which fields reached consensus
-func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64, superMajorityThreshold, simpleMajorityThreshold int64) {
+func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[VoteExtensionField]int64) {
 	if len(fieldVotePowers) == 0 {
 		k.Logger(ctx).Error("no consensus reached on any vote extension fields")
 		return

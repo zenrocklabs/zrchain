@@ -10,18 +10,18 @@ import (
 	"testing"
 )
 
-func TestEncodeDecode_RemoveFeeAuthority(t *testing.T) {
+func TestEncodeDecode_UpdateGlobalAuthority(t *testing.T) {
 	fu := ag_gofuzz.New().NilChance(0)
 	for i := 0; i < 1; i++ {
-		t.Run("RemoveFeeAuthority"+strconv.Itoa(i), func(t *testing.T) {
+		t.Run("UpdateGlobalAuthority"+strconv.Itoa(i), func(t *testing.T) {
 			{
-				params := new(RemoveFeeAuthority)
+				params := new(UpdateGlobalAuthority)
 				fu.Fuzz(params)
 				params.AccountMetaSlice = nil
 				buf := new(bytes.Buffer)
 				err := encodeT(*params, buf)
 				ag_require.NoError(t, err)
-				got := new(RemoveFeeAuthority)
+				got := new(UpdateGlobalAuthority)
 				err = decodeT(got, buf.Bytes())
 				got.AccountMetaSlice = nil
 				ag_require.NoError(t, err)
