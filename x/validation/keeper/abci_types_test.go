@@ -2,11 +2,17 @@ package keeper
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
 	"math"
+	"math/big"
 	"strings"
 	"testing"
 
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
+	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -804,6 +810,99 @@ func TestNewSidecarClient(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, sidecarClient)
+			}
+		})
+	}
+}
+
+func TestProcessOracleResponse(t *testing.T) {
+	keeper := Keeper{}
+
+	tests := []struct {
+		name        string
+		resp        *sidecar.SidecarStateResponse
+		delegations map[string]map[string]*big.Int
+		expected    *OracleData
+		err         error
+	}{
+		{
+			name: "processes oracle response with zero BTC price and delegations",
+			resp: &sidecar.SidecarStateResponse{
+				EthBlockHeight:   100,
+				EthGasLimit:      100,
+				EthBaseFee:       100,
+				EthTipCap:        0,
+				EigenDelegations: []byte(`{"validator1":{"delegator1":100}}`),
+			},
+			expected: &OracleData{
+				EigenDelegationsMap: map[string]map[string]*big.Int{
+					"validator1": {
+						"delegator1": big.NewInt(100),
+					},
+				},
+				ValidatorDelegations: []ValidatorDelegations{
+					{
+						Validator: "validator1",
+						Stake:     sdkmath.NewInt(100),
+					},
+				},
+				EthBlockHeight: 100,
+				EthGasLimit:    100,
+				EthBaseFee:     100,
+			},
+			err: nil,
+		},
+		{
+			name: "processes oracle response with typical ETH mainnet values and delegations",
+			resp: &sidecar.SidecarStateResponse{
+				EthBlockHeight:   100,
+				EthGasLimit:      100,
+				EthBaseFee:       100,
+				EthTipCap:        0,
+				EigenDelegations: []byte(`{"validator1":{"delegator1":100}}`),
+			},
+			expected: &OracleData{
+				EigenDelegationsMap: map[string]map[string]*big.Int{
+					"validator1": {
+						"delegator1": big.NewInt(100),
+					},
+				},
+				ValidatorDelegations: []ValidatorDelegations{
+					{
+						Validator: "validator1",
+						Stake:     sdkmath.NewInt(100),
+					},
+				},
+				EthBlockHeight: 100,
+				EthGasLimit:    100,
+				EthBaseFee:     100,
+			},
+		},
+		{
+			name: "returns error when processing delegations fails",
+			resp: &sidecar.SidecarStateResponse{
+				EthBlockHeight:   100,
+				EthGasLimit:      100,
+				EthBaseFee:       100,
+				EthTipCap:        0,
+				EigenDelegations: []byte(`invalid json`),
+			},
+			expected: nil,
+			err:      &json.SyntaxError{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := keeper.processOracleResponse(context.Background(), tt.resp)
+			if tt.err != nil {
+				require.Error(t, err)
+				var syntaxErr *json.SyntaxError
+				require.True(t, errors.As(err, &syntaxErr))
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, result)
 			}
 		})
 	}

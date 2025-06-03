@@ -263,3 +263,8 @@ func (k Keeper) SetSolanaZenTPRequestedAccount(ctx context.Context, ownerAddress
 func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
 	return k.SolanaNonceRequested.Set(ctx, keyID, state)
 }
+
+// SetSidecarClient sets the sidecar client for the keeper.
+func (k *Keeper) SetSidecarClient(client sidecarClient) {
+	k.sidecarClient = client
+}
