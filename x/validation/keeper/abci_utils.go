@@ -1650,11 +1650,11 @@ const (
 	solanaEventConfirmationWindowBlocks = 100
 )
 
-// processBTLSolanaLogic contains the core logic for BTL timeout processing.
+// handleSolanaTransactionBTLTimeout contains the core logic for BTL timeout processing.
 // It checks if the on-chain nonce has advanced compared to the last used nonce.
 // If not, it resets the transaction's block height and awaiting event status for a full retry.
 // If the nonce has advanced, it sets the awaiting event status if it wasn't already set.
-func (k Keeper) processBTLSolanaLogic(
+func (k Keeper) handleSolanaTransactionBTLTimeout(
 	ctx sdk.Context,
 	txID uint64,
 	txBlockHeight int64,
@@ -1705,11 +1705,11 @@ func (k Keeper) processBTLSolanaLogic(
 	return
 }
 
-// processSecondaryTimeoutSolanaLogic contains the core logic for secondary event timeout processing.
+// handleSolanaEventArrivalTimeout contains the core logic for secondary event timeout processing.
 // This is called if a transaction has been marked as awaiting an event (txAwaitingEventSince > 0).
 // If the event confirmation window has passed without the event being processed,
 // it resets the transaction for a full retry and attempts to update the LastUsedSolanaNonce.
-func (k Keeper) processSecondaryTimeoutSolanaLogic(
+func (k Keeper) handleSolanaEventArrivalTimeout(
 	ctx sdk.Context,
 	txID uint64,
 	txRecipientAddress string,
@@ -1756,7 +1756,7 @@ func (k Keeper) processSecondaryTimeoutSolanaLogic(
 
 // Helper function to process BTL timeout for Solana mints
 func (k Keeper) processBtlSolanaMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, solParams zenbtctypes.Solana) zenbtctypes.PendingMintTransaction {
-	newBlockHeight, newAwaitingEventSince := k.processBTLSolanaLogic(
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaTransactionBTLTimeout(
 		ctx,
 		tx.Id,
 		tx.BlockHeight,
@@ -1772,7 +1772,7 @@ func (k Keeper) processBtlSolanaMint(ctx sdk.Context, tx zenbtctypes.PendingMint
 
 // Helper function to process secondary event timeout for Solana mints
 func (k Keeper) processSecondaryTimeoutSolanaMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, solParams zenbtctypes.Solana) zenbtctypes.PendingMintTransaction {
-	newBlockHeight, newAwaitingEventSince := k.processSecondaryTimeoutSolanaLogic(
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaEventArrivalTimeout(
 		ctx,
 		tx.Id,
 		tx.RecipientAddress,
@@ -1788,7 +1788,7 @@ func (k Keeper) processSecondaryTimeoutSolanaMint(ctx sdk.Context, tx zenbtctype
 }
 
 func (k Keeper) processSecondaryTimeoutSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, oracleData OracleData, solParams zentptypes.Solana) zentptypes.Bridge {
-	newBlockHeight, newAwaitingEventSince := k.processSecondaryTimeoutSolanaLogic(
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaEventArrivalTimeout(
 		ctx,
 		tx.Id,
 		tx.RecipientAddress,
@@ -1805,7 +1805,7 @@ func (k Keeper) processSecondaryTimeoutSolanaROCKMint(ctx sdk.Context, tx zentpt
 
 // Helper function to process BTL timeout for Solana ROCK mints
 func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, oracleData OracleData, solParams zentptypes.Solana) zentptypes.Bridge {
-	newBlockHeight, newAwaitingEventSince := k.processBTLSolanaLogic(
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaTransactionBTLTimeout(
 		ctx,
 		tx.Id,
 		tx.BlockHeight,
