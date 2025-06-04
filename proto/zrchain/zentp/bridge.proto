@@ -37,4 +37,5 @@ message Bridge {
   string tx_hash = 10;
   BridgeStatus state = 11;
   int64 block_height = 12;
+  int64 awaiting_event_since = 13;
 }

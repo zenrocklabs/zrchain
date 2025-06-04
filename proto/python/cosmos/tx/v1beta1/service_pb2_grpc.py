@@ -96,8 +96,6 @@ class ServiceServicer(object):
 
     def GetBlockWithTxs(self, request, context):
         """GetBlockWithTxs fetches a block with decoded txs.
-
-        Since: cosmos-sdk 0.45.2
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -105,8 +103,6 @@ class ServiceServicer(object):
 
     def TxDecode(self, request, context):
         """TxDecode decodes the transaction.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -114,8 +110,6 @@ class ServiceServicer(object):
 
     def TxEncode(self, request, context):
         """TxEncode encodes the transaction.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -123,8 +117,6 @@ class ServiceServicer(object):
 
     def TxEncodeAmino(self, request, context):
         """TxEncodeAmino encodes an Amino transaction from JSON to encoded bytes.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -132,8 +124,6 @@ class ServiceServicer(object):
 
     def TxDecodeAmino(self, request, context):
         """TxDecodeAmino decodes an Amino transaction from encoded bytes to JSON.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

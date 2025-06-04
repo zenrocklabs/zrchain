@@ -30,11 +30,6 @@ class MsgStub(object):
                 request_serializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevoke.SerializeToString,
                 response_deserializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevokeResponse.FromString,
                 )
-        self.PruneExpiredGrants = channel.unary_unary(
-                '/cosmos.authz.v1beta1.Msg/PruneExpiredGrants',
-                request_serializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrants.SerializeToString,
-                response_deserializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrantsResponse.FromString,
-                )
 
 
 class MsgServicer(object):
@@ -68,15 +63,6 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def PruneExpiredGrants(self, request, context):
-        """PruneExpiredGrants prunes the expired grants. Currently up to 75 at a time.
-
-        Since cosmos-sdk 0.51
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -94,11 +80,6 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.Revoke,
                     request_deserializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevoke.FromString,
                     response_serializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevokeResponse.SerializeToString,
-            ),
-            'PruneExpiredGrants': grpc.unary_unary_rpc_method_handler(
-                    servicer.PruneExpiredGrants,
-                    request_deserializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrants.FromString,
-                    response_serializer=cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrantsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -159,22 +140,5 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.authz.v1beta1.Msg/Revoke',
             cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevoke.SerializeToString,
             cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgRevokeResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def PruneExpiredGrants(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.authz.v1beta1.Msg/PruneExpiredGrants',
-            cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrants.SerializeToString,
-            cosmos_dot_authz_dot_v1beta1_dot_tx__pb2.MsgPruneExpiredGrantsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

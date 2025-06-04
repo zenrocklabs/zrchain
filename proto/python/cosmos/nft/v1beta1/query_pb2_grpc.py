@@ -20,30 +20,15 @@ class QueryStub(object):
                 request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceRequest.SerializeToString,
                 response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceResponse.FromString,
                 )
-        self.BalanceByQueryString = channel.unary_unary(
-                '/cosmos.nft.v1beta1.Query/BalanceByQueryString',
-                request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringRequest.SerializeToString,
-                response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringResponse.FromString,
-                )
         self.Owner = channel.unary_unary(
                 '/cosmos.nft.v1beta1.Query/Owner',
                 request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerRequest.SerializeToString,
                 response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerResponse.FromString,
                 )
-        self.OwnerByQueryString = channel.unary_unary(
-                '/cosmos.nft.v1beta1.Query/OwnerByQueryString',
-                request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringRequest.SerializeToString,
-                response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringResponse.FromString,
-                )
         self.Supply = channel.unary_unary(
                 '/cosmos.nft.v1beta1.Query/Supply',
                 request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyRequest.SerializeToString,
                 response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyResponse.FromString,
-                )
-        self.SupplyByQueryString = channel.unary_unary(
-                '/cosmos.nft.v1beta1.Query/SupplyByQueryString',
-                request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringRequest.SerializeToString,
-                response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringResponse.FromString,
                 )
         self.NFTs = channel.unary_unary(
                 '/cosmos.nft.v1beta1.Query/NFTs',
@@ -55,20 +40,10 @@ class QueryStub(object):
                 request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTRequest.SerializeToString,
                 response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTResponse.FromString,
                 )
-        self.NFTByQueryString = channel.unary_unary(
-                '/cosmos.nft.v1beta1.Query/NFTByQueryString',
-                request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringRequest.SerializeToString,
-                response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringResponse.FromString,
-                )
         self.Class = channel.unary_unary(
                 '/cosmos.nft.v1beta1.Query/Class',
                 request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassRequest.SerializeToString,
                 response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassResponse.FromString,
-                )
-        self.ClassByQueryString = channel.unary_unary(
-                '/cosmos.nft.v1beta1.Query/ClassByQueryString',
-                request_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringRequest.SerializeToString,
-                response_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringResponse.FromString,
                 )
         self.Classes = channel.unary_unary(
                 '/cosmos.nft.v1beta1.Query/Classes',
@@ -88,15 +63,6 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def BalanceByQueryString(self, request, context):
-        """BalancebyQueryString queries the number of NFTs of a given class owned by the owner, same as balanceOf in ERC721
-
-        Since: nft v0.1.1
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def Owner(self, request, context):
         """Owner queries the owner of the NFT based on its class and id, same as ownerOf in ERC721
         """
@@ -104,26 +70,8 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def OwnerByQueryString(self, request, context):
-        """OwnerByQueryString queries the owner of the NFT based on its class and id, same as ownerOf in ERC721
-
-        Since: nft v0.1.1
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def Supply(self, request, context):
         """Supply queries the number of NFTs from the given class, same as totalSupply of ERC721.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def SupplyByQueryString(self, request, context):
-        """SupplyByQueryString queries the number of NFTs from the given class, same as totalSupply of ERC721.
-
-        Since: nft v0.1.1
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -144,26 +92,8 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def NFTByQueryString(self, request, context):
-        """NFTByQueryString queries an NFT based on its class and id.
-
-        Since: nft v0.1.1
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def Class(self, request, context):
         """Class queries an NFT class based on its id
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ClassByQueryString(self, request, context):
-        """Class queries an NFT class based on its id
-
-        Since: nft v0.1.1
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -184,30 +114,15 @@ def add_QueryServicer_to_server(servicer, server):
                     request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceRequest.FromString,
                     response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceResponse.SerializeToString,
             ),
-            'BalanceByQueryString': grpc.unary_unary_rpc_method_handler(
-                    servicer.BalanceByQueryString,
-                    request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringRequest.FromString,
-                    response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringResponse.SerializeToString,
-            ),
             'Owner': grpc.unary_unary_rpc_method_handler(
                     servicer.Owner,
                     request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerRequest.FromString,
                     response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerResponse.SerializeToString,
             ),
-            'OwnerByQueryString': grpc.unary_unary_rpc_method_handler(
-                    servicer.OwnerByQueryString,
-                    request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringRequest.FromString,
-                    response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringResponse.SerializeToString,
-            ),
             'Supply': grpc.unary_unary_rpc_method_handler(
                     servicer.Supply,
                     request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyRequest.FromString,
                     response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyResponse.SerializeToString,
-            ),
-            'SupplyByQueryString': grpc.unary_unary_rpc_method_handler(
-                    servicer.SupplyByQueryString,
-                    request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringRequest.FromString,
-                    response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringResponse.SerializeToString,
             ),
             'NFTs': grpc.unary_unary_rpc_method_handler(
                     servicer.NFTs,
@@ -219,20 +134,10 @@ def add_QueryServicer_to_server(servicer, server):
                     request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTRequest.FromString,
                     response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTResponse.SerializeToString,
             ),
-            'NFTByQueryString': grpc.unary_unary_rpc_method_handler(
-                    servicer.NFTByQueryString,
-                    request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringRequest.FromString,
-                    response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringResponse.SerializeToString,
-            ),
             'Class': grpc.unary_unary_rpc_method_handler(
                     servicer.Class,
                     request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassRequest.FromString,
                     response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassResponse.SerializeToString,
-            ),
-            'ClassByQueryString': grpc.unary_unary_rpc_method_handler(
-                    servicer.ClassByQueryString,
-                    request_deserializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringRequest.FromString,
-                    response_serializer=cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringResponse.SerializeToString,
             ),
             'Classes': grpc.unary_unary_rpc_method_handler(
                     servicer.Classes,
@@ -268,23 +173,6 @@ class Query(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def BalanceByQueryString(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/BalanceByQueryString',
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringRequest.SerializeToString,
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryBalanceByQueryStringResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def Owner(request,
             target,
             options=(),
@@ -302,23 +190,6 @@ class Query(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def OwnerByQueryString(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/OwnerByQueryString',
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringRequest.SerializeToString,
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryOwnerByQueryStringResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def Supply(request,
             target,
             options=(),
@@ -332,23 +203,6 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/Supply',
             cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyRequest.SerializeToString,
             cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def SupplyByQueryString(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/SupplyByQueryString',
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringRequest.SerializeToString,
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QuerySupplyByQueryStringResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -387,23 +241,6 @@ class Query(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def NFTByQueryString(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/NFTByQueryString',
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringRequest.SerializeToString,
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryNFTByQueryStringResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def Class(request,
             target,
             options=(),
@@ -417,23 +254,6 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/Class',
             cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassRequest.SerializeToString,
             cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ClassByQueryString(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.nft.v1beta1.Query/ClassByQueryString',
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringRequest.SerializeToString,
-            cosmos_dot_nft_dot_v1beta1_dot_query__pb2.QueryClassByQueryStringResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

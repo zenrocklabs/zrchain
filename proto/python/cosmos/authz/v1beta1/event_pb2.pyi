@@ -24,9 +24,3 @@ class EventRevoke(_message.Message):
     granter: str
     grantee: str
     def __init__(self, msg_type_url: _Optional[str] = ..., granter: _Optional[str] = ..., grantee: _Optional[str] = ...) -> None: ...
-
-class EventPruneExpiredGrants(_message.Message):
-    __slots__ = ("pruner",)
-    PRUNER_FIELD_NUMBER: _ClassVar[int]
-    pruner: str
-    def __init__(self, pruner: _Optional[str] = ...) -> None: ...

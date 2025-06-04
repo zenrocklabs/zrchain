@@ -1464,41 +1464,30 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 		func(tx *zentptypes.Bridge) error {
+			// If BlockHeight is 0, this transaction was either just dispatched in the current block
+			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
+			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
+				k.Logger(ctx).Debug("Solana ROCK Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
 				return nil
 			}
+
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
+			k.Logger(ctx).Info("Solana ROCK Mint Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
-				if currentNonceAccount == nil || currentNonceAccount.Nonce.IsZero() {
-					k.Logger(ctx).Warn("processSolanaROCKMints BTL: Live Solana nonce is zero or unavailable. Resetting transaction for full retry.", "tx_id", tx.Id)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0 // If you had AwaitingEventSince for ROCK mints
-					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-				}
-				currentNonceBytes := currentNonceAccount.Nonce[:]
-
-				lastNonceStored, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
-				if err != nil {
-					k.Logger(ctx).Error("processSolanaROCKMints BTL: Failed to get LastUsedSolanaNonce. Resetting transaction.", "tx_id", tx.Id, "error", err)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0
-					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-				}
-
-				k.Logger(ctx).Info("processSolanaROCKMints BTL: Comparing nonces.", "tx_id", tx.Id, "last_used_hex", hex.EncodeToString(lastNonceStored.Nonce), "current_on_chain_hex", hex.EncodeToString(currentNonceBytes))
-				if bytes.Equal(currentNonceBytes, lastNonceStored.Nonce) {
-					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce matches LastUsedSolanaNonce (no advancement). Resetting transaction for full retry.", "tx_id", tx.Id)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0
-				} else {
-					// Nonce advanced. If ROCK mints have a secondary timeout like ZenBTC, set AwaitingEventSince here.
-					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce advanced. Original dispatch consumed its chance.", "tx_id", tx.Id)
-					// if tx.AwaitingEventSince == 0 { tx.AwaitingEventSince = ctx.BlockHeight() }
-				}
-				return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+				*tx = k.processBtlSolanaROCKMint(ctx, *tx, oracleData, *solParams)
 			}
-			return nil
+
+			// --- Secondary Event Arrival Timeout Check ---
+			// This check applies if tx.AwaitingEventSince was set (indicating nonce advanced)
+			// and was not subsequently cleared by the BTL check itself.
+			if tx.AwaitingEventSince > 0 {
+				*tx = k.processSecondaryTimeoutSolanaROCKMint(ctx, *tx, oracleData, *solParams)
+			}
+
+			k.Logger(ctx).Info("Solana ROCK Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 	)
 
@@ -2213,4 +2202,42 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			),
 		)
 	}
+}
+
+// Helper function to process BTL timeout for Solana ROCK mints
+func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, oracleData OracleData, solParams zentptypes.Solana) zentptypes.Bridge {
+	k.Logger(ctx).Debug("BTL Timeout Logic: Initiating checks.", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl)
+	currentLiveNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+
+	if currentLiveNonceAccount == nil || currentLiveNonceAccount.Nonce.IsZero() {
+		k.Logger(ctx).Warn("BTL Logic: Live Solana nonce is zero or unavailable in oracleData. Resetting transaction.", "tx_id", tx.Id)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		return tx
+	}
+
+	lastUsedNonceStored, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
+	if err != nil {
+		k.Logger(ctx).Error("BTL Logic: Failed to get LastUsedSolanaNonce from store. Resetting transaction.", "tx_id", tx.Id, "error", err)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		return tx
+	}
+
+	currentLiveNonceBytes := currentLiveNonceAccount.Nonce[:]
+	k.Logger(ctx).Info("BTL Logic: Comparing nonces.", "tx_id", tx.Id, "last_used_hex", hex.EncodeToString(lastUsedNonceStored.Nonce), "current_on_chain_hex", hex.EncodeToString(currentLiveNonceBytes))
+
+	if bytes.Equal(currentLiveNonceBytes, lastUsedNonceStored.Nonce) {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce matches LastUsedSolanaNonce (no advancement). Resetting transaction for full retry.", "tx_id", tx.Id)
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+	} else {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce differs from LastUsedSolanaNonce (advanced). Setting AwaitingEventSince if not already set.", "tx_id", tx.Id)
+		if tx.AwaitingEventSince == 0 {
+			tx.AwaitingEventSince = ctx.BlockHeight()
+			k.Logger(ctx).Info("BTL Logic: Set AwaitingEventSince.", "tx_id", tx.Id, "awaiting_event_since_block", tx.AwaitingEventSince)
+		}
+		// CRITICAL: tx.BlockHeight is NOT reset here. Nonce advanced, so the original dispatch "consumed" its chance.
+	}
+	return tx
 }

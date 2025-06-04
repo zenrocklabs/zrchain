@@ -41,8 +41,6 @@ class QueryServicer(object):
 
     def Subspaces(self, request, context):
         """Subspaces queries for all registered subspaces and all keys for a subspace.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

@@ -5,6 +5,7 @@ from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from cosmos.tx.signing.v1beta1 import signing_pb2 as _signing_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
+from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -61,20 +62,22 @@ class SignDocDirectAux(_message.Message):
     def __init__(self, body_bytes: _Optional[bytes] = ..., public_key: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., chain_id: _Optional[str] = ..., account_number: _Optional[int] = ..., sequence: _Optional[int] = ..., tip: _Optional[_Union[Tip, _Mapping]] = ...) -> None: ...
 
 class TxBody(_message.Message):
-    __slots__ = ("messages", "memo", "timeout_height", "unordered", "extension_options", "non_critical_extension_options")
+    __slots__ = ("messages", "memo", "timeout_height", "unordered", "timeout_timestamp", "extension_options", "non_critical_extension_options")
     MESSAGES_FIELD_NUMBER: _ClassVar[int]
     MEMO_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     UNORDERED_FIELD_NUMBER: _ClassVar[int]
+    TIMEOUT_TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     EXTENSION_OPTIONS_FIELD_NUMBER: _ClassVar[int]
     NON_CRITICAL_EXTENSION_OPTIONS_FIELD_NUMBER: _ClassVar[int]
     messages: _containers.RepeatedCompositeFieldContainer[_any_pb2.Any]
     memo: str
     timeout_height: int
     unordered: bool
+    timeout_timestamp: _timestamp_pb2.Timestamp
     extension_options: _containers.RepeatedCompositeFieldContainer[_any_pb2.Any]
     non_critical_extension_options: _containers.RepeatedCompositeFieldContainer[_any_pb2.Any]
-    def __init__(self, messages: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., memo: _Optional[str] = ..., timeout_height: _Optional[int] = ..., unordered: bool = ..., extension_options: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., non_critical_extension_options: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ...) -> None: ...
+    def __init__(self, messages: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., memo: _Optional[str] = ..., timeout_height: _Optional[int] = ..., unordered: bool = ..., timeout_timestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., extension_options: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., non_critical_extension_options: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ...) -> None: ...
 
 class AuthInfo(_message.Message):
     __slots__ = ("signer_infos", "fee", "tip")

@@ -52,13 +52,3 @@ class MsgRevoke(_message.Message):
 class MsgRevokeResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
-
-class MsgPruneExpiredGrants(_message.Message):
-    __slots__ = ("pruner",)
-    PRUNER_FIELD_NUMBER: _ClassVar[int]
-    pruner: str
-    def __init__(self, pruner: _Optional[str] = ...) -> None: ...
-
-class MsgPruneExpiredGrantsResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...

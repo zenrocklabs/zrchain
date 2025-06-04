@@ -1709,3 +1709,31 @@ func (k Keeper) processSecondaryTimeoutSolanaMint(ctx sdk.Context, tx zenbtctype
 	}
 	return tx
 }
+
+func (k Keeper) processSecondaryTimeoutSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, oracleData OracleData, solParams zentptypes.Solana) zentptypes.Bridge {
+	const eventConfirmationWindowBlocks = 100 // TODO: make this a configurable parameter
+	k.Logger(ctx).Info("Secondary Timeout Logic: Checking for event arrival.", "tx_id", tx.Id, "awaiting_event_since", tx.AwaitingEventSince, "current_height", ctx.BlockHeight(), "confirmation_window", eventConfirmationWindowBlocks)
+
+	if ctx.BlockHeight() > tx.AwaitingEventSince+eventConfirmationWindowBlocks {
+		k.Logger(ctx).Warn("Secondary Timeout Logic: SolanaMintEvent not received within window. Resetting transaction for retry and attempting to update LastUsedSolanaNonce.",
+			"tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount,
+			"awaiting_since_block", tx.AwaitingEventSince, "timeout_window", eventConfirmationWindowBlocks)
+
+		currentLiveNonceForRetryUpdate := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+		if currentLiveNonceForRetryUpdate == nil || currentLiveNonceForRetryUpdate.Nonce.IsZero() {
+			k.Logger(ctx).Warn("Secondary Timeout Logic: Current on-chain Solana nonce is zero or unavailable in oracleData. Retry will use previously stored LastUsedSolanaNonce.", "tx_id", tx.Id)
+		} else {
+			newLastNonceToStore := types.SolanaNonce{Nonce: currentLiveNonceForRetryUpdate.Nonce[:]}
+			if err := k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, newLastNonceToStore); err != nil {
+				k.Logger(ctx).Error("Secondary Timeout Logic: Failed to update LastUsedSolanaNonce for retry. Next retry will use older LastUsedSolanaNonce.", "tx_id", tx.Id, "error", err)
+			} else {
+				k.Logger(ctx).Info("Secondary Timeout Logic: Successfully updated LastUsedSolanaNonce before retry.", "tx_id", tx.Id, "new_last_used_nonce_hex", hex.EncodeToString(newLastNonceToStore.Nonce))
+			}
+		}
+
+		tx.BlockHeight = 0
+		tx.AwaitingEventSince = 0
+		k.Logger(ctx).Info("Secondary Timeout Logic: Transaction has been reset for a full retry.", "tx_id", tx.Id)
+	}
+	return tx
+}

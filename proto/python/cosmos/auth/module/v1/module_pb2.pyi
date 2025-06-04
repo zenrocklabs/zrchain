@@ -7,14 +7,16 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Module(_message.Message):
-    __slots__ = ("bech32_prefix", "module_account_permissions", "authority")
+    __slots__ = ("bech32_prefix", "module_account_permissions", "authority", "enable_unordered_transactions")
     BECH32_PREFIX_FIELD_NUMBER: _ClassVar[int]
     MODULE_ACCOUNT_PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
     AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    ENABLE_UNORDERED_TRANSACTIONS_FIELD_NUMBER: _ClassVar[int]
     bech32_prefix: str
     module_account_permissions: _containers.RepeatedCompositeFieldContainer[ModuleAccountPermission]
     authority: str
-    def __init__(self, bech32_prefix: _Optional[str] = ..., module_account_permissions: _Optional[_Iterable[_Union[ModuleAccountPermission, _Mapping]]] = ..., authority: _Optional[str] = ...) -> None: ...
+    enable_unordered_transactions: bool
+    def __init__(self, bech32_prefix: _Optional[str] = ..., module_account_permissions: _Optional[_Iterable[_Union[ModuleAccountPermission, _Mapping]]] = ..., authority: _Optional[str] = ..., enable_unordered_transactions: bool = ...) -> None: ...
 
 class ModuleAccountPermission(_message.Message):
     __slots__ = ("account", "permissions")

@@ -50,21 +50,6 @@ class MsgStub(object):
                 request_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposal.SerializeToString,
                 response_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposalResponse.FromString,
                 )
-        self.SubmitMultipleChoiceProposal = channel.unary_unary(
-                '/cosmos.gov.v1.Msg/SubmitMultipleChoiceProposal',
-                request_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposal.SerializeToString,
-                response_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposalResponse.FromString,
-                )
-        self.UpdateMessageParams = channel.unary_unary(
-                '/cosmos.gov.v1.Msg/UpdateMessageParams',
-                request_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParams.SerializeToString,
-                response_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParamsResponse.FromString,
-                )
-        self.SudoExec = channel.unary_unary(
-                '/cosmos.gov.v1.Msg/SudoExec',
-                request_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExec.SerializeToString,
-                response_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExecResponse.FromString,
-                )
 
 
 class MsgServicer(object):
@@ -110,8 +95,6 @@ class MsgServicer(object):
     def UpdateParams(self, request, context):
         """UpdateParams defines a governance operation for updating the x/gov module
         parameters. The authority is defined in the keeper.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -119,36 +102,6 @@ class MsgServicer(object):
 
     def CancelProposal(self, request, context):
         """CancelProposal defines a method to cancel governance proposal
-
-        Since: cosmos-sdk 0.50
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def SubmitMultipleChoiceProposal(self, request, context):
-        """SubmitMultipleChoiceProposal defines a method to create new multiple choice proposal.
-
-        Since: x/gov 1.0.0
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def UpdateMessageParams(self, request, context):
-        """UpdateMessageParams defines a method to create or update message params when used in a governance proposal.
-
-        Since: x/gov 1.0.0
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def SudoExec(self, request, context):
-        """SudoExec defines a method to execute an inner message as the governance module.
-        It permits to execute any message from a proposal, even if they weren't meant to be governance proposals.
-
-        Since: x/gov 1.0.0
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -191,21 +144,6 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.CancelProposal,
                     request_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposal.FromString,
                     response_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposalResponse.SerializeToString,
-            ),
-            'SubmitMultipleChoiceProposal': grpc.unary_unary_rpc_method_handler(
-                    servicer.SubmitMultipleChoiceProposal,
-                    request_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposal.FromString,
-                    response_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposalResponse.SerializeToString,
-            ),
-            'UpdateMessageParams': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateMessageParams,
-                    request_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParams.FromString,
-                    response_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParamsResponse.SerializeToString,
-            ),
-            'SudoExec': grpc.unary_unary_rpc_method_handler(
-                    servicer.SudoExec,
-                    request_deserializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExec.FromString,
-                    response_serializer=cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExecResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -334,56 +272,5 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Msg/CancelProposal',
             cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposal.SerializeToString,
             cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgCancelProposalResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def SubmitMultipleChoiceProposal(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Msg/SubmitMultipleChoiceProposal',
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposal.SerializeToString,
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSubmitMultipleChoiceProposalResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def UpdateMessageParams(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Msg/UpdateMessageParams',
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParams.SerializeToString,
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgUpdateMessageParamsResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def SudoExec(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Msg/SudoExec',
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExec.SerializeToString,
-            cosmos_dot_gov_dot_v1_dot_tx__pb2.MsgSudoExecResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
