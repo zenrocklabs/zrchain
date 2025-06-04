@@ -1527,14 +1527,14 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 	}
 
 	for _, pendingMint := range pendingMints {
-		tx, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, pendingMint.TxId)
+		tx, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.TxId)
 		if err != nil {
-			k.Logger(ctx).Error("SignTransactionRequestStore.Get: ", err.Error())
+			k.Logger(ctx).Error("GetSignTransactionRequest: ", err.Error())
 			return
 		}
-		sigReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, tx.SignRequestId)
+		sigReq, err := k.treasuryKeeper.GetSignRequest(ctx, tx.SignRequestId)
 		if err != nil {
-			k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+			k.Logger(ctx).Error("GetSignRequest: ", err.Error())
 		}
 
 		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
@@ -1551,9 +1551,9 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		)
 
 		for _, id := range sigReq.ChildReqIds {
-			childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, id)
+			childReq, err := k.treasuryKeeper.GetSignRequest(ctx, id)
 			if err != nil {
-				k.Logger(ctx).Error("SignRequestStore.Get: ", err.Error())
+				k.Logger(ctx).Error("GetSignRequest: ", err.Error())
 				return
 			}
 			if len(childReq.SignedData) != 1 {
@@ -1627,14 +1627,14 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 		return
 	}
 
-	signTxReq, err := k.treasuryKeeper.SignTransactionRequestStore.Get(ctx, pendingMint.ZrchainTxId)
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.ZrchainTxId)
 	if err != nil {
 		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting SignTransactionRequest from treasury.", "zrchain_tx_id_searched", pendingMint.ZrchainTxId, "error", err)
 		return
 	}
 	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Retrieved SignTransactionRequest from treasury.", "zrchain_tx_id", signTxReq.Id, "sign_request_id", signTxReq.SignRequestId)
 
-	mainSignReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, signTxReq.SignRequestId)
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
 	if err != nil {
 		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting main SignRequest from treasury.", "sign_request_id_searched", signTxReq.SignRequestId, "error", err)
 		return
@@ -1644,7 +1644,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	var signatures [][]byte
 	foundAllChildSignatures := true
 	for i, childReqID := range mainSignReq.ChildReqIds {
-		childReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, childReqID)
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
 		if err != nil {
 			k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting child SignRequest.", "child_req_id", childReqID, "error", err)
 			foundAllChildSignatures = false
@@ -2074,7 +2074,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 	}
 
 	for _, redemption := range redemptions {
-		signReq, err := k.treasuryKeeper.SignRequestStore.Get(ctx, redemption.Data.SignReqId)
+		signReq, err := k.treasuryKeeper.GetSignRequest(ctx, redemption.Data.SignReqId)
 		if err != nil {
 			k.Logger(ctx).Error("error getting sign request for redemption", "id", redemption.Data.Id, "error", err)
 			continue

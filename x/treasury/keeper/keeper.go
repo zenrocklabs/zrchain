@@ -712,3 +712,36 @@ func (k Keeper) GetKey(ctx sdk.Context, keyID uint64) (*types.Key, error) {
 	}
 	return &key, nil
 }
+
+func (k Keeper) GetSignTransactionRequest(ctx sdk.Context, id uint64) (*types.SignTransactionRequest, error) {
+	tx, err := k.SignTransactionRequestStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (k Keeper) GetSignRequest(ctx sdk.Context, id uint64) (*types.SignRequest, error) {
+	tx, err := k.SignRequestStore.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (k Keeper) GetAddressByWalletType(ctx sdk.Context, id uint64, walletType types.WalletType, prefixes []string) (string, error) {
+	key, err := k.KeyByID(ctx, &types.QueryKeyByIDRequest{
+		Id:         id,
+		WalletType: walletType,
+		Prefixes:   prefixes,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(key.Wallets) == 0 {
+		return "", fmt.Errorf("no wallets found for key ID %d", id)
+	}
+	return key.Wallets[0].Address, nil
+}
