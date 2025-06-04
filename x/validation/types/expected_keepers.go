@@ -8,6 +8,7 @@ import (
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -129,4 +130,12 @@ type ZentpKeeper interface {
 	AddBurn(ctx context.Context, burn *zentptypes.Bridge) error
 	GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error)
 	GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, error)
+}
+
+type TreasuryKeeper interface {
+	GetSignTransactionRequest(ctx sdk.Context, id uint64) (*treasurytypes.SignTransactionRequest, error)
+	GetSignRequest(ctx sdk.Context, id uint64) (*treasurytypes.SignRequest, error)
+	GetAddressByWalletType(ctx sdk.Context, id uint64, walletType treasurytypes.WalletType, prefixes []string) (string, error)
+	HandleSignTransactionRequest(ctx sdk.Context, msg *treasurytypes.MsgNewSignTransactionRequest, data []byte) (*treasurytypes.MsgNewSignTransactionRequestResponse, error)
+	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
 }
