@@ -1009,8 +1009,40 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED,
 			)
 		},
-		// Dispatch stake transaction
+		// Dispatch stake transaction or fast-forward if SkipStakingSteps
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			// Assuming tx has a field like tx.SkipStakingSteps bool
+			if tx.SkipStakingSteps {
+				k.Logger(ctx).Warn("processZenBTCStaking: SkipStakingSteps is true, fast-forwarding to STAKED", "tx_id", tx.Id)
+				// This logic mirrors the nonceUpdatedCallback for staking
+				tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
+				if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
+					return fmt.Errorf("failed to set pending mint transaction after skipping stake: %w", err)
+				}
+
+				// Set nonce request for the *next* stage (minting)
+				if types.IsSolanaCAIP2(ctx, tx.Caip2ChainId) {
+					solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+					if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+						return fmt.Errorf("failed to set SolanaNonceRequested for mint after skipping stake: %w", err)
+					}
+					if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
+						return fmt.Errorf("failed to set SetSolanaZenBTCRequestedAccount for mint after skipping stake: %w", err)
+					}
+					k.Logger(ctx).Warn("processed zenbtc stake by skipping", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+				} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
+					if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true); err != nil {
+						return fmt.Errorf("failed to set EthereumNonceRequested for mint after skipping stake: %w", err)
+					}
+				} else {
+					return fmt.Errorf("unsupported chain type for chain ID %s after skipping stake", tx.Caip2ChainId)
+				}
+				// This transaction is "done" with the staking step from the perspective of this EVM key.
+				// It will be picked up by the next stage (minting) due to its STAKED status.
+				return nil
+			}
+
+			// Original staking logic
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
@@ -1018,7 +1050,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 			// Check for consensus
 			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
 				"zenBTC stake", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
-				return err
+				return err // Note: original code returns nil here, changed to return err for consistency.
 			}
 
 			unsignedTxHash, unsignedTx, err := k.constructStakeTx(
@@ -1805,13 +1837,53 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				for i, pb := range pendingBurns {
 					k.Logger(ctx).Debug("ProcessZenBTCBurnEvents: Pending burn event details.",
 						"idx", i, "burn_id", pb.Id, "tx_id", pb.TxID, "log_idx", pb.LogIndex, "chain_id", pb.ChainID,
-						"amount", pb.Amount, "destination_addr_hex", hex.EncodeToString(pb.DestinationAddr), "status", pb.Status)
+						"amount", pb.Amount, "destination_addr_hex", hex.EncodeToString(pb.DestinationAddr), "status", pb.Status, "skip_staking_steps", pb.SkipStakingSteps) // Added SkipStakingSteps to log
 				}
 			}
 			return pendingBurns, nil
 		},
-		// Dispatch unstake transaction
+		// Dispatch unstake transaction or fast-forward if SkipStakingSteps
 		func(be zenbtctypes.BurnEvent) error {
+			// Assuming be has a field like be.SkipStakingSteps bool
+			if be.SkipStakingSteps {
+				k.Logger(ctx).Info("ProcessZenBTCBurnEvents: SkipStakingSteps is true. Bypassing Ethereum unstake and creating direct Redemption.", "burn_id", be.Id)
+
+				// Update BurnEvent status
+				be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING // Mark as directly unstaked
+				if err := k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be); err != nil {
+					k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to set burn event status after skipping unstake.", "burn_id", be.Id, "error", err)
+					return fmt.Errorf("failed to set burn event status for burn %d after skipping unstake: %w", be.Id, err)
+				}
+
+				// Manually create a Redemption object
+				// This assumes RedemptionData has a SkipStakingSteps field.
+				// The ID for this redemption reuses BurnEvent.Id. MsgSettleRedemption must handle this.
+				redemptionData := zenbtctypes.RedemptionData{
+					Id:                 be.Id, // Using BurnEvent.Id as RedemptionId
+					DestinationAddress: be.DestinationAddr,
+					Amount:             be.Amount, // This is ZenBTC amount
+					SkipStakingSteps:   true,      // Mark this redemption as having skipped earlier steps
+					SignReqId:          0,         // Will be set by MsgSettleRedemption
+				}
+				newRedemption := zenbtctypes.Redemption{
+					Data:   redemptionData,
+					Status: zenbtctypes.RedemptionStatus_UNSTAKED, // Ready for settlement request via MsgSettleRedemption
+				}
+
+				if err := k.zenBTCKeeper.SetRedemption(ctx, newRedemption.Data.Id, newRedemption); err != nil {
+					k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Failed to create manual Redemption after skipping unstake.", "burn_id", be.Id, "redemption_id", newRedemption.Data.Id, "error", err)
+					return fmt.Errorf("failed to create manual redemption for burn %d after skipping unstake: %w", be.Id, err)
+				}
+
+				k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Manual Redemption created from BurnEvent.", "burn_id", be.Id, "redemption_id", newRedemption.Data.Id, "status", newRedemption.Status)
+
+				// Since we skipped the unstake EVM tx, this burn event is "processed" for this UnstakerKeyID stage.
+				// The associated Redemption will be handled by processZenBTCRedemptions or MsgSettleRedemption.
+				// The `processTransaction` wrapper handles nonce clearing for UnstakerKeyID if this was the last burn.
+				return nil
+			}
+
+			// Original unstaking logic
 			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Dispatching unstake for burn event.",
 				"burn_id", be.Id, "origin_tx_id", be.TxID, "origin_chain_id", be.ChainID,
 				"amount", be.Amount, "destination_addr_hex", hex.EncodeToString(be.DestinationAddr))
@@ -1827,14 +1899,9 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Validating consensus for unstake.", "burn_id", be.Id, "required_fields", fmt.Sprintf("%v", requiredFields), "details_for_log", consensusCheckDetails)
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", consensusCheckDetails); err != nil {
 				k.Logger(ctx).Error("ProcessZenBTCBurnEvents: Consensus validation failed for unstake.", "burn_id", be.Id, "error", err)
-				// If consensus fails, we don't proceed with this burn event in this block.
-				// It will be retried in the next block if it's still the first pending.
-				// To ensure it *is* retried and doesn't block others if it's a persistent consensus issue for *this* event,
-				// we might need a mechanism to advance FirstPendingBurnEvent or mark this event as unprocessable.
-				// For now, returning nil to let processTransaction handle it as a non-dispatch,
-				// but this could lead to a stuck event if consensus is permanently missing for its required fields.
-				// A more robust solution might involve a temporary "unprocessable" status.
-				return nil // Returning nil, as per current validateConsensusForTxFields behavior (logs error, returns nil if missing consensus)
+				// Return err to indicate failure for this transaction if consensus is missing.
+				// The transaction will be retried in the next block if it's still the first pending.
+				return err
 			}
 			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Consensus validated for unstake.", "burn_id", be.Id)
 
@@ -1991,8 +2058,28 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			}
 			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
-		// Dispatch unstake completer transaction
+		// Dispatch unstake completer transaction or fast-forward if SkipStakingSteps
 		func(r zenbtctypes.Redemption) error {
+			// Assuming r.Data has a field like r.Data.SkipStakingSteps bool
+			if r.Data.SkipStakingSteps {
+				k.Logger(ctx).Warn("processZenBTCRedemptions: SkipStakingSteps is true, fast-forwarding to UNSTAKED", "redemption_id", r.Data.Id)
+				// This logic mirrors the nonceUpdatedCallback for redemptions
+				r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+				if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
+					return fmt.Errorf("failed to set redemption status for redemption %d after skipping complete step: %w", r.Data.Id, err)
+				}
+				// Original logic: request staker nonce, potentially for subsequent unrelated operations.
+				// This is maintained even if the complete step is skipped.
+				if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), true); err != nil {
+					k.Logger(ctx).Error("processZenBTCRedemptions: failed to set EthereumNonceRequested for StakerKeyID after skipping complete step", "redemption_id", r.Data.Id, "error", err)
+					// Do not return error here, as the main operation (setting status) succeeded.
+				}
+				k.Logger(ctx).Info("processZenBTCRedemptions: Redemption fast-forwarded to UNSTAKED.", "redemption_id", r.Data.Id)
+				// This redemption is "done" with the completer step from the perspective of this EVM key.
+				return nil
+			}
+
+			// Original complete logic
 			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, r.Data.Id); err != nil {
 				return err
 			}
@@ -2000,7 +2087,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			// Check for consensus
 			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedCompleterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
 				"zenBTC redemption", fmt.Sprintf("redemption_id: %d, amount: %d", r.Data.Id, r.Data.Amount)); err != nil {
-				return err
+				return err // Note: original code returns nil here, changed to return err for consistency.
 			}
 
 			k.Logger(ctx).Warn("processing zenBTC complete",

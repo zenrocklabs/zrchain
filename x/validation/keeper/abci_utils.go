@@ -1635,7 +1635,7 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 		}
 	}
 
-	// Clear ZenTP related requests if no pending ROCK Solana mints (assuming pendingsROCK is for ZenTP)
+	// Clear ZenTP related requests if no pending ROCK Solana mints
 	if len(pendingsROCK) == 0 {
 		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
 			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
