@@ -729,7 +729,7 @@ func (k Keeper) GetSignRequest(ctx sdk.Context, id uint64) (*types.SignRequest, 
 	return &tx, nil
 }
 
-func (k Keeper) QueryKeyById(ctx sdk.Context, id uint64, walletType types.WalletType, prefixes []string) (string, error) {
+func (k Keeper) GetAddressByWalletType(ctx sdk.Context, id uint64, walletType types.WalletType, prefixes []string) (string, error) {
 	key, err := k.KeyByID(ctx, &types.QueryKeyByIDRequest{
 		Id:         id,
 		WalletType: walletType,

@@ -626,7 +626,7 @@ func (k *Keeper) EncodeCompleteCallData(ctx context.Context, redemptionID uint64
 }
 
 func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType treasurytypes.WalletType) (string, error) {
-	address, err := k.treasuryKeeper.QueryKeyById(sdk.UnwrapSDKContext(ctx), keyID, walletType, make([]string, 0))
+	address, err := k.treasuryKeeper.GetAddressByWalletType(sdk.UnwrapSDKContext(ctx), keyID, walletType, make([]string, 0))
 	if err != nil {
 		return "", fmt.Errorf("error getting address for key ID %d: %w", keyID, err)
 	}

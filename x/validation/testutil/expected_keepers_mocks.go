@@ -918,6 +918,21 @@ func (m *MockTreasuryKeeper) EXPECT() *MockTreasuryKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetAddressByWalletType mocks base method.
+func (m *MockTreasuryKeeper) GetAddressByWalletType(ctx types2.Context, id uint64, walletType types.WalletType, prefixes []string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAddressByWalletType", ctx, id, walletType, prefixes)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAddressByWalletType indicates an expected call of GetAddressByWalletType.
+func (mr *MockTreasuryKeeperMockRecorder) GetAddressByWalletType(ctx, id, walletType, prefixes interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAddressByWalletType", reflect.TypeOf((*MockTreasuryKeeper)(nil).GetAddressByWalletType), ctx, id, walletType, prefixes)
+}
+
 // GetKey mocks base method.
 func (m *MockTreasuryKeeper) GetKey(ctx types2.Context, keyID uint64) (*types.Key, error) {
 	m.ctrl.T.Helper()
@@ -976,19 +991,4 @@ func (m *MockTreasuryKeeper) HandleSignTransactionRequest(ctx types2.Context, ms
 func (mr *MockTreasuryKeeperMockRecorder) HandleSignTransactionRequest(ctx, msg, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleSignTransactionRequest", reflect.TypeOf((*MockTreasuryKeeper)(nil).HandleSignTransactionRequest), ctx, msg, data)
-}
-
-// QueryKeyById mocks base method.
-func (m *MockTreasuryKeeper) QueryKeyById(ctx types2.Context, id uint64, walletType types.WalletType, prefixes []string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryKeyById", ctx, id, walletType, prefixes)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// QueryKeyById indicates an expected call of QueryKeyById.
-func (mr *MockTreasuryKeeperMockRecorder) QueryKeyById(ctx, id, walletType, prefixes interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryKeyById", reflect.TypeOf((*MockTreasuryKeeper)(nil).QueryKeyById), ctx, id, walletType, prefixes)
 }

@@ -135,7 +135,7 @@ type ZentpKeeper interface {
 type TreasuryKeeper interface {
 	GetSignTransactionRequest(ctx sdk.Context, id uint64) (*treasurytypes.SignTransactionRequest, error)
 	GetSignRequest(ctx sdk.Context, id uint64) (*treasurytypes.SignRequest, error)
-	QueryKeyById(ctx sdk.Context, id uint64, walletType treasurytypes.WalletType, prefixes []string) (string, error)
+	GetAddressByWalletType(ctx sdk.Context, id uint64, walletType treasurytypes.WalletType, prefixes []string) (string, error)
 	HandleSignTransactionRequest(ctx sdk.Context, msg *treasurytypes.MsgNewSignTransactionRequest, data []byte) (*treasurytypes.MsgNewSignTransactionRequestResponse, error)
 	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
 }
