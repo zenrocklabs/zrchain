@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -31,6 +32,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	}
 
 	p := k.GetSolanaParams(ctx)
+	fmt.Println("p.Fee", p.Fee)
 	totalAmount = totalAmount + p.Fee // TODO: do this chain agnostic
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
 	if bal.IsLT(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))) {
