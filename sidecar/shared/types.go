@@ -75,7 +75,7 @@ var (
 
 	ZenBTCSolanaProgramID = map[string]string{
 		NetworkDevnet:  "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
-		NetworkTestnet: "DNHyTXKSbSGdtXzr6Db9xSJ4ZMkGJrXPm29pq4dBmXip",
+		NetworkTestnet: "Hs816EC8ToGhbT9xSMAoCTg6gPeKefX7dcof5d6WgCwz",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 	SolRockProgramID = map[string]string{
