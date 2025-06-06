@@ -16,8 +16,11 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, err := treasurytypes.Caip2ToKeyType(req.DestinationChain)
-	if err != nil {
+	if req.Creator != req.SourceAddress {
+		return nil, errors.New("creator and source address must be the same")
+	}
+
+	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
 		return nil, err
 	}
 
@@ -25,15 +28,28 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
 
-	totalAmount, err := k.AddFeeToBridgeAmount(ctx, req.Amount)
+	if req.Denom != params.BondDenom {
+		return nil, errors.New("invalid denomination")
+	}
+
+	baseAmount, err := k.AddFeeToBridgeAmount(ctx, req.Amount)
 	if err != nil {
 		return nil, err
 	}
 
+	var fee uint64 = 0
 	p := k.GetSolanaParams(ctx)
-	totalAmount = totalAmount + p.Fee // TODO: do this chain agnostic
-	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), req.Denom)
-	if bal.IsLT(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))) {
+	if p != nil {
+		fee = p.Fee
+	}
+
+	// Use safe math to prevent overflow
+	baseAmountInt := sdkmath.NewIntFromUint64(baseAmount)
+	feeInt := sdkmath.NewIntFromUint64(fee)
+	totalAmountInt := baseAmountInt.Add(feeInt)
+
+	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), params.BondDenom)
+	if bal.Amount.LT(totalAmountInt) {
 		return nil, errors.New("not enough balance")
 	}
 
@@ -43,7 +59,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	}
 
 	mintsCount++
-	err = k.mintStore.Set(ctx, mintsCount, types.Bridge{
+	if err = k.mintStore.Set(ctx, mintsCount, types.Bridge{
 		Id:               mintsCount,
 		Creator:          req.Creator,
 		SourceAddress:    req.SourceAddress,
@@ -53,13 +69,11 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		Denom:            req.Denom,
 		RecipientAddress: req.RecipientAddress,
 		State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
-	err = k.MintCount.Set(ctx, mintsCount)
-	if err != nil {
+	if err = k.MintCount.Set(ctx, mintsCount); err != nil {
 		return nil, err
 	}
 
@@ -67,16 +81,16 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		ctx,
 		sdk.MustAccAddressFromBech32(req.SourceAddress),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(totalAmount))),
+		sdk.NewCoins(sdk.NewCoin(params.BondDenom, totalAmountInt)),
 	); err != nil {
 		return nil, err
 	}
 
-	if err := k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.NonceAccountKey, true); err != nil {
+	if err = k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.NonceAccountKey, true); err != nil {
 		return nil, err
 	}
 
-	if err := k.validationKeeper.SetSolanaZenTPRequestedAccount(goCtx, req.RecipientAddress, true); err != nil {
+	if err = k.validationKeeper.SetSolanaZenTPRequestedAccount(goCtx, req.RecipientAddress, true); err != nil {
 		return nil, err
 	}
 
