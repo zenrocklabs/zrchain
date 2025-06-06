@@ -18,10 +18,11 @@ import (
 	identitykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )
 
-func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore) (keeper.Keeper, sdk.Context) {
+func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKeeper *identitykeeper.Keeper, bankKeeper types.BankKeeper, db dbm.DB, stateStore storetypes.CommitMultiStore, zentpKeeper *treasurytestutil.MockZentpKeeper) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -43,7 +44,7 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		*policyKeeper,
 
 		nil,
-		nil,
+		zentpKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

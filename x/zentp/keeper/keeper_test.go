@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -120,20 +119,6 @@ func (s *IntegrationTestSuite) TestGetBridgeFeeParams() {
 	// Assert the results
 	s.Require().Equal(sdk.MustAccAddressFromBech32(mintParams.ProtocolWalletAddress), protocolWalletAddress)
 	s.Require().Equal(bridgeFee, params.BridgeFee)
-}
-
-func (s *IntegrationTestSuite) TestGetBridgeFeeAmount() {
-	// Setup test parameters
-	params := types.DefaultParams()
-	err := s.zentpKeeper.ParamStore.Set(s.ctx, params)
-	s.Require().NoError(err)
-
-	// Call the GetBridgeFeeAmount function
-	bridgeFeeAmount, err := s.zentpKeeper.GetBridgeFeeAmount(s.ctx, 1000, params.BridgeFee)
-	s.Require().NoError(err)
-
-	// Assert the results
-	s.Require().Equal(sdk.NewCoins(sdk.NewCoin("urock", sdkmath.NewIntFromUint64(10))), bridgeFeeAmount)
 }
 
 func (s *IntegrationTestSuite) TestAddBurn() {

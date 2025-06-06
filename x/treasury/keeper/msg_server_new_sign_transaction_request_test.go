@@ -234,6 +234,8 @@ func Test_msgServer_NewSignTransactionRequest(t *testing.T) {
 			tk := keepers.TreasuryKeeper
 			ctx := keepers.Ctx
 
+			keepers.ZentpKeeper.EXPECT().GetSignerKeyID(ctx).Return(uint64(0)).AnyTimes()
+
 			idGenesis := idTypes.GenesisState{
 				PortId:     idTypes.PortID,
 				Keyrings:   []idTypes.Keyring{*tt.args.keyring},
