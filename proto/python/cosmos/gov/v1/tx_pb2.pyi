@@ -14,7 +14,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MsgSubmitProposal(_message.Message):
-    __slots__ = ("messages", "initial_deposit", "proposer", "metadata", "title", "summary", "expedited", "proposal_type")
+    __slots__ = ("messages", "initial_deposit", "proposer", "metadata", "title", "summary", "expedited")
     MESSAGES_FIELD_NUMBER: _ClassVar[int]
     INITIAL_DEPOSIT_FIELD_NUMBER: _ClassVar[int]
     PROPOSER_FIELD_NUMBER: _ClassVar[int]
@@ -22,7 +22,6 @@ class MsgSubmitProposal(_message.Message):
     TITLE_FIELD_NUMBER: _ClassVar[int]
     SUMMARY_FIELD_NUMBER: _ClassVar[int]
     EXPEDITED_FIELD_NUMBER: _ClassVar[int]
-    PROPOSAL_TYPE_FIELD_NUMBER: _ClassVar[int]
     messages: _containers.RepeatedCompositeFieldContainer[_any_pb2.Any]
     initial_deposit: _containers.RepeatedCompositeFieldContainer[_coin_pb2.Coin]
     proposer: str
@@ -30,8 +29,7 @@ class MsgSubmitProposal(_message.Message):
     title: str
     summary: str
     expedited: bool
-    proposal_type: _gov_pb2.ProposalType
-    def __init__(self, messages: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., initial_deposit: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ..., proposer: _Optional[str] = ..., metadata: _Optional[str] = ..., title: _Optional[str] = ..., summary: _Optional[str] = ..., expedited: bool = ..., proposal_type: _Optional[_Union[_gov_pb2.ProposalType, str]] = ...) -> None: ...
+    def __init__(self, messages: _Optional[_Iterable[_Union[_any_pb2.Any, _Mapping]]] = ..., initial_deposit: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ..., proposer: _Optional[str] = ..., metadata: _Optional[str] = ..., title: _Optional[str] = ..., summary: _Optional[str] = ..., expedited: bool = ...) -> None: ...
 
 class MsgSubmitProposalResponse(_message.Message):
     __slots__ = ("proposal_id",)
@@ -126,53 +124,3 @@ class MsgCancelProposalResponse(_message.Message):
     canceled_time: _timestamp_pb2.Timestamp
     canceled_height: int
     def __init__(self, proposal_id: _Optional[int] = ..., canceled_time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., canceled_height: _Optional[int] = ...) -> None: ...
-
-class MsgSubmitMultipleChoiceProposal(_message.Message):
-    __slots__ = ("initial_deposit", "proposer", "metadata", "title", "summary", "vote_options")
-    INITIAL_DEPOSIT_FIELD_NUMBER: _ClassVar[int]
-    PROPOSER_FIELD_NUMBER: _ClassVar[int]
-    METADATA_FIELD_NUMBER: _ClassVar[int]
-    TITLE_FIELD_NUMBER: _ClassVar[int]
-    SUMMARY_FIELD_NUMBER: _ClassVar[int]
-    VOTE_OPTIONS_FIELD_NUMBER: _ClassVar[int]
-    initial_deposit: _containers.RepeatedCompositeFieldContainer[_coin_pb2.Coin]
-    proposer: str
-    metadata: str
-    title: str
-    summary: str
-    vote_options: _gov_pb2.ProposalVoteOptions
-    def __init__(self, initial_deposit: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ..., proposer: _Optional[str] = ..., metadata: _Optional[str] = ..., title: _Optional[str] = ..., summary: _Optional[str] = ..., vote_options: _Optional[_Union[_gov_pb2.ProposalVoteOptions, _Mapping]] = ...) -> None: ...
-
-class MsgSubmitMultipleChoiceProposalResponse(_message.Message):
-    __slots__ = ("proposal_id",)
-    PROPOSAL_ID_FIELD_NUMBER: _ClassVar[int]
-    proposal_id: int
-    def __init__(self, proposal_id: _Optional[int] = ...) -> None: ...
-
-class MsgUpdateMessageParams(_message.Message):
-    __slots__ = ("authority", "msg_url", "params")
-    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
-    MSG_URL_FIELD_NUMBER: _ClassVar[int]
-    PARAMS_FIELD_NUMBER: _ClassVar[int]
-    authority: str
-    msg_url: str
-    params: _gov_pb2.MessageBasedParams
-    def __init__(self, authority: _Optional[str] = ..., msg_url: _Optional[str] = ..., params: _Optional[_Union[_gov_pb2.MessageBasedParams, _Mapping]] = ...) -> None: ...
-
-class MsgUpdateMessageParamsResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
-
-class MsgSudoExec(_message.Message):
-    __slots__ = ("authority", "msg")
-    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
-    MSG_FIELD_NUMBER: _ClassVar[int]
-    authority: str
-    msg: _any_pb2.Any
-    def __init__(self, authority: _Optional[str] = ..., msg: _Optional[_Union[_any_pb2.Any, _Mapping]] = ...) -> None: ...
-
-class MsgSudoExecResponse(_message.Message):
-    __slots__ = ("result",)
-    RESULT_FIELD_NUMBER: _ClassVar[int]
-    result: bytes
-    def __init__(self, result: _Optional[bytes] = ...) -> None: ...

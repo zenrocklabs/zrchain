@@ -62,15 +62,3 @@ class MsgSetSendEnabled(_message.Message):
 class MsgSetSendEnabledResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
-
-class MsgBurn(_message.Message):
-    __slots__ = ("from_address", "amount")
-    FROM_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    from_address: str
-    amount: _containers.RepeatedCompositeFieldContainer[_coin_pb2.Coin]
-    def __init__(self, from_address: _Optional[str] = ..., amount: _Optional[_Iterable[_Union[_coin_pb2.Coin, _Mapping]]] = ...) -> None: ...
-
-class MsgBurnResponse(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...

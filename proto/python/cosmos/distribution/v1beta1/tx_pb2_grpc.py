@@ -84,8 +84,7 @@ class MsgServicer(object):
         """FundCommunityPool defines a method to allow an account to directly
         fund the community pool.
 
-        Deprecated: Use x/protocolpool module's FundCommunityPool instead.
-        Since: cosmos-sdk 0.50
+        WARNING: This method will fail if an external community pool is used.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -94,8 +93,6 @@ class MsgServicer(object):
     def UpdateParams(self, request, context):
         """UpdateParams defines a governance operation for updating the x/distribution
         module parameters. The authority is defined in the keeper.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -107,8 +104,7 @@ class MsgServicer(object):
         could be the governance module itself. The authority is defined in the
         keeper.
 
-        Deprecated: Use x/protocolpool module's CommunityPoolSpend instead.
-        Since: cosmos-sdk 0.50
+        WARNING: This method will fail if an external community pool is used.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -117,8 +113,6 @@ class MsgServicer(object):
     def DepositValidatorRewardsPool(self, request, context):
         """DepositValidatorRewardsPool defines a method to provide additional rewards
         to delegators to a specific validator.
-
-        Since: cosmos-sdk 0.50
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

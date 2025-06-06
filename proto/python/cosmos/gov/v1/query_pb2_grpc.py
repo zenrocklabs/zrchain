@@ -60,16 +60,6 @@ class QueryStub(object):
                 request_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultRequest.SerializeToString,
                 response_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultResponse.FromString,
                 )
-        self.ProposalVoteOptions = channel.unary_unary(
-                '/cosmos.gov.v1.Query/ProposalVoteOptions',
-                request_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsRequest.SerializeToString,
-                response_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsResponse.FromString,
-                )
-        self.MessageBasedParams = channel.unary_unary(
-                '/cosmos.gov.v1.Query/MessageBasedParams',
-                request_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsRequest.SerializeToString,
-                response_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsResponse.FromString,
-                )
 
 
 class QueryServicer(object):
@@ -139,22 +129,6 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ProposalVoteOptions(self, request, context):
-        """ProposalVoteOptions queries the valid voting options for a proposal.
-        Since: cosmos-sdk x/gov v1.0.0
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def MessageBasedParams(self, request, context):
-        """MessageBasedParams queries the message specific governance params based on a msg url.
-        Since: cosmos-sdk x/gov v1.0.0
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -202,16 +176,6 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.TallyResult,
                     request_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultRequest.FromString,
                     response_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultResponse.SerializeToString,
-            ),
-            'ProposalVoteOptions': grpc.unary_unary_rpc_method_handler(
-                    servicer.ProposalVoteOptions,
-                    request_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsRequest.FromString,
-                    response_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsResponse.SerializeToString,
-            ),
-            'MessageBasedParams': grpc.unary_unary_rpc_method_handler(
-                    servicer.MessageBasedParams,
-                    request_deserializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsRequest.FromString,
-                    response_serializer=cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -374,39 +338,5 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Query/TallyResult',
             cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultRequest.SerializeToString,
             cosmos_dot_gov_dot_v1_dot_query__pb2.QueryTallyResultResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ProposalVoteOptions(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Query/ProposalVoteOptions',
-            cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsRequest.SerializeToString,
-            cosmos_dot_gov_dot_v1_dot_query__pb2.QueryProposalVoteOptionsResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def MessageBasedParams(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.gov.v1.Query/MessageBasedParams',
-            cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsRequest.SerializeToString,
-            cosmos_dot_gov_dot_v1_dot_query__pb2.QueryMessageBasedParamsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

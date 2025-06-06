@@ -76,8 +76,6 @@ class QueryServicer(object):
 
         When called from another module, this query might consume a high amount of
         gas if the pagination field is incorrectly set.
-
-        Since: cosmos-sdk 0.43
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -92,8 +90,6 @@ class QueryServicer(object):
 
     def AccountAddressByID(self, request, context):
         """AccountAddressByID returns account address based on account number.
-
-        Since: cosmos-sdk 0.46.2
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -108,8 +104,6 @@ class QueryServicer(object):
 
     def ModuleAccounts(self, request, context):
         """ModuleAccounts returns all the existing module accounts.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -124,8 +118,6 @@ class QueryServicer(object):
 
     def Bech32Prefix(self, request, context):
         """Bech32Prefix queries bech32Prefix
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -133,8 +125,6 @@ class QueryServicer(object):
 
     def AddressBytesToString(self, request, context):
         """AddressBytesToString converts Account Address bytes to string
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -142,8 +132,6 @@ class QueryServicer(object):
 
     def AddressStringToBytes(self, request, context):
         """AddressStringToBytes converts Address string to bytes
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -151,8 +139,6 @@ class QueryServicer(object):
 
     def AccountInfo(self, request, context):
         """AccountInfo queries account info which is common to all account types.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

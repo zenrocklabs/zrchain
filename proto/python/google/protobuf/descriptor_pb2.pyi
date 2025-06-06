@@ -21,6 +21,12 @@ class Edition(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     EDITION_99998_TEST_ONLY: _ClassVar[Edition]
     EDITION_99999_TEST_ONLY: _ClassVar[Edition]
     EDITION_MAX: _ClassVar[Edition]
+
+class SymbolVisibility(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    VISIBILITY_UNSET: _ClassVar[SymbolVisibility]
+    VISIBILITY_LOCAL: _ClassVar[SymbolVisibility]
+    VISIBILITY_EXPORT: _ClassVar[SymbolVisibility]
 EDITION_UNKNOWN: Edition
 EDITION_LEGACY: Edition
 EDITION_PROTO2: Edition
@@ -33,6 +39,9 @@ EDITION_99997_TEST_ONLY: Edition
 EDITION_99998_TEST_ONLY: Edition
 EDITION_99999_TEST_ONLY: Edition
 EDITION_MAX: Edition
+VISIBILITY_UNSET: SymbolVisibility
+VISIBILITY_LOCAL: SymbolVisibility
+VISIBILITY_EXPORT: SymbolVisibility
 
 class FileDescriptorSet(_message.Message):
     __slots__ = ("file",)
@@ -42,12 +51,13 @@ class FileDescriptorSet(_message.Message):
     def __init__(self, file: _Optional[_Iterable[_Union[FileDescriptorProto, _Mapping]]] = ...) -> None: ...
 
 class FileDescriptorProto(_message.Message):
-    __slots__ = ("name", "package", "dependency", "public_dependency", "weak_dependency", "message_type", "enum_type", "service", "extension", "options", "source_code_info", "syntax", "edition")
+    __slots__ = ("name", "package", "dependency", "public_dependency", "weak_dependency", "option_dependency", "message_type", "enum_type", "service", "extension", "options", "source_code_info", "syntax", "edition")
     NAME_FIELD_NUMBER: _ClassVar[int]
     PACKAGE_FIELD_NUMBER: _ClassVar[int]
     DEPENDENCY_FIELD_NUMBER: _ClassVar[int]
     PUBLIC_DEPENDENCY_FIELD_NUMBER: _ClassVar[int]
     WEAK_DEPENDENCY_FIELD_NUMBER: _ClassVar[int]
+    OPTION_DEPENDENCY_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_TYPE_FIELD_NUMBER: _ClassVar[int]
     ENUM_TYPE_FIELD_NUMBER: _ClassVar[int]
     SERVICE_FIELD_NUMBER: _ClassVar[int]
@@ -61,6 +71,7 @@ class FileDescriptorProto(_message.Message):
     dependency: _containers.RepeatedScalarFieldContainer[str]
     public_dependency: _containers.RepeatedScalarFieldContainer[int]
     weak_dependency: _containers.RepeatedScalarFieldContainer[int]
+    option_dependency: _containers.RepeatedScalarFieldContainer[str]
     message_type: _containers.RepeatedCompositeFieldContainer[DescriptorProto]
     enum_type: _containers.RepeatedCompositeFieldContainer[EnumDescriptorProto]
     service: _containers.RepeatedCompositeFieldContainer[ServiceDescriptorProto]
@@ -69,10 +80,10 @@ class FileDescriptorProto(_message.Message):
     source_code_info: SourceCodeInfo
     syntax: str
     edition: Edition
-    def __init__(self, name: _Optional[str] = ..., package: _Optional[str] = ..., dependency: _Optional[_Iterable[str]] = ..., public_dependency: _Optional[_Iterable[int]] = ..., weak_dependency: _Optional[_Iterable[int]] = ..., message_type: _Optional[_Iterable[_Union[DescriptorProto, _Mapping]]] = ..., enum_type: _Optional[_Iterable[_Union[EnumDescriptorProto, _Mapping]]] = ..., service: _Optional[_Iterable[_Union[ServiceDescriptorProto, _Mapping]]] = ..., extension: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[FileOptions, _Mapping]] = ..., source_code_info: _Optional[_Union[SourceCodeInfo, _Mapping]] = ..., syntax: _Optional[str] = ..., edition: _Optional[_Union[Edition, str]] = ...) -> None: ...
+    def __init__(self, name: _Optional[str] = ..., package: _Optional[str] = ..., dependency: _Optional[_Iterable[str]] = ..., public_dependency: _Optional[_Iterable[int]] = ..., weak_dependency: _Optional[_Iterable[int]] = ..., option_dependency: _Optional[_Iterable[str]] = ..., message_type: _Optional[_Iterable[_Union[DescriptorProto, _Mapping]]] = ..., enum_type: _Optional[_Iterable[_Union[EnumDescriptorProto, _Mapping]]] = ..., service: _Optional[_Iterable[_Union[ServiceDescriptorProto, _Mapping]]] = ..., extension: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[FileOptions, _Mapping]] = ..., source_code_info: _Optional[_Union[SourceCodeInfo, _Mapping]] = ..., syntax: _Optional[str] = ..., edition: _Optional[_Union[Edition, str]] = ...) -> None: ...
 
 class DescriptorProto(_message.Message):
-    __slots__ = ("name", "field", "extension", "nested_type", "enum_type", "extension_range", "oneof_decl", "options", "reserved_range", "reserved_name")
+    __slots__ = ("name", "field", "extension", "nested_type", "enum_type", "extension_range", "oneof_decl", "options", "reserved_range", "reserved_name", "visibility")
     class ExtensionRange(_message.Message):
         __slots__ = ("start", "end", "options")
         START_FIELD_NUMBER: _ClassVar[int]
@@ -99,6 +110,7 @@ class DescriptorProto(_message.Message):
     OPTIONS_FIELD_NUMBER: _ClassVar[int]
     RESERVED_RANGE_FIELD_NUMBER: _ClassVar[int]
     RESERVED_NAME_FIELD_NUMBER: _ClassVar[int]
+    VISIBILITY_FIELD_NUMBER: _ClassVar[int]
     name: str
     field: _containers.RepeatedCompositeFieldContainer[FieldDescriptorProto]
     extension: _containers.RepeatedCompositeFieldContainer[FieldDescriptorProto]
@@ -109,7 +121,8 @@ class DescriptorProto(_message.Message):
     options: MessageOptions
     reserved_range: _containers.RepeatedCompositeFieldContainer[DescriptorProto.ReservedRange]
     reserved_name: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, name: _Optional[str] = ..., field: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., extension: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., nested_type: _Optional[_Iterable[_Union[DescriptorProto, _Mapping]]] = ..., enum_type: _Optional[_Iterable[_Union[EnumDescriptorProto, _Mapping]]] = ..., extension_range: _Optional[_Iterable[_Union[DescriptorProto.ExtensionRange, _Mapping]]] = ..., oneof_decl: _Optional[_Iterable[_Union[OneofDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[MessageOptions, _Mapping]] = ..., reserved_range: _Optional[_Iterable[_Union[DescriptorProto.ReservedRange, _Mapping]]] = ..., reserved_name: _Optional[_Iterable[str]] = ...) -> None: ...
+    visibility: SymbolVisibility
+    def __init__(self, name: _Optional[str] = ..., field: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., extension: _Optional[_Iterable[_Union[FieldDescriptorProto, _Mapping]]] = ..., nested_type: _Optional[_Iterable[_Union[DescriptorProto, _Mapping]]] = ..., enum_type: _Optional[_Iterable[_Union[EnumDescriptorProto, _Mapping]]] = ..., extension_range: _Optional[_Iterable[_Union[DescriptorProto.ExtensionRange, _Mapping]]] = ..., oneof_decl: _Optional[_Iterable[_Union[OneofDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[MessageOptions, _Mapping]] = ..., reserved_range: _Optional[_Iterable[_Union[DescriptorProto.ReservedRange, _Mapping]]] = ..., reserved_name: _Optional[_Iterable[str]] = ..., visibility: _Optional[_Union[SymbolVisibility, str]] = ...) -> None: ...
 
 class ExtensionRangeOptions(_message.Message):
     __slots__ = ("uninterpreted_option", "declaration", "features", "verification")
@@ -224,7 +237,7 @@ class OneofDescriptorProto(_message.Message):
     def __init__(self, name: _Optional[str] = ..., options: _Optional[_Union[OneofOptions, _Mapping]] = ...) -> None: ...
 
 class EnumDescriptorProto(_message.Message):
-    __slots__ = ("name", "value", "options", "reserved_range", "reserved_name")
+    __slots__ = ("name", "value", "options", "reserved_range", "reserved_name", "visibility")
     class EnumReservedRange(_message.Message):
         __slots__ = ("start", "end")
         START_FIELD_NUMBER: _ClassVar[int]
@@ -237,12 +250,14 @@ class EnumDescriptorProto(_message.Message):
     OPTIONS_FIELD_NUMBER: _ClassVar[int]
     RESERVED_RANGE_FIELD_NUMBER: _ClassVar[int]
     RESERVED_NAME_FIELD_NUMBER: _ClassVar[int]
+    VISIBILITY_FIELD_NUMBER: _ClassVar[int]
     name: str
     value: _containers.RepeatedCompositeFieldContainer[EnumValueDescriptorProto]
     options: EnumOptions
     reserved_range: _containers.RepeatedCompositeFieldContainer[EnumDescriptorProto.EnumReservedRange]
     reserved_name: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, name: _Optional[str] = ..., value: _Optional[_Iterable[_Union[EnumValueDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[EnumOptions, _Mapping]] = ..., reserved_range: _Optional[_Iterable[_Union[EnumDescriptorProto.EnumReservedRange, _Mapping]]] = ..., reserved_name: _Optional[_Iterable[str]] = ...) -> None: ...
+    visibility: SymbolVisibility
+    def __init__(self, name: _Optional[str] = ..., value: _Optional[_Iterable[_Union[EnumValueDescriptorProto, _Mapping]]] = ..., options: _Optional[_Union[EnumOptions, _Mapping]] = ..., reserved_range: _Optional[_Iterable[_Union[EnumDescriptorProto.EnumReservedRange, _Mapping]]] = ..., reserved_name: _Optional[_Iterable[str]] = ..., visibility: _Optional[_Union[SymbolVisibility, str]] = ...) -> None: ...
 
 class EnumValueDescriptorProto(_message.Message):
     __slots__ = ("name", "number", "options")
@@ -548,7 +563,7 @@ class UninterpretedOption(_message.Message):
     def __init__(self, name: _Optional[_Iterable[_Union[UninterpretedOption.NamePart, _Mapping]]] = ..., identifier_value: _Optional[str] = ..., positive_int_value: _Optional[int] = ..., negative_int_value: _Optional[int] = ..., double_value: _Optional[float] = ..., string_value: _Optional[bytes] = ..., aggregate_value: _Optional[str] = ...) -> None: ...
 
 class FeatureSet(_message.Message):
-    __slots__ = ("field_presence", "enum_type", "repeated_field_encoding", "utf8_validation", "message_encoding", "json_format", "enforce_naming_style")
+    __slots__ = ("field_presence", "enum_type", "repeated_field_encoding", "utf8_validation", "message_encoding", "json_format", "enforce_naming_style", "default_symbol_visibility")
     Extensions: _python_message._ExtensionDict
     class FieldPresence(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
@@ -608,6 +623,21 @@ class FeatureSet(_message.Message):
     ENFORCE_NAMING_STYLE_UNKNOWN: FeatureSet.EnforceNamingStyle
     STYLE2024: FeatureSet.EnforceNamingStyle
     STYLE_LEGACY: FeatureSet.EnforceNamingStyle
+    class VisibilityFeature(_message.Message):
+        __slots__ = ()
+        class DefaultSymbolVisibility(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+            __slots__ = ()
+            DEFAULT_SYMBOL_VISIBILITY_UNKNOWN: _ClassVar[FeatureSet.VisibilityFeature.DefaultSymbolVisibility]
+            EXPORT_ALL: _ClassVar[FeatureSet.VisibilityFeature.DefaultSymbolVisibility]
+            EXPORT_TOP_LEVEL: _ClassVar[FeatureSet.VisibilityFeature.DefaultSymbolVisibility]
+            LOCAL_ALL: _ClassVar[FeatureSet.VisibilityFeature.DefaultSymbolVisibility]
+            STRICT: _ClassVar[FeatureSet.VisibilityFeature.DefaultSymbolVisibility]
+        DEFAULT_SYMBOL_VISIBILITY_UNKNOWN: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+        EXPORT_ALL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+        EXPORT_TOP_LEVEL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+        LOCAL_ALL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+        STRICT: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+        def __init__(self) -> None: ...
     FIELD_PRESENCE_FIELD_NUMBER: _ClassVar[int]
     ENUM_TYPE_FIELD_NUMBER: _ClassVar[int]
     REPEATED_FIELD_ENCODING_FIELD_NUMBER: _ClassVar[int]
@@ -615,6 +645,7 @@ class FeatureSet(_message.Message):
     MESSAGE_ENCODING_FIELD_NUMBER: _ClassVar[int]
     JSON_FORMAT_FIELD_NUMBER: _ClassVar[int]
     ENFORCE_NAMING_STYLE_FIELD_NUMBER: _ClassVar[int]
+    DEFAULT_SYMBOL_VISIBILITY_FIELD_NUMBER: _ClassVar[int]
     field_presence: FeatureSet.FieldPresence
     enum_type: FeatureSet.EnumType
     repeated_field_encoding: FeatureSet.RepeatedFieldEncoding
@@ -622,7 +653,8 @@ class FeatureSet(_message.Message):
     message_encoding: FeatureSet.MessageEncoding
     json_format: FeatureSet.JsonFormat
     enforce_naming_style: FeatureSet.EnforceNamingStyle
-    def __init__(self, field_presence: _Optional[_Union[FeatureSet.FieldPresence, str]] = ..., enum_type: _Optional[_Union[FeatureSet.EnumType, str]] = ..., repeated_field_encoding: _Optional[_Union[FeatureSet.RepeatedFieldEncoding, str]] = ..., utf8_validation: _Optional[_Union[FeatureSet.Utf8Validation, str]] = ..., message_encoding: _Optional[_Union[FeatureSet.MessageEncoding, str]] = ..., json_format: _Optional[_Union[FeatureSet.JsonFormat, str]] = ..., enforce_naming_style: _Optional[_Union[FeatureSet.EnforceNamingStyle, str]] = ...) -> None: ...
+    default_symbol_visibility: FeatureSet.VisibilityFeature.DefaultSymbolVisibility
+    def __init__(self, field_presence: _Optional[_Union[FeatureSet.FieldPresence, str]] = ..., enum_type: _Optional[_Union[FeatureSet.EnumType, str]] = ..., repeated_field_encoding: _Optional[_Union[FeatureSet.RepeatedFieldEncoding, str]] = ..., utf8_validation: _Optional[_Union[FeatureSet.Utf8Validation, str]] = ..., message_encoding: _Optional[_Union[FeatureSet.MessageEncoding, str]] = ..., json_format: _Optional[_Union[FeatureSet.JsonFormat, str]] = ..., enforce_naming_style: _Optional[_Union[FeatureSet.EnforceNamingStyle, str]] = ..., default_symbol_visibility: _Optional[_Union[FeatureSet.VisibilityFeature.DefaultSymbolVisibility, str]] = ...) -> None: ...
 
 class FeatureSetDefaults(_message.Message):
     __slots__ = ("defaults", "minimum_edition", "maximum_edition")

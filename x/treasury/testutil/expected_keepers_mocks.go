@@ -288,18 +288,18 @@ func (mr *MockPolicyKeeperMockRecorder) ActionHandler(actionType interface{}) *g
 }
 
 // AddAction mocks base method.
-func (m *MockPolicyKeeper) AddAction(ctx types2.Context, creator string, msg types2.Msg, policyID, btl uint64, policyData map[string][]byte) (*types0.Action, error) {
+func (m *MockPolicyKeeper) AddAction(ctx types2.Context, creator string, msg types2.Msg, policyID, btl uint64, policyData map[string][]byte, wsOwners []string) (*types0.Action, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddAction", ctx, creator, msg, policyID, btl, policyData)
+	ret := m.ctrl.Call(m, "AddAction", ctx, creator, msg, policyID, btl, policyData, wsOwners)
 	ret0, _ := ret[0].(*types0.Action)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddAction indicates an expected call of AddAction.
-func (mr *MockPolicyKeeperMockRecorder) AddAction(ctx, creator, msg, policyID, btl, policyData interface{}) *gomock.Call {
+func (mr *MockPolicyKeeperMockRecorder) AddAction(ctx, creator, msg, policyID, btl, policyData, wsOwners interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAction", reflect.TypeOf((*MockPolicyKeeper)(nil).AddAction), ctx, creator, msg, policyID, btl, policyData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAction", reflect.TypeOf((*MockPolicyKeeper)(nil).AddAction), ctx, creator, msg, policyID, btl, policyData, wsOwners)
 }
 
 // Codec mocks base method.
@@ -441,4 +441,41 @@ func (m *MockPolicyKeeper) Unpack(policyPb *types0.Policy) (policy.Policy, error
 func (mr *MockPolicyKeeperMockRecorder) Unpack(policyPb interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unpack", reflect.TypeOf((*MockPolicyKeeper)(nil).Unpack), policyPb)
+}
+
+// MockZentpKeeper is a mock of ZentpKeeper interface.
+type MockZentpKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockZentpKeeperMockRecorder
+}
+
+// MockZentpKeeperMockRecorder is the mock recorder for MockZentpKeeper.
+type MockZentpKeeperMockRecorder struct {
+	mock *MockZentpKeeper
+}
+
+// NewMockZentpKeeper creates a new mock instance.
+func NewMockZentpKeeper(ctrl *gomock.Controller) *MockZentpKeeper {
+	mock := &MockZentpKeeper{ctrl: ctrl}
+	mock.recorder = &MockZentpKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockZentpKeeper) EXPECT() *MockZentpKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetSignerKeyID mocks base method.
+func (m *MockZentpKeeper) GetSignerKeyID(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSignerKeyID", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetSignerKeyID indicates an expected call of GetSignerKeyID.
+func (mr *MockZentpKeeperMockRecorder) GetSignerKeyID(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSignerKeyID", reflect.TypeOf((*MockZentpKeeper)(nil).GetSignerKeyID), ctx)
 }

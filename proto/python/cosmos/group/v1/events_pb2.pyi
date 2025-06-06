@@ -75,3 +75,11 @@ class EventProposalPruned(_message.Message):
     status: _types_pb2.ProposalStatus
     tally_result: _types_pb2.TallyResult
     def __init__(self, proposal_id: _Optional[int] = ..., status: _Optional[_Union[_types_pb2.ProposalStatus, str]] = ..., tally_result: _Optional[_Union[_types_pb2.TallyResult, _Mapping]] = ...) -> None: ...
+
+class EventTallyError(_message.Message):
+    __slots__ = ("proposal_id", "error_message")
+    PROPOSAL_ID_FIELD_NUMBER: _ClassVar[int]
+    ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    proposal_id: int
+    error_message: str
+    def __init__(self, proposal_id: _Optional[int] = ..., error_message: _Optional[str] = ...) -> None: ...

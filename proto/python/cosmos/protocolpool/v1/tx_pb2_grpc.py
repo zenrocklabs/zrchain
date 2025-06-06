@@ -25,30 +25,20 @@ class MsgStub(object):
                 request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCommunityPoolSpend.SerializeToString,
                 response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCommunityPoolSpendResponse.FromString,
                 )
-        self.SubmitBudgetProposal = channel.unary_unary(
-                '/cosmos.protocolpool.v1.Msg/SubmitBudgetProposal',
-                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposal.SerializeToString,
-                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposalResponse.FromString,
-                )
-        self.ClaimBudget = channel.unary_unary(
-                '/cosmos.protocolpool.v1.Msg/ClaimBudget',
-                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudget.SerializeToString,
-                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudgetResponse.FromString,
-                )
         self.CreateContinuousFund = channel.unary_unary(
                 '/cosmos.protocolpool.v1.Msg/CreateContinuousFund',
                 request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCreateContinuousFund.SerializeToString,
                 response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCreateContinuousFundResponse.FromString,
                 )
-        self.WithdrawContinuousFund = channel.unary_unary(
-                '/cosmos.protocolpool.v1.Msg/WithdrawContinuousFund',
-                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFund.SerializeToString,
-                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFundResponse.FromString,
-                )
         self.CancelContinuousFund = channel.unary_unary(
                 '/cosmos.protocolpool.v1.Msg/CancelContinuousFund',
                 request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFund.SerializeToString,
                 response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFundResponse.FromString,
+                )
+        self.UpdateParams = channel.unary_unary(
+                '/cosmos.protocolpool.v1.Msg/UpdateParams',
+                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParams.SerializeToString,
+                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
 
 
@@ -74,29 +64,11 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def SubmitBudgetProposal(self, request, context):
-        """SubmitBudgetProposal defines a method to set a budget proposal.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ClaimBudget(self, request, context):
-        """ClaimBudget defines a method to claim the distributed budget.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def CreateContinuousFund(self, request, context):
-        """CreateContinuousFund defines a method to add funds continuously.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def WithdrawContinuousFund(self, request, context):
-        """WithdrawContinuousFund defines a method to withdraw continuous fund allocated.
+        """CreateContinuousFund defines a method to distribute a percentage of funds to an address continuously.
+        This ContinuousFund can be indefinite or run until a given expiry time.
+        Funds come from validator block rewards from x/distribution, but may also come from
+        any user who funds the ProtocolPoolEscrow module account directly through x/bank.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -104,6 +76,14 @@ class MsgServicer(object):
 
     def CancelContinuousFund(self, request, context):
         """CancelContinuousFund defines a method for cancelling continuous fund.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateParams(self, request, context):
+        """UpdateParams defines a governance operation for updating the x/protocolpool module parameters.
+        The authority is defined in the keeper.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -122,30 +102,20 @@ def add_MsgServicer_to_server(servicer, server):
                     request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCommunityPoolSpend.FromString,
                     response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCommunityPoolSpendResponse.SerializeToString,
             ),
-            'SubmitBudgetProposal': grpc.unary_unary_rpc_method_handler(
-                    servicer.SubmitBudgetProposal,
-                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposal.FromString,
-                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposalResponse.SerializeToString,
-            ),
-            'ClaimBudget': grpc.unary_unary_rpc_method_handler(
-                    servicer.ClaimBudget,
-                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudget.FromString,
-                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudgetResponse.SerializeToString,
-            ),
             'CreateContinuousFund': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateContinuousFund,
                     request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCreateContinuousFund.FromString,
                     response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCreateContinuousFundResponse.SerializeToString,
             ),
-            'WithdrawContinuousFund': grpc.unary_unary_rpc_method_handler(
-                    servicer.WithdrawContinuousFund,
-                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFund.FromString,
-                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFundResponse.SerializeToString,
-            ),
             'CancelContinuousFund': grpc.unary_unary_rpc_method_handler(
                     servicer.CancelContinuousFund,
                     request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFund.FromString,
                     response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFundResponse.SerializeToString,
+            ),
+            'UpdateParams': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateParams,
+                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParams.FromString,
+                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -193,40 +163,6 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def SubmitBudgetProposal(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Msg/SubmitBudgetProposal',
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposal.SerializeToString,
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgSubmitBudgetProposalResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ClaimBudget(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Msg/ClaimBudget',
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudget.SerializeToString,
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgClaimBudgetResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def CreateContinuousFund(request,
             target,
             options=(),
@@ -244,23 +180,6 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def WithdrawContinuousFund(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Msg/WithdrawContinuousFund',
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFund.SerializeToString,
-            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgWithdrawContinuousFundResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def CancelContinuousFund(request,
             target,
             options=(),
@@ -274,5 +193,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Msg/CancelContinuousFund',
             cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFund.SerializeToString,
             cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgCancelContinuousFundResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateParams(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Msg/UpdateParams',
+            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParams.SerializeToString,
+            cosmos_dot_protocolpool_dot_v1_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

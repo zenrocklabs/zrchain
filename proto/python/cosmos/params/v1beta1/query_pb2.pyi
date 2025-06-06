@@ -2,6 +2,7 @@ from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.params.v1beta1 import params_pb2 as _params_pb2
 from amino import amino_pb2 as _amino_pb2
+from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

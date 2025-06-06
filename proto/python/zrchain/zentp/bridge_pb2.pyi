@@ -20,7 +20,7 @@ BRIDGE_STATUS_COMPLETED: BridgeStatus
 BRIDGE_STATUS_FAILED: BridgeStatus
 
 class Bridge(_message.Message):
-    __slots__ = ("id", "denom", "creator", "source_address", "source_chain", "destination_chain", "amount", "recipient_address", "tx_id", "tx_hash", "state", "block_height")
+    __slots__ = ("id", "denom", "creator", "source_address", "source_chain", "destination_chain", "amount", "recipient_address", "tx_id", "tx_hash", "state", "block_height", "awaiting_event_since")
     ID_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
@@ -33,6 +33,7 @@ class Bridge(_message.Message):
     TX_HASH_FIELD_NUMBER: _ClassVar[int]
     STATE_FIELD_NUMBER: _ClassVar[int]
     BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    AWAITING_EVENT_SINCE_FIELD_NUMBER: _ClassVar[int]
     id: int
     denom: str
     creator: str
@@ -45,4 +46,5 @@ class Bridge(_message.Message):
     tx_hash: str
     state: BridgeStatus
     block_height: int
-    def __init__(self, id: _Optional[int] = ..., denom: _Optional[str] = ..., creator: _Optional[str] = ..., source_address: _Optional[str] = ..., source_chain: _Optional[str] = ..., destination_chain: _Optional[str] = ..., amount: _Optional[int] = ..., recipient_address: _Optional[str] = ..., tx_id: _Optional[int] = ..., tx_hash: _Optional[str] = ..., state: _Optional[_Union[BridgeStatus, str]] = ..., block_height: _Optional[int] = ...) -> None: ...
+    awaiting_event_since: int
+    def __init__(self, id: _Optional[int] = ..., denom: _Optional[str] = ..., creator: _Optional[str] = ..., source_address: _Optional[str] = ..., source_chain: _Optional[str] = ..., destination_chain: _Optional[str] = ..., amount: _Optional[int] = ..., recipient_address: _Optional[str] = ..., tx_id: _Optional[int] = ..., tx_hash: _Optional[str] = ..., state: _Optional[_Union[BridgeStatus, str]] = ..., block_height: _Optional[int] = ..., awaiting_event_since: _Optional[int] = ...) -> None: ...

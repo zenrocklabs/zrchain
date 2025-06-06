@@ -140,27 +140,3 @@ class QueryTallyResultResponse(_message.Message):
     TALLY_FIELD_NUMBER: _ClassVar[int]
     tally: _gov_pb2.TallyResult
     def __init__(self, tally: _Optional[_Union[_gov_pb2.TallyResult, _Mapping]] = ...) -> None: ...
-
-class QueryProposalVoteOptionsRequest(_message.Message):
-    __slots__ = ("proposal_id",)
-    PROPOSAL_ID_FIELD_NUMBER: _ClassVar[int]
-    proposal_id: int
-    def __init__(self, proposal_id: _Optional[int] = ...) -> None: ...
-
-class QueryProposalVoteOptionsResponse(_message.Message):
-    __slots__ = ("vote_options",)
-    VOTE_OPTIONS_FIELD_NUMBER: _ClassVar[int]
-    vote_options: _gov_pb2.ProposalVoteOptions
-    def __init__(self, vote_options: _Optional[_Union[_gov_pb2.ProposalVoteOptions, _Mapping]] = ...) -> None: ...
-
-class QueryMessageBasedParamsRequest(_message.Message):
-    __slots__ = ("msg_url",)
-    MSG_URL_FIELD_NUMBER: _ClassVar[int]
-    msg_url: str
-    def __init__(self, msg_url: _Optional[str] = ...) -> None: ...
-
-class QueryMessageBasedParamsResponse(_message.Message):
-    __slots__ = ("params",)
-    PARAMS_FIELD_NUMBER: _ClassVar[int]
-    params: _gov_pb2.MessageBasedParams
-    def __init__(self, params: _Optional[_Union[_gov_pb2.MessageBasedParams, _Mapping]] = ...) -> None: ...

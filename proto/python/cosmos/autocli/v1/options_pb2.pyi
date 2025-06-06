@@ -1,3 +1,4 @@
+from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -14,7 +15,7 @@ class ModuleOptions(_message.Message):
     def __init__(self, tx: _Optional[_Union[ServiceCommandDescriptor, _Mapping]] = ..., query: _Optional[_Union[ServiceCommandDescriptor, _Mapping]] = ...) -> None: ...
 
 class ServiceCommandDescriptor(_message.Message):
-    __slots__ = ("service", "rpc_command_options", "sub_commands", "enhance_custom_command")
+    __slots__ = ("service", "rpc_command_options", "sub_commands", "enhance_custom_command", "short")
     class SubCommandsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -26,11 +27,13 @@ class ServiceCommandDescriptor(_message.Message):
     RPC_COMMAND_OPTIONS_FIELD_NUMBER: _ClassVar[int]
     SUB_COMMANDS_FIELD_NUMBER: _ClassVar[int]
     ENHANCE_CUSTOM_COMMAND_FIELD_NUMBER: _ClassVar[int]
+    SHORT_FIELD_NUMBER: _ClassVar[int]
     service: str
     rpc_command_options: _containers.RepeatedCompositeFieldContainer[RpcCommandOptions]
     sub_commands: _containers.MessageMap[str, ServiceCommandDescriptor]
     enhance_custom_command: bool
-    def __init__(self, service: _Optional[str] = ..., rpc_command_options: _Optional[_Iterable[_Union[RpcCommandOptions, _Mapping]]] = ..., sub_commands: _Optional[_Mapping[str, ServiceCommandDescriptor]] = ..., enhance_custom_command: bool = ...) -> None: ...
+    short: str
+    def __init__(self, service: _Optional[str] = ..., rpc_command_options: _Optional[_Iterable[_Union[RpcCommandOptions, _Mapping]]] = ..., sub_commands: _Optional[_Mapping[str, ServiceCommandDescriptor]] = ..., enhance_custom_command: bool = ..., short: _Optional[str] = ...) -> None: ...
 
 class RpcCommandOptions(_message.Message):
     __slots__ = ("rpc_method", "use", "long", "short", "example", "alias", "suggest_for", "deprecated", "version", "flag_options", "positional_args", "skip", "gov_proposal")

@@ -47,8 +47,6 @@ class MsgServicer(object):
     def CreatePermanentLockedAccount(self, request, context):
         """CreatePermanentLockedAccount defines a method that enables creating a permanent
         locked account.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -57,8 +55,6 @@ class MsgServicer(object):
     def CreatePeriodicVestingAccount(self, request, context):
         """CreatePeriodicVestingAccount defines a method that enables creating a
         periodic vesting account.
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

@@ -20,10 +20,20 @@ class QueryStub(object):
                 request_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryCommunityPoolRequest.SerializeToString,
                 response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryCommunityPoolResponse.FromString,
                 )
-        self.UnclaimedBudget = channel.unary_unary(
-                '/cosmos.protocolpool.v1.Query/UnclaimedBudget',
-                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetRequest.SerializeToString,
-                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetResponse.FromString,
+        self.ContinuousFund = channel.unary_unary(
+                '/cosmos.protocolpool.v1.Query/ContinuousFund',
+                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundRequest.SerializeToString,
+                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundResponse.FromString,
+                )
+        self.ContinuousFunds = channel.unary_unary(
+                '/cosmos.protocolpool.v1.Query/ContinuousFunds',
+                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsRequest.SerializeToString,
+                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsResponse.FromString,
+                )
+        self.Params = channel.unary_unary(
+                '/cosmos.protocolpool.v1.Query/Params',
+                request_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsRequest.SerializeToString,
+                response_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsResponse.FromString,
                 )
 
 
@@ -38,8 +48,22 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def UnclaimedBudget(self, request, context):
-        """UnclaimedBudget queries the remaining budget left to be claimed and it gives overall budget allocation view.
+    def ContinuousFund(self, request, context):
+        """ContinuousFund queries a continuous fund by the recipient is is associated with.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ContinuousFunds(self, request, context):
+        """ContinuousFunds queries all continuous funds in the store.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Params(self, request, context):
+        """Params returns the total set of x/protocolpool parameters.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -53,10 +77,20 @@ def add_QueryServicer_to_server(servicer, server):
                     request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryCommunityPoolRequest.FromString,
                     response_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryCommunityPoolResponse.SerializeToString,
             ),
-            'UnclaimedBudget': grpc.unary_unary_rpc_method_handler(
-                    servicer.UnclaimedBudget,
-                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetRequest.FromString,
-                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetResponse.SerializeToString,
+            'ContinuousFund': grpc.unary_unary_rpc_method_handler(
+                    servicer.ContinuousFund,
+                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundRequest.FromString,
+                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundResponse.SerializeToString,
+            ),
+            'ContinuousFunds': grpc.unary_unary_rpc_method_handler(
+                    servicer.ContinuousFunds,
+                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsRequest.FromString,
+                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsResponse.SerializeToString,
+            ),
+            'Params': grpc.unary_unary_rpc_method_handler(
+                    servicer.Params,
+                    request_deserializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsRequest.FromString,
+                    response_serializer=cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -87,7 +121,7 @@ class Query(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def UnclaimedBudget(request,
+    def ContinuousFund(request,
             target,
             options=(),
             channel_credentials=None,
@@ -97,8 +131,42 @@ class Query(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Query/UnclaimedBudget',
-            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetRequest.SerializeToString,
-            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryUnclaimedBudgetResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Query/ContinuousFund',
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundRequest.SerializeToString,
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ContinuousFunds(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Query/ContinuousFunds',
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsRequest.SerializeToString,
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryContinuousFundsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Params(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/cosmos.protocolpool.v1.Query/Params',
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsRequest.SerializeToString,
+            cosmos_dot_protocolpool_dot_v1_dot_query__pb2.QueryParamsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
