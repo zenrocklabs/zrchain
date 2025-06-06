@@ -14,7 +14,7 @@ func (k Keeper) Mints(goCtx context.Context, req *types.QueryMintsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, req.Status)
+	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, req.Status, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.Status)
+	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.Status, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 	}, nil
 }
 
-func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64, types.Bridge], pagination *query.PageRequest, creator, denom string, status types.BridgeStatus) ([]*types.Bridge, *query.PageResponse, error) {
+func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64, types.Bridge], pagination *query.PageRequest, creator, denom string, status types.BridgeStatus, id uint64) ([]*types.Bridge, *query.PageResponse, error) {
 	keys, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		store,
@@ -54,7 +54,9 @@ func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64,
 
 			denomMatch := denom == "" || denom == value.Denom
 
-			return statusMatch && creatorMatch && denomMatch, nil
+			idMatch := id == 0 || id == key
+
+			return statusMatch && creatorMatch && denomMatch && idMatch, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil

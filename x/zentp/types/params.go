@@ -30,7 +30,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams() Params {
 	return Params{
 		Solana:    DefaultSolanaParams,
-		BridgeFee: math.LegacyNewDecWithPrec(0, 0),
+		BridgeFee: math.LegacyNewDecWithPrec(1, 18), // 0.000000000000000001 -> will get truncated to 0
 	}
 }
 

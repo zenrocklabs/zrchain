@@ -400,12 +400,6 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
 
-		fmt.Println("req.Creator", req.Creator)
-		fmt.Println("req.KeyIds[0]", req.KeyIds[0])
-		fmt.Println("########################################################")
-		fmt.Println("req:", req)
-		fmt.Println("########################################################")
-		fmt.Println("k.IsZentpMint(ctx, req.KeyIds[0])", k.IsZentpMint(ctx, req.KeyIds[0]))
 		if k.IsZentpMint(ctx, req.KeyIds[0]) {
 			keyring.SigReqFee = 0
 		}
