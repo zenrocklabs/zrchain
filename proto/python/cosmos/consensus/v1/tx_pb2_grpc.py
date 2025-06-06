@@ -29,8 +29,6 @@ class MsgServicer(object):
     def UpdateParams(self, request, context):
         """UpdateParams defines a governance operation for updating the x/consensus module parameters.
         The authority is defined in the keeper.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

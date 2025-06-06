@@ -1464,41 +1464,30 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 		func(tx *zentptypes.Bridge) error {
+			// If BlockHeight is 0, this transaction was either just dispatched in the current block
+			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
+			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
+				k.Logger(ctx).Debug("Solana ROCK Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
 				return nil
 			}
+
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
+			k.Logger(ctx).Info("Solana ROCK Mint Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "btl", solParams.Btl, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
 			if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
-				currentNonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
-				if currentNonceAccount == nil || currentNonceAccount.Nonce.IsZero() {
-					k.Logger(ctx).Warn("processSolanaROCKMints BTL: Live Solana nonce is zero or unavailable. Resetting transaction for full retry.", "tx_id", tx.Id)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0 // If you had AwaitingEventSince for ROCK mints
-					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-				}
-				currentNonceBytes := currentNonceAccount.Nonce[:]
-
-				lastNonceStored, err := k.LastUsedSolanaNonce.Get(ctx, solParams.NonceAccountKey)
-				if err != nil {
-					k.Logger(ctx).Error("processSolanaROCKMints BTL: Failed to get LastUsedSolanaNonce. Resetting transaction.", "tx_id", tx.Id, "error", err)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0
-					return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
-				}
-
-				k.Logger(ctx).Info("processSolanaROCKMints BTL: Comparing nonces.", "tx_id", tx.Id, "last_used_hex", hex.EncodeToString(lastNonceStored.Nonce), "current_on_chain_hex", hex.EncodeToString(currentNonceBytes))
-				if bytes.Equal(currentNonceBytes, lastNonceStored.Nonce) {
-					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce matches LastUsedSolanaNonce (no advancement). Resetting transaction for full retry.", "tx_id", tx.Id)
-					tx.BlockHeight = 0
-					// tx.AwaitingEventSince = 0
-				} else {
-					// Nonce advanced. If ROCK mints have a secondary timeout like ZenBTC, set AwaitingEventSince here.
-					k.Logger(ctx).Info("processSolanaROCKMints BTL: On-chain nonce advanced. Original dispatch consumed its chance.", "tx_id", tx.Id)
-					// if tx.AwaitingEventSince == 0 { tx.AwaitingEventSince = ctx.BlockHeight() }
-				}
-				return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+				*tx = k.processBtlSolanaROCKMint(ctx, *tx, oracleData, *solParams)
 			}
-			return nil
+
+			// --- Secondary Event Arrival Timeout Check ---
+			// This check applies if tx.AwaitingEventSince was set (indicating nonce advanced)
+			// and was not subsequently cleared by the BTL check itself.
+			if tx.AwaitingEventSince > 0 {
+				*tx = k.processSecondaryTimeoutSolanaROCKMint(ctx, *tx, oracleData, *solParams)
+			}
+
+			k.Logger(ctx).Info("Solana ROCK Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
 	)
 
@@ -1506,12 +1495,6 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
-
-	protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-		return
-	}
 
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	if err != nil {
@@ -1537,14 +1520,6 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("GetSignRequest: ", err.Error())
 		}
 
-		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
-		}
-
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(pendingMint.Amount)))
-
 		var (
 			signatures []byte
 			sigHash    [32]byte
@@ -1565,17 +1540,12 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
-				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
+				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
 					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
 					return
 				}
 
-				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins)
-				if err != nil {
-					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
-					return
-				}
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
 				err = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
 				if err != nil {
@@ -1586,8 +1556,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				sdkCtx.EventManager().EmitEvent(
 					sdk.NewEvent(
 						types.EventTypeValidation,
-						sdk.NewAttribute(types.AttributeKeyBurnAmount, bridgeAmount.String()),
-						sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+						sdk.NewAttribute(types.AttributeKeyBurnAmount, fmt.Sprintf("%d", pendingMint.Amount)),
 					),
 				)
 			}
@@ -2169,27 +2138,10 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-			return
-		}
-
-		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
-		}
-
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
-
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
-		}
 		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
 			Denom:            params.BondDenom,
 			Amount:           burn.Amount,
@@ -2207,8 +2159,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		sdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeValidation,
-				sdk.NewAttribute(types.AttributeKeyBridgeAmount, bridgeAmount.String()),
-				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", burn.Amount)),
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)

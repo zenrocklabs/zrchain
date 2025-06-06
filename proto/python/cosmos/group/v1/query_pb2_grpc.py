@@ -188,8 +188,6 @@ class QueryServicer(object):
 
     def Groups(self, request, context):
         """Groups queries all groups in state.
-
-        Since: cosmos-sdk 0.47.1
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

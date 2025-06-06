@@ -1,5 +1,6 @@
 from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.upgrade.v1beta1 import upgrade_pb2 as _upgrade_pb2
+from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

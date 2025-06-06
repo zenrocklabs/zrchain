@@ -16,21 +16,7 @@ class QueryBalanceRequest(_message.Message):
     owner: str
     def __init__(self, class_id: _Optional[str] = ..., owner: _Optional[str] = ...) -> None: ...
 
-class QueryBalanceByQueryStringRequest(_message.Message):
-    __slots__ = ("class_id", "owner")
-    CLASS_ID_FIELD_NUMBER: _ClassVar[int]
-    OWNER_FIELD_NUMBER: _ClassVar[int]
-    class_id: str
-    owner: str
-    def __init__(self, class_id: _Optional[str] = ..., owner: _Optional[str] = ...) -> None: ...
-
 class QueryBalanceResponse(_message.Message):
-    __slots__ = ("amount",)
-    AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    amount: int
-    def __init__(self, amount: _Optional[int] = ...) -> None: ...
-
-class QueryBalanceByQueryStringResponse(_message.Message):
     __slots__ = ("amount",)
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     amount: int
@@ -44,21 +30,7 @@ class QueryOwnerRequest(_message.Message):
     id: str
     def __init__(self, class_id: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
 
-class QueryOwnerByQueryStringRequest(_message.Message):
-    __slots__ = ("class_id", "id")
-    CLASS_ID_FIELD_NUMBER: _ClassVar[int]
-    ID_FIELD_NUMBER: _ClassVar[int]
-    class_id: str
-    id: str
-    def __init__(self, class_id: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
-
 class QueryOwnerResponse(_message.Message):
-    __slots__ = ("owner",)
-    OWNER_FIELD_NUMBER: _ClassVar[int]
-    owner: str
-    def __init__(self, owner: _Optional[str] = ...) -> None: ...
-
-class QueryOwnerByQueryStringResponse(_message.Message):
     __slots__ = ("owner",)
     OWNER_FIELD_NUMBER: _ClassVar[int]
     owner: str
@@ -70,19 +42,7 @@ class QuerySupplyRequest(_message.Message):
     class_id: str
     def __init__(self, class_id: _Optional[str] = ...) -> None: ...
 
-class QuerySupplyByQueryStringRequest(_message.Message):
-    __slots__ = ("class_id",)
-    CLASS_ID_FIELD_NUMBER: _ClassVar[int]
-    class_id: str
-    def __init__(self, class_id: _Optional[str] = ...) -> None: ...
-
 class QuerySupplyResponse(_message.Message):
-    __slots__ = ("amount",)
-    AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    amount: int
-    def __init__(self, amount: _Optional[int] = ...) -> None: ...
-
-class QuerySupplyByQueryStringResponse(_message.Message):
     __slots__ = ("amount",)
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     amount: int
@@ -114,21 +74,7 @@ class QueryNFTRequest(_message.Message):
     id: str
     def __init__(self, class_id: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
 
-class QueryNFTByQueryStringRequest(_message.Message):
-    __slots__ = ("class_id", "id")
-    CLASS_ID_FIELD_NUMBER: _ClassVar[int]
-    ID_FIELD_NUMBER: _ClassVar[int]
-    class_id: str
-    id: str
-    def __init__(self, class_id: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
-
 class QueryNFTResponse(_message.Message):
-    __slots__ = ("nft",)
-    NFT_FIELD_NUMBER: _ClassVar[int]
-    nft: _nft_pb2.NFT
-    def __init__(self, nft: _Optional[_Union[_nft_pb2.NFT, _Mapping]] = ...) -> None: ...
-
-class QueryNFTByQueryStringResponse(_message.Message):
     __slots__ = ("nft",)
     NFT_FIELD_NUMBER: _ClassVar[int]
     nft: _nft_pb2.NFT
@@ -140,18 +86,7 @@ class QueryClassRequest(_message.Message):
     class_id: str
     def __init__(self, class_id: _Optional[str] = ...) -> None: ...
 
-class QueryClassByQueryStringRequest(_message.Message):
-    __slots__ = ("class_id",)
-    CLASS_ID_FIELD_NUMBER: _ClassVar[int]
-    class_id: str
-    def __init__(self, class_id: _Optional[str] = ...) -> None: ...
-
 class QueryClassResponse(_message.Message):
-    __slots__ = ()
-    CLASS_FIELD_NUMBER: _ClassVar[int]
-    def __init__(self, **kwargs) -> None: ...
-
-class QueryClassByQueryStringResponse(_message.Message):
     __slots__ = ()
     CLASS_FIELD_NUMBER: _ClassVar[int]
     def __init__(self, **kwargs) -> None: ...

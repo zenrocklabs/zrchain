@@ -39,16 +39,16 @@ func (s *IntegrationTestSuite) TestBridge() {
 		s.ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
 		msg.Denom,
-	).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount*20)))
+	).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount+100000000+params.Solana.Fee*2)))
 
-	burnAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(msg.Amount)).Mul(params.BridgeFee).TruncateInt()
+	burnAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(msg.Amount)).Add(math.LegacyNewDecFromInt(math.NewIntFromUint64(params.Solana.Fee))).TruncateInt()
 
 	// Mock bank keeper SendCoinsFromAccountToModule
 	s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 		s.ctx,
 		sdk.MustAccAddressFromBech32(msg.SourceAddress),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(msg.Amount).Add(burnAmount))),
+		sdk.NewCoins(sdk.NewCoin("urock", burnAmount)),
 	).Return(nil)
 
 	// Mock validation keeper SetSolanaRequestedNonce

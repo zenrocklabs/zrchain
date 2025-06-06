@@ -25,11 +25,6 @@ class MsgStub(object):
                 request_serializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSend.SerializeToString,
                 response_deserializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSendResponse.FromString,
                 )
-        self.Burn = channel.unary_unary(
-                '/cosmos.bank.v1beta1.Msg/Burn',
-                request_serializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurn.SerializeToString,
-                response_deserializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurnResponse.FromString,
-                )
         self.UpdateParams = channel.unary_unary(
                 '/cosmos.bank.v1beta1.Msg/UpdateParams',
                 request_serializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgUpdateParams.SerializeToString,
@@ -60,20 +55,9 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Burn(self, request, context):
-        """Burn defines a method for burning coins by an account.
-
-        Since: cosmos-sdk 0.51
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def UpdateParams(self, request, context):
         """UpdateParams defines a governance operation for updating the x/bank module parameters.
         The authority is defined in the keeper.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -84,8 +68,6 @@ class MsgServicer(object):
         on any number of Denoms. Only the entries to add or update should be
         included. Entries that already exist in the store, but that aren't
         included in this message, will be left unchanged.
-
-        Since: cosmos-sdk 0.47
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -103,11 +85,6 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.MultiSend,
                     request_deserializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSend.FromString,
                     response_serializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSendResponse.SerializeToString,
-            ),
-            'Burn': grpc.unary_unary_rpc_method_handler(
-                    servicer.Burn,
-                    request_deserializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurn.FromString,
-                    response_serializer=cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurnResponse.SerializeToString,
             ),
             'UpdateParams': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateParams,
@@ -161,23 +138,6 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/cosmos.bank.v1beta1.Msg/MultiSend',
             cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSend.SerializeToString,
             cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgMultiSendResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def Burn(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/cosmos.bank.v1beta1.Msg/Burn',
-            cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurn.SerializeToString,
-            cosmos_dot_bank_dot_v1beta1_dot_tx__pb2.MsgBurnResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

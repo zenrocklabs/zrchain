@@ -43,16 +43,6 @@ class HistoricalInfo(_message.Message):
     valset: _containers.RepeatedCompositeFieldContainer[Validator]
     def __init__(self, header: _Optional[_Union[_types_pb2.Header, _Mapping]] = ..., valset: _Optional[_Iterable[_Union[Validator, _Mapping]]] = ...) -> None: ...
 
-class HistoricalRecord(_message.Message):
-    __slots__ = ("apphash", "time", "validators_hash")
-    APPHASH_FIELD_NUMBER: _ClassVar[int]
-    TIME_FIELD_NUMBER: _ClassVar[int]
-    VALIDATORS_HASH_FIELD_NUMBER: _ClassVar[int]
-    apphash: bytes
-    time: _timestamp_pb2.Timestamp
-    validators_hash: bytes
-    def __init__(self, apphash: _Optional[bytes] = ..., time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., validators_hash: _Optional[bytes] = ...) -> None: ...
-
 class CommissionRates(_message.Message):
     __slots__ = ("rate", "max_rate", "max_change_rate")
     RATE_FIELD_NUMBER: _ClassVar[int]
@@ -216,22 +206,20 @@ class Redelegation(_message.Message):
     def __init__(self, delegator_address: _Optional[str] = ..., validator_src_address: _Optional[str] = ..., validator_dst_address: _Optional[str] = ..., entries: _Optional[_Iterable[_Union[RedelegationEntry, _Mapping]]] = ...) -> None: ...
 
 class Params(_message.Message):
-    __slots__ = ("unbonding_time", "max_validators", "max_entries", "historical_entries", "bond_denom", "min_commission_rate", "key_rotation_fee")
+    __slots__ = ("unbonding_time", "max_validators", "max_entries", "historical_entries", "bond_denom", "min_commission_rate")
     UNBONDING_TIME_FIELD_NUMBER: _ClassVar[int]
     MAX_VALIDATORS_FIELD_NUMBER: _ClassVar[int]
     MAX_ENTRIES_FIELD_NUMBER: _ClassVar[int]
     HISTORICAL_ENTRIES_FIELD_NUMBER: _ClassVar[int]
     BOND_DENOM_FIELD_NUMBER: _ClassVar[int]
     MIN_COMMISSION_RATE_FIELD_NUMBER: _ClassVar[int]
-    KEY_ROTATION_FEE_FIELD_NUMBER: _ClassVar[int]
     unbonding_time: _duration_pb2.Duration
     max_validators: int
     max_entries: int
     historical_entries: int
     bond_denom: str
     min_commission_rate: str
-    key_rotation_fee: _coin_pb2.Coin
-    def __init__(self, unbonding_time: _Optional[_Union[_duration_pb2.Duration, _Mapping]] = ..., max_validators: _Optional[int] = ..., max_entries: _Optional[int] = ..., historical_entries: _Optional[int] = ..., bond_denom: _Optional[str] = ..., min_commission_rate: _Optional[str] = ..., key_rotation_fee: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ...) -> None: ...
+    def __init__(self, unbonding_time: _Optional[_Union[_duration_pb2.Duration, _Mapping]] = ..., max_validators: _Optional[int] = ..., max_entries: _Optional[int] = ..., historical_entries: _Optional[int] = ..., bond_denom: _Optional[str] = ..., min_commission_rate: _Optional[str] = ...) -> None: ...
 
 class DelegationResponse(_message.Message):
     __slots__ = ("delegation", "balance")
@@ -270,23 +258,3 @@ class ValidatorUpdates(_message.Message):
     UPDATES_FIELD_NUMBER: _ClassVar[int]
     updates: _containers.RepeatedCompositeFieldContainer[_types_pb2_1.ValidatorUpdate]
     def __init__(self, updates: _Optional[_Iterable[_Union[_types_pb2_1.ValidatorUpdate, _Mapping]]] = ...) -> None: ...
-
-class ConsPubKeyRotationHistory(_message.Message):
-    __slots__ = ("operator_address", "old_cons_pubkey", "new_cons_pubkey", "height", "fee")
-    OPERATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    OLD_CONS_PUBKEY_FIELD_NUMBER: _ClassVar[int]
-    NEW_CONS_PUBKEY_FIELD_NUMBER: _ClassVar[int]
-    HEIGHT_FIELD_NUMBER: _ClassVar[int]
-    FEE_FIELD_NUMBER: _ClassVar[int]
-    operator_address: bytes
-    old_cons_pubkey: _any_pb2.Any
-    new_cons_pubkey: _any_pb2.Any
-    height: int
-    fee: _coin_pb2.Coin
-    def __init__(self, operator_address: _Optional[bytes] = ..., old_cons_pubkey: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., new_cons_pubkey: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., height: _Optional[int] = ..., fee: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ...) -> None: ...
-
-class ValAddrsOfRotatedConsKeys(_message.Message):
-    __slots__ = ("addresses",)
-    ADDRESSES_FIELD_NUMBER: _ClassVar[int]
-    addresses: _containers.RepeatedScalarFieldContainer[bytes]
-    def __init__(self, addresses: _Optional[_Iterable[bytes]] = ...) -> None: ...

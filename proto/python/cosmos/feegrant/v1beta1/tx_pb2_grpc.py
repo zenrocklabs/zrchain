@@ -54,8 +54,6 @@ class MsgServicer(object):
 
     def PruneAllowances(self, request, context):
         """PruneAllowances prunes expired fee allowances, currently up to 75 at a time.
-
-        Since cosmos-sdk 0.50
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

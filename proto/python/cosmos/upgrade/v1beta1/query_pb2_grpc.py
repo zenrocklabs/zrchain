@@ -74,8 +74,6 @@ class QueryServicer(object):
 
     def ModuleVersions(self, request, context):
         """ModuleVersions queries the list of module versions from state.
-
-        Since: cosmos-sdk 0.43
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -83,8 +81,6 @@ class QueryServicer(object):
 
     def Authority(self, request, context):
         """Returns the account with authority to conduct upgrades
-
-        Since: cosmos-sdk 0.46
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

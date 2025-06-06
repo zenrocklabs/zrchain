@@ -1,3 +1,4 @@
+from amino import amino_pb2 as _amino_pb2
 from cosmos.msg.v1 import msg_pb2 as _msg_pb2
 from cosmos.upgrade.v1beta1 import upgrade_pb2 as _upgrade_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2

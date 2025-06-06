@@ -62,3 +62,19 @@ class QueryBurnsResponse(_message.Message):
     burns: _containers.RepeatedCompositeFieldContainer[_bridge_pb2.Bridge]
     pagination: _pagination_pb2.PageResponse
     def __init__(self, burns: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
+
+class QueryStatsRequest(_message.Message):
+    __slots__ = ("address", "denom")
+    ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    DENOM_FIELD_NUMBER: _ClassVar[int]
+    address: str
+    denom: str
+    def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ...) -> None: ...
+
+class QueryStatsResponse(_message.Message):
+    __slots__ = ("total_mints", "total_burns")
+    TOTAL_MINTS_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_BURNS_FIELD_NUMBER: _ClassVar[int]
+    total_mints: int
+    total_burns: int
+    def __init__(self, total_mints: _Optional[int] = ..., total_burns: _Optional[int] = ...) -> None: ...

@@ -138,8 +138,7 @@ class QueryServicer(object):
     def CommunityPool(self, request, context):
         """CommunityPool queries the community pool coins.
 
-        Deprecated: Prefer to use x/protocolpool module's CommunityPool rpc method.
-        Since: cosmos-sdk 0.50
+        WARNING: This query will fail if an external community pool is used.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

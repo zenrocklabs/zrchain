@@ -31,7 +31,13 @@ service Query {
     option (google.api.http).get = "/zrchain/v6/zentp/burns/{id}/{denom}";
   
   }
+
+  // Stats queries the total amounts of mints and burns for an address
+  rpc Stats(QueryStatsRequest) returns (QueryStatsResponse) {
+    option (google.api.http).get = "/zrchain/zentp/stats/{address}";
+  }
 }
+
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
 
@@ -71,3 +77,14 @@ message QueryBurnsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryStatsRequest is request type for the Query/Stats RPC method.
+message QueryStatsRequest {
+  string address = 1; // Optional
+  string denom = 2;   // Optional
+}
+
+// QueryStatsResponse is response type for the Query/Stats RPC method.
+message QueryStatsResponse {
+  uint64 total_mints = 1; // Optional
+  uint64 total_burns = 2; // Optional
+}
