@@ -68,3 +68,40 @@ func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64,
 
 	return keys, pageRes, err
 }
+
+func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*types.QueryStatsResponse, error) {
+	if req == nil {
+		return nil, errors.New("request is nil")
+	}
+
+	mintKeys, _, err := k.queryBridge(goCtx, k.mintStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	burnKeys, _, err := k.queryBridge(goCtx, k.burnStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalMints uint64
+	for _, mint := range mintKeys {
+
+		if req.Address == "" || mint.Creator == req.Address {
+			totalMints += mint.Amount
+		}
+	}
+
+	var totalBurns uint64
+	for _, burn := range burnKeys {
+
+		if req.Address == "" || burn.RecipientAddress == req.Address {
+			totalBurns += burn.Amount
+		}
+	}
+
+	return &types.QueryStatsResponse{
+		TotalMints: totalMints,
+		TotalBurns: totalBurns,
+	}, nil
+}
