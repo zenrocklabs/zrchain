@@ -37,15 +37,9 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	var fee uint64 = 0
-	p := k.GetSolanaParams(ctx)
-	if p != nil {
-		fee = p.Fee
-	}
-
 	// Use safe math to prevent overflow
 	baseAmountInt := sdkmath.NewIntFromUint64(baseAmount)
-	feeInt := sdkmath.NewIntFromUint64(fee)
+	feeInt := sdkmath.NewIntFromUint64(k.GetSolanaParams(ctx).Fee)
 	totalAmountInt := baseAmountInt.Add(feeInt)
 
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), params.BondDenom)
@@ -86,7 +80,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	if err = k.validationKeeper.SetSolanaRequestedNonce(goCtx, p.NonceAccountKey, true); err != nil {
+	if err = k.validationKeeper.SetSolanaRequestedNonce(goCtx, k.GetSolanaParams(ctx).NonceAccountKey, true); err != nil {
 		return nil, err
 	}
 
