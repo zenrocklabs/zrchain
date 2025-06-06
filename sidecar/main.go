@@ -19,9 +19,9 @@ import (
 )
 
 func main() {
-	port := flag.Int("port", 0, "Override GRPC port from config")
-	cacheFile := flag.String("cache-file", "", "Override cache file path from config")
-	neutrinoPort := flag.Int("neutrino-port", 0, "Override Neutrino RPC port (default: 12345)")
+	port := flag.Int("port", 9191, "Override GRPC port from config")
+	cacheFile := flag.String("cache-file", "cache.json", "Override cache file path from config")
+	neutrinoPort := flag.Int("neutrino-port", 12345, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
 	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
 	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
