@@ -52,3 +52,7 @@ type PolicyKeeper interface {
 	RegisterActionHandler(actionType string, f func(sdk.Context, *policytypes.Action) (any, error))
 	RegisterPolicyGeneratorHandler(reqType string, f func(sdk.Context, *cdctypes.Any) (policy.Policy, error))
 }
+
+type ZentpKeeper interface {
+	GetSignerKeyID(ctx context.Context) uint64
+}

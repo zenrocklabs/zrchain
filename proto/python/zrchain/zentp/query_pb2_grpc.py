@@ -30,6 +30,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.FromString,
                 )
+        self.Stats = channel.unary_unary(
+                '/zrchain.zentp.Query/Stats',
+                request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -57,6 +62,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Stats(self, request, context):
+        """Stats queries the total amounts of mints and burns for an address
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -74,6 +86,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.Burns,
                     request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.FromString,
                     response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.SerializeToString,
+            ),
+            'Stats': grpc.unary_unary_rpc_method_handler(
+                    servicer.Stats,
+                    request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -134,5 +151,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Burns',
             zrchain_dot_zentp_dot_query__pb2.QueryBurnsRequest.SerializeToString,
             zrchain_dot_zentp_dot_query__pb2.QueryBurnsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Stats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Stats',
+            zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.SerializeToString,
+            zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

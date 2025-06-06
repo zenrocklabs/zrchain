@@ -1453,6 +1453,8 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			recipientPubKey,
 			receiverAta,
 		))
+	} else {
+		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")
 	}
 
 	tx, err := solana.NewTransaction(

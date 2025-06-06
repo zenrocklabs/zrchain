@@ -43,6 +43,7 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		*policyKeeper,
 
 		nil,
+		nil,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

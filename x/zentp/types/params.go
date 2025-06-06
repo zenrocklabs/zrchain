@@ -14,7 +14,7 @@ var DefaultSolanaParams = &Solana{
 	NonceAccountKey:   12,
 	MintAddress:       "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
 	FeeWallet:         "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
-	Fee:               0,
+	Fee:               50000000,
 	Btl:               20,
 	// MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
 }
@@ -30,7 +30,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams() Params {
 	return Params{
 		Solana:    DefaultSolanaParams,
-		BridgeFee: math.LegacyNewDecWithPrec(1, 2),
+		BridgeFee: math.LegacyNewDecWithPrec(1, 18), // 0.000000000000000001 -> will get truncated to 0
 	}
 }
 

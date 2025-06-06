@@ -59,6 +59,7 @@ type Keeper struct {
 	identityKeeper     types.IdentityKeeper
 	policyKeeper       types.PolicyKeeper
 	zenBTCKeeper       shared.ZenBTCKeeper
+	zentpKeeper        types.ZentpKeeper
 }
 
 type ValidationKeeper interface {
@@ -74,6 +75,7 @@ func NewKeeper(
 	identityKeeper types.IdentityKeeper,
 	policyKeeper types.PolicyKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
+	zentpKeeper types.ZentpKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -90,6 +92,7 @@ func NewKeeper(
 		identityKeeper: identityKeeper,
 		policyKeeper:   policyKeeper,
 		zenBTCKeeper:   zenBTCKeeper,
+		zentpKeeper:    zentpKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),
@@ -395,6 +398,10 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 		keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 		if err != nil {
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
+		}
+
+		if k.IsZentpMint(ctx, req.KeyIds[0]) {
+			keyring.SigReqFee = 0
 		}
 
 		sigReqs = append(sigReqs, &types.SignRequest{
@@ -744,4 +751,14 @@ func (k Keeper) GetAddressByWalletType(ctx sdk.Context, id uint64, walletType ty
 		return "", fmt.Errorf("no wallets found for key ID %d", id)
 	}
 	return key.Wallets[0].Address, nil
+}
+
+func (k Keeper) IsZentpMint(ctx sdk.Context, keyID uint64) bool {
+	signerKeyID := k.zentpKeeper.GetSignerKeyID(ctx)
+
+	if keyID == signerKeyID {
+		return true
+	}
+
+	return false
 }

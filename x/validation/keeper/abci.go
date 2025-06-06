@@ -1496,12 +1496,6 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 
-	protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-		return
-	}
-
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -1526,14 +1520,6 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("GetSignRequest: ", err.Error())
 		}
 
-		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, pendingMint.Amount, bridgeFee)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
-		}
-
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(pendingMint.Amount)))
-
 		var (
 			signatures []byte
 			sigHash    [32]byte
@@ -1554,17 +1540,12 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
-				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, bridgeAmount)
+				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
 					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
 					return
 				}
 
-				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins)
-				if err != nil {
-					k.Logger(ctx).Error("SendCoinsFromModuleToAccount: ", err.Error())
-					return
-				}
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
 				err = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
 				if err != nil {
@@ -1575,8 +1556,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				sdkCtx.EventManager().EmitEvent(
 					sdk.NewEvent(
 						types.EventTypeValidation,
-						sdk.NewAttribute(types.AttributeKeyBurnAmount, bridgeAmount.String()),
-						sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+						sdk.NewAttribute(types.AttributeKeyBurnAmount, fmt.Sprintf("%d", pendingMint.Amount)),
 					),
 				)
 			}
@@ -2158,27 +2138,10 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-			return
-		}
-
-		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
-		if err != nil {
-			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
-		}
-
-		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
-
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
-		}
 		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
 			Denom:            params.BondDenom,
 			Amount:           burn.Amount,
@@ -2196,8 +2159,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		sdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeValidation,
-				sdk.NewAttribute(types.AttributeKeyBridgeAmount, bridgeAmount.String()),
-				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", burn.Amount)),
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)
