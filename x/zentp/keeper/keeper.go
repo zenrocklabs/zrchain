@@ -199,7 +199,6 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 }
 
 func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {
-
 	mintParams, err := k.mintKeeper.GetParams(ctx)
 	if err != nil {
 		return nil, math.LegacyDec{}, err
@@ -217,28 +216,32 @@ func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.Le
 }
 
 func (k Keeper) GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, error) {
-
-	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
+	amountInt := math.NewIntFromUint64(amount)
+	bridgeFeeAmount := math.LegacyNewDecFromInt(amountInt).Mul(bridgeFee).TruncateInt()
 
 	bridgeFeeCoins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, bridgeFeeAmount))
-	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount).Sub(bridgeFeeAmount)))
+	bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, amountInt.Sub(bridgeFeeAmount)))
 
-	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(math.NewIntFromUint64(amount)) {
-		return nil, fmt.Errorf("bridge fee %s and bridge amount %s cannot exceed original amount: %s", bridgeFeeCoins.String(), bridgeAmount.String(), math.NewIntFromUint64(amount).String())
+	if bridgeFeeCoins.AmountOf(params.BondDenom).Add(bridgeAmount.AmountOf(params.BondDenom)).GT(amountInt) {
+		return nil, fmt.Errorf("bridge fee %s and bridge amount %s cannot exceed original amount: %s", bridgeFeeCoins.String(), bridgeAmount.String(), amountInt.String())
 	}
 
 	return bridgeFeeCoins, nil
-
 }
 
 func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64, error) {
-
 	_, bridgeFee, err := k.GetBridgeFeeParams(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	bridgeFeeAmount := math.LegacyNewDec(int64(amount)).Mul(bridgeFee).TruncateInt()
-	totalAmount := bridgeFeeAmount.Add(math.NewIntFromUint64(amount))
+	amountInt := math.NewIntFromUint64(amount)
+	bridgeFeeAmount := math.LegacyNewDecFromInt(amountInt).Mul(bridgeFee).TruncateInt()
+	totalAmount := bridgeFeeAmount.Add(amountInt)
+
+	if !totalAmount.IsUint64() {
+		return 0, fmt.Errorf("total amount %s exceeds max uint64", totalAmount.String())
+	}
+
 	return totalAmount.Uint64(), nil
 }
