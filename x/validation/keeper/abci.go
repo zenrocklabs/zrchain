@@ -761,7 +761,7 @@ func checkForUpdateAndDispatchTx[T any](
 	nonceReqStore collections.Map[uint64, bool],
 	pendingTxs []T,
 	txDispatchCallback func(tx T) error,
-	nonceUpdatedCallback func(tx T) error,
+	txContinuationCallback func(tx T) error,
 ) {
 	if len(pendingTxs) == 0 {
 		return
@@ -785,7 +785,7 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
+		nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], txContinuationCallback)
 		if err != nil {
 			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
 			return
@@ -827,9 +827,9 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		// For Solana, `nonceUpdatedCallback` is a misnomer. It's a status/timeout checker for the head of the queue.
+		// For Solana, `txContinuationCallback` is a misnomer. It's a status/timeout checker for the head of the queue.
 		// We call it, and then attempt to dispatch the same transaction. The dispatch is idempotent.
-		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+		if err := txContinuationCallback(pendingTxs[0]); err != nil {
 			k.Logger(ctx).Error("error handling solana transaction status check", "keyID", keyID, "error", err)
 			return
 		}
@@ -850,7 +850,7 @@ func processTransaction[T any](
 	requestedSolNonce *solSystem.NonceAccount,
 	pendingGetter func(ctx sdk.Context) ([]T, error),
 	txDispatchCallback func(tx T) error,
-	nonceUpdatedCallback func(tx T) error,
+	txContinuationCallback func(tx T) error,
 ) {
 	nonceReqStore := k.EthereumNonceRequested
 	if requestedEthNonce == nil {
@@ -878,7 +878,7 @@ func processTransaction[T any](
 		}
 		return
 	}
-	checkForUpdateAndDispatchTx(k, ctx, keyID, requestedEthNonce, requestedSolNonce, nonceReqStore, pendingTxs, txDispatchCallback, nonceUpdatedCallback)
+	checkForUpdateAndDispatchTx(k, ctx, keyID, requestedEthNonce, requestedSolNonce, nonceReqStore, pendingTxs, txDispatchCallback, txContinuationCallback)
 }
 
 // getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
@@ -934,11 +934,11 @@ func handleNonceUpdate[T any](
 	requestedNonce uint64,
 	nonceData zenbtctypes.NonceData,
 	tx T,
-	nonceUpdatedCallback func(tx T) error,
+	txContinuationCallback func(tx T) error,
 ) (bool, error) {
 	if requestedNonce != nonceData.PrevNonce {
-		if err := nonceUpdatedCallback(tx); err != nil {
-			return false, fmt.Errorf("nonce update callback error: %w", err)
+		if err := txContinuationCallback(tx); err != nil {
+			return false, fmt.Errorf("tx continuation callback error: %w", err)
 		}
 		k.Logger(ctx).Warn("nonce updated for key",
 			"keyID", keyID,
@@ -1012,6 +1012,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		k.zenBTCKeeper.GetStakerKeyID(ctx),
 		&oracleData.RequestedStakerNonce,
 		nil,
+		// pendingGetter: Fetches pending zenBTC mints that are in the DEPOSITED state.
+		// These are transactions that have received a BTC deposit and are ready to be staked on EigenLayer.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
 				ctx,
@@ -1019,7 +1021,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED,
 			)
 		},
-		// Dispatch stake transaction
+		// txDispatchCallback: Constructs and submits an Ethereum transaction to stake the deposited assets on EigenLayer.
+		// It uses the current nonce and gas parameters from the oracle data.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
@@ -1063,7 +1066,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				unsignedTxHash,
 			)
 		},
-		// Successfully processed stake transaction
+		// txContinuationCallback: This is called when the stake transaction's nonce has been confirmed on-chain.
+		// It updates the transaction's status to STAKED and sets up the system for the next step: minting zenBTC.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
@@ -1095,7 +1099,8 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
 		&oracleData.RequestedEthMinterNonce,
 		nil,
-		// Get pending mint transactions
+		// pendingGetter: Fetches pending zenBTC mints for EVM chains that are in the STAKED state.
+		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
 				ctx,
@@ -1103,7 +1108,8 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				zenbtctypes.WalletType_WALLET_TYPE_EVM,
 			)
 		},
-		// Dispatch mint transaction
+		// txDispatchCallback: Constructs and submits an Ethereum transaction to mint zenBTC on the destination EVM chain.
+		// It calculates the required fees and constructs the minting transaction.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			if err := k.zenBTCKeeper.SetFirstPendingEthMintTransaction(ctx, tx.Id); err != nil {
 				return err
@@ -1181,6 +1187,8 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				unsignedMintTxHash,
 			)
 		},
+		// txContinuationCallback: This is called when the mint transaction's nonce has been confirmed on-chain.
+		// It updates the zenBTC supply and marks the mint transaction as MINTED.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
@@ -1213,7 +1221,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		nil,
 		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		// Get pending mint transactions
+		// pendingGetter: Fetches pending zenBTC mints for Solana that are in the STAKED state.
+		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on Solana.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
@@ -1223,7 +1232,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			k.Logger(ctx).Warn("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
 			return pendingMints, err
 		},
-		// Dispatch mint transaction
+		// txDispatchCallback: Constructs and dispatches a Solana transaction to mint zenBTC.
+		// This function is idempotent and will only send a new transaction if one is not already in-flight.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			k.Logger(ctx).Warn("dispatch handler triggered", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			if tx.BlockHeight > 0 {
@@ -1339,10 +1349,12 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
 			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
 		},
+		// txContinuationCallback: For Solana, this function acts as a status and timeout checker for in-flight transactions.
+		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
+		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx zenbtctypes.PendingMintTransaction) error {
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
-			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
 				k.Logger(ctx).Debug("Solana Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
 				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
@@ -1378,10 +1390,13 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		nil,
 		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		// pendingGetter: Fetches pending solROCK mints that are in the PENDING state.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			mints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 			return mints, err
 		},
+		// txDispatchCallback: Constructs and dispatches a Solana transaction to mint ROCK tokens.
+		// This function is idempotent and handles the preparation of the Solana transaction.
 		func(tx *zentptypes.Bridge) error {
 			// Check whether this tx has already been processed, if it has been - we wait for it to complete (or timeout)
 			if tx.BlockHeight > 0 {
@@ -1468,10 +1483,12 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
+		// txContinuationCallback: For Solana, this function acts as a status and timeout checker for in-flight transactions.
+		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
+		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx *zentptypes.Bridge) error {
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
-			// It doesn't need BTL/event checks *yet*.
 			if tx.BlockHeight == 0 {
 				k.Logger(ctx).Debug("Solana ROCK Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
 				return nil
@@ -1766,6 +1783,8 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 		&oracleData.RequestedUnstakerNonce,
 		nil,
+		// pendingGetter: Fetches burn events that have been observed on-chain (Ethereum or Solana)
+		// and are in the BURNED state, ready to be processed for unstaking from EigenLayer.
 		func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 			pendingBurns, err := k.getPendingBurnEvents(ctx)
 			if err != nil {
@@ -1782,7 +1801,8 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 			}
 			return pendingBurns, nil
 		},
-		// Dispatch unstake transaction
+		// txDispatchCallback: Constructs and submits an Ethereum transaction to unstake assets from EigenLayer.
+		// This corresponds to the amount of zenBTC that was burned.
 		func(be zenbtctypes.BurnEvent) error {
 			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Dispatching unstake for burn event.",
 				"burn_id", be.Id, "origin_tx_id", be.TxID, "origin_chain_id", be.ChainID,
@@ -1855,7 +1875,8 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				unsignedTxHash,
 			)
 		},
-		// Successfully processed unstake transaction
+		// txContinuationCallback: This is called when the unstake transaction's nonce has been confirmed on-chain.
+		// It updates the burn event's status to UNSTAKING to reflect that the unstaking process has started.
 		func(be zenbtctypes.BurnEvent) error {
 			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Nonce advanced for unstake. Updating burn event status.", "burn_id", be.Id, "old_status", be.Status, "new_status", zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING)
 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
@@ -1956,6 +1977,8 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		&oracleData.RequestedCompleterNonce,
 		nil,
+		// pendingGetter: Fetches redemptions that are in the INITIATED state.
+		// These are unstaking requests from EigenLayer that are ready to be completed.
 		func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
 			firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
 			if err != nil {
@@ -1963,7 +1986,8 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			}
 			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
-		// Dispatch unstake completer transaction
+		// txDispatchCallback: Constructs and submits an Ethereum transaction to call the 'complete' function
+		// on the EigenLayer contracts, which finalizes the unstaking process.
 		func(r zenbtctypes.Redemption) error {
 			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, r.Data.Id); err != nil {
 				return err
@@ -2008,7 +2032,9 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				unsignedTxHash,
 			)
 		},
-		// Successfully processed redemption, set to unstaked.
+		// txContinuationCallback: This is called when the 'complete' transaction's nonce has been confirmed on-chain.
+		// It updates the redemption status to UNSTAKED and requests a nonce for the staker key,
+		// anticipating that the released funds might be re-staked.
 		func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
