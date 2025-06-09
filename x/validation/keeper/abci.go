@@ -1561,21 +1561,9 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
 				// Perform the paramount check *before* any state change.
-				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
-				if err != nil {
-					k.Logger(ctx).Error("Failed to get solana rock supply for invariant check", "error", err.Error(), "bridge_id", pendingMint.Id)
-					continue // Skip this event if we can't perform the check
-				}
-				zrchainSupply := k.bankKeeper.GetSupply(ctx, pendingMint.Denom).Amount
-
-				// The total supply after this operation will be the sum of the two supplies.
-				// This is because we are burning `pendingMint.Amount` from zrchain and adding it to the solana counter.
-				finalTotalSupply := zrchainSupply.Add(solanaSupply)
-
-				const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
-				if finalTotalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
+				if err := k.CheckSolanaBridgeInvariants(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount), false); err != nil {
 					// ABORT. The invariant would be violated. Do not complete the bridge.
-					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION DETECTED: A mint on Solana would breach the 1bn cap. Aborting bridge completion.", "bridge_id", pendingMint.Id, "final_total_supply", finalTotalSupply.String())
+					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION DETECTED: A mint on Solana would breach the 1bn cap. Aborting bridge completion.", "bridge_id", pendingMint.Id, "error", err.Error())
 					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
 					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
 						k.Logger(ctx).Error("CRITICAL: Failed to update mint status to FAILED after invariant violation.", "error", err, "bridge_id", pendingMint.Id)
@@ -1592,7 +1580,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				}
 
 				// Re-fetch solana supply to avoid race conditions within the same block processing multiple events
-				solanaSupply, err = k.zentpKeeper.GetSolanaROCKSupply(ctx)
+				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
 				if err != nil {
 					k.Logger(ctx).Error("CRITICAL: Failed to get solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
 					continue
@@ -2201,22 +2189,8 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
-		if err != nil {
-			k.Logger(ctx).Error("GetSolanaROCKSupply: ", err.Error())
-			continue
-		}
-
-		if sdkmath.NewIntFromUint64(burn.Amount).GT(solanaSupply) {
-			k.Logger(ctx).Error("attempt to bridge from solana exceeds solana ROCK supply", "amount", burn.Amount, "supply", solanaSupply)
-			continue
-		}
-
-		const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
-		zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
-		totalSupply := zrchainSupply.Add(solanaSupply)
-		if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-			k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
+		if err := k.CheckSolanaBridgeInvariants(ctx, sdkmath.NewIntFromUint64(burn.Amount), true); err != nil {
+			k.Logger(ctx).Error("invariant check failed for solana rock burn", "error", err.Error(), "amount", burn.Amount)
 			continue
 		}
 
@@ -2240,6 +2214,11 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetSolanaROCKSupply: " + err.Error())
+			continue
+		}
 		newSolanaSupply := solanaSupply.Sub(sdkmath.NewIntFromUint64(burn.Amount))
 		if newSolanaSupply.IsNegative() {
 			k.Logger(ctx).Error("solana rock supply underflow", "new_supply", newSolanaSupply.String())
