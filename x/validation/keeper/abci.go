@@ -750,7 +750,8 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 // =============================================================================
 //
 
-// checkForUpdateAndDispatchTx processes nonce updates and transaction dispatch
+// checkForUpdateAndDispatchTx processes nonce updates and transaction dispatch. It contains separate logic
+// for Ethereum and Solana based transactions due to their different nonce mechanisms and transaction lifecycles.
 func checkForUpdateAndDispatchTx[T any](
 	k *Keeper,
 	ctx sdk.Context,
@@ -766,8 +767,7 @@ func checkForUpdateAndDispatchTx[T any](
 		return
 	}
 
-	nonceUpdated := false
-
+	// Ethereum transaction processing flow.
 	if requestedEthNonce != nil {
 		nonceData, err := k.getNonceDataWithInit(ctx, keyID)
 		if err != nil {
@@ -785,7 +785,7 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		nonceUpdated, err = handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
+		nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], nonceUpdatedCallback)
 		if err != nil {
 			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
 			return
@@ -801,37 +801,43 @@ func checkForUpdateAndDispatchTx[T any](
 		if nonceData.Skip {
 			return
 		}
-	} else if requestedSolNonce != nil {
-		k.Logger(ctx).Warn("requested solana nonce", "nonce", requestedSolNonce.Nonce)
+
+		// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
+		txIndex := 0
+		if nonceUpdated {
+			txIndex = 1
+		}
+
+		if len(pendingTxs) <= txIndex {
+			return
+		}
+
+		if err := txDispatchCallback(pendingTxs[txIndex]); err != nil {
+			k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
+		}
+		return
+	}
+
+	// Solana transaction processing flow.
+	if requestedSolNonce != nil {
+		k.Logger(ctx).Info("processing solana transaction with nonce", "nonce", requestedSolNonce.Nonce)
 
 		if requestedSolNonce.Nonce.IsZero() {
 			k.Logger(ctx).Error("solana nonce is zero")
 			return
 		}
 
-		if len(pendingTxs) == 0 {
-			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
-				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-			}
-			return
-		}
-
+		// For Solana, `nonceUpdatedCallback` is a misnomer. It's a status/timeout checker for the head of the queue.
+		// We call it, and then attempt to dispatch the same transaction. The dispatch is idempotent.
 		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
-			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
+			k.Logger(ctx).Error("error handling solana transaction status check", "keyID", keyID, "error", err)
 			return
 		}
 
-		k.Logger(ctx).Warn("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
-	}
-
-	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
-	txIndex := 0
-	if nonceUpdated {
-		txIndex = 1
-	}
-
-	if err := txDispatchCallback(pendingTxs[txIndex]); err != nil {
-		k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
+		// If tx[0] is still pending, dispatch it. The dispatch callback is idempotent.
+		if err := txDispatchCallback(pendingTxs[0]); err != nil {
+			k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
+		}
 	}
 }
 
@@ -1390,11 +1396,6 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return fmt.Errorf("validateConsensusForTxFields: %w", err)
 			}
 
-			// val, err := k.SolanaAccountsRequested.Get(ctx, tx.RecipientAddress) // This was part of old logic and not directly used here for funding decision
-			// if err == nil { // k.SolanaZenTPAccountsRequested should be checked if direct check is needed
-			// 	_ = val
-			// }
-
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
 			// Derive the ATA for the recipient and check its state
 			recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
@@ -1524,10 +1525,8 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			k.Logger(ctx).Error("GetSignRequest: ", err.Error())
 		}
 
-		var (
-			signatures []byte
-			sigHash    [32]byte
-		)
+		var signatures []byte
+		var sigHash [32]byte
 
 		for _, id := range sigReq.ChildReqIds {
 			childReq, err := k.treasuryKeeper.GetSignRequest(ctx, id)
