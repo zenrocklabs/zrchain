@@ -14,7 +14,6 @@ import (
 )
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := k.Keeper.CheckROCKSupplyCap(ctx, math.NewIntFromUint64(req.Amount)); err != nil {
