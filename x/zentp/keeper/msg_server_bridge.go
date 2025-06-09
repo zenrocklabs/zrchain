@@ -16,6 +16,18 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
+	solanaSupply, err := k.GetSolanaROCKSupply(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get solana rock supply")
+	}
+
+	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
+	totalSupply := zrchainSupply.Add(solanaSupply)
+	if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
+		return nil, errors.Errorf("total ROCK supply exceeds cap (%s), bridge disabled", totalSupply.String())
+	}
+
 	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
 		return nil, err
 	}

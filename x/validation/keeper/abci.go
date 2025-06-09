@@ -1560,30 +1560,36 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
-				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+				// A mint has been observed on Solana. We must update our state to reflect this,
+				// even if it violates the supply cap. The check to prevent this from happening
+				// should be in MsgBridge, before the cross-chain transaction is initiated.
+				// Here, we perform the state change and then log a critical error if the
+				// invariant is violated.
+				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
-					k.Logger(ctx).Error("Failed to get solana rock supply", "error", err.Error())
+					k.Logger(ctx).Error("CRITICAL: Failed to burn coins for completed Solana bridge. State is now inconsistent.", "denom", pendingMint.Denom, "error", err.Error(), "bridge_id", pendingMint.Id)
+					// We cannot proceed with this event. The state is broken.
 					return
 				}
 
-				const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
-				zrchainSupply := k.bankKeeper.GetSupply(ctx, pendingMint.Denom).Amount
-				totalSupply := zrchainSupply.Add(solanaSupply)
-				if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-					k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
-					continue
-				}
-
-				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
+				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
 				if err != nil {
-					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
+					k.Logger(ctx).Error("CRITICAL: Failed to get solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
 					return
 				}
 
 				newSolanaSupply := solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
 				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
-					k.Logger(ctx).Error("Failed to set solana rock supply", "error", err.Error())
+					k.Logger(ctx).Error("CRITICAL: Failed to set solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
 					return
+				}
+
+				// Now, check the invariant and log if it's broken.
+				const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
+				zrchainSupply := k.bankKeeper.GetSupply(ctx, pendingMint.Denom).Amount
+				totalSupply := zrchainSupply.Add(newSolanaSupply)
+				if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
+					k.Logger(ctx).Error("CRITICAL: total ROCK supply exceeds cap after bridge completion!", "total_supply", totalSupply.String(), "cap", rockCap, "bridge_id", pendingMint.Id)
 				}
 
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
