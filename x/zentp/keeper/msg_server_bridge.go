@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -22,10 +23,21 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.Wrap(err, "failed to get solana rock supply")
 	}
 
+	pendingMints, err := k.GetMintsWithStatus(ctx, types.BridgeStatus_BRIDGE_STATUS_PENDING)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get pending mints")
+	}
+
+	var pendingAmount math.Int = math.ZeroInt()
+	for _, mint := range pendingMints {
+		pendingAmount = pendingAmount.Add(math.NewIntFromUint64(mint.Amount))
+	}
+
 	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
-	totalSupply := zrchainSupply.Add(solanaSupply)
+	// Check if current supply + pending supply + new bridge amount > cap
+	totalSupply := zrchainSupply.Add(solanaSupply).Add(pendingAmount).Add(math.NewIntFromUint64(req.Amount))
 	if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-		return nil, errors.Errorf("total ROCK supply exceeds cap (%s), bridge disabled", totalSupply.String())
+		return nil, errors.Errorf("total ROCK supply including pending bridges would exceed cap (%s), bridge disabled", totalSupply.String())
 	}
 
 	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
