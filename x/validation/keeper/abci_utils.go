@@ -1067,7 +1067,7 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		mismatches = append(mismatches, mismatch)
 	}
 
-	// Validate hashes only if fields have consensus
+	// Validate whether hash fields have consensus
 	if fieldHasConsensus(fieldVotePowers, VEFieldEigenDelegationsHash) {
 		if err := validateHashField(VEFieldEigenDelegationsHash.String(), voteExt.EigenDelegationsHash, oracleData.EigenDelegationsMap); err != nil {
 			recordMismatch(VEFieldEigenDelegationsHash, voteExt.EigenDelegationsHash, "derived_hash", err)
@@ -1091,6 +1091,16 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
 		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
 			recordMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNonceHashes, "derived_hash", err)
+		}
+	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintEventsHash) {
+		if err := validateHashField(VEFieldSolanaMintEventsHash.String(), voteExt.SolanaMintEventsHash, oracleData.SolanaMintEvents); err != nil {
+			recordMismatch(VEFieldSolanaMintEventsHash, voteExt.SolanaMintEventsHash, "derived_hash", err)
+		}
+	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaBurnEventsHash) {
+		if err := validateHashField(VEFieldSolanaBurnEventsHash.String(), voteExt.SolanaBurnEventsHash, oracleData.SolanaBurnEvents); err != nil {
+			recordMismatch(VEFieldSolanaBurnEventsHash, voteExt.SolanaBurnEventsHash, "derived_hash", err)
 		}
 	}
 	// Skip RequestedBtcHeaderHash validation when there are no requested headers (indicated by RequestedBtcBlockHeight == 0)

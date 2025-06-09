@@ -144,17 +144,20 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	if err != nil {
 		return VoteExtension{}, err
 	}
-	solanaMintEventsHash, err := deriveHash(oracleData.SolanaMintEvents)
 
 	solAccs, err := k.retrieveSolanaAccounts(ctx)
 	if err != nil {
-		return VoteExtension{}, fmt.Errorf("error collecting solana accounts: %w", err)
+		return VoteExtension{}, fmt.Errorf("error retrieving solana accounts: %w", err)
 	}
 	solAccsHash, err := deriveHash(solAccs)
 	if err != nil {
 		return VoteExtension{}, err
 	}
 
+	solanaMintEventsHash, err := deriveHash(oracleData.SolanaMintEvents)
+	if err != nil {
+		return VoteExtension{}, fmt.Errorf("error deriving solana mint events hash: %w", err)
+	}
 	solanaBurnEventsHash, err := deriveHash(oracleData.SolanaBurnEvents)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving solana burn events hash: %w", err)
@@ -503,6 +506,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		}
 		oracleData.SolanaAccounts = solAccs
 	}
+
 	// Store the field vote powers for later use in transaction dispatch callbacks
 	oracleData.FieldVotePowers = fieldVotePowers
 
