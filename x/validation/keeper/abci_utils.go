@@ -1830,12 +1830,3 @@ func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, 
 	tx.AwaitingEventSince = newAwaitingEventSince
 	return tx
 }
-
-func (k *Keeper) CheckSolanaBridgeInvariants(ctx sdk.Context, amount math.Int, isBurnFromSolana bool) error {
-	if isBurnFromSolana {
-		return k.zentpKeeper.CheckCanBurnFromSolana(ctx, amount)
-	}
-
-	// This is for a mint-to-solana completion. The amount is already pending, so we check with a zero new amount.
-	return k.zentpKeeper.CheckROCKSupplyCap(ctx, math.ZeroInt())
-}

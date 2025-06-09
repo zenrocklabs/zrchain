@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -1561,7 +1562,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
 				// Perform the paramount check *before* any state change.
-				if err := k.CheckSolanaBridgeInvariants(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount), false); err != nil {
+				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, math.ZeroInt()); err != nil {
 					// ABORT. The invariant would be violated. Do not complete the bridge.
 					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION DETECTED: A mint on Solana would breach the 1bn cap. Aborting bridge completion.", "bridge_id", pendingMint.Id, "error", err.Error())
 					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
@@ -2189,7 +2190,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		if err := k.CheckSolanaBridgeInvariants(ctx, sdkmath.NewIntFromUint64(burn.Amount), true); err != nil {
+		if err := k.zentpKeeper.CheckCanBurnFromSolana(ctx, sdkmath.NewIntFromUint64(burn.Amount)); err != nil {
 			k.Logger(ctx).Error("invariant check failed for solana rock burn", "error", err.Error(), "amount", burn.Amount)
 			continue
 		}
