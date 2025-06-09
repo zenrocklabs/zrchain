@@ -1832,22 +1832,10 @@ func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, 
 }
 
 func (k *Keeper) CheckSolanaBridgeInvariants(ctx sdk.Context, amount math.Int, isBurnFromSolana bool) error {
-	solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
-	if err != nil {
-		return fmt.Errorf("GetSolanaROCKSupply: %w", err)
-	}
-
 	if isBurnFromSolana {
-		if amount.GT(solanaSupply) {
-			return fmt.Errorf("attempt to bridge from solana exceeds solana ROCK supply, amount: %s, supply: %s", amount, solanaSupply)
-		}
+		return k.zentpKeeper.CheckCanBurnFromSolana(ctx, amount)
 	}
 
-	const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
-	zrchainSupply := k.bankKeeper.GetSupply(ctx, "urock").Amount
-	totalSupply := zrchainSupply.Add(solanaSupply)
-	if totalSupply.GT(math.NewIntFromUint64(rockCap)) {
-		return fmt.Errorf("total ROCK supply exceeds cap, total_supply: %s, cap: %d", totalSupply.String(), rockCap)
-	}
-	return nil
+	// This is for a mint-to-solana completion. The amount is already pending, so we check with a zero new amount.
+	return k.zentpKeeper.CheckROCKSupplyCap(ctx, math.ZeroInt())
 }

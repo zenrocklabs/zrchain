@@ -17,27 +17,8 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
-	solanaSupply, err := k.GetSolanaROCKSupply(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get solana rock supply")
-	}
-
-	pendingMints, err := k.GetMintsWithStatus(ctx, types.BridgeStatus_BRIDGE_STATUS_PENDING)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get pending mints")
-	}
-
-	var pendingAmount math.Int = math.ZeroInt()
-	for _, mint := range pendingMints {
-		pendingAmount = pendingAmount.Add(math.NewIntFromUint64(mint.Amount))
-	}
-
-	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
-	// Check if current supply + pending supply + new bridge amount > cap
-	totalSupply := zrchainSupply.Add(solanaSupply).Add(pendingAmount).Add(math.NewIntFromUint64(req.Amount))
-	if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-		return nil, errors.Errorf("total ROCK supply including pending bridges would exceed cap (%s), bridge disabled", totalSupply.String())
+	if err := k.Keeper.CheckROCKSupplyCap(ctx, math.NewIntFromUint64(req.Amount)); err != nil {
+		return nil, err
 	}
 
 	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {

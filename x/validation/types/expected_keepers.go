@@ -132,6 +132,8 @@ type ZentpKeeper interface {
 	GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (sdk.Coins, error)
 	GetSolanaROCKSupply(ctx context.Context) (math.Int, error)
 	SetSolanaROCKSupply(ctx context.Context, supply math.Int) error
+	CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error
+	CheckCanBurnFromSolana(ctx sdk.Context, burnAmount math.Int) error
 }
 
 type TreasuryKeeper interface {
