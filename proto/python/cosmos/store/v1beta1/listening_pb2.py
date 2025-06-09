@@ -22,11 +22,11 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-from tendermint.abci import types_pb2 as tendermint_dot_abci_dot_types__pb2
+from cometbft.abci.v2 import types_pb2 as cometbft_dot_abci_dot_v2_dot_types__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$cosmos/store/v1beta1/listening.proto\x12\x14\x63osmos.store.v1beta1\x1a\x1btendermint/abci/types.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x7f\n\x0bStoreKVPair\x12\x1b\n\tstore_key\x18\x01 \x01(\tR\x08storeKey\x12\x16\n\x06\x64\x65lete\x18\x02 \x01(\x08R\x06\x64\x65lete\x12\x10\n\x03key\x18\x03 \x01(\x0cR\x03key\x12\x14\n\x05value\x18\x04 \x01(\x0cR\x05value:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.43\"\xb4\x02\n\rBlockMetadata\x12H\n\x0fresponse_commit\x18\x06 \x01(\x0b\x32\x1f.tendermint.abci.ResponseCommitR\x0eresponseCommit\x12[\n\x16request_finalize_block\x18\x07 \x01(\x0b\x32%.tendermint.abci.RequestFinalizeBlockR\x14requestFinalizeBlock\x12^\n\x17response_finalize_block\x18\x08 \x01(\x0b\x32&.tendermint.abci.ResponseFinalizeBlockR\x15responseFinalizeBlockJ\x04\x08\x01\x10\x02J\x04\x08\x02\x10\x03J\x04\x08\x03\x10\x04J\x04\x08\x04\x10\x05J\x04\x08\x05\x10\x06\x42\x1aZ\x18\x63osmossdk.io/store/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$cosmos/store/v1beta1/listening.proto\x12\x14\x63osmos.store.v1beta1\x1a\x1c\x63ometbft/abci/v2/types.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x7f\n\x0bStoreKVPair\x12\x1b\n\tstore_key\x18\x01 \x01(\tR\x08storeKey\x12\x16\n\x06\x64\x65lete\x18\x02 \x01(\x08R\x06\x64\x65lete\x12\x10\n\x03key\x18\x03 \x01(\x0cR\x03key\x12\x14\n\x05value\x18\x04 \x01(\x0cR\x05value:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.43\"\xb7\x02\n\rBlockMetadata\x12I\n\x0fresponse_commit\x18\x06 \x01(\x0b\x32 .cometbft.abci.v2.CommitResponseR\x0eresponseCommit\x12\\\n\x16request_finalize_block\x18\x07 \x01(\x0b\x32&.cometbft.abci.v2.FinalizeBlockRequestR\x14requestFinalizeBlock\x12_\n\x17response_finalize_block\x18\x08 \x01(\x0b\x32\'.cometbft.abci.v2.FinalizeBlockResponseR\x15responseFinalizeBlockJ\x04\x08\x01\x10\x02J\x04\x08\x02\x10\x03J\x04\x08\x03\x10\x04J\x04\x08\x04\x10\x05J\x04\x08\x05\x10\x06\x42\x1aZ\x18\x63osmossdk.io/store/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,8 +36,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z\030cosmossdk.io/store/types'
   _globals['_STOREKVPAIR']._loaded_options = None
   _globals['_STOREKVPAIR']._serialized_options = b'\322\264-\017cosmos-sdk 0.43'
-  _globals['_STOREKVPAIR']._serialized_start=118
-  _globals['_STOREKVPAIR']._serialized_end=245
-  _globals['_BLOCKMETADATA']._serialized_start=248
-  _globals['_BLOCKMETADATA']._serialized_end=556
+  _globals['_STOREKVPAIR']._serialized_start=119
+  _globals['_STOREKVPAIR']._serialized_end=246
+  _globals['_BLOCKMETADATA']._serialized_start=249
+  _globals['_BLOCKMETADATA']._serialized_end=560
 # @@protoc_insertion_point(module_scope)

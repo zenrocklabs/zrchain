@@ -1,5 +1,5 @@
 from google.api import annotations_pb2 as _annotations_pb2
-from tendermint.types import params_pb2 as _params_pb2
+from cometbft.types.v2 import params_pb2 as _params_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

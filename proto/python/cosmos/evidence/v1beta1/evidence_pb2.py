@@ -28,14 +28,14 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&cosmos/evidence/v1beta1/evidence.proto\x12\x17\x63osmos.evidence.v1beta1\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\xe8\x01\n\x0c\x45quivocation\x12\x16\n\x06height\x18\x01 \x01(\x03R\x06height\x12=\n\x04time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\r\xc8\xde\x1f\x00\x90\xdf\x1f\x01\xa8\xe7\xb0*\x01R\x04time\x12\x14\n\x05power\x18\x03 \x01(\x03R\x05power\x12\x45\n\x11\x63onsensus_address\x18\x04 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x10\x63onsensusAddress:$\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x8a\xe7\xb0*\x17\x63osmos-sdk/EquivocationB#Z\x1d\x63osmossdk.io/x/evidence/types\xa8\xe2\x1e\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n&cosmos/evidence/v1beta1/evidence.proto\x12\x17\x63osmos.evidence.v1beta1\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\xe8\x01\n\x0c\x45quivocation\x12\x16\n\x06height\x18\x01 \x01(\x03R\x06height\x12=\n\x04time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\r\xc8\xde\x1f\x00\x90\xdf\x1f\x01\xa8\xe7\xb0*\x01R\x04time\x12\x14\n\x05power\x18\x03 \x01(\x03R\x05power\x12\x45\n\x11\x63onsensus_address\x18\x04 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x10\x63onsensusAddress:$\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x8a\xe7\xb0*\x17\x63osmos-sdk/EquivocationB3Z-github.com/cosmos/cosmos-sdk/x/evidence/types\xa8\xe2\x1e\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'cosmos.evidence.v1beta1.evidence_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z\035cosmossdk.io/x/evidence/types\250\342\036\001'
+  _globals['DESCRIPTOR']._serialized_options = b'Z-github.com/cosmos/cosmos-sdk/x/evidence/types\250\342\036\001'
   _globals['_EQUIVOCATION'].fields_by_name['time']._loaded_options = None
   _globals['_EQUIVOCATION'].fields_by_name['time']._serialized_options = b'\310\336\037\000\220\337\037\001\250\347\260*\001'
   _globals['_EQUIVOCATION'].fields_by_name['consensus_address']._loaded_options = None

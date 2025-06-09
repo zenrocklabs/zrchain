@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
@@ -271,4 +273,126 @@ func (s *IntegrationTestSuite) TestUserOwnsKey() {
 
 	ownsKey = s.zentpKeeper.UserOwnsKey(s.ctx, user, key)
 	s.Require().False(ownsKey)
+}
+
+func (s *IntegrationTestSuite) TestGetBridgeFeeAmount() {
+
+	tests := []struct {
+		name                   string
+		amount                 uint64
+		bridgeFee              sdkmath.LegacyDec
+		expectedBridgeFeeCoins sdk.Coins
+		expectedError          error
+	}{
+		{
+			name:                   "valid test",
+			amount:                 100,
+			bridgeFee:              sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedBridgeFeeCoins: sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(1))),
+			expectedError:          nil,
+		},
+		{
+			name:                   "low amount",
+			amount:                 1,
+			bridgeFee:              sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedBridgeFeeCoins: sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(0))),
+			expectedError:          nil,
+		},
+		{
+			name:                   "low amount",
+			amount:                 50,
+			bridgeFee:              sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedBridgeFeeCoins: sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(0))),
+			expectedError:          nil,
+		},
+		{
+			name:                   "high amount",
+			amount:                 1000000000000000000,
+			bridgeFee:              sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedBridgeFeeCoins: sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(10000000000000000))),
+			expectedError:          nil,
+		},
+		{
+			name:                   "normal amount",
+			amount:                 5000000000,
+			bridgeFee:              sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedBridgeFeeCoins: sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(50000000))),
+			expectedError:          nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			bridgeFeeCoins, err := s.zentpKeeper.GetBridgeFeeAmount(s.ctx, tc.amount, tc.bridgeFee)
+			s.Require().NoError(err)
+
+			expectedFee := sdkmath.NewIntFromUint64(tc.amount).ToLegacyDec().Mul(tc.bridgeFee).TruncateInt()
+			s.Require().Equal(bridgeFeeCoins, sdk.NewCoins(sdk.NewCoin(params.BondDenom, expectedFee)))
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestAddFeeToBridgeAmount() {
+
+	tests := []struct {
+		name                string
+		amount              uint64
+		bridgeFee           sdkmath.LegacyDec
+		expectedTotalAmount uint64
+		expectedError       error
+	}{
+		{
+			name:                "valid test",
+			amount:              100,
+			bridgeFee:           sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedTotalAmount: 101,
+			expectedError:       nil,
+		},
+		{
+			name:                "low amount",
+			amount:              1,
+			bridgeFee:           sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedTotalAmount: 1,
+			expectedError:       nil,
+		},
+		{
+			name:                "low amount",
+			amount:              50,
+			bridgeFee:           sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedTotalAmount: 50,
+			expectedError:       nil,
+		},
+		{
+			name:                "high amount",
+			amount:              1000000000000000000,
+			bridgeFee:           sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedTotalAmount: 1010000000000000000,
+			expectedError:       nil,
+		},
+		{
+			name:                "normal amount",
+			amount:              5000000000,
+			bridgeFee:           sdkmath.LegacyNewDecWithPrec(1, 2),
+			expectedTotalAmount: 5050000000,
+			expectedError:       nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			// Setup test parameters
+			params := types.DefaultParams()
+			params.BridgeFee = tc.bridgeFee
+			err := s.zentpKeeper.ParamStore.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			// Mock mint keeper GetParams
+			mintParams := minttypes.DefaultParams()
+			s.mintKeeper.EXPECT().GetParams(s.ctx).Return(mintParams, nil)
+
+			totalAmount, err := s.zentpKeeper.AddFeeToBridgeAmount(s.ctx, tc.amount)
+			s.Require().NoError(err)
+			s.Require().Equal(totalAmount, tc.expectedTotalAmount)
+		})
+	}
 }

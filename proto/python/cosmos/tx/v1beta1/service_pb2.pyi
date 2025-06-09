@@ -2,8 +2,8 @@ from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.base.abci.v1beta1 import abci_pb2 as _abci_pb2
 from cosmos.tx.v1beta1 import tx_pb2 as _tx_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
-from tendermint.types import block_pb2 as _block_pb2
-from tendermint.types import types_pb2 as _types_pb2
+from cometbft.types.v2 import block_pb2 as _block_pb2
+from cometbft.types.v2 import types_pb2 as _types_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
