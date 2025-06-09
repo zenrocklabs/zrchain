@@ -2133,7 +2133,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
+		_, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
 			return
@@ -2151,10 +2151,6 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
 			continue
-		}
-
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 
 		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
