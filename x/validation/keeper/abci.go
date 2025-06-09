@@ -1568,7 +1568,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 				const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
 				zrchainSupply := k.bankKeeper.GetSupply(ctx, pendingMint.Denom).Amount
-				totalSupply := zrchainSupply.Add(sdkmath.NewIntFromUint64(solanaSupply))
+				totalSupply := zrchainSupply.Add(solanaSupply)
 				if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
 					k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
 					continue
@@ -1580,12 +1580,8 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					return
 				}
 
-				newSolanaSupply := sdkmath.NewIntFromUint64(solanaSupply).Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
-				if !newSolanaSupply.IsUint64() {
-					k.Logger(ctx).Error("solana rock supply overflow", "new_supply", newSolanaSupply.String())
-					return
-				}
-				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply.Uint64()); err != nil {
+				newSolanaSupply := solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
+				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
 					k.Logger(ctx).Error("Failed to set solana rock supply", "error", err.Error())
 					return
 				}
@@ -2193,14 +2189,14 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		if burn.Amount > solanaSupply {
+		if sdkmath.NewIntFromUint64(burn.Amount).GT(solanaSupply) {
 			k.Logger(ctx).Error("attempt to bridge from solana exceeds solana ROCK supply", "amount", burn.Amount, "supply", solanaSupply)
 			continue
 		}
 
 		const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
 		zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
-		totalSupply := zrchainSupply.Add(sdkmath.NewIntFromUint64(solanaSupply))
+		totalSupply := zrchainSupply.Add(solanaSupply)
 		if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
 			k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
 			continue
@@ -2226,7 +2222,11 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		newSolanaSupply := solanaSupply - burn.Amount
+		newSolanaSupply := solanaSupply.Sub(sdkmath.NewIntFromUint64(burn.Amount))
+		if newSolanaSupply.IsNegative() {
+			k.Logger(ctx).Error("solana rock supply underflow", "new_supply", newSolanaSupply.String())
+			continue
+		}
 		if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
 			k.Logger(ctx).Error("SetSolanaROCKSupply: ", err.Error())
 			continue

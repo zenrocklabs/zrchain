@@ -40,7 +40,7 @@ type (
 		burnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
-		SolanaROCKSupply collections.Item[uint64]
+		SolanaROCKSupply collections.Item[math.Int]
 	}
 )
 
@@ -79,7 +79,7 @@ func NewKeeper(
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
-		SolanaROCKSupply: collections.NewItem(sb, types.SolanaROCKSupplyKey, types.SolanaROCKSupplyIndex, collections.Uint64Value),
+		SolanaROCKSupply: collections.NewItem(sb, types.SolanaROCKSupplyKey, types.SolanaROCKSupplyIndex, sdk.IntValue),
 		authority:        authority,
 		logger:           logger,
 		treasuryKeeper:   treasuryKeeper,
@@ -188,18 +188,18 @@ func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) e
 	return k.mintStore.Set(ctx, id, *mint)
 }
 
-func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (uint64, error) {
+func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {
 	supply, err := k.SolanaROCKSupply.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return 0, nil
+			return math.ZeroInt(), nil
 		}
-		return 0, err
+		return math.Int{}, err
 	}
 	return supply, nil
 }
 
-func (k Keeper) SetSolanaROCKSupply(ctx context.Context, supply uint64) error {
+func (k Keeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error {
 	return k.SolanaROCKSupply.Set(ctx, supply)
 }
 
