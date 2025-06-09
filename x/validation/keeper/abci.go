@@ -791,13 +791,6 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		if len(pendingTxs) == 1 && nonceUpdated {
-			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
-				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-			}
-			return
-		}
-
 		if nonceData.Skip {
 			return
 		}
@@ -809,25 +802,55 @@ func checkForUpdateAndDispatchTx[T any](
 			return
 		}
 
-		if len(pendingTxs) == 0 {
-			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
-				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
+		lastNonce, err := k.LastUsedSolanaNonce.Get(ctx, keyID)
+		isNotFound := errors.Is(err, collections.ErrNotFound)
+		if err != nil && !isNotFound {
+			k.Logger(ctx).Error("error getting last used solana nonce", "keyID", keyID, "error", err)
+			return
+		}
+
+		// Nonce has advanced if the on-chain nonce is different from the one we last used for a transaction.
+		isNonceAdvanced := !isNotFound && !bytes.Equal(lastNonce.Nonce, requestedSolNonce.Nonce[:])
+
+		if isNonceAdvanced {
+			// Nonce has advanced, so tx[0] is considered processed for dispatch queue.
+			if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+				k.Logger(ctx).Error("error handling solana nonce update callback", "keyID", keyID, "error", err)
+				return
 			}
-			return
+			nonceUpdated = true
+			k.Logger(ctx).Warn("solana nonce advanced", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
+		} else if !isNotFound {
+			// Nonce has not advanced, but we have a tx in-flight. Call callback for status checks (e.g., BTL).
+			if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
+				k.Logger(ctx).Error("error handling solana nonce update callback for non-advanced nonce", "keyID", keyID, "error", err)
+				return
+			}
 		}
+	}
 
-		if err := nonceUpdatedCallback(pendingTxs[0]); err != nil {
-			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
-			return
+	if len(pendingTxs) == 1 && nonceUpdated {
+		if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
+			k.Logger(ctx).Error("error clearing nonce request", "keyID", keyID, "error", err)
 		}
-
-		k.Logger(ctx).Warn("solana nonce updated", "keyID", keyID, "nonce", requestedSolNonce.Nonce)
+		return
 	}
 
 	// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
 	txIndex := 0
 	if nonceUpdated {
 		txIndex = 1
+	}
+
+	if txIndex >= len(pendingTxs) {
+		// This can happen if nonceUpdated is true but there's only one pending tx.
+		// The `len(pendingTxs) == 1 && nonceUpdated` check above handles this, but this is an extra safeguard.
+		if nonceUpdated {
+			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
+				k.Logger(ctx).Error("error clearing nonce request", "keyID", keyID, "error", err)
+			}
+		}
+		return
 	}
 
 	if err := txDispatchCallback(pendingTxs[txIndex]); err != nil {
