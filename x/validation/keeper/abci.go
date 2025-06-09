@@ -1560,9 +1560,21 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
+				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+				if err != nil {
+					k.Logger(ctx).Error("Failed to get solana rock supply", "error", err.Error())
+					return
+				}
+
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
 					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
+					return
+				}
+
+				newSolanaSupply := solanaSupply + pendingMint.Amount
+				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
+					k.Logger(ctx).Error("Failed to set solana rock supply", "error", err.Error())
 					return
 				}
 
@@ -1576,7 +1588,9 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				sdkCtx.EventManager().EmitEvent(
 					sdk.NewEvent(
 						types.EventTypeValidation,
-						sdk.NewAttribute(types.AttributeKeyBurnAmount, fmt.Sprintf("%d", pendingMint.Amount)),
+						sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", pendingMint.Amount)),
+						sdk.NewAttribute(types.AttributeKeyBridgeFee, fmt.Sprintf("%d", pendingMint.Amount)),
+						sdk.NewAttribute(types.AttributeKeyBurnDestination, pendingMint.RecipientAddress),
 					),
 				)
 			}
@@ -2162,6 +2176,17 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetSolanaROCKSupply: ", err.Error())
+			continue
+		}
+
+		if burn.Amount > solanaSupply {
+			k.Logger(ctx).Error("attempt to bridge from solana exceeds solana ROCK supply", "amount", burn.Amount, "supply", solanaSupply)
+			continue
+		}
+
 		_, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
@@ -2179,6 +2204,12 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
+			continue
+		}
+
+		newSolanaSupply := solanaSupply - burn.Amount
+		if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
+			k.Logger(ctx).Error("SetSolanaROCKSupply: ", err.Error())
 			continue
 		}
 
