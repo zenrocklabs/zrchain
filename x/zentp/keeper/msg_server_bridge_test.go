@@ -21,6 +21,15 @@ func (s *IntegrationTestSuite) TestBridge() {
 	err := s.zentpKeeper.ParamStore.Set(s.ctx, params)
 	s.Require().NoError(err)
 
+	// Setup Solana ROCK supply for invariant check
+	err = s.zentpKeeper.SetSolanaROCKSupply(s.ctx, math.NewIntFromUint64(100_000_000_000_000)) // 100M ROCK
+	s.Require().NoError(err)
+
+	// Mock bank keeper GetSupply for invariant check
+	s.bankKeeper.EXPECT().GetSupply(s.ctx, "urock").Return(
+		sdk.NewCoin("urock", math.NewIntFromUint64(200_000_000_000_000)), // 200M ROCK
+	).AnyTimes()
+
 	// Mock getting the mint params
 	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil)
 
@@ -80,8 +89,17 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	err := s.zentpKeeper.ParamStore.Set(s.ctx, params)
 	s.Require().NoError(err)
 
+	// Setup Solana ROCK supply for invariant check (for most tests)
+	err = s.zentpKeeper.SetSolanaROCKSupply(s.ctx, math.NewIntFromUint64(100_000_000_000_000)) // 100M ROCK
+	s.Require().NoError(err)
+
+	// Mock bank keeper GetSupply for invariant check (for most tests)
+	s.bankKeeper.EXPECT().GetSupply(s.ctx, "urock").Return(
+		sdk.NewCoin("urock", math.NewIntFromUint64(200_000_000_000_000)), // 200M ROCK
+	).AnyTimes()
+
 	// Mock getting the mint params
-	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil)
+	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil).AnyTimes()
 
 	// Create base test message
 	baseMsg := &types.MsgBridge{
@@ -166,6 +184,18 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 				).Return(nil).AnyTimes()
 			},
 			expectedError: "not enough balance",
+		},
+		{
+			name: "Supply Cap Exceeded",
+			modifyMsg: func(msg *types.MsgBridge) {
+				msg.Amount = 800_000_000_000_000 // 800M ROCK - will exceed cap with existing supplies
+			},
+			setupMocks: func() {
+				// Setup supplies that will cause cap violation
+				// Current setup: 200M ROCK on zrchain + 100M ROCK on Solana + 800M new = 1.1B ROCK (exceeds 1B cap)
+				// The existing mocks should be sufficient since they're set to AnyTimes()
+			},
+			expectedError: "total ROCK supply including pending would exceed cap",
 		},
 	}
 
