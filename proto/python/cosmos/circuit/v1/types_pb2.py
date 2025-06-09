@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1d\x63osmos/circuit/v1/types.proto\x12\x11\x63osmos.circuit.v1\"\xd6\x01\n\x0bPermissions\x12:\n\x05level\x18\x01 \x01(\x0e\x32$.cosmos.circuit.v1.Permissions.LevelR\x05level\x12&\n\x0flimit_type_urls\x18\x02 \x03(\tR\rlimitTypeUrls\"c\n\x05Level\x12\x1a\n\x16LEVEL_NONE_UNSPECIFIED\x10\x00\x12\x13\n\x0fLEVEL_SOME_MSGS\x10\x01\x12\x12\n\x0eLEVEL_ALL_MSGS\x10\x02\x12\x15\n\x11LEVEL_SUPER_ADMIN\x10\x03\"w\n\x19GenesisAccountPermissions\x12\x18\n\x07\x61\x64\x64ress\x18\x01 \x01(\tR\x07\x61\x64\x64ress\x12@\n\x0bpermissions\x18\x02 \x01(\x0b\x32\x1e.cosmos.circuit.v1.PermissionsR\x0bpermissions\"\x9b\x01\n\x0cGenesisState\x12]\n\x13\x61\x63\x63ount_permissions\x18\x01 \x03(\x0b\x32,.cosmos.circuit.v1.GenesisAccountPermissionsR\x12\x61\x63\x63ountPermissions\x12,\n\x12\x64isabled_type_urls\x18\x02 \x03(\tR\x10\x64isabledTypeUrlsB\x1eZ\x1c\x63osmossdk.io/x/circuit/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1d\x63osmos/circuit/v1/types.proto\x12\x11\x63osmos.circuit.v1\"\xd6\x01\n\x0bPermissions\x12:\n\x05level\x18\x01 \x01(\x0e\x32$.cosmos.circuit.v1.Permissions.LevelR\x05level\x12&\n\x0flimit_type_urls\x18\x02 \x03(\tR\rlimitTypeUrls\"c\n\x05Level\x12\x1a\n\x16LEVEL_NONE_UNSPECIFIED\x10\x00\x12\x13\n\x0fLEVEL_SOME_MSGS\x10\x01\x12\x12\n\x0eLEVEL_ALL_MSGS\x10\x02\x12\x15\n\x11LEVEL_SUPER_ADMIN\x10\x03\"w\n\x19GenesisAccountPermissions\x12\x18\n\x07\x61\x64\x64ress\x18\x01 \x01(\tR\x07\x61\x64\x64ress\x12@\n\x0bpermissions\x18\x02 \x01(\x0b\x32\x1e.cosmos.circuit.v1.PermissionsR\x0bpermissions\"\x9b\x01\n\x0cGenesisState\x12]\n\x13\x61\x63\x63ount_permissions\x18\x01 \x03(\x0b\x32,.cosmos.circuit.v1.GenesisAccountPermissionsR\x12\x61\x63\x63ountPermissions\x12,\n\x12\x64isabled_type_urls\x18\x02 \x03(\tR\x10\x64isabledTypeUrlsB.Z,github.com/cosmos/cosmos-sdk/x/circuit/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'cosmos.circuit.v1.types_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z\034cosmossdk.io/x/circuit/types'
+  _globals['DESCRIPTOR']._serialized_options = b'Z,github.com/cosmos/cosmos-sdk/x/circuit/types'
   _globals['_PERMISSIONS']._serialized_start=53
   _globals['_PERMISSIONS']._serialized_end=267
   _globals['_PERMISSIONS_LEVEL']._serialized_start=168

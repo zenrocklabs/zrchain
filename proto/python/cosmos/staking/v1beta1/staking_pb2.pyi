@@ -5,8 +5,8 @@ from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from amino import amino_pb2 as _amino_pb2
-from tendermint.types import types_pb2 as _types_pb2
-from tendermint.abci import types_pb2 as _types_pb2_1
+from cometbft.types.v2 import types_pb2 as _types_pb2
+from cometbft.abci.v2 import types_pb2 as _types_pb2_1
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor

@@ -49,7 +49,7 @@ message MsgBridge {
   string creator = 1;
   
   // source_address is the address on the source chain where the tokens are coming from.
-  string source_address = 2;
+  string source_address = 2 [deprecated = true]; // Deprecated
   
   // amount is the amount to mint on the destination chain
   uint64 amount = 3;

@@ -26,12 +26,12 @@ from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 from cosmos.base.abci.v1beta1 import abci_pb2 as cosmos_dot_base_dot_abci_dot_v1beta1_dot_abci__pb2
 from cosmos.tx.v1beta1 import tx_pb2 as cosmos_dot_tx_dot_v1beta1_dot_tx__pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as cosmos_dot_base_dot_query_dot_v1beta1_dot_pagination__pb2
-from tendermint.types import block_pb2 as tendermint_dot_types_dot_block__pb2
-from tendermint.types import types_pb2 as tendermint_dot_types_dot_types__pb2
+from cometbft.types.v2 import block_pb2 as cometbft_dot_types_dot_v2_dot_block__pb2
+from cometbft.types.v2 import types_pb2 as cometbft_dot_types_dot_v2_dot_types__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x63osmos/tx/v1beta1/service.proto\x12\x11\x63osmos.tx.v1beta1\x1a\x1cgoogle/api/annotations.proto\x1a#cosmos/base/abci/v1beta1/abci.proto\x1a\x1a\x63osmos/tx/v1beta1/tx.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1ctendermint/types/block.proto\x1a\x1ctendermint/types/types.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x88\x02\n\x12GetTxsEventRequest\x12\x1a\n\x06\x65vents\x18\x01 \x03(\tB\x02\x18\x01R\x06\x65vents\x12J\n\npagination\x18\x02 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestB\x02\x18\x01R\npagination\x12\x35\n\x08order_by\x18\x03 \x01(\x0e\x32\x1a.cosmos.tx.v1beta1.OrderByR\x07orderBy\x12\x12\n\x04page\x18\x04 \x01(\x04R\x04page\x12\x14\n\x05limit\x18\x05 \x01(\x04R\x05limit\x12)\n\x05query\x18\x06 \x01(\tB\x13\xda\xb4-\x0f\x63osmos-sdk 0.50R\x05query\"\xea\x01\n\x13GetTxsEventResponse\x12\'\n\x03txs\x18\x01 \x03(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x03txs\x12G\n\x0ctx_responses\x18\x02 \x03(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\x0btxResponses\x12K\n\npagination\x18\x03 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseB\x02\x18\x01R\npagination\x12\x14\n\x05total\x18\x04 \x01(\x04R\x05total\"e\n\x12\x42roadcastTxRequest\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes\x12\x34\n\x04mode\x18\x02 \x01(\x0e\x32 .cosmos.tx.v1beta1.BroadcastModeR\x04mode\"\\\n\x13\x42roadcastTxResponse\x12\x45\n\x0btx_response\x18\x01 \x01(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\ntxResponse\"l\n\x0fSimulateRequest\x12)\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxB\x02\x18\x01R\x02tx\x12.\n\x08tx_bytes\x18\x02 \x01(\x0c\x42\x13\xda\xb4-\x0f\x63osmos-sdk 0.43R\x07txBytes\"\x8a\x01\n\x10SimulateResponse\x12<\n\x08gas_info\x18\x01 \x01(\x0b\x32!.cosmos.base.abci.v1beta1.GasInfoR\x07gasInfo\x12\x38\n\x06result\x18\x02 \x01(\x0b\x32 .cosmos.base.abci.v1beta1.ResultR\x06result\"\"\n\x0cGetTxRequest\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\"}\n\rGetTxResponse\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx\x12\x45\n\x0btx_response\x18\x02 \x01(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\ntxResponse\"\x8f\x01\n\x16GetBlockWithTxsRequest\x12\x16\n\x06height\x18\x01 \x01(\x03R\x06height\x12\x46\n\npagination\x18\x02 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination:\x15\xd2\xb4-\x11\x63osmos-sdk 0.45.2\"\x87\x02\n\x17GetBlockWithTxsResponse\x12\'\n\x03txs\x18\x01 \x03(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x03txs\x12\x34\n\x08\x62lock_id\x18\x02 \x01(\x0b\x32\x19.tendermint.types.BlockIDR\x07\x62lockId\x12-\n\x05\x62lock\x18\x03 \x01(\x0b\x32\x17.tendermint.types.BlockR\x05\x62lock\x12G\n\npagination\x18\x04 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination:\x15\xd2\xb4-\x11\x63osmos-sdk 0.45.2\"A\n\x0fTxDecodeRequest\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"N\n\x10TxDecodeResponse\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"M\n\x0fTxEncodeRequest\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"B\n\x10TxEncodeResponse\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"J\n\x14TxEncodeAminoRequest\x12\x1d\n\namino_json\x18\x01 \x01(\tR\taminoJson:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"O\n\x15TxEncodeAminoResponse\x12!\n\x0c\x61mino_binary\x18\x01 \x01(\x0cR\x0b\x61minoBinary:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"N\n\x14TxDecodeAminoRequest\x12!\n\x0c\x61mino_binary\x18\x01 \x01(\x0cR\x0b\x61minoBinary:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"K\n\x15TxDecodeAminoResponse\x12\x1d\n\namino_json\x18\x01 \x01(\tR\taminoJson:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47*H\n\x07OrderBy\x12\x18\n\x14ORDER_BY_UNSPECIFIED\x10\x00\x12\x10\n\x0cORDER_BY_ASC\x10\x01\x12\x11\n\rORDER_BY_DESC\x10\x02*\x80\x01\n\rBroadcastMode\x12\x1e\n\x1a\x42ROADCAST_MODE_UNSPECIFIED\x10\x00\x12\x1c\n\x14\x42ROADCAST_MODE_BLOCK\x10\x01\x1a\x02\x08\x01\x12\x17\n\x13\x42ROADCAST_MODE_SYNC\x10\x02\x12\x18\n\x14\x42ROADCAST_MODE_ASYNC\x10\x03\x32\x8d\n\n\x07Service\x12{\n\x08Simulate\x12\".cosmos.tx.v1beta1.SimulateRequest\x1a#.cosmos.tx.v1beta1.SimulateResponse\"&\x82\xd3\xe4\x93\x02 \"\x1b/cosmos/tx/v1beta1/simulate:\x01*\x12q\n\x05GetTx\x12\x1f.cosmos.tx.v1beta1.GetTxRequest\x1a .cosmos.tx.v1beta1.GetTxResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/cosmos/tx/v1beta1/txs/{hash}\x12\x7f\n\x0b\x42roadcastTx\x12%.cosmos.tx.v1beta1.BroadcastTxRequest\x1a&.cosmos.tx.v1beta1.BroadcastTxResponse\"!\x82\xd3\xe4\x93\x02\x1b\"\x16/cosmos/tx/v1beta1/txs:\x01*\x12|\n\x0bGetTxsEvent\x12%.cosmos.tx.v1beta1.GetTxsEventRequest\x1a&.cosmos.tx.v1beta1.GetTxsEventResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/cosmos/tx/v1beta1/txs\x12\xac\x01\n\x0fGetBlockWithTxs\x12).cosmos.tx.v1beta1.GetBlockWithTxsRequest\x1a*.cosmos.tx.v1beta1.GetBlockWithTxsResponse\"B\xca\xb4-\x11\x63osmos-sdk 0.45.2\x82\xd3\xe4\x93\x02\'\x12%/cosmos/tx/v1beta1/txs/block/{height}\x12\x8c\x01\n\x08TxDecode\x12\".cosmos.tx.v1beta1.TxDecodeRequest\x1a#.cosmos.tx.v1beta1.TxDecodeResponse\"7\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1e\"\x19/cosmos/tx/v1beta1/decode:\x01*\x12\x8c\x01\n\x08TxEncode\x12\".cosmos.tx.v1beta1.TxEncodeRequest\x1a#.cosmos.tx.v1beta1.TxEncodeResponse\"7\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1e\"\x19/cosmos/tx/v1beta1/encode:\x01*\x12\xa1\x01\n\rTxEncodeAmino\x12\'.cosmos.tx.v1beta1.TxEncodeAminoRequest\x1a(.cosmos.tx.v1beta1.TxEncodeAminoResponse\"=\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02$\"\x1f/cosmos/tx/v1beta1/encode/amino:\x01*\x12\xa1\x01\n\rTxDecodeAmino\x12\'.cosmos.tx.v1beta1.TxDecodeAminoRequest\x1a(.cosmos.tx.v1beta1.TxDecodeAminoResponse\"=\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02$\"\x1f/cosmos/tx/v1beta1/decode/amino:\x01*B\'Z%github.com/cosmos/cosmos-sdk/types/txb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x63osmos/tx/v1beta1/service.proto\x12\x11\x63osmos.tx.v1beta1\x1a\x1cgoogle/api/annotations.proto\x1a#cosmos/base/abci/v1beta1/abci.proto\x1a\x1a\x63osmos/tx/v1beta1/tx.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1d\x63ometbft/types/v2/block.proto\x1a\x1d\x63ometbft/types/v2/types.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x88\x02\n\x12GetTxsEventRequest\x12\x1a\n\x06\x65vents\x18\x01 \x03(\tB\x02\x18\x01R\x06\x65vents\x12J\n\npagination\x18\x02 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestB\x02\x18\x01R\npagination\x12\x35\n\x08order_by\x18\x03 \x01(\x0e\x32\x1a.cosmos.tx.v1beta1.OrderByR\x07orderBy\x12\x12\n\x04page\x18\x04 \x01(\x04R\x04page\x12\x14\n\x05limit\x18\x05 \x01(\x04R\x05limit\x12)\n\x05query\x18\x06 \x01(\tB\x13\xda\xb4-\x0f\x63osmos-sdk 0.50R\x05query\"\xea\x01\n\x13GetTxsEventResponse\x12\'\n\x03txs\x18\x01 \x03(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x03txs\x12G\n\x0ctx_responses\x18\x02 \x03(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\x0btxResponses\x12K\n\npagination\x18\x03 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseB\x02\x18\x01R\npagination\x12\x14\n\x05total\x18\x04 \x01(\x04R\x05total\"e\n\x12\x42roadcastTxRequest\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes\x12\x34\n\x04mode\x18\x02 \x01(\x0e\x32 .cosmos.tx.v1beta1.BroadcastModeR\x04mode\"\\\n\x13\x42roadcastTxResponse\x12\x45\n\x0btx_response\x18\x01 \x01(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\ntxResponse\"l\n\x0fSimulateRequest\x12)\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxB\x02\x18\x01R\x02tx\x12.\n\x08tx_bytes\x18\x02 \x01(\x0c\x42\x13\xda\xb4-\x0f\x63osmos-sdk 0.43R\x07txBytes\"\x8a\x01\n\x10SimulateResponse\x12<\n\x08gas_info\x18\x01 \x01(\x0b\x32!.cosmos.base.abci.v1beta1.GasInfoR\x07gasInfo\x12\x38\n\x06result\x18\x02 \x01(\x0b\x32 .cosmos.base.abci.v1beta1.ResultR\x06result\"\"\n\x0cGetTxRequest\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\"}\n\rGetTxResponse\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx\x12\x45\n\x0btx_response\x18\x02 \x01(\x0b\x32$.cosmos.base.abci.v1beta1.TxResponseR\ntxResponse\"\x8f\x01\n\x16GetBlockWithTxsRequest\x12\x16\n\x06height\x18\x01 \x01(\x03R\x06height\x12\x46\n\npagination\x18\x02 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination:\x15\xd2\xb4-\x11\x63osmos-sdk 0.45.2\"\x89\x02\n\x17GetBlockWithTxsResponse\x12\'\n\x03txs\x18\x01 \x03(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x03txs\x12\x35\n\x08\x62lock_id\x18\x02 \x01(\x0b\x32\x1a.cometbft.types.v2.BlockIDR\x07\x62lockId\x12.\n\x05\x62lock\x18\x03 \x01(\x0b\x32\x18.cometbft.types.v2.BlockR\x05\x62lock\x12G\n\npagination\x18\x04 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination:\x15\xd2\xb4-\x11\x63osmos-sdk 0.45.2\"A\n\x0fTxDecodeRequest\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"N\n\x10TxDecodeResponse\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"M\n\x0fTxEncodeRequest\x12%\n\x02tx\x18\x01 \x01(\x0b\x32\x15.cosmos.tx.v1beta1.TxR\x02tx:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"B\n\x10TxEncodeResponse\x12\x19\n\x08tx_bytes\x18\x01 \x01(\x0cR\x07txBytes:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"J\n\x14TxEncodeAminoRequest\x12\x1d\n\namino_json\x18\x01 \x01(\tR\taminoJson:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"O\n\x15TxEncodeAminoResponse\x12!\n\x0c\x61mino_binary\x18\x01 \x01(\x0cR\x0b\x61minoBinary:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"N\n\x14TxDecodeAminoRequest\x12!\n\x0c\x61mino_binary\x18\x01 \x01(\x0cR\x0b\x61minoBinary:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47\"K\n\x15TxDecodeAminoResponse\x12\x1d\n\namino_json\x18\x01 \x01(\tR\taminoJson:\x13\xd2\xb4-\x0f\x63osmos-sdk 0.47*H\n\x07OrderBy\x12\x18\n\x14ORDER_BY_UNSPECIFIED\x10\x00\x12\x10\n\x0cORDER_BY_ASC\x10\x01\x12\x11\n\rORDER_BY_DESC\x10\x02*\x80\x01\n\rBroadcastMode\x12\x1e\n\x1a\x42ROADCAST_MODE_UNSPECIFIED\x10\x00\x12\x1c\n\x14\x42ROADCAST_MODE_BLOCK\x10\x01\x1a\x02\x08\x01\x12\x17\n\x13\x42ROADCAST_MODE_SYNC\x10\x02\x12\x18\n\x14\x42ROADCAST_MODE_ASYNC\x10\x03\x32\x8d\n\n\x07Service\x12{\n\x08Simulate\x12\".cosmos.tx.v1beta1.SimulateRequest\x1a#.cosmos.tx.v1beta1.SimulateResponse\"&\x82\xd3\xe4\x93\x02 \"\x1b/cosmos/tx/v1beta1/simulate:\x01*\x12q\n\x05GetTx\x12\x1f.cosmos.tx.v1beta1.GetTxRequest\x1a .cosmos.tx.v1beta1.GetTxResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/cosmos/tx/v1beta1/txs/{hash}\x12\x7f\n\x0b\x42roadcastTx\x12%.cosmos.tx.v1beta1.BroadcastTxRequest\x1a&.cosmos.tx.v1beta1.BroadcastTxResponse\"!\x82\xd3\xe4\x93\x02\x1b\"\x16/cosmos/tx/v1beta1/txs:\x01*\x12|\n\x0bGetTxsEvent\x12%.cosmos.tx.v1beta1.GetTxsEventRequest\x1a&.cosmos.tx.v1beta1.GetTxsEventResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/cosmos/tx/v1beta1/txs\x12\xac\x01\n\x0fGetBlockWithTxs\x12).cosmos.tx.v1beta1.GetBlockWithTxsRequest\x1a*.cosmos.tx.v1beta1.GetBlockWithTxsResponse\"B\xca\xb4-\x11\x63osmos-sdk 0.45.2\x82\xd3\xe4\x93\x02\'\x12%/cosmos/tx/v1beta1/txs/block/{height}\x12\x8c\x01\n\x08TxDecode\x12\".cosmos.tx.v1beta1.TxDecodeRequest\x1a#.cosmos.tx.v1beta1.TxDecodeResponse\"7\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1e\"\x19/cosmos/tx/v1beta1/decode:\x01*\x12\x8c\x01\n\x08TxEncode\x12\".cosmos.tx.v1beta1.TxEncodeRequest\x1a#.cosmos.tx.v1beta1.TxEncodeResponse\"7\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1e\"\x19/cosmos/tx/v1beta1/encode:\x01*\x12\xa1\x01\n\rTxEncodeAmino\x12\'.cosmos.tx.v1beta1.TxEncodeAminoRequest\x1a(.cosmos.tx.v1beta1.TxEncodeAminoResponse\"=\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02$\"\x1f/cosmos/tx/v1beta1/encode/amino:\x01*\x12\xa1\x01\n\rTxDecodeAmino\x12\'.cosmos.tx.v1beta1.TxDecodeAminoRequest\x1a(.cosmos.tx.v1beta1.TxDecodeAminoResponse\"=\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02$\"\x1f/cosmos/tx/v1beta1/decode/amino:\x01*B\'Z%github.com/cosmos/cosmos-sdk/types/txb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -91,46 +91,46 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SERVICE'].methods_by_name['TxEncodeAmino']._serialized_options = b'\312\264-\017cosmos-sdk 0.47\202\323\344\223\002$\"\037/cosmos/tx/v1beta1/encode/amino:\001*'
   _globals['_SERVICE'].methods_by_name['TxDecodeAmino']._loaded_options = None
   _globals['_SERVICE'].methods_by_name['TxDecodeAmino']._serialized_options = b'\312\264-\017cosmos-sdk 0.47\202\323\344\223\002$\"\037/cosmos/tx/v1beta1/decode/amino:\001*'
-  _globals['_ORDERBY']._serialized_start=2415
-  _globals['_ORDERBY']._serialized_end=2487
-  _globals['_BROADCASTMODE']._serialized_start=2490
-  _globals['_BROADCASTMODE']._serialized_end=2618
-  _globals['_GETTXSEVENTREQUEST']._serialized_start=281
-  _globals['_GETTXSEVENTREQUEST']._serialized_end=545
-  _globals['_GETTXSEVENTRESPONSE']._serialized_start=548
-  _globals['_GETTXSEVENTRESPONSE']._serialized_end=782
-  _globals['_BROADCASTTXREQUEST']._serialized_start=784
-  _globals['_BROADCASTTXREQUEST']._serialized_end=885
-  _globals['_BROADCASTTXRESPONSE']._serialized_start=887
-  _globals['_BROADCASTTXRESPONSE']._serialized_end=979
-  _globals['_SIMULATEREQUEST']._serialized_start=981
-  _globals['_SIMULATEREQUEST']._serialized_end=1089
-  _globals['_SIMULATERESPONSE']._serialized_start=1092
-  _globals['_SIMULATERESPONSE']._serialized_end=1230
-  _globals['_GETTXREQUEST']._serialized_start=1232
-  _globals['_GETTXREQUEST']._serialized_end=1266
-  _globals['_GETTXRESPONSE']._serialized_start=1268
-  _globals['_GETTXRESPONSE']._serialized_end=1393
-  _globals['_GETBLOCKWITHTXSREQUEST']._serialized_start=1396
-  _globals['_GETBLOCKWITHTXSREQUEST']._serialized_end=1539
-  _globals['_GETBLOCKWITHTXSRESPONSE']._serialized_start=1542
-  _globals['_GETBLOCKWITHTXSRESPONSE']._serialized_end=1805
-  _globals['_TXDECODEREQUEST']._serialized_start=1807
-  _globals['_TXDECODEREQUEST']._serialized_end=1872
-  _globals['_TXDECODERESPONSE']._serialized_start=1874
-  _globals['_TXDECODERESPONSE']._serialized_end=1952
-  _globals['_TXENCODEREQUEST']._serialized_start=1954
-  _globals['_TXENCODEREQUEST']._serialized_end=2031
-  _globals['_TXENCODERESPONSE']._serialized_start=2033
-  _globals['_TXENCODERESPONSE']._serialized_end=2099
-  _globals['_TXENCODEAMINOREQUEST']._serialized_start=2101
-  _globals['_TXENCODEAMINOREQUEST']._serialized_end=2175
-  _globals['_TXENCODEAMINORESPONSE']._serialized_start=2177
-  _globals['_TXENCODEAMINORESPONSE']._serialized_end=2256
-  _globals['_TXDECODEAMINOREQUEST']._serialized_start=2258
-  _globals['_TXDECODEAMINOREQUEST']._serialized_end=2336
-  _globals['_TXDECODEAMINORESPONSE']._serialized_start=2338
-  _globals['_TXDECODEAMINORESPONSE']._serialized_end=2413
-  _globals['_SERVICE']._serialized_start=2621
-  _globals['_SERVICE']._serialized_end=3914
+  _globals['_ORDERBY']._serialized_start=2419
+  _globals['_ORDERBY']._serialized_end=2491
+  _globals['_BROADCASTMODE']._serialized_start=2494
+  _globals['_BROADCASTMODE']._serialized_end=2622
+  _globals['_GETTXSEVENTREQUEST']._serialized_start=283
+  _globals['_GETTXSEVENTREQUEST']._serialized_end=547
+  _globals['_GETTXSEVENTRESPONSE']._serialized_start=550
+  _globals['_GETTXSEVENTRESPONSE']._serialized_end=784
+  _globals['_BROADCASTTXREQUEST']._serialized_start=786
+  _globals['_BROADCASTTXREQUEST']._serialized_end=887
+  _globals['_BROADCASTTXRESPONSE']._serialized_start=889
+  _globals['_BROADCASTTXRESPONSE']._serialized_end=981
+  _globals['_SIMULATEREQUEST']._serialized_start=983
+  _globals['_SIMULATEREQUEST']._serialized_end=1091
+  _globals['_SIMULATERESPONSE']._serialized_start=1094
+  _globals['_SIMULATERESPONSE']._serialized_end=1232
+  _globals['_GETTXREQUEST']._serialized_start=1234
+  _globals['_GETTXREQUEST']._serialized_end=1268
+  _globals['_GETTXRESPONSE']._serialized_start=1270
+  _globals['_GETTXRESPONSE']._serialized_end=1395
+  _globals['_GETBLOCKWITHTXSREQUEST']._serialized_start=1398
+  _globals['_GETBLOCKWITHTXSREQUEST']._serialized_end=1541
+  _globals['_GETBLOCKWITHTXSRESPONSE']._serialized_start=1544
+  _globals['_GETBLOCKWITHTXSRESPONSE']._serialized_end=1809
+  _globals['_TXDECODEREQUEST']._serialized_start=1811
+  _globals['_TXDECODEREQUEST']._serialized_end=1876
+  _globals['_TXDECODERESPONSE']._serialized_start=1878
+  _globals['_TXDECODERESPONSE']._serialized_end=1956
+  _globals['_TXENCODEREQUEST']._serialized_start=1958
+  _globals['_TXENCODEREQUEST']._serialized_end=2035
+  _globals['_TXENCODERESPONSE']._serialized_start=2037
+  _globals['_TXENCODERESPONSE']._serialized_end=2103
+  _globals['_TXENCODEAMINOREQUEST']._serialized_start=2105
+  _globals['_TXENCODEAMINOREQUEST']._serialized_end=2179
+  _globals['_TXENCODEAMINORESPONSE']._serialized_start=2181
+  _globals['_TXENCODEAMINORESPONSE']._serialized_end=2260
+  _globals['_TXDECODEAMINOREQUEST']._serialized_start=2262
+  _globals['_TXDECODEAMINOREQUEST']._serialized_end=2340
+  _globals['_TXDECODEAMINORESPONSE']._serialized_start=2342
+  _globals['_TXDECODEAMINORESPONSE']._serialized_end=2417
+  _globals['_SERVICE']._serialized_start=2625
+  _globals['_SERVICE']._serialized_end=3918
 # @@protoc_insertion_point(module_scope)
