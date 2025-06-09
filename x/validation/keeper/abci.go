@@ -1580,8 +1580,12 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					return
 				}
 
-				newSolanaSupply := solanaSupply + pendingMint.Amount
-				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
+				newSolanaSupply := sdkmath.NewIntFromUint64(solanaSupply).Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
+				if !newSolanaSupply.IsUint64() {
+					k.Logger(ctx).Error("solana rock supply overflow", "new_supply", newSolanaSupply.String())
+					return
+				}
+				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply.Uint64()); err != nil {
 					k.Logger(ctx).Error("Failed to set solana rock supply", "error", err.Error())
 					return
 				}
@@ -1597,7 +1601,6 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					sdk.NewEvent(
 						types.EventTypeValidation,
 						sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", pendingMint.Amount)),
-						sdk.NewAttribute(types.AttributeKeyBridgeFee, fmt.Sprintf("%d", pendingMint.Amount)),
 						sdk.NewAttribute(types.AttributeKeyBurnDestination, pendingMint.RecipientAddress),
 					),
 				)
@@ -2251,7 +2254,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			sdk.NewEvent(
 				types.EventTypeValidation,
 				sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", burn.Amount)),
-				sdk.NewAttribute(types.AttributeKeyBridgeFee, fmt.Sprintf("%d", bridgeFeeCoins.AmountOf(params.BondDenom))),
+				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.AmountOf(params.BondDenom).String()),
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)
