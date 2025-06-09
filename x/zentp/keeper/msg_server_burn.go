@@ -5,6 +5,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -21,6 +22,10 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 	// checks if the module account exists
 	if !k.accountKeeper.HasAccount(ctx, k.accountKeeper.GetModuleAddress(msg.ModuleAccount)) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidModuleAccount, "module account %s does not exist", msg.ModuleAccount)
+	}
+
+	if msg.Denom != params.BondDenom {
+		return nil, errors.New("invalid denomination")
 	}
 
 	// creates sdk.Coins to burn from message

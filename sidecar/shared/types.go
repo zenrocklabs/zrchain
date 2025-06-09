@@ -108,6 +108,18 @@ var (
 	EthBurnEventsBlockRange       = 1000
 	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
 	SolanaEventScanTxLimit        = 1000
+	SolanaEventFetchBatchSize     = 50
+)
+
+// SolanaEventType defines a type for Solana event keys for type safety.
+type SolanaEventType string
+
+// Constants for Solana event types to avoid magic strings
+const (
+	SolRockMint   SolanaEventType = "solRockMint"
+	SolZenBTCMint SolanaEventType = "solZenBTCMint"
+	SolZenBTCBurn SolanaEventType = "solZenBTCBurn"
+	SolRockBurn   SolanaEventType = "solRockBurn"
 )
 
 type OracleState struct {

@@ -4442,8 +4442,8 @@ type QueryStatsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Denom   string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"` // Optional
+	Denom   string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`     // Optional
 }
 
 func (x *QueryStatsRequest) Reset() {
@@ -4486,8 +4486,8 @@ type QueryStatsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TotalMints uint64 `protobuf:"varint,1,opt,name=total_mints,json=totalMints,proto3" json:"total_mints,omitempty"`
-	TotalBurns uint64 `protobuf:"varint,2,opt,name=total_burns,json=totalBurns,proto3" json:"total_burns,omitempty"`
+	TotalMints uint64 `protobuf:"varint,1,opt,name=total_mints,json=totalMints,proto3" json:"total_mints,omitempty"` // Optional
+	TotalBurns uint64 `protobuf:"varint,2,opt,name=total_burns,json=totalBurns,proto3" json:"total_burns,omitempty"` // Optional
 }
 
 func (x *QueryStatsResponse) Reset() {

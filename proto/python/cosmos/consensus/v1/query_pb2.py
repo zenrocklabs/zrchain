@@ -23,11 +23,11 @@ _sym_db = _symbol_database.Default()
 
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
-from tendermint.types import params_pb2 as tendermint_dot_types_dot_params__pb2
+from cometbft.types.v2 import params_pb2 as cometbft_dot_types_dot_v2_dot_params__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x63osmos/consensus/v1/query.proto\x12\x13\x63osmos.consensus.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1dtendermint/types/params.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x14\n\x12QueryParamsRequest\"P\n\x13QueryParamsResponse\x12\x39\n\x06params\x18\x01 \x01(\x0b\x32!.tendermint.types.ConsensusParamsR\x06params2\x9d\x01\n\x05Query\x12\x93\x01\n\x06Params\x12\'.cosmos.consensus.v1.QueryParamsRequest\x1a(.cosmos.consensus.v1.QueryParamsResponse\"6\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1d\x12\x1b/cosmos/consensus/v1/paramsB0Z.github.com/cosmos/cosmos-sdk/x/consensus/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x63osmos/consensus/v1/query.proto\x12\x13\x63osmos.consensus.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1e\x63ometbft/types/v2/params.proto\x1a\x19\x63osmos_proto/cosmos.proto\"\x14\n\x12QueryParamsRequest\"Q\n\x13QueryParamsResponse\x12:\n\x06params\x18\x01 \x01(\x0b\x32\".cometbft.types.v2.ConsensusParamsR\x06params2\x9d\x01\n\x05Query\x12\x93\x01\n\x06Params\x12\'.cosmos.consensus.v1.QueryParamsRequest\x1a(.cosmos.consensus.v1.QueryParamsResponse\"6\xca\xb4-\x0f\x63osmos-sdk 0.47\x82\xd3\xe4\x93\x02\x1d\x12\x1b/cosmos/consensus/v1/paramsB0Z.github.com/cosmos/cosmos-sdk/x/consensus/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,10 +37,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z.github.com/cosmos/cosmos-sdk/x/consensus/types'
   _globals['_QUERY'].methods_by_name['Params']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Params']._serialized_options = b'\312\264-\017cosmos-sdk 0.47\202\323\344\223\002\035\022\033/cosmos/consensus/v1/params'
-  _globals['_QUERYPARAMSREQUEST']._serialized_start=144
-  _globals['_QUERYPARAMSREQUEST']._serialized_end=164
-  _globals['_QUERYPARAMSRESPONSE']._serialized_start=166
-  _globals['_QUERYPARAMSRESPONSE']._serialized_end=246
-  _globals['_QUERY']._serialized_start=249
-  _globals['_QUERY']._serialized_end=406
+  _globals['_QUERYPARAMSREQUEST']._serialized_start=145
+  _globals['_QUERYPARAMSREQUEST']._serialized_end=165
+  _globals['_QUERYPARAMSRESPONSE']._serialized_start=167
+  _globals['_QUERYPARAMSRESPONSE']._serialized_end=248
+  _globals['_QUERY']._serialized_start=251
+  _globals['_QUERY']._serialized_end=408
 # @@protoc_insertion_point(module_scope)

@@ -64,7 +64,7 @@ type oracleStateUpdate struct {
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
-	latestSolanaSigs           map[string]sol.Signature
+	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
 }
 
 type PriceData struct {

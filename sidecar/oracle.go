@@ -447,7 +447,7 @@ func (o *Oracle) fetchSolanaMintEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature("solRockMint")
+		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
 		events, newestSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
@@ -458,7 +458,7 @@ func (o *Oracle) fetchSolanaMintEvents(
 			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
 		}
 		if !newestSig.IsZero() {
-			update.latestSolanaSigs["solRockMint"] = newestSig
+			update.latestSolanaSigs[sidecartypes.SolRockMint] = newestSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -467,7 +467,7 @@ func (o *Oracle) fetchSolanaMintEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature("solZenBTCMint")
+		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
 		events, newestSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
@@ -478,7 +478,7 @@ func (o *Oracle) fetchSolanaMintEvents(
 			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
 		}
 		if !newestSig.IsZero() {
-			update.latestSolanaSigs["solZenBTCMint"] = newestSig
+			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newestSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -494,7 +494,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature("solZenBTCBurn")
+		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 		events, newestSig, err := o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process Solana ZenBTC burn events: %w", err)
@@ -505,7 +505,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
 		}
 		if !newestSig.IsZero() {
-			update.latestSolanaSigs["solZenBTCBurn"] = newestSig
+			update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -514,7 +514,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature("solRockBurn")
+		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 		events, newestSig, err := o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", err)
@@ -525,7 +525,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
 		}
 		if !newestSig.IsZero() {
-			update.latestSolanaSigs["solRockBurn"] = newestSig
+			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -538,16 +538,16 @@ func (o *Oracle) buildFinalState(
 ) (sidecartypes.OracleState, error) {
 	// Update the main Oracle's last signature strings
 	if len(update.latestSolanaSigs) > 0 {
-		if sig, ok := update.latestSolanaSigs["solRockMint"]; ok && !sig.IsZero() {
+		if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockMint]; ok && !sig.IsZero() {
 			o.lastSolRockMintSigStr = sig.String()
 		}
-		if sig, ok := update.latestSolanaSigs["solZenBTCMint"]; ok && !sig.IsZero() {
+		if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCMint]; ok && !sig.IsZero() {
 			o.lastSolZenBTCMintSigStr = sig.String()
 		}
-		if sig, ok := update.latestSolanaSigs["solZenBTCBurn"]; ok && !sig.IsZero() {
+		if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCBurn]; ok && !sig.IsZero() {
 			o.lastSolZenBTCBurnSigStr = sig.String()
 		}
-		if sig, ok := update.latestSolanaSigs["solRockBurn"]; ok && !sig.IsZero() {
+		if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
 			o.lastSolRockBurnSigStr = sig.String()
 		}
 		log.Printf("Updated latest Solana signatures: RockMint=%s, ZenBTCMint=%s, ZenBTCBurn=%s, RockBurn=%s",
@@ -924,8 +924,8 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	var mintEvents []api.SolanaMintEvent
-	const internalBatchSize = 50 // Define a smaller batch size for getTransaction calls
-	v0 := uint64(0)              // Define v0 for pointer
+	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)                                             // Define v0 for pointer
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
@@ -1114,8 +1114,8 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	var mintEvents []api.SolanaMintEvent
-	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
-	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
+	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
@@ -1398,8 +1398,8 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	var burnEvents []api.BurnEvent
-	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
-	v0 := uint64(0)              // Define v0 for pointer for maxSupportedTransactionVersion
+	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
@@ -1564,8 +1564,8 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	var burnEvents []api.BurnEvent
-	const internalBatchSize = 20 // Define a smaller batch size for getTransaction calls
-	v0 := uint64(0)              // Define v0 for pointer
+	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
+	v0 := uint64(0)                                             // Define v0 for pointer
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
@@ -1674,16 +1674,16 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 }
 
 // Helper to get typed last processed Solana signature
-func (o *Oracle) GetLastProcessedSolSignature(eventType string) solana.Signature {
+func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEventType) solana.Signature {
 	var sigStr string
 	switch eventType {
-	case "solRockMint":
+	case sidecartypes.SolRockMint:
 		sigStr = o.lastSolRockMintSigStr
-	case "solZenBTCMint":
+	case sidecartypes.SolZenBTCMint:
 		sigStr = o.lastSolZenBTCMintSigStr
-	case "solZenBTCBurn":
+	case sidecartypes.SolZenBTCBurn:
 		sigStr = o.lastSolZenBTCBurnSigStr
-	case "solRockBurn":
+	case sidecartypes.SolRockBurn:
 		sigStr = o.lastSolRockBurnSigStr
 	default:
 		log.Printf("Warning: Unknown Solana event type for GetLastProcessedSolSignature: %s", eventType)
