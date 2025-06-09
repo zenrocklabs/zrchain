@@ -1,6 +1,6 @@
 from gogoproto import gogo_pb2 as _gogo_pb2
-from tendermint.abci import types_pb2 as _types_pb2
-from tendermint.types import block_pb2 as _block_pb2
+from cometbft.abci.v2 import types_pb2 as _types_pb2
+from cometbft.types.v2 import block_pb2 as _block_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf.internal import containers as _containers

@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x63osmos/nft/v1beta1/event.proto\x12\x12\x63osmos.nft.v1beta1\"j\n\tEventSend\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n\x06sender\x18\x03 \x01(\tR\x06sender\x12\x1a\n\x08receiver\x18\x04 \x01(\tR\x08receiver\"L\n\tEventMint\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n\x05owner\x18\x03 \x01(\tR\x05owner\"L\n\tEventBurn\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n\x05owner\x18\x03 \x01(\tR\x05ownerB\x14Z\x12\x63osmossdk.io/x/nftb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x63osmos/nft/v1beta1/event.proto\x12\x12\x63osmos.nft.v1beta1\"j\n\tEventSend\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n\x06sender\x18\x03 \x01(\tR\x06sender\x12\x1a\n\x08receiver\x18\x04 \x01(\tR\x08receiver\"L\n\tEventMint\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n\x05owner\x18\x03 \x01(\tR\x05owner\"L\n\tEventBurn\x12\x19\n\x08\x63lass_id\x18\x01 \x01(\tR\x07\x63lassId\x12\x0e\n\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n\x05owner\x18\x03 \x01(\tR\x05ownerB$Z\"github.com/cosmos/cosmos-sdk/x/nftb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'cosmos.nft.v1beta1.event_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z\022cosmossdk.io/x/nft'
+  _globals['DESCRIPTOR']._serialized_options = b'Z\"github.com/cosmos/cosmos-sdk/x/nft'
   _globals['_EVENTSEND']._serialized_start=54
   _globals['_EVENTSEND']._serialized_end=160
   _globals['_EVENTMINT']._serialized_start=162

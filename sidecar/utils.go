@@ -146,7 +146,7 @@ func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
 
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	return &oracleStateUpdate{
-		latestSolanaSigs: make(map[string]solana.Signature),
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]solana.Signature),
 		SolanaMintEvents: []api.SolanaMintEvent{},
 		solanaBurnEvents: []api.BurnEvent{},
 		eigenDelegations: make(map[string]map[string]*big.Int),

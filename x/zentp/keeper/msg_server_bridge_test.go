@@ -27,7 +27,6 @@ func (s *IntegrationTestSuite) TestBridge() {
 	// Create test message
 	msg := &types.MsgBridge{
 		Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-		SourceAddress:    "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 		Amount:           1000,
 		Denom:            "urock",
@@ -41,14 +40,17 @@ func (s *IntegrationTestSuite) TestBridge() {
 		msg.Denom,
 	).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount+100000000+params.Solana.Fee*2)))
 
-	burnAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(msg.Amount)).Add(math.LegacyNewDecFromInt(math.NewIntFromUint64(params.Solana.Fee))).TruncateInt()
+	// Calculate total amount including bridge fee and Solana fee
+	baseAmountInt := math.NewIntFromUint64(msg.Amount)
+	bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+	totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
 
 	// Mock bank keeper SendCoinsFromAccountToModule
 	s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 		s.ctx,
-		sdk.MustAccAddressFromBech32(msg.SourceAddress),
+		sdk.MustAccAddressFromBech32(msg.Creator),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("urock", burnAmount)),
+		sdk.NewCoins(sdk.NewCoin("urock", totalAmountInt)),
 	).Return(nil)
 
 	// Mock validation keeper SetSolanaRequestedNonce
@@ -84,7 +86,6 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	// Create base test message
 	baseMsg := &types.MsgBridge{
 		Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-		SourceAddress:    "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 		Amount:           1000,
 		Denom:            "urock",
@@ -94,6 +95,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	testCases := []struct {
 		name          string
 		modifyMsg     func(*types.MsgBridge)
+		setupMocks    func()
 		expectedError string
 	}{
 		{
@@ -101,6 +103,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			modifyMsg: func(msg *types.MsgBridge) {
 				msg.DestinationChain = "invalid:chain"
 			},
+			setupMocks:    func() {},
 			expectedError: "invalid key type",
 		},
 		{
@@ -108,25 +111,45 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			modifyMsg: func(msg *types.MsgBridge) {
 				msg.RecipientAddress = "invalid-address"
 			},
+			setupMocks:    func() {},
 			expectedError: "invalid recipient address",
+		},
+		{
+			name: "invalid denom",
+			modifyMsg: func(msg *types.MsgBridge) {
+				msg.Denom = "noturock"
+			},
+			setupMocks:    func() {},
+			expectedError: "invalid denomination",
 		},
 		{
 			name: "Insufficient Balance",
 			modifyMsg: func(msg *types.MsgBridge) {
 				msg.Amount = 1000000000000
+			},
+			setupMocks: func() {
+				// Create a test message for mocking
+				testMsg := &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+					Amount:           1000000000000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+				}
+
 				// First check balance
 				s.bankKeeper.EXPECT().GetBalance(
 					s.ctx,
-					sdk.MustAccAddressFromBech32(msg.Creator),
-					msg.Denom,
-				).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(100))).AnyTimes() // Less than required amount
+					sdk.MustAccAddressFromBech32(testMsg.Creator),
+					testMsg.Denom,
+				).Return(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(100))).AnyTimes() // Less than required amount
 
 				// Mock SendCoinsFromAccountToModule even though it shouldn't be called
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 					s.ctx,
-					sdk.MustAccAddressFromBech32(msg.SourceAddress),
+					sdk.MustAccAddressFromBech32(testMsg.Creator),
 					types.ModuleName,
-					sdk.NewCoins(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount+10))),
+					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(testMsg.Amount+10))),
 				).Return(nil).AnyTimes()
 
 				// Mock validation keeper calls
@@ -138,7 +161,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 
 				s.validationKeeper.EXPECT().SetSolanaZenTPRequestedAccount(
 					s.ctx,
-					msg.RecipientAddress,
+					testMsg.RecipientAddress,
 					true,
 				).Return(nil).AnyTimes()
 			},
@@ -152,6 +175,11 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			msg := *baseMsg
 			if tc.modifyMsg != nil {
 				tc.modifyMsg(&msg)
+			}
+
+			// Setup mocks
+			if tc.setupMocks != nil {
+				tc.setupMocks()
 			}
 
 			// Call the Bridge handler

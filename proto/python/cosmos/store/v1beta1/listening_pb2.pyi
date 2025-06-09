@@ -1,4 +1,4 @@
-from tendermint.abci import types_pb2 as _types_pb2
+from cometbft.abci.v2 import types_pb2 as _types_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -23,7 +23,7 @@ class BlockMetadata(_message.Message):
     RESPONSE_COMMIT_FIELD_NUMBER: _ClassVar[int]
     REQUEST_FINALIZE_BLOCK_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_FINALIZE_BLOCK_FIELD_NUMBER: _ClassVar[int]
-    response_commit: _types_pb2.ResponseCommit
-    request_finalize_block: _types_pb2.RequestFinalizeBlock
-    response_finalize_block: _types_pb2.ResponseFinalizeBlock
-    def __init__(self, response_commit: _Optional[_Union[_types_pb2.ResponseCommit, _Mapping]] = ..., request_finalize_block: _Optional[_Union[_types_pb2.RequestFinalizeBlock, _Mapping]] = ..., response_finalize_block: _Optional[_Union[_types_pb2.ResponseFinalizeBlock, _Mapping]] = ...) -> None: ...
+    response_commit: _types_pb2.CommitResponse
+    request_finalize_block: _types_pb2.FinalizeBlockRequest
+    response_finalize_block: _types_pb2.FinalizeBlockResponse
+    def __init__(self, response_commit: _Optional[_Union[_types_pb2.CommitResponse, _Mapping]] = ..., request_finalize_block: _Optional[_Union[_types_pb2.FinalizeBlockRequest, _Mapping]] = ..., response_finalize_block: _Optional[_Union[_types_pb2.FinalizeBlockResponse, _Mapping]] = ...) -> None: ...
