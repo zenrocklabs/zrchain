@@ -2175,6 +2175,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			sdk.NewEvent(
 				types.EventTypeValidation,
 				sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", burn.Amount)),
+				sdk.NewAttribute(types.AttributeKeyBridgeFee, fmt.Sprintf("%d", bridgeFeeCoins.AmountOf(params.BondDenom))),
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)
