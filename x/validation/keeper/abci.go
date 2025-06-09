@@ -2122,11 +2122,6 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
-		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
-		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
-			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
-			continue
-		}
 		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())
@@ -2138,7 +2133,31 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, coins); err != nil {
+		protocolWalletAddress, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
+			return
+		}
+
+		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
+		if err != nil {
+			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
+			return
+		}
+
+		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
+
+		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
+		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
+			continue
+		}
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, protocolWalletAddress, bridgeFeeCoins); err != nil {
+			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
+		}
+
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 

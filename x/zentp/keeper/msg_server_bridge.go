@@ -16,10 +16,6 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if req.Creator != req.SourceAddress {
-		return nil, errors.New("creator and source address must be the same")
-	}
-
 	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
 		return nil, err
 	}
@@ -56,7 +52,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	if err = k.mintStore.Set(ctx, mintsCount, types.Bridge{
 		Id:               mintsCount,
 		Creator:          req.Creator,
-		SourceAddress:    req.SourceAddress,
+		SourceAddress:    req.Creator,
 		SourceChain:      "cosmos:" + ctx.ChainID(),
 		DestinationChain: req.DestinationChain,
 		Amount:           req.Amount,
@@ -73,7 +69,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
-		sdk.MustAccAddressFromBech32(req.SourceAddress),
+		sdk.MustAccAddressFromBech32(req.Creator),
 		types.ModuleName,
 		sdk.NewCoins(sdk.NewCoin(params.BondDenom, totalAmountInt)),
 	); err != nil {
