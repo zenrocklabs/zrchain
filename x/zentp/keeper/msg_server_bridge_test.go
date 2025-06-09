@@ -40,14 +40,17 @@ func (s *IntegrationTestSuite) TestBridge() {
 		msg.Denom,
 	).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount+100000000+params.Solana.Fee*2)))
 
-	burnAmount := math.LegacyNewDecFromInt(math.NewIntFromUint64(msg.Amount)).Add(math.LegacyNewDecFromInt(math.NewIntFromUint64(params.Solana.Fee))).TruncateInt()
+	// Calculate total amount including bridge fee and Solana fee
+	baseAmountInt := math.NewIntFromUint64(msg.Amount)
+	bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+	totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
 
 	// Mock bank keeper SendCoinsFromAccountToModule
 	s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 		s.ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("urock", burnAmount)),
+		sdk.NewCoins(sdk.NewCoin("urock", totalAmountInt)),
 	).Return(nil)
 
 	// Mock validation keeper SetSolanaRequestedNonce
