@@ -1566,6 +1566,14 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					return
 				}
 
+				const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
+				zrchainSupply := k.bankKeeper.GetSupply(ctx, pendingMint.Denom).Amount
+				totalSupply := zrchainSupply.Add(sdkmath.NewIntFromUint64(solanaSupply))
+				if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
+					k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
+					continue
+				}
+
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
 					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
@@ -2184,6 +2192,14 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 
 		if burn.Amount > solanaSupply {
 			k.Logger(ctx).Error("attempt to bridge from solana exceeds solana ROCK supply", "amount", burn.Amount, "supply", solanaSupply)
+			continue
+		}
+
+		const rockCap = 1_000_000_000_000_000 // 1bn ROCK in urock
+		zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
+		totalSupply := zrchainSupply.Add(sdkmath.NewIntFromUint64(solanaSupply))
+		if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
+			k.Logger(ctx).Error("total ROCK supply exceeds cap", "total_supply", totalSupply.String(), "cap", rockCap)
 			continue
 		}
 
