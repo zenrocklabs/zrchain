@@ -262,16 +262,11 @@ func (s *IntegrationTestSuite) TestCheckCanBurnFromSolana() {
 }
 
 func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
-	// Test error handling when GetSolanaROCKSupply fails
-	s.Run("GetSolanaROCKSupply error", func() {
-		// Don't set SolanaROCKSupply, which should cause an error when trying to get it
-		err := s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
-		s.Require().Error(err)
-		s.Require().Contains(err.Error(), "failed to get solana rock supply")
-	})
-
 	// Test that GetMintsWithStatus errors are handled gracefully
 	s.Run("GetMintsWithStatus error handling", func() {
+		// Ensure clean state
+		s.SetupTest()
+
 		// Setup valid solana supply
 		err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, sdkmath.NewIntFromUint64(1000))
 		s.Require().NoError(err)
@@ -286,15 +281,38 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 		err = s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
 		s.Require().NoError(err) // Should succeed despite potential GetMintsWithStatus issues
 	})
+
+	// Test that function works correctly when solana supply is not set (should default to zero)
+	s.Run("Solana supply not set defaults to zero", func() {
+		// Ensure clean state
+		s.SetupTest()
+
+		// Setup bank keeper mock
+		s.bankKeeper.EXPECT().GetSupply(s.ctx, params.BondDenom).Return(
+			sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(1000)),
+		).AnyTimes()
+
+		// The function should succeed with zero solana supply
+		err := s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
+		s.Require().NoError(err) // Should succeed with solana supply defaulting to zero
+	})
 }
 
 func (s *IntegrationTestSuite) TestCheckCanBurnFromSolana_ErrorHandling() {
-	// Test error handling when GetSolanaROCKSupply fails
-	s.Run("GetSolanaROCKSupply error", func() {
-		// Don't set SolanaROCKSupply, which should cause an error when trying to get it
+	// Test that function works correctly when solana supply is not set (should default to zero)
+	s.Run("Solana supply not set defaults to zero", func() {
+		// Ensure clean state
+		s.SetupTest()
+
+		// Setup bank keeper mock
+		s.bankKeeper.EXPECT().GetSupply(s.ctx, params.BondDenom).Return(
+			sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(1000)),
+		).AnyTimes()
+
+		// Attempting to burn from zero solana supply should fail
 		err := s.zentpKeeper.CheckCanBurnFromSolana(s.ctx, sdkmath.NewIntFromUint64(1000))
 		s.Require().Error(err)
-		s.Require().Contains(err.Error(), "failed to get solana rock supply")
+		s.Require().Contains(err.Error(), "attempt to bridge from solana exceeds solana ROCK supply")
 	})
 }
 
