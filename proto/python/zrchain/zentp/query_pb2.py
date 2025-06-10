@@ -30,7 +30,7 @@ from zrchain.zentp import params_pb2 as zrchain_dot_zentp_dot_params__pb2
 from zrchain.zentp import bridge_pb2 as zrchain_dot_zentp_dot_bridge__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/zentp/query.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1cgoogle/api/annotations.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1azrchain/zentp/params.proto\x1a\x1azrchain/zentp/bridge.proto\"\x14\n\x12QueryParamsRequest\"O\n\x13QueryParamsResponse\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\"\xd0\x01\n\x11QueryMintsRequest\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x18\n\x07\x63reator\x18\x02 \x01(\tR\x07\x63reator\x12\x33\n\x06status\x18\x03 \x01(\x0e\x32\x1b.zrchain.zentp.BridgeStatusR\x06status\x12\x14\n\x05\x64\x65nom\x18\x04 \x01(\tR\x05\x64\x65nom\x12\x46\n\npagination\x18\x05 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\"\x8a\x01\n\x12QueryMintsResponse\x12+\n\x05mints\x18\x01 \x03(\x0b\x32\x15.zrchain.zentp.BridgeR\x05mints\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"\xb6\x01\n\x11QueryBurnsRequest\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x14\n\x05\x64\x65nom\x18\x02 \x01(\tR\x05\x64\x65nom\x12\x33\n\x06status\x18\x03 \x01(\x0e\x32\x1b.zrchain.zentp.BridgeStatusR\x06status\x12\x46\n\npagination\x18\x04 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\"\x8a\x01\n\x12QueryBurnsResponse\x12+\n\x05\x62urns\x18\x01 \x03(\x0b\x32\x15.zrchain.zentp.BridgeR\x05\x62urns\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"C\n\x11QueryStatsRequest\x12\x18\n\x07\x61\x64\x64ress\x18\x01 \x01(\tR\x07\x61\x64\x64ress\x12\x14\n\x05\x64\x65nom\x18\x02 \x01(\tR\x05\x64\x65nom\"V\n\x12QueryStatsResponse\x12\x1f\n\x0btotal_mints\x18\x01 \x01(\x04R\ntotalMints\x12\x1f\n\x0btotal_burns\x18\x02 \x01(\x04R\ntotalBurns2\xf6\x03\n\x05Query\x12n\n\x06Params\x12!.zrchain.zentp.QueryParamsRequest\x1a\".zrchain.zentp.QueryParamsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/zrchain/zentp/params\x12\x8a\x01\n\x05Mints\x12 .zrchain.zentp.QueryMintsRequest\x1a!.zrchain.zentp.QueryMintsResponse\"<\x82\xd3\xe4\x93\x02\x36\x12\x34/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}\x12z\n\x05\x42urns\x12 .zrchain.zentp.QueryBurnsRequest\x1a!.zrchain.zentp.QueryBurnsResponse\",\x82\xd3\xe4\x93\x02&\x12$/zrchain/v6/zentp/burns/{id}/{denom}\x12t\n\x05Stats\x12 .zrchain.zentp.QueryStatsRequest\x1a!.zrchain.zentp.QueryStatsResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/zrchain/zentp/stats/{address}B8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/zentp/query.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1cgoogle/api/annotations.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1azrchain/zentp/params.proto\x1a\x1azrchain/zentp/bridge.proto\"\x14\n\x12QueryParamsRequest\"O\n\x13QueryParamsResponse\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\"\xe5\x01\n\x11QueryMintsRequest\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x18\n\x07\x63reator\x18\x02 \x01(\tR\x07\x63reator\x12\x33\n\x06status\x18\x03 \x01(\x0e\x32\x1b.zrchain.zentp.BridgeStatusR\x06status\x12\x14\n\x05\x64\x65nom\x18\x04 \x01(\tR\x05\x64\x65nom\x12\x46\n\npagination\x18\x05 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\x12\x13\n\x05tx_id\x18\x06 \x01(\x04R\x04txId\"\x8a\x01\n\x12QueryMintsResponse\x12+\n\x05mints\x18\x01 \x03(\x0b\x32\x15.zrchain.zentp.BridgeR\x05mints\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"\xcb\x01\n\x11QueryBurnsRequest\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x14\n\x05\x64\x65nom\x18\x02 \x01(\tR\x05\x64\x65nom\x12\x33\n\x06status\x18\x03 \x01(\x0e\x32\x1b.zrchain.zentp.BridgeStatusR\x06status\x12\x46\n\npagination\x18\x04 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\x12\x13\n\x05tx_id\x18\x05 \x01(\x04R\x04txId\"\x8a\x01\n\x12QueryBurnsResponse\x12+\n\x05\x62urns\x18\x01 \x03(\x0b\x32\x15.zrchain.zentp.BridgeR\x05\x62urns\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"C\n\x11QueryStatsRequest\x12\x18\n\x07\x61\x64\x64ress\x18\x01 \x01(\tR\x07\x61\x64\x64ress\x12\x14\n\x05\x64\x65nom\x18\x02 \x01(\tR\x05\x64\x65nom\"V\n\x12QueryStatsResponse\x12\x1f\n\x0btotal_mints\x18\x01 \x01(\x04R\ntotalMints\x12\x1f\n\x0btotal_burns\x18\x02 \x01(\x04R\ntotalBurns\"\x1e\n\x1cQuerySolanaROCKSupplyRequest\"7\n\x1dQuerySolanaROCKSupplyResponse\x12\x16\n\x06\x61mount\x18\x01 \x01(\x04R\x06\x61mount2\x96\x05\n\x05Query\x12n\n\x06Params\x12!.zrchain.zentp.QueryParamsRequest\x1a\".zrchain.zentp.QueryParamsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/zrchain/zentp/params\x12\x8a\x01\n\x05Mints\x12 .zrchain.zentp.QueryMintsRequest\x1a!.zrchain.zentp.QueryMintsResponse\"<\x82\xd3\xe4\x93\x02\x36\x12\x34/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}\x12z\n\x05\x42urns\x12 .zrchain.zentp.QueryBurnsRequest\x1a!.zrchain.zentp.QueryBurnsResponse\",\x82\xd3\xe4\x93\x02&\x12$/zrchain/v6/zentp/burns/{id}/{denom}\x12t\n\x05Stats\x12 .zrchain.zentp.QueryStatsRequest\x1a!.zrchain.zentp.QueryStatsResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/zrchain/zentp/stats/{address}\x12\x9d\x01\n\x15QuerySolanaROCKSupply\x12+.zrchain.zentp.QuerySolanaROCKSupplyRequest\x1a,.zrchain.zentp.QuerySolanaROCKSupplyResponse\")\x82\xd3\xe4\x93\x02#\x12!/zrchain/zentp/solana_rock_supplyB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -48,22 +48,28 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERY'].methods_by_name['Burns']._serialized_options = b'\202\323\344\223\002&\022$/zrchain/v6/zentp/burns/{id}/{denom}'
   _globals['_QUERY'].methods_by_name['Stats']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Stats']._serialized_options = b'\202\323\344\223\002 \022\036/zrchain/zentp/stats/{address}'
+  _globals['_QUERY'].methods_by_name['QuerySolanaROCKSupply']._loaded_options = None
+  _globals['_QUERY'].methods_by_name['QuerySolanaROCKSupply']._serialized_options = b'\202\323\344\223\002#\022!/zrchain/zentp/solana_rock_supply'
   _globals['_QUERYPARAMSREQUEST']._serialized_start=215
   _globals['_QUERYPARAMSREQUEST']._serialized_end=235
   _globals['_QUERYPARAMSRESPONSE']._serialized_start=237
   _globals['_QUERYPARAMSRESPONSE']._serialized_end=316
   _globals['_QUERYMINTSREQUEST']._serialized_start=319
-  _globals['_QUERYMINTSREQUEST']._serialized_end=527
-  _globals['_QUERYMINTSRESPONSE']._serialized_start=530
-  _globals['_QUERYMINTSRESPONSE']._serialized_end=668
-  _globals['_QUERYBURNSREQUEST']._serialized_start=671
-  _globals['_QUERYBURNSREQUEST']._serialized_end=853
-  _globals['_QUERYBURNSRESPONSE']._serialized_start=856
-  _globals['_QUERYBURNSRESPONSE']._serialized_end=994
-  _globals['_QUERYSTATSREQUEST']._serialized_start=996
-  _globals['_QUERYSTATSREQUEST']._serialized_end=1063
-  _globals['_QUERYSTATSRESPONSE']._serialized_start=1065
-  _globals['_QUERYSTATSRESPONSE']._serialized_end=1151
-  _globals['_QUERY']._serialized_start=1154
-  _globals['_QUERY']._serialized_end=1656
+  _globals['_QUERYMINTSREQUEST']._serialized_end=548
+  _globals['_QUERYMINTSRESPONSE']._serialized_start=551
+  _globals['_QUERYMINTSRESPONSE']._serialized_end=689
+  _globals['_QUERYBURNSREQUEST']._serialized_start=692
+  _globals['_QUERYBURNSREQUEST']._serialized_end=895
+  _globals['_QUERYBURNSRESPONSE']._serialized_start=898
+  _globals['_QUERYBURNSRESPONSE']._serialized_end=1036
+  _globals['_QUERYSTATSREQUEST']._serialized_start=1038
+  _globals['_QUERYSTATSREQUEST']._serialized_end=1105
+  _globals['_QUERYSTATSRESPONSE']._serialized_start=1107
+  _globals['_QUERYSTATSRESPONSE']._serialized_end=1193
+  _globals['_QUERYSOLANAROCKSUPPLYREQUEST']._serialized_start=1195
+  _globals['_QUERYSOLANAROCKSUPPLYREQUEST']._serialized_end=1225
+  _globals['_QUERYSOLANAROCKSUPPLYRESPONSE']._serialized_start=1227
+  _globals['_QUERYSOLANAROCKSUPPLYRESPONSE']._serialized_end=1282
+  _globals['_QUERY']._serialized_start=1285
+  _globals['_QUERY']._serialized_end=1947
 # @@protoc_insertion_point(module_scope)

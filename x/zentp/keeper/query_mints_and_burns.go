@@ -14,7 +14,7 @@ func (k Keeper) Mints(goCtx context.Context, req *types.QueryMintsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, req.Status, req.Id)
+	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, req.Status, req.Id, req.TxId)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.Status, req.Id)
+	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.Status, req.Id, req.TxId)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 	}, nil
 }
 
-func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64, types.Bridge], pagination *query.PageRequest, creator, denom string, status types.BridgeStatus, id uint64) ([]*types.Bridge, *query.PageResponse, error) {
+func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64, types.Bridge], pagination *query.PageRequest, creator, denom string, status types.BridgeStatus, id, txId uint64) ([]*types.Bridge, *query.PageResponse, error) {
 	keys, pageRes, err := query.CollectionFilteredPaginate(
 		goCtx,
 		store,
@@ -56,7 +56,9 @@ func (k Keeper) queryBridge(goCtx context.Context, store collections.Map[uint64,
 
 			idMatch := id == 0 || id == key
 
-			return statusMatch && creatorMatch && denomMatch && idMatch, nil
+			txIdMatch := txId == 0 || txId == value.TxId
+
+			return statusMatch && creatorMatch && denomMatch && idMatch && txIdMatch, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil
@@ -74,12 +76,12 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	mintKeys, _, err := k.queryBridge(goCtx, k.mintStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0)
+	mintKeys, _, err := k.queryBridge(goCtx, k.mintStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	burnKeys, _, err := k.queryBridge(goCtx, k.burnStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0)
+	burnKeys, _, err := k.queryBridge(goCtx, k.burnStore, nil, "", req.Denom, types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
 	if err != nil {
 		return nil, err
 	}

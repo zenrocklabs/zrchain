@@ -35,6 +35,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.FromString,
                 )
+        self.QuerySolanaROCKSupply = channel.unary_unary(
+                '/zrchain.zentp.Query/QuerySolanaROCKSupply',
+                request_serializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -69,6 +74,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def QuerySolanaROCKSupply(self, request, context):
+        """QuerySolanaROCKSupply queries the amount of ROCK on Solana.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -91,6 +103,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.Stats,
                     request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.FromString,
                     response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.SerializeToString,
+            ),
+            'QuerySolanaROCKSupply': grpc.unary_unary_rpc_method_handler(
+                    servicer.QuerySolanaROCKSupply,
+                    request_deserializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -168,5 +185,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Stats',
             zrchain_dot_zentp_dot_query__pb2.QueryStatsRequest.SerializeToString,
             zrchain_dot_zentp_dot_query__pb2.QueryStatsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def QuerySolanaROCKSupply(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/QuerySolanaROCKSupply',
+            zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.SerializeToString,
+            zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
