@@ -203,28 +203,76 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 		{
 			name: "Supply Cap Exceeded",
 			modifyMsg: func(msg *types.MsgBridge) {
-				msg.Amount = 800_000_000_000_000 // 800M ROCK - will exceed cap with existing supplies
+				msg.Amount = 200_000_000_000_000 // 200M ROCK - will exceed cap with existing supplies
 			},
 			setupMocks: func() {
-				// Setup supplies that will cause cap violation
-				// Current setup: 200M ROCK on zrchain + 100M ROCK on Solana + 800M new = 1.1B ROCK (exceeds 1B cap)
-				// The existing mocks should be sufficient since they're set to AnyTimes()
+				// To hit the supply cap check, we need to pass the available bridging supply check first
+				// Setup: 200M zrchain + 100M solana + 200M new = 500M total
+				// But let's increase solana supply to make total > 1B cap
+				// Setup: 200M zrchain + 800M solana + 200M new = 1.2B > 1B cap
+
+				// Override solana supply to be much larger
+				err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, math.NewIntFromUint64(800_000_000_000_000)) // 800M ROCK
+				s.Require().NoError(err)
+
+				// Create a test message for mocking balance check
+				testMsg := &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+					Amount:           200_000_000_000_000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+				}
+
+				// Calculate total amount including bridge fee and Solana fee for balance check
+				baseAmountInt := math.NewIntFromUint64(testMsg.Amount)
+				bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+
+				// Mock sufficient balance for this amount
+				s.bankKeeper.EXPECT().GetBalance(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(testMsg.Creator),
+					testMsg.Denom,
+				).Return(sdk.NewCoin(testMsg.Denom, totalAmountInt.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
 			},
 			expectedError: "total ROCK supply including pending would exceed cap",
 		},
 		{
 			name: "Bridge amount exceeds available zrchain supply",
 			modifyMsg: func(msg *types.MsgBridge) {
-				msg.Amount = 150_000_000_000_000 // 150M ROCK
+				msg.Amount = 250_000_000_000_000 // 250M ROCK
 			},
 			setupMocks: func() {
-				// zrchain supply is 200M, zentp module balance is 100M, so available is 100M. 150M is too much.
-				zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
-				s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
-					sdk.NewCoin("urock", math.NewIntFromUint64(100_000_000_000_000)), // 100M ROCK
-				).AnyTimes()
+				// Reset Solana supply back to 100M (from previous test that set it to 800M)
+				err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, math.NewIntFromUint64(100_000_000_000_000)) // 100M ROCK
+				s.Require().NoError(err)
+
+				// With global setup: zrchain supply 200M, module balance 0M, available = 200M
+				// Bridge amount 250M > 200M should trigger the "exceeds available supply" error
+
+				// Create a test message for mocking balance check
+				testMsg := &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+					Amount:           250_000_000_000_000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+				}
+
+				// Calculate total amount including bridge fee and Solana fee for balance check
+				baseAmountInt := math.NewIntFromUint64(testMsg.Amount)
+				bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+
+				// Mock sufficient balance so the balance check passes and we hit the supply check
+				s.bankKeeper.EXPECT().GetBalance(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(testMsg.Creator),
+					testMsg.Denom,
+				).Return(sdk.NewCoin(testMsg.Denom, totalAmountInt.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
 			},
-			expectedError: "bridge amount 150000000000000 exceeds available zrchain rock supply for bridging 100000000000000",
+			expectedError: "bridge amount 250000000000000 exceeds available zrchain rock supply for bridging 200000000000000",
 		},
 	}
 
