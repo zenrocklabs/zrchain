@@ -36,6 +36,11 @@ service Query {
   rpc Stats(QueryStatsRequest) returns (QueryStatsResponse) {
     option (google.api.http).get = "/zrchain/zentp/stats/{address}";
   }
+
+  // QuerySolanaROCKSupply queries the amount of ROCK on Solana.
+  rpc QuerySolanaROCKSupply(QuerySolanaROCKSupplyRequest) returns (QuerySolanaROCKSupplyResponse) {
+    option (google.api.http).get = "/zrchain/zentp/solana_rock_supply";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -55,6 +60,7 @@ message QueryMintsRequest {
   BridgeStatus                          status     = 3;
   string                                denom      = 4;
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
+  uint64                                tx_id      = 6;
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.
@@ -69,6 +75,7 @@ message QueryBurnsRequest {
   string                                denom      = 2;
   BridgeStatus                          status     = 3;
   cosmos.base.query.v1beta1.PageRequest pagination = 4;
+  uint64                                tx_id      = 5;
 }
 
 // QueryBurnsResponse is response type for the Query/Burns RPC method.
@@ -85,6 +92,14 @@ message QueryStatsRequest {
 
 // QueryStatsResponse is response type for the Query/Stats RPC method.
 message QueryStatsResponse {
-  uint64 total_mints = 1; // Optional
-  uint64 total_burns = 2; // Optional
+  uint64 total_minted = 1;
+  uint64 total_burned = 2;
+  uint64 mints_count = 3;
+  uint64 burns_count = 4;
+}
+
+message QuerySolanaROCKSupplyRequest {}
+
+message QuerySolanaROCKSupplyResponse {
+  uint64 amount = 1;
 }

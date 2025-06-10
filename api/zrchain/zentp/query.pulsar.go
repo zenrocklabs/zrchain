@@ -814,6 +814,7 @@ var (
 	fd_QueryMintsRequest_status     protoreflect.FieldDescriptor
 	fd_QueryMintsRequest_denom      protoreflect.FieldDescriptor
 	fd_QueryMintsRequest_pagination protoreflect.FieldDescriptor
+	fd_QueryMintsRequest_tx_id      protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -824,6 +825,7 @@ func init() {
 	fd_QueryMintsRequest_status = md_QueryMintsRequest.Fields().ByName("status")
 	fd_QueryMintsRequest_denom = md_QueryMintsRequest.Fields().ByName("denom")
 	fd_QueryMintsRequest_pagination = md_QueryMintsRequest.Fields().ByName("pagination")
+	fd_QueryMintsRequest_tx_id = md_QueryMintsRequest.Fields().ByName("tx_id")
 }
 
 var _ protoreflect.Message = (*fastReflection_QueryMintsRequest)(nil)
@@ -921,6 +923,12 @@ func (x *fastReflection_QueryMintsRequest) Range(f func(protoreflect.FieldDescri
 			return
 		}
 	}
+	if x.TxId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.TxId)
+		if !f(fd_QueryMintsRequest_tx_id, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -946,6 +954,8 @@ func (x *fastReflection_QueryMintsRequest) Has(fd protoreflect.FieldDescriptor) 
 		return x.Denom != ""
 	case "zrchain.zentp.QueryMintsRequest.pagination":
 		return x.Pagination != nil
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		return x.TxId != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -972,6 +982,8 @@ func (x *fastReflection_QueryMintsRequest) Clear(fd protoreflect.FieldDescriptor
 		x.Denom = ""
 	case "zrchain.zentp.QueryMintsRequest.pagination":
 		x.Pagination = nil
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		x.TxId = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -1003,6 +1015,9 @@ func (x *fastReflection_QueryMintsRequest) Get(descriptor protoreflect.FieldDesc
 	case "zrchain.zentp.QueryMintsRequest.pagination":
 		value := x.Pagination
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		value := x.TxId
+		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -1033,6 +1048,8 @@ func (x *fastReflection_QueryMintsRequest) Set(fd protoreflect.FieldDescriptor, 
 		x.Denom = value.Interface().(string)
 	case "zrchain.zentp.QueryMintsRequest.pagination":
 		x.Pagination = value.Message().Interface().(*v1beta1.PageRequest)
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		x.TxId = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -1066,6 +1083,8 @@ func (x *fastReflection_QueryMintsRequest) Mutable(fd protoreflect.FieldDescript
 		panic(fmt.Errorf("field status of message zrchain.zentp.QueryMintsRequest is not mutable"))
 	case "zrchain.zentp.QueryMintsRequest.denom":
 		panic(fmt.Errorf("field denom of message zrchain.zentp.QueryMintsRequest is not mutable"))
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		panic(fmt.Errorf("field tx_id of message zrchain.zentp.QueryMintsRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -1090,6 +1109,8 @@ func (x *fastReflection_QueryMintsRequest) NewField(fd protoreflect.FieldDescrip
 	case "zrchain.zentp.QueryMintsRequest.pagination":
 		m := new(v1beta1.PageRequest)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "zrchain.zentp.QueryMintsRequest.tx_id":
+		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryMintsRequest"))
@@ -1177,6 +1198,9 @@ func (x *fastReflection_QueryMintsRequest) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.Pagination)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.TxId != 0 {
+			n += 1 + runtime.Sov(uint64(x.TxId))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1205,6 +1229,11 @@ func (x *fastReflection_QueryMintsRequest) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.TxId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.TxId))
+			i--
+			dAtA[i] = 0x30
 		}
 		if x.Pagination != nil {
 			encoded, err := options.Marshal(x.Pagination)
@@ -1431,6 +1460,25 @@ func (x *fastReflection_QueryMintsRequest) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TxId", wireType)
+				}
+				x.TxId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.TxId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2045,6 +2093,7 @@ var (
 	fd_QueryBurnsRequest_denom      protoreflect.FieldDescriptor
 	fd_QueryBurnsRequest_status     protoreflect.FieldDescriptor
 	fd_QueryBurnsRequest_pagination protoreflect.FieldDescriptor
+	fd_QueryBurnsRequest_tx_id      protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -2054,6 +2103,7 @@ func init() {
 	fd_QueryBurnsRequest_denom = md_QueryBurnsRequest.Fields().ByName("denom")
 	fd_QueryBurnsRequest_status = md_QueryBurnsRequest.Fields().ByName("status")
 	fd_QueryBurnsRequest_pagination = md_QueryBurnsRequest.Fields().ByName("pagination")
+	fd_QueryBurnsRequest_tx_id = md_QueryBurnsRequest.Fields().ByName("tx_id")
 }
 
 var _ protoreflect.Message = (*fastReflection_QueryBurnsRequest)(nil)
@@ -2145,6 +2195,12 @@ func (x *fastReflection_QueryBurnsRequest) Range(f func(protoreflect.FieldDescri
 			return
 		}
 	}
+	if x.TxId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.TxId)
+		if !f(fd_QueryBurnsRequest_tx_id, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -2168,6 +2224,8 @@ func (x *fastReflection_QueryBurnsRequest) Has(fd protoreflect.FieldDescriptor) 
 		return x.Status != 0
 	case "zrchain.zentp.QueryBurnsRequest.pagination":
 		return x.Pagination != nil
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		return x.TxId != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2192,6 +2250,8 @@ func (x *fastReflection_QueryBurnsRequest) Clear(fd protoreflect.FieldDescriptor
 		x.Status = 0
 	case "zrchain.zentp.QueryBurnsRequest.pagination":
 		x.Pagination = nil
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		x.TxId = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2220,6 +2280,9 @@ func (x *fastReflection_QueryBurnsRequest) Get(descriptor protoreflect.FieldDesc
 	case "zrchain.zentp.QueryBurnsRequest.pagination":
 		value := x.Pagination
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		value := x.TxId
+		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2248,6 +2311,8 @@ func (x *fastReflection_QueryBurnsRequest) Set(fd protoreflect.FieldDescriptor, 
 		x.Status = (BridgeStatus)(value.Enum())
 	case "zrchain.zentp.QueryBurnsRequest.pagination":
 		x.Pagination = value.Message().Interface().(*v1beta1.PageRequest)
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		x.TxId = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2279,6 +2344,8 @@ func (x *fastReflection_QueryBurnsRequest) Mutable(fd protoreflect.FieldDescript
 		panic(fmt.Errorf("field denom of message zrchain.zentp.QueryBurnsRequest is not mutable"))
 	case "zrchain.zentp.QueryBurnsRequest.status":
 		panic(fmt.Errorf("field status of message zrchain.zentp.QueryBurnsRequest is not mutable"))
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		panic(fmt.Errorf("field tx_id of message zrchain.zentp.QueryBurnsRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2301,6 +2368,8 @@ func (x *fastReflection_QueryBurnsRequest) NewField(fd protoreflect.FieldDescrip
 	case "zrchain.zentp.QueryBurnsRequest.pagination":
 		m := new(v1beta1.PageRequest)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "zrchain.zentp.QueryBurnsRequest.tx_id":
+		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryBurnsRequest"))
@@ -2384,6 +2453,9 @@ func (x *fastReflection_QueryBurnsRequest) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.Pagination)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.TxId != 0 {
+			n += 1 + runtime.Sov(uint64(x.TxId))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -2412,6 +2484,11 @@ func (x *fastReflection_QueryBurnsRequest) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.TxId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.TxId))
+			i--
+			dAtA[i] = 0x28
 		}
 		if x.Pagination != nil {
 			encoded, err := options.Marshal(x.Pagination)
@@ -2599,6 +2676,25 @@ func (x *fastReflection_QueryBurnsRequest) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 5:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TxId", wireType)
+				}
+				x.TxId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.TxId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -3692,16 +3788,20 @@ func (x *fastReflection_QueryStatsRequest) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_QueryStatsResponse             protoreflect.MessageDescriptor
-	fd_QueryStatsResponse_total_mints protoreflect.FieldDescriptor
-	fd_QueryStatsResponse_total_burns protoreflect.FieldDescriptor
+	md_QueryStatsResponse              protoreflect.MessageDescriptor
+	fd_QueryStatsResponse_total_minted protoreflect.FieldDescriptor
+	fd_QueryStatsResponse_total_burned protoreflect.FieldDescriptor
+	fd_QueryStatsResponse_mints_count  protoreflect.FieldDescriptor
+	fd_QueryStatsResponse_burns_count  protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_zrchain_zentp_query_proto_init()
 	md_QueryStatsResponse = File_zrchain_zentp_query_proto.Messages().ByName("QueryStatsResponse")
-	fd_QueryStatsResponse_total_mints = md_QueryStatsResponse.Fields().ByName("total_mints")
-	fd_QueryStatsResponse_total_burns = md_QueryStatsResponse.Fields().ByName("total_burns")
+	fd_QueryStatsResponse_total_minted = md_QueryStatsResponse.Fields().ByName("total_minted")
+	fd_QueryStatsResponse_total_burned = md_QueryStatsResponse.Fields().ByName("total_burned")
+	fd_QueryStatsResponse_mints_count = md_QueryStatsResponse.Fields().ByName("mints_count")
+	fd_QueryStatsResponse_burns_count = md_QueryStatsResponse.Fields().ByName("burns_count")
 }
 
 var _ protoreflect.Message = (*fastReflection_QueryStatsResponse)(nil)
@@ -3769,15 +3869,27 @@ func (x *fastReflection_QueryStatsResponse) Interface() protoreflect.ProtoMessag
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_QueryStatsResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.TotalMints != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.TotalMints)
-		if !f(fd_QueryStatsResponse_total_mints, value) {
+	if x.TotalMinted != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.TotalMinted)
+		if !f(fd_QueryStatsResponse_total_minted, value) {
 			return
 		}
 	}
-	if x.TotalBurns != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.TotalBurns)
-		if !f(fd_QueryStatsResponse_total_burns, value) {
+	if x.TotalBurned != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.TotalBurned)
+		if !f(fd_QueryStatsResponse_total_burned, value) {
+			return
+		}
+	}
+	if x.MintsCount != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.MintsCount)
+		if !f(fd_QueryStatsResponse_mints_count, value) {
+			return
+		}
+	}
+	if x.BurnsCount != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.BurnsCount)
+		if !f(fd_QueryStatsResponse_burns_count, value) {
 			return
 		}
 	}
@@ -3796,10 +3908,14 @@ func (x *fastReflection_QueryStatsResponse) Range(f func(protoreflect.FieldDescr
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_QueryStatsResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
-		return x.TotalMints != uint64(0)
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
-		return x.TotalBurns != uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
+		return x.TotalMinted != uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		return x.TotalBurned != uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		return x.MintsCount != uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
+		return x.BurnsCount != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryStatsResponse"))
@@ -3816,10 +3932,14 @@ func (x *fastReflection_QueryStatsResponse) Has(fd protoreflect.FieldDescriptor)
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_QueryStatsResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
-		x.TotalMints = uint64(0)
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
-		x.TotalBurns = uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
+		x.TotalMinted = uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		x.TotalBurned = uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		x.MintsCount = uint64(0)
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
+		x.BurnsCount = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryStatsResponse"))
@@ -3836,11 +3956,17 @@ func (x *fastReflection_QueryStatsResponse) Clear(fd protoreflect.FieldDescripto
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_QueryStatsResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
-		value := x.TotalMints
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
+		value := x.TotalMinted
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
-		value := x.TotalBurns
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		value := x.TotalBurned
+		return protoreflect.ValueOfUint64(value)
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		value := x.MintsCount
+		return protoreflect.ValueOfUint64(value)
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
+		value := x.BurnsCount
 		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
@@ -3862,10 +3988,14 @@ func (x *fastReflection_QueryStatsResponse) Get(descriptor protoreflect.FieldDes
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_QueryStatsResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
-		x.TotalMints = value.Uint()
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
-		x.TotalBurns = value.Uint()
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
+		x.TotalMinted = value.Uint()
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		x.TotalBurned = value.Uint()
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		x.MintsCount = value.Uint()
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
+		x.BurnsCount = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryStatsResponse"))
@@ -3886,10 +4016,14 @@ func (x *fastReflection_QueryStatsResponse) Set(fd protoreflect.FieldDescriptor,
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_QueryStatsResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
-		panic(fmt.Errorf("field total_mints of message zrchain.zentp.QueryStatsResponse is not mutable"))
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
-		panic(fmt.Errorf("field total_burns of message zrchain.zentp.QueryStatsResponse is not mutable"))
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
+		panic(fmt.Errorf("field total_minted of message zrchain.zentp.QueryStatsResponse is not mutable"))
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		panic(fmt.Errorf("field total_burned of message zrchain.zentp.QueryStatsResponse is not mutable"))
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		panic(fmt.Errorf("field mints_count of message zrchain.zentp.QueryStatsResponse is not mutable"))
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
+		panic(fmt.Errorf("field burns_count of message zrchain.zentp.QueryStatsResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QueryStatsResponse"))
@@ -3903,9 +4037,13 @@ func (x *fastReflection_QueryStatsResponse) Mutable(fd protoreflect.FieldDescrip
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_QueryStatsResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zentp.QueryStatsResponse.total_mints":
+	case "zrchain.zentp.QueryStatsResponse.total_minted":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.zentp.QueryStatsResponse.total_burns":
+	case "zrchain.zentp.QueryStatsResponse.total_burned":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.zentp.QueryStatsResponse.mints_count":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.zentp.QueryStatsResponse.burns_count":
 		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
@@ -3976,11 +4114,17 @@ func (x *fastReflection_QueryStatsResponse) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		if x.TotalMints != 0 {
-			n += 1 + runtime.Sov(uint64(x.TotalMints))
+		if x.TotalMinted != 0 {
+			n += 1 + runtime.Sov(uint64(x.TotalMinted))
 		}
-		if x.TotalBurns != 0 {
-			n += 1 + runtime.Sov(uint64(x.TotalBurns))
+		if x.TotalBurned != 0 {
+			n += 1 + runtime.Sov(uint64(x.TotalBurned))
+		}
+		if x.MintsCount != 0 {
+			n += 1 + runtime.Sov(uint64(x.MintsCount))
+		}
+		if x.BurnsCount != 0 {
+			n += 1 + runtime.Sov(uint64(x.BurnsCount))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -4011,13 +4155,23 @@ func (x *fastReflection_QueryStatsResponse) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.TotalBurns != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.TotalBurns))
+		if x.BurnsCount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.BurnsCount))
+			i--
+			dAtA[i] = 0x20
+		}
+		if x.MintsCount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MintsCount))
+			i--
+			dAtA[i] = 0x18
+		}
+		if x.TotalBurned != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.TotalBurned))
 			i--
 			dAtA[i] = 0x10
 		}
-		if x.TotalMints != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.TotalMints))
+		if x.TotalMinted != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.TotalMinted))
 			i--
 			dAtA[i] = 0x8
 		}
@@ -4072,9 +4226,9 @@ func (x *fastReflection_QueryStatsResponse) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TotalMints", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TotalMinted", wireType)
 				}
-				x.TotalMints = 0
+				x.TotalMinted = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -4084,16 +4238,16 @@ func (x *fastReflection_QueryStatsResponse) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.TotalMints |= uint64(b&0x7F) << shift
+					x.TotalMinted |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
 			case 2:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TotalBurns", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TotalBurned", wireType)
 				}
-				x.TotalBurns = 0
+				x.TotalBurned = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -4103,7 +4257,805 @@ func (x *fastReflection_QueryStatsResponse) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.TotalBurns |= uint64(b&0x7F) << shift
+					x.TotalBurned |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MintsCount", wireType)
+				}
+				x.MintsCount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.MintsCount |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BurnsCount", wireType)
+				}
+				x.BurnsCount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.BurnsCount |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QuerySolanaROCKSupplyRequest protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_zrchain_zentp_query_proto_init()
+	md_QuerySolanaROCKSupplyRequest = File_zrchain_zentp_query_proto.Messages().ByName("QuerySolanaROCKSupplyRequest")
+}
+
+var _ protoreflect.Message = (*fastReflection_QuerySolanaROCKSupplyRequest)(nil)
+
+type fastReflection_QuerySolanaROCKSupplyRequest QuerySolanaROCKSupplyRequest
+
+func (x *QuerySolanaROCKSupplyRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QuerySolanaROCKSupplyRequest)(x)
+}
+
+func (x *QuerySolanaROCKSupplyRequest) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_zentp_query_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QuerySolanaROCKSupplyRequest_messageType fastReflection_QuerySolanaROCKSupplyRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QuerySolanaROCKSupplyRequest_messageType{}
+
+type fastReflection_QuerySolanaROCKSupplyRequest_messageType struct{}
+
+func (x fastReflection_QuerySolanaROCKSupplyRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QuerySolanaROCKSupplyRequest)(nil)
+}
+func (x fastReflection_QuerySolanaROCKSupplyRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QuerySolanaROCKSupplyRequest)
+}
+func (x fastReflection_QuerySolanaROCKSupplyRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QuerySolanaROCKSupplyRequest
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QuerySolanaROCKSupplyRequest
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QuerySolanaROCKSupplyRequest_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) New() protoreflect.Message {
+	return new(fastReflection_QuerySolanaROCKSupplyRequest)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Interface() protoreflect.ProtoMessage {
+	return (*QuerySolanaROCKSupplyRequest)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.QuerySolanaROCKSupplyRequest", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QuerySolanaROCKSupplyRequest) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyRequest)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyRequest)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyRequest)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QuerySolanaROCKSupplyRequest: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QuerySolanaROCKSupplyRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QuerySolanaROCKSupplyResponse        protoreflect.MessageDescriptor
+	fd_QuerySolanaROCKSupplyResponse_amount protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_zentp_query_proto_init()
+	md_QuerySolanaROCKSupplyResponse = File_zrchain_zentp_query_proto.Messages().ByName("QuerySolanaROCKSupplyResponse")
+	fd_QuerySolanaROCKSupplyResponse_amount = md_QuerySolanaROCKSupplyResponse.Fields().ByName("amount")
+}
+
+var _ protoreflect.Message = (*fastReflection_QuerySolanaROCKSupplyResponse)(nil)
+
+type fastReflection_QuerySolanaROCKSupplyResponse QuerySolanaROCKSupplyResponse
+
+func (x *QuerySolanaROCKSupplyResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QuerySolanaROCKSupplyResponse)(x)
+}
+
+func (x *QuerySolanaROCKSupplyResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_zentp_query_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QuerySolanaROCKSupplyResponse_messageType fastReflection_QuerySolanaROCKSupplyResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QuerySolanaROCKSupplyResponse_messageType{}
+
+type fastReflection_QuerySolanaROCKSupplyResponse_messageType struct{}
+
+func (x fastReflection_QuerySolanaROCKSupplyResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QuerySolanaROCKSupplyResponse)(nil)
+}
+func (x fastReflection_QuerySolanaROCKSupplyResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QuerySolanaROCKSupplyResponse)
+}
+func (x fastReflection_QuerySolanaROCKSupplyResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QuerySolanaROCKSupplyResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QuerySolanaROCKSupplyResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QuerySolanaROCKSupplyResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) New() protoreflect.Message {
+	return new(fastReflection_QuerySolanaROCKSupplyResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Interface() protoreflect.ProtoMessage {
+	return (*QuerySolanaROCKSupplyResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Amount != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.Amount)
+		if !f(fd_QuerySolanaROCKSupplyResponse_amount, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		return x.Amount != uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		x.Amount = uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		value := x.Amount
+		return protoreflect.ValueOfUint64(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		x.Amount = value.Uint()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		panic(fmt.Errorf("field amount of message zrchain.zentp.QuerySolanaROCKSupplyResponse is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zentp.QuerySolanaROCKSupplyResponse.amount":
+		return protoreflect.ValueOfUint64(uint64(0))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.QuerySolanaROCKSupplyResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zentp.QuerySolanaROCKSupplyResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zentp.QuerySolanaROCKSupplyResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QuerySolanaROCKSupplyResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.Amount != 0 {
+			n += 1 + runtime.Sov(uint64(x.Amount))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.Amount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Amount))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QuerySolanaROCKSupplyResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QuerySolanaROCKSupplyResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QuerySolanaROCKSupplyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+				}
+				x.Amount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Amount |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -4231,6 +5183,7 @@ type QueryMintsRequest struct {
 	Status     BridgeStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=zrchain.zentp.BridgeStatus" json:"status,omitempty"`
 	Denom      string               `protobuf:"bytes,4,opt,name=denom,proto3" json:"denom,omitempty"`
 	Pagination *v1beta1.PageRequest `protobuf:"bytes,5,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	TxId       uint64               `protobuf:"varint,6,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
 }
 
 func (x *QueryMintsRequest) Reset() {
@@ -4288,6 +5241,13 @@ func (x *QueryMintsRequest) GetPagination() *v1beta1.PageRequest {
 	return nil
 }
 
+func (x *QueryMintsRequest) GetTxId() uint64 {
+	if x != nil {
+		return x.TxId
+	}
+	return 0
+}
+
 // QueryMintsResponse is response type for the Query/Mints RPC method.
 type QueryMintsResponse struct {
 	state         protoimpl.MessageState
@@ -4342,6 +5302,7 @@ type QueryBurnsRequest struct {
 	Denom      string               `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 	Status     BridgeStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=zrchain.zentp.BridgeStatus" json:"status,omitempty"`
 	Pagination *v1beta1.PageRequest `protobuf:"bytes,4,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	TxId       uint64               `protobuf:"varint,5,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
 }
 
 func (x *QueryBurnsRequest) Reset() {
@@ -4390,6 +5351,13 @@ func (x *QueryBurnsRequest) GetPagination() *v1beta1.PageRequest {
 		return x.Pagination
 	}
 	return nil
+}
+
+func (x *QueryBurnsRequest) GetTxId() uint64 {
+	if x != nil {
+		return x.TxId
+	}
+	return 0
 }
 
 // QueryBurnsResponse is response type for the Query/Burns RPC method.
@@ -4486,8 +5454,10 @@ type QueryStatsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TotalMints uint64 `protobuf:"varint,1,opt,name=total_mints,json=totalMints,proto3" json:"total_mints,omitempty"` // Optional
-	TotalBurns uint64 `protobuf:"varint,2,opt,name=total_burns,json=totalBurns,proto3" json:"total_burns,omitempty"` // Optional
+	TotalMinted uint64 `protobuf:"varint,1,opt,name=total_minted,json=totalMinted,proto3" json:"total_minted,omitempty"`
+	TotalBurned uint64 `protobuf:"varint,2,opt,name=total_burned,json=totalBurned,proto3" json:"total_burned,omitempty"`
+	MintsCount  uint64 `protobuf:"varint,3,opt,name=mints_count,json=mintsCount,proto3" json:"mints_count,omitempty"`
+	BurnsCount  uint64 `protobuf:"varint,4,opt,name=burns_count,json=burnsCount,proto3" json:"burns_count,omitempty"`
 }
 
 func (x *QueryStatsResponse) Reset() {
@@ -4510,16 +5480,91 @@ func (*QueryStatsResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_query_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *QueryStatsResponse) GetTotalMints() uint64 {
+func (x *QueryStatsResponse) GetTotalMinted() uint64 {
 	if x != nil {
-		return x.TotalMints
+		return x.TotalMinted
 	}
 	return 0
 }
 
-func (x *QueryStatsResponse) GetTotalBurns() uint64 {
+func (x *QueryStatsResponse) GetTotalBurned() uint64 {
 	if x != nil {
-		return x.TotalBurns
+		return x.TotalBurned
+	}
+	return 0
+}
+
+func (x *QueryStatsResponse) GetMintsCount() uint64 {
+	if x != nil {
+		return x.MintsCount
+	}
+	return 0
+}
+
+func (x *QueryStatsResponse) GetBurnsCount() uint64 {
+	if x != nil {
+		return x.BurnsCount
+	}
+	return 0
+}
+
+type QuerySolanaROCKSupplyRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *QuerySolanaROCKSupplyRequest) Reset() {
+	*x = QuerySolanaROCKSupplyRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_zentp_query_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QuerySolanaROCKSupplyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySolanaROCKSupplyRequest) ProtoMessage() {}
+
+// Deprecated: Use QuerySolanaROCKSupplyRequest.ProtoReflect.Descriptor instead.
+func (*QuerySolanaROCKSupplyRequest) Descriptor() ([]byte, []int) {
+	return file_zrchain_zentp_query_proto_rawDescGZIP(), []int{8}
+}
+
+type QuerySolanaROCKSupplyResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Amount uint64 `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
+}
+
+func (x *QuerySolanaROCKSupplyResponse) Reset() {
+	*x = QuerySolanaROCKSupplyResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_zentp_query_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QuerySolanaROCKSupplyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySolanaROCKSupplyResponse) ProtoMessage() {}
+
+// Deprecated: Use QuerySolanaROCKSupplyResponse.ProtoReflect.Descriptor instead.
+func (*QuerySolanaROCKSupplyResponse) Descriptor() ([]byte, []int) {
+	return file_zrchain_zentp_query_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *QuerySolanaROCKSupplyResponse) GetAmount() uint64 {
+	if x != nil {
+		return x.Amount
 	}
 	return 0
 }
@@ -4546,7 +5591,7 @@ var file_zrchain_zentp_query_proto_rawDesc = []byte{
 	0x73, 0x65, 0x12, 0x38, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e,
 	0x74, 0x70, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8,
-	0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0xd0, 0x01, 0x0a,
+	0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0xe5, 0x01, 0x0a,
 	0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02,
 	0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x02, 0x20,
@@ -4559,88 +5604,111 @@ var file_zrchain_zentp_query_proto_rawDesc = []byte{
 	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f,
 	0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e,
 	0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22,
-	0x8a, 0x01, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x18,
+	0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x13, 0x0a, 0x05, 0x74, 0x78, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x04,
+	0x74, 0x78, 0x49, 0x64, 0x22, 0x8a, 0x01, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69,
+	0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05, 0x6d,
+	0x69, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64, 0x67,
+	0x65, 0x52, 0x05, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69,
+	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79,
+	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x22, 0xcb, 0x01, 0x0a, 0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x75, 0x72, 0x6e, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x33, 0x0a,
+	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1b, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72,
+	0x69, 0x64, 0x67, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x12, 0x46, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74,
+	0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a,
+	0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x13, 0x0a, 0x05, 0x74, 0x78,
+	0x5f, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x04, 0x74, 0x78, 0x49, 0x64, 0x22,
+	0x8a, 0x01, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x18,
 	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x05, 0x6d, 0x69,
-	0x6e, 0x74, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x52, 0x05, 0x62, 0x75,
+	0x72, 0x6e, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
 	0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65,
 	0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xb6, 0x01, 0x0a,
-	0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02,
-	0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x33, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x46, 0x0a,
-	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e,
-	0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61,
-	0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x8a, 0x01, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42,
-	0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05,
-	0x62, 0x75, 0x72, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x42, 0x72, 0x69, 0x64,
-	0x67, 0x65, 0x52, 0x05, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67,
-	0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72,
-	0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x22, 0x43, 0x0a, 0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
-	0x73, 0x12, 0x14, 0x0a, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x22, 0x56, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a,
-	0x0b, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x0a, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x12, 0x1f,
-	0x0a, 0x0b, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x04, 0x52, 0x0a, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x32,
-	0xf6, 0x03, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x6e, 0x0a, 0x06, 0x50, 0x61, 0x72,
-	0x61, 0x6d, 0x73, 0x12, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65,
-	0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61,
-	0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x1d, 0x82, 0xd3, 0xe4, 0x93,
-	0x02, 0x17, 0x12, 0x15, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e,
-	0x74, 0x70, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x8a, 0x01, 0x0a, 0x05, 0x4d, 0x69,
-	0x6e, 0x74, 0x73, 0x12, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65,
-	0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3c, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x36,
-	0x12, 0x34, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70,
-	0x2f, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x2f, 0x7b, 0x63, 0x72, 0x65,
-	0x61, 0x74, 0x6f, 0x72, 0x7d, 0x2f, 0x7b, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x7d, 0x2f, 0x7b,
-	0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x7d, 0x12, 0x7a, 0x0a, 0x05, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x12,
-	0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74,
-	0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2c, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x26, 0x12, 0x24, 0x2f, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x36, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f,
-	0x62, 0x75, 0x72, 0x6e, 0x73, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x2f, 0x7b, 0x64, 0x65, 0x6e, 0x6f,
-	0x6d, 0x7d, 0x12, 0x74, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x73, 0x12, 0x20, 0x2e, 0x7a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72,
-	0x79, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e,
+	0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x43, 0x0a, 0x11,
+	0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x64,
+	0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f,
+	0x6d, 0x22, 0x9c, 0x01, 0x0a, 0x12, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x74, 0x6f, 0x74, 0x61,
+	0x6c, 0x5f, 0x6d, 0x69, 0x6e, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b,
+	0x74, 0x6f, 0x74, 0x61, 0x6c, 0x4d, 0x69, 0x6e, 0x74, 0x65, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x74,
+	0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x62, 0x75, 0x72, 0x6e, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x0b, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x75, 0x72, 0x6e, 0x65, 0x64, 0x12, 0x1f,
+	0x0a, 0x0b, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x0a, 0x6d, 0x69, 0x6e, 0x74, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12,
+	0x1f, 0x0a, 0x0b, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74,
+	0x22, 0x1e, 0x0a, 0x1c, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x52,
+	0x4f, 0x43, 0x4b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x22, 0x37, 0x0a, 0x1d, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x52,
+	0x4f, 0x43, 0x4b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x32, 0x96, 0x05, 0x0a, 0x05, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x12, 0x6e, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x21, 0x2e,
 	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75,
-	0x65, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x26, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x20, 0x12, 0x1e, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x73, 0x74, 0x61, 0x74, 0x73, 0x2f, 0x7b,
-	0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x7d, 0x42, 0x94, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42, 0x0a,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a,
-	0x5a, 0x58, 0xaa, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e,
-	0x74, 0x70, 0xca, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e,
-	0x74, 0x70, 0xe2, 0x02, 0x19, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e,
-	0x74, 0x70, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02,
-	0x0e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70,
+	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x1d, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x17, 0x12, 0x15, 0x2f, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x70, 0x61, 0x72,
+	0x61, 0x6d, 0x73, 0x12, 0x8a, 0x01, 0x0a, 0x05, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x12, 0x20, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e,
+	0x51, 0x75, 0x65, 0x72, 0x79, 0x4d, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x3c, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x36, 0x12, 0x34, 0x2f, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x6d, 0x69, 0x6e, 0x74, 0x73,
+	0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x2f, 0x7b, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x7d, 0x2f,
+	0x7b, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x7d, 0x2f, 0x7b, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x7d,
+	0x12, 0x7a, 0x0a, 0x05, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x12, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42,
+	0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x42, 0x75, 0x72, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2c,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x26, 0x12, 0x24, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2f, 0x76, 0x36, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x2f,
+	0x7b, 0x69, 0x64, 0x7d, 0x2f, 0x7b, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x7d, 0x12, 0x74, 0x0a, 0x05,
+	0x53, 0x74, 0x61, 0x74, 0x73, 0x12, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x61,
+	0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x26, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x20, 0x12, 0x1e, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e,
+	0x74, 0x70, 0x2f, 0x73, 0x74, 0x61, 0x74, 0x73, 0x2f, 0x7b, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x7d, 0x12, 0x9d, 0x01, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53, 0x6f, 0x6c, 0x61,
+	0x6e, 0x61, 0x52, 0x4f, 0x43, 0x4b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x12, 0x2b, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x52, 0x4f, 0x43, 0x4b, 0x53, 0x75, 0x70, 0x70,
+	0x6c, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x53,
+	0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x52, 0x4f, 0x43, 0x4b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x29, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x23, 0x12,
+	0x21, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f,
+	0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x5f, 0x72, 0x6f, 0x63, 0x6b, 0x5f, 0x73, 0x75, 0x70, 0x70,
+	0x6c, 0x79, 0x42, 0x94, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50,
+	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64,
+	0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02, 0x0d, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xca, 0x02, 0x0d, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xe2, 0x02, 0x19, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x5c, 0x47, 0x50, 0x42,
+	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -4655,42 +5723,46 @@ func file_zrchain_zentp_query_proto_rawDescGZIP() []byte {
 	return file_zrchain_zentp_query_proto_rawDescData
 }
 
-var file_zrchain_zentp_query_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_zrchain_zentp_query_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_zrchain_zentp_query_proto_goTypes = []interface{}{
-	(*QueryParamsRequest)(nil),   // 0: zrchain.zentp.QueryParamsRequest
-	(*QueryParamsResponse)(nil),  // 1: zrchain.zentp.QueryParamsResponse
-	(*QueryMintsRequest)(nil),    // 2: zrchain.zentp.QueryMintsRequest
-	(*QueryMintsResponse)(nil),   // 3: zrchain.zentp.QueryMintsResponse
-	(*QueryBurnsRequest)(nil),    // 4: zrchain.zentp.QueryBurnsRequest
-	(*QueryBurnsResponse)(nil),   // 5: zrchain.zentp.QueryBurnsResponse
-	(*QueryStatsRequest)(nil),    // 6: zrchain.zentp.QueryStatsRequest
-	(*QueryStatsResponse)(nil),   // 7: zrchain.zentp.QueryStatsResponse
-	(*Params)(nil),               // 8: zrchain.zentp.Params
-	(BridgeStatus)(0),            // 9: zrchain.zentp.BridgeStatus
-	(*v1beta1.PageRequest)(nil),  // 10: cosmos.base.query.v1beta1.PageRequest
-	(*Bridge)(nil),               // 11: zrchain.zentp.Bridge
-	(*v1beta1.PageResponse)(nil), // 12: cosmos.base.query.v1beta1.PageResponse
+	(*QueryParamsRequest)(nil),            // 0: zrchain.zentp.QueryParamsRequest
+	(*QueryParamsResponse)(nil),           // 1: zrchain.zentp.QueryParamsResponse
+	(*QueryMintsRequest)(nil),             // 2: zrchain.zentp.QueryMintsRequest
+	(*QueryMintsResponse)(nil),            // 3: zrchain.zentp.QueryMintsResponse
+	(*QueryBurnsRequest)(nil),             // 4: zrchain.zentp.QueryBurnsRequest
+	(*QueryBurnsResponse)(nil),            // 5: zrchain.zentp.QueryBurnsResponse
+	(*QueryStatsRequest)(nil),             // 6: zrchain.zentp.QueryStatsRequest
+	(*QueryStatsResponse)(nil),            // 7: zrchain.zentp.QueryStatsResponse
+	(*QuerySolanaROCKSupplyRequest)(nil),  // 8: zrchain.zentp.QuerySolanaROCKSupplyRequest
+	(*QuerySolanaROCKSupplyResponse)(nil), // 9: zrchain.zentp.QuerySolanaROCKSupplyResponse
+	(*Params)(nil),                        // 10: zrchain.zentp.Params
+	(BridgeStatus)(0),                     // 11: zrchain.zentp.BridgeStatus
+	(*v1beta1.PageRequest)(nil),           // 12: cosmos.base.query.v1beta1.PageRequest
+	(*Bridge)(nil),                        // 13: zrchain.zentp.Bridge
+	(*v1beta1.PageResponse)(nil),          // 14: cosmos.base.query.v1beta1.PageResponse
 }
 var file_zrchain_zentp_query_proto_depIdxs = []int32{
-	8,  // 0: zrchain.zentp.QueryParamsResponse.params:type_name -> zrchain.zentp.Params
-	9,  // 1: zrchain.zentp.QueryMintsRequest.status:type_name -> zrchain.zentp.BridgeStatus
-	10, // 2: zrchain.zentp.QueryMintsRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
-	11, // 3: zrchain.zentp.QueryMintsResponse.mints:type_name -> zrchain.zentp.Bridge
-	12, // 4: zrchain.zentp.QueryMintsResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
-	9,  // 5: zrchain.zentp.QueryBurnsRequest.status:type_name -> zrchain.zentp.BridgeStatus
-	10, // 6: zrchain.zentp.QueryBurnsRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
-	11, // 7: zrchain.zentp.QueryBurnsResponse.burns:type_name -> zrchain.zentp.Bridge
-	12, // 8: zrchain.zentp.QueryBurnsResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
+	10, // 0: zrchain.zentp.QueryParamsResponse.params:type_name -> zrchain.zentp.Params
+	11, // 1: zrchain.zentp.QueryMintsRequest.status:type_name -> zrchain.zentp.BridgeStatus
+	12, // 2: zrchain.zentp.QueryMintsRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
+	13, // 3: zrchain.zentp.QueryMintsResponse.mints:type_name -> zrchain.zentp.Bridge
+	14, // 4: zrchain.zentp.QueryMintsResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
+	11, // 5: zrchain.zentp.QueryBurnsRequest.status:type_name -> zrchain.zentp.BridgeStatus
+	12, // 6: zrchain.zentp.QueryBurnsRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
+	13, // 7: zrchain.zentp.QueryBurnsResponse.burns:type_name -> zrchain.zentp.Bridge
+	14, // 8: zrchain.zentp.QueryBurnsResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
 	0,  // 9: zrchain.zentp.Query.Params:input_type -> zrchain.zentp.QueryParamsRequest
 	2,  // 10: zrchain.zentp.Query.Mints:input_type -> zrchain.zentp.QueryMintsRequest
 	4,  // 11: zrchain.zentp.Query.Burns:input_type -> zrchain.zentp.QueryBurnsRequest
 	6,  // 12: zrchain.zentp.Query.Stats:input_type -> zrchain.zentp.QueryStatsRequest
-	1,  // 13: zrchain.zentp.Query.Params:output_type -> zrchain.zentp.QueryParamsResponse
-	3,  // 14: zrchain.zentp.Query.Mints:output_type -> zrchain.zentp.QueryMintsResponse
-	5,  // 15: zrchain.zentp.Query.Burns:output_type -> zrchain.zentp.QueryBurnsResponse
-	7,  // 16: zrchain.zentp.Query.Stats:output_type -> zrchain.zentp.QueryStatsResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
+	8,  // 13: zrchain.zentp.Query.QuerySolanaROCKSupply:input_type -> zrchain.zentp.QuerySolanaROCKSupplyRequest
+	1,  // 14: zrchain.zentp.Query.Params:output_type -> zrchain.zentp.QueryParamsResponse
+	3,  // 15: zrchain.zentp.Query.Mints:output_type -> zrchain.zentp.QueryMintsResponse
+	5,  // 16: zrchain.zentp.Query.Burns:output_type -> zrchain.zentp.QueryBurnsResponse
+	7,  // 17: zrchain.zentp.Query.Stats:output_type -> zrchain.zentp.QueryStatsResponse
+	9,  // 18: zrchain.zentp.Query.QuerySolanaROCKSupply:output_type -> zrchain.zentp.QuerySolanaROCKSupplyResponse
+	14, // [14:19] is the sub-list for method output_type
+	9,  // [9:14] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -4800,6 +5872,30 @@ func file_zrchain_zentp_query_proto_init() {
 				return nil
 			}
 		}
+		file_zrchain_zentp_query_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QuerySolanaROCKSupplyRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_zentp_query_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QuerySolanaROCKSupplyResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -4807,7 +5903,7 @@ func file_zrchain_zentp_query_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_zentp_query_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
