@@ -32,6 +32,17 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 
 	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
 
+	if newAmount.IsPositive() {
+		// This check is for new bridge requests from zrchain to solana.
+		// It ensures the bridge amount does not exceed the supply available for bridging.
+		zentpModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+		zentpModuleBalance := k.bankKeeper.GetBalance(ctx, zentpModuleAddr, params.BondDenom).Amount
+		availableForBridging := zrchainSupply.Sub(zentpModuleBalance)
+		if newAmount.GT(availableForBridging) {
+			return errors.Errorf("bridge amount %s exceeds available zrchain rock supply for bridging %s", newAmount.String(), availableForBridging.String())
+		}
+	}
+
 	totalSupply := zrchainSupply.Add(solanaSupply).Add(pendingAmount)
 	if newAmount.IsPositive() {
 		totalSupply = totalSupply.Add(newAmount)

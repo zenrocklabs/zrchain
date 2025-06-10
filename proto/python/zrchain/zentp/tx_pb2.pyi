@@ -58,3 +58,15 @@ class MsgBurn(_message.Message):
 class MsgBurnResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgSetSolanaROCKSupply(_message.Message):
+    __slots__ = ("authority", "amount")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    amount: int
+    def __init__(self, authority: _Optional[str] = ..., amount: _Optional[int] = ...) -> None: ...
+
+class MsgSetSolanaROCKSupplyResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

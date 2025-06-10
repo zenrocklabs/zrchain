@@ -5,22 +5,25 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 	tests := []struct {
-		name             string
-		zrchainSupply    uint64
-		solanaSupply     uint64
-		pendingMints     []types.Bridge
-		newAmount        uint64
-		expectError      bool
-		expectedErrorMsg string
+		name               string
+		zrchainSupply      uint64
+		zentpModuleBalance uint64
+		solanaSupply       uint64
+		pendingMints       []types.Bridge
+		newAmount          uint64
+		expectError        bool
+		expectedErrorMsg   string
 	}{
 		{
-			name:          "Normal operation under cap",
-			zrchainSupply: 100_000_000_000_000, // 100M ROCK
-			solanaSupply:  200_000_000_000_000, // 200M ROCK
+			name:               "Normal operation under cap",
+			zrchainSupply:      100_000_000_000_000, // 100M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       200_000_000_000_000, // 200M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 50_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 50M ROCK
 			},
@@ -28,9 +31,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectError: false,
 		},
 		{
-			name:          "Exactly at cap should succeed",
-			zrchainSupply: 400_000_000_000_000, // 400M ROCK
-			solanaSupply:  300_000_000_000_000, // 300M ROCK
+			name:               "Exactly at cap should succeed",
+			zrchainSupply:      400_000_000_000_000, // 400M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       300_000_000_000_000, // 300M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 200_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 200M ROCK
 			},
@@ -38,9 +42,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectError: false,
 		},
 		{
-			name:          "One unit over cap should fail",
-			zrchainSupply: 400_000_000_000_000, // 400M ROCK
-			solanaSupply:  300_000_000_000_000, // 300M ROCK
+			name:               "One unit over cap should fail",
+			zrchainSupply:      400_000_000_000_000, // 400M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       300_000_000_000_000, // 300M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 200_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 200M ROCK
 			},
@@ -49,9 +54,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectedErrorMsg: "total ROCK supply including pending would exceed cap",
 		},
 		{
-			name:          "Zero new amount with existing state under cap",
-			zrchainSupply: 300_000_000_000_000, // 300M ROCK
-			solanaSupply:  200_000_000_000_000, // 200M ROCK
+			name:               "Zero new amount with existing state under cap",
+			zrchainSupply:      300_000_000_000_000, // 300M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       200_000_000_000_000, // 200M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 100_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 100M ROCK
 			},
@@ -59,9 +65,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectError: false,
 		},
 		{
-			name:          "Zero new amount with existing state at cap",
-			zrchainSupply: 400_000_000_000_000, // 400M ROCK
-			solanaSupply:  300_000_000_000_000, // 300M ROCK
+			name:               "Zero new amount with existing state at cap",
+			zrchainSupply:      400_000_000_000_000, // 400M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       300_000_000_000_000, // 300M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 300_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 300M ROCK
 			},
@@ -69,9 +76,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectError: false,
 		},
 		{
-			name:          "Zero new amount with existing state over cap",
-			zrchainSupply: 500_000_000_000_000, // 500M ROCK
-			solanaSupply:  300_000_000_000_000, // 300M ROCK
+			name:               "Zero new amount with existing state over cap",
+			zrchainSupply:      500_000_000_000_000, // 500M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       300_000_000_000_000, // 300M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 300_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 300M ROCK
 			},
@@ -80,9 +88,10 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectedErrorMsg: "total ROCK supply including pending would exceed cap",
 		},
 		{
-			name:          "Multiple pending mints",
-			zrchainSupply: 200_000_000_000_000, // 200M ROCK
-			solanaSupply:  200_000_000_000_000, // 200M ROCK
+			name:               "Multiple pending mints",
+			zrchainSupply:      200_000_000_000_000, // 200M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       200_000_000_000_000, // 200M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 100_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 100M ROCK
 				{Amount: 150_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING}, // 150M ROCK
@@ -92,24 +101,36 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			expectError: false,
 		},
 		{
-			name:          "Ignore non-pending mints",
-			zrchainSupply: 200_000_000_000_000, // 200M ROCK
-			solanaSupply:  200_000_000_000_000, // 200M ROCK
+			name:               "Ignore non-pending mints",
+			zrchainSupply:      500_000_000_000_000, // 500M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       200_000_000_000_000, // 200M ROCK
 			pendingMints: []types.Bridge{
 				{Amount: 100_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_PENDING},   // 100M ROCK (counted)
 				{Amount: 500_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_COMPLETED}, // 500M ROCK (ignored)
 				{Amount: 300_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_FAILED},    // 300M ROCK (ignored)
 			},
-			newAmount:   400_000_000_000_000, // 400M ROCK = 200+200+100+400 = 900M total
+			newAmount:   200_000_000_000_000, // 200M ROCK = 500+200+100+200 = 1B total
 			expectError: false,
 		},
 		{
-			name:          "No pending mints",
-			zrchainSupply: 400_000_000_000_000, // 400M ROCK
-			solanaSupply:  300_000_000_000_000, // 300M ROCK
-			pendingMints:  []types.Bridge{},
-			newAmount:     300_000_000_000_000, // 300M ROCK = 400+300+300 = 1B total
-			expectError:   false,
+			name:               "No pending mints",
+			zrchainSupply:      500_000_000_000_000, // 500M ROCK
+			zentpModuleBalance: 0,
+			solanaSupply:       300_000_000_000_000, // 300M ROCK
+			pendingMints:       []types.Bridge{},
+			newAmount:          200_000_000_000_000, // 200M ROCK = 500+300+200 = 1B total
+			expectError:        false,
+		},
+		{
+			name:               "Bridge amount exceeds available supply",
+			zrchainSupply:      200_000_000_000_000, // 200M ROCK
+			zentpModuleBalance: 150_000_000_000_000, // 150M ROCK in module
+			solanaSupply:       100_000_000_000_000, // 100M ROCK
+			pendingMints:       []types.Bridge{},
+			newAmount:          60_000_000_000_000, // 60M ROCK new bridge. Available is 50M.
+			expectError:        true,
+			expectedErrorMsg:   "bridge amount 60000000000000 exceeds available zrchain rock supply for bridging 50000000000000",
 		},
 	}
 
@@ -118,6 +139,13 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			// Setup: Mock bank keeper to return the test zrchain supply
 			s.bankKeeper.EXPECT().GetSupply(s.ctx, params.BondDenom).Return(
 				sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(tt.zrchainSupply)),
+			).AnyTimes()
+
+			// Mock for new check
+			zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
+				sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(tt.zentpModuleBalance)),
 			).AnyTimes()
 
 			// Setup: Set solana supply
@@ -276,6 +304,13 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 			sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(1000)),
 		).AnyTimes()
 
+		// Mock for new check
+		zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+		s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+		s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
+			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
+		).AnyTimes()
+
 		// The function should not fail even if GetMintsWithStatus has issues
 		// (our implementation treats this as "no pending mints")
 		err = s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
@@ -290,6 +325,13 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 		// Setup bank keeper mock
 		s.bankKeeper.EXPECT().GetSupply(s.ctx, params.BondDenom).Return(
 			sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(1000)),
+		).AnyTimes()
+
+		// Mock for new check
+		zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+		s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+		s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
+			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
 		).AnyTimes()
 
 		// The function should succeed with zero solana supply

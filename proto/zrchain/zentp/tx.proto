@@ -24,6 +24,8 @@ service Msg {
   
   // Burn defines an operation for burning Rock for a module account
   rpc Burn     (MsgBurn    ) returns (MsgBurnResponse    );
+
+  rpc SetSolanaROCKSupply(MsgSetSolanaROCKSupply) returns (MsgSetSolanaROCKSupplyResponse);
 }
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
@@ -87,3 +89,10 @@ message MsgBurn {
 // MsgBurn message.
 message MsgBurnResponse {}
 
+message MsgSetSolanaROCKSupply {
+  option (cosmos.msg.v1.signer) = "authority";
+  string authority = 1;
+  uint64 amount = 2;
+}
+
+message MsgSetSolanaROCKSupplyResponse {}
