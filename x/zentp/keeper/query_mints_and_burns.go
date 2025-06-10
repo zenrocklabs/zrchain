@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/pkg/errors"
@@ -86,24 +87,28 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		return nil, err
 	}
 
-	var totalMints uint64
+	totalMinted := math.ZeroInt()
+	mintsCount := uint64(0)
 	for _, mint := range mintKeys {
-
 		if req.Address == "" || mint.Creator == req.Address {
-			totalMints += mint.Amount
+			totalMinted = totalMinted.Add(math.NewIntFromUint64(mint.Amount))
+			mintsCount++
 		}
 	}
 
-	var totalBurns uint64
+	totalBurned := math.ZeroInt()
+	burnsCount := uint64(0)
 	for _, burn := range burnKeys {
-
 		if req.Address == "" || burn.RecipientAddress == req.Address {
-			totalBurns += burn.Amount
+			totalBurned = totalBurned.Add(math.NewIntFromUint64(burn.Amount))
+			burnsCount++
 		}
 	}
 
 	return &types.QueryStatsResponse{
-		TotalMints: totalMints,
-		TotalBurns: totalBurns,
+		TotalMinted: totalMinted.Uint64(),
+		TotalBurned: totalBurned.Uint64(),
+		MintsCount:  mintsCount,
+		BurnsCount:  burnsCount,
 	}, nil
 }

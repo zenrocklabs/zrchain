@@ -92,8 +92,10 @@ message QueryStatsRequest {
 
 // QueryStatsResponse is response type for the Query/Stats RPC method.
 message QueryStatsResponse {
-  uint64 total_mints = 1; // Optional
-  uint64 total_burns = 2; // Optional
+  uint64 total_minted = 1;
+  uint64 total_burned = 2;
+  uint64 mints_count = 3;
+  uint64 burns_count = 4;
 }
 
 message QuerySolanaROCKSupplyRequest {}

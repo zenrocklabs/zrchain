@@ -76,12 +76,16 @@ class QueryStatsRequest(_message.Message):
     def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ...) -> None: ...
 
 class QueryStatsResponse(_message.Message):
-    __slots__ = ("total_mints", "total_burns")
-    TOTAL_MINTS_FIELD_NUMBER: _ClassVar[int]
-    TOTAL_BURNS_FIELD_NUMBER: _ClassVar[int]
-    total_mints: int
-    total_burns: int
-    def __init__(self, total_mints: _Optional[int] = ..., total_burns: _Optional[int] = ...) -> None: ...
+    __slots__ = ("total_minted", "total_burned", "mints_count", "burns_count")
+    TOTAL_MINTED_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_BURNED_FIELD_NUMBER: _ClassVar[int]
+    MINTS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    BURNS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    total_minted: int
+    total_burned: int
+    mints_count: int
+    burns_count: int
+    def __init__(self, total_minted: _Optional[int] = ..., total_burned: _Optional[int] = ..., mints_count: _Optional[int] = ..., burns_count: _Optional[int] = ...) -> None: ...
 
 class QuerySolanaROCKSupplyRequest(_message.Message):
     __slots__ = ()
