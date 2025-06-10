@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -13,8 +14,11 @@ import (
 )
 
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.CheckROCKSupplyCap(ctx, math.NewIntFromUint64(req.Amount)); err != nil {
+		return nil, err
+	}
 
 	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
 		return nil, err

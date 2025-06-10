@@ -15,8 +15,8 @@ import (
 func TestCreateDurableNonceAccount(t *testing.T) {
 	var client = rpc.New("https://api.devnet.solana.com")
 
-	nonceAuthPubKey := solana.MustPublicKeyFromBase58("HfaUt1DK7J8ea6Mrwh8SG8iEoLCEPLXD6jV9XkyjTMPG")
-	nonceAccPubKey := solana.MustPublicKeyFromBase58("5HL2k4JXrgzoZpKEFGNfQUEPvH7JvZE2CNBGzm9adPS5")
+	nonceAuthPubKey := solana.MustPublicKeyFromBase58("9WB3KQZ5d2jqXuufWX6vidYzjgEgnRLbxYBWYCRsfzmw")
+	nonceAccPubKey := solana.MustPublicKeyFromBase58("GqojxUhvnNdHKztS2ZZ9HMAZ8VvXv4wmaB6d5MQxz9se")
 	recent, err := client.GetLatestBlockhash(context.Background(), rpc.CommitmentConfirmed)
 	require.NoError(t, err)
 

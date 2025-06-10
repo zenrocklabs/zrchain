@@ -203,7 +203,7 @@ if [ "$START_ONLY" = false ]; then
             zenrockd genesis add-genesis-account zen1a0hfnvaslygrauq8k8weu5fjsnawlu37wvdpfl 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zentp
             # Add funds for other accounts
             zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
-            zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+            zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
         else
             # Second validator node: copy genesis.json
             cp $VALIDATOR_HOME/config/genesis.json $HOME_DIR/config/genesis.json

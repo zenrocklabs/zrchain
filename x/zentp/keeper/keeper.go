@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -39,6 +40,7 @@ type (
 		burnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
+		SolanaROCKSupply collections.Item[math.Int]
 	}
 )
 
@@ -77,6 +79,7 @@ func NewKeeper(
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
+		SolanaROCKSupply: collections.NewItem(sb, types.SolanaROCKSupplyKey, types.SolanaROCKSupplyIndex, sdk.IntValue),
 		authority:        authority,
 		logger:           logger,
 		treasuryKeeper:   treasuryKeeper,
@@ -183,6 +186,21 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
 	return k.mintStore.Set(ctx, id, *mint)
+}
+
+func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {
+	supply, err := k.SolanaROCKSupply.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return math.ZeroInt(), nil
+		}
+		return math.Int{}, err
+	}
+	return supply, nil
+}
+
+func (k Keeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error {
+	return k.SolanaROCKSupply.Set(ctx, supply)
 }
 
 func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -1560,10 +1561,36 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 		for _, event := range oracleData.SolanaMintEvents {
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
+				// Perform the paramount check *before* any state change.
+				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, math.ZeroInt()); err != nil {
+					// ABORT. The invariant would be violated. Do not complete the bridge.
+					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION DETECTED: A mint on Solana would breach the 1bn cap. Aborting bridge completion.", "bridge_id", pendingMint.Id, "error", err.Error())
+					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
+					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+						k.Logger(ctx).Error("CRITICAL: Failed to update mint status to FAILED after invariant violation.", "error", err, "bridge_id", pendingMint.Id)
+					}
+					continue // Move to the next event, this one is terminated.
+				}
+
+				// --- Invariant holds, proceed with bridge completion ---
+
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
-					k.Logger(ctx).Error("Failed to burn coins", "denom", pendingMint.Denom, "error", err.Error())
-					return
+					k.Logger(ctx).Error("CRITICAL: Failed to burn coins for completed Solana bridge AFTER invariant check. State is now inconsistent.", "denom", pendingMint.Denom, "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
+				// Re-fetch solana supply to avoid race conditions within the same block processing multiple events
+				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+				if err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to get solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
+				newSolanaSupply := solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
+				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to set solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
 				}
 
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
@@ -1576,7 +1603,8 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				sdkCtx.EventManager().EmitEvent(
 					sdk.NewEvent(
 						types.EventTypeValidation,
-						sdk.NewAttribute(types.AttributeKeyBurnAmount, fmt.Sprintf("%d", pendingMint.Amount)),
+						sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", pendingMint.Amount)),
+						sdk.NewAttribute(types.AttributeKeyBurnDestination, pendingMint.RecipientAddress),
 					),
 				)
 			}
@@ -2162,6 +2190,11 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		if err := k.zentpKeeper.CheckCanBurnFromSolana(ctx, sdkmath.NewIntFromUint64(burn.Amount)); err != nil {
+			k.Logger(ctx).Error("invariant check failed for solana rock burn", "error", err.Error(), "amount", burn.Amount)
+			continue
+		}
+
 		_, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
@@ -2179,6 +2212,21 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		coins := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount)))
 		if err := k.bankKeeper.MintCoins(ctx, zentptypes.ModuleName, coins); err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("MintCoins: %w", err).Error())
+			continue
+		}
+
+		solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("GetSolanaROCKSupply: " + err.Error())
+			continue
+		}
+		newSolanaSupply := solanaSupply.Sub(sdkmath.NewIntFromUint64(burn.Amount))
+		if newSolanaSupply.IsNegative() {
+			k.Logger(ctx).Error("solana rock supply underflow", "new_supply", newSolanaSupply.String())
+			continue
+		}
+		if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
+			k.Logger(ctx).Error("SetSolanaROCKSupply: ", err.Error())
 			continue
 		}
 
@@ -2204,7 +2252,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			sdk.NewEvent(
 				types.EventTypeValidation,
 				sdk.NewAttribute(types.AttributeKeyBridgeAmount, fmt.Sprintf("%d", burn.Amount)),
-				sdk.NewAttribute(types.AttributeKeyBridgeFee, fmt.Sprintf("%d", bridgeFeeCoins.AmountOf(params.BondDenom))),
+				sdk.NewAttribute(types.AttributeKeyBridgeFee, bridgeFeeCoins.AmountOf(params.BondDenom).String()),
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)

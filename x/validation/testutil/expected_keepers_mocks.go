@@ -792,6 +792,34 @@ func (mr *MockZentpKeeperMockRecorder) AddBurn(ctx, burn interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBurn", reflect.TypeOf((*MockZentpKeeper)(nil).AddBurn), ctx, burn)
 }
 
+// CheckCanBurnFromSolana mocks base method.
+func (m *MockZentpKeeper) CheckCanBurnFromSolana(ctx types2.Context, burnAmount math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckCanBurnFromSolana", ctx, burnAmount)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckCanBurnFromSolana indicates an expected call of CheckCanBurnFromSolana.
+func (mr *MockZentpKeeperMockRecorder) CheckCanBurnFromSolana(ctx, burnAmount interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCanBurnFromSolana", reflect.TypeOf((*MockZentpKeeper)(nil).CheckCanBurnFromSolana), ctx, burnAmount)
+}
+
+// CheckROCKSupplyCap mocks base method.
+func (m *MockZentpKeeper) CheckROCKSupplyCap(ctx types2.Context, newAmount math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckROCKSupplyCap", ctx, newAmount)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckROCKSupplyCap indicates an expected call of CheckROCKSupplyCap.
+func (mr *MockZentpKeeperMockRecorder) CheckROCKSupplyCap(ctx, newAmount interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckROCKSupplyCap", reflect.TypeOf((*MockZentpKeeper)(nil).CheckROCKSupplyCap), ctx, newAmount)
+}
+
 // GetBridgeFeeAmount mocks base method.
 func (m *MockZentpKeeper) GetBridgeFeeAmount(ctx context.Context, amount uint64, bridgeFee math.LegacyDec) (types2.Coins, error) {
 	m.ctrl.T.Helper()
@@ -879,6 +907,35 @@ func (m *MockZentpKeeper) GetSolanaParams(ctx context.Context) *types1.Solana {
 func (mr *MockZentpKeeperMockRecorder) GetSolanaParams(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSolanaParams", reflect.TypeOf((*MockZentpKeeper)(nil).GetSolanaParams), ctx)
+}
+
+// GetSolanaROCKSupply mocks base method.
+func (m *MockZentpKeeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSolanaROCKSupply", ctx)
+	ret0, _ := ret[0].(math.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSolanaROCKSupply indicates an expected call of GetSolanaROCKSupply.
+func (mr *MockZentpKeeperMockRecorder) GetSolanaROCKSupply(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSolanaROCKSupply", reflect.TypeOf((*MockZentpKeeper)(nil).GetSolanaROCKSupply), ctx)
+}
+
+// SetSolanaROCKSupply mocks base method.
+func (m *MockZentpKeeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSolanaROCKSupply", ctx, supply)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSolanaROCKSupply indicates an expected call of SetSolanaROCKSupply.
+func (mr *MockZentpKeeperMockRecorder) SetSolanaROCKSupply(ctx, supply interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSolanaROCKSupply", reflect.TypeOf((*MockZentpKeeper)(nil).SetSolanaROCKSupply), ctx, supply)
 }
 
 // UpdateMint mocks base method.
