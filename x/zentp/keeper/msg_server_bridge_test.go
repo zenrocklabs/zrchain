@@ -30,6 +30,13 @@ func (s *IntegrationTestSuite) TestBridge() {
 		sdk.NewCoin("urock", math.NewIntFromUint64(200_000_000_000_000)), // 200M ROCK
 	).AnyTimes()
 
+	// Mock for new check in CheckROCKSupplyCap
+	zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
+		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
+	).AnyTimes()
+
 	// Mock getting the mint params
 	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil)
 
@@ -96,6 +103,13 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	// Mock bank keeper GetSupply for invariant check (for most tests)
 	s.bankKeeper.EXPECT().GetSupply(s.ctx, "urock").Return(
 		sdk.NewCoin("urock", math.NewIntFromUint64(200_000_000_000_000)), // 200M ROCK
+	).AnyTimes()
+
+	// Mock for new check in CheckROCKSupplyCap
+	zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
+		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance for most tests
 	).AnyTimes()
 
 	// Mock getting the mint params
@@ -196,6 +210,19 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 				// The existing mocks should be sufficient since they're set to AnyTimes()
 			},
 			expectedError: "total ROCK supply including pending would exceed cap",
+		},
+		{
+			name: "Bridge amount exceeds available zrchain supply",
+			modifyMsg: func(msg *types.MsgBridge) {
+				msg.Amount = 150_000_000_000_000 // 150M ROCK
+			},
+			setupMocks: func() {
+				// zrchain supply is 200M, zentp module balance is 100M, so available is 100M. 150M is too much.
+				s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
+					sdk.NewCoin("urock", math.NewIntFromUint64(100_000_000_000_000)), // 100M ROCK
+				).AnyTimes()
+			},
+			expectedError: "bridge amount 150000000000000 exceeds available zrchain rock supply for bridging 100000000000000",
 		},
 	}
 
