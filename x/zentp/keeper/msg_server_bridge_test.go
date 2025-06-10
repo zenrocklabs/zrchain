@@ -9,6 +9,7 @@ import (
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -31,7 +32,7 @@ func (s *IntegrationTestSuite) TestBridge() {
 	).AnyTimes()
 
 	// Mock for new check in CheckROCKSupplyCap
-	zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+	zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
@@ -106,7 +107,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	).AnyTimes()
 
 	// Mock for new check in CheckROCKSupplyCap
-	zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+	zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance for most tests
@@ -218,6 +219,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			},
 			setupMocks: func() {
 				// zrchain supply is 200M, zentp module balance is 100M, so available is 100M. 150M is too much.
+				zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 				s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 					sdk.NewCoin("urock", math.NewIntFromUint64(100_000_000_000_000)), // 100M ROCK
 				).AnyTimes()

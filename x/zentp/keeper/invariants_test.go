@@ -5,6 +5,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
@@ -141,7 +142,7 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 			).AnyTimes()
 
 			// Mock for new check
-			zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+			zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 			s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
 				sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(tt.zentpModuleBalance)),
@@ -304,7 +305,7 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 		).AnyTimes()
 
 		// Mock for new check
-		zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+		zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 		s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 		s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
 			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
@@ -327,7 +328,7 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 		).AnyTimes()
 
 		// Mock for new check
-		zentpModuleAddr := sdk.AccAddress([]byte("zentpModule"))
+		zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 		s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 		s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
 			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
