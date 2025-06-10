@@ -19,18 +19,40 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "Mints",
-					Use:       "mints [id] [creator] [status] [denom] [tx_id]",
+					Use:       "mints",
 					Short:     "Query mints with optional filters",
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"id":      {Usage: "Filter by mint ID"},
+						"creator": {Usage: "Filter by creator address"},
+						"status":  {Usage: "Filter by status"},
+						"denom":   {Usage: "Filter by denom"},
+						"tx_id":   {Usage: "Filter by transaction ID"},
+					},
 				},
 				{
 					RpcMethod: "Burns",
-					Use:       "burns [id] [denom] [status] [tx_id]",
+					Use:       "burns",
 					Short:     "Query burns with optional filters",
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"id":     {Usage: "Filter by burn ID"},
+						"denom":  {Usage: "Filter by denom"},
+						"status": {Usage: "Filter by status"},
+						"tx_id":  {Usage: "Filter by transaction ID"},
+					},
 				},
 				{
 					RpcMethod: "QuerySolanaROCKSupply",
 					Use:       "solana-rock-supply",
 					Short:     "Query the total ROCK supply on Solana",
+				},
+				{
+					RpcMethod: "Stats",
+					Use:       "stats",
+					Short:     "Query total mints and burns for an address",
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"address": {Usage: "The address to query stats for (optional)"},
+						"denom":   {Usage: "The denom to query stats for (optional)"},
+					},
 				},
 				// this line is used by ignite scaffolding # autocli/query
 			},
