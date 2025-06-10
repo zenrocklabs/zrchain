@@ -102,7 +102,7 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 		},
 		{
 			name:               "Ignore non-pending mints",
-			zrchainSupply:      200_000_000_000_000, // 200M ROCK
+			zrchainSupply:      500_000_000_000_000, // 500M ROCK
 			zentpModuleBalance: 0,
 			solanaSupply:       200_000_000_000_000, // 200M ROCK
 			pendingMints: []types.Bridge{
@@ -110,16 +110,16 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 				{Amount: 500_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_COMPLETED}, // 500M ROCK (ignored)
 				{Amount: 300_000_000_000_000, State: types.BridgeStatus_BRIDGE_STATUS_FAILED},    // 300M ROCK (ignored)
 			},
-			newAmount:   400_000_000_000_000, // 400M ROCK = 200+200+100+400 = 900M total
+			newAmount:   200_000_000_000_000, // 200M ROCK = 500+200+100+200 = 1B total
 			expectError: false,
 		},
 		{
 			name:               "No pending mints",
-			zrchainSupply:      400_000_000_000_000, // 400M ROCK
+			zrchainSupply:      500_000_000_000_000, // 500M ROCK
 			zentpModuleBalance: 0,
 			solanaSupply:       300_000_000_000_000, // 300M ROCK
 			pendingMints:       []types.Bridge{},
-			newAmount:          300_000_000_000_000, // 300M ROCK = 400+300+300 = 1B total
+			newAmount:          200_000_000_000_000, // 200M ROCK = 500+300+200 = 1B total
 			expectError:        false,
 		},
 		{
