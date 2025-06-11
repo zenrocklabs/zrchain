@@ -56,7 +56,12 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
-		return nil, fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = fmt.Sprintf("keyring %s is inactive or not found", key.KeyringAddr)
+		return nil, nil
+	}
+	if !keyring.IsParty(msg.Creator) && req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
+		return nil, fmt.Errorf("only one party of the keyring can fulfil signature request")
 	}
 
 	if req.Fee > 0 {
