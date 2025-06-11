@@ -369,6 +369,7 @@ func (m *MsgBurnResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgBurnResponse proto.InternalMessageInfo
 
+// MsgSetSolanaROCKSupply is the Msg/SetSolanaROCKSupply request type
 type MsgSetSolanaROCKSupply struct {
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	Amount    uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
@@ -421,6 +422,8 @@ func (m *MsgSetSolanaROCKSupply) GetAmount() uint64 {
 	return 0
 }
 
+// MsgSetSolanaROCKSupplyResponse defines the response structure for executing a
+// MsgSetSolanaROCKSupply message.
 type MsgSetSolanaROCKSupplyResponse struct {
 }
 

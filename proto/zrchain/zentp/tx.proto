@@ -89,10 +89,13 @@ message MsgBurn {
 // MsgBurn message.
 message MsgBurnResponse {}
 
+// MsgSetSolanaROCKSupply is the Msg/SetSolanaROCKSupply request type
 message MsgSetSolanaROCKSupply {
   option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
   uint64 amount = 2;
 }
 
+// MsgSetSolanaROCKSupplyResponse defines the response structure for executing a
+// MsgSetSolanaROCKSupply message.
 message MsgSetSolanaROCKSupplyResponse {}
