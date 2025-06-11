@@ -48,7 +48,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Stats",
 					Use:       "stats",
-					Short:     "Query total mints and burns for an address",
+					Short:     "Query total mints and burns optionally by address and denom",
 					FlagOptions: map[string]*autocliv1.FlagOptions{
 						"address": {Usage: "The address to query stats for (optional)"},
 						"denom":   {Usage: "The denom to query stats for (optional)"},
