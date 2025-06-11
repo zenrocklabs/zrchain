@@ -34,10 +34,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "burns",
 					Short:     "Query burns with optional filters",
 					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"id":     {Usage: "Filter by burn ID"},
-						"denom":  {Usage: "Filter by denom"},
-						"status": {Usage: "Filter by status"},
-						"tx_id":  {Usage: "Filter by transaction ID"},
+						"id":                {Usage: "Filter by burn ID"},
+						"denom":             {Usage: "Filter by denom"},
+						"status":            {Usage: "Filter by status"},
+						"tx_id":             {Usage: "Filter by transaction ID"},
+						"recipient_address": {Usage: "Filter by recipient address"},
+						"source_tx_hash":    {Usage: "Filter by source transaction hash"},
 					},
 				},
 				{
