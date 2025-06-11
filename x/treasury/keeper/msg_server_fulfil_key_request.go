@@ -72,8 +72,13 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		}
 	}
 
+	keyMsg, ok := msg.Result.(*types.MsgFulfilKeyRequest_Key)
+	if !ok || keyMsg.Key == nil || len(keyMsg.Key.PublicKey) == 0 {
+		return k.rejectKeyRequest(ctx, req, "invalid or missing public key for fulfilled key request")
+	}
+	pubKey := keyMsg.Key.PublicKey
+
 	// Check against public key from other parties
-	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
 	if len(req.PublicKey) > 0 {
 		if !bytes.Equal(req.PublicKey, pubKey) {
 			rejectReason := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
@@ -146,7 +151,11 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 
 func (k msgServer) handleKeyRequestRejection(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
 	req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
-	req.RejectReason = msg.Result.(*types.MsgFulfilKeyRequest_RejectReason).RejectReason
+	if rejectMsg, ok := msg.Result.(*types.MsgFulfilKeyRequest_RejectReason); ok {
+		req.RejectReason = rejectMsg.RejectReason
+	} else {
+		req.RejectReason = "rejected with no reason provided"
+	}
 
 	if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 		return nil, err

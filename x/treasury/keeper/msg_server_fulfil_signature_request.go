@@ -27,17 +27,27 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 		return nil, err
 	}
 
-	switch msg.Status {
-	case types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED, types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL:
-		if err := k.handleSignatureRequest(ctx, msg, req, key); err != nil {
-			return nil, err
+	if req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING &&
+		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL {
+		return nil, fmt.Errorf("request is not pending/partial, can't be updated")
+	}
+
+	if err := k.validateZenBTCSignRequest(ctx, *req, *key); err != nil {
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = err.Error()
+	} else {
+		switch msg.Status {
+		case types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED, types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL:
+			if err := k.handleSignatureRequest(ctx, msg, req, key); err != nil {
+				return nil, err
+			}
+		case types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED:
+			if err := k.handleSignatureRequestRejection(ctx, msg, req); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("invalid status field %s, should be either fulfilled/partial/rejected", msg.Status)
 		}
-	case types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED:
-		if err := k.handleSignatureRequestRejection(ctx, msg, req); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("invalid status field %s, should be either fulfilled/partial/rejected", msg.Status)
 	}
 
 	if err := k.SignRequestStore.Set(ctx, req.Id, *req); err != nil {
@@ -81,19 +91,9 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("request not found")
 	}
 
-	if req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING &&
-		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL &&
-		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
-		return nil, nil, fmt.Errorf("request is not pending/partial, can't be updated")
-	}
-
 	key, err := k.KeyStore.Get(ctx, req.KeyIds[0])
 	if err != nil {
 		return nil, nil, fmt.Errorf("key not found")
-	}
-
-	if err := k.validateZenBTCSignRequest(ctx, req, key); err != nil {
-		return nil, nil, err
 	}
 
 	return &req, &key, nil

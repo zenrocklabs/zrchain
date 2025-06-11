@@ -623,7 +623,7 @@ func (k Keeper) CheckForKeyMPCTimeouts(goCtx context.Context) error {
 				sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
 			)
 			if err != nil {
-				return err
+				ctx.Logger().Error("failed to refund timed-out key request fee", "request_id", req.Id, "creator", req.Creator, "fee", req.Fee, "error", err)
 			}
 		}
 		req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
@@ -693,7 +693,7 @@ func (k Keeper) CheckForSignatureMPCTimeouts(goCtx context.Context) error {
 				sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(req.Fee))),
 			)
 			if err != nil {
-				return err
+				ctx.Logger().Error("failed to refund timed-out signature request fee", "request_id", req.Id, "creator", req.Creator, "fee", req.Fee, "error", err)
 			}
 		}
 		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
