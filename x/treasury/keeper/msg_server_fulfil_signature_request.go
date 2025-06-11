@@ -198,7 +198,11 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 
 func (k msgServer) handleSignatureRequestRejection(ctx sdk.Context, msg *types.MsgFulfilSignatureRequest, req *types.SignRequest) error {
 	req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-	req.RejectReason = msg.GetRejectReason()
+	rejectReason := msg.GetRejectReason()
+	if rejectReason == "" {
+		rejectReason = "rejected with no reason provided"
+	}
+	req.RejectReason = rejectReason
 
 	if req.ParentReqId != 0 {
 		parentReq, err := k.SignRequestStore.Get(ctx, req.ParentReqId)
@@ -206,7 +210,7 @@ func (k msgServer) handleSignatureRequestRejection(ctx sdk.Context, msg *types.M
 			return fmt.Errorf("parent request not found: %w", err)
 		}
 		parentReq.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-		parentReq.RejectReason = "Child request " + strconv.FormatUint(req.Id, 10) + " rejected with reason: " + msg.GetRejectReason()
+		parentReq.RejectReason = "Child request " + strconv.FormatUint(req.Id, 10) + " rejected with reason: " + rejectReason
 
 		if err := k.SignRequestStore.Set(ctx, parentReq.Id, parentReq); err != nil {
 			return fmt.Errorf("failed to set parent sign request: %w", err)
