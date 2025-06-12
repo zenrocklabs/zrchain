@@ -1084,7 +1084,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				}
 				k.Logger(ctx).Warn("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				return nil
-			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
+			} else if types.IsEthereumCAIP2(ctx, tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
 			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
@@ -1149,7 +1149,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				exchangeRate,
 			)
 
-			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
+			chainID, err := types.ValidateEVMChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
 				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
@@ -1157,7 +1157,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
-				chainID.Uint64(),
+				chainID,
 				tx.Amount,
 				feeZenBTC,
 				oracleData.RequestedEthMinterNonce,
@@ -1183,7 +1183,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				tx.Creator,
 				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
 				treasurytypes.WalletType(tx.ChainType),
-				chainID.Uint64(),
+				chainID,
 				unsignedMintTx,
 				unsignedMintTxHash,
 			)

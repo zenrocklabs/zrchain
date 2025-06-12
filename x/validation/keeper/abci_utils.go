@@ -454,11 +454,11 @@ func (k *Keeper) lookupEthereumNonce(ctx context.Context, keyID uint64) (uint64,
 }
 
 func (k *Keeper) constructEthereumTx(ctx context.Context, addr common.Address, chainID uint64, data []byte, nonce, gasLimit, baseFee, tipCap uint64) ([]byte, []byte, error) {
-	validatedChainID, err := types.ValidateChainID(ctx, chainID)
-	if err != nil {
+	caip2ChainID := fmt.Sprintf("eip155:%d", chainID)
+	if _, err := types.ValidateEVMChainID(ctx, caip2ChainID); err != nil {
 		return nil, nil, err
 	}
-	chainIDBigInt := new(big.Int).SetUint64(validatedChainID.Uint64())
+	chainIDBigInt := new(big.Int).SetUint64(chainID)
 
 	// Set minimum priority fee of 0.05 Gwei
 	minTipCap := new(big.Int).SetUint64(50000000)
@@ -892,7 +892,7 @@ func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.
 			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
 				isMatchingNetwork = types.IsSolanaCAIP2(ctx, tx.Caip2ChainId)
 			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
-				isMatchingNetwork = types.IsEthereumCAIP2(tx.Caip2ChainId)
+				isMatchingNetwork = types.IsEthereumCAIP2(ctx, tx.Caip2ChainId)
 			}
 			return isMatchingStatus && isMatchingNetwork
 		},

@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -16,20 +17,20 @@ import (
 func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.MsgBridgeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	if err := k.Keeper.CheckROCKSupplyCap(ctx, math.NewIntFromUint64(req.Amount)); err != nil {
 		return nil, err
 	}
 
-	if _, err := treasurytypes.Caip2ToKeyType(req.DestinationChain); err != nil {
+	if _, err := validationtypes.ValidateSolanaChainID(goCtx, req.DestinationChain); err != nil {
 		return nil, err
 	}
 
 	if treasurytypes.ValidateChainAddress(req.DestinationChain, req.RecipientAddress) != nil {
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
-	}
-
-	if !types.IsValidChain(ctx, req.DestinationChain) {
-		return nil, errors.New("invalid destination chain")
 	}
 
 	if req.Denom != params.BondDenom {
