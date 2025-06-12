@@ -1901,7 +1901,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				"burn_id", be.Id, "creator", creator, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 				"eigen_chain_id", getChainIDForEigen(ctx))
 
-			_, err = k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetUnstakerKeyID(ctx),
@@ -1910,13 +1910,32 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				unsignedTx,
 				unsignedTxHash,
 			)
-			return err
+			if err != nil {
+				return err
+			}
+			be.ZrchainTxId = txID
+			be.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
-		// txContinuationCallback: This is called when the unstake transaction's nonce has been confirmed on-chain.
-		// It updates the burn event's status to UNSTAKING to reflect that the unstaking process has started.
+		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
+		// The actual state progression now happens in `processZenBTCUnstakeEvents` upon event confirmation.
 		func(be zenbtctypes.BurnEvent) error {
-			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Nonce advanced for unstake. Updating burn event status.", "burn_id", be.Id, "old_status", be.Status, "new_status", zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING)
-			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+			if be.BlockHeight == 0 {
+				return nil
+			}
+			k.Logger(ctx).Info("Ethereum Unstake Status Check Begin", "burn_id", be.Id, "tx_block_height", be.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", be.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > be.BlockHeight+btl {
+				be = k.processBtlEthBurn(ctx, be, oracleData, btl)
+			}
+
+			if be.AwaitingEventSince > 0 {
+				be = k.processSecondaryTimeoutEthBurn(ctx, be, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Unstake Status Check End", "burn_id", be.Id, "tx_block_height_after_checks", be.BlockHeight, "awaiting_event_since_after_checks", be.AwaitingEventSince)
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
 	)
@@ -2059,7 +2078,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				return err
 			}
 
-			_, err = k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetCompleterKeyID(ctx),
@@ -2068,17 +2087,33 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				unsignedTx,
 				unsignedTxHash,
 			)
-			return err
-		},
-		// txContinuationCallback: This is called when the 'complete' transaction's nonce has been confirmed on-chain.
-		// It updates the redemption status to UNSTAKED and requests a nonce for the staker key,
-		// anticipating that the released funds might be re-staked.
-		func(r zenbtctypes.Redemption) error {
-			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
+			if err != nil {
 				return err
 			}
-			return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), true)
+			r.Data.ZrchainTxId = txID
+			r.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r)
+		},
+		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
+		// The actual state progression now happens in `processZenBTCRedemptionCompleteEvents` upon event confirmation.
+		func(r zenbtctypes.Redemption) error {
+			if r.BlockHeight == 0 {
+				return nil
+			}
+			k.Logger(ctx).Info("Ethereum Redemption Status Check Begin", "redemption_id", r.Data.Id, "tx_block_height", r.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", r.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > r.BlockHeight+btl {
+				r = k.processBtlEthRedemption(ctx, r, oracleData, btl)
+			}
+
+			if r.AwaitingEventSince > 0 {
+				r = k.processSecondaryTimeoutEthRedemption(ctx, r, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Redemption Status Check End", "redemption_id", r.Data.Id, "tx_block_height_after_checks", r.BlockHeight, "awaiting_event_since_after_checks", r.AwaitingEventSince)
+			return k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r)
 		},
 	)
 }
