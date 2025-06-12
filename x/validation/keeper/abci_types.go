@@ -171,10 +171,6 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
 	}
-	//if len(ve.SolanaBurnEventsHash) == 0 {
-	//	logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
-	//	invalid = true
-	//}
 	if len(ve.RedemptionsHash) == 0 {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
@@ -197,6 +193,22 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	}
 	if len(ve.LatestBtcHeaderHash) == 0 {
 		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaMintNonceHashes) == 0 {
+		logger.Error("invalid vote extension: SolanaMintNonceHashes is empty")
+		invalid = true
+	}
+	if len(ve.SolanaAccountsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaAccountsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaMintEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaMintEventsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaBurnEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
 		invalid = true
 	}
 
