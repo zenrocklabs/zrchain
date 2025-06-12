@@ -1048,7 +1048,6 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				return err
 			}
 			tx.ZrchainTxId = txID
-			tx.UnsignedTxHash = unsignedTxHash
 			tx.BlockHeight = ctx.BlockHeight()
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
@@ -1068,7 +1067,6 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				k.Logger(ctx).Warn("zenBTC stake transaction timed out, resetting", "tx_id", tx.Id)
 				tx.BlockHeight = 0
 				tx.ZrchainTxId = 0
-				tx.UnsignedTxHash = nil
 				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			}
 			return nil
@@ -1179,7 +1177,6 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				return err
 			}
 			tx.ZrchainTxId = txID
-			tx.UnsignedTxHash = unsignedMintTxHash
 			tx.BlockHeight = ctx.BlockHeight()
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
@@ -1194,7 +1191,6 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				k.Logger(ctx).Warn("zenBTC mint transaction timed out, resetting", "tx_id", tx.Id)
 				tx.BlockHeight = 0
 				tx.ZrchainTxId = 0
-				tx.UnsignedTxHash = nil
 				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 			}
 			return nil
@@ -1900,7 +1896,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				"burn_id", be.Id, "creator", creator, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 				"eigen_chain_id", getChainIDForEigen(ctx))
 
-			return k.submitEthereumTransaction(
+			_, err = k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetUnstakerKeyID(ctx),
@@ -1909,6 +1905,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				unsignedTx,
 				unsignedTxHash,
 			)
+			return err
 		},
 		// txContinuationCallback: This is called when the unstake transaction's nonce has been confirmed on-chain.
 		// It updates the burn event's status to UNSTAKING to reflect that the unstaking process has started.
@@ -2057,7 +2054,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				return err
 			}
 
-			return k.submitEthereumTransaction(
+			_, err = k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetCompleterKeyID(ctx),
@@ -2066,6 +2063,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				unsignedTx,
 				unsignedTxHash,
 			)
+			return err
 		},
 		// txContinuationCallback: This is called when the 'complete' transaction's nonce has been confirmed on-chain.
 		// It updates the redemption status to UNSTAKED and requests a nonce for the staker key,
@@ -2293,8 +2291,36 @@ func (k *Keeper) processZenBTCStakeEvents(ctx sdk.Context, oracleData OracleData
 		return
 	}
 
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for stake event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for stake event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for stake event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for stake event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
 	for _, event := range oracleData.EthStakeEvents {
-		if bytes.Equal(event.UnsignedTxHash, signTxReq.UnsignedTxHash) {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("error setting pending mint tx after stake event", "error", err)
@@ -2342,8 +2368,36 @@ func (k *Keeper) processZenBTCMintEventsEthereum(ctx sdk.Context, oracleData Ora
 		return
 	}
 
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for eth mint event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for eth mint event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for eth mint event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for eth mint event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
 	for _, event := range oracleData.EthMintEvents {
-		if bytes.Equal(event.UnsignedTxHash, signTxReq.UnsignedTxHash) {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				k.Logger(ctx).Error("error getting zenBTC supply for mint event", "error", err)
@@ -2396,8 +2450,36 @@ func (k *Keeper) processZenBTCUnstakeEvents(ctx sdk.Context, oracleData OracleDa
 		return
 	}
 
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for unstake event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for unstake event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for unstake event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for unstake event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
 	for _, event := range oracleData.EthUnstakeEvents {
-		if bytes.Equal(event.UnsignedTxHash, signTxReq.UnsignedTxHash) {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
 			burnEvent.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
 			if err := k.zenBTCKeeper.SetBurnEvent(ctx, burnEvent.Id, burnEvent); err != nil {
 				k.Logger(ctx).Error("error setting burn event after unstake event", "error", err)
@@ -2422,11 +2504,12 @@ func (k *Keeper) processZenBTCRedemptionCompleteEvents(ctx sdk.Context, oracleDa
 		return
 	}
 
-	redemption, err := k.zenBTCKeeper.GetRedemption(ctx, firstPendingID)
-	if err != nil {
+	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 1, firstPendingID)
+	if err != nil || len(redemptions) == 0 {
 		k.Logger(ctx).Error("error getting redemption for completion event", "id", firstPendingID, "error", err)
 		return
 	}
+	redemption := redemptions[0]
 
 	if redemption.Data.ZrchainTxId == 0 {
 		return
@@ -2438,8 +2521,36 @@ func (k *Keeper) processZenBTCRedemptionCompleteEvents(ctx sdk.Context, oracleDa
 		return
 	}
 
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for completion event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for completion event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for completion event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for completion event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
 	for _, event := range oracleData.EthCompletionEvents {
-		if bytes.Equal(event.UnsignedTxHash, signTxReq.UnsignedTxHash) {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
 			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 			if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption); err != nil {
 				return
