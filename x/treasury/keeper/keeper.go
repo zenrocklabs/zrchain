@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -400,7 +401,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("keyring %s not found", key.KeyringAddr)
 		}
 
-		if k.IsZentpMint(ctx, req.KeyIds[0]) {
+		if k.IsReservedKey(ctx, req.KeyIds[0]) {
 			keyring.SigReqFee = 0
 		}
 
@@ -761,4 +762,41 @@ func (k Keeper) IsZentpMint(ctx sdk.Context, keyID uint64) bool {
 	}
 
 	return false
+}
+
+func (k Keeper) isKeyReserved(ctx sdk.Context, keyID uint64) (bool, string, error) {
+	if k.zenBTCKeeper == nil {
+		return false, "", fmt.Errorf("zenbtc keeper is not set")
+	}
+	if k.zentpKeeper == nil {
+		return false, "", fmt.Errorf("zentp keeper is not set")
+	}
+
+	if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
+		keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
+		keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
+		keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
+		keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
+		keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
+		keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
+		keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
+		slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
+		return true, "zenbtc", nil
+	}
+	if keyID == k.zentpKeeper.GetSignerKeyID(ctx) ||
+		keyID == k.zentpKeeper.GetNonceAccountKey(ctx) ||
+		keyID == k.zentpKeeper.GetNonceAuthorityKey(ctx) {
+		return true, "zentp", nil
+	}
+
+	return false, "", nil
+}
+
+func (k Keeper) IsReservedKey(ctx sdk.Context, keyID uint64) bool {
+	isReserved, _, err := k.isKeyReserved(ctx, keyID)
+	if err != nil {
+		k.Logger().Error("failed to check if key is reserved", "err", err.Error(), "keyID", keyID)
+		return false
+	}
+	return isReserved
 }

@@ -42,7 +42,6 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		bankKeeper,
 		*identityKeeper,
 		*policyKeeper,
-
 		nil,
 		zentpKeeper,
 	)
