@@ -1054,22 +1054,22 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
 		// The actual state progression now happens in `processZenBTCStakeEvents` upon event confirmation.
 		func(tx zenbtctypes.PendingMintTransaction) error {
-			// If BlockHeight is 0, this transaction has not been dispatched yet, so nothing to check.
 			if tx.BlockHeight == 0 {
 				return nil
 			}
+			k.Logger(ctx).Info("Ethereum Stake Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
 
-			// Simple timeout logic: if the transaction has been pending for too many blocks, reset it.
-			// A more advanced implementation could use a progressive backoff or other strategies.
-			// TODO: Make BTL a chain parameter for Ethereum transactions.
-			const btl = 30 // Blocks-To-Live
+			const btl = 30 // TODO: Make this a governance parameter
+
 			if ctx.BlockHeight() > tx.BlockHeight+btl {
-				k.Logger(ctx).Warn("zenBTC stake transaction timed out, resetting", "tx_id", tx.Id)
-				tx.BlockHeight = 0
-				tx.ZrchainTxId = 0
-				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+				tx = k.processBtlEthStake(ctx, tx, oracleData, btl)
 			}
-			return nil
+
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutEthStake(ctx, tx, oracleData)
+			}
+			k.Logger(ctx).Info("Ethereum Stake Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
 }
@@ -1185,15 +1185,20 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if tx.BlockHeight == 0 {
 				return nil
 			}
-			// TODO: Make BTL a chain parameter for Ethereum transactions.
-			const btl = 30 // Blocks-To-Live
+			k.Logger(ctx).Info("Ethereum Mint Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
 			if ctx.BlockHeight() > tx.BlockHeight+btl {
-				k.Logger(ctx).Warn("zenBTC mint transaction timed out, resetting", "tx_id", tx.Id)
-				tx.BlockHeight = 0
-				tx.ZrchainTxId = 0
-				return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+				tx = k.processBtlEthMint(ctx, tx, oracleData, btl)
 			}
-			return nil
+
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutEthMint(ctx, tx, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
 }
@@ -2562,4 +2567,132 @@ func (k *Keeper) processZenBTCRedemptionCompleteEvents(ctx sdk.Context, oracleDa
 			break // Event processed, exit loop
 		}
 	}
+}
+
+// =============================================================================
+// ETHEREUM TIMEOUT/RETRY HELPERS
+// =============================================================================
+
+// processBtlEthStake processes BTL timeout for an Ethereum stake transaction.
+func (k *Keeper) processBtlEthStake(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, btl int64) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processSecondaryTimeoutEthStake processes the secondary event arrival timeout for a stake transaction.
+func (k *Keeper) processSecondaryTimeoutEthStake(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processBtlEthMint processes BTL timeout for an Ethereum mint transaction.
+func (k *Keeper) processBtlEthMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, btl int64) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processSecondaryTimeoutEthMint processes the secondary event arrival timeout for a mint transaction.
+func (k *Keeper) processSecondaryTimeoutEthMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processBtlEthBurn processes BTL timeout for an Ethereum unstake transaction.
+func (k *Keeper) processBtlEthBurn(ctx sdk.Context, be zenbtctypes.BurnEvent, oracleData OracleData, btl int64) zenbtctypes.BurnEvent {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		be.Id,
+		be.BlockHeight,
+		be.AwaitingEventSince,
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	be.BlockHeight = newBlockHeight
+	be.AwaitingEventSince = newAwaitingEventSince
+	return be
+}
+
+// processSecondaryTimeoutEthBurn processes the secondary event arrival timeout for an unstake transaction.
+func (k *Keeper) processSecondaryTimeoutEthBurn(ctx sdk.Context, be zenbtctypes.BurnEvent, oracleData OracleData) zenbtctypes.BurnEvent {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		be.Id,
+		be.BlockHeight,
+		be.AwaitingEventSince,
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		oracleData,
+	)
+	be.BlockHeight = newBlockHeight
+	be.AwaitingEventSince = newAwaitingEventSince
+	return be
+}
+
+// processBtlEthRedemption processes BTL timeout for an Ethereum redemption transaction.
+func (k *Keeper) processBtlEthRedemption(ctx sdk.Context, r zenbtctypes.Redemption, oracleData OracleData, btl int64) zenbtctypes.Redemption {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		r.Data.Id,
+		r.BlockHeight,
+		r.AwaitingEventSince,
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	r.BlockHeight = newBlockHeight
+	r.AwaitingEventSince = newAwaitingEventSince
+	return r
+}
+
+// processSecondaryTimeoutEthRedemption processes the secondary event arrival timeout for a redemption transaction.
+func (k *Keeper) processSecondaryTimeoutEthRedemption(ctx sdk.Context, r zenbtctypes.Redemption, oracleData OracleData) zenbtctypes.Redemption {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		r.Data.Id,
+		r.BlockHeight,
+		r.AwaitingEventSince,
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+		oracleData,
+	)
+	r.BlockHeight = newBlockHeight
+	r.AwaitingEventSince = newAwaitingEventSince
+	return r
 }
