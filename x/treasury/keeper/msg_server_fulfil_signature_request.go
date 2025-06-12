@@ -27,17 +27,27 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 		return nil, err
 	}
 
-	switch msg.Status {
-	case types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED, types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL:
-		if err := k.handleSignatureRequest(ctx, msg, req, key); err != nil {
-			return nil, err
+	if req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING &&
+		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL {
+		return nil, fmt.Errorf("request is not pending/partial, can't be updated")
+	}
+
+	if err := k.validateZenBTCSignRequest(ctx, *req, *key); err != nil {
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = err.Error()
+	} else {
+		switch msg.Status {
+		case types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED, types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL:
+			if err := k.handleSignatureRequest(ctx, msg, req, key); err != nil {
+				return nil, err
+			}
+		case types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED:
+			if err := k.handleSignatureRequestRejection(ctx, msg, req); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("invalid status field %s, should be either fulfilled/partial/rejected", msg.Status)
 		}
-	case types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED:
-		if err := k.handleSignatureRequestRejection(ctx, msg, req); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("invalid status field %s, should be either fulfilled/partial/rejected", msg.Status)
 	}
 
 	if err := k.SignRequestStore.Set(ctx, req.Id, *req); err != nil {
@@ -46,7 +56,12 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, key.KeyringAddr)
 	if err != nil || !keyring.IsActive {
-		return nil, fmt.Errorf("keyring %s is nil or is inactive", key.KeyringAddr)
+		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
+		req.RejectReason = fmt.Sprintf("keyring %s is inactive or not found", key.KeyringAddr)
+		return nil, nil
+	}
+	if !keyring.IsParty(msg.Creator) && req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
+		return nil, fmt.Errorf("only one party of the keyring can fulfil signature request")
 	}
 
 	if req.Fee > 0 {
@@ -81,19 +96,9 @@ func (k msgServer) fulfilRequestSetup(ctx sdk.Context, requestID uint64) (*types
 		return nil, nil, fmt.Errorf("request not found")
 	}
 
-	if req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING &&
-		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL &&
-		req.Status != types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
-		return nil, nil, fmt.Errorf("request is not pending/partial, can't be updated")
-	}
-
 	key, err := k.KeyStore.Get(ctx, req.KeyIds[0])
 	if err != nil {
 		return nil, nil, fmt.Errorf("key not found")
-	}
-
-	if err := k.validateZenBTCSignRequest(ctx, req, key); err != nil {
-		return nil, nil, err
 	}
 
 	return &req, &key, nil
@@ -193,7 +198,11 @@ func (k msgServer) handleSignatureRequest(ctx sdk.Context, msg *types.MsgFulfilS
 
 func (k msgServer) handleSignatureRequestRejection(ctx sdk.Context, msg *types.MsgFulfilSignatureRequest, req *types.SignRequest) error {
 	req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-	req.RejectReason = msg.GetRejectReason()
+	rejectReason := msg.GetRejectReason()
+	if rejectReason == "" {
+		rejectReason = "rejected with no reason provided"
+	}
+	req.RejectReason = rejectReason
 
 	if req.ParentReqId != 0 {
 		parentReq, err := k.SignRequestStore.Get(ctx, req.ParentReqId)
@@ -201,7 +210,7 @@ func (k msgServer) handleSignatureRequestRejection(ctx sdk.Context, msg *types.M
 			return fmt.Errorf("parent request not found: %w", err)
 		}
 		parentReq.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
-		parentReq.RejectReason = "Child request " + strconv.FormatUint(req.Id, 10) + " rejected with reason: " + msg.GetRejectReason()
+		parentReq.RejectReason = "Child request " + strconv.FormatUint(req.Id, 10) + " rejected with reason: " + rejectReason
 
 		if err := k.SignRequestStore.Set(ctx, parentReq.Id, parentReq); err != nil {
 			return fmt.Errorf("failed to set parent sign request: %w", err)

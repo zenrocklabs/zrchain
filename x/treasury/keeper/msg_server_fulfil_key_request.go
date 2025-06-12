@@ -72,8 +72,13 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 		}
 	}
 
+	keyMsg, ok := msg.Result.(*types.MsgFulfilKeyRequest_Key)
+	if !ok || keyMsg.Key == nil || len(keyMsg.Key.PublicKey) == 0 {
+		return k.rejectKeyRequest(ctx, req, "invalid or missing public key for fulfilled key request")
+	}
+	pubKey := keyMsg.Key.PublicKey
+
 	// Check against public key from other parties
-	pubKey := (msg.Result.(*types.MsgFulfilKeyRequest_Key)).Key.PublicKey
 	if len(req.PublicKey) > 0 {
 		if !bytes.Equal(req.PublicKey, pubKey) {
 			rejectReason := fmt.Sprintf("public key mismatch, expected %x, got %x", req.PublicKey, pubKey)
@@ -146,7 +151,11 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 
 func (k msgServer) handleKeyRequestRejection(ctx sdk.Context, msg *types.MsgFulfilKeyRequest, req *types.KeyRequest) (*types.MsgFulfilKeyRequestResponse, error) {
 	req.Status = types.KeyRequestStatus_KEY_REQUEST_STATUS_REJECTED
-	req.RejectReason = msg.Result.(*types.MsgFulfilKeyRequest_RejectReason).RejectReason
+	if rejectMsg, ok := msg.Result.(*types.MsgFulfilKeyRequest_RejectReason); ok {
+		req.RejectReason = rejectMsg.RejectReason
+	} else {
+		req.RejectReason = "rejected with no reason provided"
+	}
 
 	if err := k.KeyRequestStore.Set(ctx, req.Id, *req); err != nil {
 		return nil, err
@@ -174,6 +183,35 @@ func (k msgServer) handleKeyRequestRejection(ctx sdk.Context, msg *types.MsgFulf
 	return &types.MsgFulfilKeyRequestResponse{}, nil
 }
 
+// validateLeadingZeros checks for an excessive number of leading zeros in a public key.
+// It checks for 5 or more leading zeros starting from the given index.
+func (k msgServer) validateLeadingZeros(ctx sdk.Context, req *types.KeyRequest, pubKey []byte, keyTypeStr string, startIdx int) (*types.MsgFulfilKeyRequestResponse, error) {
+	// Check for 5 or more leading zeros from startIdx.
+	// If the key is shorter than startIdx + 5, it can't have 5 leading zeros.
+	if len(pubKey) < startIdx+5 {
+		return nil, nil
+	}
+
+	numLeadingZeros := 0
+	for i := startIdx; i < startIdx+5; i++ {
+		if pubKey[i] == 0 {
+			numLeadingZeros++
+		} else {
+			break
+		}
+	}
+
+	if numLeadingZeros >= 5 {
+		errorMsg := fmt.Sprintf("invalid %s public key %x: contains %d leading zeros (max 4 allowed)", keyTypeStr, pubKey, numLeadingZeros)
+		if startIdx > 0 {
+			errorMsg = fmt.Sprintf("invalid %s public key %x: contains %d leading zeros after prefix (max 4 allowed)", keyTypeStr, pubKey, numLeadingZeros)
+		}
+		return k.rejectKeyRequest(ctx, req, errorMsg)
+	}
+
+	return nil, nil
+}
+
 // validateECDSAKeyDetails performs common validation for ECDSA-based public keys.
 func (k msgServer) validateECDSAKeyDetails(ctx sdk.Context, req *types.KeyRequest, pubKey []byte, keyTypeStr string) (*types.MsgFulfilKeyRequestResponse, error) {
 	keyLen := len(pubKey)
@@ -190,18 +228,8 @@ func (k msgServer) validateECDSAKeyDetails(ctx sdk.Context, req *types.KeyReques
 	// Constraint 2: It should not contain more than 4 leading zeros after the prefix.
 	// This means if pubKey[1] through pubKey[5] are all zero, it's a violation.
 	// (i.e., 5 or more leading zeros after the prefix is not allowed).
-	// This check is relevant as keyLen is guaranteed to be 33 or 65.
-	numLeadingZerosAfterPrefix := 0
-	for i := 1; i <= 5; i++ { // Check byte indices 1 through 5
-		if pubKey[i] == 0 {
-			numLeadingZerosAfterPrefix++
-		} else {
-			break // Stop counting at the first non-zero byte
-		}
-	}
-
-	if numLeadingZerosAfterPrefix >= 5 {
-		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid %s public key %x: contains %d leading zeros after prefix (max 4 allowed)", keyTypeStr, pubKey, numLeadingZerosAfterPrefix))
+	if res, err := k.validateLeadingZeros(ctx, req, pubKey, keyTypeStr, 1); err != nil || res != nil {
+		return res, err
 	}
 
 	return nil, nil
@@ -215,12 +243,12 @@ func (k msgServer) validatePublicKey(ctx sdk.Context, req *types.KeyRequest, key
 		if l := len(pubKey); l != ed25519.PublicKeySize {
 			return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid eddsa_ed25519 public key %x of length %v, expected %d bytes", pubKey, l, ed25519.PublicKeySize))
 		}
+		return k.validateLeadingZeros(ctx, req, pubKey, "eddsa_ed25519", 0)
 	case types.KeyType_KEY_TYPE_BITCOIN_SECP256K1:
 		return k.validateECDSAKeyDetails(ctx, req, pubKey, "bitcoin_secp256k1")
 	default:
 		return k.rejectKeyRequest(ctx, req, fmt.Sprintf("invalid key type: %v", keyType.String()))
 	}
-	return nil, nil // Should be unreachable due to default case, but good practice.
 }
 
 func (k msgServer) rejectKeyRequest(ctx sdk.Context, req *types.KeyRequest, rejectReason string) (*types.MsgFulfilKeyRequestResponse, error) {

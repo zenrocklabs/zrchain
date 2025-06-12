@@ -39,14 +39,6 @@ var defaultECDSAKey = types.Key{
 	PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
 }
 
-// var defaultBTCKey = types.Key{
-// 	Id:            1,
-// 	WorkspaceAddr: "testWorkspace",
-// 	KeyringAddr:   "keyring1pfnq7r04rept47gaf5cpdew2",
-// 	Type:          types.KeyType_KEY_TYPE_BITCOIN_SECP256K1,
-// 	PublicKey:     []byte{0x03, 0xca, 0x27, 0xea, 0x7b, 0x06, 0x41, 0x49, 0x7b, 0x19, 0xa7, 0x23, 0xe3, 0xb9, 0x25, 0x90, 0x80, 0x1c, 0x7e, 0x79, 0xb1, 0x14, 0x25, 0x3f, 0xc1, 0xe9, 0x9d, 0xf1, 0xfd, 0x97, 0x30, 0x52, 0x6b},
-// }
-
 var defaultBitcoinKey = types.Key{
 	Id:            1,
 	WorkspaceAddr: "testWorkspace",
@@ -107,7 +99,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 		Creator:        "testCreator",
 		KeyIds:         []uint64{1},
 		DataForSigning: sigRequestPayload,
-		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL,
+		Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 		KeyType:        types.KeyType_KEY_TYPE_ECDSA_SECP256K1,
 		KeyringPartySigs: []*types.PartySignature{
 			{
@@ -118,7 +110,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 	}
 
 	var defaultResponseECDSA = types.MsgFulfilSignatureRequest{
-		Creator:               "testRequestCreator",
+		Creator:               "testCreator2",
 		RequestId:             1,
 		Status:                types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 		SignedData:            sigPayloadECDSA[0].SignedData,
@@ -159,7 +151,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 						Signature: []byte("0TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 					},
 					{
-						Creator:   "testRequestCreator",
+						Creator:   "testCreator2",
 						Signature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 					},
 				},
@@ -175,7 +167,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					Creator:        "testCreator",
 					KeyIds:         []uint64{1},
 					DataForSigning: sigRequestPayload,
-					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PARTIAL,
+					Status:         types.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING,
 					KeyType:        types.KeyType_KEY_TYPE_EDDSA_ED25519,
 					KeyringPartySigs: []*types.PartySignature{
 						{
@@ -185,7 +177,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 					},
 				},
 				msg: &types.MsgFulfilSignatureRequest{
-					Creator:               "testRequestCreator",
+					Creator:               "testCreator2",
 					RequestId:             1,
 					Status:                types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED,
 					SignedData:            sigPayloadEdDSA[0].SignedData,
@@ -207,7 +199,7 @@ func Test_msgServer_FulfilSignatureRequest(t *testing.T) {
 						Signature: []byte("0TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 					},
 					{
-						Creator:   "testRequestCreator",
+						Creator:   "testCreator2",
 						Signature: []byte("1TestSignatureTestSignatureTestSignatureTestSignatureTestSignatu"),
 					},
 				},
