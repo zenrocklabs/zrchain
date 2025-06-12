@@ -46,18 +46,22 @@ class QueryMintsResponse(_message.Message):
     def __init__(self, mints: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
 
 class QueryBurnsRequest(_message.Message):
-    __slots__ = ("id", "denom", "status", "pagination", "tx_id")
+    __slots__ = ("id", "denom", "status", "tx_id", "recipient_address", "source_tx_hash", "pagination")
     ID_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
-    PAGINATION_FIELD_NUMBER: _ClassVar[int]
     TX_ID_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
     id: int
     denom: str
     status: _bridge_pb2.BridgeStatus
-    pagination: _pagination_pb2.PageRequest
     tx_id: int
-    def __init__(self, id: _Optional[int] = ..., denom: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ..., tx_id: _Optional[int] = ...) -> None: ...
+    recipient_address: str
+    source_tx_hash: str
+    pagination: _pagination_pb2.PageRequest
+    def __init__(self, id: _Optional[int] = ..., denom: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., tx_id: _Optional[int] = ..., recipient_address: _Optional[str] = ..., source_tx_hash: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
 
 class QueryBurnsResponse(_message.Message):
     __slots__ = ("burns", "pagination")

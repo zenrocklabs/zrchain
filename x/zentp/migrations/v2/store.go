@@ -44,11 +44,10 @@ func UpdateParams(ctx sdk.Context, params collections.Item[types.Params]) error 
 			Btl:               20,
 		},
 		"diamond": { // mainnet
-			// TODO: Configure mainnet environment parameters
-			SignerKeyId:       0,
+			SignerKeyId:       281,
 			ProgramId:         "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
-			NonceAccountKey:   0,
-			NonceAuthorityKey: 0,
+			NonceAccountKey:   283,
+			NonceAuthorityKey: 282,
 			MintAddress:       "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf",
 			FeeWallet:         "7AnbfuYgwXXKo2Jn8HBc9HBrrNezEPvYA55NW2PWmSHQ",
 			Fee:               0,

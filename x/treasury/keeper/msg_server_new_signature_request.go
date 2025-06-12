@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	"golang.org/x/exp/slices"
 
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
@@ -111,20 +110,13 @@ func (k msgServer) NewSignatureRequestActionHandler(ctx sdk.Context, act *policy
 
 func (k msgServer) checkReservedKeyIDs(ctx sdk.Context, keyIds []uint64) error {
 	if !k.TestMode {
-		if k.zenBTCKeeper == nil {
-			return fmt.Errorf("zenbtc keeper is not set")
-		}
 		for _, keyID := range keyIds {
-			if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetCompleterKeyID(ctx) ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).SignerKeyId ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAuthorityKey ||
-				keyID == k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey ||
-				keyID == k.zenBTCKeeper.GetRewardsDepositKeyID(ctx) ||
-				slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
-				return fmt.Errorf("key %d is reserved for internal zenbtc use", keyID)
+			isReserved, reservedFor, err := k.isKeyReserved(ctx, keyID)
+			if err != nil {
+				return err
+			}
+			if isReserved {
+				return fmt.Errorf("key %d is reserved for internal %s use", keyID, reservedFor)
 			}
 		}
 	}

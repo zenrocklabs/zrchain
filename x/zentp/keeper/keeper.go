@@ -165,8 +165,16 @@ func (k Keeper) GetSignerKeyID(ctx context.Context) uint64 {
 	return k.GetSolanaParams(ctx).SignerKeyId
 }
 
+func (k Keeper) GetNonceAccountKey(ctx context.Context) uint64 {
+	return k.GetSolanaParams(ctx).NonceAccountKey
+}
+
+func (k Keeper) GetNonceAuthorityKey(ctx context.Context) uint64 {
+	return k.GetSolanaParams(ctx).NonceAuthorityKey
+}
+
 func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeStatus) ([]*types.Bridge, error) {
-	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
+	mints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.mintStore,
 		nil,

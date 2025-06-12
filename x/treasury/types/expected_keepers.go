@@ -55,4 +55,6 @@ type PolicyKeeper interface {
 
 type ZentpKeeper interface {
 	GetSignerKeyID(ctx context.Context) uint64
+	GetNonceAccountKey(ctx context.Context) uint64
+	GetNonceAuthorityKey(ctx context.Context) uint64
 }
