@@ -94,6 +94,10 @@ type (
 		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
+		EthStakeEvents             []*api.EthStakeEvent
+		EthMintEvents              []*api.EthMintEvent
+		EthUnstakeEvents           []*api.EthUnstakeEvent
+		EthCompletionEvents        []*api.EthCompletionEvent
 	}
 
 	ValidatorDelegations struct {
