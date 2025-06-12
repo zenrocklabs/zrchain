@@ -473,19 +473,23 @@ func (m *SidecarStateRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_SidecarStateRequest proto.InternalMessageInfo
 
 type SidecarStateResponse struct {
-	EigenDelegations           []byte            `protobuf:"bytes,1,opt,name=EigenDelegations,proto3" json:"EigenDelegations,omitempty"`
-	EthBlockHeight             uint64            `protobuf:"varint,2,opt,name=EthBlockHeight,proto3" json:"EthBlockHeight,omitempty"`
-	EthGasLimit                uint64            `protobuf:"varint,3,opt,name=EthGasLimit,proto3" json:"EthGasLimit,omitempty"`
-	EthBaseFee                 uint64            `protobuf:"varint,4,opt,name=EthBaseFee,proto3" json:"EthBaseFee,omitempty"`
-	EthTipCap                  uint64            `protobuf:"varint,5,opt,name=EthTipCap,proto3" json:"EthTipCap,omitempty"`
-	SolanaLamportsPerSignature uint64            `protobuf:"varint,6,opt,name=SolanaLamportsPerSignature,proto3" json:"SolanaLamportsPerSignature,omitempty"`
-	EthBurnEvents              []BurnEvent       `protobuf:"bytes,7,rep,name=EthBurnEvents,proto3" json:"EthBurnEvents"`
-	Redemptions                []Redemption      `protobuf:"bytes,8,rep,name=Redemptions,proto3" json:"Redemptions"`
-	ROCKUSDPrice               string            `protobuf:"bytes,9,opt,name=ROCKUSDPrice,proto3" json:"ROCKUSDPrice,omitempty"`
-	BTCUSDPrice                string            `protobuf:"bytes,10,opt,name=BTCUSDPrice,proto3" json:"BTCUSDPrice,omitempty"`
-	ETHUSDPrice                string            `protobuf:"bytes,11,opt,name=ETHUSDPrice,proto3" json:"ETHUSDPrice,omitempty"`
-	SolanaMintEvents           []SolanaMintEvent `protobuf:"bytes,12,rep,name=SolanaMintEvents,proto3" json:"SolanaMintEvents"`
-	SolanaBurnEvents           []BurnEvent       `protobuf:"bytes,13,rep,name=SolanaBurnEvents,proto3" json:"SolanaBurnEvents"`
+	EigenDelegations           []byte               `protobuf:"bytes,1,opt,name=EigenDelegations,proto3" json:"EigenDelegations,omitempty"`
+	EthBlockHeight             uint64               `protobuf:"varint,2,opt,name=EthBlockHeight,proto3" json:"EthBlockHeight,omitempty"`
+	EthGasLimit                uint64               `protobuf:"varint,3,opt,name=EthGasLimit,proto3" json:"EthGasLimit,omitempty"`
+	EthBaseFee                 uint64               `protobuf:"varint,4,opt,name=EthBaseFee,proto3" json:"EthBaseFee,omitempty"`
+	EthTipCap                  uint64               `protobuf:"varint,5,opt,name=EthTipCap,proto3" json:"EthTipCap,omitempty"`
+	SolanaLamportsPerSignature uint64               `protobuf:"varint,6,opt,name=SolanaLamportsPerSignature,proto3" json:"SolanaLamportsPerSignature,omitempty"`
+	EthBurnEvents              []BurnEvent          `protobuf:"bytes,7,rep,name=EthBurnEvents,proto3" json:"EthBurnEvents"`
+	Redemptions                []Redemption         `protobuf:"bytes,8,rep,name=Redemptions,proto3" json:"Redemptions"`
+	ROCKUSDPrice               string               `protobuf:"bytes,9,opt,name=ROCKUSDPrice,proto3" json:"ROCKUSDPrice,omitempty"`
+	BTCUSDPrice                string               `protobuf:"bytes,10,opt,name=BTCUSDPrice,proto3" json:"BTCUSDPrice,omitempty"`
+	ETHUSDPrice                string               `protobuf:"bytes,11,opt,name=ETHUSDPrice,proto3" json:"ETHUSDPrice,omitempty"`
+	SolanaMintEvents           []SolanaMintEvent    `protobuf:"bytes,12,rep,name=SolanaMintEvents,proto3" json:"SolanaMintEvents"`
+	SolanaBurnEvents           []BurnEvent          `protobuf:"bytes,13,rep,name=SolanaBurnEvents,proto3" json:"SolanaBurnEvents"`
+	EthStakeEvents             []EthStakeEvent      `protobuf:"bytes,14,rep,name=EthStakeEvents,proto3" json:"EthStakeEvents"`
+	EthMintEvents              []EthMintEvent       `protobuf:"bytes,15,rep,name=EthMintEvents,proto3" json:"EthMintEvents"`
+	EthUnstakeEvents           []EthUnstakeEvent    `protobuf:"bytes,16,rep,name=EthUnstakeEvents,proto3" json:"EthUnstakeEvents"`
+	EthCompletionEvents        []EthCompletionEvent `protobuf:"bytes,17,rep,name=EthCompletionEvents,proto3" json:"EthCompletionEvents"`
 }
 
 func (m *SidecarStateResponse) Reset()         { *m = SidecarStateResponse{} }
@@ -608,6 +612,34 @@ func (m *SidecarStateResponse) GetSolanaMintEvents() []SolanaMintEvent {
 func (m *SidecarStateResponse) GetSolanaBurnEvents() []BurnEvent {
 	if m != nil {
 		return m.SolanaBurnEvents
+	}
+	return nil
+}
+
+func (m *SidecarStateResponse) GetEthStakeEvents() []EthStakeEvent {
+	if m != nil {
+		return m.EthStakeEvents
+	}
+	return nil
+}
+
+func (m *SidecarStateResponse) GetEthMintEvents() []EthMintEvent {
+	if m != nil {
+		return m.EthMintEvents
+	}
+	return nil
+}
+
+func (m *SidecarStateResponse) GetEthUnstakeEvents() []EthUnstakeEvent {
+	if m != nil {
+		return m.EthUnstakeEvents
+	}
+	return nil
+}
+
+func (m *SidecarStateResponse) GetEthCompletionEvents() []EthCompletionEvent {
+	if m != nil {
+		return m.EthCompletionEvents
 	}
 	return nil
 }
@@ -924,6 +956,270 @@ func (m *SolanaMintEvent) GetMint() []byte {
 	return nil
 }
 
+// EthStakeEvent corresponds to the RockBTCStaked event on the ZenBTController
+// contract.
+type EthStakeEvent struct {
+	UnsignedTxHash []byte `protobuf:"bytes,1,opt,name=unsigned_tx_hash,json=unsignedTxHash,proto3" json:"unsigned_tx_hash,omitempty"`
+	Staker         []byte `protobuf:"bytes,2,opt,name=staker,proto3" json:"staker,omitempty"`
+	Amount         uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+}
+
+func (m *EthStakeEvent) Reset()         { *m = EthStakeEvent{} }
+func (m *EthStakeEvent) String() string { return proto.CompactTextString(m) }
+func (*EthStakeEvent) ProtoMessage()    {}
+func (*EthStakeEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{14}
+}
+func (m *EthStakeEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EthStakeEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EthStakeEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EthStakeEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthStakeEvent.Merge(m, src)
+}
+func (m *EthStakeEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *EthStakeEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthStakeEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EthStakeEvent proto.InternalMessageInfo
+
+func (m *EthStakeEvent) GetUnsignedTxHash() []byte {
+	if m != nil {
+		return m.UnsignedTxHash
+	}
+	return nil
+}
+
+func (m *EthStakeEvent) GetStaker() []byte {
+	if m != nil {
+		return m.Staker
+	}
+	return nil
+}
+
+func (m *EthStakeEvent) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+// EthMintEvent corresponds to the TokensMintedWithFee event on the ZenBTC
+// contract.
+type EthMintEvent struct {
+	UnsignedTxHash []byte `protobuf:"bytes,1,opt,name=unsigned_tx_hash,json=unsignedTxHash,proto3" json:"unsigned_tx_hash,omitempty"`
+	Recipient      []byte `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
+	Amount         uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	Fee            uint64 `protobuf:"varint,4,opt,name=fee,proto3" json:"fee,omitempty"`
+}
+
+func (m *EthMintEvent) Reset()         { *m = EthMintEvent{} }
+func (m *EthMintEvent) String() string { return proto.CompactTextString(m) }
+func (*EthMintEvent) ProtoMessage()    {}
+func (*EthMintEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{15}
+}
+func (m *EthMintEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EthMintEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EthMintEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EthMintEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthMintEvent.Merge(m, src)
+}
+func (m *EthMintEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *EthMintEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthMintEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EthMintEvent proto.InternalMessageInfo
+
+func (m *EthMintEvent) GetUnsignedTxHash() []byte {
+	if m != nil {
+		return m.UnsignedTxHash
+	}
+	return nil
+}
+
+func (m *EthMintEvent) GetRecipient() []byte {
+	if m != nil {
+		return m.Recipient
+	}
+	return nil
+}
+
+func (m *EthMintEvent) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *EthMintEvent) GetFee() uint64 {
+	if m != nil {
+		return m.Fee
+	}
+	return 0
+}
+
+// EthUnstakeEvent corresponds to the WithdrawalZenBTCInitiated event on the
+// ZenBTController contract.
+type EthUnstakeEvent struct {
+	UnsignedTxHash []byte `protobuf:"bytes,1,opt,name=unsigned_tx_hash,json=unsignedTxHash,proto3" json:"unsigned_tx_hash,omitempty"`
+	Redeemer       []byte `protobuf:"bytes,2,opt,name=redeemer,proto3" json:"redeemer,omitempty"`
+	Nonce          string `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Amount         string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
+}
+
+func (m *EthUnstakeEvent) Reset()         { *m = EthUnstakeEvent{} }
+func (m *EthUnstakeEvent) String() string { return proto.CompactTextString(m) }
+func (*EthUnstakeEvent) ProtoMessage()    {}
+func (*EthUnstakeEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{16}
+}
+func (m *EthUnstakeEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EthUnstakeEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EthUnstakeEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EthUnstakeEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthUnstakeEvent.Merge(m, src)
+}
+func (m *EthUnstakeEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *EthUnstakeEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthUnstakeEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EthUnstakeEvent proto.InternalMessageInfo
+
+func (m *EthUnstakeEvent) GetUnsignedTxHash() []byte {
+	if m != nil {
+		return m.UnsignedTxHash
+	}
+	return nil
+}
+
+func (m *EthUnstakeEvent) GetRedeemer() []byte {
+	if m != nil {
+		return m.Redeemer
+	}
+	return nil
+}
+
+func (m *EthUnstakeEvent) GetNonce() string {
+	if m != nil {
+		return m.Nonce
+	}
+	return ""
+}
+
+func (m *EthUnstakeEvent) GetAmount() string {
+	if m != nil {
+		return m.Amount
+	}
+	return ""
+}
+
+// EthCompletionEvent corresponds to the WithdrawalCompleted event on the
+// ZenBTController contract.
+type EthCompletionEvent struct {
+	UnsignedTxHash []byte `protobuf:"bytes,1,opt,name=unsigned_tx_hash,json=unsignedTxHash,proto3" json:"unsigned_tx_hash,omitempty"`
+	Redeemer       []byte `protobuf:"bytes,2,opt,name=redeemer,proto3" json:"redeemer,omitempty"`
+	Nonce          string `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
+}
+
+func (m *EthCompletionEvent) Reset()         { *m = EthCompletionEvent{} }
+func (m *EthCompletionEvent) String() string { return proto.CompactTextString(m) }
+func (*EthCompletionEvent) ProtoMessage()    {}
+func (*EthCompletionEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f890d7da2148de8, []int{17}
+}
+func (m *EthCompletionEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EthCompletionEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EthCompletionEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EthCompletionEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthCompletionEvent.Merge(m, src)
+}
+func (m *EthCompletionEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *EthCompletionEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthCompletionEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EthCompletionEvent proto.InternalMessageInfo
+
+func (m *EthCompletionEvent) GetUnsignedTxHash() []byte {
+	if m != nil {
+		return m.UnsignedTxHash
+	}
+	return nil
+}
+
+func (m *EthCompletionEvent) GetRedeemer() []byte {
+	if m != nil {
+		return m.Redeemer
+	}
+	return nil
+}
+
+func (m *EthCompletionEvent) GetNonce() string {
+	if m != nil {
+		return m.Nonce
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterEnum("api.Coin", Coin_name, Coin_value)
 	proto.RegisterType((*LatestBitcoinBlockHeaderRequest)(nil), "api.LatestBitcoinBlockHeaderRequest")
@@ -940,82 +1236,99 @@ func init() {
 	proto.RegisterType((*SolanaAccountInfoRequest)(nil), "api.SolanaAccountInfoRequest")
 	proto.RegisterType((*SolanaAccountInfoResponse)(nil), "api.SolanaAccountInfoResponse")
 	proto.RegisterType((*SolanaMintEvent)(nil), "api.SolanaMintEvent")
+	proto.RegisterType((*EthStakeEvent)(nil), "api.EthStakeEvent")
+	proto.RegisterType((*EthMintEvent)(nil), "api.EthMintEvent")
+	proto.RegisterType((*EthUnstakeEvent)(nil), "api.EthUnstakeEvent")
+	proto.RegisterType((*EthCompletionEvent)(nil), "api.EthCompletionEvent")
 }
 
 func init() { proto.RegisterFile("api/sidecar_service.proto", fileDescriptor_9f890d7da2148de8) }
 
 var fileDescriptor_9f890d7da2148de8 = []byte{
-	// 1120 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x56, 0xdd, 0x6e, 0x1b, 0xc5,
-	0x17, 0xf7, 0x26, 0x9b, 0xa4, 0x3e, 0x76, 0x1d, 0x6b, 0x9a, 0x7f, 0xb5, 0xf1, 0x9f, 0x3a, 0x61,
-	0x29, 0x55, 0x88, 0xd4, 0x58, 0x0a, 0x2a, 0x48, 0x95, 0x80, 0xd6, 0x1f, 0x49, 0xac, 0xa6, 0x21,
-	0x5a, 0xbb, 0x45, 0xca, 0x05, 0xd1, 0x64, 0x7d, 0x6a, 0x0f, 0xb1, 0x77, 0x96, 0xdd, 0x71, 0xd4,
-	0xc0, 0x4b, 0x20, 0x71, 0xc1, 0xbb, 0xf0, 0x04, 0xbd, 0x42, 0xbd, 0xe4, 0x0a, 0xa1, 0x84, 0x17,
-	0xe0, 0x0d, 0xd0, 0x7c, 0xac, 0xbd, 0xb6, 0xf3, 0xd1, 0xbb, 0x39, 0xbf, 0xf3, 0x3d, 0xfb, 0x3b,
-	0x67, 0x07, 0x56, 0x69, 0xc8, 0x2a, 0x31, 0xeb, 0xa0, 0x4f, 0xa3, 0xe3, 0x18, 0xa3, 0x33, 0xe6,
-	0xe3, 0x56, 0x18, 0x71, 0xc1, 0xc9, 0x3c, 0x0d, 0x59, 0x69, 0xd5, 0xe7, 0xf1, 0x80, 0xc7, 0xc7,
-	0x0a, 0xaa, 0x68, 0x41, 0xeb, 0x4b, 0x2b, 0x5d, 0xde, 0xe5, 0x1a, 0x97, 0x27, 0x8d, 0xba, 0xdf,
-	0xc0, 0xda, 0x3e, 0x15, 0x18, 0x8b, 0x2a, 0x13, 0x3e, 0x67, 0x41, 0xb5, 0xcf, 0xfd, 0xd3, 0x3d,
-	0xa4, 0x1d, 0x8c, 0x3c, 0xfc, 0x71, 0x88, 0xb1, 0x20, 0x1f, 0x41, 0xb6, 0xd6, 0xa3, 0x2c, 0x38,
-	0xa0, 0x03, 0x74, 0xac, 0x75, 0x6b, 0x23, 0xeb, 0x8d, 0x01, 0xd7, 0x87, 0x8f, 0x67, 0x5d, 0xab,
-	0xe7, 0x7b, 0xc8, 0xba, 0x3d, 0x91, 0x84, 0x58, 0x87, 0x9c, 0xd1, 0x4a, 0x54, 0x05, 0x99, 0xf7,
-	0xd2, 0xd0, 0x64, 0x92, 0xb9, 0xe9, 0x24, 0xbf, 0x5a, 0x50, 0xba, 0xaa, 0xc0, 0x38, 0xe4, 0x41,
-	0x8c, 0xe4, 0x09, 0xe4, 0x4e, 0xc6, 0xb0, 0x0a, 0x9f, 0xdb, 0xbe, 0xb7, 0x45, 0x43, 0xb6, 0x55,
-	0x6d, 0xd7, 0xd2, 0x1e, 0x69, 0xbb, 0xe9, 0xaa, 0xe6, 0xae, 0xac, 0xaa, 0xcd, 0x42, 0xa3, 0x9f,
-	0x57, 0xfa, 0x31, 0xe0, 0xfe, 0x61, 0x41, 0x61, 0x32, 0x3e, 0x71, 0x60, 0xe9, 0x35, 0x46, 0x31,
-	0xe3, 0x81, 0x69, 0x32, 0x11, 0x65, 0xa8, 0xc3, 0x08, 0xcf, 0x94, 0x71, 0xd2, 0xe0, 0x08, 0x20,
-	0x65, 0x80, 0x97, 0x18, 0x9d, 0xf6, 0xd1, 0xe3, 0x5c, 0x67, 0xca, 0x7a, 0x29, 0x44, 0x17, 0x32,
-	0xc0, 0x96, 0xa0, 0x83, 0xd0, 0xb1, 0x93, 0x42, 0x0c, 0x40, 0x08, 0xd8, 0x55, 0x26, 0x62, 0x67,
-	0x41, 0x29, 0xd4, 0x99, 0xac, 0xc0, 0xc2, 0x01, 0x0f, 0x7c, 0x74, 0x16, 0x15, 0xa8, 0x05, 0x19,
-	0x47, 0x97, 0x4b, 0xe3, 0x9e, 0xb3, 0xa4, 0xab, 0x18, 0x01, 0x2e, 0x02, 0x78, 0xd8, 0xc1, 0x41,
-	0x28, 0x64, 0xc5, 0x05, 0x98, 0x63, 0x1d, 0xd5, 0x86, 0xed, 0xcd, 0xb1, 0x0e, 0xa9, 0xc0, 0xbd,
-	0x0e, 0xc6, 0x82, 0x05, 0x54, 0xaa, 0x8f, 0x69, 0xa7, 0x13, 0x61, 0x1c, 0xab, 0x5e, 0xf2, 0x1e,
-	0x49, 0xa9, 0x9e, 0x6b, 0x0d, 0xb9, 0x0f, 0x8b, 0x74, 0xc0, 0x87, 0x81, 0x6e, 0xc8, 0xf6, 0x8c,
-	0xe4, 0xfe, 0x66, 0x41, 0xb6, 0x3a, 0x8c, 0x82, 0xc6, 0x19, 0x06, 0x42, 0x16, 0x2f, 0xde, 0x36,
-	0xeb, 0x86, 0x59, 0xea, 0x4c, 0x4a, 0x70, 0xa7, 0xcf, 0xbb, 0xcd, 0xa0, 0x83, 0x6f, 0x55, 0x7c,
-	0xdb, 0x1b, 0xc9, 0xf2, 0x8a, 0x7d, 0x49, 0x8c, 0x66, 0xdd, 0xdc, 0x53, 0x22, 0x92, 0x0d, 0x58,
-	0x9e, 0xaa, 0x42, 0x5d, 0x55, 0xde, 0x9b, 0x86, 0x53, 0x95, 0x2d, 0x4c, 0x54, 0xf6, 0x3f, 0xb8,
-	0xd7, 0xd2, 0xc3, 0xd5, 0x12, 0x54, 0xa0, 0xa1, 0xaf, 0xfb, 0xaf, 0x0d, 0x2b, 0x93, 0xb8, 0x21,
-	0xde, 0x26, 0x14, 0x1b, 0xac, 0x8b, 0x41, 0x1d, 0xfb, 0xd8, 0x55, 0xe1, 0x63, 0xd5, 0x47, 0xde,
-	0x9b, 0xc1, 0xc9, 0x23, 0x28, 0x34, 0x44, 0x6f, 0x9a, 0x70, 0xb6, 0x37, 0x85, 0x4a, 0x56, 0x36,
-	0x44, 0x6f, 0x97, 0xc6, 0xfb, 0x6c, 0xc0, 0x92, 0xab, 0x4b, 0x43, 0x92, 0x2c, 0xd2, 0x87, 0xc6,
-	0xb8, 0x83, 0xa8, 0x5a, 0xb4, 0xbd, 0x14, 0x22, 0x3f, 0x72, 0x43, 0xf4, 0xda, 0x2c, 0xac, 0xd1,
-	0xd0, 0x34, 0x38, 0x06, 0xc8, 0xd7, 0x50, 0x6a, 0xf1, 0x3e, 0x0d, 0xe8, 0x3e, 0x1d, 0x84, 0x3c,
-	0x12, 0xf1, 0x21, 0x46, 0x2d, 0xd6, 0x0d, 0xa8, 0x18, 0x46, 0x9a, 0x2d, 0xb6, 0x77, 0x83, 0x05,
-	0x79, 0x0a, 0x77, 0x65, 0xae, 0xe4, 0xfb, 0xc5, 0xce, 0xd2, 0xfa, 0xfc, 0x46, 0x6e, 0xbb, 0xa0,
-	0xc7, 0x2d, 0x81, 0xab, 0xf6, 0xbb, 0xbf, 0xd6, 0x32, 0xde, 0xa4, 0x29, 0xf9, 0x12, 0x72, 0x63,
-	0x82, 0xc5, 0xce, 0x1d, 0xe5, 0xb9, 0xac, 0x3c, 0xc7, 0xb8, 0x71, 0x4d, 0x5b, 0x12, 0x17, 0xf2,
-	0xde, 0xb7, 0xb5, 0x17, 0xaf, 0x5a, 0xf5, 0xc3, 0x88, 0xf9, 0xe8, 0x64, 0xd5, 0x97, 0x9f, 0xc0,
-	0xd4, 0x38, 0xb7, 0x6b, 0x23, 0x13, 0x50, 0x26, 0x69, 0x48, 0x5d, 0x6d, 0x7b, 0x6f, 0x64, 0x91,
-	0xd3, 0x16, 0x29, 0x88, 0xec, 0x40, 0x51, 0xb7, 0xfe, 0x92, 0x05, 0xc2, 0xf4, 0x97, 0x57, 0x55,
-	0xae, 0xa8, 0x2a, 0xa7, 0x94, 0xa6, 0xd4, 0x19, 0x1f, 0xf2, 0x2c, 0x89, 0x93, 0xba, 0xa7, 0xbb,
-	0x37, 0xdc, 0xd3, 0x8c, 0xb5, 0xbb, 0x07, 0xe5, 0x34, 0xe5, 0xaa, 0xe7, 0x0d, 0xd1, 0x9b, 0x5c,
-	0xaa, 0xb3, 0x84, 0xb2, 0xae, 0x22, 0x94, 0xfb, 0x0c, 0x1e, 0xea, 0x15, 0xdf, 0x10, 0x3d, 0x8c,
-	0x70, 0x38, 0x50, 0xab, 0x60, 0x87, 0x47, 0xcf, 0x7d, 0x5f, 0xb2, 0x3e, 0x89, 0xe7, 0xc0, 0x92,
-	0x99, 0x5c, 0x33, 0x8b, 0x89, 0xe8, 0x7e, 0x05, 0x9f, 0xde, 0x12, 0xc1, 0xcc, 0xc3, 0x68, 0xe9,
-	0xe8, 0x4a, 0xb4, 0xe0, 0x6e, 0x83, 0xa3, 0xdb, 0x33, 0xe6, 0xcd, 0xe0, 0x0d, 0x4f, 0x92, 0xde,
-	0x87, 0xc5, 0xc3, 0xe1, 0xc9, 0x0b, 0x3c, 0x37, 0x39, 0x8d, 0xe4, 0x3e, 0x81, 0xd5, 0x2b, 0x7c,
-	0x4c, 0x1a, 0x59, 0xa9, 0x86, 0xcd, 0xb4, 0x25, 0xa2, 0xfb, 0xbb, 0x05, 0xcb, 0x53, 0x1f, 0x83,
-	0xac, 0xc1, 0x42, 0x8d, 0x33, 0x63, 0x5b, 0xd8, 0xce, 0xaa, 0x0f, 0x20, 0x11, 0x4f, 0xe3, 0x32,
-	0x5c, 0x8b, 0x75, 0xd5, 0x4a, 0xd4, 0xcb, 0x2c, 0x11, 0xe5, 0x24, 0x79, 0xe8, 0xb3, 0x90, 0xa1,
-	0x59, 0x62, 0x79, 0x6f, 0x0c, 0xc8, 0xcd, 0x55, 0xa7, 0x02, 0xcd, 0x3e, 0x56, 0x67, 0x79, 0x03,
-	0xaf, 0x69, 0x7f, 0x88, 0x66, 0xee, 0xb4, 0x40, 0x8a, 0x30, 0x2f, 0x47, 0x55, 0x0f, 0x97, 0x3c,
-	0x4a, 0x5f, 0x59, 0xa1, 0xda, 0xc1, 0x79, 0x4f, 0x9d, 0x37, 0x1f, 0x83, 0x2d, 0x0b, 0x22, 0xcb,
-	0x90, 0x7b, 0x75, 0xd0, 0x3a, 0x6c, 0xd4, 0x9a, 0x3b, 0xcd, 0x46, 0xbd, 0x98, 0x21, 0x00, 0x8b,
-	0x47, 0x8d, 0x83, 0x6a, 0xbb, 0x56, 0xb4, 0xc8, 0x1d, 0xb0, 0x25, 0xeb, 0x8b, 0x73, 0xdb, 0xff,
-	0xd8, 0x50, 0x48, 0x28, 0xa2, 0x5f, 0x02, 0x64, 0x0f, 0x96, 0x77, 0x51, 0xa4, 0x79, 0x43, 0x1c,
-	0xcd, 0xdb, 0xd9, 0xad, 0x56, 0x5a, 0xbd, 0x42, 0xa3, 0x2f, 0xd8, 0xcd, 0x90, 0xef, 0xa1, 0x34,
-	0x15, 0x29, 0xc5, 0x40, 0xf2, 0xc9, 0x8c, 0xeb, 0x2c, 0x3f, 0x6f, 0x8e, 0xff, 0x03, 0x3c, 0xd8,
-	0x45, 0x71, 0xfd, 0xcb, 0x81, 0x3c, 0xd2, 0x73, 0x72, 0xdb, 0xd3, 0xa2, 0xb4, 0x76, 0x8d, 0x5d,
-	0x2a, 0xd7, 0x1b, 0xf8, 0xff, 0x2e, 0x8a, 0xeb, 0x9e, 0x39, 0xe4, 0xa1, 0x8a, 0x70, 0xcb, 0x2b,
-	0xe8, 0x43, 0xf2, 0xfc, 0x0c, 0xeb, 0xa3, 0x3c, 0xd7, 0x4c, 0x0a, 0xf9, 0x2c, 0x95, 0xec, 0xe6,
-	0x79, 0x2c, 0x6d, 0x7e, 0x88, 0xe9, 0x28, 0xf9, 0x77, 0xb0, 0x22, 0x3f, 0xd8, 0xf4, 0xcc, 0x90,
-	0x07, 0xa9, 0xbd, 0x35, 0x3b, 0x7f, 0xa5, 0xf2, 0x75, 0xea, 0x24, 0x70, 0xb5, 0xfd, 0xee, 0xa2,
-	0x6c, 0xbd, 0xbf, 0x28, 0x5b, 0x7f, 0x5f, 0x94, 0xad, 0x5f, 0x2e, 0xcb, 0x99, 0xf7, 0x97, 0xe5,
-	0xcc, 0x9f, 0x97, 0xe5, 0xcc, 0xd1, 0xd3, 0x2e, 0x13, 0xbd, 0xe1, 0xc9, 0x96, 0xcf, 0x07, 0x95,
-	0x23, 0x0c, 0x22, 0xee, 0x9f, 0x3e, 0xde, 0xe1, 0xc3, 0xa0, 0xa3, 0xfe, 0x78, 0x95, 0x9f, 0x22,
-	0xf5, 0x63, 0xae, 0x9c, 0x7d, 0x91, 0xbc, 0x58, 0x2b, 0xfa, 0xf9, 0x49, 0x43, 0x76, 0xb2, 0xa8,
-	0x8e, 0x9f, 0xff, 0x17, 0x00, 0x00, 0xff, 0xff, 0x18, 0xd8, 0x09, 0x76, 0xd1, 0x0a, 0x00, 0x00,
+	// 1319 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0xcd, 0x6f, 0x1b, 0x45,
+	0x14, 0xcf, 0x26, 0x9b, 0x0f, 0x3f, 0xbb, 0xb6, 0x3b, 0x09, 0xc5, 0x31, 0xad, 0x13, 0x96, 0x52,
+	0x85, 0x4a, 0x8d, 0xa5, 0xa0, 0x82, 0x54, 0xa9, 0xd0, 0xda, 0x71, 0x3e, 0xd4, 0x36, 0x8d, 0xd6,
+	0x6e, 0x91, 0x7a, 0x20, 0x9a, 0xac, 0x5f, 0xed, 0x21, 0xf6, 0xce, 0xb2, 0x3b, 0x8e, 0x52, 0xb8,
+	0x70, 0xe1, 0xc4, 0x05, 0x89, 0x03, 0xff, 0x0b, 0x7f, 0x41, 0x4f, 0xa8, 0x47, 0x4e, 0x08, 0xb5,
+	0xfc, 0x21, 0x68, 0x3e, 0xd6, 0x5e, 0xaf, 0xe3, 0xb4, 0x3d, 0x70, 0x9b, 0xf7, 0x7b, 0xdf, 0x33,
+	0x6f, 0x7e, 0xb3, 0x0b, 0xab, 0x34, 0x60, 0xd5, 0x88, 0xb5, 0xd1, 0xa3, 0xe1, 0x51, 0x84, 0xe1,
+	0x29, 0xf3, 0x70, 0x33, 0x08, 0xb9, 0xe0, 0x64, 0x8e, 0x06, 0xac, 0xbc, 0xea, 0xf1, 0xa8, 0xcf,
+	0xa3, 0x23, 0x05, 0x55, 0xb5, 0xa0, 0xf5, 0xe5, 0x95, 0x0e, 0xef, 0x70, 0x8d, 0xcb, 0x95, 0x46,
+	0x9d, 0xaf, 0x61, 0xed, 0x21, 0x15, 0x18, 0x89, 0x1a, 0x13, 0x1e, 0x67, 0x7e, 0xad, 0xc7, 0xbd,
+	0x93, 0x3d, 0xa4, 0x6d, 0x0c, 0x5d, 0xfc, 0x7e, 0x80, 0x91, 0x20, 0x57, 0x21, 0x53, 0xef, 0x52,
+	0xe6, 0x1f, 0xd0, 0x3e, 0x96, 0xac, 0x75, 0x6b, 0x23, 0xe3, 0x8e, 0x00, 0xc7, 0x83, 0x8f, 0x27,
+	0x5d, 0x6b, 0x2f, 0xf6, 0x90, 0x75, 0xba, 0x22, 0x0e, 0xb1, 0x0e, 0x59, 0xa3, 0x95, 0xa8, 0x0a,
+	0x32, 0xe7, 0x26, 0xa1, 0xf1, 0x24, 0xb3, 0xe9, 0x24, 0xbf, 0x59, 0x50, 0x3e, 0xaf, 0xc0, 0x28,
+	0xe0, 0x7e, 0x84, 0xe4, 0x36, 0x64, 0x8f, 0x47, 0xb0, 0x0a, 0x9f, 0xdd, 0x5a, 0xde, 0xa4, 0x01,
+	0xdb, 0xac, 0xb5, 0xea, 0x49, 0x8f, 0xa4, 0x5d, 0xba, 0xaa, 0xd9, 0x73, 0xab, 0x6a, 0xb1, 0xc0,
+	0xe8, 0xe7, 0x94, 0x7e, 0x04, 0x38, 0x7f, 0x5a, 0x90, 0x1f, 0x8f, 0x4f, 0x4a, 0xb0, 0xf8, 0x14,
+	0xc3, 0x88, 0x71, 0xdf, 0x34, 0x19, 0x8b, 0x32, 0xd4, 0x61, 0x88, 0xa7, 0xca, 0x38, 0x6e, 0x70,
+	0x08, 0x90, 0x0a, 0xc0, 0x23, 0x0c, 0x4f, 0x7a, 0xe8, 0x72, 0xae, 0x33, 0x65, 0xdc, 0x04, 0xa2,
+	0x0b, 0xe9, 0x63, 0x53, 0xd0, 0x7e, 0x50, 0xb2, 0xe3, 0x42, 0x0c, 0x40, 0x08, 0xd8, 0x35, 0x26,
+	0xa2, 0xd2, 0xbc, 0x52, 0xa8, 0x35, 0x59, 0x81, 0xf9, 0x03, 0xee, 0x7b, 0x58, 0x5a, 0x50, 0xa0,
+	0x16, 0x64, 0x1c, 0x5d, 0x2e, 0x8d, 0xba, 0xa5, 0x45, 0x5d, 0xc5, 0x10, 0x70, 0x10, 0xc0, 0xc5,
+	0x36, 0xf6, 0x03, 0x21, 0x2b, 0xce, 0xc3, 0x2c, 0x6b, 0xab, 0x36, 0x6c, 0x77, 0x96, 0xb5, 0x49,
+	0x15, 0x96, 0xdb, 0x18, 0x09, 0xe6, 0x53, 0xa9, 0x3e, 0xa2, 0xed, 0x76, 0x88, 0x51, 0xa4, 0x7a,
+	0xc9, 0xb9, 0x24, 0xa1, 0xba, 0xaf, 0x35, 0xe4, 0x0a, 0x2c, 0xd0, 0x3e, 0x1f, 0xf8, 0xba, 0x21,
+	0xdb, 0x35, 0x92, 0xf3, 0xbb, 0x05, 0x99, 0xda, 0x20, 0xf4, 0x1b, 0xa7, 0xe8, 0x0b, 0x59, 0xbc,
+	0x38, 0xdb, 0xdf, 0x36, 0x93, 0xa5, 0xd6, 0xa4, 0x0c, 0x4b, 0x3d, 0xde, 0xd9, 0xf7, 0xdb, 0x78,
+	0xa6, 0xe2, 0xdb, 0xee, 0x50, 0x96, 0x5b, 0xec, 0xc9, 0xc1, 0xd8, 0xdf, 0x36, 0xfb, 0x14, 0x8b,
+	0x64, 0x03, 0x0a, 0xa9, 0x2a, 0xd4, 0x56, 0xe5, 0xdc, 0x34, 0x9c, 0xa8, 0x6c, 0x7e, 0xac, 0xb2,
+	0x0f, 0x60, 0xb9, 0xa9, 0x2f, 0x57, 0x53, 0x50, 0x81, 0x66, 0x7c, 0x9d, 0x5f, 0x16, 0x61, 0x65,
+	0x1c, 0x37, 0x83, 0x77, 0x13, 0x8a, 0x0d, 0xd6, 0x41, 0x7f, 0x1b, 0x7b, 0xd8, 0x51, 0xe1, 0x23,
+	0xd5, 0x47, 0xce, 0x9d, 0xc0, 0xc9, 0x0d, 0xc8, 0x37, 0x44, 0x37, 0x3d, 0x70, 0xb6, 0x9b, 0x42,
+	0xe5, 0x54, 0x36, 0x44, 0x77, 0x97, 0x46, 0x0f, 0x59, 0x9f, 0xc5, 0x5b, 0x97, 0x84, 0xe4, 0xb0,
+	0x48, 0x1f, 0x1a, 0xe1, 0x0e, 0xa2, 0x6a, 0xd1, 0x76, 0x13, 0x88, 0x3c, 0xe4, 0x86, 0xe8, 0xb6,
+	0x58, 0x50, 0xa7, 0x81, 0x69, 0x70, 0x04, 0x90, 0xaf, 0xa0, 0xdc, 0xe4, 0x3d, 0xea, 0xd3, 0x87,
+	0xb4, 0x1f, 0xf0, 0x50, 0x44, 0x87, 0x18, 0x36, 0x59, 0xc7, 0xa7, 0x62, 0x10, 0xea, 0x69, 0xb1,
+	0xdd, 0x0b, 0x2c, 0xc8, 0x1d, 0xb8, 0x24, 0x73, 0xc5, 0xe7, 0x17, 0x95, 0x16, 0xd7, 0xe7, 0x36,
+	0xb2, 0x5b, 0x79, 0x7d, 0xdd, 0x62, 0xb8, 0x66, 0xbf, 0xfc, 0x7b, 0x6d, 0xc6, 0x1d, 0x37, 0x25,
+	0x5f, 0x42, 0x76, 0x34, 0x60, 0x51, 0x69, 0x49, 0x79, 0x16, 0x94, 0xe7, 0x08, 0x37, 0xae, 0x49,
+	0x4b, 0xe2, 0x40, 0xce, 0x7d, 0x5c, 0x7f, 0xf0, 0xa4, 0xb9, 0x7d, 0x18, 0x32, 0x0f, 0x4b, 0x19,
+	0x75, 0xf2, 0x63, 0x98, 0xba, 0xce, 0xad, 0xfa, 0xd0, 0x04, 0x94, 0x49, 0x12, 0x52, 0x5b, 0xdb,
+	0xda, 0x1b, 0x5a, 0x64, 0xb5, 0x45, 0x02, 0x22, 0x3b, 0x50, 0xd4, 0xad, 0x3f, 0x62, 0xbe, 0x30,
+	0xfd, 0xe5, 0x54, 0x95, 0x2b, 0xaa, 0xca, 0x94, 0xd2, 0x94, 0x3a, 0xe1, 0x43, 0xee, 0xc5, 0x71,
+	0x12, 0xfb, 0x74, 0xe9, 0x82, 0x7d, 0x9a, 0xb0, 0x26, 0xf7, 0xd4, 0xb8, 0x34, 0x05, 0x3d, 0x41,
+	0xe3, 0x9f, 0x57, 0xfe, 0x44, 0xf9, 0x8f, 0xa9, 0x4c, 0x8c, 0x94, 0x3d, 0xb9, 0xab, 0x0e, 0x2a,
+	0xd1, 0x48, 0x41, 0x05, 0xb8, 0x1c, 0x07, 0x48, 0x77, 0x31, 0x6e, 0x2d, 0xb7, 0xa2, 0x21, 0xba,
+	0x4f, 0xfc, 0x28, 0x51, 0x42, 0x31, 0xb1, 0x15, 0x29, 0x65, 0xdc, 0x48, 0xda, 0x87, 0x3c, 0x86,
+	0xe5, 0x86, 0xe8, 0xd6, 0x79, 0x3f, 0xe8, 0xa1, 0x3c, 0x4c, 0x13, 0xea, 0xb2, 0x0a, 0xf5, 0x61,
+	0x1c, 0x2a, 0xa5, 0x37, 0xd1, 0xce, 0xf3, 0x74, 0xf6, 0xa0, 0x92, 0xbc, 0x8c, 0xb5, 0x17, 0x0d,
+	0xd1, 0x1d, 0x7f, 0x6e, 0x26, 0xaf, 0x9a, 0x75, 0xde, 0x55, 0x73, 0xee, 0xc1, 0x75, 0xfd, 0xf8,
+	0x35, 0x44, 0x17, 0x43, 0x1c, 0xf4, 0x15, 0x49, 0xee, 0xf0, 0xf0, 0xbe, 0xe7, 0x49, 0x3e, 0x88,
+	0xe3, 0x95, 0x60, 0xd1, 0x70, 0x9a, 0x61, 0xa9, 0x58, 0x74, 0xee, 0xc2, 0xa7, 0x6f, 0x89, 0x60,
+	0x98, 0x62, 0x48, 0xc7, 0xba, 0x12, 0x2d, 0x38, 0x5b, 0x50, 0xd2, 0x07, 0x6f, 0xcc, 0xf7, 0xfd,
+	0xe7, 0x3c, 0x4e, 0x7a, 0x05, 0x16, 0x0e, 0x07, 0xc7, 0x0f, 0xf0, 0x85, 0xc9, 0x69, 0x24, 0xe7,
+	0x36, 0xac, 0x9e, 0xe3, 0x63, 0xd2, 0xc8, 0x4a, 0x35, 0x6c, 0x78, 0x28, 0x16, 0x9d, 0x3f, 0x2c,
+	0x28, 0xa4, 0xc6, 0x94, 0xac, 0xc1, 0x7c, 0x9d, 0x33, 0x63, 0x9b, 0xdf, 0xca, 0xa8, 0xc3, 0x90,
+	0x88, 0xab, 0x71, 0x19, 0xae, 0xc9, 0x3a, 0xea, 0xb1, 0xd0, 0x34, 0x1f, 0x8b, 0x92, 0x63, 0x5c,
+	0xf4, 0x58, 0xc0, 0xd0, 0xd0, 0x7b, 0xce, 0x1d, 0x01, 0x92, 0xd3, 0xb7, 0xa9, 0x40, 0xf3, 0x52,
+	0xa9, 0xb5, 0xdc, 0x81, 0xa7, 0xb4, 0x37, 0x40, 0xc3, 0x48, 0x5a, 0x20, 0x45, 0x98, 0x93, 0x24,
+	0xa6, 0x69, 0x47, 0x2e, 0xa5, 0xaf, 0xac, 0x50, 0xbd, 0x4e, 0x39, 0x57, 0xad, 0x1d, 0xa6, 0x46,
+	0x79, 0x34, 0xdc, 0x64, 0x03, 0x8a, 0x03, 0x3f, 0x62, 0x1d, 0x1f, 0xdb, 0x47, 0xe2, 0xec, 0xa8,
+	0x2b, 0x2b, 0xd4, 0x0d, 0xe7, 0x63, 0xbc, 0x75, 0xa6, 0x0a, 0xbd, 0x02, 0x0b, 0x6a, 0x1a, 0x43,
+	0xd3, 0x81, 0x91, 0xa6, 0x3e, 0x4e, 0x3f, 0x59, 0x90, 0x4b, 0x5e, 0x84, 0xf7, 0x48, 0x75, 0x15,
+	0x32, 0xe1, 0x70, 0x4f, 0x74, 0xb6, 0x11, 0x30, 0x2d, 0xa1, 0xdc, 0x81, 0xe7, 0x43, 0x1a, 0x97,
+	0x4b, 0xe7, 0x67, 0x0b, 0x0a, 0xa9, 0x6b, 0xf4, 0x1e, 0x55, 0x94, 0x61, 0x29, 0xc4, 0x36, 0x62,
+	0x7f, 0xd8, 0xf2, 0x50, 0x96, 0x67, 0xe0, 0xab, 0x29, 0xd4, 0x2f, 0xa7, 0x16, 0x12, 0x95, 0xd9,
+	0x7a, 0xd2, 0xcc, 0x56, 0x04, 0x40, 0x26, 0xef, 0xdf, 0xff, 0x59, 0xc9, 0xcd, 0x5b, 0x60, 0xcb,
+	0xc1, 0x23, 0x05, 0xc8, 0x3e, 0x39, 0x68, 0x1e, 0x36, 0xea, 0xfb, 0x3b, 0xfb, 0x8d, 0xed, 0xe2,
+	0x0c, 0x01, 0x58, 0x78, 0xd6, 0x38, 0xa8, 0xb5, 0xea, 0x45, 0x8b, 0x2c, 0x81, 0x2d, 0x79, 0xbf,
+	0x38, 0xbb, 0xf5, 0xaf, 0x0d, 0xf9, 0x98, 0x0a, 0xf4, 0xb7, 0x30, 0xd9, 0x83, 0xc2, 0x2e, 0x8a,
+	0x24, 0x3f, 0x90, 0x92, 0x66, 0xee, 0xc9, 0x77, 0xbd, 0xbc, 0x7a, 0x8e, 0x46, 0x5f, 0x24, 0x67,
+	0x86, 0x7c, 0x0b, 0xe5, 0x54, 0xa4, 0x04, 0xd3, 0x90, 0x4f, 0x26, 0x5c, 0x27, 0x79, 0xe8, 0xe2,
+	0xf8, 0xdf, 0xc1, 0xb5, 0x5d, 0x14, 0xd3, 0xbf, 0x9d, 0xc9, 0x0d, 0xfd, 0x52, 0xbc, 0xed, 0xe3,
+	0xba, 0xbc, 0x36, 0xc5, 0x2e, 0x91, 0xeb, 0x39, 0x7c, 0xb4, 0x8b, 0x62, 0xda, 0x87, 0x3e, 0xb9,
+	0xae, 0x22, 0xbc, 0xe5, 0x3f, 0xe0, 0x5d, 0xf2, 0xfc, 0x08, 0xeb, 0xc3, 0x3c, 0x53, 0x18, 0x91,
+	0x7c, 0x96, 0x48, 0x76, 0x31, 0xef, 0x96, 0x6f, 0xbe, 0x8b, 0xe9, 0x30, 0xf9, 0x37, 0xb0, 0x22,
+	0x0f, 0x2c, 0xcd, 0x8d, 0xe4, 0x5a, 0xe2, 0xe5, 0x9e, 0xe4, 0xd9, 0x72, 0x65, 0x9a, 0x3a, 0x0e,
+	0x5c, 0x6b, 0xbd, 0x7c, 0x5d, 0xb1, 0x5e, 0xbd, 0xae, 0x58, 0xff, 0xbc, 0xae, 0x58, 0xbf, 0xbe,
+	0xa9, 0xcc, 0xbc, 0x7a, 0x53, 0x99, 0xf9, 0xeb, 0x4d, 0x65, 0xe6, 0xd9, 0x9d, 0x0e, 0x13, 0xdd,
+	0xc1, 0xf1, 0xa6, 0xc7, 0xfb, 0xd5, 0x67, 0xe8, 0x87, 0xdc, 0x3b, 0xb9, 0xb5, 0xc3, 0x07, 0x7e,
+	0x5b, 0x7d, 0xf3, 0x55, 0x7f, 0x08, 0xd5, 0xa7, 0x69, 0xf5, 0xf4, 0x8b, 0xf8, 0x9f, 0xad, 0xaa,
+	0x7f, 0xc0, 0x68, 0xc0, 0x8e, 0x17, 0xd4, 0xf2, 0xf3, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0xef,
+	0xdd, 0x60, 0xc1, 0xd3, 0x0d, 0x00, 0x00,
 }
 
 func (m *LatestBitcoinBlockHeaderRequest) Marshal() (dAtA []byte, err error) {
@@ -1329,6 +1642,66 @@ func (m *SidecarStateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.EthCompletionEvents) > 0 {
+		for iNdEx := len(m.EthCompletionEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EthCompletionEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSidecarService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x8a
+		}
+	}
+	if len(m.EthUnstakeEvents) > 0 {
+		for iNdEx := len(m.EthUnstakeEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EthUnstakeEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSidecarService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x82
+		}
+	}
+	if len(m.EthMintEvents) > 0 {
+		for iNdEx := len(m.EthMintEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EthMintEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSidecarService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x7a
+		}
+	}
+	if len(m.EthStakeEvents) > 0 {
+		for iNdEx := len(m.EthStakeEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EthStakeEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintSidecarService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x72
+		}
+	}
 	if len(m.SolanaBurnEvents) > 0 {
 		for iNdEx := len(m.SolanaBurnEvents) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1651,6 +2024,190 @@ func (m *SolanaMintEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *EthStakeEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EthStakeEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EthStakeEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Amount != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Amount))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Staker) > 0 {
+		i -= len(m.Staker)
+		copy(dAtA[i:], m.Staker)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Staker)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.UnsignedTxHash) > 0 {
+		i -= len(m.UnsignedTxHash)
+		copy(dAtA[i:], m.UnsignedTxHash)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.UnsignedTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EthMintEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EthMintEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EthMintEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Fee != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Fee))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Amount != 0 {
+		i = encodeVarintSidecarService(dAtA, i, uint64(m.Amount))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Recipient) > 0 {
+		i -= len(m.Recipient)
+		copy(dAtA[i:], m.Recipient)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Recipient)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.UnsignedTxHash) > 0 {
+		i -= len(m.UnsignedTxHash)
+		copy(dAtA[i:], m.UnsignedTxHash)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.UnsignedTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EthUnstakeEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EthUnstakeEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EthUnstakeEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Amount) > 0 {
+		i -= len(m.Amount)
+		copy(dAtA[i:], m.Amount)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Amount)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Nonce) > 0 {
+		i -= len(m.Nonce)
+		copy(dAtA[i:], m.Nonce)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Nonce)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Redeemer) > 0 {
+		i -= len(m.Redeemer)
+		copy(dAtA[i:], m.Redeemer)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Redeemer)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.UnsignedTxHash) > 0 {
+		i -= len(m.UnsignedTxHash)
+		copy(dAtA[i:], m.UnsignedTxHash)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.UnsignedTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EthCompletionEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EthCompletionEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EthCompletionEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Nonce) > 0 {
+		i -= len(m.Nonce)
+		copy(dAtA[i:], m.Nonce)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Nonce)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Redeemer) > 0 {
+		i -= len(m.Redeemer)
+		copy(dAtA[i:], m.Redeemer)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.Redeemer)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.UnsignedTxHash) > 0 {
+		i -= len(m.UnsignedTxHash)
+		copy(dAtA[i:], m.UnsignedTxHash)
+		i = encodeVarintSidecarService(dAtA, i, uint64(len(m.UnsignedTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintSidecarService(dAtA []byte, offset int, v uint64) int {
 	offset -= sovSidecarService(v)
 	base := offset
@@ -1859,6 +2416,30 @@ func (m *SidecarStateResponse) Size() (n int) {
 			n += 1 + l + sovSidecarService(uint64(l))
 		}
 	}
+	if len(m.EthStakeEvents) > 0 {
+		for _, e := range m.EthStakeEvents {
+			l = e.Size()
+			n += 1 + l + sovSidecarService(uint64(l))
+		}
+	}
+	if len(m.EthMintEvents) > 0 {
+		for _, e := range m.EthMintEvents {
+			l = e.Size()
+			n += 1 + l + sovSidecarService(uint64(l))
+		}
+	}
+	if len(m.EthUnstakeEvents) > 0 {
+		for _, e := range m.EthUnstakeEvents {
+			l = e.Size()
+			n += 2 + l + sovSidecarService(uint64(l))
+		}
+	}
+	if len(m.EthCompletionEvents) > 0 {
+		for _, e := range m.EthCompletionEvents {
+			l = e.Size()
+			n += 2 + l + sovSidecarService(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -1952,6 +2533,95 @@ func (m *SolanaMintEvent) Size() (n int) {
 		n += 1 + sovSidecarService(uint64(m.Fee))
 	}
 	l = len(m.Mint)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	return n
+}
+
+func (m *EthStakeEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.UnsignedTxHash)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Staker)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	if m.Amount != 0 {
+		n += 1 + sovSidecarService(uint64(m.Amount))
+	}
+	return n
+}
+
+func (m *EthMintEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.UnsignedTxHash)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Recipient)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	if m.Amount != 0 {
+		n += 1 + sovSidecarService(uint64(m.Amount))
+	}
+	if m.Fee != 0 {
+		n += 1 + sovSidecarService(uint64(m.Fee))
+	}
+	return n
+}
+
+func (m *EthUnstakeEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.UnsignedTxHash)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Redeemer)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Nonce)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Amount)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	return n
+}
+
+func (m *EthCompletionEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.UnsignedTxHash)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Redeemer)
+	if l > 0 {
+		n += 1 + l + sovSidecarService(uint64(l))
+	}
+	l = len(m.Nonce)
 	if l > 0 {
 		n += 1 + l + sovSidecarService(uint64(l))
 	}
@@ -3241,6 +3911,142 @@ func (m *SidecarStateResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthStakeEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EthStakeEvents = append(m.EthStakeEvents, EthStakeEvent{})
+			if err := m.EthStakeEvents[len(m.EthStakeEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthMintEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EthMintEvents = append(m.EthMintEvents, EthMintEvent{})
+			if err := m.EthMintEvents[len(m.EthMintEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthUnstakeEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EthUnstakeEvents = append(m.EthUnstakeEvents, EthUnstakeEvent{})
+			if err := m.EthUnstakeEvents[len(m.EthUnstakeEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthCompletionEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EthCompletionEvents = append(m.EthCompletionEvents, EthCompletionEvent{})
+			if err := m.EthCompletionEvents[len(m.EthCompletionEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSidecarService(dAtA[iNdEx:])
@@ -3854,6 +4660,631 @@ func (m *SolanaMintEvent) Unmarshal(dAtA []byte) error {
 			if m.Mint == nil {
 				m.Mint = []byte{}
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EthStakeEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EthStakeEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EthStakeEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnsignedTxHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnsignedTxHash = append(m.UnsignedTxHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.UnsignedTxHash == nil {
+				m.UnsignedTxHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Staker", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Staker = append(m.Staker[:0], dAtA[iNdEx:postIndex]...)
+			if m.Staker == nil {
+				m.Staker = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			m.Amount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Amount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EthMintEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EthMintEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EthMintEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnsignedTxHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnsignedTxHash = append(m.UnsignedTxHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.UnsignedTxHash == nil {
+				m.UnsignedTxHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Recipient", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Recipient = append(m.Recipient[:0], dAtA[iNdEx:postIndex]...)
+			if m.Recipient == nil {
+				m.Recipient = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			m.Amount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Amount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
+			}
+			m.Fee = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fee |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EthUnstakeEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EthUnstakeEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EthUnstakeEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnsignedTxHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnsignedTxHash = append(m.UnsignedTxHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.UnsignedTxHash == nil {
+				m.UnsignedTxHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Redeemer", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Redeemer = append(m.Redeemer[:0], dAtA[iNdEx:postIndex]...)
+			if m.Redeemer == nil {
+				m.Redeemer = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Nonce = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amount = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSidecarService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EthCompletionEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSidecarService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EthCompletionEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EthCompletionEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnsignedTxHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnsignedTxHash = append(m.UnsignedTxHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.UnsignedTxHash == nil {
+				m.UnsignedTxHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Redeemer", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Redeemer = append(m.Redeemer[:0], dAtA[iNdEx:postIndex]...)
+			if m.Redeemer == nil {
+				m.Redeemer = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSidecarService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSidecarService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Nonce = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -8,21 +8,6 @@ import (
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
-// TODO: These event structs are temporary. They should be defined in `sidecar/proto/api/types.proto`
-// and the generated Go files should be used instead (e.g., `api.EthStakeEvent`).
-type EthStakeEvent struct {
-	UnsignedTxHash []byte
-}
-type EthMintEvent struct {
-	UnsignedTxHash []byte
-}
-type EthUnstakeEvent struct {
-	UnsignedTxHash []byte
-}
-type EthCompletionEvent struct {
-	UnsignedTxHash []byte
-}
-
 // Network constants
 const (
 	NetworkDevnet  = "devnet"
@@ -120,7 +105,7 @@ var (
 	// Oracle tuning parameters
 	MainLoopTickerIntervalSeconds = 60 // Seconds
 	OracleCacheSize               = 20
-	EthBurnEventsBlockRange       = 1000
+	EthEventsBlockRange           = 1000
 	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
 	SolanaEventScanTxLimit        = 1000
 	SolanaEventFetchBatchSize     = 50
@@ -154,14 +139,14 @@ type OracleState struct {
 	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
 	SolanaMintEvents           []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	// Fields for watermarking Solana events
-	LastSolRockMintSig   string               `json:"lastSolRockMintSig,omitempty"`
-	LastSolZenBTCMintSig string               `json:"lastSolZenBTCMintSig,omitempty"`
-	LastSolZenBTCBurnSig string               `json:"lastSolZenBTCBurnSig,omitempty"`
-	LastSolRockBurnSig   string               `json:"lastSolRockBurnSig,omitempty"`
-	EthStakeEvents       []EthStakeEvent      `json:"ethStakeEvents"`
-	EthMintEvents        []EthMintEvent       `json:"ethMintEvents"`
-	EthUnstakeEvents     []EthUnstakeEvent    `json:"ethUnstakeEvents"`
-	EthCompletionEvents  []EthCompletionEvent `json:"ethCompletionEvents"`
+	LastSolRockMintSig   string                    `json:"lastSolRockMintSig,omitempty"`
+	LastSolZenBTCMintSig string                    `json:"lastSolZenBTCMintSig,omitempty"`
+	LastSolZenBTCBurnSig string                    `json:"lastSolZenBTCBurnSig,omitempty"`
+	LastSolRockBurnSig   string                    `json:"lastSolRockBurnSig,omitempty"`
+	EthStakeEvents       []*api.EthStakeEvent      `json:"ethStakeEvents"`
+	EthMintEvents        []*api.EthMintEvent       `json:"ethMintEvents"`
+	EthUnstakeEvents     []*api.EthUnstakeEvent    `json:"ethUnstakeEvents"`
+	EthCompletionEvents  []*api.EthCompletionEvent `json:"ethCompletionEvents"`
 }
 
 type Config struct {

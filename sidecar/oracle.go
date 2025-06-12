@@ -647,10 +647,10 @@ func (o *Oracle) buildFinalState(
 		LastSolZenBTCMintSig:       o.lastSolZenBTCMintSigStr,
 		LastSolZenBTCBurnSig:       o.lastSolZenBTCBurnSigStr,
 		LastSolRockBurnSig:         o.lastSolRockBurnSigStr,
-		EthStakeEvents:             o.apiStakeEvents(update.ethStakeEvents),
-		EthMintEvents:              o.apiMintEvents(update.ethMintEvents),
-		EthUnstakeEvents:           o.apiUnstakeEvents(update.ethUnstakeEvents),
-		EthCompletionEvents:        o.apiCompletionEvents(update.ethCompletionEvents),
+		EthStakeEvents:             update.ethStakeEvents,
+		EthMintEvents:              update.ethMintEvents,
+		EthUnstakeEvents:           update.ethUnstakeEvents,
+		EthCompletionEvents:        update.ethCompletionEvents,
 	}
 
 	if o.DebugMode {
@@ -744,7 +744,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
 	// Calculate block range for event fetching
 	toBlock := latestHeader.Number
-	fromBlock := big.NewInt(0).Sub(toBlock, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
+	fromBlock := big.NewInt(0).Sub(toBlock, big.NewInt(int64(sidecartypes.EthEventsBlockRange)))
 	if fromBlock.Sign() < 0 {
 		fromBlock.SetInt64(0)
 	}
@@ -1803,7 +1803,7 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 }
 
 // getEthStakeEvents fetches RockBTCStaked events from the ZenBTController contract.
-func (o *Oracle) getEthStakeEvents(latestHeader *ethtypes.Header) ([]sidecartypes.EthStakeEvent, error) {
+func (o *Oracle) getEthStakeEvents(latestHeader *ethtypes.Header) ([]*api.EthStakeEvent, error) {
 	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
 	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
 	if err != nil {
@@ -1818,14 +1818,18 @@ func (o *Oracle) getEthStakeEvents(latestHeader *ethtypes.Header) ([]sidecartype
 	}
 	defer iter.Close()
 
-	var events []sidecartypes.EthStakeEvent
+	var events []*api.EthStakeEvent
 	for iter.Next() {
 		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
 		if err != nil {
 			log.Printf("failed to get unsigned tx hash for RockBTCStaked event: %v", err)
 			continue
 		}
-		events = append(events, sidecartypes.EthStakeEvent{UnsignedTxHash: unsignedTxHash})
+		events = append(events, &api.EthStakeEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Staker:         iter.Event.Operator.Bytes(),
+			Amount:         iter.Event.Value,
+		})
 	}
 
 	if err := iter.Error(); err != nil {
@@ -1836,7 +1840,7 @@ func (o *Oracle) getEthStakeEvents(latestHeader *ethtypes.Header) ([]sidecartype
 }
 
 // getEthMintEvents fetches TokensMintedWithFee events from the ZenBTC contract.
-func (o *Oracle) getEthMintEvents(latestHeader *ethtypes.Header) ([]sidecartypes.EthMintEvent, error) {
+func (o *Oracle) getEthMintEvents(latestHeader *ethtypes.Header) ([]*api.EthMintEvent, error) {
 	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
 	zenBTCFilterer, err := bindings.NewZenBTCFilterer(common.HexToAddress(o.Config.ZenBTCAddress), o.EthClient)
 	if err != nil {
@@ -1851,14 +1855,19 @@ func (o *Oracle) getEthMintEvents(latestHeader *ethtypes.Header) ([]sidecartypes
 	}
 	defer iter.Close()
 
-	var events []sidecartypes.EthMintEvent
+	var events []*api.EthMintEvent
 	for iter.Next() {
 		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
 		if err != nil {
 			log.Printf("failed to get unsigned tx hash for TokensMintedWithFee event: %v", err)
 			continue
 		}
-		events = append(events, sidecartypes.EthMintEvent{UnsignedTxHash: unsignedTxHash})
+		events = append(events, &api.EthMintEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Recipient:      iter.Event.Recipient.Bytes(),
+			Amount:         iter.Event.Value,
+			Fee:            iter.Event.Fee,
+		})
 	}
 
 	if err := iter.Error(); err != nil {
@@ -1869,7 +1878,7 @@ func (o *Oracle) getEthMintEvents(latestHeader *ethtypes.Header) ([]sidecartypes
 }
 
 // getEthUnstakeEvents fetches WithdrawalZenBTCInitiated events from the ZenBTController contract.
-func (o *Oracle) getEthUnstakeEvents(latestHeader *ethtypes.Header) ([]sidecartypes.EthUnstakeEvent, error) {
+func (o *Oracle) getEthUnstakeEvents(latestHeader *ethtypes.Header) ([]*api.EthUnstakeEvent, error) {
 	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
 	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
 	if err != nil {
@@ -1884,14 +1893,19 @@ func (o *Oracle) getEthUnstakeEvents(latestHeader *ethtypes.Header) ([]sidecarty
 	}
 	defer iter.Close()
 
-	var events []sidecartypes.EthUnstakeEvent
+	var events []*api.EthUnstakeEvent
 	for iter.Next() {
 		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
 		if err != nil {
 			log.Printf("failed to get unsigned tx hash for WithdrawalZenBTCInitiated event: %v", err)
 			continue
 		}
-		events = append(events, sidecartypes.EthUnstakeEvent{UnsignedTxHash: unsignedTxHash})
+		events = append(events, &api.EthUnstakeEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Redeemer:       iter.Event.UnstakeInfo.DestinationAddress,
+			Nonce:          iter.Event.Nonce.String(),
+			Amount:         iter.Event.UnstakeInfo.ZenBTCValue.String(),
+		})
 	}
 
 	if err := iter.Error(); err != nil {
@@ -1902,7 +1916,7 @@ func (o *Oracle) getEthUnstakeEvents(latestHeader *ethtypes.Header) ([]sidecarty
 }
 
 // getEthCompletionEvents fetches WithdrawalCompleted events from the ZenBTController contract.
-func (o *Oracle) getEthCompletionEvents(latestHeader *ethtypes.Header) ([]sidecartypes.EthCompletionEvent, error) {
+func (o *Oracle) getEthCompletionEvents(latestHeader *ethtypes.Header) ([]*api.EthCompletionEvent, error) {
 	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
 	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
 	if err != nil {
@@ -1917,14 +1931,18 @@ func (o *Oracle) getEthCompletionEvents(latestHeader *ethtypes.Header) ([]sideca
 	}
 	defer iter.Close()
 
-	var events []sidecartypes.EthCompletionEvent
+	var events []*api.EthCompletionEvent
 	for iter.Next() {
 		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
 		if err != nil {
 			log.Printf("failed to get unsigned tx hash for WithdrawalCompleted event: %v", err)
 			continue
 		}
-		events = append(events, sidecartypes.EthCompletionEvent{UnsignedTxHash: unsignedTxHash})
+		events = append(events, &api.EthCompletionEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Redeemer:       iter.Event.Arg0.Withdrawer.Bytes(),
+			Nonce:          iter.Event.Arg0.Nonce.String(),
+		})
 	}
 
 	if err := iter.Error(); err != nil {
@@ -1948,25 +1966,9 @@ func (o *Oracle) getUnsignedTxHash(txHash common.Hash) ([]byte, error) {
 	return unsignedTxHash[:], nil
 }
 
-func (o *Oracle) apiStakeEvents(events []sidecartypes.EthStakeEvent) []sidecartypes.EthStakeEvent {
-	return events
-}
-
-func (o *Oracle) apiMintEvents(events []sidecartypes.EthMintEvent) []sidecartypes.EthMintEvent {
-	return events
-}
-
-func (o *Oracle) apiUnstakeEvents(events []sidecartypes.EthUnstakeEvent) []sidecartypes.EthUnstakeEvent {
-	return events
-}
-
-func (o *Oracle) apiCompletionEvents(events []sidecartypes.EthCompletionEvent) []sidecartypes.EthCompletionEvent {
-	return events
-}
-
 func (o *Oracle) calculateBlockRange(latestHeader *ethtypes.Header) (*big.Int, *big.Int) {
 	toBlock := latestHeader.Number
-	fromBlock := new(big.Int).Sub(toBlock, big.NewInt(100)) // TODO: make this configurable
+	fromBlock := new(big.Int).Sub(toBlock, big.NewInt(int64(sidecartypes.EthEventsBlockRange)))
 	if fromBlock.Sign() < 0 {
 		fromBlock.SetInt64(0)
 	}

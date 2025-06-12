@@ -15,21 +15,6 @@ import (
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
-// TODO: These event structs are temporary. They should be defined in `sidecar/proto/api/types.proto`
-// and the generated Go files should be used instead (e.g., `api.EthStakeEvent`).
-type EthStakeEvent struct {
-	UnsignedTxHash []byte
-}
-type EthMintEvent struct {
-	UnsignedTxHash []byte
-}
-type EthUnstakeEvent struct {
-	UnsignedTxHash []byte
-}
-type EthCompletionEvent struct {
-	UnsignedTxHash []byte
-}
-
 var (
 	EmptyOracleState = sidecartypes.OracleState{
 		EigenDelegations:           make(map[string]map[string]*big.Int),
@@ -44,10 +29,10 @@ var (
 		ROCKUSDPrice:               math.LegacyNewDec(0),
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
-		EthStakeEvents:             []sidecartypes.EthStakeEvent{},
-		EthMintEvents:              []sidecartypes.EthMintEvent{},
-		EthUnstakeEvents:           []sidecartypes.EthUnstakeEvent{},
-		EthCompletionEvents:        []sidecartypes.EthCompletionEvent{},
+		EthStakeEvents:             []*api.EthStakeEvent{},
+		EthMintEvents:              []*api.EthMintEvent{},
+		EthUnstakeEvents:           []*api.EthUnstakeEvent{},
+		EthCompletionEvents:        []*api.EthCompletionEvent{},
 	}
 )
 
@@ -71,6 +56,12 @@ type Oracle struct {
 
 	// Event caches to prevent re-processing
 	cleanedEthBurnEvents map[string]bool
+
+	latestSolanaSigs    map[sidecartypes.SolanaEventType]solana.Signature
+	ethStakeEvents      []*api.EthStakeEvent
+	ethMintEvents       []*api.EthMintEvent
+	ethUnstakeEvents    []*api.EthUnstakeEvent
+	ethCompletionEvents []*api.EthCompletionEvent
 }
 
 type oracleStateUpdate struct {
@@ -86,10 +77,10 @@ type oracleStateUpdate struct {
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
 	latestSolanaSigs           map[sidecartypes.SolanaEventType]solana.Signature
-	ethStakeEvents             []sidecartypes.EthStakeEvent
-	ethMintEvents              []sidecartypes.EthMintEvent
-	ethUnstakeEvents           []sidecartypes.EthUnstakeEvent
-	ethCompletionEvents        []sidecartypes.EthCompletionEvent
+	ethStakeEvents             []*api.EthStakeEvent
+	ethMintEvents              []*api.EthMintEvent
+	ethUnstakeEvents           []*api.EthUnstakeEvent
+	ethCompletionEvents        []*api.EthCompletionEvent
 }
 
 type PriceData struct {
