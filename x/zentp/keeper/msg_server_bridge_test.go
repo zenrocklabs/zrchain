@@ -137,7 +137,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 				msg.DestinationChain = "invalid:chain"
 			},
 			setupMocks:    func() {},
-			expectedError: "invalid key type",
+			expectedError: "CAIP-2 is not of Solana type",
 		},
 		{
 			name: "Invalid Recipient Address",
@@ -153,7 +153,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 				msg.DestinationChain = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
 			},
 			setupMocks:    func() {},
-			expectedError: "invalid destination chain",
+			expectedError: "invalid Solana network",
 		},
 		{
 			name: "invalid denom",

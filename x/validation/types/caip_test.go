@@ -64,7 +64,7 @@ func TestExtractCAIP2Parts(t *testing.T) {
 
 func TestIsSolanaCAIP2(t *testing.T) {
 	mainnetCtx := sdk.Context{}.WithChainID("diamond-1")
-	devnetCtx := sdk.Context{}.WithChainID("zenrock-1")
+	devnetCtx := sdk.Context{}.WithChainID("amber-1")
 
 	testCases := []struct {
 		name     string
