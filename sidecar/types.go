@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/client"
+	client "github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
-	"github.com/btcsuite/neutrino"
 	"github.com/ethereum/go-ethereum/ethclient"
-	solana "github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 // TODO: These event structs are temporary. They should be defined in `sidecar/proto/api/types.proto`
@@ -43,6 +44,10 @@ var (
 		ROCKUSDPrice:               math.LegacyNewDec(0),
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
+		EthStakeEvents:             []sidecartypes.EthStakeEvent{},
+		EthMintEvents:              []sidecartypes.EthMintEvent{},
+		EthUnstakeEvents:           []sidecartypes.EthUnstakeEvent{},
+		EthCompletionEvents:        []sidecartypes.EthCompletionEvent{},
 	}
 )
 
@@ -52,7 +57,7 @@ type Oracle struct {
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
 	neutrinoServer     *neutrino.NeutrinoServer
-	solanaClient       *solana.Client
+	solanaClient       *solrpc.Client
 	zrChainQueryClient *client.QueryClient
 	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
@@ -80,11 +85,11 @@ type oracleStateUpdate struct {
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
-	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
-	ethStakeEvents             []EthStakeEvent
-	ethMintEvents              []EthMintEvent
-	ethUnstakeEvents           []EthUnstakeEvent
-	ethCompletionEvents        []EthCompletionEvent
+	latestSolanaSigs           map[sidecartypes.SolanaEventType]solana.Signature
+	ethStakeEvents             []sidecartypes.EthStakeEvent
+	ethMintEvents              []sidecartypes.EthMintEvent
+	ethUnstakeEvents           []sidecartypes.EthUnstakeEvent
+	ethCompletionEvents        []sidecartypes.EthCompletionEvent
 }
 
 type PriceData struct {
