@@ -466,6 +466,34 @@ func (m *MockZentpKeeper) EXPECT() *MockZentpKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetNonceAccountKey mocks base method.
+func (m *MockZentpKeeper) GetNonceAccountKey(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNonceAccountKey", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetNonceAccountKey indicates an expected call of GetNonceAccountKey.
+func (mr *MockZentpKeeperMockRecorder) GetNonceAccountKey(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNonceAccountKey", reflect.TypeOf((*MockZentpKeeper)(nil).GetNonceAccountKey), ctx)
+}
+
+// GetNonceAuthorityKey mocks base method.
+func (m *MockZentpKeeper) GetNonceAuthorityKey(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNonceAuthorityKey", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetNonceAuthorityKey indicates an expected call of GetNonceAuthorityKey.
+func (mr *MockZentpKeeperMockRecorder) GetNonceAuthorityKey(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNonceAuthorityKey", reflect.TypeOf((*MockZentpKeeper)(nil).GetNonceAuthorityKey), ctx)
+}
+
 // GetSignerKeyID mocks base method.
 func (m *MockZentpKeeper) GetSignerKeyID(ctx context.Context) uint64 {
 	m.ctrl.T.Helper()
