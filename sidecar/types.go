@@ -6,15 +6,28 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/ethereum/go-ethereum/ethclient"
-	sol "github.com/gagliardetto/solana-go"
-	solana "github.com/gagliardetto/solana-go/rpc"
-
-	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
-	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/btcsuite/neutrino"
+	"github.com/ethereum/go-ethereum/ethclient"
+	solana "github.com/gagliardetto/solana-go/rpc"
 )
+
+// TODO: These event structs are temporary. They should be defined in `sidecar/proto/api/types.proto`
+// and the generated Go files should be used instead (e.g., `api.EthStakeEvent`).
+type EthStakeEvent struct {
+	UnsignedTxHash []byte
+}
+type EthMintEvent struct {
+	UnsignedTxHash []byte
+}
+type EthUnstakeEvent struct {
+	UnsignedTxHash []byte
+}
+type EthCompletionEvent struct {
+	UnsignedTxHash []byte
+}
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
@@ -50,6 +63,9 @@ type Oracle struct {
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// Event caches to prevent re-processing
+	cleanedEthBurnEvents map[string]bool
 }
 
 type oracleStateUpdate struct {
@@ -65,6 +81,10 @@ type oracleStateUpdate struct {
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
 	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
+	ethStakeEvents             []EthStakeEvent
+	ethMintEvents              []EthMintEvent
+	ethUnstakeEvents           []EthUnstakeEvent
+	ethCompletionEvents        []EthCompletionEvent
 }
 
 type PriceData struct {

@@ -1202,35 +1202,22 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 // Helper function to validate consensus on multiple required fields for transactions
 func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
-	// Always check for gas fields consensus first
-	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-	}
-
-	// Check if all required fields have consensus
-	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
-	if len(missingFields) > 0 {
-		fieldNames := make([]string, 0, len(missingFields))
-		for _, field := range missingFields {
-			fieldNames = append(fieldNames, field.String())
+	for _, field := range requiredFields {
+		if !fieldHasConsensus(oracleData.FieldVotePowers, field) {
+			k.Logger(ctx).Error("missing consensus for required field", "field", field, "tx_type", txType, "tx_details", txDetails)
+			return nil // Returning nil to prevent transaction from being sent, but not to halt the chain
 		}
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
 	}
-
 	return nil
 }
 
 // Helper function to submit Ethereum transactions
-func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) (uint64, error) {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+	res, err := k.treasuryKeeper.HandleSignTransactionRequest(
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             creator,
@@ -1242,7 +1229,14 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		},
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	if res == nil {
+		return 0, fmt.Errorf("HandleSignTransactionRequest returned nil response")
+	}
+
+	return res.Id, nil
 }
 
 // Helper function to submit Ethereum transactions
