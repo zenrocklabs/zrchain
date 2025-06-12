@@ -4072,6 +4072,7 @@ func (*MsgBurnResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_tx_proto_rawDescGZIP(), []int{5}
 }
 
+// MsgSetSolanaROCKSupply is the Msg/SetSolanaROCKSupply request type
 type MsgSetSolanaROCKSupply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4115,6 +4116,8 @@ func (x *MsgSetSolanaROCKSupply) GetAmount() uint64 {
 	return 0
 }
 
+// MsgSetSolanaROCKSupplyResponse defines the response structure for executing a
+// MsgSetSolanaROCKSupply message.
 type MsgSetSolanaROCKSupplyResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

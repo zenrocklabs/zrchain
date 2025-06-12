@@ -74,8 +74,11 @@ message QueryBurnsRequest {
   uint64                                id         = 1;
   string                                denom      = 2;
   BridgeStatus                          status     = 3;
-  cosmos.base.query.v1beta1.PageRequest pagination = 4;
-  uint64                                tx_id      = 5;
+  uint64                                tx_id      = 4;
+  string                                recipient_address = 5;
+  string                                source_tx_hash = 6;
+  cosmos.base.query.v1beta1.PageRequest pagination = 7;
+
 }
 
 // QueryBurnsResponse is response type for the Query/Burns RPC method.
@@ -98,8 +101,10 @@ message QueryStatsResponse {
   uint64 burns_count = 4;
 }
 
+// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply RPC method.
 message QuerySolanaROCKSupplyRequest {}
 
+// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply RPC method.
 message QuerySolanaROCKSupplyResponse {
   uint64 amount = 1;
 }

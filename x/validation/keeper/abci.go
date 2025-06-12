@@ -1084,7 +1084,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				}
 				k.Logger(ctx).Warn("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 				return nil
-			} else if types.IsEthereumCAIP2(tx.Caip2ChainId) {
+			} else if types.IsEthereumCAIP2(ctx, tx.Caip2ChainId) {
 				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
 			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
@@ -1149,7 +1149,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				exchangeRate,
 			)
 
-			chainID, err := types.ValidateChainID(ctx, tx.Caip2ChainId)
+			chainID, err := types.ValidateEVMChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
 				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
@@ -1157,7 +1157,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
-				chainID.Uint64(),
+				chainID,
 				tx.Amount,
 				feeZenBTC,
 				oracleData.RequestedEthMinterNonce,
@@ -1183,7 +1183,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				tx.Creator,
 				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
 				treasurytypes.WalletType(tx.ChainType),
-				chainID.Uint64(),
+				chainID,
 				unsignedMintTx,
 				unsignedMintTxHash,
 			)
@@ -1273,8 +1273,21 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return nil
 			}
 
+			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err != nil {
+				return err
+			}
+
+			feeZenBTC := k.CalculateZenBTCMintFee(
+				oracleData.EthBaseFee,
+				oracleData.EthTipCap,
+				oracleData.EthGasLimit,
+				btcUSDPrice,
+				ethUSDPrice,
+				exchangeRate,
+			)
+
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-			txPrepReq := &solanaMintTxRequest{}
 
 			// Derive the ATA for the recipient and check its state
 			recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
@@ -1290,6 +1303,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return fmt.Errorf("failed to derive ATA for recipient %s, mint %s: %w", tx.RecipientAddress, solParams.MintAddress, err)
 			}
 
+			fundReceiver := false
 			ata, ok := oracleData.SolanaAccounts[expectedATA.String()]
 			if !ok {
 				// This means the ATA was not requested or not found by collectSolanaAccounts.
@@ -1297,25 +1311,30 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				// For safety, if it's not in oracleData, we can assume it needs creation/funding.
 				// However, collectSolanaAccounts should have fetched it if it was SetSolanaZenBTCRequestedAccount.
 				k.Logger(ctx).Warn("ATA not found in oracleData.SolanaAccounts, assuming it might need funding", "ata", expectedATA.String(), "recipient", tx.RecipientAddress)
-				txPrepReq.fundReceiver = true // If not found in map, assume it needs to be created.
+				fundReceiver = true // If not found in map, assume it needs to be created.
 			} else if ata.State == solToken.Uninitialized {
-				txPrepReq.fundReceiver = true
+				fundReceiver = true
 			}
 
-			txPrepReq.amount = tx.Amount
-			txPrepReq.fee = solParams.Fee
-			txPrepReq.recipient = tx.RecipientAddress
-			txPrepReq.nonce, ok = oracleData.SolanaMintNonces[solParams.NonceAccountKey]
+			nonce, ok := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
 			if !ok {
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for solParams.NonceAccountKey: %d", solParams.NonceAccountKey)
 			}
-			txPrepReq.programID = solParams.ProgramId
-			txPrepReq.mintAddress = solParams.MintAddress
-			txPrepReq.feeWallet = solParams.FeeWallet
-			txPrepReq.nonceAccountKey = solParams.NonceAccountKey
-			txPrepReq.nonceAuthorityKey = solParams.NonceAuthorityKey
-			txPrepReq.signerKey = solParams.SignerKeyId
-			txPrepReq.zenbtc = true
+
+			txPrepReq := &solanaMintTxRequest{
+				amount:            tx.Amount,
+				fee:               feeZenBTC, // TODO: currently we are not using solParams.Fee
+				recipient:         tx.RecipientAddress,
+				nonce:             nonce,
+				fundReceiver:      fundReceiver,
+				programID:         solParams.ProgramId,
+				mintAddress:       solParams.MintAddress,
+				feeWallet:         solParams.FeeWallet,
+				nonceAccountKey:   solParams.NonceAccountKey,
+				nonceAuthorityKey: solParams.NonceAuthorityKey,
+				signerKey:         solParams.SignerKeyId,
+				zenbtc:            true,
+			}
 			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
@@ -1347,8 +1366,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
-			nonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
-			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, nonce)
+			solNonce := types.SolanaNonce{Nonce: oracleData.SolanaMintNonces[solParams.NonceAccountKey].Nonce[:]}
+			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 		},
 		// txContinuationCallback: For Solana, this function acts as a status and timeout checker for in-flight transactions.
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
