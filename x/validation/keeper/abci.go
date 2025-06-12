@@ -1273,6 +1273,20 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return nil
 			}
 
+			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err != nil {
+				return err
+			}
+
+			feeZenBTC := k.CalculateZenBTCMintFee(
+				oracleData.EthBaseFee,
+				oracleData.EthTipCap,
+				oracleData.EthGasLimit,
+				btcUSDPrice,
+				ethUSDPrice,
+				exchangeRate,
+			)
+
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 			txPrepReq := &solanaMintTxRequest{}
 
@@ -1303,7 +1317,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 
 			txPrepReq.amount = tx.Amount
-			txPrepReq.fee = solParams.Fee
+			txPrepReq.fee = feeZenBTC // TODO: currently we are not using solParams.Fee
 			txPrepReq.recipient = tx.RecipientAddress
 			txPrepReq.nonce, ok = oracleData.SolanaMintNonces[solParams.NonceAccountKey]
 			if !ok {
