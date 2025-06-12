@@ -148,6 +148,14 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			expectedError: "invalid recipient address",
 		},
 		{
+			name: "Invalid destination chain combination",
+			modifyMsg: func(msg *types.MsgBridge) {
+				msg.DestinationChain = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
+			},
+			setupMocks:    func() {},
+			expectedError: "invalid destination chain",
+		},
+		{
 			name: "invalid denom",
 			modifyMsg: func(msg *types.MsgBridge) {
 				msg.Denom = "noturock"

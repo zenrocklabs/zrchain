@@ -28,6 +28,10 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
 
+	if !types.IsValidChain(ctx, req.DestinationChain) {
+		return nil, errors.New("invalid destination chain")
+	}
+
 	if req.Denom != params.BondDenom {
 		return nil, errors.New("invalid denomination")
 	}
