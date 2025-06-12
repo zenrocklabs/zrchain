@@ -45,6 +45,13 @@ func (s *IntegrationTestSuite) TestBurn() {
 		Denom:         params.BondDenom,
 	}
 
+	wrongDenom := &types.MsgBurn{
+		Authority:     s.zentpKeeper.GetAuthority(),
+		ModuleAccount: types.ModuleName,
+		Amount:        100000000000,
+		Denom:         "wrongDenom",
+	}
+
 	// Test cases
 	testCases := []struct {
 		name          string
@@ -88,6 +95,14 @@ func (s *IntegrationTestSuite) TestBurn() {
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
 				s.accountKeeper.EXPECT().HasAccount(s.ctx, moduleAddr).Return(true).AnyTimes()
 				s.bankKeeper.EXPECT().GetBalance(s.ctx, moduleAddr, params.BondDenom).Return(maccbalance).AnyTimes()
+			},
+			expectedError: true,
+		},
+		{
+			name: "Wrong Denom",
+			msg:  wrongDenom,
+			setupMocks: func() {
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
 			},
 			expectedError: true,
 		},
