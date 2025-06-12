@@ -1202,35 +1202,22 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 
 // Helper function to validate consensus on multiple required fields for transactions
 func (k *Keeper) validateConsensusForTxFields(ctx sdk.Context, oracleData OracleData, requiredFields []VoteExtensionField, txType, txDetails string) error {
-	// Always check for gas fields consensus first
-	if !HasRequiredGasFields(oracleData.FieldVotePowers) {
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on gas fields", txType),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on gas fields required for transaction construction")
-	}
-
-	// Check if all required fields have consensus
-	missingFields := allFieldsHaveConsensus(oracleData.FieldVotePowers, requiredFields)
-	if len(missingFields) > 0 {
-		fieldNames := make([]string, 0, len(missingFields))
-		for _, field := range missingFields {
-			fieldNames = append(fieldNames, field.String())
+	for _, field := range requiredFields {
+		if !fieldHasConsensus(oracleData.FieldVotePowers, field) {
+			k.Logger(ctx).Error("missing consensus for required field", "field", field, "tx_type", txType, "tx_details", txDetails)
+			return nil // Returning nil to prevent transaction from being sent, but not to halt the chain
 		}
-		k.Logger(ctx).Error(fmt.Sprintf("cannot process %s: missing consensus on fields: %s", txType, strings.Join(fieldNames, ", ")),
-			"details", txDetails)
-		return fmt.Errorf("missing consensus on fields required for transaction construction: %s", strings.Join(fieldNames, ", "))
 	}
-
 	return nil
 }
 
 // Helper function to submit Ethereum transactions
-func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) error {
+func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyID uint64, walletType treasurytypes.WalletType, chainID uint64, unsignedTx []byte, unsignedTxHash []byte) (uint64, error) {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataEthereum{ChainId: chainID})
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = k.treasuryKeeper.HandleSignTransactionRequest(
+	res, err := k.treasuryKeeper.HandleSignTransactionRequest(
 		ctx,
 		&treasurytypes.MsgNewSignTransactionRequest{
 			Creator:             creator,
@@ -1242,7 +1229,14 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 		},
 		[]byte(hex.EncodeToString(unsignedTxHash)),
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	if res == nil {
+		return 0, fmt.Errorf("HandleSignTransactionRequest returned nil response")
+	}
+
+	return res.Id, nil
 }
 
 // Helper function to submit Ethereum transactions
@@ -1660,6 +1654,11 @@ const (
 	// after a nonce has been observed to advance, before considering the transaction timed out.
 	// TODO: This should ideally be a configurable module parameter.
 	solanaEventConfirmationWindowBlocks = 100
+
+	// ethereumEventConfirmationWindowBlocks defines the window in blocks to wait for an Ethereum event
+	// after a nonce has been observed to advance, before considering the transaction timed out.
+	// TODO: This should ideally be a configurable module parameter.
+	ethereumEventConfirmationWindowBlocks = 30
 )
 
 // handleSolanaTransactionBTLTimeout contains the core logic for BTL timeout processing.
@@ -1829,4 +1828,115 @@ func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, 
 	tx.BlockHeight = newBlockHeight
 	tx.AwaitingEventSince = newAwaitingEventSince
 	return tx
+}
+
+// handleEthereumTransactionBTLTimeout contains the core logic for BTL timeout processing for Ethereum transactions.
+// It checks if the on-chain nonce has advanced compared to the last used nonce for a given key.
+// If not, it resets the transaction's block height and awaiting event status for a full retry.
+// If the nonce has advanced, it sets the awaiting event status if it wasn't already set.
+func (k Keeper) handleEthereumTransactionBTLTimeout(
+	ctx sdk.Context,
+	txID uint64,
+	txBlockHeight int64,
+	txAwaitingEventSince int64,
+	keyID uint64,
+	btl int64,
+	oracleData OracleData,
+) (newBlockHeight int64, newAwaitingEventSince int64) {
+	k.Logger(ctx).Debug("Eth BTL Timeout Logic: Initiating checks.", "tx_id", txID, "tx_block_height", txBlockHeight, "btl", btl)
+
+	// Initialize return values to current tx values
+	newBlockHeight = txBlockHeight
+	newAwaitingEventSince = txAwaitingEventSince
+
+	var currentLiveNonce uint64
+	switch keyID {
+	case k.zenBTCKeeper.GetStakerKeyID(ctx):
+		currentLiveNonce = oracleData.RequestedStakerNonce
+	case k.zenBTCKeeper.GetEthMinterKeyID(ctx):
+		currentLiveNonce = oracleData.RequestedEthMinterNonce
+	case k.zenBTCKeeper.GetUnstakerKeyID(ctx):
+		currentLiveNonce = oracleData.RequestedUnstakerNonce
+	case k.zenBTCKeeper.GetCompleterKeyID(ctx):
+		currentLiveNonce = oracleData.RequestedCompleterNonce
+	default:
+		k.Logger(ctx).Error("BTL Logic: Invalid keyID provided.", "keyID", keyID)
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+		return
+	}
+
+	if currentLiveNonce == 0 {
+		k.Logger(ctx).Warn("BTL Logic: Live Ethereum nonce is zero in oracleData. Cannot confirm advancement. Resetting transaction.", "tx_id", txID, "keyID", keyID)
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+		return
+	}
+
+	lastUsedNonceData, err := k.LastUsedEthereumNonce.Get(ctx, keyID)
+	if err != nil {
+		k.Logger(ctx).Error("BTL Logic: Failed to get LastUsedEthereumNonce from store. Resetting transaction.", "tx_id", txID, "keyID", keyID, "error", err)
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+		return
+	}
+
+	k.Logger(ctx).Info("BTL Logic: Comparing nonces.", "tx_id", txID, "keyID", keyID, "last_used", lastUsedNonceData.Nonce, "current_on_chain", currentLiveNonce)
+
+	if currentLiveNonce == lastUsedNonceData.Nonce {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce matches LastUsedEthereumNonce (no advancement). Resetting transaction for full retry.", "tx_id", txID)
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+	} else if currentLiveNonce > lastUsedNonceData.Nonce {
+		k.Logger(ctx).Info("BTL Logic: On-chain nonce is greater than LastUsedEthereumNonce (advanced). Setting AwaitingEventSince if not already set.", "tx_id", txID)
+		// If the transaction was not already awaiting an event, mark it now.
+		if txAwaitingEventSince == 0 {
+			newAwaitingEventSince = ctx.BlockHeight()
+			k.Logger(ctx).Info("BTL Logic: Set AwaitingEventSince.", "tx_id", txID, "awaiting_event_since_block", newAwaitingEventSince)
+		}
+	} else {
+		// This case (live nonce < stored nonce) indicates a potential re-org or state issue.
+		k.Logger(ctx).Error("BTL Logic: On-chain nonce is less than last used nonce. This is unexpected. Resetting transaction.", "tx_id", txID, "keyID", keyID, "last_used", lastUsedNonceData.Nonce, "current_on_chain", currentLiveNonce)
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+	}
+	return
+}
+
+// handleEthereumEventArrivalTimeout contains the core logic for secondary event timeout processing for Ethereum transactions.
+// This is called if a transaction has been marked as awaiting an event (txAwaitingEventSince > 0).
+// If the event confirmation window has passed without the event being processed,
+// it resets the transaction for a full retry.
+func (k Keeper) handleEthereumEventArrivalTimeout(
+	ctx sdk.Context,
+	txID uint64,
+	txBlockHeight int64,
+	txAwaitingEventSince int64,
+	keyID uint64,
+	oracleData OracleData,
+) (newBlockHeight int64, newAwaitingEventSince int64) {
+	// Initialize return values to current tx values
+	newBlockHeight = txBlockHeight
+	newAwaitingEventSince = txAwaitingEventSince
+
+	// Only proceed if the transaction was actually awaiting an event
+	if txAwaitingEventSince == 0 {
+		return
+	}
+
+	k.Logger(ctx).Info("Secondary Timeout Logic: Checking for Eth event arrival.", "tx_id", txID, "awaiting_event_since", txAwaitingEventSince, "current_height", ctx.BlockHeight(), "confirmation_window", ethereumEventConfirmationWindowBlocks)
+
+	if ctx.BlockHeight() > txAwaitingEventSince+ethereumEventConfirmationWindowBlocks {
+		k.Logger(ctx).Warn("Secondary Timeout Logic: Ethereum event not received within window. Resetting transaction for retry.",
+			"tx_id", txID, "keyID", keyID,
+			"awaiting_since_block", txAwaitingEventSince, "timeout_window", ethereumEventConfirmationWindowBlocks)
+
+		// Unlike Solana, we don't need to update the last used nonce here. An Eth nonce is consumed
+		// once the tx is mined. Resetting the state simply allows the dispatch logic to be triggered
+		// again if needed for the same logical operation, but it would be a new transaction with a new nonce.
+		newBlockHeight = 0
+		newAwaitingEventSince = 0
+		k.Logger(ctx).Info("Secondary Timeout Logic: Transaction has been reset for a full retry.", "tx_id", txID)
+	}
+	return
 }

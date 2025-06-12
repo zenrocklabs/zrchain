@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/ethereum/go-ethereum/ethclient"
-	sol "github.com/gagliardetto/solana-go"
-	solana "github.com/gagliardetto/solana-go/rpc"
-
-	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
-	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	client "github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gagliardetto/solana-go"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 var (
@@ -30,6 +29,10 @@ var (
 		ROCKUSDPrice:               math.LegacyNewDec(0),
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
+		EthStakeEvents:             []*api.EthStakeEvent{},
+		EthMintEvents:              []*api.EthMintEvent{},
+		EthUnstakeEvents:           []*api.EthUnstakeEvent{},
+		EthCompletionEvents:        []*api.EthCompletionEvent{},
 	}
 )
 
@@ -39,7 +42,7 @@ type Oracle struct {
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
 	neutrinoServer     *neutrino.NeutrinoServer
-	solanaClient       *solana.Client
+	solanaClient       *solrpc.Client
 	zrChainQueryClient *client.QueryClient
 	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
@@ -50,6 +53,15 @@ type Oracle struct {
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// Event caches to prevent re-processing
+	cleanedEthBurnEvents map[string]bool
+
+	latestSolanaSigs    map[sidecartypes.SolanaEventType]solana.Signature
+	ethStakeEvents      []*api.EthStakeEvent
+	ethMintEvents       []*api.EthMintEvent
+	ethUnstakeEvents    []*api.EthUnstakeEvent
+	ethCompletionEvents []*api.EthCompletionEvent
 }
 
 type oracleStateUpdate struct {
@@ -64,7 +76,11 @@ type oracleStateUpdate struct {
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
-	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
+	latestSolanaSigs           map[sidecartypes.SolanaEventType]solana.Signature
+	ethStakeEvents             []*api.EthStakeEvent
+	ethMintEvents              []*api.EthMintEvent
+	ethUnstakeEvents           []*api.EthUnstakeEvent
+	ethCompletionEvents        []*api.EthCompletionEvent
 }
 
 type PriceData struct {

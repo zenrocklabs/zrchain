@@ -74,6 +74,11 @@ message SidecarStateResponse {
   string ETHUSDPrice = 11;
   repeated SolanaMintEvent SolanaMintEvents = 12 [(gogoproto.nullable) = false];
   repeated BurnEvent SolanaBurnEvents = 13 [(gogoproto.nullable) = false];
+  repeated EthStakeEvent EthStakeEvents = 14 [(gogoproto.nullable) = false];
+  repeated EthMintEvent EthMintEvents = 15 [(gogoproto.nullable) = false];
+  repeated EthUnstakeEvent EthUnstakeEvents = 16 [(gogoproto.nullable) = false];
+  repeated EthCompletionEvent EthCompletionEvents = 17
+      [(gogoproto.nullable) = false];
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }
@@ -100,4 +105,38 @@ message SolanaMintEvent {
   uint64 Value = 5;
   uint64 Fee = 6;
   bytes Mint = 7;
+}
+
+// EthStakeEvent corresponds to the RockBTCStaked event on the ZenBTController
+// contract.
+message EthStakeEvent {
+  bytes unsigned_tx_hash = 1;
+  bytes staker = 2;
+  uint64 amount = 3;
+}
+
+// EthMintEvent corresponds to the TokensMintedWithFee event on the ZenBTC
+// contract.
+message EthMintEvent {
+  bytes unsigned_tx_hash = 1;
+  bytes recipient = 2;
+  uint64 amount = 3;
+  uint64 fee = 4;
+}
+
+// EthUnstakeEvent corresponds to the WithdrawalZenBTCInitiated event on the
+// ZenBTController contract.
+message EthUnstakeEvent {
+  bytes unsigned_tx_hash = 1;
+  bytes redeemer = 2;
+  string nonce = 3;
+  string amount = 4;
+}
+
+// EthCompletionEvent corresponds to the WithdrawalCompleted event on the
+// ZenBTController contract.
+message EthCompletionEvent {
+  bytes unsigned_tx_hash = 1;
+  bytes redeemer = 2;
+  string nonce = 3;
 }
