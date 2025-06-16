@@ -2230,13 +2230,13 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		_, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-			return
+			continue
 		}
 
 		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
+			continue
 		}
 
 		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))
