@@ -344,6 +344,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
 
+		// 1. Update on-chain state based on oracle data that has reached consensus
 		nonceFields := []VoteExtensionField{
 			VEFieldRequestedStakerNonce,
 			VEFieldRequestedEthMinterNonce,
@@ -357,23 +358,31 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
-		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
-			k.processSolanaROCKBurnEvents(ctx, oracleData)
-			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
-		}
+
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
 			k.storeNewZenBTCRedemptions(ctx, oracleData)
 		}
 
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+			k.processSolanaZenBTCMintEvents(ctx, oracleData)
+			k.processSolanaROCKMintEvents(ctx, oracleData)
+		}
+
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
+			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
+			k.processSolanaROCKBurnEvents(ctx, oracleData)
+		}
+
+		// 2. Process pending transaction queues based on the latest state
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
-		k.processSolanaZenBTCMintEvents(ctx, oracleData)
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
-		k.processSolanaROCKMintEvents(ctx, oracleData)
+
+		// 3. Final cleanup steps for the block
 		k.clearSolanaAccounts(ctx)
 	}
 
