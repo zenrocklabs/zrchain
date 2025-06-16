@@ -914,7 +914,8 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		return []api.SolanaMintEvent{}, lastKnownSig, nil
 	}
 
-	// The newest signature from the node's perspective for this program address
+	// The newest signature from the node's perspective for this program address.
+	// This will be the new watermark only if there are no new transactions to process.
 	newestSigFromNode := allSignatures[0].Signature
 	// The type returned by GetSignaturesForAddressWithOpts is []*rpc.TransactionSignature
 	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
@@ -935,7 +936,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolROCK mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
@@ -951,6 +952,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	var mintEvents []api.SolanaMintEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer
 
@@ -979,10 +981,10 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolROCK mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			// Potentially return lastKnownSig here if we want to stop processing further sub-batches on error
-			// return nil, lastKnownSig, fmt.Errorf("SolROCK mints sub-batch GetTransaction failed: %w", err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolROCK mints sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			// On batch failure, we can't trust we processed anything after the last success.
+			// Break the loop and return what we have so far, with the last known good watermark.
+			break
 		}
 
 		// Process the results
@@ -1073,12 +1075,14 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = sig
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return mintEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1125,7 +1129,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolZenBTC mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
@@ -1141,6 +1145,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	var mintEvents []api.SolanaMintEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
@@ -1169,8 +1174,8 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolZenBTC mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolZenBTC mints sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		// Process the results
@@ -1260,12 +1265,14 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = sig
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolZenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return mintEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
@@ -1409,7 +1416,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolZenBTC burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
@@ -1425,6 +1432,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	var burnEvents []api.BurnEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
@@ -1453,8 +1461,8 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolZenBTC burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolZenBTC burn sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here as it's needed per batch processing if successful
@@ -1529,12 +1537,14 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = originalSignature
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolZenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return burnEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
@@ -1592,6 +1602,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	var burnEvents []api.BurnEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer
 
@@ -1620,8 +1631,8 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 		// Execute batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolRock burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolRock burn sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here
@@ -1695,11 +1706,13 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = originalSignature
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
-	return burnEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // Helper to get typed last processed Solana signature
