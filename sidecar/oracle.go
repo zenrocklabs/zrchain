@@ -179,6 +179,8 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 
 			// Clean up burn events *after* sending state update
 			o.cleanUpBurnEvents()
+			// Clean up mint events *after* sending state update
+			o.cleanUpMintEvents()
 		}
 	}
 }
@@ -223,7 +225,7 @@ func (o *Oracle) fetchAndProcessState(
 	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
 
 	// Fetch Solana mint events
-	o.fetchSolanaMintEvents(&wg, update, &updateMutex, errChan)
+	o.processSolanaMintEvents(&wg, update, &updateMutex, errChan)
 
 	// Fetch Solana burn events
 	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
@@ -438,48 +440,62 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	}()
 }
 
-func (o *Oracle) fetchSolanaMintEvents(
+func (o *Oracle) processSolanaMintEvents(
 	wg *sync.WaitGroup,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetch SolROCK Mints using watermarking
+	// Process solana mint events
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-		events, newestSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
+		// Get new events using watermarking
+		lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
+		rockEvents, newRockSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
 			return
 		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolRockMint] = newestSig
-		}
-		updateMutex.Unlock()
-	}()
 
-	// Fetch SolZenBTC Mints using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
-		events, newestSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
+		lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
+		zenbtcEvents, newZenBTCSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
 			return
 		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+
+		allNewEvents := append(rockEvents, zenbtcEvents...)
+
+		// Get current state to merge with new mint events
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+		// Create a map of existing events for quick lookup
+		existingMintEvents := make(map[string]bool)
+		for _, event := range currentState.SolanaMintEvents {
+			key := base64.StdEncoding.EncodeToString(event.SigHash)
+			existingMintEvents[key] = true
 		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newestSig
+
+		mergedMintEvents := make([]api.SolanaMintEvent, len(currentState.SolanaMintEvents))
+		copy(mergedMintEvents, currentState.SolanaMintEvents)
+
+		for _, event := range allNewEvents {
+			key := base64.StdEncoding.EncodeToString(event.SigHash)
+			if !existingMintEvents[key] {
+				if cleaned, exists := currentState.CleanedSolanaMintEvents[key]; !exists || !cleaned {
+					mergedMintEvents = append(mergedMintEvents, event)
+				}
+			}
+		}
+
+		updateMutex.Lock()
+		update.SolanaMintEvents = mergedMintEvents
+		if !newRockSig.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+		}
+		if !newZenBTCSig.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -573,6 +589,7 @@ func (o *Oracle) buildFinalState(
 		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
 		SolanaMintEvents:           update.SolanaMintEvents,
+		CleanedSolanaMintEvents:    currentState.CleanedSolanaMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
@@ -805,6 +822,8 @@ func (o *Oracle) cleanUpBurnEvents() {
 		newState.CleanedEthBurnEvents = updatedCleanedEthEvents
 		newState.SolanaBurnEvents = remainingSolEvents
 		newState.CleanedSolanaBurnEvents = updatedCleanedSolEvents
+		newState.SolanaMintEvents = currentState.SolanaMintEvents
+		newState.CleanedSolanaMintEvents = currentState.CleanedSolanaMintEvents
 
 		o.currentState.Store(&newState)
 		o.CacheState() // Persist the updated state
@@ -889,6 +908,64 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	}
 
 	return redemptions, nil
+}
+
+func (o *Oracle) reconcileMintEventsWithZRChain(
+	ctx context.Context,
+	eventsToClean []api.SolanaMintEvent,
+	cleanedEvents map[string]bool,
+) ([]api.SolanaMintEvent, map[string]bool) {
+	remainingEvents := make([]api.SolanaMintEvent, 0)
+	updatedCleanedEvents := make(map[string]bool)
+	maps.Copy(updatedCleanedEvents, cleanedEvents)
+
+	for _, event := range eventsToClean {
+		key := base64.StdEncoding.EncodeToString(event.SigHash)
+		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
+			continue
+		}
+
+		var foundOnChain bool
+
+		// Heuristic: check if a mint with the same amount to the same recipient has completed.
+		// This is not perfect as it doesn't use a unique ID, but it's the best we can do
+		// without a chain query for the unique SigHash.
+		// We check for both zenBTC and ROCK mints.
+
+		// Check ZenBTC keeper for a completed mint
+		// We can't query by much, so we list pending mints and if a mint is NOT on that list,
+		// we assume it might be completed. This is a weak heuristic.
+		// A better approach would require a query for completed transactions.
+		// For now, we will assume that if we can't find a pending mint that could match,
+		// it has been processed.
+
+		// Check ZenTP (ROCK)
+		// We can query for completed burns, but not mints easily.
+		// The logic here is difficult without better chain queries.
+		// For now, let's assume we can't reliably detect if a mint is on-chain.
+		// This means we can't clean up mint events yet.
+		// Caching without cleanup will lead to a memory leak.
+
+		// Given the limitations, for now, we will not implement cleanup.
+		// We will just accumulate. This is better than losing events, but not ideal.
+		// The `cleanUpMintEvents` function will be a no-op for now.
+		foundOnChain = false // Forcing no cleanup for now.
+
+		if !foundOnChain {
+			remainingEvents = append(remainingEvents, event)
+		} else {
+			updatedCleanedEvents[key] = true
+			log.Printf("Removing Solana mint event from cache as it's now on chain (sigHash: %s)", key)
+		}
+	}
+
+	return remainingEvents, updatedCleanedEvents
+}
+
+func (o *Oracle) cleanUpMintEvents() {
+	// TODO: This function is a no-op until a reliable way to query
+	// completed mints from zrchain is available. Caching mints without
+	// a cleanup mechanism will lead to state bloat over time.
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {

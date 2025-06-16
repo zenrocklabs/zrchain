@@ -27,3 +27,20 @@ func (c *ZenTPQueryClient) Burns(ctx context.Context, recipientAddress string, s
 		SourceTxHash:     sourceTxHash,
 	})
 }
+
+func (c *ZenTPQueryClient) Mints(ctx context.Context, denom string) (*types.QueryMintsResponse, error) {
+	return c.client.Mints(ctx, &types.QueryMintsRequest{
+		Denom: denom,
+	})
+}
+
+func (c *ZenTPQueryClient) Stats(ctx context.Context, address, denom string) (*types.QueryStatsResponse, error) {
+	return c.client.Stats(ctx, &types.QueryStatsRequest{
+		Address: address,
+		Denom:   denom,
+	})
+}
+
+func (c *ZenTPQueryClient) QuerySolanaROCKSupply(ctx context.Context) (*types.QuerySolanaROCKSupplyResponse, error) {
+	return c.client.QuerySolanaROCKSupply(ctx, &types.QuerySolanaROCKSupplyRequest{})
+}
