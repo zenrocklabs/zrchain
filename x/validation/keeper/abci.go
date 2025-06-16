@@ -1742,6 +1742,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 				"minted_old", supply.MintedZenBTC-pendingMint.Amount,
 				"minted_new", supply.MintedZenBTC,
 			)
+			pendingMint.TxHash = event.TxSig
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())

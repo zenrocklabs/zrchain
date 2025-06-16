@@ -928,12 +928,12 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		var foundOnChain bool
 
 		// Check ZenBTC keeper
-		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.MintByTxID(ctx, event.TxSig)
+		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
 			log.Printf("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
 		}
 
-		if zenbtcResp != nil && zenbtcResp.MintTransaction != nil {
+		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil {
 			foundOnChain = true
 		}
 

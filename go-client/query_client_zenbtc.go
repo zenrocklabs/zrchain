@@ -64,6 +64,10 @@ func (c *ZenBTCQueryClient) PendingMintTransactions(ctx context.Context, startIn
 	return c.client.QueryPendingMintTransactions(ctx, &types.QueryPendingMintTransactionsRequest{StartIndex: startIndex})
 }
 
+func (c *ZenBTCQueryClient) PendingMintTransaction(ctx context.Context, txHash string) (*types.QueryPendingMintTransactionResponse, error) {
+	return c.client.QueryPendingMintTransaction(ctx, &types.QueryPendingMintTransactionRequest{TxHash: txHash})
+}
+
 func (c *ZenBTCQueryClient) Supply(ctx context.Context) (*types.QuerySupplyResponse, error) {
 	return c.client.QuerySupply(ctx, &types.QuerySupplyRequest{})
 }
