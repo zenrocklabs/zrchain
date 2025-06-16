@@ -22,6 +22,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/beevik/ntp"
+	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum"
@@ -699,7 +700,7 @@ func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api
 	return mergedEthBurnEvents, nil
 }
 
-// reconcileBurnEventsWithChain checks a list of burn events against the chain and returns the events
+// reconcileBurnEventsWithZRChain checks a list of burn events against the chain and returns the events
 // that should remain in the cache and an updated map of cleaned events.
 func (o *Oracle) reconcileBurnEventsWithZRChain(
 	ctx context.Context,
@@ -721,17 +722,43 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 			continue // Skip to next event if already marked as cleaned
 		}
 
-		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
-		if err != nil || resp == nil {
-			// Log the specific chain type in the error
-			log.Printf("Error querying %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
-			// Keep events that we failed to query, they might succeed next time
-			remainingEvents = append(remainingEvents, event)
-			continue // Continue checking other events even if one query fails
+		var foundOnChain bool
+
+		// 1. Check ZenBTC keeper
+		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
+		if err != nil {
+			log.Printf("Error querying ZenBTC for %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
+			// Keep events that we failed to query, they might succeed next time. We'll let it continue to the ZenTP check.
 		}
 
-		// If the event is not found on chain, keep it in our cache
-		if len(resp.BurnEvents) == 0 {
+		if zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
+			foundOnChain = true
+		}
+
+		// 2. If not found and it's a Solana event, check ZenTP keeper as well
+		if !foundOnChain && chainTypeName == "Solana" {
+			// The destination address for Solana burns is a 32-byte key, but zrchain uses the first 20 bytes for the Cosmos address.
+			if len(event.DestinationAddr) >= 20 {
+				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", event.DestinationAddr[:20])
+				if err != nil {
+					log.Printf("Error converting destination address to bech32 for ZenTP query (txID: %s): %v", event.TxID, err)
+				} else {
+					zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, event.ChainID, event.TxID)
+					if err != nil {
+						log.Printf("Error querying ZenTP for Solana burn event (txID: %s, chainID: %s, addr: %s): %v", event.TxID, event.ChainID, bech32Addr, err)
+					}
+					// Check zentpResp and its content. The actual field might be 'burns' or 'bridges'.
+					if zentpResp != nil && len(zentpResp.Burns) > 0 {
+						foundOnChain = true
+					}
+				}
+			} else {
+				log.Printf("Skipping ZenTP check for Solana burn event due to short destination address (txID: %s, len: %d)", event.TxID, len(event.DestinationAddr))
+			}
+		}
+
+		// 3. Update state based on whether it was found
+		if !foundOnChain {
 			remainingEvents = append(remainingEvents, event)
 		} else {
 			// Event found on chain, mark it as cleaned by adding to the map
