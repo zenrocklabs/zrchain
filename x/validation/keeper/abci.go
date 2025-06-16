@@ -1761,13 +1761,20 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 		for i, dbgEvent := range burnEvents {
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Solana event details from oracle.",
 				"source", source, "idx", i, "tx_id", dbgEvent.TxID, "log_idx", dbgEvent.LogIndex,
-				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr))
+				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr), "is_zenbtc", dbgEvent.IsZenBTC)
 		}
 	}
 
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
+		// For Solana events, we now use the explicit flag to distinguish burn types.
+		// We skip ROCK burns here. zenBTC burns will have IsZenBTC = true.
+		if source == "solana" && !burn.IsZenBTC {
+			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping event explicitly marked as not a zenBTC burn.", "tx_id", burn.TxID, "log_idx", burn.LogIndex)
+			continue
+		}
+
 		// Check if this burn event already exists
 		exists := false
 		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
@@ -1786,31 +1793,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 		}
 
 		if !exists {
-			// If the source is Solana, we must first check if this is a ROCK burn event
-			// that has already been processed by the zentp module. This prevents
-			// ROCK burns from being incorrectly stored in the zenbtc keeper.
-			if source == "solana" {
-				// We need the bech32 address to query the zentp keeper.
-				addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
-				if err != nil {
-					k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error converting destination address to bech32 for zentp check.", "tx_id", burn.TxID, "error", err)
-					// If we can't convert the address, we can't check. It's safer to not store it as a zenbtc burn.
-					continue
-				}
-
-				burns, err := k.zentpKeeper.GetBurns(ctx, addr, burn.ChainID, burn.TxID)
-				if err != nil {
-					k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error querying zentp keeper for ROCK burn.", "tx_id", burn.TxID, "error", err)
-					// If we can't query, it's safer to not store it as a zenbtc burn.
-					continue
-				}
-
-				if len(burns) > 0 {
-					// This event has been processed by the zentp keeper, so it's a ROCK burn. Skip it.
-					k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Skipping event already processed as a ROCK burn.", "tx_id", burn.TxID)
-					continue
-				}
-			}
+			// The explicit check at the top of the loop replaces the need for the zentp keeper check.
 
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New event, creating BurnEvent.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "amount", burn.Amount, "destination_addr_hex", hex.EncodeToString(burn.DestinationAddr))
 			// Create a new BurnEvent using data from the input struct
@@ -2204,6 +2187,11 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
 	for _, e := range oracleData.SolanaBurnEvents {
+		// Only process events that are explicitly marked as ROCK burns.
+		if e.IsZenBTC {
+			continue // This is a zenBTC burn, skip it.
+		}
+
 		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Errorf("Bech32ifyAddressBytes: %w", err).Error())

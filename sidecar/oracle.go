@@ -1516,6 +1516,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr,
 						Amount:          e.Value,
+						IsZenBTC:        true, // This is a ZenBTC burn
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
@@ -1681,6 +1682,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr[:],
 						Amount:          e.Value,
+						IsZenBTC:        false, // This is a ROCK burn
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
