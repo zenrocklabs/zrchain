@@ -21,6 +21,9 @@ func (c *ZenTPQueryClient) Params(ctx context.Context) (*types.QueryParamsRespon
 	return c.client.Params(ctx, &types.QueryParamsRequest{})
 }
 
-func (c *ZenTPQueryClient) Burns(ctx context.Context, startIndex uint64, txID string, logIndex uint64, chainID string) (*types.QueryBurnsResponse, error) {
-	return c.client.Burns(ctx, &types.QueryBurnsRequest{})
+func (c *ZenTPQueryClient) Burns(ctx context.Context, recipientAddress string, sourceTxHash string) (*types.QueryBurnsResponse, error) {
+	return c.client.Burns(ctx, &types.QueryBurnsRequest{
+		RecipientAddress: recipientAddress,
+		SourceTxHash:     sourceTxHash,
+	})
 }

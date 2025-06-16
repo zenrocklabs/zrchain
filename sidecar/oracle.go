@@ -743,11 +743,11 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 				if err != nil {
 					log.Printf("Error converting destination address to bech32 for ZenTP query (txID: %s): %v", event.TxID, err)
 				} else {
-					zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, event.ChainID, event.TxID)
+					zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, event.TxID)
 					if err != nil {
-						log.Printf("Error querying ZenTP for Solana burn event (txID: %s, chainID: %s, addr: %s): %v", event.TxID, event.ChainID, bech32Addr, err)
+						log.Printf("Error querying ZenTP for Solana burn event (txID: %s, addr: %s): %v", event.TxID, bech32Addr, err)
 					}
-					// Check zentpResp and its content. The actual field might be 'burns' or 'bridges'.
+					// Check zentpResp and its content.
 					if zentpResp != nil && len(zentpResp.Burns) > 0 {
 						foundOnChain = true
 					}
