@@ -105,7 +105,7 @@ var (
 	// Oracle tuning parameters
 	MainLoopTickerIntervalSeconds = 60 // Seconds
 	OracleCacheSize               = 20
-	EthBurnEventsBlockRange       = 1000
+	EthEventsBlockRange           = 1000
 	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
 	SolanaEventScanTxLimit        = 1000
 	SolanaEventFetchBatchSize     = 50
@@ -139,23 +139,29 @@ type OracleState struct {
 	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
 	SolanaMintEvents           []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	// Fields for watermarking Solana events
-	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
-	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
-	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
-	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
+	LastSolRockMintSig   string                    `json:"lastSolRockMintSig,omitempty"`
+	LastSolZenBTCMintSig string                    `json:"lastSolZenBTCMintSig,omitempty"`
+	LastSolZenBTCBurnSig string                    `json:"lastSolZenBTCBurnSig,omitempty"`
+	LastSolRockBurnSig   string                    `json:"lastSolRockBurnSig,omitempty"`
+	EthStakeEvents       []*api.EthStakeEvent      `json:"ethStakeEvents"`
+	EthMintEvents        []*api.EthMintEvent       `json:"ethMintEvents"`
+	EthUnstakeEvents     []*api.EthUnstakeEvent    `json:"ethUnstakeEvents"`
+	EthCompletionEvents  []*api.EthCompletionEvent `json:"ethCompletionEvents"`
 }
 
 type Config struct {
-	Enabled        bool              `yaml:"enabled"`
-	GRPCPort       int               `yaml:"grpc_port"`
-	StateFile      string            `yaml:"state_file"`
-	ZRChainRPC     string            `yaml:"zrchain_rpc"`
-	OperatorConfig string            `yaml:"operator_config"`
-	Network        string            `yaml:"network"`
-	EthRPC         map[string]string `yaml:"eth_rpc"`
-	SolanaRPC      map[string]string `yaml:"solana_rpc"`
-	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
-	Neutrino       NeutrinoConfig    `yaml:"neutrino"`
+	Enabled                 bool              `yaml:"enabled"`
+	GRPCPort                int               `yaml:"grpc_port"`
+	StateFile               string            `yaml:"state_file"`
+	ZRChainRPC              string            `yaml:"zrchain_rpc"`
+	OperatorConfig          string            `yaml:"operator_config"`
+	Network                 string            `yaml:"network"`
+	EthRPC                  map[string]string `yaml:"eth_rpc"`
+	SolanaRPC               map[string]string `yaml:"solana_rpc"`
+	ProxyRPC                ProxyRPCConfig    `yaml:"proxy_rpc"`
+	Neutrino                NeutrinoConfig    `yaml:"neutrino"`
+	ZenBTCControllerAddress string            `json:"zenBTCControllerAddress"`
+	ZenBTCAddress           string            `json:"zenBTCAddress"`
 }
 
 type ProxyRPCConfig struct {

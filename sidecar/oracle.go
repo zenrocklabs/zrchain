@@ -29,6 +29,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/zenrocklabs/zenbtc/bindings"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
@@ -210,22 +211,26 @@ func (o *Oracle) fetchAndProcessState(
 	errChan := make(chan error, 16)
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(&wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
-
-	// Fetch network data (gas estimates, tips, Solana fees)
-	o.fetchNetworkData(&wg, ctx, update, &updateMutex, errChan)
-
-	// Fetch price data (ROCK, BTC, ETH)
-	o.fetchPriceData(&wg, btcPriceFeed, ethPriceFeed, tempEthClient, ctx, update, &updateMutex, errChan)
-
-	// Fetch burn events
-	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
-
-	// Fetch Solana mint events
-	o.fetchSolanaMintEvents(&wg, update, &updateMutex, errChan)
-
-	// Fetch Solana burn events
-	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthereumContractData(&wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchNetworkData(&wg, ctx, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchPriceData(&wg, btcPriceFeed, ethPriceFeed, tempEthClient, ctx, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchSolanaMintEvents(&wg, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthStakeEvents(&wg, latestHeader, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthMintEvents(&wg, latestHeader, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthUnstakeEvents(&wg, latestHeader, update, &updateMutex, errChan)
+	wg.Add(1)
+	go o.fetchEthCompletionEvents(&wg, latestHeader, update, &updateMutex, errChan)
 
 	wg.Wait()
 	close(errChan)
@@ -422,19 +427,18 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Process ETH burn events
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		events, err := o.processEthereumBurnEvents(latestHeader)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Ethereum burn events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		update.ethBurnEvents = events
-		updateMutex.Unlock()
-	}()
+	defer wg.Done()
+	log.Printf("DEBUG: fetching ethereum burn events")
+
+	events, err := o.processEthereumBurnEvents(latestHeader)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process ethereum burn events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	update.ethBurnEvents = events
 }
 
 func (o *Oracle) fetchSolanaMintEvents(
@@ -443,45 +447,41 @@ func (o *Oracle) fetchSolanaMintEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetch SolROCK Mints using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-		events, newestSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolRockMint] = newestSig
-		}
-		updateMutex.Unlock()
-	}()
+	defer wg.Done()
 
-	// Fetch SolZenBTC Mints using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
-		events, newestSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
-			return
-		}
+	// Fetch Solana ZenBTC mint events
+	lastKnownSigZenBTC := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
+	zenBtcMintEvents, newestSigZenBTC, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSigZenBTC)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process Solana ZenBTC mint events: %w", err)
+		// continue
+	} else {
 		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+		if len(zenBtcMintEvents) > 0 {
+			update.SolanaMintEvents = append(update.SolanaMintEvents, zenBtcMintEvents...)
 		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newestSig
+		if !newestSigZenBTC.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newestSigZenBTC
 		}
 		updateMutex.Unlock()
-	}()
+	}
+
+	// Fetch Solana ROCK mint events
+	lastKnownSigRock := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
+	rockMintEvents, newestSigRock, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSigRock)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process Solana ROCK mint events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	if len(rockMintEvents) > 0 {
+		update.SolanaMintEvents = append(update.SolanaMintEvents, rockMintEvents...)
+	}
+	if !newestSigRock.IsZero() {
+		update.latestSolanaSigs[sidecartypes.SolRockMint] = newestSigRock
+	}
+	updateMutex.Unlock()
 }
 
 func (o *Oracle) fetchSolanaBurnEvents(
@@ -490,45 +490,115 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
+	defer wg.Done()
+
 	// Fetch Solana ZenBTC burn events using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
-		events, newestSig, err := o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana ZenBTC burn events: %w", err)
-			return
-		}
+	lastKnownSigZenBTC := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
+	zenBtcBurnEvents, newestSigZenBTC, err := o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSigZenBTC)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process Solana ZenBTC burn events: %w", err)
+	} else {
 		updateMutex.Lock()
-		if len(events) > 0 {
-			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
+		if len(zenBtcBurnEvents) > 0 {
+			update.solanaBurnEvents = append(update.solanaBurnEvents, zenBtcBurnEvents...)
 		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
+		if !newestSigZenBTC.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSigZenBTC
 		}
 		updateMutex.Unlock()
-	}()
+	}
 
 	// Fetch Solana ROCK burn events using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
-		events, newestSig, err := o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", err)
-			return
-		}
+	lastKnownSigRock := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
+	rockBurnEvents, newestSigRock, err := o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSigRock)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", err)
+	} else {
 		updateMutex.Lock()
-		if len(events) > 0 {
-			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
+		if len(rockBurnEvents) > 0 {
+			update.solanaBurnEvents = append(update.solanaBurnEvents, rockBurnEvents...)
 		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
+		if !newestSigRock.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSigRock
 		}
 		updateMutex.Unlock()
-	}()
+	}
+}
+
+func (o *Oracle) fetchEthStakeEvents(
+	wg *sync.WaitGroup,
+	latestHeader *ethtypes.Header,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
+	defer wg.Done()
+	events, err := o.getEthStakeEvents(latestHeader)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process ethereum stake events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	update.ethStakeEvents = events
+}
+
+func (o *Oracle) fetchEthMintEvents(
+	wg *sync.WaitGroup,
+	latestHeader *ethtypes.Header,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
+	defer wg.Done()
+	events, err := o.getEthMintEvents(latestHeader)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process ethereum mint events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	update.ethMintEvents = events
+}
+
+func (o *Oracle) fetchEthUnstakeEvents(
+	wg *sync.WaitGroup,
+	latestHeader *ethtypes.Header,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
+	defer wg.Done()
+	events, err := o.getEthUnstakeEvents(latestHeader)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process ethereum unstake events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	update.ethUnstakeEvents = events
+}
+
+func (o *Oracle) fetchEthCompletionEvents(
+	wg *sync.WaitGroup,
+	latestHeader *ethtypes.Header,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+	errChan chan<- error,
+) {
+	defer wg.Done()
+	events, err := o.getEthCompletionEvents(latestHeader)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to process ethereum completion events: %w", err)
+		return
+	}
+
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	update.ethCompletionEvents = events
 }
 
 func (o *Oracle) buildFinalState(
@@ -561,15 +631,13 @@ func (o *Oracle) buildFinalState(
 
 	newState := sidecartypes.OracleState{
 		EigenDelegations:           update.eigenDelegations,
-		EthBlockHeight:             targetBlockNumber.Uint64(),
+		EthBlockHeight:             latestHeader.Number.Uint64(),
 		EthGasLimit:                update.estimatedGas,
 		EthBaseFee:                 latestHeader.BaseFee.Uint64(),
 		EthTipCap:                  update.suggestedTip.Uint64(),
 		SolanaLamportsPerSignature: update.solanaLamportsPerSignature,
 		EthBurnEvents:              update.ethBurnEvents,
-		CleanedEthBurnEvents:       currentState.CleanedEthBurnEvents,
 		SolanaBurnEvents:           update.solanaBurnEvents,
-		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
 		SolanaMintEvents:           update.SolanaMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
@@ -579,9 +647,14 @@ func (o *Oracle) buildFinalState(
 		LastSolZenBTCMintSig:       o.lastSolZenBTCMintSigStr,
 		LastSolZenBTCBurnSig:       o.lastSolZenBTCBurnSigStr,
 		LastSolRockBurnSig:         o.lastSolRockBurnSigStr,
+		EthStakeEvents:             update.ethStakeEvents,
+		EthMintEvents:              update.ethMintEvents,
+		EthUnstakeEvents:           update.ethUnstakeEvents,
+		EthCompletionEvents:        update.ethCompletionEvents,
 	}
 
 	if o.DebugMode {
+		log.Printf("DEBUG: final state: %+v", newState)
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
 		if err != nil {
 			log.Printf("\nError marshalling state to JSON for logging: %v\n", err)
@@ -669,38 +742,27 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 }
 
 func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api.BurnEvent, error) {
-	fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
+	// Calculate block range for event fetching
 	toBlock := latestHeader.Number
-	newEthBurnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
+	fromBlock := big.NewInt(0).Sub(toBlock, big.NewInt(int64(sidecartypes.EthEventsBlockRange)))
+	if fromBlock.Sign() < 0 {
+		fromBlock.SetInt64(0)
+	}
+
+	burnEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Ethereum burn events: %w", err)
+		return nil, fmt.Errorf("failed to get eth burn events: %w", err)
 	}
 
-	// Get current state to merge with new burn events
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	// Filter out events that are too old to be relevant
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cleanedEvents, _ := o.reconcileBurnEventsWithZRChain(ctx, burnEvents, o.cleanedEthBurnEvents, "Ethereum")
 
-	// Create a map of existing events for quick lookup
-	existingEthBurnEvents := make(map[string]bool)
-	for _, event := range currentState.EthBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		existingEthBurnEvents[key] = true
-	}
-
-	// Only add new events that aren't already in our cache and haven't been cleaned up
-	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
-	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
-	for _, event := range newEthBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingEthBurnEvents[key] && !currentState.CleanedEthBurnEvents[key] {
-			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
-		}
-	}
-
-	return mergedEthBurnEvents, nil
+	return cleanedEvents, nil
 }
 
-// reconcileBurnEventsWithChain checks a list of burn events against the chain and returns the events
-// that should remain in the cache and an updated map of cleaned events.
+// reconcileBurnEventsWithZRChain checks against the zrchain state to see if a burn has already been processed.
 func (o *Oracle) reconcileBurnEventsWithZRChain(
 	ctx context.Context,
 	eventsToClean []api.BurnEvent,
@@ -1738,4 +1800,177 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 		return false
 	}
 	return true
+}
+
+// getEthStakeEvents fetches RockBTCStaked events from the ZenBTController contract.
+func (o *Oracle) getEthStakeEvents(latestHeader *ethtypes.Header) ([]*api.EthStakeEvent, error) {
+	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
+	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate a ZenBTCController filterer: %w", err)
+	}
+
+	toBlockU64 := toBlock.Uint64()
+	opts := &bind.FilterOpts{Start: fromBlock.Uint64(), End: &toBlockU64, Context: context.Background()}
+	iter, err := zenBTCControllerFilterer.FilterRockBTCStaked(opts, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter for RockBTCStaked events: %w", err)
+	}
+	defer iter.Close()
+
+	var events []*api.EthStakeEvent
+	for iter.Next() {
+		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
+		if err != nil {
+			log.Printf("failed to get unsigned tx hash for RockBTCStaked event: %v", err)
+			continue
+		}
+		events = append(events, &api.EthStakeEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Staker:         iter.Event.Operator.Bytes(),
+			Amount:         iter.Event.Value,
+		})
+	}
+
+	if err := iter.Error(); err != nil {
+		return nil, fmt.Errorf("iterator error on RockBTCStaked events: %w", err)
+	}
+
+	return events, nil
+}
+
+// getEthMintEvents fetches TokensMintedWithFee events from the ZenBTC contract.
+func (o *Oracle) getEthMintEvents(latestHeader *ethtypes.Header) ([]*api.EthMintEvent, error) {
+	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
+	zenBTCFilterer, err := bindings.NewZenBTCFilterer(common.HexToAddress(o.Config.ZenBTCAddress), o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate a ZenBTC filterer: %w", err)
+	}
+
+	toBlockU64 := toBlock.Uint64()
+	opts := &bind.FilterOpts{Start: fromBlock.Uint64(), End: &toBlockU64, Context: context.Background()}
+	iter, err := zenBTCFilterer.FilterTokensMintedWithFee(opts, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter for TokensMintedWithFee events: %w", err)
+	}
+	defer iter.Close()
+
+	var events []*api.EthMintEvent
+	for iter.Next() {
+		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
+		if err != nil {
+			log.Printf("failed to get unsigned tx hash for TokensMintedWithFee event: %v", err)
+			continue
+		}
+		events = append(events, &api.EthMintEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Recipient:      iter.Event.Recipient.Bytes(),
+			Amount:         iter.Event.Value,
+			Fee:            iter.Event.Fee,
+		})
+	}
+
+	if err := iter.Error(); err != nil {
+		return nil, fmt.Errorf("iterator error on TokensMintedWithFee events: %w", err)
+	}
+
+	return events, nil
+}
+
+// getEthUnstakeEvents fetches WithdrawalZenBTCInitiated events from the ZenBTController contract.
+func (o *Oracle) getEthUnstakeEvents(latestHeader *ethtypes.Header) ([]*api.EthUnstakeEvent, error) {
+	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
+	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate a ZenBTCController filterer: %w", err)
+	}
+
+	toBlockU64 := toBlock.Uint64()
+	opts := &bind.FilterOpts{Start: fromBlock.Uint64(), End: &toBlockU64, Context: context.Background()}
+	iter, err := zenBTCControllerFilterer.FilterWithdrawalZenBTCInitiated(opts, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter for WithdrawalZenBTCInitiated events: %w", err)
+	}
+	defer iter.Close()
+
+	var events []*api.EthUnstakeEvent
+	for iter.Next() {
+		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
+		if err != nil {
+			log.Printf("failed to get unsigned tx hash for WithdrawalZenBTCInitiated event: %v", err)
+			continue
+		}
+		events = append(events, &api.EthUnstakeEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Redeemer:       iter.Event.UnstakeInfo.DestinationAddress,
+			Nonce:          iter.Event.Nonce.String(),
+			Amount:         iter.Event.UnstakeInfo.ZenBTCValue.String(),
+		})
+	}
+
+	if err := iter.Error(); err != nil {
+		return nil, fmt.Errorf("iterator error on WithdrawalZenBTCInitiated events: %w", err)
+	}
+
+	return events, nil
+}
+
+// getEthCompletionEvents fetches WithdrawalCompleted events from the ZenBTController contract.
+func (o *Oracle) getEthCompletionEvents(latestHeader *ethtypes.Header) ([]*api.EthCompletionEvent, error) {
+	fromBlock, toBlock := o.calculateBlockRange(latestHeader)
+	zenBTCControllerFilterer, err := bindings.NewZenBTControllerFilterer(common.HexToAddress(o.Config.ZenBTCControllerAddress), o.EthClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate a ZenBTCController filterer: %w", err)
+	}
+
+	toBlockU64 := toBlock.Uint64()
+	opts := &bind.FilterOpts{Start: fromBlock.Uint64(), End: &toBlockU64, Context: context.Background()}
+	iter, err := zenBTCControllerFilterer.FilterWithdrawalCompleted(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter for WithdrawalCompleted events: %w", err)
+	}
+	defer iter.Close()
+
+	var events []*api.EthCompletionEvent
+	for iter.Next() {
+		unsignedTxHash, err := o.getUnsignedTxHash(iter.Event.Raw.TxHash)
+		if err != nil {
+			log.Printf("failed to get unsigned tx hash for WithdrawalCompleted event: %v", err)
+			continue
+		}
+		events = append(events, &api.EthCompletionEvent{
+			UnsignedTxHash: unsignedTxHash,
+			Redeemer:       iter.Event.Arg0.Withdrawer.Bytes(),
+			Nonce:          iter.Event.Arg0.Nonce.String(),
+		})
+	}
+
+	if err := iter.Error(); err != nil {
+		return nil, fmt.Errorf("iterator error on WithdrawalCompleted events: %w", err)
+	}
+
+	return events, nil
+}
+
+func (o *Oracle) getUnsignedTxHash(txHash common.Hash) ([]byte, error) {
+	tx, isPending, err := o.EthClient.TransactionByHash(context.Background(), txHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction by hash: %w", err)
+	}
+	if isPending {
+		return nil, fmt.Errorf("transaction is pending, cannot get unsigned hash")
+	}
+
+	signer := ethtypes.LatestSignerForChainID(tx.ChainId())
+	unsignedTxHash := signer.Hash(tx)
+	return unsignedTxHash[:], nil
+}
+
+func (o *Oracle) calculateBlockRange(latestHeader *ethtypes.Header) (*big.Int, *big.Int) {
+	toBlock := latestHeader.Number
+	fromBlock := new(big.Int).Sub(toBlock, big.NewInt(int64(sidecartypes.EthEventsBlockRange)))
+	if fromBlock.Sign() < 0 {
+		fromBlock.SetInt64(0)
+	}
+	return fromBlock, toBlock
 }

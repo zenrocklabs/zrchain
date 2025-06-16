@@ -342,6 +342,13 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		}
 	}
 
+	// Process ethereum events first, as they might confirm transactions
+	// dispatched in previous blocks, allowing new ones to be sent in the current block.
+	k.processZenBTCStakeEvents(ctx, oracleData)
+	k.processZenBTCMintEventsEthereum(ctx, oracleData)
+	k.processZenBTCUnstakeEvents(ctx, oracleData)
+	k.processZenBTCRedemptionCompleteEvents(ctx, oracleData)
+
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
 
 		nonceFields := []VoteExtensionField{
@@ -770,50 +777,17 @@ func checkForUpdateAndDispatchTx[T any](
 
 	// Ethereum transaction processing flow.
 	if requestedEthNonce != nil {
-		nonceData, err := k.getNonceDataWithInit(ctx, keyID)
-		if err != nil {
-			k.Logger(ctx).Error("error getting nonce data", "keyID", keyID, "error", err)
-			return
-		}
-		k.Logger(ctx).Info("Nonce info",
-			"nonce", nonceData.Nonce,
-			"prev", nonceData.PrevNonce,
-			"counter", nonceData.Counter,
-			"skip", nonceData.Skip,
-			"requested", requestedEthNonce,
-		)
-		if nonceData.Nonce != 0 && *requestedEthNonce == 0 {
+		// The continuation callback is used to check for timeouts or other conditions
+		// that might require a transaction to be reset or retried.
+		if err := txContinuationCallback(pendingTxs[0]); err != nil {
+			k.Logger(ctx).Error("error handling ethereum transaction status check", "keyID", keyID, "error", err)
 			return
 		}
 
-		nonceUpdated, err := handleNonceUpdate(k, ctx, keyID, *requestedEthNonce, nonceData, pendingTxs[0], txContinuationCallback)
-		if err != nil {
-			k.Logger(ctx).Error("error handling nonce update", "keyID", keyID, "error", err)
-			return
-		}
-
-		if len(pendingTxs) == 1 && nonceUpdated {
-			if err := k.clearNonceRequest(ctx, nonceReqStore, keyID); err != nil {
-				k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", keyID, "error", err)
-			}
-			return
-		}
-
-		if nonceData.Skip {
-			return
-		}
-
-		// If tx[0] confirmed on-chain via nonce increment, dispatch tx[1]. If not then retry dispatching tx[0].
-		txIndex := 0
-		if nonceUpdated {
-			txIndex = 1
-		}
-
-		if len(pendingTxs) <= txIndex {
-			return
-		}
-
-		if err := txDispatchCallback(pendingTxs[txIndex]); err != nil {
+		// The dispatch callback is responsible for sending the transaction.
+		// It should be idempotent, as it may be called multiple times for the same transaction
+		// if it's not confirmed quickly.
+		if err := txDispatchCallback(pendingTxs[0]); err != nil {
 			k.Logger(ctx).Error("tx dispatch callback error", "keyID", keyID, "error", err)
 		}
 		return
@@ -1025,6 +999,10 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		// txDispatchCallback: Constructs and submits an Ethereum transaction to stake the deposited assets on EigenLayer.
 		// It uses the current nonce and gas parameters from the oracle data.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			if tx.BlockHeight > 0 {
+				k.Logger(ctx).Info("waiting for pending zenbtc stake tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
+				return nil
+			}
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
@@ -1057,7 +1035,7 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				"tip_cap", oracleData.EthTipCap,
 			)
 
-			return k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				tx.Creator,
 				k.zenBTCKeeper.GetStakerKeyID(ctx),
@@ -1066,28 +1044,32 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 				unsignedTx,
 				unsignedTxHash,
 			)
-		},
-		// txContinuationCallback: This is called when the stake transaction's nonce has been confirmed on-chain.
-		// It updates the transaction's status to STAKED and sets up the system for the next step: minting zenBTC.
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
-			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
+			if err != nil {
 				return err
 			}
-			if types.IsSolanaCAIP2(ctx, tx.Caip2ChainId) {
-				solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
-					return err
-				}
-				if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
-					return err
-				}
-				k.Logger(ctx).Warn("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+			tx.ZrchainTxId = txID
+			tx.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+		},
+		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
+		// The actual state progression now happens in `processZenBTCStakeEvents` upon event confirmation.
+		func(tx zenbtctypes.PendingMintTransaction) error {
+			if tx.BlockHeight == 0 {
 				return nil
-			} else if types.IsEthereumCAIP2(ctx, tx.Caip2ChainId) {
-				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
 			}
-			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
+			k.Logger(ctx).Info("Ethereum Stake Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > tx.BlockHeight+btl {
+				tx = k.processBtlEthStake(ctx, tx, oracleData, btl)
+			}
+
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutEthStake(ctx, tx, oracleData)
+			}
+			k.Logger(ctx).Info("Ethereum Stake Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
 }
@@ -1112,6 +1094,10 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 		// txDispatchCallback: Constructs and submits an Ethereum transaction to mint zenBTC on the destination EVM chain.
 		// It calculates the required fees and constructs the minting transaction.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			if tx.BlockHeight > 0 {
+				k.Logger(ctx).Info("waiting for pending zenbtc ethereum mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
+				return nil
+			}
 			if err := k.zenBTCKeeper.SetFirstPendingEthMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
@@ -1178,7 +1164,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				"tip_cap", oracleData.EthTipCap,
 			)
 
-			return k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				tx.Creator,
 				k.zenBTCKeeper.GetEthMinterKeyID(ctx),
@@ -1187,28 +1173,31 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				unsignedMintTx,
 				unsignedMintTxHash,
 			)
-		},
-		// txContinuationCallback: This is called when the mint transaction's nonce has been confirmed on-chain.
-		// It updates the zenBTC supply and marks the mint transaction as MINTED.
-		func(tx zenbtctypes.PendingMintTransaction) error {
-			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return err
 			}
-			supply.PendingZenBTC -= tx.Amount
-			supply.MintedZenBTC += tx.Amount
-			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				return err
+			tx.ZrchainTxId = txID
+			tx.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
+		},
+		// txContinuationCallback: Timeout/status checker.
+		func(tx zenbtctypes.PendingMintTransaction) error {
+			if tx.BlockHeight == 0 {
+				return nil
 			}
-			k.Logger(ctx).Warn("pending mint supply updated",
-				"pending_mint_old", supply.PendingZenBTC+tx.Amount,
-				"pending_mint_new", supply.PendingZenBTC,
-			)
-			k.Logger(ctx).Warn("minted supply updated",
-				"minted_old", supply.MintedZenBTC-tx.Amount,
-				"minted_new", supply.MintedZenBTC,
-			)
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+			k.Logger(ctx).Info("Ethereum Mint Status Check Begin", "tx_id", tx.Id, "tx_block_height", tx.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", tx.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > tx.BlockHeight+btl {
+				tx = k.processBtlEthMint(ctx, tx, oracleData, btl)
+			}
+
+			if tx.AwaitingEventSince > 0 {
+				tx = k.processSecondaryTimeoutEthMint(ctx, tx, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Mint Status Check End", "tx_id", tx.Id, "tx_block_height_after_checks", tx.BlockHeight, "awaiting_event_since_after_checks", tx.AwaitingEventSince)
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
@@ -1912,7 +1901,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				"burn_id", be.Id, "creator", creator, "unstaker_key_id", k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 				"eigen_chain_id", getChainIDForEigen(ctx))
 
-			return k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetUnstakerKeyID(ctx),
@@ -1921,12 +1910,32 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 				unsignedTx,
 				unsignedTxHash,
 			)
+			if err != nil {
+				return err
+			}
+			be.ZrchainTxId = txID
+			be.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
-		// txContinuationCallback: This is called when the unstake transaction's nonce has been confirmed on-chain.
-		// It updates the burn event's status to UNSTAKING to reflect that the unstaking process has started.
+		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
+		// The actual state progression now happens in `processZenBTCUnstakeEvents` upon event confirmation.
 		func(be zenbtctypes.BurnEvent) error {
-			k.Logger(ctx).Info("ProcessZenBTCBurnEvents: Nonce advanced for unstake. Updating burn event status.", "burn_id", be.Id, "old_status", be.Status, "new_status", zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING)
-			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+			if be.BlockHeight == 0 {
+				return nil
+			}
+			k.Logger(ctx).Info("Ethereum Unstake Status Check Begin", "burn_id", be.Id, "tx_block_height", be.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", be.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > be.BlockHeight+btl {
+				be = k.processBtlEthBurn(ctx, be, oracleData, btl)
+			}
+
+			if be.AwaitingEventSince > 0 {
+				be = k.processSecondaryTimeoutEthBurn(ctx, be, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Unstake Status Check End", "burn_id", be.Id, "tx_block_height_after_checks", be.BlockHeight, "awaiting_event_since_after_checks", be.AwaitingEventSince)
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
 	)
@@ -2069,7 +2078,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				return err
 			}
 
-			return k.submitEthereumTransaction(
+			txID, err := k.submitEthereumTransaction(
 				ctx,
 				creator,
 				k.zenBTCKeeper.GetCompleterKeyID(ctx),
@@ -2078,16 +2087,33 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 				unsignedTx,
 				unsignedTxHash,
 			)
-		},
-		// txContinuationCallback: This is called when the 'complete' transaction's nonce has been confirmed on-chain.
-		// It updates the redemption status to UNSTAKED and requests a nonce for the staker key,
-		// anticipating that the released funds might be re-staked.
-		func(r zenbtctypes.Redemption) error {
-			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
-			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
+			if err != nil {
 				return err
 			}
-			return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetStakerKeyID(ctx), true)
+			r.Data.ZrchainTxId = txID
+			r.BlockHeight = ctx.BlockHeight()
+			return k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r)
+		},
+		// txContinuationCallback: This is now a timeout/status checker. If a tx is stuck, it will be reset here.
+		// The actual state progression now happens in `processZenBTCRedemptionCompleteEvents` upon event confirmation.
+		func(r zenbtctypes.Redemption) error {
+			if r.BlockHeight == 0 {
+				return nil
+			}
+			k.Logger(ctx).Info("Ethereum Redemption Status Check Begin", "redemption_id", r.Data.Id, "tx_block_height", r.BlockHeight, "current_chain_height", ctx.BlockHeight(), "awaiting_event_since", r.AwaitingEventSince)
+
+			const btl = 30 // TODO: Make this a governance parameter
+
+			if ctx.BlockHeight() > r.BlockHeight+btl {
+				r = k.processBtlEthRedemption(ctx, r, oracleData, btl)
+			}
+
+			if r.AwaitingEventSince > 0 {
+				r = k.processSecondaryTimeoutEthRedemption(ctx, r, oracleData)
+			}
+
+			k.Logger(ctx).Info("Ethereum Redemption Status Check End", "redemption_id", r.Data.Id, "tx_block_height_after_checks", r.BlockHeight, "awaiting_event_since_after_checks", r.AwaitingEventSince)
+			return k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r)
 		},
 	)
 }
@@ -2276,4 +2302,432 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			),
 		)
 	}
+}
+
+// processZenBTCStakeEvents processes confirmed stake events from Ethereum.
+func (k *Keeper) processZenBTCStakeEvents(ctx sdk.Context, oracleData OracleData) {
+	if len(oracleData.EthStakeEvents) == 0 {
+		return
+	}
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingStakeTransaction(ctx)
+	if err != nil || firstPendingID == 0 {
+		return
+	}
+
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending mint for stake event", "id", firstPendingID, "error", err)
+		return
+	}
+
+	if pendingMint.ZrchainTxId == 0 {
+		return
+	}
+
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.ZrchainTxId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting sign tx request for stake event", "id", pendingMint.ZrchainTxId, "error", err)
+		return
+	}
+
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for stake event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for stake event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for stake event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for stake event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
+	for _, event := range oracleData.EthStakeEvents {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
+			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
+			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+				k.Logger(ctx).Error("error setting pending mint tx after stake event", "error", err)
+			}
+			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, 0); err != nil {
+				k.Logger(ctx).Error("error clearing first pending stake tx", "error", err)
+			}
+			// Request nonce for the next step (minting)
+			if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true); err != nil {
+				k.Logger(ctx).Error("error setting nonce requested for eth minter", "error", err)
+			}
+			if err := k.SolanaNonceRequested.Set(ctx, k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey, true); err != nil {
+				k.Logger(ctx).Error("error setting nonce requested for sol minter", "error", err)
+			}
+			k.Logger(ctx).Info("processed stake event for mint", "id", pendingMint.Id)
+			break // Event processed, exit loop
+		}
+	}
+}
+
+// processZenBTCMintEventsEthereum processes confirmed mint events from Ethereum.
+func (k *Keeper) processZenBTCMintEventsEthereum(ctx sdk.Context, oracleData OracleData) {
+	if len(oracleData.EthMintEvents) == 0 {
+		return
+	}
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingEthMintTransaction(ctx)
+	if err != nil || firstPendingID == 0 {
+		return
+	}
+
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending mint for eth mint event", "id", firstPendingID, "error", err)
+		return
+	}
+
+	if pendingMint.ZrchainTxId == 0 {
+		return
+	}
+
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.ZrchainTxId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting sign tx request for eth mint event", "id", pendingMint.ZrchainTxId, "error", err)
+		return
+	}
+
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for eth mint event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for eth mint event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for eth mint event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for eth mint event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
+	for _, event := range oracleData.EthMintEvents {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
+			supply, err := k.zenBTCKeeper.GetSupply(ctx)
+			if err != nil {
+				k.Logger(ctx).Error("error getting zenBTC supply for mint event", "error", err)
+				return
+			}
+			supply.PendingZenBTC -= pendingMint.Amount
+			supply.MintedZenBTC += pendingMint.Amount
+			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+				k.Logger(ctx).Error("error setting zenBTC supply after mint event", "error", err)
+				return
+			}
+
+			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+				k.Logger(ctx).Error("error setting pending mint tx after eth mint event", "error", err)
+			}
+			if err := k.zenBTCKeeper.SetFirstPendingEthMintTransaction(ctx, 0); err != nil {
+				k.Logger(ctx).Error("error clearing first pending eth mint tx", "error", err)
+			}
+			k.Logger(ctx).Info("processed eth mint event for mint", "id", pendingMint.Id)
+			break // Event processed, exit loop
+		}
+	}
+}
+
+// processZenBTCUnstakeEvents processes confirmed unstake events from Ethereum.
+func (k *Keeper) processZenBTCUnstakeEvents(ctx sdk.Context, oracleData OracleData) {
+	if len(oracleData.EthUnstakeEvents) == 0 {
+		return
+	}
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
+	if err != nil || firstPendingID == 0 {
+		return
+	}
+
+	burnEvent, err := k.zenBTCKeeper.GetBurnEvent(ctx, firstPendingID)
+	if err != nil {
+		k.Logger(ctx).Error("error getting burn event for unstake event", "id", firstPendingID, "error", err)
+		return
+	}
+
+	if burnEvent.ZrchainTxId == 0 {
+		return
+	}
+
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, burnEvent.ZrchainTxId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting sign tx request for unstake event", "id", burnEvent.ZrchainTxId, "error", err)
+		return
+	}
+
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for unstake event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for unstake event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for unstake event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for unstake event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
+	for _, event := range oracleData.EthUnstakeEvents {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
+			burnEvent.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+			if err := k.zenBTCKeeper.SetBurnEvent(ctx, burnEvent.Id, burnEvent); err != nil {
+				k.Logger(ctx).Error("error setting burn event after unstake event", "error", err)
+			}
+			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, 0); err != nil {
+				k.Logger(ctx).Error("error clearing first pending burn event", "error", err)
+			}
+			k.Logger(ctx).Info("processed unstake event for burn", "id", burnEvent.Id)
+			break // Event processed, exit loop
+		}
+	}
+}
+
+// processZenBTCRedemptionCompleteEvents processes confirmed redemption complete events from Ethereum.
+func (k *Keeper) processZenBTCRedemptionCompleteEvents(ctx sdk.Context, oracleData OracleData) {
+	if len(oracleData.EthCompletionEvents) == 0 {
+		return
+	}
+
+	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
+	if err != nil || firstPendingID == 0 {
+		return
+	}
+
+	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 1, firstPendingID)
+	if err != nil || len(redemptions) == 0 {
+		k.Logger(ctx).Error("error getting redemption for completion event", "id", firstPendingID, "error", err)
+		return
+	}
+	redemption := redemptions[0]
+
+	if redemption.Data.ZrchainTxId == 0 {
+		return
+	}
+
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, redemption.Data.ZrchainTxId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting sign tx request for completion event", "id", redemption.Data.ZrchainTxId, "error", err)
+		return
+	}
+
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("error getting main sign request for completion event", "id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil {
+			k.Logger(ctx).Error("error getting child sign request for completion event", "id", childReqID, "error", err)
+			return
+		}
+		if len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("child sign request has no signed data for completion event", "id", childReqID)
+			return
+		}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+
+	if len(signatures) == 0 {
+		k.Logger(ctx).Warn("no signatures collected for completion event", "main_sign_request_id", mainSignReq.Id)
+		return
+	}
+
+	concatenatedSignatures := bytes.Join(signatures, []byte{})
+	sigHash := sha256.Sum256(concatenatedSignatures)
+
+	for _, event := range oracleData.EthCompletionEvents {
+		if bytes.Equal(event.UnsignedTxHash, sigHash[:]) {
+			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
+			if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption); err != nil {
+				return
+			}
+			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, 0); err != nil {
+				k.Logger(ctx).Error("error clearing first pending redemption", "error", err)
+			}
+			k.Logger(ctx).Info("processed completion event for redemption", "id", redemption.Data.Id)
+			break // Event processed, exit loop
+		}
+	}
+}
+
+// =============================================================================
+// ETHEREUM TIMEOUT/RETRY HELPERS
+// =============================================================================
+
+// processBtlEthStake processes BTL timeout for an Ethereum stake transaction.
+func (k *Keeper) processBtlEthStake(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, btl int64) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processSecondaryTimeoutEthStake processes the secondary event arrival timeout for a stake transaction.
+func (k *Keeper) processSecondaryTimeoutEthStake(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetStakerKeyID(ctx),
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processBtlEthMint processes BTL timeout for an Ethereum mint transaction.
+func (k *Keeper) processBtlEthMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData, btl int64) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processSecondaryTimeoutEthMint processes the secondary event arrival timeout for a mint transaction.
+func (k *Keeper) processSecondaryTimeoutEthMint(ctx sdk.Context, tx zenbtctypes.PendingMintTransaction, oracleData OracleData) zenbtctypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
+		oracleData,
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// processBtlEthBurn processes BTL timeout for an Ethereum unstake transaction.
+func (k *Keeper) processBtlEthBurn(ctx sdk.Context, be zenbtctypes.BurnEvent, oracleData OracleData, btl int64) zenbtctypes.BurnEvent {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		be.Id,
+		be.BlockHeight,
+		be.AwaitingEventSince,
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	be.BlockHeight = newBlockHeight
+	be.AwaitingEventSince = newAwaitingEventSince
+	return be
+}
+
+// processSecondaryTimeoutEthBurn processes the secondary event arrival timeout for an unstake transaction.
+func (k *Keeper) processSecondaryTimeoutEthBurn(ctx sdk.Context, be zenbtctypes.BurnEvent, oracleData OracleData) zenbtctypes.BurnEvent {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		be.Id,
+		be.BlockHeight,
+		be.AwaitingEventSince,
+		k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+		oracleData,
+	)
+	be.BlockHeight = newBlockHeight
+	be.AwaitingEventSince = newAwaitingEventSince
+	return be
+}
+
+// processBtlEthRedemption processes BTL timeout for an Ethereum redemption transaction.
+func (k *Keeper) processBtlEthRedemption(ctx sdk.Context, r zenbtctypes.Redemption, oracleData OracleData, btl int64) zenbtctypes.Redemption {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumTransactionBTLTimeout(
+		ctx,
+		r.Data.Id,
+		r.BlockHeight,
+		r.AwaitingEventSince,
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+		btl,
+		oracleData,
+	)
+	r.BlockHeight = newBlockHeight
+	r.AwaitingEventSince = newAwaitingEventSince
+	return r
+}
+
+// processSecondaryTimeoutEthRedemption processes the secondary event arrival timeout for a redemption transaction.
+func (k *Keeper) processSecondaryTimeoutEthRedemption(ctx sdk.Context, r zenbtctypes.Redemption, oracleData OracleData) zenbtctypes.Redemption {
+	newBlockHeight, newAwaitingEventSince := k.handleEthereumEventArrivalTimeout(
+		ctx,
+		r.Data.Id,
+		r.BlockHeight,
+		r.AwaitingEventSince,
+		k.zenBTCKeeper.GetCompleterKeyID(ctx),
+		oracleData,
+	)
+	r.BlockHeight = newBlockHeight
+	r.AwaitingEventSince = newAwaitingEventSince
+	return r
 }
