@@ -185,7 +185,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
-		SolanaMintNonceHashes:      solNonceHash[:],
+		SolanaMintNoncesHash:       solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
 		SolanaMintEventsHash:       solanaMintEventsHash[:],
 		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
@@ -1420,6 +1420,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		nil,
 		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// pendingGetter: Fetches pending solROCK mints that are in the PENDING state.
+		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			mints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 			return mints, err
