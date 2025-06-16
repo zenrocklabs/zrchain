@@ -101,4 +101,5 @@ message SolanaMintEvent {
   uint64 Value = 5;
   uint64 Fee = 6;
   bytes Mint = 7;
+  string TxSig = 8;
 }

@@ -22,20 +22,22 @@ class QueryParamsResponse(_message.Message):
     def __init__(self, params: _Optional[_Union[_params_pb2.Params, _Mapping]] = ...) -> None: ...
 
 class QueryMintsRequest(_message.Message):
-    __slots__ = ("id", "creator", "status", "denom", "pagination", "tx_id")
+    __slots__ = ("id", "creator", "status", "denom", "pagination", "tx_id", "source_tx_hash")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
     PAGINATION_FIELD_NUMBER: _ClassVar[int]
     TX_ID_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     status: _bridge_pb2.BridgeStatus
     denom: str
     pagination: _pagination_pb2.PageRequest
     tx_id: int
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., denom: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ..., tx_id: _Optional[int] = ...) -> None: ...
+    source_tx_hash: str
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., denom: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ..., tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ...) -> None: ...
 
 class QueryMintsResponse(_message.Message):
     __slots__ = ("mints", "pagination")

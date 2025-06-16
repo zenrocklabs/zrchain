@@ -927,35 +927,32 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 
 		var foundOnChain bool
 
-		// Heuristic: check if a mint with the same amount to the same recipient has completed.
-		// This is not perfect as it doesn't use a unique ID, but it's the best we can do
-		// without a chain query for the unique SigHash.
-		// We check for both zenBTC and ROCK mints.
+		// Check ZenBTC keeper
+		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.MintByTxID(ctx, event.TxSig)
+		if err != nil {
+			log.Printf("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
+		}
 
-		// Check ZenBTC keeper for a completed mint
-		// We can't query by much, so we list pending mints and if a mint is NOT on that list,
-		// we assume it might be completed. This is a weak heuristic.
-		// A better approach would require a query for completed transactions.
-		// For now, we will assume that if we can't find a pending mint that could match,
-		// it has been processed.
+		if zenbtcResp != nil && zenbtcResp.MintTransaction != nil {
+			foundOnChain = true
+		}
 
-		// Check ZenTP (ROCK)
-		// We can query for completed burns, but not mints easily.
-		// The logic here is difficult without better chain queries.
-		// For now, let's assume we can't reliably detect if a mint is on-chain.
-		// This means we can't clean up mint events yet.
-		// Caching without cleanup will lead to a memory leak.
-
-		// Given the limitations, for now, we will not implement cleanup.
-		// We will just accumulate. This is better than losing events, but not ideal.
-		// The `cleanUpMintEvents` function will be a no-op for now.
-		foundOnChain = false // Forcing no cleanup for now.
+		// If not found, check ZenTP keeper as well
+		if !foundOnChain {
+			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig)
+			if err != nil {
+				log.Printf("Error querying ZenTP for mint event (txSig: %s): %v", event.TxSig, err)
+			}
+			if zentpResp != nil && len(zentpResp.Mints) > 0 {
+				foundOnChain = true
+			}
+		}
 
 		if !foundOnChain {
 			remainingEvents = append(remainingEvents, event)
 		} else {
 			updatedCleanedEvents[key] = true
-			log.Printf("Removing Solana mint event from cache as it's now on chain (sigHash: %s)", key)
+			log.Printf("Removing Solana mint event from cache as it's now on chain (txSig: %s, sigHash: %s)", event.TxSig, key)
 		}
 	}
 
@@ -963,9 +960,32 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 }
 
 func (o *Oracle) cleanUpMintEvents() {
-	// TODO: This function is a no-op until a reliable way to query
-	// completed mints from zrchain is available. Caching mints without
-	// a cleanup mechanism will lead to state bloat over time.
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	initialMintCount := len(currentState.SolanaMintEvents)
+	if initialMintCount == 0 {
+		return
+	}
+
+	ctx := context.Background()
+	stateChanged := false
+
+	remainingMintEvents, updatedCleanedMintEvents := o.reconcileMintEventsWithZRChain(ctx, currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
+	if len(remainingMintEvents) != initialMintCount {
+		log.Printf("Removed %d Solana mint events from cache", initialMintCount-len(remainingMintEvents))
+		stateChanged = true
+	}
+
+	if stateChanged {
+		newState := *currentState
+		newState.SolanaMintEvents = remainingMintEvents
+		newState.CleanedSolanaMintEvents = updatedCleanedMintEvents
+		o.currentState.Store(&newState)
+		o.CacheState()
+		log.Println("Mint event cache state updated and saved.")
+	} else {
+		log.Println("No mint events removed from cache during cleanup.")
+	}
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1138,6 +1158,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
+						TxSig:     sig.String(),
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {
@@ -1328,6 +1349,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
+						TxSig:     sig.String(),
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {

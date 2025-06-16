@@ -28,9 +28,10 @@ func (c *ZenTPQueryClient) Burns(ctx context.Context, recipientAddress string, s
 	})
 }
 
-func (c *ZenTPQueryClient) Mints(ctx context.Context, denom string) (*types.QueryMintsResponse, error) {
+func (c *ZenTPQueryClient) Mints(ctx context.Context, denom string, sourceTxHash string) (*types.QueryMintsResponse, error) {
 	return c.client.Mints(ctx, &types.QueryMintsRequest{
-		Denom: denom,
+		Denom:        denom,
+		SourceTxHash: sourceTxHash,
 	})
 }
 
