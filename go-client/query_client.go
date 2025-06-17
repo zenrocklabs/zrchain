@@ -4,11 +4,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"time"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
-	"time"
 )
 
 // Package client provides a unified gRPC client implementation for interacting with various
@@ -23,6 +24,7 @@ type QueryClient struct {
 	*PolicyQueryClient                      // For querying policy-related information
 	*ValidationQueryClient                  // For querying validator information
 	*ZenBTCQueryClient                      // For querying ZenBTC-related data
+	*ZenTPQueryClient                       // For querying ZenTP-related data
 	conn                   *grpc.ClientConn // The underlying gRPC connection
 }
 
@@ -116,6 +118,7 @@ func NewQueryClientWithConn(conn *grpc.ClientConn) *QueryClient {
 		PolicyQueryClient:     NewPolicyQueryClient(conn),
 		ValidationQueryClient: NewValidationQueryClient(conn),
 		ZenBTCQueryClient:     NewZenBTCQueryClient(conn),
+		ZenTPQueryClient:      NewZenTPQueryClient(conn),
 		conn:                  conn,
 	}
 }

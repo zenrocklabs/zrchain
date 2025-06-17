@@ -26,7 +26,11 @@ var (
 		SolanaLamportsPerSignature: 0,
 		EthBurnEvents:              []api.BurnEvent{},
 		CleanedEthBurnEvents:       make(map[string]bool),
+		SolanaBurnEvents:           []api.BurnEvent{},
+		CleanedSolanaBurnEvents:    make(map[string]bool),
 		Redemptions:                []api.Redemption{},
+		SolanaMintEvents:           []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents:    make(map[string]bool),
 		ROCKUSDPrice:               math.LegacyNewDec(0),
 		BTCUSDPrice:                math.LegacyNewDec(0),
 		ETHUSDPrice:                math.LegacyNewDec(0),
@@ -41,7 +45,6 @@ type Oracle struct {
 	neutrinoServer     *neutrino.NeutrinoServer
 	solanaClient       *solana.Client
 	zrChainQueryClient *client.QueryClient
-	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
 	DebugMode          bool
 

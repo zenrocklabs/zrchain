@@ -1089,8 +1089,8 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintNoncesHash) {
-		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNonceHashes, oracleData.SolanaMintNonces); err != nil {
-			recordMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNonceHashes, "derived_hash", err)
+		if err := validateHashField(VEFieldSolanaMintNoncesHash.String(), voteExt.SolanaMintNoncesHash, oracleData.SolanaMintNonces); err != nil {
+			recordMismatch(VEFieldSolanaMintNoncesHash, voteExt.SolanaMintNoncesHash, "derived_hash", err)
 		}
 	}
 	if fieldHasConsensus(fieldVotePowers, VEFieldSolanaMintEventsHash) {

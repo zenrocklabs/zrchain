@@ -35,7 +35,7 @@ var defaultVe = VoteExtension{
 	RequestedEthMinterNonce:    1,
 	RequestedUnstakerNonce:     1,
 	RequestedCompleterNonce:    1,
-	SolanaMintNonceHashes:      []byte("randomhash"),
+	SolanaMintNoncesHash:       []byte("randomhash"),
 	SolanaAccountsHash:         []byte("randomhash"),
 	SolanaLamportsPerSignature: 1000000000,
 	EthBurnEventsHash:          []byte("randomhash"),

@@ -59,3 +59,15 @@ func (c *ZenBTCQueryClient) Params(ctx context.Context) (*types.QueryParamsRespo
 func (c *ZenBTCQueryClient) BurnEvents(ctx context.Context, startIndex uint64, txID string, logIndex uint64, chainID string) (*types.QueryBurnEventsResponse, error) {
 	return c.client.QueryBurnEvents(ctx, &types.QueryBurnEventsRequest{StartIndex: startIndex, TxID: txID, LogIndex: logIndex, ChainID: chainID})
 }
+
+func (c *ZenBTCQueryClient) PendingMintTransactions(ctx context.Context, startIndex uint64) (*types.QueryPendingMintTransactionsResponse, error) {
+	return c.client.QueryPendingMintTransactions(ctx, &types.QueryPendingMintTransactionsRequest{StartIndex: startIndex})
+}
+
+func (c *ZenBTCQueryClient) PendingMintTransaction(ctx context.Context, txHash string) (*types.QueryPendingMintTransactionResponse, error) {
+	return c.client.QueryPendingMintTransaction(ctx, &types.QueryPendingMintTransactionRequest{TxHash: txHash})
+}
+
+func (c *ZenBTCQueryClient) Supply(ctx context.Context) (*types.QuerySupplyResponse, error) {
+	return c.client.QuerySupply(ctx, &types.QuerySupplyRequest{})
+}
