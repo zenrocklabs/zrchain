@@ -236,7 +236,7 @@ func (o *Oracle) fetchAndProcessState(
 	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
 
 	// Fetch backfill requests
-	o.fetchBackfillRequests(&wg, update, &updateMutex)
+	o.processBackfillRequests(&wg, update, &updateMutex)
 
 	wg.Wait()
 	close(errChan)
@@ -553,18 +553,6 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
 		}
 		updateMutex.Unlock()
-	}()
-}
-
-func (o *Oracle) fetchBackfillRequests(
-	wg *sync.WaitGroup,
-	update *oracleStateUpdate,
-	updateMutex *sync.Mutex,
-) {
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		o.processBackfillRequests(update, updateMutex)
 	}()
 }
 
@@ -1395,16 +1383,6 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
 
-// getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
-// (i.e., a block height that's a multiple of the rounding factor) and returns both the blockhash and slot
-// func (o *Oracle) getSolanaRecentBlockhash(ctx context.Context) (string, uint64, error) {
-// 	blockhash, slot, _, err := o.getSolanaBlockInfoAtRoundedSlot(ctx)
-// 	if err != nil {
-// 		return "", 0, err
-// 	}
-// 	return blockhash, slot, nil
-// }
-
 // getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
 // Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
 func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
@@ -1901,65 +1879,72 @@ func (o *Oracle) getSolanaBurnEventsFromSig(sigStr string, programID string) ([]
 }
 
 // processBackfillRequests polls for backfill requests and processes them.
-func (o *Oracle) processBackfillRequests(update *oracleStateUpdate, updateMutex *sync.Mutex) {
-	ctx := context.Background()
-	backfillResp, err := o.zrChainQueryClient.ValidationQueryClient.BackfillRequests(ctx)
-	if err != nil {
-		// Don't push to errChan, as this is not a critical failure. Just log it.
-		log.Printf("Failed to query backfill requests: %v", err)
-		return
-	}
-
-	if backfillResp == nil || backfillResp.BackfillRequests == nil || len(backfillResp.BackfillRequests.Requests) == 0 {
-		return // No backfill requests
-	}
-
-	log.Printf("Found %d backfill requests to process", len(backfillResp.BackfillRequests.Requests))
-
-	var newBurnEvents []api.BurnEvent
-
-	for _, req := range backfillResp.BackfillRequests.Requests {
-		// For now, only handle ZenTP burn events.
-		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
-			log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
-			programID := sidecartypes.SolRockProgramID[o.Config.Network]
-			events, err := o.getSolanaBurnEventsFromSig(req.TxHash, programID)
-			if err != nil {
-				log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
-				continue
-			}
-			newBurnEvents = append(newBurnEvents, events...)
-		}
-	}
-
-	if len(newBurnEvents) > 0 {
-		updateMutex.Lock()
-		defer updateMutex.Unlock()
-
-		// Merge with existing burn events.
-		// Create a map of existing events for quick lookup to avoid duplicates.
-		existingBurnEvents := make(map[string]bool)
-		for _, event := range update.solanaBurnEvents {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			existingBurnEvents[key] = true
+func (o *Oracle) processBackfillRequests(
+	wg *sync.WaitGroup,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		backfillResp, err := o.zrChainQueryClient.ValidationQueryClient.BackfillRequests(context.Background())
+		if err != nil {
+			// Don't push to errChan, as this is not a critical failure. Just log it.
+			log.Printf("Failed to query backfill requests: %v", err)
+			return
 		}
 
-		// Also check against already cleaned events
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
-		for key := range currentState.CleanedSolanaBurnEvents {
-			existingBurnEvents[key] = true
+		if backfillResp == nil || backfillResp.BackfillRequests == nil || len(backfillResp.BackfillRequests.Requests) == 0 {
+			return // No backfill requests
 		}
 
-		for _, event := range newBurnEvents {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			if !existingBurnEvents[key] {
-				update.solanaBurnEvents = append(update.solanaBurnEvents, event)
-				log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
-			} else {
-				log.Printf("Skipping already present backfilled Solana burn event: TxID=%s", event.TxID)
+		log.Printf("Found %d backfill requests to process", len(backfillResp.BackfillRequests.Requests))
+
+		var newBurnEvents []api.BurnEvent
+
+		for _, req := range backfillResp.BackfillRequests.Requests {
+			// For now, only handle ZenTP burn events.
+			if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
+				log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
+				programID := sidecartypes.SolRockProgramID[o.Config.Network]
+				events, err := o.getSolanaBurnEventsFromSig(req.TxHash, programID)
+				if err != nil {
+					log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
+					continue
+				}
+				newBurnEvents = append(newBurnEvents, events...)
 			}
 		}
-	}
+
+		if len(newBurnEvents) > 0 {
+			updateMutex.Lock()
+			defer updateMutex.Unlock()
+
+			// Merge with existing burn events.
+			// Create a map of existing events for quick lookup to avoid duplicates.
+			existingBurnEvents := make(map[string]bool)
+			for _, event := range update.solanaBurnEvents {
+				key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+				existingBurnEvents[key] = true
+			}
+
+			// Also check against already cleaned events
+			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			for key := range currentState.CleanedSolanaBurnEvents {
+				existingBurnEvents[key] = true
+			}
+
+			for _, event := range newBurnEvents {
+				key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+				if !existingBurnEvents[key] {
+					update.solanaBurnEvents = append(update.solanaBurnEvents, event)
+					log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
+				} else {
+					log.Printf("Skipping already present backfilled Solana burn event: TxID=%s", event.TxID)
+				}
+			}
+		}
+	}()
 }
 
 // Helper to get typed last processed Solana signature
