@@ -19,6 +19,15 @@ func (k msgServer) TriggerEventBackfill(ctx context.Context, msg *types.MsgTrigg
 	// Validate the request based on its event type to ensure it's actionable.
 	switch msg.EventType {
 	case types.EventType_EVENT_TYPE_ZENTP_BURN:
+		// First, check if a burn event with this transaction hash already exists in zentp.
+		existingBurns, err := k.zentpKeeper.GetBurns(ctx, "", "", msg.TxHash)
+		if err != nil {
+			return nil, err
+		}
+		if len(existingBurns) > 0 {
+			return nil, fmt.Errorf("burn event with tx hash '%s' already exists", msg.TxHash)
+		}
+
 		// ZenTP burns are always on Solana. Validate the chain ID is a supported Solana network.
 		if _, err := types.ValidateSolanaChainID(ctx, msg.Caip2ChainId); err != nil {
 			return nil, err
@@ -28,7 +37,7 @@ func (k msgServer) TriggerEventBackfill(ctx context.Context, msg *types.MsgTrigg
 			return nil, fmt.Errorf("transaction hash cannot be empty for zentp burn backfill")
 		}
 	default:
-		return nil, fmt.Errorf("unsupported event type for backfill: %s", msg.EventType)
+		return nil, fmt.Errorf("currently unsupported backfill request type: %s", msg.EventType)
 	}
 
 	backfillRequests, err := k.BackfillRequests.Get(ctx)
