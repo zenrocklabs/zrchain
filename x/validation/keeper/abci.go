@@ -1781,7 +1781,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	for _, burn := range burnEvents {
 		// For Solana events, we now use the explicit flag to distinguish burn types.
 		// We skip ROCK burns here. zenBTC burns will have IsZenBTC = true.
-		if source == "solana" && !burn.IsZenBTC {
+		if !burn.IsZenBTC {
 			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping event explicitly marked as not a zenBTC burn.", "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 			continue
 		}

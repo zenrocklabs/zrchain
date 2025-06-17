@@ -120,7 +120,7 @@ func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTyp
 }
 
 func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) ([]*types.Bridge, error) {
-	mints, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
+	mints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.mintStore,
 		nil,
@@ -140,7 +140,7 @@ func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) 
 }
 
 func (k Keeper) GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*types.Bridge, error) {
-	burns, _, err := query.CollectionFilteredPaginate[uint64, types.Bridge, collections.Map[uint64, types.Bridge], *types.Bridge](
+	burns, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.burnStore,
 		nil,
@@ -194,6 +194,10 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
 	return k.mintStore.Set(ctx, id, *mint)
+}
+
+func (k Keeper) UpdateBurn(ctx context.Context, id uint64, burn *types.Bridge) error {
+	return k.burnStore.Set(ctx, id, *burn)
 }
 
 func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {

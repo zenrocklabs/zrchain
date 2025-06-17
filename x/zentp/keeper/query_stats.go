@@ -14,34 +14,62 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	pagination := &query.PageRequest{
+	// Mints
+	totalMinted := math.ZeroInt()
+	var mintsCount uint64
+	mintPagination := &query.PageRequest{
 		CountTotal: true,
 	}
-
-	mintKeys, pageResMint, err := k.queryBridge(goCtx, k.mintStore, pagination, req.Address, req.Denom, "", "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	burnKeys, pageResBurn, err := k.queryBridge(goCtx, k.burnStore, pagination, "", req.Denom, req.Address, "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	totalMinted := math.ZeroInt()
-	mintsCount := pageResMint.Total
-	for _, mint := range mintKeys {
-		if req.Address == "" || mint.Creator == req.Address {
-			totalMinted = totalMinted.Add(math.NewIntFromUint64(mint.Amount))
+	for {
+		mintKeys, pageResMint, err := k.queryBridge(goCtx, k.mintStore, mintPagination, req.Address, req.Denom, "", "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
+		if err != nil {
+			return nil, err
 		}
+
+		if mintPagination.CountTotal {
+			mintsCount = pageResMint.Total
+		}
+
+		for _, mint := range mintKeys {
+			if req.Address == "" || mint.Creator == req.Address {
+				totalMinted = totalMinted.Add(math.NewIntFromUint64(mint.Amount))
+			}
+		}
+
+		if pageResMint.NextKey == nil {
+			break
+		}
+		mintPagination.Key = pageResMint.NextKey
+		mintPagination.CountTotal = false
 	}
 
+	// Burns
 	totalBurned := math.ZeroInt()
-	burnsCount := pageResBurn.Total
-	for _, burn := range burnKeys {
-		if req.Address == "" || burn.RecipientAddress == req.Address {
-			totalBurned = totalBurned.Add(math.NewIntFromUint64(burn.Amount))
+	var burnsCount uint64
+	burnPagination := &query.PageRequest{
+		CountTotal: true,
+	}
+	for {
+		burnKeys, pageResBurn, err := k.queryBridge(goCtx, k.burnStore, burnPagination, "", req.Denom, req.Address, "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
+		if err != nil {
+			return nil, err
 		}
+
+		if burnPagination.CountTotal {
+			burnsCount = pageResBurn.Total
+		}
+
+		for _, burn := range burnKeys {
+			if req.Address == "" || burn.RecipientAddress == req.Address {
+				totalBurned = totalBurned.Add(math.NewIntFromUint64(burn.Amount))
+			}
+		}
+
+		if pageResBurn.NextKey == nil {
+			break
+		}
+		burnPagination.Key = pageResBurn.NextKey
+		burnPagination.CountTotal = false
 	}
 
 	return &types.QueryStatsResponse{
