@@ -68,6 +68,8 @@ type Keeper struct {
 	LastUsedSolanaNonce          collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
+	// BackfillRequests - key: tx hash | value: bool (is requested)
+	BackfillRequests collections.Item[types.BackfillRequests]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -151,6 +153,7 @@ func NewKeeper(
 		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
+		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
 	}
 }
 
@@ -267,4 +270,8 @@ func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state
 // SetSidecarClient sets the sidecar client for the keeper.
 func (k *Keeper) SetSidecarClient(client sidecarClient) {
 	k.sidecarClient = client
+}
+
+func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.BackfillRequests) error {
+	return k.BackfillRequests.Set(ctx, requests)
 }

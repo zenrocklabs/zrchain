@@ -35,6 +35,7 @@ import (
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	solana "github.com/gagliardetto/solana-go"
 	solanagoSystem "github.com/gagliardetto/solana-go/programs/system"
@@ -233,6 +234,9 @@ func (o *Oracle) fetchAndProcessState(
 
 	// Fetch Solana burn events
 	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+
+	// Fetch backfill requests
+	o.fetchBackfillRequests(&wg, update, &updateMutex)
 
 	wg.Wait()
 	close(errChan)
@@ -549,6 +553,18 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
 		}
 		updateMutex.Unlock()
+	}()
+}
+
+func (o *Oracle) fetchBackfillRequests(
+	wg *sync.WaitGroup,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		o.processBackfillRequests(update, updateMutex)
 	}()
 }
 
@@ -1817,6 +1833,133 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 
 	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
 	return burnEvents, lastSuccessfullyProcessedSig, nil
+}
+
+// getSolanaBurnEventsFromSig fetches and decodes burn events from a single Solana transaction signature.
+func (o *Oracle) getSolanaBurnEventsFromSig(sigStr string, programID string) ([]api.BurnEvent, error) {
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain program public key for burn event backfill: %w", err)
+	}
+
+	sig, err := solana.SignatureFromBase58(sigStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signature string for backfill: %w", err)
+	}
+
+	v0 := uint64(0)
+	txResult, err := o.solanaClient.GetTransaction(context.Background(), sig, &solrpc.GetTransactionOpts{
+		Encoding:                       solana.EncodingJSON,
+		Commitment:                     solrpc.CommitmentConfirmed,
+		MaxSupportedTransactionVersion: &v0,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction for backfill sig %s: %w", sig, err)
+	}
+	if txResult == nil {
+		return nil, fmt.Errorf("nil transaction result for backfill sig %s", sig)
+	}
+
+	var burnEvents []api.BurnEvent
+	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+
+	// This is for zentp (ROCK) burns for now.
+	events, err := rock_spl_token.DecodeEvents(txResult, program)
+	if err != nil {
+		log.Printf("Failed to decode Solana Rock burn events for backfill tx %s: %v", sig, err)
+		return nil, err
+	}
+
+	for logIndex, event := range events {
+		if event.Name == "TokenRedemption" {
+			e, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
+			if !ok {
+				log.Printf("Type assertion failed for SolRock TokenRedemptionEventData on backfill tx %s", sig)
+				continue
+			}
+			burnEvent := api.BurnEvent{
+				TxID:            sig.String(),
+				LogIndex:        uint64(logIndex),
+				ChainID:         chainID,
+				DestinationAddr: e.DestAddr[:],
+				Amount:          e.Value,
+				IsZenBTC:        false, // This is a ROCK burn
+			}
+			burnEvents = append(burnEvents, burnEvent)
+			if o.DebugMode {
+				log.Printf("Backfilled SolRock Burn Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
+					burnEvent.TxID,
+					burnEvent.LogIndex,
+					burnEvent.ChainID,
+					burnEvent.DestinationAddr,
+					burnEvent.Amount)
+			}
+		}
+	}
+
+	return burnEvents, nil
+}
+
+// processBackfillRequests polls for backfill requests and processes them.
+func (o *Oracle) processBackfillRequests(update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	ctx := context.Background()
+	backfillResp, err := o.zrChainQueryClient.ValidationQueryClient.BackfillRequests(ctx)
+	if err != nil {
+		// Don't push to errChan, as this is not a critical failure. Just log it.
+		log.Printf("Failed to query backfill requests: %v", err)
+		return
+	}
+
+	if backfillResp == nil || backfillResp.BackfillRequests == nil || len(backfillResp.BackfillRequests.Requests) == 0 {
+		return // No backfill requests
+	}
+
+	log.Printf("Found %d backfill requests to process", len(backfillResp.BackfillRequests.Requests))
+
+	var newBurnEvents []api.BurnEvent
+
+	for _, req := range backfillResp.BackfillRequests.Requests {
+		// For now, only handle ZenTP burn events.
+		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
+			log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
+			programID := sidecartypes.SolRockProgramID[o.Config.Network]
+			events, err := o.getSolanaBurnEventsFromSig(req.TxHash, programID)
+			if err != nil {
+				log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
+				continue
+			}
+			newBurnEvents = append(newBurnEvents, events...)
+		}
+	}
+
+	if len(newBurnEvents) > 0 {
+		updateMutex.Lock()
+		defer updateMutex.Unlock()
+
+		// Merge with existing burn events.
+		// Create a map of existing events for quick lookup to avoid duplicates.
+		existingBurnEvents := make(map[string]bool)
+		for _, event := range update.solanaBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			existingBurnEvents[key] = true
+		}
+
+		// Also check against already cleaned events
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		for key := range currentState.CleanedSolanaBurnEvents {
+			existingBurnEvents[key] = true
+		}
+
+		for _, event := range newBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if !existingBurnEvents[key] {
+				update.solanaBurnEvents = append(update.solanaBurnEvents, event)
+				log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
+			} else {
+				log.Printf("Skipping already present backfilled Solana burn event: TxID=%s", event.TxID)
+			}
+		}
+	}
 }
 
 // Helper to get typed last processed Solana signature
