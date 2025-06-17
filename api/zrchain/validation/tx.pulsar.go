@@ -8038,6 +8038,958 @@ func (x *fastReflection_MsgUpdateHVParamsResponse) ProtoMethods() *protoiface.Me
 	}
 }
 
+var (
+	md_MsgManualEventBackfill                protoreflect.MessageDescriptor
+	fd_MsgManualEventBackfill_authority      protoreflect.FieldDescriptor
+	fd_MsgManualEventBackfill_tx_hash        protoreflect.FieldDescriptor
+	fd_MsgManualEventBackfill_caip2_chain_id protoreflect.FieldDescriptor
+	fd_MsgManualEventBackfill_event_type     protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgManualEventBackfill = File_zrchain_validation_tx_proto.Messages().ByName("MsgManualEventBackfill")
+	fd_MsgManualEventBackfill_authority = md_MsgManualEventBackfill.Fields().ByName("authority")
+	fd_MsgManualEventBackfill_tx_hash = md_MsgManualEventBackfill.Fields().ByName("tx_hash")
+	fd_MsgManualEventBackfill_caip2_chain_id = md_MsgManualEventBackfill.Fields().ByName("caip2_chain_id")
+	fd_MsgManualEventBackfill_event_type = md_MsgManualEventBackfill.Fields().ByName("event_type")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgManualEventBackfill)(nil)
+
+type fastReflection_MsgManualEventBackfill MsgManualEventBackfill
+
+func (x *MsgManualEventBackfill) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgManualEventBackfill)(x)
+}
+
+func (x *MsgManualEventBackfill) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgManualEventBackfill_messageType fastReflection_MsgManualEventBackfill_messageType
+var _ protoreflect.MessageType = fastReflection_MsgManualEventBackfill_messageType{}
+
+type fastReflection_MsgManualEventBackfill_messageType struct{}
+
+func (x fastReflection_MsgManualEventBackfill_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgManualEventBackfill)(nil)
+}
+func (x fastReflection_MsgManualEventBackfill_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgManualEventBackfill)
+}
+func (x fastReflection_MsgManualEventBackfill_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManualEventBackfill
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgManualEventBackfill) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManualEventBackfill
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgManualEventBackfill) Type() protoreflect.MessageType {
+	return _fastReflection_MsgManualEventBackfill_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgManualEventBackfill) New() protoreflect.Message {
+	return new(fastReflection_MsgManualEventBackfill)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgManualEventBackfill) Interface() protoreflect.ProtoMessage {
+	return (*MsgManualEventBackfill)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgManualEventBackfill) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Authority != "" {
+		value := protoreflect.ValueOfString(x.Authority)
+		if !f(fd_MsgManualEventBackfill_authority, value) {
+			return
+		}
+	}
+	if x.TxHash != "" {
+		value := protoreflect.ValueOfString(x.TxHash)
+		if !f(fd_MsgManualEventBackfill_tx_hash, value) {
+			return
+		}
+	}
+	if x.Caip2ChainId != "" {
+		value := protoreflect.ValueOfString(x.Caip2ChainId)
+		if !f(fd_MsgManualEventBackfill_caip2_chain_id, value) {
+			return
+		}
+	}
+	if x.EventType != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.EventType))
+		if !f(fd_MsgManualEventBackfill_event_type, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgManualEventBackfill) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		return x.Authority != ""
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		return x.TxHash != ""
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		return x.Caip2ChainId != ""
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		return x.EventType != 0
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfill) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		x.Authority = ""
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		x.TxHash = ""
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		x.Caip2ChainId = ""
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		x.EventType = 0
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgManualEventBackfill) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		value := x.Authority
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		value := x.TxHash
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		value := x.Caip2ChainId
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		value := x.EventType
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfill) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		x.Authority = value.Interface().(string)
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		x.TxHash = value.Interface().(string)
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		x.Caip2ChainId = value.Interface().(string)
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		x.EventType = (EventType)(value.Enum())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfill) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		panic(fmt.Errorf("field authority of message zrchain.validation.MsgManualEventBackfill is not mutable"))
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		panic(fmt.Errorf("field tx_hash of message zrchain.validation.MsgManualEventBackfill is not mutable"))
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		panic(fmt.Errorf("field caip2_chain_id of message zrchain.validation.MsgManualEventBackfill is not mutable"))
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		panic(fmt.Errorf("field event_type of message zrchain.validation.MsgManualEventBackfill is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgManualEventBackfill) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManualEventBackfill.authority":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.MsgManualEventBackfill.tx_hash":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.MsgManualEventBackfill.caip2_chain_id":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.MsgManualEventBackfill.event_type":
+		return protoreflect.ValueOfEnum(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgManualEventBackfill) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgManualEventBackfill", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgManualEventBackfill) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfill) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgManualEventBackfill) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgManualEventBackfill) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgManualEventBackfill)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Authority)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.TxHash)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.Caip2ChainId)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.EventType != 0 {
+			n += 1 + runtime.Sov(uint64(x.EventType))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManualEventBackfill)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.EventType != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.EventType))
+			i--
+			dAtA[i] = 0x20
+		}
+		if len(x.Caip2ChainId) > 0 {
+			i -= len(x.Caip2ChainId)
+			copy(dAtA[i:], x.Caip2ChainId)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Caip2ChainId)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if len(x.TxHash) > 0 {
+			i -= len(x.TxHash)
+			copy(dAtA[i:], x.TxHash)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.TxHash)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if len(x.Authority) > 0 {
+			i -= len(x.Authority)
+			copy(dAtA[i:], x.Authority)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManualEventBackfill)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManualEventBackfill: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManualEventBackfill: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Authority = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TxHash", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.TxHash = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Caip2ChainId", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Caip2ChainId = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field EventType", wireType)
+				}
+				x.EventType = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.EventType |= EventType(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgManualEventBackfillResponse protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgManualEventBackfillResponse = File_zrchain_validation_tx_proto.Messages().ByName("MsgManualEventBackfillResponse")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgManualEventBackfillResponse)(nil)
+
+type fastReflection_MsgManualEventBackfillResponse MsgManualEventBackfillResponse
+
+func (x *MsgManualEventBackfillResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgManualEventBackfillResponse)(x)
+}
+
+func (x *MsgManualEventBackfillResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgManualEventBackfillResponse_messageType fastReflection_MsgManualEventBackfillResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgManualEventBackfillResponse_messageType{}
+
+type fastReflection_MsgManualEventBackfillResponse_messageType struct{}
+
+func (x fastReflection_MsgManualEventBackfillResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgManualEventBackfillResponse)(nil)
+}
+func (x fastReflection_MsgManualEventBackfillResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgManualEventBackfillResponse)
+}
+func (x fastReflection_MsgManualEventBackfillResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManualEventBackfillResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgManualEventBackfillResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManualEventBackfillResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgManualEventBackfillResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgManualEventBackfillResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgManualEventBackfillResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgManualEventBackfillResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgManualEventBackfillResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgManualEventBackfillResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgManualEventBackfillResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgManualEventBackfillResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfillResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgManualEventBackfillResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfillResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfillResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgManualEventBackfillResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManualEventBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManualEventBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgManualEventBackfillResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgManualEventBackfillResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgManualEventBackfillResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManualEventBackfillResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgManualEventBackfillResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgManualEventBackfillResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgManualEventBackfillResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManualEventBackfillResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManualEventBackfillResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManualEventBackfillResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManualEventBackfillResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 // 	protoc-gen-go v1.27.0
@@ -8050,6 +9002,62 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type EventType int32
+
+const (
+	EventType_EVENT_TYPE_UNSPECIFIED EventType = 0
+	EventType_EVENT_TYPE_ZENBTC_MINT EventType = 1
+	EventType_EVENT_TYPE_ZENBTC_BURN EventType = 2
+	// can add more types for zenbtc later if needed
+	EventType_EVENT_TYPE_ZENTP_MINT EventType = 3
+	EventType_EVENT_TYPE_ZENTP_BURN EventType = 4
+)
+
+// Enum value maps for EventType.
+var (
+	EventType_name = map[int32]string{
+		0: "EVENT_TYPE_UNSPECIFIED",
+		1: "EVENT_TYPE_ZENBTC_MINT",
+		2: "EVENT_TYPE_ZENBTC_BURN",
+		3: "EVENT_TYPE_ZENTP_MINT",
+		4: "EVENT_TYPE_ZENTP_BURN",
+	}
+	EventType_value = map[string]int32{
+		"EVENT_TYPE_UNSPECIFIED": 0,
+		"EVENT_TYPE_ZENBTC_MINT": 1,
+		"EVENT_TYPE_ZENBTC_BURN": 2,
+		"EVENT_TYPE_ZENTP_MINT":  3,
+		"EVENT_TYPE_ZENTP_BURN":  4,
+	}
+)
+
+func (x EventType) Enum() *EventType {
+	p := new(EventType)
+	*p = x
+	return p
+}
+
+func (x EventType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EventType) Descriptor() protoreflect.EnumDescriptor {
+	return file_zrchain_validation_tx_proto_enumTypes[0].Descriptor()
+}
+
+func (EventType) Type() protoreflect.EnumType {
+	return &file_zrchain_validation_tx_proto_enumTypes[0]
+}
+
+func (x EventType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EventType.Descriptor instead.
+func (EventType) EnumDescriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{0}
+}
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
 type MsgCreateValidator struct {
@@ -8791,6 +9799,91 @@ func (*MsgUpdateHVParamsResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{15}
 }
 
+type MsgManualEventBackfill struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Authority    string    `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	TxHash       string    `protobuf:"bytes,2,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
+	Caip2ChainId string    `protobuf:"bytes,3,opt,name=caip2_chain_id,json=caip2ChainId,proto3" json:"caip2_chain_id,omitempty"`
+	EventType    EventType `protobuf:"varint,4,opt,name=event_type,json=eventType,proto3,enum=zrchain.validation.EventType" json:"event_type,omitempty"`
+}
+
+func (x *MsgManualEventBackfill) Reset() {
+	*x = MsgManualEventBackfill{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgManualEventBackfill) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgManualEventBackfill) ProtoMessage() {}
+
+// Deprecated: Use MsgManualEventBackfill.ProtoReflect.Descriptor instead.
+func (*MsgManualEventBackfill) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MsgManualEventBackfill) GetAuthority() string {
+	if x != nil {
+		return x.Authority
+	}
+	return ""
+}
+
+func (x *MsgManualEventBackfill) GetTxHash() string {
+	if x != nil {
+		return x.TxHash
+	}
+	return ""
+}
+
+func (x *MsgManualEventBackfill) GetCaip2ChainId() string {
+	if x != nil {
+		return x.Caip2ChainId
+	}
+	return ""
+}
+
+func (x *MsgManualEventBackfill) GetEventType() EventType {
+	if x != nil {
+		return x.EventType
+	}
+	return EventType_EVENT_TYPE_UNSPECIFIED
+}
+
+type MsgManualEventBackfillResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MsgManualEventBackfillResponse) Reset() {
+	*x = MsgManualEventBackfillResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgManualEventBackfillResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgManualEventBackfillResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgManualEventBackfillResponse.ProtoReflect.Descriptor instead.
+func (*MsgManualEventBackfillResponse) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{17}
+}
+
 var File_zrchain_validation_tx_proto protoreflect.FileDescriptor
 
 var file_zrchain_validation_tx_proto_rawDesc = []byte{
@@ -9023,72 +10116,108 @@ var file_zrchain_validation_tx_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f,
 	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d,
 	0x73, 0x22, 0x1b, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56,
-	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xcd,
-	0x06, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x69, 0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
-	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d,
-	0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
-	0x72, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
-	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x63, 0x0a, 0x0d, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x6f, 0x72, 0x12, 0x24, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x8d,
+	0x02, 0x0a, 0x16, 0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x45, 0x76, 0x65, 0x6e,
+	0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74,
+	0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4,
+	0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74,
+	0x79, 0x12, 0x17, 0x0a, 0x07, 0x74, 0x78, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x74, 0x78, 0x48, 0x61, 0x73, 0x68, 0x12, 0x24, 0x0a, 0x0e, 0x63, 0x61,
+	0x69, 0x70, 0x32, 0x5f, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x69, 0x70, 0x32, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x49, 0x64,
+	0x12, 0x3c, 0x0a, 0x0a, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x09, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x3e,
+	0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7,
+	0xb0, 0x2a, 0x2b, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61,
+	0x6c, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x22, 0x20,
+	0x0a, 0x1e, 0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x2a, 0x95, 0x01, 0x0a, 0x09, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a,
+	0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53,
+	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x56,
+	0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x42, 0x54, 0x43, 0x5f,
+	0x4d, 0x49, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f,
+	0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x42, 0x54, 0x43, 0x5f, 0x42, 0x55, 0x52, 0x4e,
+	0x10, 0x02, 0x12, 0x19, 0x0a, 0x15, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45,
+	0x5f, 0x5a, 0x45, 0x4e, 0x54, 0x50, 0x5f, 0x4d, 0x49, 0x4e, 0x54, 0x10, 0x03, 0x12, 0x19, 0x0a,
+	0x15, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x54,
+	0x50, 0x5f, 0x42, 0x55, 0x52, 0x4e, 0x10, 0x04, 0x32, 0xc4, 0x07, 0x0a, 0x03, 0x4d, 0x73, 0x67,
+	0x12, 0x69, 0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
+	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x1a, 0x2e, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x63, 0x0a, 0x0d, 0x45,
+	0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x24, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x6f, 0x72, 0x1a, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x45, 0x64, 0x69, 0x74, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x1a, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73,
-	0x67, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61,
-	0x74, 0x65, 0x12, 0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67,
-	0x61, 0x74, 0x65, 0x1a, 0x27, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65,
-	0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x69, 0x0a, 0x0f,
-	0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12,
-	0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64,
-	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
-	0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5a, 0x0a, 0x0a, 0x55, 0x6e, 0x64, 0x65, 0x6c,
-	0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e,
-	0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x87, 0x01, 0x0a, 0x19, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e,
-	0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x12, 0x30, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c,
-	0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x1a, 0x38, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63,
-	0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x60, 0x0a,
-	0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x23, 0x2e,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x54, 0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x1f, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x27, 0x2e,
 	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61,
-	0x6d, 0x73, 0x1a, 0x2b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x69, 0x0a, 0x0f, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52,
+	0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d,
+	0x73, 0x67, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74,
+	0x65, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52,
+	0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x5a, 0x0a, 0x0a, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12,
+	0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61,
+	0x74, 0x65, 0x1a, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e, 0x64, 0x65, 0x6c,
+	0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x87, 0x01,
+	0x0a, 0x19, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e,
+	0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x30, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64,
+	0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x38, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x60, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x23, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x2b, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x66, 0x0a, 0x0e, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x25, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61,
+	0x6d, 0x73, 0x1a, 0x2d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x66, 0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x12, 0x25, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x2d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x75, 0x0a, 0x13, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x2a, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
 	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xaf,
-	0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e,
-	0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa,
-	0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47,
-	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63,
-	0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b,
+	0x66, 0x69, 0x6c, 0x6c, 0x1a, 0x32, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e,
+	0x75, 0x61, 0x6c, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42,
+	0xaf, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58,
+	0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c,
+	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9103,69 +10232,76 @@ func file_zrchain_validation_tx_proto_rawDescGZIP() []byte {
 	return file_zrchain_validation_tx_proto_rawDescData
 }
 
-var file_zrchain_validation_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_zrchain_validation_tx_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_zrchain_validation_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_zrchain_validation_tx_proto_goTypes = []interface{}{
-	(*MsgCreateValidator)(nil),                   // 0: zrchain.validation.MsgCreateValidator
-	(*MsgCreateValidatorResponse)(nil),           // 1: zrchain.validation.MsgCreateValidatorResponse
-	(*MsgEditValidator)(nil),                     // 2: zrchain.validation.MsgEditValidator
-	(*MsgEditValidatorResponse)(nil),             // 3: zrchain.validation.MsgEditValidatorResponse
-	(*MsgDelegate)(nil),                          // 4: zrchain.validation.MsgDelegate
-	(*MsgDelegateResponse)(nil),                  // 5: zrchain.validation.MsgDelegateResponse
-	(*MsgBeginRedelegate)(nil),                   // 6: zrchain.validation.MsgBeginRedelegate
-	(*MsgBeginRedelegateResponse)(nil),           // 7: zrchain.validation.MsgBeginRedelegateResponse
-	(*MsgUndelegate)(nil),                        // 8: zrchain.validation.MsgUndelegate
-	(*MsgUndelegateResponse)(nil),                // 9: zrchain.validation.MsgUndelegateResponse
-	(*MsgCancelUnbondingDelegation)(nil),         // 10: zrchain.validation.MsgCancelUnbondingDelegation
-	(*MsgCancelUnbondingDelegationResponse)(nil), // 11: zrchain.validation.MsgCancelUnbondingDelegationResponse
-	(*MsgUpdateParams)(nil),                      // 12: zrchain.validation.MsgUpdateParams
-	(*MsgUpdateParamsResponse)(nil),              // 13: zrchain.validation.MsgUpdateParamsResponse
-	(*MsgUpdateHVParams)(nil),                    // 14: zrchain.validation.MsgUpdateHVParams
-	(*MsgUpdateHVParamsResponse)(nil),            // 15: zrchain.validation.MsgUpdateHVParamsResponse
-	(*Description)(nil),                          // 16: zrchain.validation.Description
-	(*CommissionRates)(nil),                      // 17: zrchain.validation.CommissionRates
-	(*anypb.Any)(nil),                            // 18: google.protobuf.Any
-	(*v1beta1.Coin)(nil),                         // 19: cosmos.base.v1beta1.Coin
-	(*timestamppb.Timestamp)(nil),                // 20: google.protobuf.Timestamp
-	(*Params)(nil),                               // 21: zrchain.validation.Params
-	(*HVParams)(nil),                             // 22: zrchain.validation.HVParams
+	(EventType)(0),                               // 0: zrchain.validation.EventType
+	(*MsgCreateValidator)(nil),                   // 1: zrchain.validation.MsgCreateValidator
+	(*MsgCreateValidatorResponse)(nil),           // 2: zrchain.validation.MsgCreateValidatorResponse
+	(*MsgEditValidator)(nil),                     // 3: zrchain.validation.MsgEditValidator
+	(*MsgEditValidatorResponse)(nil),             // 4: zrchain.validation.MsgEditValidatorResponse
+	(*MsgDelegate)(nil),                          // 5: zrchain.validation.MsgDelegate
+	(*MsgDelegateResponse)(nil),                  // 6: zrchain.validation.MsgDelegateResponse
+	(*MsgBeginRedelegate)(nil),                   // 7: zrchain.validation.MsgBeginRedelegate
+	(*MsgBeginRedelegateResponse)(nil),           // 8: zrchain.validation.MsgBeginRedelegateResponse
+	(*MsgUndelegate)(nil),                        // 9: zrchain.validation.MsgUndelegate
+	(*MsgUndelegateResponse)(nil),                // 10: zrchain.validation.MsgUndelegateResponse
+	(*MsgCancelUnbondingDelegation)(nil),         // 11: zrchain.validation.MsgCancelUnbondingDelegation
+	(*MsgCancelUnbondingDelegationResponse)(nil), // 12: zrchain.validation.MsgCancelUnbondingDelegationResponse
+	(*MsgUpdateParams)(nil),                      // 13: zrchain.validation.MsgUpdateParams
+	(*MsgUpdateParamsResponse)(nil),              // 14: zrchain.validation.MsgUpdateParamsResponse
+	(*MsgUpdateHVParams)(nil),                    // 15: zrchain.validation.MsgUpdateHVParams
+	(*MsgUpdateHVParamsResponse)(nil),            // 16: zrchain.validation.MsgUpdateHVParamsResponse
+	(*MsgManualEventBackfill)(nil),               // 17: zrchain.validation.MsgManualEventBackfill
+	(*MsgManualEventBackfillResponse)(nil),       // 18: zrchain.validation.MsgManualEventBackfillResponse
+	(*Description)(nil),                          // 19: zrchain.validation.Description
+	(*CommissionRates)(nil),                      // 20: zrchain.validation.CommissionRates
+	(*anypb.Any)(nil),                            // 21: google.protobuf.Any
+	(*v1beta1.Coin)(nil),                         // 22: cosmos.base.v1beta1.Coin
+	(*timestamppb.Timestamp)(nil),                // 23: google.protobuf.Timestamp
+	(*Params)(nil),                               // 24: zrchain.validation.Params
+	(*HVParams)(nil),                             // 25: zrchain.validation.HVParams
 }
 var file_zrchain_validation_tx_proto_depIdxs = []int32{
-	16, // 0: zrchain.validation.MsgCreateValidator.description:type_name -> zrchain.validation.Description
-	17, // 1: zrchain.validation.MsgCreateValidator.commission:type_name -> zrchain.validation.CommissionRates
-	18, // 2: zrchain.validation.MsgCreateValidator.pubkey:type_name -> google.protobuf.Any
-	19, // 3: zrchain.validation.MsgCreateValidator.value:type_name -> cosmos.base.v1beta1.Coin
-	16, // 4: zrchain.validation.MsgEditValidator.description:type_name -> zrchain.validation.Description
-	19, // 5: zrchain.validation.MsgDelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	19, // 6: zrchain.validation.MsgBeginRedelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	20, // 7: zrchain.validation.MsgBeginRedelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
-	19, // 8: zrchain.validation.MsgUndelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	20, // 9: zrchain.validation.MsgUndelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
-	19, // 10: zrchain.validation.MsgUndelegateResponse.amount:type_name -> cosmos.base.v1beta1.Coin
-	19, // 11: zrchain.validation.MsgCancelUnbondingDelegation.amount:type_name -> cosmos.base.v1beta1.Coin
-	21, // 12: zrchain.validation.MsgUpdateParams.Params:type_name -> zrchain.validation.Params
-	22, // 13: zrchain.validation.MsgUpdateParams.HVParams:type_name -> zrchain.validation.HVParams
-	22, // 14: zrchain.validation.MsgUpdateHVParams.HVParams:type_name -> zrchain.validation.HVParams
-	0,  // 15: zrchain.validation.Msg.CreateValidator:input_type -> zrchain.validation.MsgCreateValidator
-	2,  // 16: zrchain.validation.Msg.EditValidator:input_type -> zrchain.validation.MsgEditValidator
-	4,  // 17: zrchain.validation.Msg.Delegate:input_type -> zrchain.validation.MsgDelegate
-	6,  // 18: zrchain.validation.Msg.BeginRedelegate:input_type -> zrchain.validation.MsgBeginRedelegate
-	8,  // 19: zrchain.validation.Msg.Undelegate:input_type -> zrchain.validation.MsgUndelegate
-	10, // 20: zrchain.validation.Msg.CancelUnbondingDelegation:input_type -> zrchain.validation.MsgCancelUnbondingDelegation
-	12, // 21: zrchain.validation.Msg.UpdateParams:input_type -> zrchain.validation.MsgUpdateParams
-	14, // 22: zrchain.validation.Msg.UpdateHVParams:input_type -> zrchain.validation.MsgUpdateHVParams
-	1,  // 23: zrchain.validation.Msg.CreateValidator:output_type -> zrchain.validation.MsgCreateValidatorResponse
-	3,  // 24: zrchain.validation.Msg.EditValidator:output_type -> zrchain.validation.MsgEditValidatorResponse
-	5,  // 25: zrchain.validation.Msg.Delegate:output_type -> zrchain.validation.MsgDelegateResponse
-	7,  // 26: zrchain.validation.Msg.BeginRedelegate:output_type -> zrchain.validation.MsgBeginRedelegateResponse
-	9,  // 27: zrchain.validation.Msg.Undelegate:output_type -> zrchain.validation.MsgUndelegateResponse
-	11, // 28: zrchain.validation.Msg.CancelUnbondingDelegation:output_type -> zrchain.validation.MsgCancelUnbondingDelegationResponse
-	13, // 29: zrchain.validation.Msg.UpdateParams:output_type -> zrchain.validation.MsgUpdateParamsResponse
-	15, // 30: zrchain.validation.Msg.UpdateHVParams:output_type -> zrchain.validation.MsgUpdateHVParamsResponse
-	23, // [23:31] is the sub-list for method output_type
-	15, // [15:23] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	19, // 0: zrchain.validation.MsgCreateValidator.description:type_name -> zrchain.validation.Description
+	20, // 1: zrchain.validation.MsgCreateValidator.commission:type_name -> zrchain.validation.CommissionRates
+	21, // 2: zrchain.validation.MsgCreateValidator.pubkey:type_name -> google.protobuf.Any
+	22, // 3: zrchain.validation.MsgCreateValidator.value:type_name -> cosmos.base.v1beta1.Coin
+	19, // 4: zrchain.validation.MsgEditValidator.description:type_name -> zrchain.validation.Description
+	22, // 5: zrchain.validation.MsgDelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	22, // 6: zrchain.validation.MsgBeginRedelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	23, // 7: zrchain.validation.MsgBeginRedelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
+	22, // 8: zrchain.validation.MsgUndelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	23, // 9: zrchain.validation.MsgUndelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
+	22, // 10: zrchain.validation.MsgUndelegateResponse.amount:type_name -> cosmos.base.v1beta1.Coin
+	22, // 11: zrchain.validation.MsgCancelUnbondingDelegation.amount:type_name -> cosmos.base.v1beta1.Coin
+	24, // 12: zrchain.validation.MsgUpdateParams.Params:type_name -> zrchain.validation.Params
+	25, // 13: zrchain.validation.MsgUpdateParams.HVParams:type_name -> zrchain.validation.HVParams
+	25, // 14: zrchain.validation.MsgUpdateHVParams.HVParams:type_name -> zrchain.validation.HVParams
+	0,  // 15: zrchain.validation.MsgManualEventBackfill.event_type:type_name -> zrchain.validation.EventType
+	1,  // 16: zrchain.validation.Msg.CreateValidator:input_type -> zrchain.validation.MsgCreateValidator
+	3,  // 17: zrchain.validation.Msg.EditValidator:input_type -> zrchain.validation.MsgEditValidator
+	5,  // 18: zrchain.validation.Msg.Delegate:input_type -> zrchain.validation.MsgDelegate
+	7,  // 19: zrchain.validation.Msg.BeginRedelegate:input_type -> zrchain.validation.MsgBeginRedelegate
+	9,  // 20: zrchain.validation.Msg.Undelegate:input_type -> zrchain.validation.MsgUndelegate
+	11, // 21: zrchain.validation.Msg.CancelUnbondingDelegation:input_type -> zrchain.validation.MsgCancelUnbondingDelegation
+	13, // 22: zrchain.validation.Msg.UpdateParams:input_type -> zrchain.validation.MsgUpdateParams
+	15, // 23: zrchain.validation.Msg.UpdateHVParams:input_type -> zrchain.validation.MsgUpdateHVParams
+	17, // 24: zrchain.validation.Msg.ManualEventBackfill:input_type -> zrchain.validation.MsgManualEventBackfill
+	2,  // 25: zrchain.validation.Msg.CreateValidator:output_type -> zrchain.validation.MsgCreateValidatorResponse
+	4,  // 26: zrchain.validation.Msg.EditValidator:output_type -> zrchain.validation.MsgEditValidatorResponse
+	6,  // 27: zrchain.validation.Msg.Delegate:output_type -> zrchain.validation.MsgDelegateResponse
+	8,  // 28: zrchain.validation.Msg.BeginRedelegate:output_type -> zrchain.validation.MsgBeginRedelegateResponse
+	10, // 29: zrchain.validation.Msg.Undelegate:output_type -> zrchain.validation.MsgUndelegateResponse
+	12, // 30: zrchain.validation.Msg.CancelUnbondingDelegation:output_type -> zrchain.validation.MsgCancelUnbondingDelegationResponse
+	14, // 31: zrchain.validation.Msg.UpdateParams:output_type -> zrchain.validation.MsgUpdateParamsResponse
+	16, // 32: zrchain.validation.Msg.UpdateHVParams:output_type -> zrchain.validation.MsgUpdateHVParamsResponse
+	18, // 33: zrchain.validation.Msg.ManualEventBackfill:output_type -> zrchain.validation.MsgManualEventBackfillResponse
+	25, // [25:34] is the sub-list for method output_type
+	16, // [16:25] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_validation_tx_proto_init() }
@@ -9368,19 +10504,44 @@ func file_zrchain_validation_tx_proto_init() {
 				return nil
 			}
 		}
+		file_zrchain_validation_tx_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgManualEventBackfill); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgManualEventBackfillResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_validation_tx_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   16,
+			NumEnums:      1,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_zrchain_validation_tx_proto_goTypes,
 		DependencyIndexes: file_zrchain_validation_tx_proto_depIdxs,
+		EnumInfos:         file_zrchain_validation_tx_proto_enumTypes,
 		MessageInfos:      file_zrchain_validation_tx_proto_msgTypes,
 	}.Build()
 	File_zrchain_validation_tx_proto = out.File

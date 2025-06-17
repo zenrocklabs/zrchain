@@ -9,11 +9,25 @@ from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from tendermint.abci import types_pb2 as _types_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
+
+class EventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    EVENT_TYPE_UNSPECIFIED: _ClassVar[EventType]
+    EVENT_TYPE_ZENBTC_MINT: _ClassVar[EventType]
+    EVENT_TYPE_ZENBTC_BURN: _ClassVar[EventType]
+    EVENT_TYPE_ZENTP_MINT: _ClassVar[EventType]
+    EVENT_TYPE_ZENTP_BURN: _ClassVar[EventType]
+EVENT_TYPE_UNSPECIFIED: EventType
+EVENT_TYPE_ZENBTC_MINT: EventType
+EVENT_TYPE_ZENBTC_BURN: EventType
+EVENT_TYPE_ZENTP_MINT: EventType
+EVENT_TYPE_ZENTP_BURN: EventType
 
 class MsgCreateValidator(_message.Message):
     __slots__ = ("description", "commission", "min_self_delegation", "delegator_address", "validator_address", "pubkey", "value")
@@ -142,5 +156,21 @@ class MsgUpdateHVParams(_message.Message):
     def __init__(self, authority: _Optional[str] = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
 
 class MsgUpdateHVParamsResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgManualEventBackfill(_message.Message):
+    __slots__ = ("authority", "tx_hash", "caip2_chain_id", "event_type")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    CAIP2_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    EVENT_TYPE_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    tx_hash: str
+    caip2_chain_id: str
+    event_type: EventType
+    def __init__(self, authority: _Optional[str] = ..., tx_hash: _Optional[str] = ..., caip2_chain_id: _Optional[str] = ..., event_type: _Optional[_Union[EventType, str]] = ...) -> None: ...
+
+class MsgManualEventBackfillResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
