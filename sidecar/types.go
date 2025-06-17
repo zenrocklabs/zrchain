@@ -45,7 +45,6 @@ type Oracle struct {
 	neutrinoServer     *neutrino.NeutrinoServer
 	solanaClient       *solana.Client
 	zrChainQueryClient *client.QueryClient
-	updateChan         chan sidecartypes.OracleState
 	mainLoopTicker     *time.Ticker
 	DebugMode          bool
 

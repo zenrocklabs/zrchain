@@ -34,6 +34,7 @@ import (
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	solana "github.com/gagliardetto/solana-go"
 	solanagoSystem "github.com/gagliardetto/solana-go/programs/system"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
@@ -56,7 +57,6 @@ func NewOracle(
 		neutrinoServer:     neutrinoServer,
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
-		updateChan:         make(chan sidecartypes.OracleState, 32),
 		DebugMode:          debugMode,
 	}
 	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
@@ -175,7 +175,10 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			// --- End of intra-loop wait ---
 
 			// Send the fetched state exactly at the interval mark (or immediately if delayed)
-			o.updateChan <- newState
+			slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
+			slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+			o.currentState.Store(&newState)
+			o.CacheState()
 
 			// Clean up burn events *after* sending state update
 			o.cleanUpBurnEvents()
@@ -930,7 +933,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		// Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
-			log.Printf("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
+			slog.Debug("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil {
@@ -939,9 +942,9 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 
 		// If not found, check ZenTP keeper as well
 		if !foundOnChain {
-			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig)
+			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
-				log.Printf("Error querying ZenTP for mint event (txSig: %s): %v", event.TxSig, err)
+				slog.Debug("Error querying ZenTP for mint event (txSig: %s): %v", event.TxSig, err)
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
