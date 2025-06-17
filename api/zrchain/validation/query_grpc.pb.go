@@ -72,6 +72,7 @@ type QueryClient interface {
 	// Parameters queries the staking parameters.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	ValidatorPower(ctx context.Context, in *QueryPowerRequest, opts ...grpc.CallOption) (*QueryPowerResponse, error)
+	QueryBackfillRequests(ctx context.Context, in *QueryBackfillRequestsRequest, opts ...grpc.CallOption) (*QueryBackfillRequestsResponse, error)
 }
 
 type queryClient struct {
@@ -217,6 +218,15 @@ func (c *queryClient) ValidatorPower(ctx context.Context, in *QueryPowerRequest,
 	return out, nil
 }
 
+func (c *queryClient) QueryBackfillRequests(ctx context.Context, in *QueryBackfillRequestsRequest, opts ...grpc.CallOption) (*QueryBackfillRequestsResponse, error) {
+	out := new(QueryBackfillRequestsResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.validation.Query/QueryBackfillRequests", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -275,6 +285,7 @@ type QueryServer interface {
 	// Parameters queries the staking parameters.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	ValidatorPower(context.Context, *QueryPowerRequest) (*QueryPowerResponse, error)
+	QueryBackfillRequests(context.Context, *QueryBackfillRequestsRequest) (*QueryBackfillRequestsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -326,6 +337,9 @@ func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*Q
 }
 func (UnimplementedQueryServer) ValidatorPower(context.Context, *QueryPowerRequest) (*QueryPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidatorPower not implemented")
+}
+func (UnimplementedQueryServer) QueryBackfillRequests(context.Context, *QueryBackfillRequestsRequest) (*QueryBackfillRequestsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryBackfillRequests not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -610,6 +624,24 @@ func _Query_ValidatorPower_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_QueryBackfillRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBackfillRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryBackfillRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zrchain.validation.Query/QueryBackfillRequests",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryBackfillRequests(ctx, req.(*QueryBackfillRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -676,6 +708,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidatorPower",
 			Handler:    _Query_ValidatorPower_Handler,
+		},
+		{
+			MethodName: "QueryBackfillRequests",
+			Handler:    _Query_QueryBackfillRequests_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

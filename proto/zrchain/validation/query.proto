@@ -9,6 +9,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "zrchain/validation/staking.proto";
+import "zrchain/validation/tx.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types";
 
@@ -149,6 +150,11 @@ service Query {
   rpc ValidatorPower(QueryPowerRequest) returns (QueryPowerResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmos/staking/v1beta1/validator_power";
+  }
+
+  rpc QueryBackfillRequests(QueryBackfillRequestsRequest) returns (QueryBackfillRequestsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/cosmos/validation/v1beta1/backfill_requests";
   }
 }
 
@@ -444,4 +450,10 @@ message QueryPowerResponse {
   repeated ValidatorPower validator_power = 1;
   int64 total_power = 2;
   int64 height = 3;
+}
+
+message QueryBackfillRequestsRequest {}
+
+message QueryBackfillRequestsResponse {
+  BackfillRequests backfill_requests = 1;
 }

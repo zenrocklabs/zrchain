@@ -6,6 +6,7 @@ from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
+from zrchain.validation import tx_pb2 as _tx_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -244,3 +245,13 @@ class QueryPowerResponse(_message.Message):
     total_power: int
     height: int
     def __init__(self, validator_power: _Optional[_Iterable[_Union[ValidatorPower, _Mapping]]] = ..., total_power: _Optional[int] = ..., height: _Optional[int] = ...) -> None: ...
+
+class QueryBackfillRequestsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryBackfillRequestsResponse(_message.Message):
+    __slots__ = ("backfill_requests",)
+    BACKFILL_REQUESTS_FIELD_NUMBER: _ClassVar[int]
+    backfill_requests: _tx_pb2.BackfillRequests
+    def __init__(self, backfill_requests: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ...) -> None: ...
