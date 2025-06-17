@@ -436,24 +436,38 @@ message QueryParamsResponse {
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
+// QueryPowerRequest is the request type for the Query/ValidatorPower RPC method.
 message QueryPowerRequest {}
 
+// ValidatorPower represents the power information for a validator.
 message ValidatorPower {
+  // operator_addr is the operator address of the validator.
   string operator_addr = 1;
+  // cons_addr is the consensus address of the validator.
   string cons_addr = 2;
+  // power is the voting power of the validator.
   int64 power = 3;
+  // jailed indicates if the validator is jailed.
   bool jailed = 4;
+  // status is the bond status of the validator.
   BondStatus status = 5;
 }
 
+// QueryPowerResponse is the response type for the Query/ValidatorPower RPC method.
 message QueryPowerResponse {
+  // validator_power contains the power information for all validators.
   repeated ValidatorPower validator_power = 1;
+  // total_power is the total voting power of all validators.
   int64 total_power = 2;
+  // height is the block height at which the power was queried.
   int64 height = 3;
 }
 
+// QueryBackfillRequestsRequest is the request type for the Query/BackfillRequests RPC method.
 message QueryBackfillRequestsRequest {}
 
+// QueryBackfillRequestsResponse is the response type for the Query/BackfillRequests RPC method.
 message QueryBackfillRequestsResponse {
+  // backfill_requests contains the list of backfill requests.
   BackfillRequests backfill_requests = 1;
 }

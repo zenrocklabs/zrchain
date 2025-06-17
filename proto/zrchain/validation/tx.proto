@@ -248,42 +248,63 @@ message MsgUpdateParams {
 // Since: cosmos-sdk 0.47
 message MsgUpdateParamsResponse {}
 
+// MsgUpdateHVParams is the Msg/UpdateHVParams request type.
+// This message is used to update the HVParams parameters of the validation module.
 message MsgUpdateHVParams {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) = "zrchain/x/validation/MsgUpdateHVParams";
 
-  // authority is the address that controls the module (defaults to x/gov unless
-  // overwritten).
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
+  // HVParams defines the HV parameters to update.
   // NOTE: All parameters must be supplied.
   HVParams HVParams = 2
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
+// MsgUpdateHVParamsResponse defines the response structure for executing a MsgUpdateHVParams message.
 message MsgUpdateHVParamsResponse {}
 
+// MsgTriggerEventBackfill is the Msg/TriggerEventBackfill request type.
+// This message is used to trigger a backfill event for a specific transaction and event type.
 message MsgTriggerEventBackfill {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) = "zrchain/x/validation/MsgTriggerEventBackfill";
 
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // tx_hash is the transaction hash for which the backfill event is triggered.
   string tx_hash = 2;
+
+  // caip2_chain_id is the CAIP-2 chain ID of the chain where the event occurred.
   string caip2_chain_id = 3;
+
+  // event_type specifies the type of event to backfill.
   EventType event_type = 4;
 }
 
+// MsgTriggerEventBackfillResponse defines the response structure for executing a MsgTriggerEventBackfill message.
 message MsgTriggerEventBackfillResponse {}
 
+// EventType enumerates the possible event types for backfill requests.
 enum EventType {
+  // EVENT_TYPE_UNSPECIFIED indicates an unspecified event type.
   EVENT_TYPE_UNSPECIFIED = 0;
+  // EVENT_TYPE_ZENBTC_MINT indicates a ZENBTC mint event.
   EVENT_TYPE_ZENBTC_MINT = 1;
+  // EVENT_TYPE_ZENBTC_BURN indicates a ZENBTC burn event.
   EVENT_TYPE_ZENBTC_BURN = 2;
   // can add more types for zenbtc later if needed
+  // EVENT_TYPE_ZENTP_MINT indicates a ZENTP mint event.
   EVENT_TYPE_ZENTP_MINT = 3;
+  // EVENT_TYPE_ZENTP_BURN indicates a ZENTP burn event.
   EVENT_TYPE_ZENTP_BURN = 4;
 }
 
+// BackfillRequests contains a list of MsgTriggerEventBackfill requests.
 message BackfillRequests {
+  // requests is the list of backfill requests.
   repeated MsgTriggerEventBackfill requests = 1;
 }
