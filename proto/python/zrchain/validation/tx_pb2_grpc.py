@@ -55,10 +55,10 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParams.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParamsResponse.FromString,
                 )
-        self.ManualEventBackfill = channel.unary_unary(
-                '/zrchain.validation.Msg/ManualEventBackfill',
-                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfill.SerializeToString,
-                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfillResponse.FromString,
+        self.TriggerEventBackfill = channel.unary_unary(
+                '/zrchain.validation.Msg/TriggerEventBackfill',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.FromString,
                 )
 
 
@@ -129,7 +129,7 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ManualEventBackfill(self, request, context):
+    def TriggerEventBackfill(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -178,10 +178,10 @@ def add_MsgServicer_to_server(servicer, server):
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParams.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgUpdateHVParamsResponse.SerializeToString,
             ),
-            'ManualEventBackfill': grpc.unary_unary_rpc_method_handler(
-                    servicer.ManualEventBackfill,
-                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfill.FromString,
-                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfillResponse.SerializeToString,
+            'TriggerEventBackfill': grpc.unary_unary_rpc_method_handler(
+                    servicer.TriggerEventBackfill,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -331,7 +331,7 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def ManualEventBackfill(request,
+    def TriggerEventBackfill(request,
             target,
             options=(),
             channel_credentials=None,
@@ -341,8 +341,8 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/ManualEventBackfill',
-            zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfill.SerializeToString,
-            zrchain_dot_validation_dot_tx__pb2.MsgManualEventBackfillResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/TriggerEventBackfill',
+            zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

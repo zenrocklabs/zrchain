@@ -9,10 +9,11 @@ from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from tendermint.abci import types_pb2 as _types_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
+from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -159,7 +160,7 @@ class MsgUpdateHVParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
-class MsgManualEventBackfill(_message.Message):
+class MsgTriggerEventBackfill(_message.Message):
     __slots__ = ("authority", "tx_hash", "caip2_chain_id", "event_type")
     AUTHORITY_FIELD_NUMBER: _ClassVar[int]
     TX_HASH_FIELD_NUMBER: _ClassVar[int]
@@ -171,6 +172,12 @@ class MsgManualEventBackfill(_message.Message):
     event_type: EventType
     def __init__(self, authority: _Optional[str] = ..., tx_hash: _Optional[str] = ..., caip2_chain_id: _Optional[str] = ..., event_type: _Optional[_Union[EventType, str]] = ...) -> None: ...
 
-class MsgManualEventBackfillResponse(_message.Message):
+class MsgTriggerEventBackfillResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class BackfillRequests(_message.Message):
+    __slots__ = ("requests",)
+    REQUESTS_FIELD_NUMBER: _ClassVar[int]
+    requests: _containers.RepeatedCompositeFieldContainer[MsgTriggerEventBackfill]
+    def __init__(self, requests: _Optional[_Iterable[_Union[MsgTriggerEventBackfill, _Mapping]]] = ...) -> None: ...
