@@ -31,6 +31,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
@@ -936,7 +937,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Debug("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
 		}
 
-		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil {
+		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
+			zenbtcResp.PendingMintTransaction.Status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED {
 			foundOnChain = true
 		}
 
