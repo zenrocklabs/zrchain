@@ -9497,14 +9497,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// EventType enumerates the possible event types for backfill requests.
 type EventType int32
 
 const (
+	// EVENT_TYPE_UNSPECIFIED indicates an unspecified event type.
 	EventType_EVENT_TYPE_UNSPECIFIED EventType = 0
+	// EVENT_TYPE_ZENBTC_MINT indicates a ZENBTC mint event.
 	EventType_EVENT_TYPE_ZENBTC_MINT EventType = 1
+	// EVENT_TYPE_ZENBTC_BURN indicates a ZENBTC burn event.
 	EventType_EVENT_TYPE_ZENBTC_BURN EventType = 2
 	// can add more types for zenbtc later if needed
+	// EVENT_TYPE_ZENTP_MINT indicates a ZENTP mint event.
 	EventType_EVENT_TYPE_ZENTP_MINT EventType = 3
+	// EVENT_TYPE_ZENTP_BURN indicates a ZENTP burn event.
 	EventType_EVENT_TYPE_ZENTP_BURN EventType = 4
 )
 
@@ -10221,14 +10227,16 @@ func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{13}
 }
 
+// MsgUpdateHVParams is the Msg/UpdateHVParams request type.
+// This message is used to update the HVParams parameters of the validation module.
 type MsgUpdateHVParams struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// authority is the address that controls the module (defaults to x/gov unless
-	// overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// HVParams defines the HV parameters to update.
 	// NOTE: All parameters must be supplied.
 	HVParams *HVParams `protobuf:"bytes,2,opt,name=HVParams,proto3" json:"HVParams,omitempty"`
 }
@@ -10267,6 +10275,7 @@ func (x *MsgUpdateHVParams) GetHVParams() *HVParams {
 	return nil
 }
 
+// MsgUpdateHVParamsResponse defines the response structure for executing a MsgUpdateHVParams message.
 type MsgUpdateHVParamsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10293,15 +10302,21 @@ func (*MsgUpdateHVParamsResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{15}
 }
 
+// MsgTriggerEventBackfill is the Msg/TriggerEventBackfill request type.
+// This message is used to trigger a backfill event for a specific transaction and event type.
 type MsgTriggerEventBackfill struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Authority    string    `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	TxHash       string    `protobuf:"bytes,2,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
-	Caip2ChainId string    `protobuf:"bytes,3,opt,name=caip2_chain_id,json=caip2ChainId,proto3" json:"caip2_chain_id,omitempty"`
-	EventType    EventType `protobuf:"varint,4,opt,name=event_type,json=eventType,proto3,enum=zrchain.validation.EventType" json:"event_type,omitempty"`
+	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// tx_hash is the transaction hash for which the backfill event is triggered.
+	TxHash string `protobuf:"bytes,2,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
+	// caip2_chain_id is the CAIP-2 chain ID of the chain where the event occurred.
+	Caip2ChainId string `protobuf:"bytes,3,opt,name=caip2_chain_id,json=caip2ChainId,proto3" json:"caip2_chain_id,omitempty"`
+	// event_type specifies the type of event to backfill.
+	EventType EventType `protobuf:"varint,4,opt,name=event_type,json=eventType,proto3,enum=zrchain.validation.EventType" json:"event_type,omitempty"`
 }
 
 func (x *MsgTriggerEventBackfill) Reset() {
@@ -10352,6 +10367,7 @@ func (x *MsgTriggerEventBackfill) GetEventType() EventType {
 	return EventType_EVENT_TYPE_UNSPECIFIED
 }
 
+// MsgTriggerEventBackfillResponse defines the response structure for executing a MsgTriggerEventBackfill message.
 type MsgTriggerEventBackfillResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -10378,11 +10394,13 @@ func (*MsgTriggerEventBackfillResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{17}
 }
 
+// BackfillRequests contains a list of MsgTriggerEventBackfill requests.
 type BackfillRequests struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// requests is the list of backfill requests.
 	Requests []*MsgTriggerEventBackfill `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
 }
 

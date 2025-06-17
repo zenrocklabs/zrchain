@@ -17355,6 +17355,7 @@ func (x *QueryParamsResponse) GetHVParams() *HVParams {
 	return nil
 }
 
+// QueryPowerRequest is the request type for the Query/ValidatorPower RPC method.
 type QueryPowerRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -17381,16 +17382,22 @@ func (*QueryPowerRequest) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_query_proto_rawDescGZIP(), []int{28}
 }
 
+// ValidatorPower represents the power information for a validator.
 type ValidatorPower struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OperatorAddr string     `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
-	ConsAddr     string     `protobuf:"bytes,2,opt,name=cons_addr,json=consAddr,proto3" json:"cons_addr,omitempty"`
-	Power        int64      `protobuf:"varint,3,opt,name=power,proto3" json:"power,omitempty"`
-	Jailed       bool       `protobuf:"varint,4,opt,name=jailed,proto3" json:"jailed,omitempty"`
-	Status       BondStatus `protobuf:"varint,5,opt,name=status,proto3,enum=zrchain.validation.BondStatus" json:"status,omitempty"`
+	// operator_addr is the operator address of the validator.
+	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
+	// cons_addr is the consensus address of the validator.
+	ConsAddr string `protobuf:"bytes,2,opt,name=cons_addr,json=consAddr,proto3" json:"cons_addr,omitempty"`
+	// power is the voting power of the validator.
+	Power int64 `protobuf:"varint,3,opt,name=power,proto3" json:"power,omitempty"`
+	// jailed indicates if the validator is jailed.
+	Jailed bool `protobuf:"varint,4,opt,name=jailed,proto3" json:"jailed,omitempty"`
+	// status is the bond status of the validator.
+	Status BondStatus `protobuf:"varint,5,opt,name=status,proto3,enum=zrchain.validation.BondStatus" json:"status,omitempty"`
 }
 
 func (x *ValidatorPower) Reset() {
@@ -17448,14 +17455,18 @@ func (x *ValidatorPower) GetStatus() BondStatus {
 	return BondStatus_BOND_STATUS_UNSPECIFIED
 }
 
+// QueryPowerResponse is the response type for the Query/ValidatorPower RPC method.
 type QueryPowerResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// validator_power contains the power information for all validators.
 	ValidatorPower []*ValidatorPower `protobuf:"bytes,1,rep,name=validator_power,json=validatorPower,proto3" json:"validator_power,omitempty"`
-	TotalPower     int64             `protobuf:"varint,2,opt,name=total_power,json=totalPower,proto3" json:"total_power,omitempty"`
-	Height         int64             `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	// total_power is the total voting power of all validators.
+	TotalPower int64 `protobuf:"varint,2,opt,name=total_power,json=totalPower,proto3" json:"total_power,omitempty"`
+	// height is the block height at which the power was queried.
+	Height int64 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 }
 
 func (x *QueryPowerResponse) Reset() {
@@ -17499,6 +17510,7 @@ func (x *QueryPowerResponse) GetHeight() int64 {
 	return 0
 }
 
+// QueryBackfillRequestsRequest is the request type for the Query/BackfillRequests RPC method.
 type QueryBackfillRequestsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -17525,11 +17537,13 @@ func (*QueryBackfillRequestsRequest) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_query_proto_rawDescGZIP(), []int{31}
 }
 
+// QueryBackfillRequestsResponse is the response type for the Query/BackfillRequests RPC method.
 type QueryBackfillRequestsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// backfill_requests contains the list of backfill requests.
 	BackfillRequests *BackfillRequests `protobuf:"bytes,1,opt,name=backfill_requests,json=backfillRequests,proto3" json:"backfill_requests,omitempty"`
 }
 
