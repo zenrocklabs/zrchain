@@ -2220,6 +2220,12 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		}
 	}
 
+	if len(toProcess) == 0 {
+		return
+	}
+
+	processedTxHashes := make(map[string]bool)
+
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
 		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
@@ -2288,7 +2294,9 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		})
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
+			continue
 		}
+		processedTxHashes[burn.TxID] = true
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.EventManager().EmitEvent(
@@ -2299,5 +2307,39 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 				sdk.NewAttribute(types.AttributeKeyBurnDestination, addr),
 			),
 		)
+	}
+
+	if len(processedTxHashes) == 0 {
+		return // Nothing was processed, so nothing to clear.
+	}
+
+	backfillRequests, err := k.BackfillRequests.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting backfill requests for cleanup", "error", err)
+		}
+		return // Can't clean up if we can't get the list.
+	}
+
+	if len(backfillRequests.Requests) == 0 {
+		return
+	}
+
+	initialRequestCount := len(backfillRequests.Requests)
+
+	backfillRequests.Requests = slices.DeleteFunc(backfillRequests.Requests, func(req *types.MsgTriggerEventBackfill) bool {
+		// Check if the request is a ZENTP_BURN and if its hash is in the processed map.
+		if req.EventType == types.EventType_EVENT_TYPE_ZENTP_BURN && processedTxHashes[req.TxHash] {
+			k.Logger(ctx).Info("clearing processed zentp burn backfill request", "tx_hash", req.TxHash)
+			return true // Delete this item.
+		}
+		return false
+	})
+
+	// If we removed any requests, update the store.
+	if len(backfillRequests.Requests) < initialRequestCount {
+		if err := k.SetBackfillRequests(ctx, backfillRequests); err != nil {
+			k.Logger(ctx).Error("error updating backfill requests after processing zentp burns", "error", err)
+		}
 	}
 }

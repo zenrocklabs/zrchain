@@ -271,3 +271,7 @@ func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state
 func (k *Keeper) SetSidecarClient(client sidecarClient) {
 	k.sidecarClient = client
 }
+
+func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.BackfillRequests) error {
+	return k.BackfillRequests.Set(ctx, requests)
+}
