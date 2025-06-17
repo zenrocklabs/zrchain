@@ -428,7 +428,13 @@ func (k Keeper) IterateLastValidatorPowers(ctx context.Context, handler func(ope
 	}
 
 	for ; iter.Valid(); iter.Next() {
-		addr := sdk.ValAddress(types.AddressFromLastValidatorPowerKey(iter.Key()))
+		key := iter.Key()
+		if len(key) < 3 {
+			// this should not happen, but if it does, continue to prevent a panic
+			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
+			continue
+		}
+		addr := sdk.ValAddress(types.AddressFromLastValidatorPowerKey(key))
 		intV := &gogotypes.Int64Value{}
 
 		if err = k.cdc.Unmarshal(iter.Value(), intV); err != nil {
@@ -467,7 +473,13 @@ func (k Keeper) GetLastValidators(ctx context.Context) (validators []types.Valid
 			panic("more validators than maxValidators found")
 		}
 
-		address := types.AddressFromLastValidatorPowerKey(iterator.Key())
+		key := iterator.Key()
+		if len(key) < 3 {
+			// this should not happen, but if it does, continue to prevent a panic
+			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
+			continue
+		}
+		address := types.AddressFromLastValidatorPowerKey(key)
 		validator, err := k.GetZenrockValidator(ctx, address)
 		if err != nil {
 			return nil, err
