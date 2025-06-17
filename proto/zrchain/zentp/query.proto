@@ -61,6 +61,7 @@ message QueryMintsRequest {
   string                                denom      = 4;
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
   uint64                                tx_id      = 6;
+  string                                source_tx_hash = 7;
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.

@@ -185,7 +185,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		RequestedEthMinterNonce:    nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
 		RequestedUnstakerNonce:     nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
 		RequestedCompleterNonce:    nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
-		SolanaMintNonceHashes:      solNonceHash[:],
+		SolanaMintNoncesHash:       solNonceHash[:],
 		SolanaAccountsHash:         solAccsHash[:],
 		SolanaMintEventsHash:       solanaMintEventsHash[:],
 		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
@@ -344,6 +344,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
 
+		// 1. Update on-chain state based on oracle data that has reached consensus
 		nonceFields := []VoteExtensionField{
 			VEFieldRequestedStakerNonce,
 			VEFieldRequestedEthMinterNonce,
@@ -357,23 +358,31 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEthBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
-		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
-			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
-		}
+
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
 			k.storeNewZenBTCRedemptions(ctx, oracleData)
 		}
 
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+			k.processSolanaZenBTCMintEvents(ctx, oracleData)
+			k.processSolanaROCKMintEvents(ctx, oracleData)
+		}
+
+		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
+			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
+			k.processSolanaROCKBurnEvents(ctx, oracleData)
+		}
+
+		// 2. Process pending transaction queues based on the latest state
 		k.processZenBTCStaking(ctx, oracleData)
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
-		k.processSolanaZenBTCMintEvents(ctx, oracleData)
 		k.processZenBTCBurnEvents(ctx, oracleData)
 		k.processZenBTCRedemptions(ctx, oracleData)
 		k.checkForRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
-		k.processSolanaROCKMintEvents(ctx, oracleData)
-		k.processSolanaROCKBurnEvents(ctx, oracleData)
+
+		// 3. Final cleanup steps for the block
 		k.clearSolanaAccounts(ctx)
 	}
 
@@ -1411,6 +1420,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		nil,
 		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
 		// pendingGetter: Fetches pending solROCK mints that are in the PENDING state.
+		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			mints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 			return mints, err
@@ -1733,6 +1743,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 				"minted_old", supply.MintedZenBTC-pendingMint.Amount,
 				"minted_new", supply.MintedZenBTC,
 			)
+			pendingMint.TxHash = event.TxSig
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
@@ -1761,13 +1772,20 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 		for i, dbgEvent := range burnEvents {
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Solana event details from oracle.",
 				"source", source, "idx", i, "tx_id", dbgEvent.TxID, "log_idx", dbgEvent.LogIndex,
-				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr))
+				"chain_id", dbgEvent.ChainID, "amount", dbgEvent.Amount, "destination_addr_hex", hex.EncodeToString(dbgEvent.DestinationAddr), "is_zenbtc", dbgEvent.IsZenBTC)
 		}
 	}
 
 	foundNewBurn := false
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
+		// For Solana events, we now use the explicit flag to distinguish burn types.
+		// We skip ROCK burns here. zenBTC burns will have IsZenBTC = true.
+		if !burn.IsZenBTC {
+			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping event explicitly marked as not a zenBTC burn.", "tx_id", burn.TxID, "log_idx", burn.LogIndex)
+			continue
+		}
+
 		// Check if this burn event already exists
 		exists := false
 		if err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, existingBurn zenbtctypes.BurnEvent) (bool, error) {
@@ -1786,6 +1804,8 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 		}
 
 		if !exists {
+			// The explicit check at the top of the loop replaces the need for the zentp keeper check.
+
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New event, creating BurnEvent.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex, "chain_id", burn.ChainID, "amount", burn.Amount, "destination_addr_hex", hex.EncodeToString(burn.DestinationAddr))
 			// Create a new BurnEvent using data from the input struct
 			newBurn := zenbtctypes.BurnEvent{
@@ -2178,6 +2198,10 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
 	for _, e := range oracleData.SolanaBurnEvents {
+		// Only process events that are explicitly marked as ROCK burns.
+		if e.IsZenBTC {
+			continue // This is a zenBTC burn, skip it.
+		}
 
 		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
 		if err != nil {
@@ -2217,13 +2241,13 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		_, bridgeFee, err := k.zentpKeeper.GetBridgeFeeParams(ctx)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeParams: ", err.Error())
-			return
+			continue
 		}
 
 		bridgeFeeCoins, err := k.zentpKeeper.GetBridgeFeeAmount(ctx, burn.Amount, bridgeFee)
 		if err != nil {
 			k.Logger(ctx).Error("GetBridgeFeeAmount: ", err.Error())
-			return
+			continue
 		}
 
 		bridgeAmount := sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(burn.Amount).Sub(bridgeFeeCoins.AmountOf(params.BondDenom))))

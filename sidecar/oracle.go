@@ -22,6 +22,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/beevik/ntp"
+	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
 	"github.com/ethereum/go-ethereum"
@@ -30,9 +31,11 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	solana "github.com/gagliardetto/solana-go"
 	solanagoSystem "github.com/gagliardetto/solana-go/programs/system"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
@@ -55,7 +58,6 @@ func NewOracle(
 		neutrinoServer:     neutrinoServer,
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
-		updateChan:         make(chan sidecartypes.OracleState, 32),
 		DebugMode:          debugMode,
 	}
 	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
@@ -174,10 +176,15 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			// --- End of intra-loop wait ---
 
 			// Send the fetched state exactly at the interval mark (or immediately if delayed)
-			o.updateChan <- newState
+			slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
+			slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+			o.currentState.Store(&newState)
+			o.CacheState()
 
 			// Clean up burn events *after* sending state update
 			o.cleanUpBurnEvents()
+			// Clean up mint events *after* sending state update
+			o.cleanUpMintEvents()
 		}
 	}
 }
@@ -222,7 +229,7 @@ func (o *Oracle) fetchAndProcessState(
 	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
 
 	// Fetch Solana mint events
-	o.fetchSolanaMintEvents(&wg, update, &updateMutex, errChan)
+	o.processSolanaMintEvents(&wg, update, &updateMutex, errChan)
 
 	// Fetch Solana burn events
 	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
@@ -437,48 +444,62 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	}()
 }
 
-func (o *Oracle) fetchSolanaMintEvents(
+func (o *Oracle) processSolanaMintEvents(
 	wg *sync.WaitGroup,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetch SolROCK Mints using watermarking
+	// Process solana mint events
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-		events, newestSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
+		// Get new events using watermarking
+		lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
+		rockEvents, newRockSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolROCK mint events: %w", err)
 			return
 		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
-		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolRockMint] = newestSig
-		}
-		updateMutex.Unlock()
-	}()
 
-	// Fetch SolZenBTC Mints using watermarking
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
-		events, newestSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
+		lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
+		zenbtcEvents, newZenBTCSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to process SolZenBTC mint events: %w", err)
 			return
 		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.SolanaMintEvents = append(update.SolanaMintEvents, events...)
+
+		allNewEvents := append(rockEvents, zenbtcEvents...)
+
+		// Get current state to merge with new mint events
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+		// Create a map of existing events for quick lookup
+		existingMintEvents := make(map[string]bool)
+		for _, event := range currentState.SolanaMintEvents {
+			key := base64.StdEncoding.EncodeToString(event.SigHash)
+			existingMintEvents[key] = true
 		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newestSig
+
+		mergedMintEvents := make([]api.SolanaMintEvent, len(currentState.SolanaMintEvents))
+		copy(mergedMintEvents, currentState.SolanaMintEvents)
+
+		for _, event := range allNewEvents {
+			key := base64.StdEncoding.EncodeToString(event.SigHash)
+			if !existingMintEvents[key] {
+				if cleaned, exists := currentState.CleanedSolanaMintEvents[key]; !exists || !cleaned {
+					mergedMintEvents = append(mergedMintEvents, event)
+				}
+			}
+		}
+
+		updateMutex.Lock()
+		update.SolanaMintEvents = mergedMintEvents
+		if !newRockSig.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+		}
+		if !newZenBTCSig.IsZero() {
+			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
 		}
 		updateMutex.Unlock()
 	}()
@@ -572,6 +593,7 @@ func (o *Oracle) buildFinalState(
 		CleanedSolanaBurnEvents:    currentState.CleanedSolanaBurnEvents,
 		Redemptions:                update.redemptions,
 		SolanaMintEvents:           update.SolanaMintEvents,
+		CleanedSolanaMintEvents:    currentState.CleanedSolanaMintEvents,
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
@@ -699,7 +721,7 @@ func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api
 	return mergedEthBurnEvents, nil
 }
 
-// reconcileBurnEventsWithChain checks a list of burn events against the chain and returns the events
+// reconcileBurnEventsWithZRChain checks a list of burn events against the chain and returns the events
 // that should remain in the cache and an updated map of cleaned events.
 func (o *Oracle) reconcileBurnEventsWithZRChain(
 	ctx context.Context,
@@ -721,17 +743,43 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 			continue // Skip to next event if already marked as cleaned
 		}
 
-		resp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
-		if err != nil || resp == nil {
-			// Log the specific chain type in the error
-			log.Printf("Error querying %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
-			// Keep events that we failed to query, they might succeed next time
-			remainingEvents = append(remainingEvents, event)
-			continue // Continue checking other events even if one query fails
+		var foundOnChain bool
+
+		// 1. Check ZenBTC keeper
+		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
+		if err != nil {
+			log.Printf("Error querying ZenBTC for %s burn event (txID: %s, logIndex: %d, chainID: %s): %v", chainTypeName, event.TxID, event.LogIndex, event.ChainID, err)
+			// Keep events that we failed to query, they might succeed next time. We'll let it continue to the ZenTP check.
 		}
 
-		// If the event is not found on chain, keep it in our cache
-		if len(resp.BurnEvents) == 0 {
+		if zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
+			foundOnChain = true
+		}
+
+		// 2. If not found and it's a Solana event, check ZenTP keeper as well
+		if !foundOnChain && chainTypeName == "Solana" {
+			// The destination address for Solana burns is a 32-byte key, but zrchain uses the first 20 bytes for the Cosmos address.
+			if len(event.DestinationAddr) >= 20 {
+				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", event.DestinationAddr[:20])
+				if err != nil {
+					log.Printf("Error converting destination address to bech32 for ZenTP query (txID: %s): %v", event.TxID, err)
+				} else {
+					zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, event.TxID)
+					if err != nil {
+						log.Printf("Error querying ZenTP for Solana burn event (txID: %s, addr: %s): %v", event.TxID, bech32Addr, err)
+					}
+					// Check zentpResp and its content.
+					if zentpResp != nil && len(zentpResp.Burns) > 0 {
+						foundOnChain = true
+					}
+				}
+			} else {
+				log.Printf("Skipping ZenTP check for Solana burn event due to short destination address (txID: %s, len: %d)", event.TxID, len(event.DestinationAddr))
+			}
+		}
+
+		// 3. Update state based on whether it was found
+		if !foundOnChain {
 			remainingEvents = append(remainingEvents, event)
 		} else {
 			// Event found on chain, mark it as cleaned by adding to the map
@@ -778,6 +826,8 @@ func (o *Oracle) cleanUpBurnEvents() {
 		newState.CleanedEthBurnEvents = updatedCleanedEthEvents
 		newState.SolanaBurnEvents = remainingSolEvents
 		newState.CleanedSolanaBurnEvents = updatedCleanedSolEvents
+		newState.SolanaMintEvents = currentState.SolanaMintEvents
+		newState.CleanedSolanaMintEvents = currentState.CleanedSolanaMintEvents
 
 		o.currentState.Store(&newState)
 		o.CacheState() // Persist the updated state
@@ -864,6 +914,85 @@ func (o *Oracle) getRedemptions(contractInstance *zenbtc.ZenBTController, height
 	return redemptions, nil
 }
 
+func (o *Oracle) reconcileMintEventsWithZRChain(
+	ctx context.Context,
+	eventsToClean []api.SolanaMintEvent,
+	cleanedEvents map[string]bool,
+) ([]api.SolanaMintEvent, map[string]bool) {
+	remainingEvents := make([]api.SolanaMintEvent, 0)
+	updatedCleanedEvents := make(map[string]bool)
+	maps.Copy(updatedCleanedEvents, cleanedEvents)
+
+	for _, event := range eventsToClean {
+		key := base64.StdEncoding.EncodeToString(event.SigHash)
+		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
+			continue
+		}
+
+		var foundOnChain bool
+
+		// Check ZenBTC keeper
+		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
+		if err != nil {
+			slog.Debug("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
+		}
+
+		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
+			zenbtcResp.PendingMintTransaction.Status == zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED {
+			foundOnChain = true
+		}
+
+		// If not found, check ZenTP keeper as well
+		if !foundOnChain {
+			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
+			if err != nil {
+				slog.Debug("Error querying ZenTP for mint event (txSig: %s): %v", event.TxSig, err)
+			}
+			if zentpResp != nil && len(zentpResp.Mints) > 0 {
+				foundOnChain = true
+			}
+		}
+
+		if !foundOnChain {
+			remainingEvents = append(remainingEvents, event)
+		} else {
+			updatedCleanedEvents[key] = true
+			log.Printf("Removing Solana mint event from cache as it's now on chain (txSig: %s, sigHash: %s)", event.TxSig, key)
+		}
+	}
+
+	return remainingEvents, updatedCleanedEvents
+}
+
+func (o *Oracle) cleanUpMintEvents() {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	initialMintCount := len(currentState.SolanaMintEvents)
+	if initialMintCount == 0 {
+		return
+	}
+
+	ctx := context.Background()
+	stateChanged := false
+
+	remainingMintEvents, updatedCleanedMintEvents := o.reconcileMintEventsWithZRChain(ctx, currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
+	if len(remainingMintEvents) != initialMintCount {
+		log.Printf("Removed %d Solana mint events from cache", initialMintCount-len(remainingMintEvents))
+		stateChanged = true
+	}
+
+	if stateChanged {
+		newState := *currentState
+		newState.SolanaMintEvents = remainingMintEvents
+		newState.CleanedSolanaMintEvents = updatedCleanedMintEvents
+		o.currentState.Store(&newState)
+		o.CacheState()
+		log.Println("Mint event cache state updated and saved.")
+	} else {
+		log.Println("No mint events removed from cache during cleanup.")
+	}
+}
+
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
 	program, err := solana.PublicKeyFromBase58(programID)
@@ -887,7 +1016,8 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		return []api.SolanaMintEvent{}, lastKnownSig, nil
 	}
 
-	// The newest signature from the node's perspective for this program address
+	// The newest signature from the node's perspective for this program address.
+	// This will be the new watermark only if there are no new transactions to process.
 	newestSigFromNode := allSignatures[0].Signature
 	// The type returned by GetSignaturesForAddressWithOpts is []*rpc.TransactionSignature
 	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
@@ -908,7 +1038,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolROCK mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
@@ -924,6 +1054,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	var mintEvents []api.SolanaMintEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer
 
@@ -952,10 +1083,10 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolROCK mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			// Potentially return lastKnownSig here if we want to stop processing further sub-batches on error
-			// return nil, lastKnownSig, fmt.Errorf("SolROCK mints sub-batch GetTransaction failed: %w", err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolROCK mints sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			// On batch failure, we can't trust we processed anything after the last success.
+			// Break the loop and return what we have so far, with the last known good watermark.
+			break
 		}
 
 		// Process the results
@@ -1032,6 +1163,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
+						TxSig:     sig.String(),
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {
@@ -1046,12 +1178,14 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = sig
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return mintEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1098,7 +1232,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolZenBTC mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
@@ -1114,6 +1248,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	var mintEvents []api.SolanaMintEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
@@ -1142,8 +1277,8 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolZenBTC mints sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolZenBTC mints sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		// Process the results
@@ -1219,6 +1354,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 						Value:     e.Value,
 						Fee:       e.Fee,
 						Mint:      e.Mint.Bytes(),
+						TxSig:     sig.String(),
 					}
 					mintEvents = append(mintEvents, mintEvent)
 					if o.DebugMode {
@@ -1233,12 +1369,14 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = sig
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolZenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return mintEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // getSolanaRecentBlockhashWithSlot fetches a recent Solana blockhash from the block with height divisible by SolanaSlotRoundingFactor
@@ -1382,7 +1520,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			lastSigCheckStr = lastKnownSig.String()
 		}
 		log.Printf("No new SolZenBTC burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
-		// Return the newest signature seen from the node to update the watermark
+		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
@@ -1398,6 +1536,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	var burnEvents []api.BurnEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer for maxSupportedTransactionVersion
 
@@ -1426,8 +1565,8 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 		// Execute the batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolZenBTC burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolZenBTC burn sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here as it's needed per batch processing if successful
@@ -1489,6 +1628,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr,
 						Amount:          e.Value,
+						IsZenBTC:        true, // This is a ZenBTC burn
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
@@ -1501,12 +1641,14 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = originalSignature
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolZenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
-	// Return the collected events and the newest signature seen from the node to update the watermark
-	return burnEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolZenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	// Return the collected events and the newest *successfully processed* signature to update the watermark.
+	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
@@ -1564,6 +1706,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	var burnEvents []api.BurnEvent
+	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize // Define a smaller batch size for getTransaction calls
 	v0 := uint64(0)                                             // Define v0 for pointer
 
@@ -1592,8 +1735,8 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 		// Execute batch request
 		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 		if err != nil {
-			log.Printf("SolRock burn sub-batch GetTransaction failed (signatures %d to %d): %v. Skipping this sub-batch.", i, end-1, err)
-			continue // Skip to the next sub-batch
+			log.Printf("SolRock burn sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", i, end-1, err)
+			break // On batch failure, break the loop and return what we have so far.
 		}
 
 		chainID := sidecartypes.SolanaCAIP2[o.Config.Network] // Moved here
@@ -1654,6 +1797,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 						ChainID:         chainID,
 						DestinationAddr: e.DestAddr[:],
 						Amount:          e.Value,
+						IsZenBTC:        false, // This is a ROCK burn
 					}
 					burnEvents = append(burnEvents, burnEvent)
 					if o.DebugMode {
@@ -1666,11 +1810,13 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 					}
 				}
 			}
+			// This signature has been processed successfully, so we can advance the watermark.
+			lastSuccessfullyProcessedSig = originalSignature
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), newestSigFromNode)
-	return burnEvents, newestSigFromNode, nil
+	log.Printf("From inspected transactions, retrieved %d new SolRock burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // Helper to get typed last processed Solana signature

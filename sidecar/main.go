@@ -12,7 +12,6 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
@@ -97,8 +96,6 @@ func main() {
 		}
 	}()
 
-	go oracle.processUpdates()
-
 	if !*noAVS {
 		go func() {
 			if err := oracle.runEigenOperator(); err != nil {
@@ -114,13 +111,4 @@ func main() {
 
 	slog.Info("Shutting down gracefully...")
 	cancel()
-}
-
-func (o *Oracle) processUpdates() {
-	for update := range o.updateChan {
-		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", update.EthBlockHeight)
-		slog.Info("Received prices", "ROCK/USD", update.ROCKUSDPrice, "BTC/USD", update.BTCUSDPrice, "ETH/USD", update.ETHUSDPrice)
-		o.currentState.Store(&update)
-		o.CacheState()
-	}
 }

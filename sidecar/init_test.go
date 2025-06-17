@@ -3,6 +3,7 @@ package main_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"testing"
@@ -12,13 +13,13 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/require"
-	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
-	// "github.com/ethereum/go-ethereum/common"
-	// taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
-	// servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
+	servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
+	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 )
 
 func initTestOracle() *sidecar.Oracle {
@@ -119,25 +120,29 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 	})
 }
 
-// func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
-// 	o := initTestOracle()
+func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
+	t.Skip("Skipping test on CI")
 
-// 	contractServiceManager, err := servicemanager.NewContractZRServiceManager(common.HexToAddress(o.Config.EthOracle.ContractAddrs.ServiceManager), o.EthClient)
-// 	require.NoError(t, err)
+	o := initTestOracle()
 
-// 	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
-// 	require.NoError(t, err)
-// 	fmt.Println("Task Manager Address:", taskManagerAddr)
+	contractServiceManager, err := servicemanager.NewContractZrServiceManager(common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]), o.EthClient)
+	require.NoError(t, err)
 
-// 	contractInstance, err := taskmanager.NewContractTaskManagerZR(taskManagerAddr, o.EthClient)
-// 	require.NoError(t, err)
+	taskManagerAddr, err := contractServiceManager.TaskManager(&bind.CallOpts{})
+	require.NoError(t, err)
+	fmt.Println("Task Manager Address:", taskManagerAddr)
 
-// 	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
-// 	require.NoError(t, err)
-// 	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
-// }
+	contractInstance, err := taskmanager.NewContractZrTaskManager(taskManagerAddr, o.EthClient)
+	require.NoError(t, err)
+
+	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
+	require.NoError(t, err)
+	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
+}
 
 func TestGetSolanaAccountInfo(t *testing.T) {
+	t.Skip("Skipping test on CI")
+
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)
 	require.NotNil(t, service)

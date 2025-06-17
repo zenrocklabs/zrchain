@@ -47,7 +47,7 @@ type (
 		RequestedEthMinterNonce    uint64
 		RequestedUnstakerNonce     uint64
 		RequestedCompleterNonce    uint64
-		SolanaMintNonceHashes      []byte
+		SolanaMintNoncesHash       []byte
 		SolanaAccountsHash         []byte
 		SolanaLamportsPerSignature uint64
 		EthBurnEventsHash          []byte
@@ -406,8 +406,8 @@ func initializeFieldHandlers() []FieldHandler {
 		},
 		{
 			Field:    VEFieldSolanaMintNoncesHash,
-			GetValue: func(ve VoteExtension) any { return ve.SolanaMintNonceHashes },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolanaMintNonceHashes = v.([]byte) },
+			GetValue: func(ve VoteExtension) any { return ve.SolanaMintNoncesHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.SolanaMintNoncesHash = v.([]byte) },
 		},
 		{
 			Field:    VEFieldSolanaAccountsHash,
