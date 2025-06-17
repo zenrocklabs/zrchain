@@ -1830,3 +1830,44 @@ func (k Keeper) processBtlSolanaROCKMint(ctx sdk.Context, tx zentptypes.Bridge, 
 	tx.AwaitingEventSince = newAwaitingEventSince
 	return tx
 }
+
+// ClearProcessedBackfillRequests removes backfill requests from the queue that have been successfully processed.
+// It identifies processed requests by matching the eventType and checking if the transaction hash
+// is present in the provided processedTxHashes map.
+func (k *Keeper) ClearProcessedBackfillRequests(ctx context.Context, eventType types.EventType, processedTxHashes map[string]bool) {
+	if len(processedTxHashes) == 0 {
+		return // Nothing was processed, so nothing to clear.
+	}
+
+	backfillRequests, err := k.BackfillRequests.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting backfill requests for cleanup", "error", err)
+		}
+		return // Can't clean up if we can't get the list.
+	}
+
+	if len(backfillRequests.Requests) == 0 {
+		return
+	}
+
+	initialRequestCount := len(backfillRequests.Requests)
+
+	// Filter out the requests that have been processed.
+	remainingRequests := slices.DeleteFunc(backfillRequests.Requests, func(req *types.MsgTriggerEventBackfill) bool {
+		// Check if the request is the correct type and if its hash is in the processed map.
+		if req.EventType == eventType && processedTxHashes[req.TxHash] {
+			k.Logger(ctx).Info("clearing processed backfill request", "type", eventType.String(), "tx_hash", req.TxHash)
+			return true // Delete this item.
+		}
+		return false
+	})
+	backfillRequests.Requests = remainingRequests
+
+	// If we removed any requests, update the store.
+	if len(backfillRequests.Requests) < initialRequestCount {
+		if err := k.SetBackfillRequests(ctx, backfillRequests); err != nil {
+			k.Logger(ctx).Error("error updating backfill requests after processing events", "type", eventType.String(), "error", err)
+		}
+	}
+}

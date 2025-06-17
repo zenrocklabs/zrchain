@@ -90,6 +90,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_validation_dot_query__pb2.QueryPowerRequest.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_query__pb2.QueryPowerResponse.FromString,
                 )
+        self.QueryBackfillRequests = channel.unary_unary(
+                '/zrchain.validation.Query/QueryBackfillRequests',
+                request_serializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -225,6 +230,12 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def QueryBackfillRequests(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -302,6 +313,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.ValidatorPower,
                     request_deserializer=zrchain_dot_validation_dot_query__pb2.QueryPowerRequest.FromString,
                     response_serializer=zrchain_dot_validation_dot_query__pb2.QueryPowerResponse.SerializeToString,
+            ),
+            'QueryBackfillRequests': grpc.unary_unary_rpc_method_handler(
+                    servicer.QueryBackfillRequests,
+                    request_deserializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.FromString,
+                    response_serializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -566,5 +582,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Query/ValidatorPower',
             zrchain_dot_validation_dot_query__pb2.QueryPowerRequest.SerializeToString,
             zrchain_dot_validation_dot_query__pb2.QueryPowerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def QueryBackfillRequests(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Query/QueryBackfillRequests',
+            zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.SerializeToString,
+            zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -2220,6 +2220,12 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		}
 	}
 
+	if len(toProcess) == 0 {
+		return
+	}
+
+	processedTxHashes := make(map[string]bool)
+
 	// TODO do cleanup on error. e.g. burn minted funds if there is an error sendig them to the recipient, or adding of the bridge fails
 	for _, burn := range toProcess {
 		addr, err := sdk.Bech32ifyAddressBytes("zen", burn.DestinationAddr[:20])
@@ -2288,7 +2294,9 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		})
 		if err != nil {
 			k.Logger(ctx).Error(err.Error())
+			continue
 		}
+		processedTxHashes[burn.TxID] = true
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.EventManager().EmitEvent(
@@ -2300,4 +2308,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			),
 		)
 	}
+
+	// Now that events are processed, clear any corresponding backfill requests.
+	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENTP_BURN, processedTxHashes)
 }

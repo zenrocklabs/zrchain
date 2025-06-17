@@ -33,6 +33,7 @@ var (
 	SolanaAccountsRequestedKey           = collections.NewPrefix(14)
 	LastUsedSolanaNonceKey               = collections.NewPrefix(15)
 	SolanaZenTPAccountsRequestedKey      = collections.NewPrefix(16)
+	BackfillRequestsKey                  = collections.NewPrefix(17)
 
 	AssetPricesIndex                       = "asset_prices"
 	SlashEventsIndex                       = "slash_events"
@@ -51,6 +52,7 @@ var (
 	SolanaAccountsRequestedIndex           = "solana_account_requested"
 	LastUsedSolanaNonceIndex               = "last_used_solana_nonce"
 	SolanaZenTPAccountsRequestedIndex      = "solana_zentp_accounts_requested"
+	BackfillRequestsIndex                  = "backfill_requests"
 )
 
 const (

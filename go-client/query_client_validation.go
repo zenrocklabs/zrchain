@@ -49,3 +49,7 @@ func (c *ValidationQueryClient) UnbondingValidators(ctx context.Context, pageReq
 		Pagination: pageRequest,
 	})
 }
+
+func (c *ValidationQueryClient) BackfillRequests(ctx context.Context) (*types.QueryBackfillRequestsResponse, error) {
+	return c.client.QueryBackfillRequests(ctx, &types.QueryBackfillRequestsRequest{})
+}

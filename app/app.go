@@ -64,6 +64,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
 	mintkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/mint/keeper"
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
@@ -166,6 +167,7 @@ const appName = "ZenrockApp"
 var (
 	NodeDir      = ".zrchain"
 	Bech32Prefix = "zen"
+	authAddr     = authtypes.NewModuleAddress(govtypes.ModuleName).String()
 )
 
 // These constants are derived from the above variables.
@@ -391,9 +393,6 @@ func NewZenrockApp(
 		keys[paramstypes.StoreKey],
 		tkeys[paramstypes.TStoreKey],
 	)
-
-	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
-	adminAuthAddr := "zen1sd3fwcpw2mdw3pxexmlg34gsd78r0sxrk5weh3" // zenbtc key
 
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
@@ -711,7 +710,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zenbtctypes.StoreKey]),
 		logger,
-		adminAuthAddr,
+		shared.AdminAuthAddr,
 		app.ValidationKeeper,
 		&app.TreasuryKeeper,
 	)
@@ -721,7 +720,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
 		logger,
-		adminAuthAddr,
+		shared.AdminAuthAddr,
 		app.TreasuryKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
