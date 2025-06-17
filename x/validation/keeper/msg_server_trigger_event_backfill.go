@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 func (k msgServer) TriggerEventBackfill(ctx context.Context, msg *types.MsgTriggerEventBackfill) (*types.MsgTriggerEventBackfillResponse, error) {
-	if k.authority != msg.Authority {
+	if msg.Authority != shared.AdminAuthAddr {
 		return nil, fmt.Errorf("invalid authority; expected %s, got %s", k.authority, msg.Authority)
 	}
 
