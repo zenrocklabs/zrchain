@@ -108,13 +108,7 @@ func (k Keeper) IterateLastValidators(ctx context.Context, fn func(index int64, 
 	i := int64(0)
 
 	for ; iterator.Valid(); iterator.Next() {
-		key := iterator.Key()
-		if len(key) < 3 {
-			// this should not happen, but if it does, continue to prevent a panic
-			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
-			continue
-		}
-		address := types.AddressFromLastValidatorPowerKey(key)
+		address := types.AddressFromLastValidatorPowerKey(iterator.Key())
 
 		validator, err := k.GetZenrockValidator(ctx, address)
 		if err != nil {
