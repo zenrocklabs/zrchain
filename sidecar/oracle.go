@@ -1074,7 +1074,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{ // Use map for options
-						"encoding":                       solana.EncodingJSON,
+						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1272,7 +1272,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{
-						"encoding":                       solana.EncodingJSON,
+						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1554,7 +1554,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{
-						"encoding":                       solana.EncodingJSON,
+						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1728,7 +1728,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 				Params: []any{
 					sigInfo.Signature.String(),
 					map[string]any{ // Use map for options
-						"encoding":                       solana.EncodingJSON,
+						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
 						"maxSupportedTransactionVersion": &v0, // Pass pointer to 0
 					},
@@ -1846,7 +1846,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 		context.Background(),
 		sig,
 		&solrpc.GetTransactionOpts{
-			Encoding:                       solana.EncodingJSON,
+			Encoding:                       solana.EncodingBase64,
 			Commitment:                     solrpc.CommitmentConfirmed,
 			MaxSupportedTransactionVersion: &v0,
 		},
@@ -1918,62 +1918,69 @@ func (o *Oracle) processBackfillRequests(
 		if backfillResp == nil || backfillResp.BackfillRequests == nil || len(backfillResp.BackfillRequests.Requests) == 0 {
 			return // No backfill requests
 		}
-
-		log.Printf("Found %d backfill requests to process", len(backfillResp.BackfillRequests.Requests))
-
-		var newBurnEvents []api.BurnEvent
-
-		requests := backfillResp.BackfillRequests.Requests
-		for i, req := range requests {
-			// For now, only handle ZenTP burn events.
-			if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
-				log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
-				programID := sidecartypes.SolRockProgramID[o.Config.Network]
-				event, err := o.getSolanaBurnEventFromSig(req.TxHash, programID)
-				if err != nil {
-					log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
-					continue
-				}
-				if event != nil {
-					newBurnEvents = append(newBurnEvents, *event)
-				}
-
-				// Pause between requests to avoid rate-limiting, but not after the final one.
-				if i < len(requests)-1 {
-					time.Sleep(time.Duration(sidecartypes.SolanaSleepIntervalMilliseconds) * time.Millisecond)
-				}
-			}
-		}
-
-		if len(newBurnEvents) > 0 {
-			updateMutex.Lock()
-			defer updateMutex.Unlock()
-
-			// Merge with existing burn events.
-			// Create a map of existing events for quick lookup to avoid duplicates.
-			existingBurnEvents := make(map[string]bool)
-			for _, event := range update.solanaBurnEvents {
-				key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-				existingBurnEvents[key] = true
-			}
-
-			// Also check against already cleaned events
-			currentState := o.currentState.Load().(*sidecartypes.OracleState)
-			for key := range currentState.CleanedSolanaBurnEvents {
-				existingBurnEvents[key] = true
-			}
-
-			for _, event := range newBurnEvents {
-				key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-				if !existingBurnEvents[key] {
-					update.solanaBurnEvents = append(update.solanaBurnEvents, event)
-					log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
-				} else {
-					log.Printf("Skipping already present backfilled Solana burn event: TxID=%s", event.TxID)
-				}
-			}
-		}
+		o.handleBackfillRequests(backfillResp.BackfillRequests.Requests, update, updateMutex)
 	}()
+}
+
+// handleBackfillRequests processes a slice of backfill requests.
+func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEventBackfill, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	if len(requests) == 0 {
+		return
+	}
+
+	log.Printf("Found %d backfill requests to process", len(requests))
+
+	var newBurnEvents []api.BurnEvent
+
+	for i, req := range requests {
+		// For now, only handle ZenTP burn events.
+		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
+			log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
+			programID := sidecartypes.SolRockProgramID[o.Config.Network]
+			event, err := o.getSolanaBurnEventFromSig(req.TxHash, programID)
+			if err != nil {
+				log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
+				continue
+			}
+			if event != nil {
+				newBurnEvents = append(newBurnEvents, *event)
+			}
+
+			// Pause between requests to avoid rate-limiting, but not after the final one.
+			if i < len(requests)-1 {
+				time.Sleep(time.Duration(sidecartypes.SolanaSleepIntervalMilliseconds) * time.Millisecond)
+			}
+		}
+	}
+
+	if len(newBurnEvents) > 0 {
+		updateMutex.Lock()
+		defer updateMutex.Unlock()
+
+		// Merge with existing burn events.
+		// Create a map of existing events for quick lookup to avoid duplicates.
+		existingBurnEvents := make(map[string]bool)
+		for _, event := range update.solanaBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			existingBurnEvents[key] = true
+		}
+
+		// Also check against already cleaned events
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		for key := range currentState.CleanedSolanaBurnEvents {
+			existingBurnEvents[key] = true
+		}
+
+		for _, event := range newBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if !existingBurnEvents[key] {
+				update.solanaBurnEvents = append(update.solanaBurnEvents, event)
+				log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
+			} else {
+				log.Printf("Skipping already present backfilled Solana burn event: TxID=%s", event.TxID)
+			}
+		}
+	}
 }
 
 // Helper to get typed last processed Solana signature
