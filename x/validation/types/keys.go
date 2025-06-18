@@ -16,6 +16,9 @@ import (
 )
 
 var (
+	// ====================================================================================================
+	// ATTENTION: PLEASE READ THE NOTICE BELOW BEFORE ADDING A NEW KEY.
+	// ====================================================================================================
 	AssetPricesKey                       = collections.NewPrefix(0)
 	SlashEventsKey                       = collections.NewPrefix(1)
 	SlashEventCountKey                   = collections.NewPrefix(2)
@@ -33,37 +36,15 @@ var (
 	SolanaAccountsRequestedKey           = collections.NewPrefix(14)
 	LastUsedSolanaNonceKey               = collections.NewPrefix(15)
 	SolanaZenTPAccountsRequestedKey      = collections.NewPrefix(16)
-	BackfillRequestsKey                  = collections.NewPrefix(17)
-
-	AssetPricesIndex                       = "asset_prices"
-	SlashEventsIndex                       = "slash_events"
-	SlashEventCountIndex                   = "slash_event_count"
-	AVSDelegationsIndex                    = "avs_delegations"
-	ValidatorDelegationsIndex              = "validator_delegations"
-	HVParamsIndex                          = "hv_params"
-	AVSRewardsPoolIndex                    = "avs_rewards_pool"
-	ValidationInfosIndex                   = "validation_infos"
-	BtcBlockHeadersIndex                   = "btc_block_headers"
-	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
-	LastUsedEthereumNonceIndex             = "last_used_ethereum_nonce"
-	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
-	LastValidVEHeightIndex                 = "last_valid_ve_height"
-	SolanaNonceRequestedIndex              = "solana_nonce_requested"
-	SolanaAccountsRequestedIndex           = "solana_account_requested"
-	LastUsedSolanaNonceIndex               = "last_used_solana_nonce"
-	SolanaZenTPAccountsRequestedIndex      = "solana_zentp_accounts_requested"
-	BackfillRequestsIndex                  = "backfill_requests"
-)
-
-const (
-	// ModuleName is the name of the staking module
-	ModuleName = "validation"
-
-	// StoreKey is the string store representation
-	StoreKey = ModuleName
-
-	// RouterKey is the msg router key for the staking module
-	RouterKey = ModuleName
+	// ====================================================================================================
+	// ATTENTION: All new `collections.NewPrefix` keys MUST be added below this block.
+	//
+	// Start new keys from 101 and increment sequentially. This creates a safe separation
+	// from legacy byte slice keys below (e.g., 0x11, 0x12) to prevent storage collisions.
+	//
+	// The next available key currently is 101.
+	// ====================================================================================================
+	BackfillRequestsKey = collections.NewPrefix(100)
 )
 
 var (
@@ -97,6 +78,38 @@ var (
 	ParamsKey = []byte{0x51} // prefix for parameters for module x/staking
 
 	DelegationByValIndexKey = []byte{0x71} // key for delegations by a validator
+)
+
+var (
+	AssetPricesIndex                       = "asset_prices"
+	SlashEventsIndex                       = "slash_events"
+	SlashEventCountIndex                   = "slash_event_count"
+	AVSDelegationsIndex                    = "avs_delegations"
+	ValidatorDelegationsIndex              = "validator_delegations"
+	HVParamsIndex                          = "hv_params"
+	AVSRewardsPoolIndex                    = "avs_rewards_pool"
+	ValidationInfosIndex                   = "validation_infos"
+	BtcBlockHeadersIndex                   = "btc_block_headers"
+	EthereumNonceRequestedIndex            = "ethereum_nonce_requested"
+	LastUsedEthereumNonceIndex             = "last_used_ethereum_nonce"
+	RequestedHistoricalBitcoinHeadersIndex = "requested_historical_bitcoin_headers"
+	LastValidVEHeightIndex                 = "last_valid_ve_height"
+	SolanaNonceRequestedIndex              = "solana_nonce_requested"
+	SolanaAccountsRequestedIndex           = "solana_account_requested"
+	LastUsedSolanaNonceIndex               = "last_used_solana_nonce"
+	SolanaZenTPAccountsRequestedIndex      = "solana_zentp_accounts_requested"
+	BackfillRequestsIndex                  = "backfill_requests"
+)
+
+const (
+	// ModuleName is the name of the staking module
+	ModuleName = "validation"
+
+	// StoreKey is the string store representation
+	StoreKey = ModuleName
+
+	// RouterKey is the msg router key for the staking module
+	RouterKey = ModuleName
 )
 
 // UnbondingType defines the type of unbonding operation
