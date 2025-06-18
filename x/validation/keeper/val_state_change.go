@@ -718,10 +718,14 @@ func (k Keeper) getLastValidatorsByAddr(ctx context.Context) (validatorsByAddr, 
 
 	for ; iterator.Valid(); iterator.Next() {
 		// extract the validator address from the key (prefix is 1-byte, addrLen is 1-byte)
-		valAddr, ok := k.safeAddressFromLastValidatorPowerKey(ctx, iterator.Key())
-		if !ok {
+		key := iterator.Key()
+		if len(key) < 3 {
+			// this should not happen, but if it does, continue to prevent a panic
+			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
 			continue
 		}
+
+		valAddr := types.AddressFromLastValidatorPowerKey(key)
 		valAddrStr, err := k.validatorAddressCodec.BytesToString(valAddr)
 		if err != nil {
 			return nil, err

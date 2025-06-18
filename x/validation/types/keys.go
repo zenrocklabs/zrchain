@@ -37,7 +37,7 @@ var (
 	LastUsedSolanaNonceKey               = collections.NewPrefix(15)
 	SolanaZenTPAccountsRequestedKey      = collections.NewPrefix(16)
 	// ====================================================================================================
-	// ATTENTION: All new `collections.NewPrefix` keys MUST be added below this line.
+	// ATTENTION: All new `collections.NewPrefix` keys MUST be added below this block.
 	//
 	// Start new keys from 101 and increment sequentially. This creates a safe separation
 	// from legacy byte slice keys below (e.g., 0x11, 0x12) to prevent storage collisions.
