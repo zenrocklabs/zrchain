@@ -60,6 +60,7 @@ func NewOracle(
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
 		DebugMode:          debugMode,
+		startupTimestamp:   time.Now(),
 	}
 	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
 
@@ -89,6 +90,12 @@ func NewOracle(
 		}
 	}
 
+	log.Printf("Sidecar started at %s. Will only process events newer than this timestamp.", o.startupTimestamp.Format(time.RFC3339))
+	if o.Config.FilterEventsAfterStartup {
+		log.Printf("Event filtering after startup is ENABLED. Old events will be skipped to prevent rebroadcasting.")
+	} else {
+		log.Printf("Event filtering after startup is DISABLED. All events will be processed.")
+	}
 	return o
 }
 
@@ -1152,6 +1159,13 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 				blockTimeUnix = txResult.BlockTime.Time().Unix()
 			}
 
+			// Filter out events that are older than the startup timestamp
+			if o.shouldSkipEventBasedOnTimestamp(blockTimeUnix, sig.String(), "SolROCK mint") {
+				// Still advance the watermark even for old events to avoid reprocessing them
+				lastSuccessfullyProcessedSig = sig
+				continue
+			}
+
 			// Append valid events from this transaction
 			for _, event := range events {
 				if event.Name == "TokensMintedWithFee" {
@@ -1342,6 +1356,13 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			blockTimeUnix := int64(0)
 			if txResult.BlockTime != nil {
 				blockTimeUnix = txResult.BlockTime.Time().Unix()
+			}
+
+			// Filter out events that are older than the startup timestamp
+			if o.shouldSkipEventBasedOnTimestamp(blockTimeUnix, sig.String(), "SolZenBTC mint") {
+				// Still advance the watermark even for old events to avoid reprocessing them
+				lastSuccessfullyProcessedSig = sig
+				continue
 			}
 
 			for _, event := range events {
@@ -1594,6 +1615,19 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 				continue
 			}
 
+			// Check block time to filter out old events
+			blockTimeUnix := int64(0)
+			if txResult.BlockTime != nil {
+				blockTimeUnix = txResult.BlockTime.Time().Unix()
+			}
+
+			// Filter out events that are older than the startup timestamp
+			if o.shouldSkipEventBasedOnTimestamp(blockTimeUnix, originalSignature.String(), "SolZenBTC burn") {
+				// Still advance the watermark even for old events to avoid reprocessing them
+				lastSuccessfullyProcessedSig = originalSignature
+				continue
+			}
+
 			// Decode events using the result
 			events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
@@ -1763,6 +1797,19 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 				continue
 			}
 
+			// Check block time to filter out old events
+			blockTimeUnix := int64(0)
+			if txResult.BlockTime != nil {
+				blockTimeUnix = txResult.BlockTime.Time().Unix()
+			}
+
+			// Filter out events that are older than the startup timestamp
+			if o.shouldSkipEventBasedOnTimestamp(blockTimeUnix, originalSignature.String(), "SolRock burn") {
+				// Still advance the watermark even for old events to avoid reprocessing them
+				lastSuccessfullyProcessedSig = originalSignature
+				continue
+			}
+
 			// Decode events
 			events, err := rock_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
@@ -1865,6 +1912,18 @@ func (o *Oracle) getSolanaBurnEventsFromSig(sigStr string, programID string) ([]
 	var txResult solrpc.GetTransactionResult
 	if err := json.Unmarshal(resp.Result, &txResult); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal GetTransactionResult for backfill sig %s: %w", sig, err)
+	}
+
+	// Check block time to filter out old events
+	blockTimeUnix := int64(0)
+	if txResult.BlockTime != nil {
+		blockTimeUnix = txResult.BlockTime.Time().Unix()
+	}
+
+	// Filter out events that are older than the startup timestamp
+	if o.shouldSkipEventBasedOnTimestamp(blockTimeUnix, sig.String(), "SolRock burn backfill") {
+		log.Printf("Skipping backfill request for tx %s: block time is before startup time", sig.String())
+		return []api.BurnEvent{}, nil
 	}
 
 	var burnEvents []api.BurnEvent
@@ -2003,6 +2062,26 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 		return solana.Signature{}
 	}
 	return sig
+}
+
+// shouldSkipEventBasedOnTimestamp checks if an event should be skipped based on the startup timestamp
+func (o *Oracle) shouldSkipEventBasedOnTimestamp(blockTimeUnix int64, txSig string, eventType string) bool {
+	// Only filter if the configuration option is enabled
+	if !o.Config.FilterEventsAfterStartup {
+		return false
+	}
+
+	if blockTimeUnix > 0 && time.Unix(blockTimeUnix, 0).Before(o.startupTimestamp) {
+		if o.DebugMode {
+			log.Printf("Skipping %s event from tx %s: block time %s is before startup time %s",
+				eventType,
+				txSig,
+				time.Unix(blockTimeUnix, 0).Format(time.RFC3339),
+				o.startupTimestamp.Format(time.RFC3339))
+		}
+		return true
+	}
+	return false
 }
 
 // Helper function to parse RPC response ID into request index

@@ -53,6 +53,7 @@ type Oracle struct {
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+	startupTimestamp        time.Time
 }
 
 type oracleStateUpdate struct {
