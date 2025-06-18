@@ -195,6 +195,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "HVParams"},
 					},
 				},
+				{
+					RpcMethod: "TriggerEventBackfill",
+					Use:       "trigger-event-backfill [tx-hash] [caip2-chain-id] [event-type]",
+					Short:     "Trigger event backfill for a given event type and transaction hash",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "tx_hash"},
+						{ProtoField: "caip2_chain_id"},
+						{ProtoField: "event_type"},
+					},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 			EnhanceCustomCommand: true, // use custom commands only until v0.51

@@ -1825,24 +1825,53 @@ func (o *Oracle) getSolanaBurnEventsFromSig(sigStr string, programID string) ([]
 		return nil, fmt.Errorf("invalid signature string for backfill: %w", err)
 	}
 
+	// Use batch request approach similar to other functions to avoid encoding issues
 	v0 := uint64(0)
-	txResult, err := o.solanaClient.GetTransaction(context.Background(), sig, &solrpc.GetTransactionOpts{
-		Encoding:                       solana.EncodingJSON,
-		Commitment:                     solrpc.CommitmentConfirmed,
-		MaxSupportedTransactionVersion: &v0,
-	})
+	batchRequests := jsonrpc.RPCRequests{
+		&jsonrpc.RPCRequest{
+			Method: "getTransaction",
+			Params: []any{
+				sig.String(),
+				map[string]any{
+					"encoding":                       solana.EncodingJSON,
+					"commitment":                     solrpc.CommitmentConfirmed,
+					"maxSupportedTransactionVersion": &v0,
+				},
+			},
+			ID:      0,
+			JSONRPC: "2.0",
+		},
+	}
+
+	// Execute the batch request
+	batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction for backfill sig %s: %w", sig, err)
 	}
-	if txResult == nil {
+
+	if len(batchResponses) == 0 {
+		return nil, fmt.Errorf("no response received for backfill sig %s", sig)
+	}
+
+	resp := batchResponses[0]
+	if resp.Error != nil {
+		return nil, fmt.Errorf("RPC error for backfill sig %s: %v", sig, resp.Error)
+	}
+	if resp.Result == nil {
 		return nil, fmt.Errorf("nil transaction result for backfill sig %s", sig)
+	}
+
+	// Unmarshal the json.RawMessage result into GetTransactionResult
+	var txResult solrpc.GetTransactionResult
+	if err := json.Unmarshal(resp.Result, &txResult); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal GetTransactionResult for backfill sig %s: %w", sig, err)
 	}
 
 	var burnEvents []api.BurnEvent
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
 	// This is for zentp (ROCK) burns for now.
-	events, err := rock_spl_token.DecodeEvents(txResult, program)
+	events, err := rock_spl_token.DecodeEvents(&txResult, program)
 	if err != nil {
 		log.Printf("Failed to decode Solana Rock burn events for backfill tx %s: %v", sig, err)
 		return nil, err
