@@ -1325,7 +1325,10 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 			// Decode events using the result
 			events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
-				log.Printf("Failed to decode SolZenBTC mint events for tx %s: %v", sig, err)
+				// This error means the transaction might contain malformed event data
+				// for ANY event type from this program, not just mints.
+				// We log it and skip the entire transaction to be safe.
+				log.Printf("Failed to decode events for tx %s (SolZenBTC mint scan), skipping tx: %v", sig, err)
 				continue // Skip this transaction
 			}
 
@@ -1609,7 +1612,9 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			// Decode events using the result
 			events, err := zenbtc_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
-				log.Printf("Failed to decode Solana ZenBTC burn events for tx %s: %v", originalSignature, err)
+				// This error means the transaction might contain malformed event data.
+				// We log it and skip the entire transaction to be safe and avoid panics.
+				log.Printf("Failed to decode events for tx %s (SolZenBTC burn scan), skipping tx: %v", originalSignature, err)
 				continue // Skip this transaction
 			}
 

@@ -108,7 +108,7 @@ var (
 	EthBurnEventsBlockRange         = 1000
 	EthBlocksBeforeFinality         = int64(5) // TODO: should this be increased?
 	SolanaEventScanTxLimit          = 1000
-	SolanaEventFetchBatchSize       = 20
+	SolanaEventFetchBatchSize       = 50
 	SolanaSleepIntervalMilliseconds = 250
 )
 
