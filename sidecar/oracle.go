@@ -283,7 +283,7 @@ func (o *Oracle) fetchEthereumContractData(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetch eigen delegations
+	// Fetches the state of AVS delegations from the service manager contract.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -297,7 +297,7 @@ func (o *Oracle) fetchEthereumContractData(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch redemptions
+	// Fetches pending zenBTC redemptions from the zenBTC controller contract.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -319,7 +319,7 @@ func (o *Oracle) fetchNetworkData(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Get suggested priority fee
+	// Fetches the suggested gas tip cap (priority fee) for Ethereum transactions.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -333,7 +333,7 @@ func (o *Oracle) fetchNetworkData(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch Solana lamports per signature
+	// Fetches the current fee in lamports required per signature on Solana.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -346,7 +346,7 @@ func (o *Oracle) fetchNetworkData(
 		updateMutex.Unlock()
 	}()
 
-	// Estimate gas for stake call
+	// Estimates the gas required for a zenBTC stake call on Ethereum.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -383,7 +383,7 @@ func (o *Oracle) fetchPriceData(
 ) {
 	const httpTimeout = 10 * time.Second
 
-	// Fetch ROCK price
+	// Fetches the latest ROCK/USD price from the specified public endpoint.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -412,7 +412,7 @@ func (o *Oracle) fetchPriceData(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch BTC and ETH prices
+	// Fetches the latest BTC/USD and ETH/USD prices from Chainlink price feeds on Ethereum mainnet.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -454,7 +454,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Process ETH burn events
+	// Fetches and processes recent zenBTC burn events from Ethereum within a defined block range.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -475,7 +475,8 @@ func (o *Oracle) processSolanaMintEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Process solana mint events
+	// Fetches new ROCK and zenBTC mint events from Solana since the last processed signature,
+	// and merges them with the existing cached events.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -536,7 +537,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetch Solana ZenBTC burn events using watermarking
+	// Fetches new zenBTC burn events from Solana since the last processed signature.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -556,7 +557,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		updateMutex.Unlock()
 	}()
 
-	// Fetch Solana ROCK burn events using watermarking
+	// Fetches new ROCK burn events from Solana since the last processed signature.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -1028,12 +1029,15 @@ type processTransactionFunc func(
 ) ([]any, error)
 
 // getSolanaEvents is a generic function to fetch and process events from a Solana program.
-// It handles the boilerplate of fetching signatures, batching, and error handling,
-// while delegating the specific event processing to the provided processTransaction function.
+// It handles the boilerplate of fetching signatures, batching transaction details, and managing
+// a watermark to only process new transactions. It delegates the specific logic for parsing
+// a transaction to the provided processTransaction function.
 func (o *Oracle) getSolanaEvents(
 	programIDStr string,
 	lastKnownSig solana.Signature,
 	eventTypeName string,
+	// processTransaction is a callback function that contains the logic to parse a single, fetched
+	// Solana transaction and extract the relevant events (e.g., mints or burns).
 	processTransaction processTransactionFunc,
 ) ([]any, solana.Signature, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
@@ -1153,7 +1157,7 @@ func (o *Oracle) getSolanaEvents(
 				continue
 			}
 
-			// Call the processor function
+			// Call the processor function to handle the token-specific logic.
 			events, err := processTransaction(&txResult, program, sig, o.DebugMode)
 			if err != nil {
 				log.Printf("Failed to process events for tx %s (%s), skipping. Event is likely of an unrelated type. Error: %v", sig, eventTypeName, err)
@@ -1173,13 +1177,17 @@ func (o *Oracle) getSolanaEvents(
 	return processedEvents, lastSuccessfullyProcessedSig, nil
 }
 
-// processMintTransaction is a helper function to process a transaction for mint events.
+// processMintTransaction is a generic helper that processes a single Solana transaction to extract mint events.
+// It's designed to be reusable for different SPL tokens (like ROCK and zenBTC) by accepting functions
+// that handle token-specific decoding and data extraction.
 func (o *Oracle) processMintTransaction(
 	txResult *solrpc.GetTransactionResult,
 	program solana.PublicKey,
 	sig solana.Signature,
 	debugMode bool,
+	// decodeEvents is a function that knows how to decode all events for a specific SPL token program.
 	decodeEvents func(*solrpc.GetTransactionResult, solana.PublicKey) ([]any, error),
+	// getEventData is a function that knows how to extract mint details from a specific "TokensMintedWithFee" event type for that SPL token.
 	getEventData func(any) (recipient solana.PublicKey, value, fee uint64, mint solana.PublicKey, ok bool),
 	eventTypeName string,
 ) ([]any, error) {
@@ -1212,12 +1220,12 @@ func (o *Oracle) processMintTransaction(
 
 	var mintEvents []any
 	for _, event := range decodedEvents {
-		eventTyped := event.(struct {
+		decodedEvent := event.(struct {
 			Name string
 			Data any
 		})
-		if eventTyped.Name == "TokensMintedWithFee" {
-			recipient, value, fee, mint, ok := getEventData(eventTyped.Data)
+		if decodedEvent.Name == "TokensMintedWithFee" {
+			recipient, value, fee, mint, ok := getEventData(decodedEvent.Data)
 			if !ok {
 				log.Printf("Type assertion failed for %s TokensMintedWithFeeEventData on tx %s", eventTypeName, sig)
 				continue
@@ -1250,25 +1258,30 @@ func (o *Oracle) processMintTransaction(
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana ROCK mint"
+	// processor defines how to extract ROCK mint events from a single Solana transaction.
+	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
 	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
 		return o.processMintTransaction(txResult, program, sig, debugMode,
+			// Decode all events for the ROCK SPL token from the given transaction.
 			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
 				events, err := rock_spl_token.DecodeEvents(tx, prog)
 				if err != nil {
 					return nil, err
 				}
 				var interfaceEvents []any
-				for _, e := range events {
-					interfaceEvents = append(interfaceEvents, e)
+				for _, event := range events {
+					interfaceEvents = append(interfaceEvents, event)
 				}
 				return interfaceEvents, nil
 			},
+			// Extract the relevant details (recipient, value, fee, mint) from a specific
+			// TokensMintedWithFee event for the ROCK SPL token.
 			func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
-				e, ok := data.(*rock_spl_token.TokensMintedWithFeeEventData)
+				eventData, ok := data.(*rock_spl_token.TokensMintedWithFeeEventData)
 				if !ok {
 					return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
 				}
-				return e.Recipient, e.Value, e.Fee, e.Mint, true
+				return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
 			},
 			eventTypeName,
 		)
@@ -1280,8 +1293,8 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
-	for i, e := range untypedEvents {
-		mintEvents[i] = e.(api.SolanaMintEvent)
+	for i, untypedEvent := range untypedEvents {
+		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
 	}
 
 	return mintEvents, newWatermark, nil
@@ -1289,25 +1302,30 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana zenBTC mint"
+	// processor defines how to extract zenBTC mint events from a single Solana transaction.
+	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
 	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
 		return o.processMintTransaction(txResult, program, sig, debugMode,
+			// Decode all events for the zenBTC SPL token from the given transaction.
 			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
 				events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
 				if err != nil {
 					return nil, err
 				}
 				var interfaceEvents []any
-				for _, e := range events {
-					interfaceEvents = append(interfaceEvents, e)
+				for _, event := range events {
+					interfaceEvents = append(interfaceEvents, event)
 				}
 				return interfaceEvents, nil
 			},
+			// Extract the relevant details (recipient, value, fee, mint) from a specific
+			// TokensMintedWithFee event for the zenBTC SPL token.
 			func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
-				e, ok := data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+				eventData, ok := data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
 				if !ok {
 					return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
 				}
-				return e.Recipient, e.Value, e.Fee, e.Mint, true
+				return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
 			},
 			eventTypeName,
 		)
@@ -1319,8 +1337,8 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
-	for i, e := range untypedEvents {
-		mintEvents[i] = e.(api.SolanaMintEvent)
+	for i, untypedEvent := range untypedEvents {
+		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
 	}
 
 	return mintEvents, newWatermark, nil
@@ -1412,13 +1430,16 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	return lamports, nil
 }
 
-// processBurnTransaction is a helper function to process a transaction for burn events.
+// processBurnTransaction is a generic helper that processes a single Solana transaction to extract burn events.
+// It is reusable for different SPL tokens by accepting functions that handle token-specific logic.
 func (o *Oracle) processBurnTransaction(
 	txResult *solrpc.GetTransactionResult,
 	program solana.PublicKey,
 	sig solana.Signature,
 	debugMode bool,
+	// decodeEvents is a function that knows how to decode all events for a specific SPL token program.
 	decodeEvents func(*solrpc.GetTransactionResult, solana.PublicKey) ([]any, error),
+	// getEventData is a function that knows how to extract burn details from a specific "TokenRedemption" event type.
 	getEventData func(any) (destAddr []byte, value uint64, ok bool),
 	eventTypeName string,
 	chainID string,
@@ -1432,22 +1453,22 @@ func (o *Oracle) processBurnTransaction(
 	if debugMode {
 		log.Printf("%s - Processing tx %s: found %d events", eventTypeName, sig, len(decodedEvents))
 		for i, event := range decodedEvents {
-			eventTyped := event.(struct {
+			decodedEvent := event.(struct {
 				Name string
 				Data any
 			})
-			log.Printf("  Event %d: Name='%s', Type=%T", i, eventTyped.Name, eventTyped.Data)
+			log.Printf("  Event %d: Name='%s', Type=%T", i, decodedEvent.Name, decodedEvent.Data)
 		}
 	}
 
 	var burnEvents []any
 	for logIndex, event := range decodedEvents {
-		eventTyped := event.(struct {
+		decodedEvent := event.(struct {
 			Name string
 			Data any
 		})
-		if eventTyped.Name == "TokenRedemption" {
-			destAddr, value, ok := getEventData(eventTyped.Data)
+		if decodedEvent.Name == "TokenRedemption" {
+			destAddr, value, ok := getEventData(decodedEvent.Data)
 			if !ok {
 				log.Printf("Type assertion failed for %s TokenRedemptionEventData on tx %s", eventTypeName, sig)
 				continue
@@ -1480,25 +1501,30 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	eventTypeName := "Solana zenBTC burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
+	// processor defines how to extract zenBTC burn events from a single Solana transaction.
+	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
 	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
 		return o.processBurnTransaction(txResult, program, sig, debugMode,
+			// Decode all events for the zenBTC SPL token from the given transaction.
 			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
 				events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
 				if err != nil {
 					return nil, err
 				}
 				var interfaceEvents []any
-				for _, e := range events {
-					interfaceEvents = append(interfaceEvents, e)
+				for _, event := range events {
+					interfaceEvents = append(interfaceEvents, event)
 				}
 				return interfaceEvents, nil
 			},
+			// Extract the relevant details (destination address, value) from a specific
+			// TokenRedemption event for the zenBTC SPL token.
 			func(data any) (destAddr []byte, value uint64, ok bool) {
-				e, ok := data.(*zenbtc_spl_token.TokenRedemptionEventData)
+				eventData, ok := data.(*zenbtc_spl_token.TokenRedemptionEventData)
 				if !ok {
 					return nil, 0, false
 				}
-				return e.DestAddr, e.Value, true
+				return eventData.DestAddr, eventData.Value, true
 			},
 			eventTypeName, chainID, true,
 		)
@@ -1510,8 +1536,8 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
-	for i, e := range untypedEvents {
-		burnEvents[i] = e.(api.BurnEvent)
+	for i, untypedEvent := range untypedEvents {
+		burnEvents[i] = untypedEvent.(api.BurnEvent)
 	}
 
 	return burnEvents, newWatermark, nil
@@ -1522,25 +1548,30 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	eventTypeName := "Solana ROCK burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
+	// processor defines how to extract ROCK burn events from a single Solana transaction.
+	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
 	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
 		return o.processBurnTransaction(txResult, program, sig, debugMode,
+			// Decode all events for the ROCK SPL token from the given transaction.
 			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
 				events, err := rock_spl_token.DecodeEvents(tx, prog)
 				if err != nil {
 					return nil, err
 				}
 				var interfaceEvents []any
-				for _, e := range events {
-					interfaceEvents = append(interfaceEvents, e)
+				for _, event := range events {
+					interfaceEvents = append(interfaceEvents, event)
 				}
 				return interfaceEvents, nil
 			},
+			// Extract the relevant details (destination address, value) from a specific
+			// TokenRedemption event for the ROCK SPL token.
 			func(data any) (destAddr []byte, value uint64, ok bool) {
-				e, ok := data.(*rock_spl_token.TokenRedemptionEventData)
+				eventData, ok := data.(*rock_spl_token.TokenRedemptionEventData)
 				if !ok {
 					return nil, 0, false
 				}
-				return e.DestAddr[:], e.Value, true
+				return eventData.DestAddr[:], eventData.Value, true
 			},
 			eventTypeName, chainID, false,
 		)
@@ -1552,8 +1583,8 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
-	for i, e := range untypedEvents {
-		burnEvents[i] = e.(api.BurnEvent)
+	for i, untypedEvent := range untypedEvents {
+		burnEvents[i] = untypedEvent.(api.BurnEvent)
 	}
 
 	return burnEvents, newWatermark, nil
@@ -1599,7 +1630,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 
 	for logIndex, event := range events {
 		if event.Name == "TokenRedemption" {
-			e, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
+			eventData, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
 			if !ok {
 				log.Printf("Type assertion failed for Solana ROCK TokenRedemptionEventData on backfill tx %s", sig)
 				continue
@@ -1608,8 +1639,8 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 				TxID:            sig.String(),
 				LogIndex:        uint64(logIndex),
 				ChainID:         chainID,
-				DestinationAddr: e.DestAddr[:],
-				Amount:          e.Value,
+				DestinationAddr: eventData.DestAddr[:],
+				Amount:          eventData.Value,
 				IsZenBTC:        false, // This is a ROCK burn
 			}
 			if o.DebugMode {
