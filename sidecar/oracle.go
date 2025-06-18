@@ -51,6 +51,7 @@ func NewOracle(
 	solanaClient *solrpc.Client,
 	zrChainQueryClient *client.QueryClient,
 	debugMode bool,
+	skipInitialWait bool,
 ) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
@@ -60,8 +61,8 @@ func NewOracle(
 		solanaClient:       solanaClient,
 		zrChainQueryClient: zrChainQueryClient,
 		DebugMode:          debugMode,
+		SkipInitialWait:    skipInitialWait,
 	}
-	// o.currentState.Store(&EmptyOracleState) // Initial store, will be overwritten by loaded state or explicitly set to EmptyOracleState
 
 	// Load initial state from cache file
 	latestDiskState, historicalStates, err := loadStateDataFromFile(o.Config.StateFile)
@@ -119,12 +120,17 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
 
 	// Align the start time to the nearest MainLoopTickerInterval.
-	// This runs only if NTP succeeded (checked by the panic above)
-	alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-	initialSleep := time.Until(alignedStart)
-	if initialSleep > 0 {
-		log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
-		time.Sleep(initialSleep)
+	// This runs only if NTP succeeded (checked by the panic above) and skipInitialWait is false
+	if !o.SkipInitialWait {
+		alignedStart := ntpTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+		initialSleep := time.Until(alignedStart)
+		if initialSleep > 0 {
+			log.Printf("Initial alignment: Sleeping %v until %v to start ticker.", initialSleep.Round(time.Millisecond), alignedStart.Format("15:04:05.00"))
+			time.Sleep(initialSleep)
+		}
+	} else {
+		log.Printf("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
+		go o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now(), mainLoopTickerIntervalDuration)
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -137,57 +143,72 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
-			newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
-			if err != nil {
-				log.Printf("Error fetching and processing state: %v", err)
-				continue // Skip sending update on error
-			}
-
-			// --- Intra-loop NTP check and wait (with fallback to ticker time) ---
-			var sleepDuration time.Duration
-			var nextIntervalMark time.Time
-			alignmentSource := "NTP"
-
-			// Attempt to fetch current NTP time *after* processing
-			ntpTimeNow, err := ntp.Time("time.google.com")
-			if err != nil {
-				// NTP Failed: Fallback to using the captured ticker time
-				log.Printf("Warning: Error fetching NTP time for alignment: %v. Falling back to ticker time.", err)
-				alignmentSource = "Local Ticker Fallback"
-				// Calculate the next interval boundary based on when the ticker fired.
-				nextIntervalMark = tickTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-			} else {
-				// NTP Succeeded: Calculate alignment based on NTP time.
-				nextIntervalMark = ntpTimeNow.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
-			}
-
-			// Calculate how long to sleep until the calculated mark
-			sleepDuration = time.Until(nextIntervalMark)
-
-			if sleepDuration > 0 {
-				log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
-					sleepDuration.Round(time.Millisecond),
-					alignmentSource,
-					nextIntervalMark.Format("15:04:05.00"))
-				time.Sleep(sleepDuration)
-			} else {
-				// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
-				log.Printf("Warning: State fetching took too long relative to %s alignment. Update applied immediately.", alignmentSource)
-			}
-			// --- End of intra-loop wait ---
-
-			// Send the fetched state exactly at the interval mark (or immediately if delayed)
-			slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
-			slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
-			o.currentState.Store(&newState)
-			o.CacheState()
-
-			// Clean up burn events *after* sending state update
-			o.cleanUpBurnEvents()
-			// Clean up mint events *after* sending state update
-			o.cleanUpMintEvents()
+			o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime, mainLoopTickerIntervalDuration)
 		}
 	}
+}
+
+func (o *Oracle) processOracleTick(
+	serviceManager *middleware.ContractZrServiceManager,
+	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
+	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
+	mainnetEthClient *ethclient.Client,
+	tickTime time.Time,
+	mainLoopTickerIntervalDuration time.Duration,
+) {
+	successfulFetch := true
+	newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	if err != nil {
+		log.Printf("Error fetching and processing state: %v", err)
+		successfulFetch = false
+	}
+
+	// --- Intra-loop NTP check and wait (with fallback to ticker time) ---
+	var sleepDuration time.Duration
+	var nextIntervalMark time.Time
+	alignmentSource := "NTP"
+
+	// Attempt to fetch current NTP time *after* processing
+	ntpTimeNow, err := ntp.Time("time.google.com")
+	if err != nil {
+		// NTP Failed: Fallback to using the captured ticker time
+		log.Printf("Warning: Error fetching NTP time for alignment: %v. Falling back to ticker time.", err)
+		alignmentSource = "Local Ticker Fallback"
+		// Calculate the next interval boundary based on when the ticker fired.
+		nextIntervalMark = tickTime.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+	} else {
+		// NTP Succeeded: Calculate alignment based on NTP time.
+		nextIntervalMark = ntpTimeNow.Truncate(mainLoopTickerIntervalDuration).Add(mainLoopTickerIntervalDuration)
+	}
+
+	// Calculate how long to sleep until the calculated mark
+	sleepDuration = time.Until(nextIntervalMark)
+
+	if sleepDuration > 0 {
+		log.Printf("State fetched. Waiting %v until next %s-aligned interval mark (%v) to apply update.",
+			sleepDuration.Round(time.Millisecond),
+			alignmentSource,
+			nextIntervalMark.Format("15:04:05.00"))
+		time.Sleep(sleepDuration)
+	} else {
+		// If fetching took longer than the interval OR NTP failed and ticker time also leads to negative sleep, log a warning.
+		log.Printf("Warning: State fetching took too long relative to %s alignment. Update applied immediately.", alignmentSource)
+	}
+	// --- End of intra-loop wait ---
+
+	// Send the fetched state exactly at the interval mark (or immediately if delayed)
+	if successfulFetch {
+		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
+		slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+		o.currentState.Store(&newState)
+		o.CacheState()
+	}
+
+	// Clean up burn events *after* sending state update
+	o.cleanUpBurnEvents()
+	// Clean up mint events *after* sending state update
+	o.cleanUpMintEvents()
 }
 
 func (o *Oracle) fetchAndProcessState(
@@ -226,16 +247,16 @@ func (o *Oracle) fetchAndProcessState(
 	// Fetch price data (ROCK, BTC, ETH)
 	o.fetchPriceData(&wg, btcPriceFeed, ethPriceFeed, tempEthClient, ctx, update, &updateMutex, errChan)
 
-	// Fetch burn events
+	// Fetch zenBTC burn events from Ethereum
 	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
 
-	// Fetch Solana mint events
+	// Fetch Solana mint events for zenBTC
 	o.processSolanaMintEvents(&wg, update, &updateMutex, errChan)
 
-	// Fetch Solana burn events
+	// Fetch Solana burn events for zenBTC and ROCK
 	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
 
-	// Fetch backfill requests
+	// Fetch and populate backfill requests from zrChain
 	o.processBackfillRequests(&wg, update, &updateMutex)
 
 	wg.Wait()
@@ -1037,20 +1058,24 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		lastSigCheckStr := "the beginning"
 		if !lastKnownSig.IsZero() {
-			lastSigCheckStr = lastKnownSig.String()
+			log.Printf("No new Solana ROCK mint signatures found since last processed signature %s (scanned latest %d). Newest from node: %s", lastKnownSig.String(), limit, newestSigFromNode)
+		} else {
+			log.Printf("No Solana ROCK mint signatures found in the %d most recent transactions.", limit)
 		}
-		log.Printf("No new Solana ROCK mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
-	lastSigStr := "the beginning"
 	if !lastKnownSig.IsZero() {
-		lastSigStr = lastKnownSig.String()
+		if len(newSignaturesToFetchDetails) == limit {
+			log.Printf("Last processed Solana ROCK mint signature %s is older than the last %d transactions. Processing a full batch of %d.", lastKnownSig.String(), limit, limit)
+		} else {
+			log.Printf("Found %d new potential Solana ROCK mint transactions to inspect since last processed signature %s (scanned latest %d).", len(newSignaturesToFetchDetails), lastKnownSig.String(), limit)
+		}
+	} else {
+		log.Printf("No previous Solana ROCK mint signature stored. Found %d potential transactions to inspect in the %d most recent.", len(newSignaturesToFetchDetails), limit)
 	}
-	log.Printf("Found %d new potential Solana ROCK mint transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1191,7 +1216,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new Solana ROCK mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	log.Printf("From inspected transactions, retrieved %d new Solana ROCK mint events. Newest last processed signature: %s", len(mintEvents), lastSuccessfullyProcessedSig)
 	// Return the collected events and the newest *successfully processed* signature to update the watermark.
 	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
@@ -1235,20 +1260,24 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		lastSigCheckStr := "the beginning"
 		if !lastKnownSig.IsZero() {
-			lastSigCheckStr = lastKnownSig.String()
+			log.Printf("No new Solana zenBTC mint signatures found since last processed signature %s (scanned latest %d). Newest from node: %s", lastKnownSig.String(), limit, newestSigFromNode)
+		} else {
+			log.Printf("No Solana zenBTC mint signatures found in the %d most recent transactions.", limit)
 		}
-		log.Printf("No new Solana zenBTC mint signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.SolanaMintEvent{}, newestSigFromNode, nil
 	}
 
-	lastSigStr := "the beginning"
 	if !lastKnownSig.IsZero() {
-		lastSigStr = lastKnownSig.String()
+		if len(newSignaturesToFetchDetails) == limit {
+			log.Printf("Last processed Solana zenBTC mint signature %s is older than the last %d transactions. Processing a full batch of %d.", lastKnownSig.String(), limit, limit)
+		} else {
+			log.Printf("Found %d new potential Solana zenBTC mint transactions to inspect since last processed signature %s (scanned latest %d).", len(newSignaturesToFetchDetails), lastKnownSig.String(), limit)
+		}
+	} else {
+		log.Printf("No previous Solana zenBTC mint signature stored. Found %d potential transactions to inspect in the %d most recent.", len(newSignaturesToFetchDetails), limit)
 	}
-	log.Printf("Found %d new potential Solana zenBTC mint transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1389,7 +1418,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new Solana zenBTC mint events. Newest signature watermark updated to: %s", len(mintEvents), lastSuccessfullyProcessedSig)
+	log.Printf("From inspected transactions, retrieved %d new Solana zenBTC mint events. Newest last processed signature: %s", len(mintEvents), lastSuccessfullyProcessedSig)
 	// Return the collected events and the newest *successfully processed* signature to update the watermark.
 	return mintEvents, lastSuccessfullyProcessedSig, nil
 }
@@ -1520,20 +1549,24 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		// No *new* signatures since the last check.
-		lastSigCheckStr := "the beginning"
 		if !lastKnownSig.IsZero() {
-			lastSigCheckStr = lastKnownSig.String()
+			log.Printf("No new Solana zenBTC burn signatures found since last processed signature %s (scanned latest %d). Newest from node: %s", lastKnownSig.String(), limit, newestSigFromNode)
+		} else {
+			log.Printf("No Solana zenBTC burn signatures found in the %d most recent transactions.", limit)
 		}
-		log.Printf("No new Solana zenBTC burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		// It's safe to advance the watermark to the newest signature seen from the node.
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
-	lastSigStr := "the beginning"
 	if !lastKnownSig.IsZero() {
-		lastSigStr = lastKnownSig.String()
+		if len(newSignaturesToFetchDetails) == limit {
+			log.Printf("Last processed Solana zenBTC burn signature %s is older than the last %d transactions. Processing a full batch of %d.", lastKnownSig.String(), limit, limit)
+		} else {
+			log.Printf("Found %d new potential Solana zenBTC burn transactions to inspect since last processed signature %s (scanned latest %d).", len(newSignaturesToFetchDetails), lastKnownSig.String(), limit)
+		}
+	} else {
+		log.Printf("No previous Solana zenBTC burn signature stored. Found %d potential transactions to inspect in the %d most recent.", len(newSignaturesToFetchDetails), limit)
 	}
-	log.Printf("Found %d new potential Solana zenBTC burn transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse the slice so we process the oldest *new* signature first.
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1657,7 +1690,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new Solana zenBTC burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	log.Printf("From inspected transactions, retrieved %d new Solana zenBTC burn events. Newest last processed signature: %s", len(burnEvents), lastSuccessfullyProcessedSig)
 	// Return the collected events and the newest *successfully processed* signature to update the watermark.
 	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
@@ -1697,19 +1730,23 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	if len(newSignaturesToFetchDetails) == 0 {
-		lastSigCheckStr := "the beginning"
 		if !lastKnownSig.IsZero() {
-			lastSigCheckStr = lastKnownSig.String()
+			log.Printf("No new Solana ROCK burn signatures found since last processed signature %s (scanned latest %d). Newest from node: %s", lastKnownSig.String(), limit, newestSigFromNode)
+		} else {
+			log.Printf("No Solana ROCK burn signatures found in the %d most recent transactions.", limit)
 		}
-		log.Printf("No new Solana ROCK burn signatures since last check (%s). Newest from node: %s", lastSigCheckStr, newestSigFromNode)
 		return []api.BurnEvent{}, newestSigFromNode, nil
 	}
 
-	lastSigStr := "the beginning"
 	if !lastKnownSig.IsZero() {
-		lastSigStr = lastKnownSig.String()
+		if len(newSignaturesToFetchDetails) == limit {
+			log.Printf("Last processed Solana ROCK burn signature %s is older than the last %d transactions. Processing a full batch of %d.", lastKnownSig.String(), limit, limit)
+		} else {
+			log.Printf("Found %d new potential Solana ROCK burn transactions to inspect since last processed signature %s (scanned latest %d).", len(newSignaturesToFetchDetails), lastKnownSig.String(), limit)
+		}
+	} else {
+		log.Printf("No previous Solana ROCK burn signature stored. Found %d potential transactions to inspect in the %d most recent.", len(newSignaturesToFetchDetails), limit)
 	}
-	log.Printf("Found %d new potential Solana ROCK burn transactions (signatures) to inspect since %s.", len(newSignaturesToFetchDetails), lastSigStr)
 
 	// Reverse to process oldest first
 	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
@@ -1830,7 +1867,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 		}
 	}
 
-	log.Printf("From inspected transactions, retrieved %d new Solana ROCK burn events. Newest signature watermark updated to: %s", len(burnEvents), lastSuccessfullyProcessedSig)
+	log.Printf("From inspected transactions, retrieved %d new Solana ROCK burn events. Newest last processed signature: %s", len(burnEvents), lastSuccessfullyProcessedSig)
 	return burnEvents, lastSuccessfullyProcessedSig, nil
 }
 
