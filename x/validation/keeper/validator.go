@@ -417,7 +417,7 @@ func (k Keeper) DeleteLastValidatorPower(ctx context.Context, operator sdk.ValAd
 // safeAddressFromLastValidatorPowerKey validates the key from the LastValidatorPower store and returns the address.
 // It returns nil and false if the key is invalid.
 func (k Keeper) safeAddressFromLastValidatorPowerKey(ctx context.Context, key []byte) (sdk.ValAddress, bool) {
-	k.Logger(ctx).Info("safeAddressFromLastValidatorPowerKey", "key", key, "len", len(key))
+	k.Logger(ctx).Info("safeAddressFromLastValidatorPowerKey", "key", fmt.Sprintf("%x", key), "len", len(key))
 	if len(key) < 3 {
 		// this should not happen, but if it does, continue to prevent a panic
 		k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
