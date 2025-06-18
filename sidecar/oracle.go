@@ -1129,7 +1129,7 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 			// Decode events using the result
 			events, err := rock_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
-				log.Printf("Failed to decode Solana ROCK mint events for tx %s: %v", sig, err)
+				log.Printf("Failed to decode Solana ROCK mint events for tx %s, skipping. Event is likely of an unrelated type. Error: %v", sig, err)
 				continue // Skip this transaction
 			}
 
@@ -1328,7 +1328,7 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 				// This error means the transaction might contain malformed event data
 				// for ANY event type from this program, not just mints.
 				// We log it and skip the entire transaction to be safe.
-				log.Printf("Failed to decode events for tx %s (Solana zenBTC mint scan), skipping tx: %v", sig, err)
+				log.Printf("Failed to decode events for tx %s (Solana zenBTC mint scan), skipping. Event is likely of an unrelated type. Error: %v", sig, err)
 				continue // Skip this transaction
 			}
 
@@ -1614,7 +1614,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 			if err != nil {
 				// This error means the transaction might contain malformed event data.
 				// We log it and skip the entire transaction to be safe and avoid panics.
-				log.Printf("Failed to decode events for tx %s (Solana zenBTC burn scan), skipping tx: %v", originalSignature, err)
+				log.Printf("Failed to decode events for tx %s (Solana zenBTC burn scan), skipping. Event is likely of an unrelated type. Error: %v", originalSignature, err)
 				continue // Skip this transaction
 			}
 
@@ -1787,7 +1787,7 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 			// Decode events
 			events, err := rock_spl_token.DecodeEvents(&txResult, program)
 			if err != nil {
-				log.Printf("Failed to decode Solana ROCK burn events for tx %s: %v", originalSignature, err)
+				log.Printf("Failed to decode Solana ROCK burn events for tx %s, skipping. Event is likely of an unrelated type. Error: %v", originalSignature, err)
 				continue
 			}
 
@@ -1868,7 +1868,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 	// This is for zentp (ROCK) burns for now.
 	events, err := rock_spl_token.DecodeEvents(txResult, program)
 	if err != nil {
-		log.Printf("Failed to decode Solana ROCK burn events for backfill tx %s: %v", sig, err)
+		log.Printf("Failed to decode Solana ROCK burn events for backfill tx %s. Event is likely of an unrelated type. Error: %v", sig, err)
 		return nil, err
 	}
 
