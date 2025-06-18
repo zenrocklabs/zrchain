@@ -103,12 +103,13 @@ var (
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters
-	MainLoopTickerIntervalSeconds = 60 // Seconds
-	OracleCacheSize               = 20
-	EthBurnEventsBlockRange       = 1000
-	EthBlocksBeforeFinality       = int64(5) // TODO: should this be increased?
-	SolanaEventScanTxLimit        = 1000
-	SolanaEventFetchBatchSize     = 50
+	MainLoopTickerIntervalSeconds   = 60 // Seconds
+	OracleCacheSize                 = 20
+	EthBurnEventsBlockRange         = 1000
+	EthBlocksBeforeFinality         = int64(5) // TODO: should this be increased?
+	SolanaEventScanTxLimit          = 1000
+	SolanaEventFetchBatchSize       = 20
+	SolanaSleepIntervalMilliseconds = 250
 )
 
 // SolanaEventType defines a type for Solana event keys for type safety.
