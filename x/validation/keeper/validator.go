@@ -414,6 +414,18 @@ func (k Keeper) DeleteLastValidatorPower(ctx context.Context, operator sdk.ValAd
 	return store.Delete(types.GetLastValidatorPowerKey(operator))
 }
 
+// safeAddressFromLastValidatorPowerKey validates the key from the LastValidatorPower store and returns the address.
+// It returns nil and false if the key is invalid.
+func (k Keeper) safeAddressFromLastValidatorPowerKey(ctx context.Context, key []byte) (sdk.ValAddress, bool) {
+	k.Logger(ctx).Info("safeAddressFromLastValidatorPowerKey", "key", key, "len", len(key))
+	if len(key) < 3 {
+		// this should not happen, but if it does, continue to prevent a panic
+		k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
+		return nil, false
+	}
+	return types.AddressFromLastValidatorPowerKey(key), true
+}
+
 // lastValidatorsIterator returns an iterator for the consensus validators in the last block
 func (k Keeper) LastValidatorsIterator(ctx context.Context) (corestore.Iterator, error) {
 	store := k.storeService.OpenKVStore(ctx)
@@ -426,15 +438,13 @@ func (k Keeper) IterateLastValidatorPowers(ctx context.Context, handler func(ope
 	if err != nil {
 		return err
 	}
+	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		key := iter.Key()
-		if len(key) < 3 {
-			// this should not happen, but if it does, continue to prevent a panic
-			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
+		addr, ok := k.safeAddressFromLastValidatorPowerKey(ctx, iter.Key())
+		if !ok {
 			continue
 		}
-		addr := sdk.ValAddress(types.AddressFromLastValidatorPowerKey(key))
 		intV := &gogotypes.Int64Value{}
 
 		if err = k.cdc.Unmarshal(iter.Value(), intV); err != nil {
@@ -473,13 +483,10 @@ func (k Keeper) GetLastValidators(ctx context.Context) (validators []types.Valid
 			panic("more validators than maxValidators found")
 		}
 
-		key := iterator.Key()
-		if len(key) < 3 {
-			// this should not happen, but if it does, continue to prevent a panic
-			k.Logger(ctx).Error("invalid last validator power key, this should not happen", "key", key, "len", len(key))
+		address, ok := k.safeAddressFromLastValidatorPowerKey(ctx, iterator.Key())
+		if !ok {
 			continue
 		}
-		address := types.AddressFromLastValidatorPowerKey(key)
 		validator, err := k.GetZenrockValidator(ctx, address)
 		if err != nil {
 			return nil, err
