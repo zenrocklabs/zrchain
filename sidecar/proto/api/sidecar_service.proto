@@ -76,6 +76,7 @@ message SidecarStateResponse {
   string ETHUSDPrice = 11;
   repeated SolanaMintEvent SolanaMintEvents = 12 [(gogoproto.nullable) = false];
   repeated BurnEvent SolanaBurnEvents = 13 [(gogoproto.nullable) = false];
+  string SidecarVersionName = 14;
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }

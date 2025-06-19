@@ -1382,6 +1382,16 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
 		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			// If we don't have consensus on SolanaMintEventsHash we cannot reliably determine
+			// whether the associated event has arrived on-chain. In that case we should *not* run
+			// any retry or timeout logic, otherwise we risk redelivering the same transaction over
+			// and over again without a reliable confirmation signal.
+
+			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+				k.Logger(ctx).Debug("Skipping Solana mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
+				return nil
+			}
+
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
 			if tx.BlockHeight == 0 {
@@ -1517,6 +1527,16 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
 		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx *zentptypes.Bridge) error {
+			// If we don't have consensus on SolanaMintEventsHash we cannot reliably determine
+			// whether the associated event has arrived on-chain. In that case we should *not* run
+			// any retry or timeout logic, otherwise we risk redelivering the same transaction over
+			// and over again without a reliable confirmation signal.
+
+			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+				k.Logger(ctx).Debug("Skipping Solana ROCK mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
+				return nil
+			}
+
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
 			if tx.BlockHeight == 0 {

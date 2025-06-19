@@ -102,6 +102,8 @@ var (
 	SolanaSleepInterval        = 250 * time.Millisecond
 	SolanaEventFetchMaxRetries = 10
 	SolanaEventFetchRetrySleep = 250 * time.Millisecond
+
+	SidecarVersionName = "strawberry_moon"
 )
 
 // PriceFeed struct with fields for different price feeds

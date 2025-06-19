@@ -63,6 +63,7 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ETHUSDPrice:                currentState.ETHUSDPrice.String(),
 		SolanaBurnEvents:           currentState.SolanaBurnEvents,
 		SolanaMintEvents:           currentState.SolanaMintEvents,
+		SidecarVersionName:         sidecartypes.SidecarVersionName,
 	}, nil
 }
 
