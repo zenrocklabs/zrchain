@@ -591,7 +591,10 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Merge and sort
 		allSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
 		sort.Slice(allSolanaBurnEvents, func(i, j int) bool {
-			return allSolanaBurnEvents[i].Date < allSolanaBurnEvents[j].Date
+			if allSolanaBurnEvents[i].Height != allSolanaBurnEvents[j].Height {
+				return allSolanaBurnEvents[i].Height < allSolanaBurnEvents[j].Height
+			}
+			return allSolanaBurnEvents[i].LogIndex < allSolanaBurnEvents[j].LogIndex
 		})
 
 		updateMutex.Lock()
@@ -634,14 +637,14 @@ func (o *Oracle) buildFinalState(
 
 	// Sort all event slices to ensure deterministic order
 	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
-		if update.ethBurnEvents[i].Date != update.ethBurnEvents[j].Date {
-			return update.ethBurnEvents[i].Date < update.ethBurnEvents[j].Date
+		if update.ethBurnEvents[i].Height != update.ethBurnEvents[j].Height {
+			return update.ethBurnEvents[i].Height < update.ethBurnEvents[j].Height
 		}
 		return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
 	})
 	sort.Slice(update.solanaBurnEvents, func(i, j int) bool {
-		if update.solanaBurnEvents[i].Date != update.solanaBurnEvents[j].Date {
-			return update.solanaBurnEvents[i].Date < update.solanaBurnEvents[j].Date
+		if update.solanaBurnEvents[i].Height != update.solanaBurnEvents[j].Height {
+			return update.solanaBurnEvents[i].Height < update.solanaBurnEvents[j].Height
 		}
 		return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
 	})
@@ -649,10 +652,10 @@ func (o *Oracle) buildFinalState(
 		return update.redemptions[i].Id < update.redemptions[j].Id
 	})
 	sort.Slice(update.SolanaMintEvents, func(i, j int) bool {
-		if update.SolanaMintEvents[i].Date != update.SolanaMintEvents[j].Date {
-			return update.SolanaMintEvents[i].Date < update.SolanaMintEvents[j].Date
+		if update.SolanaMintEvents[i].Height != update.SolanaMintEvents[j].Height {
+			return update.SolanaMintEvents[i].Height < update.SolanaMintEvents[j].Height
 		}
-		// Use TxSig as a secondary sort key for determinism if dates are identical
+		// Use TxSig as a secondary sort key for determinism if heights are identical
 		return update.SolanaMintEvents[i].TxSig < update.SolanaMintEvents[j].TxSig
 	})
 
@@ -952,8 +955,8 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			continue
 		}
 
-		// Use block number as the ordering proxy to avoid an extra RPC call per event.
-		blockTime := int64(event.Raw.BlockNumber)
+		// Use block number as deterministic ordering key
+		height := uint64(event.Raw.BlockNumber)
 
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
@@ -962,7 +965,7 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 			IsZenBTC:        true,
-			Date:            blockTime,
+			Height:          height,
 		})
 	}
 
@@ -1301,11 +1304,6 @@ func (o *Oracle) processMintTransaction(
 	combined := append(solTX.Signatures[0][:], solTX.Signatures[1][:]...)
 	sigHash := sha256.Sum256(combined)
 
-	blockTimeUnix := int64(0)
-	if txResult.BlockTime != nil {
-		blockTimeUnix = txResult.BlockTime.Time().Unix()
-	}
-
 	var mintEvents []any
 	for _, event := range decodedEvents {
 		// Use reflection to access fields of the event, which could be of type
@@ -1334,7 +1332,7 @@ func (o *Oracle) processMintTransaction(
 			}
 			mintEvent := api.SolanaMintEvent{
 				SigHash:   sigHash[:],
-				Date:      blockTimeUnix,
+				Height:    uint64(txResult.Slot),
 				Recipient: recipient.Bytes(),
 				Value:     value,
 				Fee:       fee,
@@ -1343,12 +1341,12 @@ func (o *Oracle) processMintTransaction(
 			}
 			mintEvents = append(mintEvents, mintEvent)
 			if debugMode {
-				log.Printf("%s Event: TxSig=%s, SigHash=%x, Recipient=%s, Date=%d, Value=%d, Fee=%d, Mint=%s",
+				log.Printf("%s Event: TxSig=%s, SigHash=%x, Recipient=%s, Height=%d, Value=%d, Fee=%d, Mint=%s",
 					eventTypeName,
 					sig.String(),
 					mintEvent.SigHash,
 					solana.PublicKeyFromBytes(mintEvent.Recipient).String(),
-					mintEvent.Date,
+					mintEvent.Height,
 					mintEvent.Value,
 					mintEvent.Fee,
 					solana.PublicKeyFromBytes(mintEvent.Mint).String())
@@ -1602,6 +1600,7 @@ func (o *Oracle) processBurnTransaction(
 				DestinationAddr: destAddr,
 				Amount:          value,
 				IsZenBTC:        isZenBTC,
+				Height:          uint64(txResult.Slot),
 			}
 			burnEvents = append(burnEvents, burnEvent)
 			if debugMode {
@@ -1764,6 +1763,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 				DestinationAddr: eventData.DestAddr[:],
 				Amount:          eventData.Value,
 				IsZenBTC:        false, // This is a ROCK burn
+				Height:          uint64(txResult.Slot),
 			}
 			if o.DebugMode {
 				log.Printf("Backfilled Solana ROCK Burn Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
