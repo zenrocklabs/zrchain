@@ -11,6 +11,7 @@ import (
 	"maps"
 	"math/big"
 	"net/http"
+	"reflect"
 	"sync"
 	"time"
 
@@ -1220,12 +1221,26 @@ func (o *Oracle) processMintTransaction(
 
 	var mintEvents []any
 	for _, event := range decodedEvents {
-		decodedEvent := event.(struct {
-			Name string
-			Data any
-		})
-		if decodedEvent.Name == "TokensMintedWithFee" {
-			recipient, value, fee, mint, ok := getEventData(decodedEvent.Data)
+		// Use reflection to access fields of the event, which could be of type
+		// *rock_spl_token.Event or *zenbtc_spl_token.Event.
+		eventValue := reflect.ValueOf(event)
+		if eventValue.Kind() == reflect.Ptr {
+			eventValue = eventValue.Elem()
+		}
+
+		if eventValue.Kind() != reflect.Struct {
+			continue // Should not happen with current implementation
+		}
+
+		eventNameField := eventValue.FieldByName("Name")
+		eventDataField := eventValue.FieldByName("Data")
+
+		if !eventNameField.IsValid() || !eventDataField.IsValid() {
+			continue // Should not happen if event structs are as expected
+		}
+
+		if eventNameField.String() == "TokensMintedWithFee" {
+			recipient, value, fee, mint, ok := getEventData(eventDataField.Interface())
 			if !ok {
 				log.Printf("Type assertion failed for %s TokensMintedWithFeeEventData on tx %s", eventTypeName, sig)
 				continue
@@ -1453,22 +1468,42 @@ func (o *Oracle) processBurnTransaction(
 	if debugMode {
 		log.Printf("%s - Processing tx %s: found %d events", eventTypeName, sig, len(decodedEvents))
 		for i, event := range decodedEvents {
-			decodedEvent := event.(struct {
-				Name string
-				Data any
-			})
-			log.Printf("  Event %d: Name='%s', Type=%T", i, decodedEvent.Name, decodedEvent.Data)
+			// Use reflection to see event details for debugging
+			eventValue := reflect.ValueOf(event)
+			if eventValue.Kind() == reflect.Ptr {
+				eventValue = eventValue.Elem()
+			}
+			if eventValue.Kind() == reflect.Struct {
+				eventNameField := eventValue.FieldByName("Name")
+				if eventNameField.IsValid() {
+					log.Printf("  Event %d: Name='%s', Type=%T", i, eventNameField.String(), event)
+				}
+			}
 		}
 	}
 
 	var burnEvents []any
 	for logIndex, event := range decodedEvents {
-		decodedEvent := event.(struct {
-			Name string
-			Data any
-		})
-		if decodedEvent.Name == "TokenRedemption" {
-			destAddr, value, ok := getEventData(decodedEvent.Data)
+		// Use reflection to access fields of the event, which could be of type
+		// *rock_spl_token.Event or *zenbtc_spl_token.Event.
+		eventValue := reflect.ValueOf(event)
+		if eventValue.Kind() == reflect.Ptr {
+			eventValue = eventValue.Elem()
+		}
+
+		if eventValue.Kind() != reflect.Struct {
+			continue // Should not happen
+		}
+
+		eventNameField := eventValue.FieldByName("Name")
+		eventDataField := eventValue.FieldByName("Data")
+
+		if !eventNameField.IsValid() || !eventDataField.IsValid() {
+			continue // Should not happen
+		}
+
+		if eventNameField.String() == "TokenRedemption" {
+			destAddr, value, ok := getEventData(eventDataField.Interface())
 			if !ok {
 				log.Printf("Type assertion failed for %s TokenRedemptionEventData on tx %s", eventTypeName, sig)
 				continue
