@@ -1067,7 +1067,9 @@ func (o *Oracle) getSolanaEvents(
 	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
 
 	// Filter signatures: find signatures newer than the last one we processed.
+	var signaturesInspected int
 	for _, sigInfo := range allSignatures {
+		signaturesInspected++
 		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
 			break // Found the last processed signature, stop collecting.
 		}
@@ -1076,7 +1078,7 @@ func (o *Oracle) getSolanaEvents(
 
 	if len(newSignaturesToFetchDetails) == 0 {
 		if !lastKnownSig.IsZero() {
-			log.Printf("No new %s signatures found since last processed signature %s (scanned latest %d). Newest from node: %s", eventTypeName, lastKnownSig.String(), limit, newestSigFromNode)
+			log.Printf("No new %s signatures found since last processed signature %s (inspected %d of latest %d). Newest from node: %s", eventTypeName, lastKnownSig.String(), signaturesInspected, limit, newestSigFromNode)
 		} else {
 			log.Printf("No %s signatures found in the %d most recent transactions.", eventTypeName, limit)
 		}
@@ -1084,10 +1086,10 @@ func (o *Oracle) getSolanaEvents(
 	}
 
 	if !lastKnownSig.IsZero() {
-		if len(newSignaturesToFetchDetails) == limit {
-			log.Printf("Last processed %s signature %s is older than the last %d transactions. Processing a full batch of %d.", eventTypeName, lastKnownSig.String(), limit, limit)
+		if len(newSignaturesToFetchDetails) == len(allSignatures) {
+			log.Printf("Last processed %s signature %s not found in latest %d transactions. Processing a full batch of %d.", eventTypeName, lastKnownSig.String(), len(allSignatures), len(allSignatures))
 		} else {
-			log.Printf("Found %d new potential %s transactions to inspect since last processed signature %s (scanned latest %d).", len(newSignaturesToFetchDetails), eventTypeName, lastKnownSig.String(), limit)
+			log.Printf("Found %d new potential %s transactions to inspect since last processed signature %s (inspected %d of latest %d).", len(newSignaturesToFetchDetails), eventTypeName, lastKnownSig.String(), signaturesInspected, limit)
 		}
 	} else {
 		log.Printf("No previous %s signature stored. Found %d potential transactions to inspect in the %d most recent.", eventTypeName, len(newSignaturesToFetchDetails), limit)
