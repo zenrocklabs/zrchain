@@ -909,6 +909,7 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			ChainID:         fmt.Sprintf("eip155:%s", chainID.String()),
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
+			IsZenBTC:        true,
 		})
 	}
 
