@@ -59,6 +59,7 @@ type (
 		ETHUSDPrice                string
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
+		SidecarVersionName         string
 	}
 
 	VEWithVotePower struct {
@@ -171,10 +172,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
 	}
-	//if len(ve.SolanaBurnEventsHash) == 0 {
-	//	logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
-	//	invalid = true
-	//}
+	if len(ve.SolanaBurnEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
+		invalid = true
+	}
 	if len(ve.RedemptionsHash) == 0 {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
