@@ -212,6 +212,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
 		invalid = true
 	}
+	if ve.SidecarVersionName == "" {
+		logger.Error("invalid vote extension: SidecarVersionName is empty")
+		invalid = true
+	}
 
 	return invalid
 }
