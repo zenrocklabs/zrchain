@@ -118,7 +118,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		log.Fatalf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err)
 	}
 
-	mainLoopTickerIntervalDuration := time.Duration(sidecartypes.MainLoopTickerIntervalSeconds) * time.Second
+	mainLoopTickerIntervalDuration := sidecartypes.MainLoopTickerInterval
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	// This runs only if NTP succeeded (checked by the panic above) and skipInitialWait is false
@@ -137,7 +137,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
-	log.Printf("Ticker synched, awaiting initial oracle data fetch (%ds interval)...", sidecartypes.MainLoopTickerIntervalSeconds)
+	log.Printf("Ticker synched, awaiting initial oracle data fetch (%v interval)...", mainLoopTickerIntervalDuration)
 
 	for {
 		select {
@@ -1126,14 +1126,44 @@ func (o *Oracle) getSolanaEvents(
 			})
 		}
 
-		// Execute the batch request
-		batchResponses, err := o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
-		if err != nil {
-			log.Printf("%s sub-batch GetTransaction failed (signatures %d to %d): %v. Halting further fetches for this cycle.", eventTypeName, i, end-1, err)
-			break
+		var batchResponses jsonrpc.RPCResponses
+		var err error
+		// Execute the batch request with retries
+		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
+			batchResponses, err = o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+			if err == nil {
+				// Quick check for any errors inside the response. If so, we'll retry the whole batch.
+				hasErrors := false
+				for _, resp := range batchResponses {
+					if resp.Error != nil {
+						hasErrors = true
+						break
+					}
+				}
+				if !hasErrors {
+					break // Success, exit retry loop.
+				}
+				err = fmt.Errorf("response contains errors") // Set err to non-nil to trigger retry
+			}
+
+			// If we are here, it means there was an error.
+			log.Printf("%s sub-batch GetTransaction failed (signatures %d to %d): %v. Retrying in %v... (%d/%d)",
+				eventTypeName, i, end-1, err, sidecartypes.SolanaEventFetchRetrySleep, retry+1, sidecartypes.SolanaEventFetchMaxRetries)
+
+			// Don't sleep on the last attempt
+			if retry < sidecartypes.SolanaEventFetchMaxRetries-1 {
+				time.Sleep(sidecartypes.SolanaEventFetchRetrySleep)
+			}
 		}
+
+		if err != nil {
+			log.Printf("%s sub-batch GetTransaction failed after %d retries (signatures %d to %d): %v. Halting further fetches for this cycle.",
+				eventTypeName, sidecartypes.SolanaEventFetchMaxRetries, i, end-1, err)
+			break // Halt processing further batches in this cycle.
+		}
+
 		if end < len(newSignaturesToFetchDetails) {
-			time.Sleep(time.Duration(sidecartypes.SolanaSleepIntervalMilliseconds) * time.Millisecond)
+			time.Sleep(sidecartypes.SolanaSleepInterval)
 		}
 
 		for _, resp := range batchResponses {
@@ -1147,7 +1177,8 @@ func (o *Oracle) getSolanaEvents(
 			sig := currentBatchSignatures[requestIndex].Signature
 
 			if resp.Error != nil {
-				log.Printf("Error in sub-batch GetTransaction result for tx %s (%s): %v", sig, eventTypeName, resp.Error)
+				// This should ideally not be hit if the retry logic above is working, but kept as a safeguard.
+				log.Printf("Error in sub-batch GetTransaction result for tx %s (%s): %v. This transaction will be missed in this cycle.", sig, eventTypeName, resp.Error)
 				continue
 			}
 			if resp.Result == nil {
@@ -1747,7 +1778,7 @@ func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEv
 
 			// Pause between requests to avoid rate-limiting, but not after the final one.
 			if i < len(requests)-1 {
-				time.Sleep(time.Duration(sidecartypes.SolanaSleepIntervalMilliseconds) * time.Millisecond)
+				time.Sleep(sidecartypes.SolanaSleepInterval)
 			}
 		}
 	}
