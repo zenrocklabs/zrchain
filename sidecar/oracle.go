@@ -630,15 +630,9 @@ func (o *Oracle) buildFinalState(
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
 
+	// EigenDelegations map keys are deterministically ordered by encoding/json, so no manual sorting needed.
+
 	// Sort all event slices to ensure deterministic order
-	sort.SliceStable(update.eigenDelegations, func(i, j int) bool {
-		// This sorting is tricky because it's a map.
-		// For deterministic behavior, we should convert it to a sorted slice if needed.
-		// For now, let's assume map order doesn't affect consensus, but this is a potential issue.
-		// A proper fix would involve changing the data structure.
-		// Let's leave it as is for now and focus on the event slices.
-		return false // No-op sort for now
-	})
 	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
 		if update.ethBurnEvents[i].Date != update.ethBurnEvents[j].Date {
 			return update.ethBurnEvents[i].Date < update.ethBurnEvents[j].Date
@@ -958,17 +952,8 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			continue
 		}
 
-		// Get block to retrieve timestamp
-		block, err := o.EthClient.BlockByHash(ctx, event.Raw.BlockHash)
-		if err != nil {
-			// Log the error but continue; we might not want to fail the whole process for one event's timestamp.
-			// Or, we could fail hard. Let's log and continue for now.
-			log.Printf("Failed to get block details for eth burn event tx %s: %v. Timestamp will be 0.", event.Raw.TxHash.Hex(), err)
-		}
-		blockTime := int64(0)
-		if block != nil {
-			blockTime = int64(block.Time())
-		}
+		// Use block number as the ordering proxy to avoid an extra RPC call per event.
+		blockTime := int64(event.Raw.BlockNumber)
 
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
