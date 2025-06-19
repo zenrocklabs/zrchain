@@ -15,17 +15,6 @@ const (
 	NetworkMainnet = "mainnet"
 )
 
-// PriceFeed struct with fields for different price feeds
-type PriceFeed struct {
-	BTC string
-	ETH string
-}
-
-// ZenBTCToken struct to hold token addresses for different blockchains
-type ZenBTCToken struct {
-	Ethereum map[string]string
-}
-
 // Contract address constants and other network-specific configuration values
 // NB: these constants should not be changed as they are important for synchronicity.
 // Modifying them will exponentially increase the risk of your validator being slashed
@@ -102,8 +91,8 @@ var (
 	// ROCK Price feed URL
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
-	// Oracle tuning parameters
-	MainLoopTickerIntervalSeconds   = 60 // Seconds
+	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
+	MainLoopTickerIntervalSeconds   = 60
 	OracleCacheSize                 = 20
 	EthBurnEventsBlockRange         = 1000
 	EthBlocksBeforeFinality         = int64(5) // TODO: should this be increased?
@@ -111,6 +100,17 @@ var (
 	SolanaEventFetchBatchSize       = 50
 	SolanaSleepIntervalMilliseconds = 250
 )
+
+// PriceFeed struct with fields for different price feeds
+type PriceFeed struct {
+	BTC string
+	ETH string
+}
+
+// ZenBTCToken struct to hold token addresses for different blockchains
+type ZenBTCToken struct {
+	Ethereum map[string]string
+}
 
 // SolanaEventType defines a type for Solana event keys for type safety.
 type SolanaEventType string
