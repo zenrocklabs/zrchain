@@ -21,7 +21,7 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		CountTotal: true,
 	}
 	for {
-		mintKeys, pageResMint, err := k.queryBridge(goCtx, k.mintStore, mintPagination, req.Address, req.Denom, "", "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
+		mintKeys, pageResMint, err := k.queryBridge(goCtx, k.MintStore, mintPagination, req.Address, req.Denom, "", "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		CountTotal: true,
 	}
 	for {
-		burnKeys, pageResBurn, err := k.queryBridge(goCtx, k.burnStore, burnPagination, "", req.Denom, req.Address, "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
+		burnKeys, pageResBurn, err := k.queryBridge(goCtx, k.BurnStore, burnPagination, "", req.Denom, req.Address, "", types.BridgeStatus_BRIDGE_STATUS_COMPLETED, 0, 0)
 		if err != nil {
 			return nil, err
 		}
