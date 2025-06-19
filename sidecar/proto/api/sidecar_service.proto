@@ -57,6 +57,7 @@ message BurnEvent {
   bytes destinationAddr = 4;
   uint64 amount = 5;
   bool IsZenBTC = 6;
+  int64 date = 7;
 }
 
 message SidecarStateRequest {}

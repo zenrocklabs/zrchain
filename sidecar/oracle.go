@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"net/http"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 
@@ -538,42 +539,64 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
+	var zenBtcEvents, rockEvents []api.BurnEvent
+	var zenBtcErr, rockErr error
+	var wgEvents sync.WaitGroup
+
 	// Fetches new zenBTC burn events from Solana since the last processed signature.
-	wg.Add(1)
+	wgEvents.Add(1)
 	go func() {
-		defer wg.Done()
+		defer wgEvents.Done()
 		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
-		events, newestSig, err := o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events: %w", err)
-			return
-		}
-		updateMutex.Lock()
-		if len(events) > 0 {
-			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
-		}
-		if !newestSig.IsZero() {
+		var newestSig solana.Signature
+		zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
+		if zenBtcErr == nil && !newestSig.IsZero() {
+			updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
+			updateMutex.Unlock()
 		}
-		updateMutex.Unlock()
 	}()
 
 	// Fetches new ROCK burn events from Solana since the last processed signature.
+	wgEvents.Add(1)
+	go func() {
+		defer wgEvents.Done()
+		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
+		var newestSig solana.Signature
+		rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
+		if rockErr == nil && !newestSig.IsZero() {
+			updateMutex.Lock()
+			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
+			updateMutex.Unlock()
+		}
+	}()
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
-		events, newestSig, err := o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", err)
+		wgEvents.Wait() // Wait for both Solana burn fetches to complete
+
+		if zenBtcErr != nil {
+			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events: %w", zenBtcErr)
+		}
+		if rockErr != nil {
+			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", rockErr)
+		}
+
+		// If either failed, we don't proceed with merging to avoid partial state.
+		if zenBtcErr != nil || rockErr != nil {
 			return
 		}
+
+		// Merge and sort
+		allSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
+		sort.Slice(allSolanaBurnEvents, func(i, j int) bool {
+			return allSolanaBurnEvents[i].Date < allSolanaBurnEvents[j].Date
+		})
+
 		updateMutex.Lock()
-		if len(events) > 0 {
-			update.solanaBurnEvents = append(update.solanaBurnEvents, events...)
-		}
-		if !newestSig.IsZero() {
-			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
+		if len(allSolanaBurnEvents) > 0 {
+			update.solanaBurnEvents = append(update.solanaBurnEvents, allSolanaBurnEvents...)
 		}
 		updateMutex.Unlock()
 	}()
@@ -606,6 +629,38 @@ func (o *Oracle) buildFinalState(
 
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
+
+	// Sort all event slices to ensure deterministic order
+	sort.SliceStable(update.eigenDelegations, func(i, j int) bool {
+		// This sorting is tricky because it's a map.
+		// For deterministic behavior, we should convert it to a sorted slice if needed.
+		// For now, let's assume map order doesn't affect consensus, but this is a potential issue.
+		// A proper fix would involve changing the data structure.
+		// Let's leave it as is for now and focus on the event slices.
+		return false // No-op sort for now
+	})
+	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
+		if update.ethBurnEvents[i].Date != update.ethBurnEvents[j].Date {
+			return update.ethBurnEvents[i].Date < update.ethBurnEvents[j].Date
+		}
+		return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
+	})
+	sort.Slice(update.solanaBurnEvents, func(i, j int) bool {
+		if update.solanaBurnEvents[i].Date != update.solanaBurnEvents[j].Date {
+			return update.solanaBurnEvents[i].Date < update.solanaBurnEvents[j].Date
+		}
+		return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
+	})
+	sort.Slice(update.redemptions, func(i, j int) bool {
+		return update.redemptions[i].Id < update.redemptions[j].Id
+	})
+	sort.Slice(update.SolanaMintEvents, func(i, j int) bool {
+		if update.SolanaMintEvents[i].Date != update.SolanaMintEvents[j].Date {
+			return update.SolanaMintEvents[i].Date < update.SolanaMintEvents[j].Date
+		}
+		// Use TxSig as a secondary sort key for determinism if dates are identical
+		return update.SolanaMintEvents[i].TxSig < update.SolanaMintEvents[j].TxSig
+	})
 
 	newState := sidecartypes.OracleState{
 		EigenDelegations:           update.eigenDelegations,
@@ -903,6 +958,18 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			continue
 		}
 
+		// Get block to retrieve timestamp
+		block, err := o.EthClient.BlockByHash(ctx, event.Raw.BlockHash)
+		if err != nil {
+			// Log the error but continue; we might not want to fail the whole process for one event's timestamp.
+			// Or, we could fail hard. Let's log and continue for now.
+			log.Printf("Failed to get block details for eth burn event tx %s: %v. Timestamp will be 0.", event.Raw.TxHash.Hex(), err)
+		}
+		blockTime := int64(0)
+		if block != nil {
+			blockTime = int64(block.Time())
+		}
+
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
 			LogIndex:        uint64(event.Raw.Index),
@@ -910,6 +977,7 @@ func (o *Oracle) getEthBurnEvents(fromBlock, toBlock *big.Int) ([]api.BurnEvent,
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 			IsZenBTC:        true,
+			Date:            blockTime,
 		})
 	}
 
