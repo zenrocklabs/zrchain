@@ -2,6 +2,7 @@ package shared
 
 import (
 	"math/big"
+	"time"
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -92,13 +93,15 @@ var (
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
-	MainLoopTickerIntervalSeconds   = 60
-	OracleCacheSize                 = 20
-	EthBurnEventsBlockRange         = 1000
-	EthBlocksBeforeFinality         = int64(5) // TODO: should this be increased?
-	SolanaEventScanTxLimit          = 1000
-	SolanaEventFetchBatchSize       = 50
-	SolanaSleepIntervalMilliseconds = 250
+	MainLoopTickerInterval     = 60 * time.Second
+	OracleCacheSize            = 20
+	EthBurnEventsBlockRange    = 1000
+	EthBlocksBeforeFinality    = int64(5) // TODO: should this be increased?
+	SolanaEventScanTxLimit     = 500
+	SolanaEventFetchBatchSize  = 25
+	SolanaSleepInterval        = 250 * time.Millisecond
+	SolanaEventFetchMaxRetries = 10
+	SolanaEventFetchRetrySleep = 250 * time.Millisecond
 )
 
 // PriceFeed struct with fields for different price feeds
