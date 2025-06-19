@@ -47,6 +47,7 @@ var defaultVe = VoteExtension{
 	ETHUSDPrice:                "1000000000",
 	LatestBtcBlockHeight:       100000,
 	LatestBtcHeaderHash:        []byte("randomhash"),
+	SidecarVersionName:         "strawberry_moon",
 }
 
 func TestContainsVoteExtension(t *testing.T) {
@@ -249,6 +250,12 @@ func TestIsInvalid(t *testing.T) {
 			invalidValue:  []byte{},
 			expectInvalid: true,
 		},
+		{
+			name:          "invalid sidecar version name",
+			fieldToModify: "SidecarVersionName",
+			invalidValue:  "",
+			expectInvalid: true,
+		},
 	}
 
 	// Map of field names to their setters
@@ -266,6 +273,7 @@ func TestIsInvalid(t *testing.T) {
 		"ETHUSDPrice":          func(ve *VoteExtension, v any) { ve.ETHUSDPrice = v.(string) },
 		"LatestBtcBlockHeight": func(ve *VoteExtension, v any) { ve.LatestBtcBlockHeight = v.(int64) },
 		"LatestBtcHeaderHash":  func(ve *VoteExtension, v any) { ve.LatestBtcHeaderHash = v.([]byte) },
+		"SidecarVersionName":   func(ve *VoteExtension, v any) { ve.SidecarVersionName = v.(string) },
 	}
 
 	for _, tt := range tests {
