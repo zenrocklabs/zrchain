@@ -89,6 +89,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaBurnEvents:     resp.SolanaBurnEvents,
 		SolanaMintEvents:     resp.SolanaMintEvents,
+		SidecarVersionName:   resp.SidecarVersionName,
 	}, nil
 }
 

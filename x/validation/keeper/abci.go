@@ -189,6 +189,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		SolanaAccountsHash:         solAccsHash[:],
 		SolanaMintEventsHash:       solanaMintEventsHash[:],
 		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
+		SidecarVersionName:         oracleData.SidecarVersionName,
 	}
 
 	return voteExt, nil

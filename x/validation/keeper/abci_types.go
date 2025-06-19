@@ -95,6 +95,7 @@ type (
 		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
+		SidecarVersionName         string
 	}
 
 	ValidatorDelegations struct {
