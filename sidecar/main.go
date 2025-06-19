@@ -23,8 +23,10 @@ func main() {
 	neutrinoPort := flag.Int("neutrino-port", 12345, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
 	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
-	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	debug := flag.Bool("debug", false, "Enable debug mode for verbose logging")
+	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
+	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
+	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -84,7 +86,7 @@ func main() {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug, *skipInitialWait)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
