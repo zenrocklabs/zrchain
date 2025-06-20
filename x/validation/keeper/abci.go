@@ -2218,10 +2218,15 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
+	processedInThisRun := make(map[string]bool)
 	for _, e := range oracleData.SolanaBurnEvents {
 		// Only process events that are explicitly marked as ROCK burns.
 		if e.IsZenBTC {
 			continue // This is a zenBTC burn, skip it.
+		}
+
+		if _, ok := processedInThisRun[e.TxID]; ok {
+			continue
 		}
 
 		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
@@ -2238,6 +2243,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue // burn already processed
 		} else {
 			toProcess = append(toProcess, &e)
+			processedInThisRun[e.TxID] = true
 		}
 	}
 
