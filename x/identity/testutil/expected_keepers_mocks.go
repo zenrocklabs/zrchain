@@ -92,18 +92,18 @@ func (mr *MockPolicyKeeperMockRecorder) ActionHandler(actionType interface{}) *g
 }
 
 // AddAction mocks base method.
-func (m *MockPolicyKeeper) AddAction(ctx types1.Context, creator string, msg types1.Msg, policyID, btl uint64, policyData map[string][]byte) (*types.Action, error) {
+func (m *MockPolicyKeeper) AddAction(ctx types1.Context, creator string, msg types1.Msg, policyID, btl uint64, policyData map[string][]byte, wsOwners []string) (*types.Action, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddAction", ctx, creator, msg, policyID, btl, policyData)
+	ret := m.ctrl.Call(m, "AddAction", ctx, creator, msg, policyID, btl, policyData, wsOwners)
 	ret0, _ := ret[0].(*types.Action)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddAction indicates an expected call of AddAction.
-func (mr *MockPolicyKeeperMockRecorder) AddAction(ctx, creator, msg, policyID, btl, policyData interface{}) *gomock.Call {
+func (mr *MockPolicyKeeperMockRecorder) AddAction(ctx, creator, msg, policyID, btl, policyData, wsOwners interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAction", reflect.TypeOf((*MockPolicyKeeper)(nil).AddAction), ctx, creator, msg, policyID, btl, policyData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAction", reflect.TypeOf((*MockPolicyKeeper)(nil).AddAction), ctx, creator, msg, policyID, btl, policyData, wsOwners)
 }
 
 // Codec mocks base method.

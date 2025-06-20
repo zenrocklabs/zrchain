@@ -6,22 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_RemoveKeyringParty(t *testing.T) {
-
-	var defaultKrWithParties = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		Parties:     []string{"party1", "party2", "party3"},
-		KeyReqFee:   0,
-		SigReqFee:   0,
-		IsActive:    true,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -37,7 +27,7 @@ func Test_msgServer_RemoveKeyringParty(t *testing.T) {
 		{
 			name: "PASS: remove keyring party",
 			args: args{
-				keyring: &defaultKrWithParties,
+				keyring: &testutil.DefaultKrWithParties,
 				msg:     types.NewMsgRemoveKeyringParty("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "party3"),
 			},
 			want: &types.MsgRemoveKeyringPartyResponse{},
@@ -84,7 +74,7 @@ func Test_msgServer_RemoveKeyringParty(t *testing.T) {
 		{
 			name: "FAIL: keyring is nil or not found",
 			args: args{
-				keyring: &defaultKrWithParties,
+				keyring: &testutil.DefaultKrWithParties,
 				msg:     types.NewMsgRemoveKeyringParty("testCreator", "notAKeyring", "party1"),
 			},
 			want:    &types.MsgRemoveKeyringPartyResponse{},
@@ -93,7 +83,7 @@ func Test_msgServer_RemoveKeyringParty(t *testing.T) {
 		{
 			name: "FAIL: removed party is no party",
 			args: args{
-				keyring: &defaultKrWithParties,
+				keyring: &testutil.DefaultKrWithParties,
 				msg:     types.NewMsgRemoveKeyringParty("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "noParty"),
 			},
 			want:    &types.MsgRemoveKeyringPartyResponse{},
@@ -102,7 +92,7 @@ func Test_msgServer_RemoveKeyringParty(t *testing.T) {
 		{
 			name: "FAIL: creator is no admin owner",
 			args: args{
-				keyring: &defaultKrWithParties,
+				keyring: &testutil.DefaultKrWithParties,
 				msg:     types.NewMsgRemoveKeyringParty("noAdmin", "keyring1pfnq7r04rept47gaf5cpdew2", "party1"),
 			},
 			want:    &types.MsgRemoveKeyringPartyResponse{},

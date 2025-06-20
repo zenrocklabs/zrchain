@@ -6,42 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	pol "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )
-
-var defaultWsWithOwners = types.Workspace{
-	Address: "workspace14a2hpadpsy9h4auve2z8lw",
-	Creator: "testOwner",
-	Owners:  []string{"testOwner", "testOwner2"},
-}
-
-var policy, _ = codectypes.NewAnyWithValue(&policytypes.BoolparserPolicy{
-	Definition: "testOwner + testOwner2 > 1",
-	Participants: []*policytypes.PolicyParticipant{
-		{
-			Address: "testOwner",
-		},
-		{
-			Address: "testOwner2",
-		},
-	},
-})
-
-var policy1 = policytypes.Policy{
-	Id:     1,
-	Name:   "Policy1",
-	Policy: policy,
-}
-
-var policy2 = policytypes.Policy{
-	Id:     2,
-	Name:   "Policy2",
-	Policy: policy,
-}
 
 func Test_msgServer_UpdateWorkspace(t *testing.T) {
 
@@ -60,8 +30,8 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "PASS: change sign and admin policy",
 			args: args{
-				policies:  []policytypes.Policy{policy1, policy2},
-				workspace: &defaultWsWithOwners,
+				policies:  []policytypes.Policy{testutil.Policy1, testutil.Policy2},
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1, 2, 1000),
 			},
 			want: &types.MsgUpdateWorkspaceResponse{},
@@ -77,7 +47,7 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 			name: "FAIL: admin policy does not exist",
 			args: args{
 				policies:  []policytypes.Policy{},
-				workspace: &defaultWsWithOwners,
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1, 2, 1000),
 			},
 			want:    &types.MsgUpdateWorkspaceResponse{},
@@ -86,8 +56,8 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "FAIL: sign policy does not exist",
 			args: args{
-				policies:  []policytypes.Policy{policy1},
-				workspace: &defaultWsWithOwners,
+				policies:  []policytypes.Policy{testutil.Policy1},
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1, 2, 1000),
 			},
 			want:    &types.MsgUpdateWorkspaceResponse{},
@@ -96,8 +66,8 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "FAIL: workspace does not exist",
 			args: args{
-				policies:  []policytypes.Policy{policy1, policy2},
-				workspace: &defaultWsWithOwners,
+				policies:  []policytypes.Policy{testutil.Policy1, testutil.Policy2},
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "noWorkspace", 1, 2, 1000),
 			},
 			want:    &types.MsgUpdateWorkspaceResponse{},
@@ -106,8 +76,8 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "FAIL: creator is no owner",
 			args: args{
-				policies:  []policytypes.Policy{policy1, policy2},
-				workspace: &defaultWsWithOwners,
+				policies:  []policytypes.Policy{testutil.Policy1, testutil.Policy2},
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("noOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1, 2, 1000),
 			},
 			want:    &types.MsgUpdateWorkspaceResponse{},
@@ -116,7 +86,7 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "FAIL: no policy updates ",
 			args: args{
-				workspace: &defaultWsWithOwners,
+				workspace: &testutil.DefaultWsWithOwners,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 0, 0, 1000),
 				policies:  []policytypes.Policy{},
 			},
@@ -126,10 +96,10 @@ func Test_msgServer_UpdateWorkspace(t *testing.T) {
 		{
 			name: "FAIL: policy participant not part of workspace ",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgUpdateWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1, 0, 1000),
 				policies: []policytypes.Policy{
-					policy1,
+					testutil.Policy1,
 				},
 			},
 			want:    &types.MsgUpdateWorkspaceResponse{},
