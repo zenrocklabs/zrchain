@@ -44,5 +44,3 @@ func UpdateBurnStore(ctx sdk.Context, oldBurnsCol collections.Map[uint64, types.
 
 	return nil
 }
-
-// ...

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_QueryMintsAndBurns(t *testing.T) {
+func Test_QueryMints(t *testing.T) {
 
 	mints := testutil.DefaultMints
 
@@ -98,6 +98,104 @@ func Test_QueryMintsAndBurns(t *testing.T) {
 			got, err := zk.Mints(ctx, tt.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Mints() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_QueryBurns(t *testing.T) {
+
+	burns := testutil.DefaultBurns
+
+	tests := []struct {
+		name    string
+		req     *types.QueryBurnsRequest
+		want    *types.QueryBurnsResponse
+		wantErr bool
+	}{
+		{
+			name: "PASS: default",
+			req: &types.QueryBurnsRequest{
+				Pagination: &query.PageRequest{},
+			},
+			want: &types.QueryBurnsResponse{
+				Burns: []*types.Bridge{&burns[0], &burns[1], &burns[2], &burns[3], &burns[4], &burns[5]},
+				Pagination: &query.PageResponse{
+					Total: uint64(len(burns)),
+				},
+			},
+		},
+		{
+			name: "PASS: filter source tx hash",
+			req: &types.QueryBurnsRequest{
+				SourceTxHash: burns[0].TxHash,
+				Pagination:   &query.PageRequest{},
+			},
+			want: &types.QueryBurnsResponse{
+				Burns: []*types.Bridge{&burns[0]},
+				Pagination: &query.PageResponse{
+					Total: 1,
+				},
+			},
+		},
+		{
+			name: "PASS: no tx hash found",
+			req: &types.QueryBurnsRequest{
+				SourceTxHash: "not-found",
+				Pagination:   &query.PageRequest{},
+			},
+			want: &types.QueryBurnsResponse{
+				Burns: nil,
+				Pagination: &query.PageResponse{
+					Total: 0,
+				},
+			},
+		},
+		{
+			name: "PASS: tx id",
+			req: &types.QueryBurnsRequest{
+				Id:         4,
+				Pagination: &query.PageRequest{},
+			},
+			want: &types.QueryBurnsResponse{
+				Burns: []*types.Bridge{&burns[0]},
+				Pagination: &query.PageResponse{
+					Total: 1,
+				},
+			},
+		},
+		{
+			name: "PASS: filter by recipient address",
+			req: &types.QueryBurnsRequest{
+				RecipientAddress: burns[0].RecipientAddress,
+				Pagination:       &query.PageRequest{},
+			},
+			want: &types.QueryBurnsResponse{
+				Burns: []*types.Bridge{&burns[0], &burns[3]},
+				Pagination: &query.PageResponse{
+					Total: 2,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			zk, ctx := keepertest.ZentpKeeper(t)
+
+			genesis := types.GenesisState{
+				Params: types.DefaultParams(),
+				Burns:  burns,
+			}
+			zentp.InitGenesis(ctx, zk, genesis)
+
+			got, err := zk.Burns(ctx, tt.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Burns() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
