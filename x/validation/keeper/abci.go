@@ -1772,6 +1772,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
 			}
+			break // Found and processed, no need to check other events for this pending mint.
 		}
 	}
 }
@@ -1798,8 +1799,14 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	}
 
 	foundNewBurn := false
+	processedInThisRun := make(map[string]bool)
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
+		eventKey := fmt.Sprintf("%s-%d-%s", burn.TxID, burn.LogIndex, burn.ChainID)
+		if processedInThisRun[eventKey] {
+			continue
+		}
+		processedInThisRun[eventKey] = true
 		// For Solana events, we now use the explicit flag to distinguish burn types.
 		// We skip ROCK burns here. zenBTC burns will have IsZenBTC = true.
 		if !burn.IsZenBTC {
