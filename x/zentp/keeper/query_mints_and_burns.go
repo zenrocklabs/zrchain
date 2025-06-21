@@ -14,7 +14,7 @@ func (k Keeper) Mints(goCtx context.Context, req *types.QueryMintsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.mintStore, req.Pagination, req.Creator, req.Denom, "", req.SourceTxHash, req.Status, req.Id, req.TxId)
+	keys, pageRes, err := k.queryBridge(goCtx, k.MintStore, req.Pagination, req.Creator, req.Denom, "", req.SourceTxHash, req.Status, req.Id, req.TxId)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (k Keeper) Burns(goCtx context.Context, req *types.QueryBurnsRequest) (*typ
 		return nil, errors.New("request is nil")
 	}
 
-	keys, pageRes, err := k.queryBridge(goCtx, k.burnStore, req.Pagination, "", req.Denom, req.RecipientAddress, req.SourceTxHash, req.Status, req.Id, req.TxId)
+	keys, pageRes, err := k.queryBridge(goCtx, k.BurnStore, req.Pagination, "", req.Denom, req.RecipientAddress, req.SourceTxHash, req.Status, req.Id, req.TxId)
 	if err != nil {
 		return nil, err
 	}
