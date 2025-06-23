@@ -11,7 +11,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "HVParams")
+    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "hv_params")
     PARAMS_FIELD_NUMBER: _ClassVar[int]
     LAST_TOTAL_POWER_FIELD_NUMBER: _ClassVar[int]
     LAST_VALIDATOR_POWERS_FIELD_NUMBER: _ClassVar[int]
@@ -20,7 +20,7 @@ class GenesisState(_message.Message):
     UNBONDING_DELEGATIONS_FIELD_NUMBER: _ClassVar[int]
     REDELEGATIONS_FIELD_NUMBER: _ClassVar[int]
     EXPORTED_FIELD_NUMBER: _ClassVar[int]
-    HVPARAMS_FIELD_NUMBER: _ClassVar[int]
+    HV_PARAMS_FIELD_NUMBER: _ClassVar[int]
     params: _staking_pb2.Params
     last_total_power: bytes
     last_validator_powers: _containers.RepeatedCompositeFieldContainer[LastValidatorPower]
@@ -29,8 +29,8 @@ class GenesisState(_message.Message):
     unbonding_delegations: _containers.RepeatedCompositeFieldContainer[_staking_pb2.UnbondingDelegation]
     redelegations: _containers.RepeatedCompositeFieldContainer[_staking_pb2.Redelegation]
     exported: bool
-    HVParams: _hybrid_validation_pb2.HVParams
-    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
+    hv_params: _hybrid_validation_pb2.HVParams
+    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., hv_params: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ...) -> None: ...
 
 class LastValidatorPower(_message.Message):
     __slots__ = ("address", "power")

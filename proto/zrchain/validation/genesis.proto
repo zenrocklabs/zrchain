@@ -49,7 +49,8 @@ message GenesisState {
   // or initialized genesis.
   bool exported = 8;
 
-  HVParams HVParams = 9;
+  // hv_params defines the hybrid validation parameters at genesis.
+  HVParams hv_params = 9;
 }
 
 // LastValidatorPower required for validator set update logic.
