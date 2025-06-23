@@ -5,6 +5,9 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types
 
 import "gogoproto/gogo.proto";
 import "zrchain/validation/staking.proto";
+import "zrchain/validation/solana.proto";
+import "zrchain/validation/tx.proto";
+import "zrchain/validation/asset_data.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
@@ -51,6 +54,31 @@ message GenesisState {
 
   // hv_params defines the hybrid validation parameters at genesis.
   HVParams hv_params = 9;
+
+  repeated AssetData asset_prices = 10;
+
+  // last_valid_ve_height defines the last valid ve height at genesis.
+  int64 last_valid_ve_height = 11;
+
+  // slash_events defines the slash events at genesis.
+  repeated SlashEvent slash_events = 12
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  // slash_event_count defines the slash event count at genesis.
+  uint64 slash_event_count = 13;
+
+  // validation_infos defines the validation infos at genesis.
+  repeated ValidationInfo validation_infos = 14
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  repeated SolanaNonce last_used_solana_nonce = 16
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  repeated BackfillRequests backfill_requests = 17 
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  repeated BtcBlockHeaders btc_block_headers = 18
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // LastValidatorPower required for validator set update logic.

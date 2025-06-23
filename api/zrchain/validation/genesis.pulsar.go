@@ -270,17 +270,279 @@ func (x *_GenesisState_7_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_10_list)(nil)
+
+type _GenesisState_10_list struct {
+	list *[]*AssetData
+}
+
+func (x *_GenesisState_10_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_10_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_10_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*AssetData)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_10_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*AssetData)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_10_list) AppendMutable() protoreflect.Value {
+	v := new(AssetData)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_10_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_10_list) NewElement() protoreflect.Value {
+	v := new(AssetData)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_10_list) IsValid() bool {
+	return x.list != nil
+}
+
+var _ protoreflect.List = (*_GenesisState_12_list)(nil)
+
+type _GenesisState_12_list struct {
+	list *[]*SlashEvent
+}
+
+func (x *_GenesisState_12_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_12_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_12_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*SlashEvent)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_12_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*SlashEvent)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_12_list) AppendMutable() protoreflect.Value {
+	v := new(SlashEvent)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_12_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_12_list) NewElement() protoreflect.Value {
+	v := new(SlashEvent)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_12_list) IsValid() bool {
+	return x.list != nil
+}
+
+var _ protoreflect.List = (*_GenesisState_14_list)(nil)
+
+type _GenesisState_14_list struct {
+	list *[]*ValidationInfo
+}
+
+func (x *_GenesisState_14_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_14_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_14_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ValidationInfo)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_14_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ValidationInfo)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_14_list) AppendMutable() protoreflect.Value {
+	v := new(ValidationInfo)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_14_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_14_list) NewElement() protoreflect.Value {
+	v := new(ValidationInfo)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_14_list) IsValid() bool {
+	return x.list != nil
+}
+
+var _ protoreflect.List = (*_GenesisState_16_list)(nil)
+
+type _GenesisState_16_list struct {
+	list *[]*SolanaNonce
+}
+
+func (x *_GenesisState_16_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_16_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_16_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*SolanaNonce)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_16_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*SolanaNonce)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_16_list) AppendMutable() protoreflect.Value {
+	v := new(SolanaNonce)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_16_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_16_list) NewElement() protoreflect.Value {
+	v := new(SolanaNonce)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_16_list) IsValid() bool {
+	return x.list != nil
+}
+
+var _ protoreflect.List = (*_GenesisState_17_list)(nil)
+
+type _GenesisState_17_list struct {
+	list *[]*BackfillRequests
+}
+
+func (x *_GenesisState_17_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_17_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_17_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*BackfillRequests)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_17_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*BackfillRequests)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_17_list) AppendMutable() protoreflect.Value {
+	v := new(BackfillRequests)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_17_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_17_list) NewElement() protoreflect.Value {
+	v := new(BackfillRequests)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_17_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_GenesisState                       protoreflect.MessageDescriptor
-	fd_GenesisState_params                protoreflect.FieldDescriptor
-	fd_GenesisState_last_total_power      protoreflect.FieldDescriptor
-	fd_GenesisState_last_validator_powers protoreflect.FieldDescriptor
-	fd_GenesisState_validators            protoreflect.FieldDescriptor
-	fd_GenesisState_delegations           protoreflect.FieldDescriptor
-	fd_GenesisState_unbonding_delegations protoreflect.FieldDescriptor
-	fd_GenesisState_redelegations         protoreflect.FieldDescriptor
-	fd_GenesisState_exported              protoreflect.FieldDescriptor
-	fd_GenesisState_hv_params             protoreflect.FieldDescriptor
+	md_GenesisState                        protoreflect.MessageDescriptor
+	fd_GenesisState_params                 protoreflect.FieldDescriptor
+	fd_GenesisState_last_total_power       protoreflect.FieldDescriptor
+	fd_GenesisState_last_validator_powers  protoreflect.FieldDescriptor
+	fd_GenesisState_validators             protoreflect.FieldDescriptor
+	fd_GenesisState_delegations            protoreflect.FieldDescriptor
+	fd_GenesisState_unbonding_delegations  protoreflect.FieldDescriptor
+	fd_GenesisState_redelegations          protoreflect.FieldDescriptor
+	fd_GenesisState_exported               protoreflect.FieldDescriptor
+	fd_GenesisState_hv_params              protoreflect.FieldDescriptor
+	fd_GenesisState_asset_prices           protoreflect.FieldDescriptor
+	fd_GenesisState_last_valid_ve_height   protoreflect.FieldDescriptor
+	fd_GenesisState_slash_events           protoreflect.FieldDescriptor
+	fd_GenesisState_slash_event_count      protoreflect.FieldDescriptor
+	fd_GenesisState_validation_infos       protoreflect.FieldDescriptor
+	fd_GenesisState_last_used_solana_nonce protoreflect.FieldDescriptor
+	fd_GenesisState_backfill_requests      protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -295,6 +557,13 @@ func init() {
 	fd_GenesisState_redelegations = md_GenesisState.Fields().ByName("redelegations")
 	fd_GenesisState_exported = md_GenesisState.Fields().ByName("exported")
 	fd_GenesisState_hv_params = md_GenesisState.Fields().ByName("hv_params")
+	fd_GenesisState_asset_prices = md_GenesisState.Fields().ByName("asset_prices")
+	fd_GenesisState_last_valid_ve_height = md_GenesisState.Fields().ByName("last_valid_ve_height")
+	fd_GenesisState_slash_events = md_GenesisState.Fields().ByName("slash_events")
+	fd_GenesisState_slash_event_count = md_GenesisState.Fields().ByName("slash_event_count")
+	fd_GenesisState_validation_infos = md_GenesisState.Fields().ByName("validation_infos")
+	fd_GenesisState_last_used_solana_nonce = md_GenesisState.Fields().ByName("last_used_solana_nonce")
+	fd_GenesisState_backfill_requests = md_GenesisState.Fields().ByName("backfill_requests")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -416,6 +685,48 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if len(x.AssetPrices) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_10_list{list: &x.AssetPrices})
+		if !f(fd_GenesisState_asset_prices, value) {
+			return
+		}
+	}
+	if x.LastValidVeHeight != int64(0) {
+		value := protoreflect.ValueOfInt64(x.LastValidVeHeight)
+		if !f(fd_GenesisState_last_valid_ve_height, value) {
+			return
+		}
+	}
+	if len(x.SlashEvents) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_12_list{list: &x.SlashEvents})
+		if !f(fd_GenesisState_slash_events, value) {
+			return
+		}
+	}
+	if x.SlashEventCount != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.SlashEventCount)
+		if !f(fd_GenesisState_slash_event_count, value) {
+			return
+		}
+	}
+	if len(x.ValidationInfos) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_14_list{list: &x.ValidationInfos})
+		if !f(fd_GenesisState_validation_infos, value) {
+			return
+		}
+	}
+	if len(x.LastUsedSolanaNonce) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_16_list{list: &x.LastUsedSolanaNonce})
+		if !f(fd_GenesisState_last_used_solana_nonce, value) {
+			return
+		}
+	}
+	if len(x.BackfillRequests) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_17_list{list: &x.BackfillRequests})
+		if !f(fd_GenesisState_backfill_requests, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -449,6 +760,20 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.Exported != false
 	case "zrchain.validation.GenesisState.hv_params":
 		return x.HvParams != nil
+	case "zrchain.validation.GenesisState.asset_prices":
+		return len(x.AssetPrices) != 0
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		return x.LastValidVeHeight != int64(0)
+	case "zrchain.validation.GenesisState.slash_events":
+		return len(x.SlashEvents) != 0
+	case "zrchain.validation.GenesisState.slash_event_count":
+		return x.SlashEventCount != uint64(0)
+	case "zrchain.validation.GenesisState.validation_infos":
+		return len(x.ValidationInfos) != 0
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		return len(x.LastUsedSolanaNonce) != 0
+	case "zrchain.validation.GenesisState.backfill_requests":
+		return len(x.BackfillRequests) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -483,6 +808,20 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.Exported = false
 	case "zrchain.validation.GenesisState.hv_params":
 		x.HvParams = nil
+	case "zrchain.validation.GenesisState.asset_prices":
+		x.AssetPrices = nil
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		x.LastValidVeHeight = int64(0)
+	case "zrchain.validation.GenesisState.slash_events":
+		x.SlashEvents = nil
+	case "zrchain.validation.GenesisState.slash_event_count":
+		x.SlashEventCount = uint64(0)
+	case "zrchain.validation.GenesisState.validation_infos":
+		x.ValidationInfos = nil
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		x.LastUsedSolanaNonce = nil
+	case "zrchain.validation.GenesisState.backfill_requests":
+		x.BackfillRequests = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -541,6 +880,42 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	case "zrchain.validation.GenesisState.hv_params":
 		value := x.HvParams
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "zrchain.validation.GenesisState.asset_prices":
+		if len(x.AssetPrices) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_10_list{})
+		}
+		listValue := &_GenesisState_10_list{list: &x.AssetPrices}
+		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		value := x.LastValidVeHeight
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.GenesisState.slash_events":
+		if len(x.SlashEvents) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_12_list{})
+		}
+		listValue := &_GenesisState_12_list{list: &x.SlashEvents}
+		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.GenesisState.slash_event_count":
+		value := x.SlashEventCount
+		return protoreflect.ValueOfUint64(value)
+	case "zrchain.validation.GenesisState.validation_infos":
+		if len(x.ValidationInfos) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_14_list{})
+		}
+		listValue := &_GenesisState_14_list{list: &x.ValidationInfos}
+		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		if len(x.LastUsedSolanaNonce) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_16_list{})
+		}
+		listValue := &_GenesisState_16_list{list: &x.LastUsedSolanaNonce}
+		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.GenesisState.backfill_requests":
+		if len(x.BackfillRequests) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_17_list{})
+		}
+		listValue := &_GenesisState_17_list{list: &x.BackfillRequests}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -589,6 +964,30 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		x.Exported = value.Bool()
 	case "zrchain.validation.GenesisState.hv_params":
 		x.HvParams = value.Message().Interface().(*HVParams)
+	case "zrchain.validation.GenesisState.asset_prices":
+		lv := value.List()
+		clv := lv.(*_GenesisState_10_list)
+		x.AssetPrices = *clv.list
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		x.LastValidVeHeight = value.Int()
+	case "zrchain.validation.GenesisState.slash_events":
+		lv := value.List()
+		clv := lv.(*_GenesisState_12_list)
+		x.SlashEvents = *clv.list
+	case "zrchain.validation.GenesisState.slash_event_count":
+		x.SlashEventCount = value.Uint()
+	case "zrchain.validation.GenesisState.validation_infos":
+		lv := value.List()
+		clv := lv.(*_GenesisState_14_list)
+		x.ValidationInfos = *clv.list
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		lv := value.List()
+		clv := lv.(*_GenesisState_16_list)
+		x.LastUsedSolanaNonce = *clv.list
+	case "zrchain.validation.GenesisState.backfill_requests":
+		lv := value.List()
+		clv := lv.(*_GenesisState_17_list)
+		x.BackfillRequests = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -649,10 +1048,44 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 			x.HvParams = new(HVParams)
 		}
 		return protoreflect.ValueOfMessage(x.HvParams.ProtoReflect())
+	case "zrchain.validation.GenesisState.asset_prices":
+		if x.AssetPrices == nil {
+			x.AssetPrices = []*AssetData{}
+		}
+		value := &_GenesisState_10_list{list: &x.AssetPrices}
+		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.GenesisState.slash_events":
+		if x.SlashEvents == nil {
+			x.SlashEvents = []*SlashEvent{}
+		}
+		value := &_GenesisState_12_list{list: &x.SlashEvents}
+		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.GenesisState.validation_infos":
+		if x.ValidationInfos == nil {
+			x.ValidationInfos = []*ValidationInfo{}
+		}
+		value := &_GenesisState_14_list{list: &x.ValidationInfos}
+		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		if x.LastUsedSolanaNonce == nil {
+			x.LastUsedSolanaNonce = []*SolanaNonce{}
+		}
+		value := &_GenesisState_16_list{list: &x.LastUsedSolanaNonce}
+		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.GenesisState.backfill_requests":
+		if x.BackfillRequests == nil {
+			x.BackfillRequests = []*BackfillRequests{}
+		}
+		value := &_GenesisState_17_list{list: &x.BackfillRequests}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.GenesisState.last_total_power":
 		panic(fmt.Errorf("field last_total_power of message zrchain.validation.GenesisState is not mutable"))
 	case "zrchain.validation.GenesisState.exported":
 		panic(fmt.Errorf("field exported of message zrchain.validation.GenesisState is not mutable"))
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		panic(fmt.Errorf("field last_valid_ve_height of message zrchain.validation.GenesisState is not mutable"))
+	case "zrchain.validation.GenesisState.slash_event_count":
+		panic(fmt.Errorf("field slash_event_count of message zrchain.validation.GenesisState is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -691,6 +1124,25 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "zrchain.validation.GenesisState.hv_params":
 		m := new(HVParams)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "zrchain.validation.GenesisState.asset_prices":
+		list := []*AssetData{}
+		return protoreflect.ValueOfList(&_GenesisState_10_list{list: &list})
+	case "zrchain.validation.GenesisState.last_valid_ve_height":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.GenesisState.slash_events":
+		list := []*SlashEvent{}
+		return protoreflect.ValueOfList(&_GenesisState_12_list{list: &list})
+	case "zrchain.validation.GenesisState.slash_event_count":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.validation.GenesisState.validation_infos":
+		list := []*ValidationInfo{}
+		return protoreflect.ValueOfList(&_GenesisState_14_list{list: &list})
+	case "zrchain.validation.GenesisState.last_used_solana_nonce":
+		list := []*SolanaNonce{}
+		return protoreflect.ValueOfList(&_GenesisState_16_list{list: &list})
+	case "zrchain.validation.GenesisState.backfill_requests":
+		list := []*BackfillRequests{}
+		return protoreflect.ValueOfList(&_GenesisState_17_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -805,6 +1257,42 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.HvParams)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if len(x.AssetPrices) > 0 {
+			for _, e := range x.AssetPrices {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
+		if x.LastValidVeHeight != 0 {
+			n += 1 + runtime.Sov(uint64(x.LastValidVeHeight))
+		}
+		if len(x.SlashEvents) > 0 {
+			for _, e := range x.SlashEvents {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
+		if x.SlashEventCount != 0 {
+			n += 1 + runtime.Sov(uint64(x.SlashEventCount))
+		}
+		if len(x.ValidationInfos) > 0 {
+			for _, e := range x.ValidationInfos {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
+		if len(x.LastUsedSolanaNonce) > 0 {
+			for _, e := range x.LastUsedSolanaNonce {
+				l = options.Size(e)
+				n += 2 + l + runtime.Sov(uint64(l))
+			}
+		}
+		if len(x.BackfillRequests) > 0 {
+			for _, e := range x.BackfillRequests {
+				l = options.Size(e)
+				n += 2 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -833,6 +1321,100 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.BackfillRequests) > 0 {
+			for iNdEx := len(x.BackfillRequests) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.BackfillRequests[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x1
+				i--
+				dAtA[i] = 0x8a
+			}
+		}
+		if len(x.LastUsedSolanaNonce) > 0 {
+			for iNdEx := len(x.LastUsedSolanaNonce) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.LastUsedSolanaNonce[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x1
+				i--
+				dAtA[i] = 0x82
+			}
+		}
+		if len(x.ValidationInfos) > 0 {
+			for iNdEx := len(x.ValidationInfos) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.ValidationInfos[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x72
+			}
+		}
+		if x.SlashEventCount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SlashEventCount))
+			i--
+			dAtA[i] = 0x68
+		}
+		if len(x.SlashEvents) > 0 {
+			for iNdEx := len(x.SlashEvents) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.SlashEvents[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x62
+			}
+		}
+		if x.LastValidVeHeight != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.LastValidVeHeight))
+			i--
+			dAtA[i] = 0x58
+		}
+		if len(x.AssetPrices) > 0 {
+			for iNdEx := len(x.AssetPrices) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.AssetPrices[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x52
+			}
 		}
 		if x.HvParams != nil {
 			encoded, err := options.Marshal(x.HvParams)
@@ -1301,6 +1883,214 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					x.HvParams = &HVParams{}
 				}
 				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.HvParams); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 10:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AssetPrices", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AssetPrices = append(x.AssetPrices, &AssetData{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.AssetPrices[len(x.AssetPrices)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 11:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LastValidVeHeight", wireType)
+				}
+				x.LastValidVeHeight = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.LastValidVeHeight |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 12:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SlashEvents", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.SlashEvents = append(x.SlashEvents, &SlashEvent{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.SlashEvents[len(x.SlashEvents)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 13:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SlashEventCount", wireType)
+				}
+				x.SlashEventCount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.SlashEventCount |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 14:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValidationInfos", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ValidationInfos = append(x.ValidationInfos, &ValidationInfo{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ValidationInfos[len(x.ValidationInfos)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 16:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LastUsedSolanaNonce", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.LastUsedSolanaNonce = append(x.LastUsedSolanaNonce, &SolanaNonce{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.LastUsedSolanaNonce[len(x.LastUsedSolanaNonce)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 17:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BackfillRequests", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.BackfillRequests = append(x.BackfillRequests, &BackfillRequests{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.BackfillRequests[len(x.BackfillRequests)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -1846,7 +2636,18 @@ type GenesisState struct {
 	// or initialized genesis.
 	Exported bool `protobuf:"varint,8,opt,name=exported,proto3" json:"exported,omitempty"`
 	// hv_params defines the hybrid validation parameters at genesis.
-	HvParams *HVParams `protobuf:"bytes,9,opt,name=hv_params,json=hvParams,proto3" json:"hv_params,omitempty"`
+	HvParams    *HVParams    `protobuf:"bytes,9,opt,name=hv_params,json=hvParams,proto3" json:"hv_params,omitempty"`
+	AssetPrices []*AssetData `protobuf:"bytes,10,rep,name=asset_prices,json=assetPrices,proto3" json:"asset_prices,omitempty"`
+	// last_valid_ve_height defines the last valid ve height at genesis.
+	LastValidVeHeight int64 `protobuf:"varint,11,opt,name=last_valid_ve_height,json=lastValidVeHeight,proto3" json:"last_valid_ve_height,omitempty"`
+	// slash_events defines the slash events at genesis.
+	SlashEvents []*SlashEvent `protobuf:"bytes,12,rep,name=slash_events,json=slashEvents,proto3" json:"slash_events,omitempty"`
+	// slash_event_count defines the slash event count at genesis.
+	SlashEventCount uint64 `protobuf:"varint,13,opt,name=slash_event_count,json=slashEventCount,proto3" json:"slash_event_count,omitempty"`
+	// validation_infos defines the validation infos at genesis.
+	ValidationInfos     []*ValidationInfo   `protobuf:"bytes,14,rep,name=validation_infos,json=validationInfos,proto3" json:"validation_infos,omitempty"`
+	LastUsedSolanaNonce []*SolanaNonce      `protobuf:"bytes,16,rep,name=last_used_solana_nonce,json=lastUsedSolanaNonce,proto3" json:"last_used_solana_nonce,omitempty"`
+	BackfillRequests    []*BackfillRequests `protobuf:"bytes,17,rep,name=backfill_requests,json=backfillRequests,proto3" json:"backfill_requests,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -1932,6 +2733,55 @@ func (x *GenesisState) GetHvParams() *HVParams {
 	return nil
 }
 
+func (x *GenesisState) GetAssetPrices() []*AssetData {
+	if x != nil {
+		return x.AssetPrices
+	}
+	return nil
+}
+
+func (x *GenesisState) GetLastValidVeHeight() int64 {
+	if x != nil {
+		return x.LastValidVeHeight
+	}
+	return 0
+}
+
+func (x *GenesisState) GetSlashEvents() []*SlashEvent {
+	if x != nil {
+		return x.SlashEvents
+	}
+	return nil
+}
+
+func (x *GenesisState) GetSlashEventCount() uint64 {
+	if x != nil {
+		return x.SlashEventCount
+	}
+	return 0
+}
+
+func (x *GenesisState) GetValidationInfos() []*ValidationInfo {
+	if x != nil {
+		return x.ValidationInfos
+	}
+	return nil
+}
+
+func (x *GenesisState) GetLastUsedSolanaNonce() []*SolanaNonce {
+	if x != nil {
+		return x.LastUsedSolanaNonce
+	}
+	return nil
+}
+
+func (x *GenesisState) GetBackfillRequests() []*BackfillRequests {
+	if x != nil {
+		return x.BackfillRequests
+	}
+	return nil
+}
+
 // LastValidatorPower required for validator set update logic.
 type LastValidatorPower struct {
 	state         protoimpl.MessageState
@@ -1987,75 +2837,114 @@ var file_zrchain_validation_genesis_proto_rawDesc = []byte{
 	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x14, 0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x7a, 0x72,
 	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x2f, 0x73, 0x74, 0x61, 0x6b, 0x69, 0x6e, 0x67, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x2a,
+	0x2f, 0x73, 0x74, 0x61, 0x6b, 0x69, 0x6e, 0x67, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1f,
 	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x2f, 0x68, 0x79, 0x62, 0x72, 0x69, 0x64, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d,
-	0x6f, 0x73, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x11, 0x61, 0x6d, 0x69, 0x6e, 0x6f, 0x2f, 0x61, 0x6d, 0x69,
-	0x6e, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xbc, 0x05, 0x0a, 0x0c, 0x47, 0x65, 0x6e,
-	0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x3d, 0x0a, 0x06, 0x70, 0x61, 0x72,
-	0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x50,
-	0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01,
-	0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x5a, 0x0a, 0x10, 0x6c, 0x61, 0x73, 0x74,
-	0x5f, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0c, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f, 0x73, 0x6d,
-	0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x49, 0x6e,
-	0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0xa8,
-	0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0e, 0x6c, 0x61, 0x73, 0x74, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x50,
-	0x6f, 0x77, 0x65, 0x72, 0x12, 0x65, 0x0a, 0x15, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x73, 0x18, 0x03, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4c, 0x61, 0x73, 0x74, 0x56, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x42, 0x09, 0xc8, 0xde, 0x1f,
-	0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x13, 0x6c, 0x61, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x73, 0x12, 0x4a, 0x0a, 0x0a, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x48, 0x56,
-	0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0a, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x4b, 0x0a, 0x0b, 0x64, 0x65, 0x6c, 0x65, 0x67,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x7a,
+	0x6f, 0x6e, 0x2f, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
+	0x1b, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x2f, 0x74, 0x78, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x23, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x1a, 0x2a, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x68, 0x79, 0x62, 0x72, 0x69, 0x64, 0x5f, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x11, 0x61, 0x6d, 0x69, 0x6e, 0x6f, 0x2f,
+	0x61, 0x6d, 0x69, 0x6e, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xc2, 0x09, 0x0a, 0x0c,
+	0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x3d, 0x0a, 0x06,
+	0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x7a,
 	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x09, 0xc8, 0xde,
-	0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0b, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x73, 0x12, 0x67, 0x0a, 0x15, 0x75, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e,
-	0x67, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x06, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69,
-	0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x09, 0xc8, 0xde,
-	0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x14, 0x75, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69,
-	0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x51, 0x0a,
-	0x0d, 0x72, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x07,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65,
-	0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a,
-	0x01, 0x52, 0x0d, 0x72, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x12, 0x1a, 0x0a, 0x08, 0x65, 0x78, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x08, 0x65, 0x78, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x12, 0x39, 0x0a, 0x09,
-	0x68, 0x76, 0x5f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x08, 0x68,
-	0x76, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0x68, 0x0a, 0x12, 0x4c, 0x61, 0x73, 0x74, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x32, 0x0a,
-	0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
-	0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
-	0x73, 0x12, 0x14, 0x0a, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x3a, 0x08, 0x88, 0xa0, 0x1f, 0x00, 0xe8, 0xa0, 0x1f,
-	0x00, 0x42, 0xb4, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x0c, 0x47, 0x65,
-	0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
-	0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7,
+	0xb0, 0x2a, 0x01, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x5a, 0x0a, 0x10, 0x6c,
+	0x61, 0x73, 0x74, 0x5f, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0c, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68,
+	0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49,
+	0x6e, 0x74, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0e, 0x6c, 0x61, 0x73, 0x74, 0x54, 0x6f, 0x74,
+	0x61, 0x6c, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x65, 0x0a, 0x15, 0x6c, 0x61, 0x73, 0x74, 0x5f,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x73,
+	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4c, 0x61, 0x73, 0x74,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x42, 0x09,
+	0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x13, 0x6c, 0x61, 0x73, 0x74, 0x56,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x73, 0x12, 0x4a,
+	0x0a, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x04, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x48, 0x56, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0a,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x4b, 0x0a, 0x0b, 0x64, 0x65,
+	0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x1e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42,
+	0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0b, 0x64, 0x65, 0x6c, 0x65,
+	0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x67, 0x0a, 0x15, 0x75, 0x6e, 0x62, 0x6f, 0x6e,
+	0x64, 0x69, 0x6e, 0x67, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x55, 0x6e, 0x62, 0x6f,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42,
+	0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x14, 0x75, 0x6e, 0x62, 0x6f,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x51, 0x0a, 0x0d, 0x72, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x52, 0x65, 0x64,
+	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8,
+	0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0d, 0x72, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x78, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x18,
+	0x08, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x65, 0x78, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x12,
+	0x39, 0x0a, 0x09, 0x68, 0x76, 0x5f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x09, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73,
+	0x52, 0x08, 0x68, 0x76, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x40, 0x0a, 0x0c, 0x61, 0x73,
+	0x73, 0x65, 0x74, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x73, 0x18, 0x0a, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x0b, 0x61, 0x73, 0x73, 0x65, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x14,
+	0x6c, 0x61, 0x73, 0x74, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x5f, 0x76, 0x65, 0x5f, 0x68, 0x65,
+	0x69, 0x67, 0x68, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x03, 0x52, 0x11, 0x6c, 0x61, 0x73, 0x74,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x56, 0x65, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x4c, 0x0a,
+	0x0c, 0x73, 0x6c, 0x61, 0x73, 0x68, 0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x0c, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61,
+	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0b,
+	0x73, 0x6c, 0x61, 0x73, 0x68, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x2a, 0x0a, 0x11, 0x73,
+	0x6c, 0x61, 0x73, 0x68, 0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x18, 0x0d, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0f, 0x73, 0x6c, 0x61, 0x73, 0x68, 0x45, 0x76, 0x65,
+	0x6e, 0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x58, 0x0a, 0x10, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x73, 0x18, 0x0e, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x22, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01,
+	0x52, 0x0f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66, 0x6f,
+	0x73, 0x12, 0x5f, 0x0a, 0x16, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x75, 0x73, 0x65, 0x64, 0x5f, 0x73,
+	0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x5f, 0x6e, 0x6f, 0x6e, 0x63, 0x65, 0x18, 0x10, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x4e, 0x6f, 0x6e,
+	0x63, 0x65, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x13, 0x6c,
+	0x61, 0x73, 0x74, 0x55, 0x73, 0x65, 0x64, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x4e, 0x6f, 0x6e,
+	0x63, 0x65, 0x12, 0x5c, 0x0a, 0x11, 0x62, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x5f, 0x72,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x18, 0x11, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x10,
+	0x62, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73,
+	0x22, 0x68, 0x0a, 0x12, 0x4c, 0x61, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x32, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e,
+	0x67, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x70, 0x6f,
+	0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72,
+	0x3a, 0x08, 0x88, 0xa0, 0x1f, 0x00, 0xe8, 0xa0, 0x1f, 0x00, 0x42, 0xb4, 0x01, 0x0a, 0x16, 0x63,
+	0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58,
+	0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c,
+	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2080,20 +2969,30 @@ var file_zrchain_validation_genesis_proto_goTypes = []interface{}{
 	(*UnbondingDelegation)(nil), // 5: zrchain.validation.UnbondingDelegation
 	(*Redelegation)(nil),        // 6: zrchain.validation.Redelegation
 	(*HVParams)(nil),            // 7: zrchain.validation.HVParams
+	(*AssetData)(nil),           // 8: zrchain.validation.AssetData
+	(*SlashEvent)(nil),          // 9: zrchain.validation.SlashEvent
+	(*ValidationInfo)(nil),      // 10: zrchain.validation.ValidationInfo
+	(*SolanaNonce)(nil),         // 11: zrchain.validation.SolanaNonce
+	(*BackfillRequests)(nil),    // 12: zrchain.validation.BackfillRequests
 }
 var file_zrchain_validation_genesis_proto_depIdxs = []int32{
-	2, // 0: zrchain.validation.GenesisState.params:type_name -> zrchain.validation.Params
-	1, // 1: zrchain.validation.GenesisState.last_validator_powers:type_name -> zrchain.validation.LastValidatorPower
-	3, // 2: zrchain.validation.GenesisState.validators:type_name -> zrchain.validation.ValidatorHV
-	4, // 3: zrchain.validation.GenesisState.delegations:type_name -> zrchain.validation.Delegation
-	5, // 4: zrchain.validation.GenesisState.unbonding_delegations:type_name -> zrchain.validation.UnbondingDelegation
-	6, // 5: zrchain.validation.GenesisState.redelegations:type_name -> zrchain.validation.Redelegation
-	7, // 6: zrchain.validation.GenesisState.hv_params:type_name -> zrchain.validation.HVParams
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	2,  // 0: zrchain.validation.GenesisState.params:type_name -> zrchain.validation.Params
+	1,  // 1: zrchain.validation.GenesisState.last_validator_powers:type_name -> zrchain.validation.LastValidatorPower
+	3,  // 2: zrchain.validation.GenesisState.validators:type_name -> zrchain.validation.ValidatorHV
+	4,  // 3: zrchain.validation.GenesisState.delegations:type_name -> zrchain.validation.Delegation
+	5,  // 4: zrchain.validation.GenesisState.unbonding_delegations:type_name -> zrchain.validation.UnbondingDelegation
+	6,  // 5: zrchain.validation.GenesisState.redelegations:type_name -> zrchain.validation.Redelegation
+	7,  // 6: zrchain.validation.GenesisState.hv_params:type_name -> zrchain.validation.HVParams
+	8,  // 7: zrchain.validation.GenesisState.asset_prices:type_name -> zrchain.validation.AssetData
+	9,  // 8: zrchain.validation.GenesisState.slash_events:type_name -> zrchain.validation.SlashEvent
+	10, // 9: zrchain.validation.GenesisState.validation_infos:type_name -> zrchain.validation.ValidationInfo
+	11, // 10: zrchain.validation.GenesisState.last_used_solana_nonce:type_name -> zrchain.validation.SolanaNonce
+	12, // 11: zrchain.validation.GenesisState.backfill_requests:type_name -> zrchain.validation.BackfillRequests
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_validation_genesis_proto_init() }
@@ -2102,6 +3001,9 @@ func file_zrchain_validation_genesis_proto_init() {
 		return
 	}
 	file_zrchain_validation_staking_proto_init()
+	file_zrchain_validation_solana_proto_init()
+	file_zrchain_validation_tx_proto_init()
+	file_zrchain_validation_asset_data_proto_init()
 	file_zrchain_validation_hybrid_validation_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_zrchain_validation_genesis_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
