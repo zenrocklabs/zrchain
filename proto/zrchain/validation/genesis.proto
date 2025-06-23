@@ -11,6 +11,8 @@ import "zrchain/validation/asset_data.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
+import "api/sidecar_service.proto";
+import "zrchain/zenbtc/mint.proto";
 
 // GenesisState defines the staking module's genesis state.
 message GenesisState {
@@ -71,14 +73,36 @@ message GenesisState {
   repeated ValidationInfo validation_infos = 14
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  repeated api.BTCBlockHeader btc_block_headers = 15
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  
   repeated SolanaNonce last_used_solana_nonce = 16
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
-  repeated BackfillRequests backfill_requests = 17 
+  repeated BackfillRequests backfill_requests = 17
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
-  repeated BtcBlockHeaders btc_block_headers = 18
+  repeated zenbtc.NonceData last_used_ethereum_nonce = 18
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  repeated zenbtc.RequestedBitcoinHeaders requested_historical_bitcoin_headers = 19
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  repeated string avs_rewards_pool = 20
+      [ (amino.dont_omitempty) = true ];
+
+  repeated uint64 ethereum_nonce_requested = 21
+      [ (amino.dont_omitempty) = true ];
+
+  repeated uint64 solana_nonce_requested = 22
+      [ (amino.dont_omitempty) = true ];
+
+  repeated string solana_zentp_accounts_requested = 23
+      [ (amino.dont_omitempty) = true ];
+
+  repeated string solana_accounts_requested = 24
+      [ (amino.dont_omitempty) = true ];
+
 }
 
 // LastValidatorPower required for validator set update logic.

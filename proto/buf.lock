@@ -46,3 +46,13 @@ deps:
     repository: tendermint
     commit: 33ed361a90514289beabf3189e1d7665
     digest: shake256:038267e06294714fd883610626554b04a127b576b4e253befb4206cb72d5d3c1eeccacd4b9ec8e3fb891f7c14e1cb0f770c077d2989638995b0a61c85afedb1d
+  - remote: buf.build
+    owner: zenrock-foundation
+    repository: sidecar
+    commit: 4d5829f2f26f414cb9e3da8d36067902
+    digest: shake256:9adbe3942a465686bc86e378ef8ae419f199ad7f708ded605076aba00dd45fafca8ee215ff908ecb819c18736247b3ddc236bf7304aa430b9d1c653edecdbd56
+  - remote: buf.build
+    owner: zenrock-labs
+    repository: zenbtc
+    commit: 9392e9823f164b349a1e42d736aec1cf
+    digest: shake256:d56b236a6b793befb24014874844c343bab56e1f3eeba3a8b8aeec8718448b10b0eeff029d952113818d1dc4085e64486cbf2601c114524bb655850bf883d50d
