@@ -284,15 +284,100 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	assetPrices, err := k.GetAssetPrices(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	lastValidVeHeight, err := k.GetLastValidVeHeight(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	slashEvents, slashEventCount, err := k.GetSlashEvents(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	validationInfos, err := k.GetValidationInfos(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	btcBlockHeaders, err := k.GetBtcBlockHeaders(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	lastUsedSolanaNonce, err := k.GetLastUsedSolanaNonce(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	backfillRequests, err := k.GetBackfillRequests(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	lastUsedEthereumNonce, err := k.GetLastUsedEthereumNonce(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	requestedHistoricalBitcoinHeaders, err := k.GetRequestedHistoricalBitcoinHeaders(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	avsRewardsPool, err := k.GetAvsRewardsPool(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	ethereumNonceRequested, err := k.GetEthereumNonceRequested(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	solanaNonceRequested, err := k.GetSolanaNonceRequested(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	solanaAccountsRequested, err := k.GetSolanaAccountsRequested(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	solanaZenTPAccountsRequested, err := k.GetSolanaZenTPAccountsRequested(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:               types.Params(params),
-		LastTotalPower:       totalPower,
-		LastValidatorPowers:  lastValidatorPowers,
-		Validators:           allValidators,
-		Delegations:          delegations,
-		UnbondingDelegations: unbondingDelegations,
-		Redelegations:        redelegations,
-		Exported:             true,
-		HvParams:             &hvParams,
+		Params:                            types.Params(params),
+		LastTotalPower:                    totalPower,
+		LastValidatorPowers:               lastValidatorPowers,
+		Validators:                        allValidators,
+		Delegations:                       delegations,
+		UnbondingDelegations:              unbondingDelegations,
+		Redelegations:                     redelegations,
+		Exported:                          true,
+		HvParams:                          &hvParams,
+		AssetPrices:                       assetPrices,
+		LastValidVeHeight:                 lastValidVeHeight,
+		SlashEvents:                       slashEvents,
+		SlashEventCount:                   slashEventCount,
+		ValidationInfos:                   validationInfos,
+		BtcBlockHeaders:                   btcBlockHeaders,
+		LastUsedSolanaNonce:               lastUsedSolanaNonce,
+		BackfillRequests:                  backfillRequests,
+		LastUsedEthereumNonce:             lastUsedEthereumNonce,
+		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
+		AvsRewardsPool:                    avsRewardsPool,
+		EthereumNonceRequested:            ethereumNonceRequested,
+		SolanaNonceRequested:              solanaNonceRequested,
+		SolanaZentpAccountsRequested:      solanaZenTPAccountsRequested,
+		SolanaAccountsRequested:           solanaAccountsRequested,
 	}
 }
