@@ -147,11 +147,13 @@ service Query {
     option (google.api.http).get = "/cosmos/staking/v1beta1/params";
   }
 
+  // ValidatorPower queries the voting power of a validator.
   rpc ValidatorPower(QueryPowerRequest) returns (QueryPowerResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmos/staking/v1beta1/validator_power";
   }
 
+  // BackfillRequests queries the backfill requests.
   rpc QueryBackfillRequests(QueryBackfillRequestsRequest) returns (QueryBackfillRequestsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmos/validation/v1beta1/backfill_requests";

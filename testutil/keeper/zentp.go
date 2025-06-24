@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
+	zentptestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
@@ -33,17 +34,24 @@ func ZentpKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 
+	mockTreasuryKeeper := &zentptestutil.MockTreasuryKeeper{}
+	mockBankKeeper := &zentptestutil.MockBankKeeper{}
+	mockAccountKeeper := &zentptestutil.MockAccountKeeper{}
+	mockIdentityKeeper := &zentptestutil.MockIdentityKeeper{}
+	mockValidationKeeper := &zentptestutil.MockValidationKeeper{}
+	mockMintKeeper := &zentptestutil.MockMintKeeper{}
+
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		log.NewNopLogger(),
 		authority.String(),
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+		mockTreasuryKeeper,
+		mockBankKeeper,
+		mockAccountKeeper,
+		mockIdentityKeeper,
+		mockValidationKeeper,
+		mockMintKeeper,
 		nil,
 		true,
 	)

@@ -35,9 +35,11 @@ type (
 		identityKeeper   types.IdentityKeeper
 		validationKeeper types.ValidationKeeper
 		mintKeeper       types.MintKeeper
-		mintStore        collections.Map[uint64, types.Bridge]
+		mintStore        collections.Map[uint64, types.Bridge] // old mint store, required for migrating
+		MintStore        collections.Map[uint64, types.Bridge]
 		MintCount        collections.Item[uint64]
-		burnStore        collections.Map[uint64, types.Bridge]
+		burnStore        collections.Map[uint64, types.Bridge] // old burn store, required for migrating
+		BurnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
 		SolanaROCKSupply collections.Item[math.Int]
@@ -74,8 +76,8 @@ func NewKeeper(
 		cdc:              cdc,
 		storeService:     storeService,
 		memStoreService:  memStoreService,
-		mintStore:        collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
-		burnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		MintStore:        collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		BurnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
@@ -122,7 +124,7 @@ func (k Keeper) UserOwnsKey(goCtx context.Context, user string, key *treasuryTyp
 func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) ([]*types.Bridge, error) {
 	mints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
-		k.mintStore,
+		k.MintStore,
 		nil,
 		func(key uint64, value types.Bridge) (bool, error) {
 			return value.SourceAddress == address &&
@@ -142,7 +144,7 @@ func (k Keeper) GetMints(goCtx context.Context, address string, chainID string) 
 func (k Keeper) GetBurns(goCtx context.Context, address, chainID, txHash string) ([]*types.Bridge, error) {
 	burns, _, err := query.CollectionFilteredPaginate(
 		goCtx,
-		k.burnStore,
+		k.BurnStore,
 		nil,
 		func(key uint64, value types.Bridge) (bool, error) {
 			addressFilter := address == "" || address == value.RecipientAddress
@@ -176,7 +178,7 @@ func (k Keeper) GetNonceAuthorityKey(ctx context.Context) uint64 {
 func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeStatus) ([]*types.Bridge, error) {
 	mints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
-		k.mintStore,
+		k.MintStore,
 		nil,
 		func(key uint64, value types.Bridge) (bool, error) {
 			return value.State == status, nil
@@ -193,11 +195,11 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 }
 
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
-	return k.mintStore.Set(ctx, id, *mint)
+	return k.MintStore.Set(ctx, id, *mint)
 }
 
 func (k Keeper) UpdateBurn(ctx context.Context, id uint64, burn *types.Bridge) error {
-	return k.burnStore.Set(ctx, id, *burn)
+	return k.BurnStore.Set(ctx, id, *burn)
 }
 
 func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {
@@ -225,7 +227,7 @@ func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 		return err
 	}
 
-	return k.burnStore.Set(ctx, burnID, *burn)
+	return k.BurnStore.Set(ctx, burnID, *burn)
 }
 
 func (k Keeper) GetBridgeFeeParams(ctx context.Context) (sdk.AccAddress, math.LegacyDec, error) {

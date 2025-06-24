@@ -13,6 +13,8 @@ managed:
       - buf.build/cosmos/gogo-proto
       - buf.build/cosmos/cosmos-proto
     override:
+      buf.build/zenrock-labs/zenbtc: github.com/zenrocklabs/zenbtc/api
+      buf.build/zenrock-foundation/sidecar: github.com/Zenrock-Foundation/zrchain/v6/api
 plugins:
   - name: go-pulsar
     out: ./api

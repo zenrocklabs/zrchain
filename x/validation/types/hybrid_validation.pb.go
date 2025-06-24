@@ -167,6 +167,7 @@ func (m *HistoricalInfoHV) GetValset() []ValidatorHV {
 	return nil
 }
 
+// SlashEvent defines a slash event.
 type SlashEvent struct {
 	BlockHeight         int64                       `protobuf:"varint,1,opt,name=blockHeight,proto3" json:"blockHeight,omitempty"`
 	ValidatorAddr       string                      `protobuf:"bytes,2,opt,name=validatorAddr,proto3" json:"validatorAddr,omitempty"`
@@ -222,6 +223,7 @@ func (m *SlashEvent) GetValidatorAddr() string {
 	return ""
 }
 
+// HVParams defines the hybrid validation parameters.
 type HVParams struct {
 	AVSRewardsRate           cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=AVSRewardsRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"AVSRewardsRate"`
 	BlockTime                int64                       `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
@@ -283,6 +285,7 @@ func (m *HVParams) GetPriceRetentionBlockRange() int64 {
 	return 0
 }
 
+// ValidationInfo defines the validation info.
 type ValidationInfo struct {
 	NonVotingValidators      []string `protobuf:"bytes,1,rep,name=non_voting_validators,json=nonVotingValidators,proto3" json:"non_voting_validators,omitempty"`
 	MismatchedVoteExtensions []string `protobuf:"bytes,2,rep,name=mismatched_vote_extensions,json=mismatchedVoteExtensions,proto3" json:"mismatched_vote_extensions,omitempty"`

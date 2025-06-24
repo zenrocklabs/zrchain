@@ -108,6 +108,7 @@ message HistoricalInfoHV {
   ];
 }
 
+// SlashEvent defines a slash event.
 message SlashEvent {
   int64 blockHeight = 1;
   string validatorAddr = 2;
@@ -128,6 +129,7 @@ message SlashEvent {
   ];
 }
 
+// HVParams defines the hybrid validation parameters.
 message HVParams {
   string AVSRewardsRate = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -139,6 +141,7 @@ message HVParams {
   int64 priceRetentionBlockRange = 4;
 }
 
+// ValidationInfo defines the validation info.
 message ValidationInfo {
   repeated string non_voting_validators = 1;
   repeated string mismatched_vote_extensions = 2;

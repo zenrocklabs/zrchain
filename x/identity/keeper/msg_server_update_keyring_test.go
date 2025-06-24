@@ -6,27 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_UpdateKeyring(t *testing.T) {
-
-	var defaultKr = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		IsActive:    true,
-	}
-
-	var wantKr = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		IsActive:    true,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -42,7 +27,7 @@ func Test_msgServer_UpdateKeyring(t *testing.T) {
 		{
 			name: "PASS: change keyring description",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgUpdateKeyring("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "newDescription", true),
 			},
 			want: &types.MsgUpdateKeyringResponse{},
@@ -57,7 +42,7 @@ func Test_msgServer_UpdateKeyring(t *testing.T) {
 		{
 			name: "FAIL: keyring not found",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgUpdateKeyring("testCreator", "invalidKeyring", "newDescription", true),
 			},
 			want:    &types.MsgUpdateKeyringResponse{},
@@ -66,7 +51,7 @@ func Test_msgServer_UpdateKeyring(t *testing.T) {
 		{
 			name: "FAIL: creator no keyring admin",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgUpdateKeyring("noAdmin", "keyring1pfnq7r04rept47gaf5cpdew2", "newDescription", true),
 			},
 			want:    &types.MsgUpdateKeyringResponse{},
@@ -105,8 +90,14 @@ func Test_msgServer_UpdateKeyring(t *testing.T) {
 				},
 				msg: types.NewMsgUpdateKeyring("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "testDescription", true),
 			},
-			want:        &types.MsgUpdateKeyringResponse{},
-			wantKeyring: &wantKr,
+			want: &types.MsgUpdateKeyringResponse{},
+			wantKeyring: &types.Keyring{
+				Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
+				Creator:     "testCreator",
+				Description: "testDescription",
+				Admins:      []string{"testCreator"},
+				IsActive:    true,
+			},
 		},
 	}
 	for _, tt := range tests {

@@ -4107,6 +4107,7 @@ func (x *HistoricalInfoHV) GetValset() []*ValidatorHV {
 	return nil
 }
 
+// SlashEvent defines a slash event.
 type SlashEvent struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4174,6 +4175,7 @@ func (x *SlashEvent) GetTokensSlashedAVS() string {
 	return ""
 }
 
+// HVParams defines the hybrid validation parameters.
 type HVParams struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4233,6 +4235,7 @@ func (x *HVParams) GetPriceRetentionBlockRange() int64 {
 	return 0
 }
 
+// ValidationInfo defines the validation info.
 type ValidationInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

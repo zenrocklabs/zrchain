@@ -11,6 +11,8 @@ deps:
   - buf.build/cosmos/ibc
   - buf.build/cosmwasm/wasmd
   - buf.build/tendermint/tendermint
+  - buf.build/zenrock-foundation/sidecar
+  - buf.build/zenrock-labs/zenbtc
 lint:
   except:
     - UNARY_RPC

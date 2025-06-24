@@ -5,21 +5,12 @@ import (
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_KeyringByAddress(t *testing.T) {
-
-	var defaultKr = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		KeyReqFee:   0,
-		SigReqFee:   0,
-		IsActive:    true,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -34,7 +25,7 @@ func TestKeeper_KeyringByAddress(t *testing.T) {
 		{
 			name: "PASS: get a keyring by address",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				req: &types.QueryKeyringByAddressRequest{
 					KeyringAddr: "keyring1pfnq7r04rept47gaf5cpdew2",
 				},
@@ -53,7 +44,7 @@ func TestKeeper_KeyringByAddress(t *testing.T) {
 		{
 			name: "FAIL: keyring by address not found",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				req: &types.QueryKeyringByAddressRequest{
 					KeyringAddr: "noKeyringAddress",
 				},
@@ -64,7 +55,7 @@ func TestKeeper_KeyringByAddress(t *testing.T) {
 		{
 			name: "FAIL: invalid request",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				req:     nil,
 			},
 			want:    nil,

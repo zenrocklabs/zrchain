@@ -447,6 +447,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// SolanaNonce defines the nonce for a Solana account.
 type SolanaNonce struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
