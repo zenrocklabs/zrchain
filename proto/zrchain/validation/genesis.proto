@@ -73,33 +73,43 @@ message GenesisState {
   repeated ValidationInfo validation_infos = 14
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // btc_block_headers defines the Bitcoin block headers at genesis.
   repeated api.BTCBlockHeader btc_block_headers = 15
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-  
+
+  // last_used_solana_nonce defines the last used Solana nonce at genesis.
   repeated SolanaNonce last_used_solana_nonce = 16
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // backfill_requests defines the backfill requests at genesis.
   repeated BackfillRequests backfill_requests = 17
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // last_used_ethereum_nonce defines the last used Ethereum nonce at genesis.
   repeated zenbtc.NonceData last_used_ethereum_nonce = 18
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // requested_historical_bitcoin_headers defines the requested historical Bitcoin headers at genesis.
   repeated zenbtc.RequestedBitcoinHeaders requested_historical_bitcoin_headers = 19
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // avs_rewards_pool defines the AVS rewards pool at genesis.
   repeated string avs_rewards_pool = 20
       [ (amino.dont_omitempty) = true ];
-
+  
+  // ethereum_nonce_requested defines the Ethereum nonce requested at genesis.
   repeated uint64 ethereum_nonce_requested = 21
       [ (amino.dont_omitempty) = true ];
 
+  // solana_nonce_requested defines the Solana nonce requested at genesis.
   repeated uint64 solana_nonce_requested = 22
       [ (amino.dont_omitempty) = true ];
 
+  // solana_zentp_accounts_requested defines the Solana Zentp accounts requested at genesis.
   repeated string solana_zentp_accounts_requested = 23
       [ (amino.dont_omitempty) = true ];
 
+  // solana_accounts_requested defines the Solana accounts requested at genesis.
   repeated string solana_accounts_requested = 24
       [ (amino.dont_omitempty) = true ];
 

@@ -3807,17 +3807,27 @@ type GenesisState struct {
 	// slash_event_count defines the slash event count at genesis.
 	SlashEventCount uint64 `protobuf:"varint,13,opt,name=slash_event_count,json=slashEventCount,proto3" json:"slash_event_count,omitempty"`
 	// validation_infos defines the validation infos at genesis.
-	ValidationInfos                   []*ValidationInfo                 `protobuf:"bytes,14,rep,name=validation_infos,json=validationInfos,proto3" json:"validation_infos,omitempty"`
-	BtcBlockHeaders                   []*api.BTCBlockHeader             `protobuf:"bytes,15,rep,name=btc_block_headers,json=btcBlockHeaders,proto3" json:"btc_block_headers,omitempty"`
-	LastUsedSolanaNonce               []*SolanaNonce                    `protobuf:"bytes,16,rep,name=last_used_solana_nonce,json=lastUsedSolanaNonce,proto3" json:"last_used_solana_nonce,omitempty"`
-	BackfillRequests                  []*BackfillRequests               `protobuf:"bytes,17,rep,name=backfill_requests,json=backfillRequests,proto3" json:"backfill_requests,omitempty"`
-	LastUsedEthereumNonce             []*zenbtc.NonceData               `protobuf:"bytes,18,rep,name=last_used_ethereum_nonce,json=lastUsedEthereumNonce,proto3" json:"last_used_ethereum_nonce,omitempty"`
+	ValidationInfos []*ValidationInfo `protobuf:"bytes,14,rep,name=validation_infos,json=validationInfos,proto3" json:"validation_infos,omitempty"`
+	// btc_block_headers defines the Bitcoin block headers at genesis.
+	BtcBlockHeaders []*api.BTCBlockHeader `protobuf:"bytes,15,rep,name=btc_block_headers,json=btcBlockHeaders,proto3" json:"btc_block_headers,omitempty"`
+	// last_used_solana_nonce defines the last used Solana nonce at genesis.
+	LastUsedSolanaNonce []*SolanaNonce `protobuf:"bytes,16,rep,name=last_used_solana_nonce,json=lastUsedSolanaNonce,proto3" json:"last_used_solana_nonce,omitempty"`
+	// backfill_requests defines the backfill requests at genesis.
+	BackfillRequests []*BackfillRequests `protobuf:"bytes,17,rep,name=backfill_requests,json=backfillRequests,proto3" json:"backfill_requests,omitempty"`
+	// last_used_ethereum_nonce defines the last used Ethereum nonce at genesis.
+	LastUsedEthereumNonce []*zenbtc.NonceData `protobuf:"bytes,18,rep,name=last_used_ethereum_nonce,json=lastUsedEthereumNonce,proto3" json:"last_used_ethereum_nonce,omitempty"`
+	// requested_historical_bitcoin_headers defines the requested historical Bitcoin headers at genesis.
 	RequestedHistoricalBitcoinHeaders []*zenbtc.RequestedBitcoinHeaders `protobuf:"bytes,19,rep,name=requested_historical_bitcoin_headers,json=requestedHistoricalBitcoinHeaders,proto3" json:"requested_historical_bitcoin_headers,omitempty"`
-	AvsRewardsPool                    []string                          `protobuf:"bytes,20,rep,name=avs_rewards_pool,json=avsRewardsPool,proto3" json:"avs_rewards_pool,omitempty"`
-	EthereumNonceRequested            []uint64                          `protobuf:"varint,21,rep,packed,name=ethereum_nonce_requested,json=ethereumNonceRequested,proto3" json:"ethereum_nonce_requested,omitempty"`
-	SolanaNonceRequested              []uint64                          `protobuf:"varint,22,rep,packed,name=solana_nonce_requested,json=solanaNonceRequested,proto3" json:"solana_nonce_requested,omitempty"`
-	SolanaZentpAccountsRequested      []string                          `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty"`
-	SolanaAccountsRequested           []string                          `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty"`
+	// avs_rewards_pool defines the AVS rewards pool at genesis.
+	AvsRewardsPool []string `protobuf:"bytes,20,rep,name=avs_rewards_pool,json=avsRewardsPool,proto3" json:"avs_rewards_pool,omitempty"`
+	// ethereum_nonce_requested defines the Ethereum nonce requested at genesis.
+	EthereumNonceRequested []uint64 `protobuf:"varint,21,rep,packed,name=ethereum_nonce_requested,json=ethereumNonceRequested,proto3" json:"ethereum_nonce_requested,omitempty"`
+	// solana_nonce_requested defines the Solana nonce requested at genesis.
+	SolanaNonceRequested []uint64 `protobuf:"varint,22,rep,packed,name=solana_nonce_requested,json=solanaNonceRequested,proto3" json:"solana_nonce_requested,omitempty"`
+	// solana_zentp_accounts_requested defines the Solana Zentp accounts requested at genesis.
+	SolanaZentpAccountsRequested []string `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty"`
+	// solana_accounts_requested defines the Solana accounts requested at genesis.
+	SolanaAccountsRequested []string `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty"`
 }
 
 func (x *GenesisState) Reset() {

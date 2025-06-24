@@ -183,6 +183,90 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", notBondedBalance, notBondedCoins))
 	}
 
+	for _, assetPrice := range data.AssetPrices {
+		if err := k.AssetPrices.Set(ctx, assetPrice.Asset, assetPrice.PriceUSD); err != nil {
+			panic(err)
+		}
+	}
+
+	// TODO: check if this is correct
+	for _, btcBlockHeader := range data.BtcBlockHeaders {
+		if err := k.BtcBlockHeaders.Set(ctx, 0, btcBlockHeader); err != nil {
+			panic(err)
+		}
+	}
+
+	// TODO: check if this is correct
+	for _, solanaNonce := range data.LastUsedSolanaNonce {
+		k.SetSolanaRequestedNonce(ctx, uint64(solanaNonce.Nonce[0]), true)
+	}
+
+	for _, solanaZenTPAccount := range data.SolanaZentpAccountsRequested {
+		k.SetSolanaZenTPRequestedAccount(ctx, solanaZenTPAccount, true)
+	}
+
+	for _, solanaAccount := range data.SolanaAccountsRequested {
+		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
+	}
+
+	for _, backfillRequest := range data.BackfillRequests {
+		k.BackfillRequests.Set(ctx, backfillRequest)
+	}
+
+	for _, ethereumNonce := range data.LastUsedEthereumNonce {
+		k.EthereumNonceRequested.Set(ctx, ethereumNonce.Nonce, true)
+	}
+
+	for _, requestedHistoricalBitcoinHeader := range data.RequestedHistoricalBitcoinHeaders {
+		k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHistoricalBitcoinHeader)
+	}
+
+	// TODO: check if this is correct
+	for _, avsRewardPool := range data.AvsRewardsPool {
+		k.AVSRewardsPool.Set(ctx, avsRewardPool, math.NewInt(0))
+	}
+
+	for _, solanaNonce := range data.SolanaNonceRequested {
+		k.SolanaNonceRequested.Set(ctx, solanaNonce, true)
+	}
+
+	for _, ethereumNonce := range data.EthereumNonceRequested {
+		k.EthereumNonceRequested.Set(ctx, ethereumNonce, true)
+	}
+
+	for _, solanaZenTPAccount := range data.SolanaZentpAccountsRequested {
+		k.SetSolanaZenTPRequestedAccount(ctx, solanaZenTPAccount, true)
+	}
+
+	for _, solanaAccount := range data.SolanaAccountsRequested {
+		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
+	}
+
+	// TODO: check if this is correct
+	var slashEventCount uint64
+	for _, slashEvent := range data.SlashEvents {
+		k.SlashEvents.Set(ctx, slashEventCount, slashEvent)
+		slashEventCount++
+	}
+
+	err := k.SlashEventCount.Set(ctx, slashEventCount)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: check if this is correct
+	for i, validationInfo := range data.ValidationInfos {
+		k.ValidationInfos.Set(ctx, int64(i), validationInfo)
+	}
+
+	// TODO: check if this is correct
+	if data.LastValidVeHeight > 0 {
+		err = k.LastValidVEHeight.Set(ctx, data.LastValidVeHeight)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// don't need to run CometBFT updates if we exported
 	if data.Exported {
 		for _, lv := range data.LastValidatorPowers {
