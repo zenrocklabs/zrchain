@@ -2,6 +2,7 @@ package neutrino
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -30,6 +31,7 @@ func (ns *NeutrinoServer) ProxyGetLatestBlockHeader(chainName string) (*wire.Blo
 }
 
 func (ns *NeutrinoServer) ProxyGetBlockHeaderByHeight(chainName string, height int64) (*wire.BlockHeader, *chainhash.Hash, int32, error) {
+	fmt.Println("Call to ProxyGetBlockHeaderByHeight")
 	if ns.Proxy == nil {
 		return nil, nil, 0, nil
 	}
