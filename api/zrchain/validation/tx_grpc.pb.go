@@ -53,7 +53,10 @@ type MsgClient interface {
 	// parameters.
 	// Since: cosmos-sdk 0.47
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// UpdateHVParams defines an operation for updating the x/validation module
+	// parameters with Hybrid Validation parameters.
 	UpdateHVParams(ctx context.Context, in *MsgUpdateHVParams, opts ...grpc.CallOption) (*MsgUpdateHVParamsResponse, error)
+	// TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
 	TriggerEventBackfill(ctx context.Context, in *MsgTriggerEventBackfill, opts ...grpc.CallOption) (*MsgTriggerEventBackfillResponse, error)
 }
 
@@ -169,7 +172,10 @@ type MsgServer interface {
 	// parameters.
 	// Since: cosmos-sdk 0.47
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// UpdateHVParams defines an operation for updating the x/validation module
+	// parameters with Hybrid Validation parameters.
 	UpdateHVParams(context.Context, *MsgUpdateHVParams) (*MsgUpdateHVParamsResponse, error)
+	// TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
 	TriggerEventBackfill(context.Context, *MsgTriggerEventBackfill) (*MsgTriggerEventBackfillResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }

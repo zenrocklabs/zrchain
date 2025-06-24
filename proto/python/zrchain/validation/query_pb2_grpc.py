@@ -225,13 +225,15 @@ class QueryServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def ValidatorPower(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """ValidatorPower queries the voting power of a validator.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def QueryBackfillRequests(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """BackfillRequests queries the backfill requests.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
