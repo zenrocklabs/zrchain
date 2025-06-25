@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/big"
 	"os"
+	"slices"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -153,4 +155,72 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 		redemptions:      []api.Redemption{},
 		ethBurnEvents:    []api.BurnEvent{},
 	}
+}
+
+// resetStateForVersion ensures the state cache is wiped exactly once after upgrading to a
+// brand-new SidecarVersionName. It keeps a companion meta file (stateFile + ".meta") that
+// stores the last version the cache was written with. If the meta file is missing or the
+// version differs from the current one, the function deletes the cache file, writes the
+// updated meta, and returns true (indicating first boot for this version). Subsequent boots
+// for the same version leave the cache intact and return false.
+func resetStateForVersion(stateFile string) bool {
+	currentVersion := sidecartypes.SidecarVersionName
+	metaFile := stateFile + ".meta"
+
+	type meta struct {
+		Version string `json:"version"`
+	}
+
+	// Check if current version requires cache reset
+	requiresReset := slices.Contains(sidecartypes.VersionsRequiringCacheReset, currentVersion)
+
+	if !requiresReset {
+		// Current version doesn't require cache reset, just update meta file if needed
+		if f, err := os.Open(metaFile); err == nil {
+			defer f.Close()
+			var m meta
+			if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
+				// Meta already matches current version
+				return false
+			}
+		}
+
+		// Update meta file to current version without resetting cache
+		if f, err := os.Create(metaFile); err == nil {
+			json.NewEncoder(f).Encode(meta{Version: currentVersion})
+			f.Close()
+		}
+		return false
+	}
+
+	// Attempt to read existing meta file
+	if f, err := os.Open(metaFile); err == nil {
+		defer f.Close()
+		var m meta
+		if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
+			// Cache already corresponds to current version – no reset needed.
+			slog.Info("Cache is already aligned with current version", "version", currentVersion)
+			return false
+		}
+	}
+
+	// Either meta file missing or version mismatch → first boot for this version.
+	slog.Info("First boot detected for sidecar version requiring cache reset", "version", currentVersion)
+
+	// Remove state file if it exists.
+	if err := os.Remove(stateFile); err != nil && !os.IsNotExist(err) {
+		slog.Error("Failed to delete cache file during version reset", "file", stateFile, "error", err)
+	}
+
+	// Write new meta file with current version.
+	if f, err := os.Create(metaFile); err != nil {
+		slog.Error("Failed to create cache meta file", "file", metaFile, "error", err)
+	} else {
+		if err := json.NewEncoder(f).Encode(meta{Version: currentVersion}); err != nil {
+			slog.Error("Failed to write cache meta file", "file", metaFile, "error", err)
+		}
+		f.Close()
+	}
+
+	return true
 }
