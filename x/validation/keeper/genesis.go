@@ -189,7 +189,6 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		}
 	}
 
-	// TODO: check if this is correct
 	for _, btcBlockHeader := range data.BtcBlockHeaders {
 		if err := k.BtcBlockHeaders.Set(ctx, btcBlockHeader.BlockHeight, btcBlockHeader); err != nil {
 			panic(err)
@@ -197,9 +196,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	}
 
 	// TODO: check if this is correct
-	for _, solanaNonce := range data.LastUsedSolanaNonce {
-		k.SetSolanaRequestedNonce(ctx, uint64(solanaNonce.Nonce[0]), true)
-	}
+	k.SetSolanaRequestedNonce(ctx, k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey, true)
 
 	for _, solanaZenTPAccount := range data.SolanaZentpAccountsRequested {
 		k.SetSolanaZenTPRequestedAccount(ctx, solanaZenTPAccount, true)
@@ -223,7 +220,11 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 
 	// TODO: check if this is correct
 	for _, avsRewardPool := range data.AvsRewardsPool {
-		k.AVSRewardsPool.Set(ctx, avsRewardPool, math.NewInt(0))
+		amount, err := k.getCurrentRewards(sdk.UnwrapSDKContext(ctx), avsRewardPool)
+		if err != nil {
+			panic(err)
+		}
+		k.AVSRewardsPool.Set(ctx, avsRewardPool, amount)
 	}
 
 	for _, solanaNonce := range data.SolanaNonceRequested {
@@ -245,7 +246,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	// TODO: check if this is correct
 	var slashEventCount uint64
 	for _, slashEvent := range data.SlashEvents {
-		k.SlashEvents.Set(ctx, slashEventCount, slashEvent)
+		k.SlashEvents.Set(ctx, uint64(slashEvent.BlockHeight), slashEvent)
 		slashEventCount++
 	}
 
