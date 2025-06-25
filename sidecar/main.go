@@ -12,6 +12,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
@@ -49,6 +50,12 @@ func main() {
 	// Override default state file path if --cache-file flag is provided
 	if *cacheFile != "" {
 		cfg.StateFile = *cacheFile
+	}
+
+	// Reset state if version requires it – firstBoot will be true only once per version
+	firstBoot := resetStateForVersion(cfg.StateFile)
+	if firstBoot {
+		slog.Info("Completed first-boot cache reset for sidecar version", "version", sidecartypes.SidecarVersionName)
 	}
 
 	// Set Neutrino port from flag or config
