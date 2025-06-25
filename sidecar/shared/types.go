@@ -103,7 +103,11 @@ var (
 	SolanaEventFetchMaxRetries = 10
 	SolanaEventFetchRetrySleep = 250 * time.Millisecond
 
-	SidecarVersionName = "strawberry_moon"
+	SidecarVersionName = "rose_moon"
+
+	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
+	// This protects against subtle state incompatibilities after major upgrades.
+	VersionsRequiringCacheReset = []string{"rose_moon"}
 )
 
 // PriceFeed struct with fields for different price feeds
