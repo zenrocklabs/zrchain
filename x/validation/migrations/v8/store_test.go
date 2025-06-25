@@ -49,10 +49,31 @@ func TestMigrate(t *testing.T) {
 		BlockHash:  "0000000000000000000000000000000000000000000000000000000000000002",
 	})
 	require.NoError(t, err)
-	require.NoError(t, v8.UpdateBtcBlockHeaders(ctx, btcBlockHeaders))
+
+	validationInfo := collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc))
+	err = validationInfo.Set(ctx, 1, types.ValidationInfo{
+		NonVotingValidators:      []string{"validator1"},
+		MismatchedVoteExtensions: []string{"validator2"},
+		BlockHeight:              1,
+	})
+	require.NoError(t, err)
+
+	err = validationInfo.Set(ctx, 2, types.ValidationInfo{
+		NonVotingValidators:      []string{"validator3"},
+		MismatchedVoteExtensions: []string{"validator4"},
+		BlockHeight:              2,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, v8.UpdateBtcBlockHeaders(ctx, btcBlockHeaders, validationInfo))
 
 	btcBlockHeaders.Walk(ctx, nil, func(key int64, value api.BTCBlockHeader) (stop bool, err error) {
 		require.Equal(t, key, value.BlockHeight)
+		return false, nil
+	})
+
+	validationInfo.Walk(ctx, nil, func(key int64, value types.ValidationInfo) (stop bool, err error) {
+		require.Equal(t, uint64(key), value.BlockHeight)
 		return false, nil
 	})
 }

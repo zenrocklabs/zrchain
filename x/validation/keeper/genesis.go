@@ -256,11 +256,10 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	}
 
 	// TODO: check if this is correct
-	for i, validationInfo := range data.ValidationInfos {
-		k.ValidationInfos.Set(ctx, int64(i), validationInfo)
+	for _, validationInfo := range data.ValidationInfos {
+		k.ValidationInfos.Set(ctx, int64(validationInfo.BlockHeight), validationInfo)
 	}
 
-	// TODO: check if this is correct
 	if data.LastValidVeHeight > 0 {
 		err = k.LastValidVEHeight.Set(ctx, data.LastValidVeHeight)
 		if err != nil {

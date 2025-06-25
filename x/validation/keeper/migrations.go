@@ -64,5 +64,5 @@ func (m Migrator) Migrate6to7(ctx sdk.Context) error {
 }
 
 func (m Migrator) Migrate7to8(ctx sdk.Context) error {
-	return v8.UpdateBtcBlockHeaders(ctx, m.keeper.BtcBlockHeaders)
+	return v8.UpdateBtcBlockHeaders(ctx, m.keeper.BtcBlockHeaders, m.keeper.ValidationInfos)
 }

@@ -145,4 +145,5 @@ message HVParams {
 message ValidationInfo {
   repeated string non_voting_validators = 1;
   repeated string mismatched_vote_extensions = 2;
+  uint64 block_height = 3;
 }

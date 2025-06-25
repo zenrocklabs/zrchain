@@ -29,9 +29,6 @@ func (k *Keeper) ExportState(ctx sdk.Context, genState *types.GenesisState) erro
 		return err
 	}
 	genState.SolanaRockSupply = solanaRockSupply.Uint64()
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
