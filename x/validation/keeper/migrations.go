@@ -12,6 +12,7 @@ import (
 
 	v6 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v6"
 	v7 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v7"
+	v8 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v8"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -60,4 +61,8 @@ func (m Migrator) Migrate5to6(ctx sdk.Context) error {
 // Migrate6to7 migrates x/staking state from consensus version 6 to 7.
 func (m Migrator) Migrate6to7(ctx sdk.Context) error {
 	return v7.UpdateParams(ctx, m.keeper.HVParams)
+}
+
+func (m Migrator) Migrate7to8(ctx sdk.Context) error {
+	return v8.UpdateBtcBlockHeaders(ctx, m.keeper.BtcBlockHeaders)
 }

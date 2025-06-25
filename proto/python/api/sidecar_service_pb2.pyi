@@ -42,7 +42,7 @@ class BitcoinBlockHeaderResponse(_message.Message):
     def __init__(self, blockHeader: _Optional[_Union[BTCBlockHeader, _Mapping]] = ..., BlockHeight: _Optional[int] = ..., TipHeight: _Optional[int] = ...) -> None: ...
 
 class BTCBlockHeader(_message.Message):
-    __slots__ = ("Version", "PrevBlock", "MerkleRoot", "TimeStamp", "Bits", "Nonce", "BlockHash")
+    __slots__ = ("Version", "PrevBlock", "MerkleRoot", "TimeStamp", "Bits", "Nonce", "BlockHash", "block_height")
     VERSION_FIELD_NUMBER: _ClassVar[int]
     PREVBLOCK_FIELD_NUMBER: _ClassVar[int]
     MERKLEROOT_FIELD_NUMBER: _ClassVar[int]
@@ -50,6 +50,7 @@ class BTCBlockHeader(_message.Message):
     BITS_FIELD_NUMBER: _ClassVar[int]
     NONCE_FIELD_NUMBER: _ClassVar[int]
     BLOCKHASH_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     Version: int
     PrevBlock: str
     MerkleRoot: str
@@ -57,7 +58,8 @@ class BTCBlockHeader(_message.Message):
     Bits: int
     Nonce: int
     BlockHash: str
-    def __init__(self, Version: _Optional[int] = ..., PrevBlock: _Optional[str] = ..., MerkleRoot: _Optional[str] = ..., TimeStamp: _Optional[int] = ..., Bits: _Optional[int] = ..., Nonce: _Optional[int] = ..., BlockHash: _Optional[str] = ...) -> None: ...
+    block_height: int
+    def __init__(self, Version: _Optional[int] = ..., PrevBlock: _Optional[str] = ..., MerkleRoot: _Optional[str] = ..., TimeStamp: _Optional[int] = ..., Bits: _Optional[int] = ..., Nonce: _Optional[int] = ..., BlockHash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
 
 class Redemption(_message.Message):
     __slots__ = ("id", "destination_address", "amount")

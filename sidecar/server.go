@@ -101,13 +101,14 @@ func (s *oracleService) GetBitcoinBlockHeaderByHeight(ctx context.Context, req *
 	}
 
 	bh := &api.BTCBlockHeader{
-		Version:    int64(blockheader.Version),
-		PrevBlock:  blockheader.PrevBlock.String(),
-		MerkleRoot: blockheader.MerkleRoot.String(),
-		TimeStamp:  blockheader.Timestamp.Unix(),
-		Bits:       int64(blockheader.Bits),
-		Nonce:      int64(blockheader.Nonce),
-		BlockHash:  blockhash.String(),
+		Version:     int64(blockheader.Version),
+		PrevBlock:   blockheader.PrevBlock.String(),
+		MerkleRoot:  blockheader.MerkleRoot.String(),
+		TimeStamp:   blockheader.Timestamp.Unix(),
+		Bits:        int64(blockheader.Bits),
+		Nonce:       int64(blockheader.Nonce),
+		BlockHash:   blockhash.String(),
+		BlockHeight: req.BlockHeight,
 	}
 
 	return &api.BitcoinBlockHeaderResponse{
@@ -124,13 +125,14 @@ func (s *oracleService) GetLatestBitcoinBlockHeader(ctx context.Context, req *ap
 	}
 
 	bh := &api.BTCBlockHeader{
-		Version:    int64(blockheader.Version),
-		PrevBlock:  blockheader.PrevBlock.String(),
-		MerkleRoot: blockheader.MerkleRoot.String(),
-		TimeStamp:  blockheader.Timestamp.Unix(),
-		Bits:       int64(blockheader.Bits),
-		Nonce:      int64(blockheader.Nonce),
-		BlockHash:  blockhash.String(),
+		Version:     int64(blockheader.Version),
+		PrevBlock:   blockheader.PrevBlock.String(),
+		MerkleRoot:  blockheader.MerkleRoot.String(),
+		TimeStamp:   blockheader.Timestamp.Unix(),
+		Bits:        int64(blockheader.Bits),
+		Nonce:       int64(blockheader.Nonce),
+		BlockHash:   blockhash.String(),
+		BlockHeight: int64(tipHeight),
 	}
 
 	return &api.BitcoinBlockHeaderResponse{

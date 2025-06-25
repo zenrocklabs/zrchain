@@ -211,13 +211,14 @@ func (ns *NeutrinoServer) BlockHeaderByHeight(args *GetBlockHeaderByHeightArgs, 
 	}
 
 	bh := &api.BTCBlockHeader{
-		Version:    int64(blockheader.Version),
-		PrevBlock:  blockheader.PrevBlock.String(),
-		MerkleRoot: blockheader.MerkleRoot.String(),
-		TimeStamp:  blockheader.Timestamp.Unix(),
-		Bits:       int64(blockheader.Bits),
-		Nonce:      int64(blockheader.Nonce),
-		BlockHash:  blockhash.String(),
+		Version:     int64(blockheader.Version),
+		PrevBlock:   blockheader.PrevBlock.String(),
+		MerkleRoot:  blockheader.MerkleRoot.String(),
+		TimeStamp:   blockheader.Timestamp.Unix(),
+		Bits:        int64(blockheader.Bits),
+		Nonce:       int64(blockheader.Nonce),
+		BlockHash:   blockhash.String(),
+		BlockHeight: int64(height),
 	}
 
 	reply.BlockHeader = bh

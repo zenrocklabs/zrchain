@@ -191,7 +191,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 
 	// TODO: check if this is correct
 	for _, btcBlockHeader := range data.BtcBlockHeaders {
-		if err := k.BtcBlockHeaders.Set(ctx, 0, btcBlockHeader); err != nil {
+		if err := k.BtcBlockHeaders.Set(ctx, btcBlockHeader.BlockHeight, btcBlockHeader); err != nil {
 			panic(err)
 		}
 	}
