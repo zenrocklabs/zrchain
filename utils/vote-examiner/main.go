@@ -57,15 +57,16 @@ func main() {
 	fmt.Printf("Using %s network (%s)\n", config.Network, config.RPCNode)
 
 	// Get validator information
-	addrToMoniker, err := buildValidatorMappings(config.RPCNode)
+	addrToMoniker, addrToValoper, err := buildValidatorMappings(config.RPCNode)
 	if err != nil {
 		fmt.Printf("Warning: Failed to get validator information: %v\n", err)
 		fmt.Println("Proceeding without validator names.")
 		addrToMoniker = make(map[string]string)
+		addrToValoper = make(map[string]string)
 	}
 
 	if config.ConsensusReportMode {
-		err := processConsensusReport(config, addrToMoniker)
+		err := processConsensusReport(config, addrToMoniker, addrToValoper)
 		if err != nil {
 			fmt.Printf("Error generating consensus report: %v\n", err)
 			return
@@ -79,7 +80,7 @@ func main() {
 		}
 
 		// Process block data for vote extension mode
-		processBlockData(blockData, addrToMoniker, config.MissingOnly)
+		processBlockData(blockData, addrToMoniker, addrToValoper, config.MissingOnly)
 	}
 }
 
@@ -160,14 +161,14 @@ func getBlockData(config Config) (*BlockData, error) {
 }
 
 // processBlockData analyzes the block data and displays results
-func processBlockData(blockData *BlockData, addrToMoniker map[string]string, missingOnly bool) {
+func processBlockData(blockData *BlockData, addrToMoniker map[string]string, addrToValoper map[string]string, missingOnly bool) {
 	if len(blockData.ConsensusData.Votes) == 0 {
 		fmt.Println("No votes found in block data")
 		return
 	}
 
 	// Calculate statistics
-	validators, allExtensions := processVotes(blockData.ConsensusData.Votes, addrToMoniker, missingOnly)
+	validators, allExtensions := processVotes(blockData.ConsensusData.Votes, addrToMoniker, addrToValoper, missingOnly)
 	stats := calculateStats(validators)
 
 	// Display participation stats
@@ -187,7 +188,7 @@ func processBlockData(blockData *BlockData, addrToMoniker map[string]string, mis
 }
 
 // processVotes processes all votes and returns validator information
-func processVotes(votes []ConsensusVote, addrToMoniker map[string]string, missingOnly bool) ([]ValidatorInfo, []map[string]any) {
+func processVotes(votes []ConsensusVote, addrToMoniker map[string]string, addrToValoper map[string]string, missingOnly bool) ([]ValidatorInfo, []map[string]any) {
 	validators := make([]ValidatorInfo, 0, len(votes))
 	allExtensions := make([]map[string]any, 0, len(votes))
 	validatorsWithExtensions := 0
@@ -202,10 +203,15 @@ func processVotes(votes []ConsensusVote, addrToMoniker map[string]string, missin
 		// Decode the validator address
 		decodedAddr := decodeValidatorAddress(vote.Validator.Address)
 
-		// Get moniker for this validator
+		// Get moniker and valoper for this validator
 		moniker := addrToMoniker[decodedAddr]
 		if moniker == "" {
 			moniker = "Unknown"
+		}
+
+		valoperAddr := addrToValoper[decodedAddr]
+		if valoperAddr == "" {
+			valoperAddr = "Unknown"
 		}
 
 		validatorInfo := ValidatorInfo{
@@ -215,13 +221,14 @@ func processVotes(votes []ConsensusVote, addrToMoniker map[string]string, missin
 			HasVote:     false,
 			DecodedAddr: decodedAddr,
 			Moniker:     moniker,
+			ValoperAddr: valoperAddr,
 		}
 
 		totalVotingPower += vote.Validator.Power
 
 		// Print validator info if not in missing-only mode
 		if !missingOnly {
-			fmt.Printf("\n=== Validator %s (%s) (Power: %d) ===\n", decodedAddr, moniker, vote.Validator.Power)
+			fmt.Printf("\n=== Validator %s | %s (%s) (Power: %d) ===\n", decodedAddr, valoperAddr, moniker, vote.Validator.Power)
 		}
 
 		// Process vote extension
@@ -345,50 +352,57 @@ func printMissingValidators(validators []ValidatorInfo, totalVotingPower int) {
 		float64(totalMissingPower)/float64(totalVotingPower)*100)
 
 	for i, v := range missingValidators {
-		fmt.Printf("%3d. %s (%s) (Power: %d)\n", i+1, v.DecodedAddr, v.Moniker, v.Power)
+		fmt.Printf("%3d. %s | %s (%s) (Power: %d)\n", i+1, v.DecodedAddr, v.ValoperAddr, v.Moniker, v.Power)
 	}
 }
 
 // buildValidatorMappings builds a mapping from bech32 consensus address to moniker
-func buildValidatorMappings(rpcNode string) (map[string]string, error) {
+func buildValidatorMappings(rpcNode string) (map[string]string, map[string]string, error) {
 	addressToMoniker := make(map[string]string)
+	addressToValoper := make(map[string]string)
 
 	// Get validator set data
 	valSetOutput, err := execCommand("bash", "-c",
 		fmt.Sprintf("zenrockd --node=%s q consensus comet validator-set", rpcNode))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get validator set: %v", err)
+		return nil, nil, fmt.Errorf("failed to get validator set: %v", err)
 	}
 
 	// Get validators with monikers
 	validatorsOutput, err := execCommand("bash", "-c",
 		fmt.Sprintf("zenrockd --node=%s q validation validators", rpcNode))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get validators: %v", err)
+		return nil, nil, fmt.Errorf("failed to get validators: %v", err)
 	}
 
 	// Parse responses
 	var valSetResp ValidatorSetResponse
 	if err := yaml.Unmarshal(valSetOutput, &valSetResp); err != nil {
-		return nil, fmt.Errorf("failed to parse validator set: %v", err)
+		return nil, nil, fmt.Errorf("failed to parse validator set: %v", err)
 	}
 
 	var validatorsResp ValidatorsResponse
 	if err := yaml.Unmarshal(validatorsOutput, &validatorsResp); err != nil {
-		return nil, fmt.Errorf("failed to parse validators: %v", err)
+		return nil, nil, fmt.Errorf("failed to parse validators: %v", err)
 	}
 
-	// Build pubkey to moniker mapping
+	// Build pubkey to moniker and valoper mapping
 	pubkeyToMoniker := make(map[string]string)
+	pubkeyToValoper := make(map[string]string)
 	for _, val := range validatorsResp.Validators {
 		pubkeyToMoniker[val.ConsensusPublicKey.Value] = val.Description.Moniker
+		pubkeyToValoper[val.ConsensusPublicKey.Value] = val.OperatorAddress
 	}
 
 	// Build address to moniker mapping
 	for _, val := range valSetResp.Validators {
+		valoper := pubkeyToValoper[val.PubKey.Value]
 		if moniker, ok := pubkeyToMoniker[val.PubKey.Value]; ok {
 			if strings.HasPrefix(val.Address, "zenvalcons") {
 				addressToMoniker[val.Address] = moniker
+				if valoper != "" {
+					addressToValoper[val.Address] = valoper
+				}
 			} else {
 				fmt.Printf("Warning (buildValidatorMappings): validator address %s from validator-set does not have expected prefix. Moniker will not be mapped.\n", val.Address)
 			}
@@ -396,7 +410,7 @@ func buildValidatorMappings(rpcNode string) (map[string]string, error) {
 	}
 
 	fmt.Printf("Found %d validators with monikers\n", len(addressToMoniker))
-	return addressToMoniker, nil
+	return addressToMoniker, addressToValoper, nil
 }
 
 // execCommand is a helper to execute commands and capture output
@@ -629,13 +643,13 @@ func printValueDifferences(valueMap map[string][]ValidatorInfo, allValidators []
 			if !v.HasVote {
 				tag = " (no vote)"
 			}
-			fmt.Printf("    %3d. %s (%s) (power: %d)%s\n", j+1, v.DecodedAddr, v.Moniker, v.Power, tag)
+			fmt.Printf("    %3d. %s | %s (%s) (power: %d)%s\n", j+1, v.DecodedAddr, v.ValoperAddr, v.Moniker, v.Power, tag)
 		}
 		fmt.Println()
 	}
 }
 
-func processConsensusReport(config Config, addrToMoniker map[string]string) error {
+func processConsensusReport(config Config, addrToMoniker map[string]string, addrToValoper map[string]string) error {
 	var targetHeight int64
 	var err error
 	originalRequestedHeight := config.BlockHeight // Keep track of what user asked for
@@ -726,7 +740,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 	}
 
 	// Process data
-	reportData, err := analyzeConsensusData(targetHeight, blockResp, nextBlockResp, validatorsResp, addrToMoniker, config)
+	reportData, err := analyzeConsensusData(targetHeight, blockResp, nextBlockResp, validatorsResp, addrToMoniker, addrToValoper, config)
 	if err != nil {
 		return fmt.Errorf("failed to analyze consensus data: %v", err)
 	}
@@ -738,7 +752,7 @@ func processConsensusReport(config Config, addrToMoniker map[string]string) erro
 }
 
 // analyzeConsensusData processes fetched data and builds the report structure
-func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string, config Config) (*ConsensusReportData, error) {
+func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock RPCBlockResponse, rpcValidators RPCValidatorsResponse, addrToMoniker map[string]string, addrToValoper map[string]string, config Config) (*ConsensusReportData, error) {
 	proposerHexAddr := currentBlock.Result.Block.Header.ProposerAddress
 	proposerBech32AddrForLookup, err := hexAddressToBech32ConsensusAddress(proposerHexAddr)
 	var proposerMoniker string
@@ -780,8 +794,15 @@ func analyzeConsensusData(height int64, currentBlock RPCBlockResponse, nextBlock
 		if moniker == "" {
 			moniker = "Unknown"
 		}
+
+		valoper := addrToValoper[valBech32Addr]
+		if valoper == "" {
+			valoper = "Unknown"
+		}
+
 		activeValidators[valHexAddr] = ValidatorVoteInfo{ // Key activeValidators map with original HEX for direct mapping from signatures
-			Address:     valBech32Addr, // Store and display Bech32 address
+			Address:     valBech32Addr, // Bech32 cons address
+			ValoperAddr: valoper,
 			Moniker:     moniker,
 			VotingPower: votingPower,
 		}
@@ -927,7 +948,7 @@ func printConsensusReport(report *ConsensusReportData) {
 	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", report.AgreedVotingPower, report.TotalVotingPower, agreementPowerPercentage)
 	if len(report.AgreedValidators) > 0 {
 		for i, v := range report.AgreedValidators {
-			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+			fmt.Printf("%3d. %s | %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.ValoperAddr, v.Moniker, v.VotingPower)
 		}
 	} else {
 		fmt.Println("No validators explicitly cast a COMMIT vote for this block hash.")
@@ -951,7 +972,7 @@ func printConsensusReport(report *ConsensusReportData) {
 	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", nilVotingPower, report.TotalVotingPower, powerNilPercentage)
 	if len(report.VotedNilValidators) > 0 {
 		for i, v := range report.VotedNilValidators {
-			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+			fmt.Printf("%3d. %s | %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.ValoperAddr, v.Moniker, v.VotingPower)
 		}
 	} else {
 		fmt.Println("No validators explicitly voted NIL (based on found signatures).")
@@ -975,7 +996,7 @@ func printConsensusReport(report *ConsensusReportData) {
 	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", absentVotingPower, report.TotalVotingPower, powerAbsentPercentage)
 	if len(report.AbsentValidators) > 0 {
 		for i, v := range report.AbsentValidators {
-			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+			fmt.Printf("%3d. %s | %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.ValoperAddr, v.Moniker, v.VotingPower)
 		}
 	} else {
 		fmt.Println("No validators were recorded with an <ABSENT> status (vote not received).")
@@ -999,7 +1020,7 @@ func printConsensusReport(report *ConsensusReportData) {
 	fmt.Printf("  Voting Power:    %d/%d (%.2f%% of total)\n", missingSignatureVotingPower, report.TotalVotingPower, powerMissingPercentage)
 	if len(report.MissingSignatureValidators) > 0 {
 		for i, v := range report.MissingSignatureValidators {
-			fmt.Printf("%3d. %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.Moniker, v.VotingPower)
+			fmt.Printf("%3d. %s | %s (%s) (Voting Power: %d)\n", i+1, v.Address, v.ValoperAddr, v.Moniker, v.VotingPower)
 		}
 	} else {
 		fmt.Println("All validators in the active set had a signature in the commit data (either COMMIT, NIL, or ABSENT).")
