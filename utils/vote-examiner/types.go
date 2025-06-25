@@ -31,6 +31,7 @@ type ValidatorInfo struct {
 	HasVote     bool
 	DecodedAddr string
 	Moniker     string
+	ValoperAddr string
 }
 
 // ValidatorSetEntry represents a validator in the validator set
@@ -55,6 +56,7 @@ type ValidatorSetResponse struct {
 
 // ValidatorEntry represents a validator in the validators query
 type ValidatorEntry struct {
+	OperatorAddress    string `yaml:"operator_address"`
 	ConsensusPublicKey struct {
 		Type  string `yaml:"type"`
 		Value string `yaml:"value"`
@@ -163,6 +165,7 @@ type ConsensusReportData struct {
 // ValidatorVoteInfo stores validator info for the consensus report
 type ValidatorVoteInfo struct {
 	Address     string
+	ValoperAddr string
 	Moniker     string
 	VotingPower int64
 }
