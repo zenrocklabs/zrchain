@@ -49,8 +49,8 @@ deps:
   - remote: buf.build
     owner: zenrock-foundation
     repository: sidecar
-    commit: 4d5829f2f26f414cb9e3da8d36067902
-    digest: shake256:9adbe3942a465686bc86e378ef8ae419f199ad7f708ded605076aba00dd45fafca8ee215ff908ecb819c18736247b3ddc236bf7304aa430b9d1c653edecdbd56
+    commit: 1fe2932e997744b891e3659435f3fee8
+    digest: shake256:ed7e754489d33f65c59924ab86fccbca70086475342bdfe3a193f9c6b78954b0fbc3ef01fb58af5e3be2a4e3a5d8e42bb00245c675146409b6a970d529e64114
   - remote: buf.build
     owner: zenrock-labs
     repository: zenbtc

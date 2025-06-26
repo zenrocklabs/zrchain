@@ -15,6 +15,7 @@ import (
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtestutil "github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec/address"
@@ -110,9 +111,22 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	accountKeeper.EXPECT().GetModuleAddress(validationtypes.BondedPoolName).Return(bondedAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAddress(validationtypes.NotBondedPoolName).Return(notBondedAcc.GetAddress())
 	accountKeeper.EXPECT().AddressCodec().Return(address.NewBech32Codec("zen")).AnyTimes()
+	accountKeeper.EXPECT().GetModuleAccount(ctx, "bonded_tokens_pool").Return(bondedAcc).AnyTimes()
+	accountKeeper.EXPECT().GetModuleAccount(ctx, "not_bonded_tokens_pool").Return(notBondedAcc).AnyTimes()
+	accountKeeper.EXPECT().SetModuleAccount(ctx, bondedAcc).AnyTimes()
+	accountKeeper.EXPECT().SetModuleAccount(ctx, notBondedAcc).AnyTimes()
 
 	bankKeeper := validationtestutil.NewMockBankKeeper(ctrl)
+	// Return the correct bonded pool balance that matches the validator tokens in TestGenesis
+	bondDenom := validationtypes.DefaultParams().BondDenom
+	bankKeeper.EXPECT().GetAllBalances(ctx, bondedAcc.GetAddress()).Return(
+		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewInt(125000000000000))),
+	).AnyTimes()
+	bankKeeper.EXPECT().GetAllBalances(ctx, notBondedAcc.GetAddress()).Return(sdk.NewCoins()).AnyTimes()
+
 	zentpKeeper := validationtestutil.NewMockZentpKeeper(ctrl)
+	zentpKeeper.EXPECT().GetSolanaParams(ctx).Return(&zentptypes.Solana{NonceAccountKey: 123}).AnyTimes()
+
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	keeper := validationkeeper.NewKeeper(
@@ -333,4 +347,12 @@ func (s *ValidationKeeperTestSuite) TestHooks() {
 		require.NotNil(hooks)
 		require.Equal(test.expHooks, hooks)
 	}
+}
+
+func (s *ValidationKeeperTestSuite) TestExportGenesis() {
+	ctx, keeper := s.ctx, s.validationKeeper
+	require := s.Require()
+
+	genesisState := keeper.ExportGenesis(ctx)
+	require.NotNil(genesisState)
 }

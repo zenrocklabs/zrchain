@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -304,7 +305,15 @@ func (k Keeper) GetAssetPrices(ctx context.Context) ([]*types.AssetData, error) 
 }
 
 func (k Keeper) GetLastValidVeHeight(ctx context.Context) (int64, error) {
-	return k.LastValidVEHeight.Get(ctx)
+	lastValidVeHeight, err := k.LastValidVEHeight.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return 0 when the collection is empty
+			return 0, nil
+		}
+		return 0, err
+	}
+	return lastValidVeHeight, nil
 }
 
 func (k Keeper) GetSlashEvents(ctx context.Context) ([]types.SlashEvent, uint64, error) {
@@ -405,6 +414,10 @@ func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) ([]types.SolanaNonce
 func (k Keeper) GetBackfillRequests(ctx context.Context) ([]types.BackfillRequests, error) {
 	backfillRequests, err := k.BackfillRequests.Get(ctx)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return empty BackfillRequests when the collection is empty
+			return []types.BackfillRequests{{}}, nil
+		}
 		return nil, err
 	}
 
@@ -437,6 +450,10 @@ func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) ([]zenbtctypes.Non
 func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) ([]zenbtctypes.RequestedBitcoinHeaders, error) {
 	requestedHistoricalBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return empty RequestedBitcoinHeaders when the collection is empty
+			return []zenbtctypes.RequestedBitcoinHeaders{{}}, nil
+		}
 		return nil, err
 	}
 
