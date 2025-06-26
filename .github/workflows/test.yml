@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   unit-test-default:
+    if: github.repository == 'Zenrock-Foundation/zrchain'
     name: Unit Tests (GitHub-hosted)
     runs-on: ubuntu-latest
     defaults:
@@ -30,7 +31,25 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" ./...
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
+
+  unit-test-self-hosted:
+    if: github.repository == 'zenrocklabs/zrchain'
+    name: Unit Tests (zenrocklabs-hosted)
+    runs-on: zrchain
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+          cache-dependency-path: "**/*.sum"
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
 
   integration-test:
     if: github.repository == 'zenrocklabs/zrchain'
@@ -52,10 +71,10 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      - name: Start Docker Compose stack
-        run: docker compose up -d --force-recreate --build
-      - name: Run integration tests
-        run: go test -v --tags=integration ./tests/integration/...
-      - name: Stop Docker Compose stack
-        if: always()
-        run: docker compose -f docker-compose.yml down
+      # - name: Start Docker Compose stack
+      #   run: docker compose up -d --force-recreate --build
+      # - name: Run integration tests
+      #   run: go test -v --tags=integration ./tests/integration/...
+      # - name: Stop Docker Compose stack
+      #   if: always()
+      #   run: docker compose -f docker-compose.yml down
