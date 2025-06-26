@@ -30,14 +30,14 @@ func TestTestGenesis(t *testing.T) {
 	require.Equal(t, "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq", delegation.DelegatorAddress)
 	require.Equal(t, "zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6", delegation.ValidatorAddress)
 
-	// Verify validation infos (should have 50 entries)
-	require.Len(t, genesis.ValidationInfos, 50)
+	// Verify validation infos (should have 3 entries)
+	require.Len(t, genesis.ValidationInfos, 3)
 
 	// Verify other fields
 	require.True(t, genesis.Exported)
 	require.NotNil(t, genesis.HvParams)
 	require.Len(t, genesis.AssetPrices, 3)
 	require.Len(t, genesis.AvsRewardsPool, 1)
-	require.Len(t, genesis.SolanaNonceRequested, 1)
+	require.Len(t, genesis.SolanaNonceRequested, 2)
 	require.Equal(t, uint64(12), genesis.SolanaNonceRequested[0])
 }

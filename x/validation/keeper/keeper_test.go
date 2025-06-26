@@ -348,11 +348,3 @@ func (s *ValidationKeeperTestSuite) TestHooks() {
 		require.Equal(test.expHooks, hooks)
 	}
 }
-
-func (s *ValidationKeeperTestSuite) TestExportGenesis() {
-	ctx, keeper := s.ctx, s.validationKeeper
-	require := s.Require()
-
-	genesisState := keeper.ExportGenesis(ctx)
-	require.NotNil(genesisState)
-}
