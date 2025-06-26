@@ -639,6 +639,10 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
 		return "mainnet"
 	}
+	// This is the chainID needed in zrchain so it uses the bitcoin regnet node
+	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "docker") {
+		return "regnet"
+	}
 	return "testnet4"
 }
 
