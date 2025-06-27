@@ -83,8 +83,8 @@ jobs:
           git clone git@github.com:zenrocklabs/zenrock-stack.git
           cd zenrock-stack
           docker compose up -d --force-recreate --build
-      - name: Wait for 30 seconds
-        run: sleep 30
+      - name: Wait for 60 seconds
+        run: sleep 60
       - name: Run integration tests
         run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
       # - name: Stop Docker Compose stack
