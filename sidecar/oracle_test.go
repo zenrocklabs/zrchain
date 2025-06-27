@@ -82,6 +82,9 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	// 1. Setup
 	oracle := &Oracle{}
 	oracle.Config.Network = sidecartypes.NetworkTestnet
+	// Initialize signature strings to empty (no previous processed signatures)
+	oracle.lastSolZenBTCBurnSigStr = ""
+	oracle.lastSolRockBurnSigStr = ""
 	oracle.currentState.Store(&sidecartypes.OracleState{
 		SolanaBurnEvents:        []api.BurnEvent{},
 		CleanedSolanaBurnEvents: make(map[string]bool),
