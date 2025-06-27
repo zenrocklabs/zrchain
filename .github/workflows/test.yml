@@ -67,6 +67,12 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
+      - name: Install ginkgo CLI
+        run: go install github.com/onsi/ginkgo/v2/ginkgo@latest
+      - name: Add Go bin to PATH
+        run: echo "$HOME/go/bin" >> $GITHUB_PATH
+      - name: ginkgo version
+        run: ginkgo version
       - name: Start zenrock stack services
         run: |
           rm -rf zenrock-stack
