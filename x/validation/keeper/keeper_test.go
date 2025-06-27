@@ -8,6 +8,7 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -29,6 +30,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 var (
@@ -129,6 +131,16 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
+	newctrl := ubermock.NewController(s.T())
+	zenBTCKeeper := validationtestutil.NewMockZenBTCKeeper(newctrl)
+	// Set up expectations for key ID methods that are called by getZenBTCKeyIDs
+	zenBTCKeeper.EXPECT().GetStakerKeyID(ctx).Return(uint64(1)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetEthMinterKeyID(ctx).Return(uint64(2)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetUnstakerKeyID(ctx).Return(uint64(3)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetCompleterKeyID(ctx).Return(uint64(4)).AnyTimes()
+	// Set up expectation for GetSolanaParams which is called by retrieveSolanaNonces
+	zenBTCKeeper.EXPECT().GetSolanaParams(ctx).Return(&zenbtctypes.Solana{NonceAccountKey: 456}).AnyTimes()
+
 	keeper := validationkeeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -138,12 +150,25 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		nil,
 		nil,
 		treasuryKeeper,
-		nil,
+		zenBTCKeeper,
 		zentpKeeper,
 		address.NewBech32Codec("zenvaloper"),
 		address.NewBech32Codec("zenvalcons"),
 	)
 	require.NoError(keeper.SetParams(ctx, validationtypes.DefaultParams()))
+
+	// Set up mock sidecar client
+	mockSidecarClient := validationtestutil.NewMocksidecarClient(ctrl)
+	keeper.SetSidecarClient(mockSidecarClient)
+
+	mockSidecarClient.EXPECT().GetSidecarState(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetSidecarStateByEthHeight(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetBitcoinBlockHeaderByHeight(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetLatestBitcoinBlockHeader(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+
+	mockSidecarClient.EXPECT().GetLatestEthereumNonceForAccount(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleNonceResponse, nil).AnyTimes()
+
+	mockSidecarClient.EXPECT().GetSolanaAccountInfo(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSolanaAccount, nil).AnyTimes()
 
 	s.ctx = ctx
 	s.validationKeeper = keeper

@@ -89,6 +89,7 @@ require (
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pkg/errors v0.9.1
+	go.uber.org/mock v0.4.0
 )
 
 require (
