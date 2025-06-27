@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"sync"
 	"testing"
 
@@ -9,7 +12,8 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go"
-	solanarpc "github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +30,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	}
 	ethClient, err := ethclient.Dial(rpcAddress)
 	require.NoError(t, err)
-	solanaClient := solanarpc.New(cfg.SolanaRPC[cfg.Network])
+	solanaClient := rpc.New(cfg.SolanaRPC[cfg.Network])
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	require.NoError(t, err)
 	oracle := NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, true, true)
@@ -145,4 +149,33 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 
 	require.True(t, foundPreExisting, "Pre-existing burn event was not preserved in the state")
 	require.True(t, foundNew, "New burn event was not added to the state")
+}
+
+func TestGetSolanaEvents_Fallback(t *testing.T) {
+	oracle := &Oracle{}
+	oracle.Config.Network = sidecartypes.NetworkTestnet
+
+	// Mock the RPC calls
+	oracle.rpcCallBatchFn = func(ctx context.Context, rpcs ...jsonrpc.RPCRequest) (jsonrpc.RPCResponses, error) {
+		return nil, errors.New("batch request failed")
+	}
+
+	mockTxResult, err := json.Marshal(&rpc.GetTransactionResult{})
+	require.NoError(t, err)
+
+	oracle.getTransactionFn = func(ctx context.Context, signature solana.Signature, opts *rpc.GetTransactionOpts) (*rpc.GetTransactionResult, error) {
+		return &rpc.GetTransactionResult{Json: mockTxResult}, nil
+	}
+
+	// Mock the processTransaction function to return a dummy event
+	processTransaction := func(txResult *rpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+		return []any{api.BurnEvent{TxID: sig.String()}}, nil
+	}
+
+	// Run the test
+	events, _, err := oracle.getSolanaEvents("11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction)
+
+	// Assertions
+	require.NoError(t, err)
+	require.Len(t, events, 0) // The mock getTransaction returns a result with no events, so this should be 0
 }

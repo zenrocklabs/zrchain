@@ -95,6 +95,8 @@ func NewOracle(
 	// Initialize the function fields with the real implementations
 	o.getSolanaZenBTCBurnEventsFn = o.getSolanaZenBTCBurnEvents
 	o.getSolanaRockBurnEventsFn = o.getSolanaRockBurnEvents
+	o.rpcCallBatchFn = o.solanaClient.RPCCallBatch
+	o.getTransactionFn = o.solanaClient.GetTransaction
 
 	return o
 }
@@ -1217,7 +1219,7 @@ func (o *Oracle) getSolanaEvents(
 		var err error
 		// Execute the batch request with retries
 		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
-			batchResponses, err = o.solanaClient.RPCCallBatch(context.Background(), batchRequests)
+			batchResponses, err = o.rpcCallBatchFn(context.Background(), batchRequests)
 			if err == nil {
 				// Quick check for any errors inside the response. If so, we'll retry the whole batch.
 				hasErrors := false
@@ -1243,10 +1245,37 @@ func (o *Oracle) getSolanaEvents(
 			}
 		}
 
+		// If the batch request failed after all retries, fall back to individual requests
 		if err != nil {
-			log.Printf("%s sub-batch GetTransaction failed after %d retries (signatures %d to %d): %v. Halting further fetches for this cycle.",
-				eventTypeName, sidecartypes.SolanaEventFetchMaxRetries, i, end-1, err)
-			break // Halt processing further batches in this cycle.
+			log.Printf("Batch request for %s failed after all retries. Falling back to individual requests.", eventTypeName)
+			for _, sigInfo := range currentBatchSignatures {
+				txResult, err := o.getTransactionFn(context.Background(), sigInfo.Signature, &solrpc.GetTransactionOpts{
+					Encoding:                       solana.EncodingBase64,
+					Commitment:                     solrpc.CommitmentConfirmed,
+					MaxSupportedTransactionVersion: &v0,
+				})
+				if err != nil {
+					log.Printf("Error in fallback GetTransaction for tx %s (%s): %v", sigInfo.Signature, eventTypeName, err)
+					continue
+				}
+				if txResult == nil {
+					log.Printf("Nil result in fallback GetTransaction for tx %s (%s)", sigInfo.Signature, eventTypeName)
+					continue
+				}
+
+				events, err := processTransaction(txResult, program, sigInfo.Signature, o.DebugMode)
+				if err != nil {
+					log.Printf("Failed to process events for tx %s (%s) in fallback, skipping. Error: %v", sigInfo.Signature, eventTypeName, err)
+					continue
+				}
+
+				if len(events) > 0 {
+					processedEvents = append(processedEvents, events...)
+				}
+				lastSuccessfullyProcessedSig = sigInfo.Signature
+				time.Sleep(sidecartypes.SolanaSleepInterval) // Rate limit individual requests
+			}
+			continue // Skip the rest of the loop for this batch
 		}
 
 		if end < len(newSignaturesToFetchDetails) {

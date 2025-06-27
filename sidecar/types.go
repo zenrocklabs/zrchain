@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	sol "github.com/gagliardetto/solana-go"
 	solana "github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
@@ -58,6 +60,8 @@ type Oracle struct {
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	rpcCallBatchFn              func(ctx context.Context, rpcs ...*jsonrpc.RPCRequest) (jsonrpc.RPCResponses, error)
+	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
 }
 
 type oracleStateUpdate struct {
