@@ -69,6 +69,7 @@ jobs:
           registries: ${{ secrets.ECR_REGISTRY }}
       - name: Start zenrock stack services
         run: |
+          rm -rf zenrock-stack
           git clone git@github.com:zenrocklabs/zenrock-stack.git
           cd zenrock-stack
           docker compose up -d --force-recreate --build
