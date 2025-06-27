@@ -97,6 +97,7 @@ func NewOracle(
 	o.getSolanaRockBurnEventsFn = o.getSolanaRockBurnEvents
 	o.rpcCallBatchFn = o.solanaClient.RPCCallBatch
 	o.getTransactionFn = o.solanaClient.GetTransaction
+	o.getSignaturesForAddressFn = o.solanaClient.GetSignaturesForAddressWithOpts
 
 	return o
 }
@@ -1138,7 +1139,7 @@ func (o *Oracle) getSolanaEvents(
 	}
 
 	// Fetch latest signatures for the program address
-	allSignatures, err := o.solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+	allSignatures, err := o.getSignaturesForAddressFn(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: solrpc.CommitmentConfirmed,
 	})

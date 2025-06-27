@@ -155,6 +155,16 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 
 	// Mock the RPC calls
+	oracle.getSignaturesForAddressFn = func(ctx context.Context, account solana.PublicKey, opts *rpc.GetSignaturesForAddressOpts) ([]*rpc.TransactionSignature, error) {
+		// Return one dummy signature to be processed
+		sig, _ := solana.SignatureFromBase58("3NeFkZ2FendD tins4bYxm9fEMpA9n1aWzD1yT4vBfH8FDSS18aA3A33sGTc32sW2N524n7J1P1B3a33")
+		return []*rpc.TransactionSignature{
+			{
+				Signature: sig,
+				Slot:      1,
+			},
+		}, nil
+	}
 	oracle.rpcCallBatchFn = func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error) {
 		return nil, errors.New("batch request failed")
 	}
@@ -182,6 +192,6 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 
 	// Assertions
 	require.NoError(t, err)
-	// The mock getTransaction returns a result with a dummy event, so we expect events
-	require.Greater(t, len(events), 0, "Expected events to be processed via fallback")
+	// The mock getTransaction returns a result with a dummy event, so we expect one event
+	require.Len(t, events, 1, "Expected one event to be processed via fallback")
 }
