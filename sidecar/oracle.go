@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"maps"
 	"math/big"
@@ -354,7 +353,7 @@ func (o *Oracle) fetchNetworkData(
 		defer wg.Done()
 		lamportsPerSignature, err := o.getSolanaLamportsPerSignature(ctx)
 		if err != nil {
-			log.Printf("Warning: getSolanaLamportsPerSignature failed: %v. Using potentially stale/default value.", err)
+			slog.Warn("getSolanaLamportsPerSignature failed. Using potentially stale/default value.", "error", err)
 		}
 		updateMutex.Lock()
 		update.solanaLamportsPerSignature = lamportsPerSignature
