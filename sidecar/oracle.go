@@ -509,24 +509,8 @@ func (o *Oracle) processSolanaMintEvents(
 		// Get current state to merge with new mint events
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-		// Create a map of existing events for quick lookup
-		existingMintEvents := make(map[string]bool)
-		for _, event := range currentState.SolanaMintEvents {
-			key := base64.StdEncoding.EncodeToString(event.SigHash)
-			existingMintEvents[key] = true
-		}
-
-		mergedMintEvents := make([]api.SolanaMintEvent, len(currentState.SolanaMintEvents))
-		copy(mergedMintEvents, currentState.SolanaMintEvents)
-
-		for _, event := range allNewEvents {
-			key := base64.StdEncoding.EncodeToString(event.SigHash)
-			if !existingMintEvents[key] {
-				if cleaned, exists := currentState.CleanedSolanaMintEvents[key]; !exists || !cleaned {
-					mergedMintEvents = append(mergedMintEvents, event)
-				}
-			}
-		}
+		// Use helper function to merge events
+		mergedMintEvents := mergeNewMintEvents(currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents, allNewEvents, "Solana mint")
 
 		updateMutex.Lock()
 		update.SolanaMintEvents = mergedMintEvents
@@ -607,31 +591,8 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Get current state to merge with new burn events
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-		// Create a map of existing events for quick lookup
-		existingBurnEvents := make(map[string]bool)
-		for _, event := range currentState.SolanaBurnEvents {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			existingBurnEvents[key] = true
-		}
-		// Also check against already cleaned events from the main state
-		for key := range currentState.CleanedSolanaBurnEvents {
-			existingBurnEvents[key] = true
-		}
-
-		// Start with the list of existing, unprocessed events
-		mergedBurnEvents := make([]api.BurnEvent, len(currentState.SolanaBurnEvents))
-		copy(mergedBurnEvents, currentState.SolanaBurnEvents)
-
-		// Add new events if they are not duplicates and not cleaned
-		for _, event := range allNewSolanaBurnEvents {
-			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-			if !existingBurnEvents[key] {
-				mergedBurnEvents = append(mergedBurnEvents, event)
-				log.Printf("Added Solana burn event to state: TxID=%s", event.TxID)
-			} else {
-				log.Printf("Skipping already present Solana burn event: TxID=%s", event.TxID)
-			}
-		}
+		// Use helper function to merge events
+		mergedBurnEvents := mergeNewBurnEvents(currentState.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, allNewSolanaBurnEvents, "Solana")
 
 		updateMutex.Lock()
 		update.solanaBurnEvents = mergedBurnEvents
@@ -814,22 +775,8 @@ func (o *Oracle) processEthereumBurnEvents(latestHeader *ethtypes.Header) ([]api
 	// Get current state to merge with new burn events
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-	// Create a map of existing events for quick lookup
-	existingEthBurnEvents := make(map[string]bool)
-	for _, event := range currentState.EthBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		existingEthBurnEvents[key] = true
-	}
-
-	// Only add new events that aren't already in our cache and haven't been cleaned up
-	mergedEthBurnEvents := make([]api.BurnEvent, len(currentState.EthBurnEvents))
-	copy(mergedEthBurnEvents, currentState.EthBurnEvents)
-	for _, event := range newEthBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingEthBurnEvents[key] && !currentState.CleanedEthBurnEvents[key] {
-			mergedEthBurnEvents = append(mergedEthBurnEvents, event)
-		}
-	}
+	// Use helper function to merge events
+	mergedEthBurnEvents := mergeNewBurnEvents(currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, newEthBurnEvents, "Ethereum")
 
 	return mergedEthBurnEvents, nil
 }
@@ -1162,38 +1109,10 @@ func (o *Oracle) getSolanaEvents(
 	newestSigFromNode := allSignatures[0].Signature
 	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
 
-	// Filter signatures: find signatures newer than the last one we processed.
-	var signaturesInspected int
-	for _, sigInfo := range allSignatures {
-		signaturesInspected++
-		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
-			break // Found the last processed signature, stop collecting.
-		}
-		newSignaturesToFetchDetails = append(newSignaturesToFetchDetails, sigInfo)
-	}
-
+	// Filter and prepare signatures for processing
+	newSignaturesToFetchDetails, _ = o.filterNewSignatures(allSignatures, lastKnownSig, eventTypeName, newestSigFromNode, limit)
 	if len(newSignaturesToFetchDetails) == 0 {
-		if !lastKnownSig.IsZero() {
-			log.Printf("No new %s signatures found since last processed signature %s (inspected %d of latest %d). Newest from node: %s", eventTypeName, lastKnownSig.String(), signaturesInspected, limit, newestSigFromNode)
-		} else {
-			log.Printf("No %s signatures found in the %d most recent transactions.", eventTypeName, limit)
-		}
 		return []any{}, newestSigFromNode, nil
-	}
-
-	if !lastKnownSig.IsZero() {
-		if len(newSignaturesToFetchDetails) == len(allSignatures) {
-			log.Printf("Last processed %s signature %s not found in latest %d transactions. Processing a full batch of %d.", eventTypeName, lastKnownSig.String(), len(allSignatures), len(allSignatures))
-		} else {
-			log.Printf("Found %d new potential %s transactions to inspect since last processed signature %s (inspected %d of latest %d).", len(newSignaturesToFetchDetails), eventTypeName, lastKnownSig.String(), signaturesInspected, limit)
-		}
-	} else {
-		log.Printf("No previous %s signature stored. Found %d potential transactions to inspect in the %d most recent.", eventTypeName, len(newSignaturesToFetchDetails), limit)
-	}
-
-	// Reverse the slice so we process the oldest *new* signature first.
-	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
-		newSignaturesToFetchDetails[i], newSignaturesToFetchDetails[j] = newSignaturesToFetchDetails[j], newSignaturesToFetchDetails[i]
 	}
 
 	var processedEvents []any
@@ -1927,29 +1846,11 @@ func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEv
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 
-	// Create a map of existing events for quick lookup to avoid duplicates.
-	// This checks against events already in the current update from the main fetch.
-	existingBurnEvents := make(map[string]bool)
-	for _, event := range update.solanaBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		existingBurnEvents[key] = true
-	}
-
-	// Also check against already cleaned events from the persisted state.
+	// Get cleaned events from the persisted state to check against duplicates
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
-	for key := range currentState.CleanedSolanaBurnEvents {
-		existingBurnEvents[key] = true
-	}
 
-	for _, event := range newBurnEvents {
-		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
-		if !existingBurnEvents[key] {
-			update.solanaBurnEvents = append(update.solanaBurnEvents, event)
-			log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
-		} else {
-			log.Printf("Skipping already present or backfilled Solana burn event: TxID=%s", event.TxID)
-		}
-	}
+	// Use helper function to merge backfilled events with existing ones
+	update.solanaBurnEvents = mergeNewBurnEvents(update.solanaBurnEvents, currentState.CleanedSolanaBurnEvents, newBurnEvents, "backfilled Solana")
 }
 
 // Helper to get typed last processed Solana signature
@@ -2017,4 +1918,130 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 		return false
 	}
 	return true
+}
+
+// Helper function to generate event keys for deduplication
+func generateBurnEventKey(event api.BurnEvent) string {
+	return fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+}
+
+func generateMintEventKey(event api.SolanaMintEvent) string {
+	return base64.StdEncoding.EncodeToString(event.SigHash)
+}
+
+// Helper function to check if events already exist and merge new ones
+func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string]bool, newEvents []api.BurnEvent, eventTypeName string) []api.BurnEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateBurnEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Also check against already cleaned events
+	for key := range cleanedEvents {
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.BurnEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateBurnEventKey(event)
+		if !existingEventKeys[key] {
+			mergedEvents = append(mergedEvents, event)
+			log.Printf("Added %s burn event to state: TxID=%s", eventTypeName, event.TxID)
+		} else {
+			log.Printf("Skipping already present %s burn event: TxID=%s", eventTypeName, event.TxID)
+		}
+	}
+
+	return mergedEvents
+}
+
+// Helper function to filter new signatures for processing
+func (o *Oracle) filterNewSignatures(allSignatures []*solrpc.TransactionSignature, lastKnownSig solana.Signature, eventTypeName string, newestSigFromNode solana.Signature, limit int) ([]*solrpc.TransactionSignature, int) {
+	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
+
+	// Filter signatures: find signatures newer than the last one we processed.
+	var signaturesInspected int
+	for _, sigInfo := range allSignatures {
+		signaturesInspected++
+		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
+			break // Found the last processed signature, stop collecting.
+		}
+		newSignaturesToFetchDetails = append(newSignaturesToFetchDetails, sigInfo)
+	}
+
+	if len(newSignaturesToFetchDetails) == 0 {
+		if !lastKnownSig.IsZero() {
+			slog.Info("No new signatures found since last processed",
+				"eventType", eventTypeName,
+				"lastSig", lastKnownSig.String(),
+				"inspected", signaturesInspected,
+				"total", limit,
+				"newest", newestSigFromNode.String())
+		} else {
+			slog.Info("No signatures found in recent transactions",
+				"eventType", eventTypeName,
+				"recent", limit)
+		}
+		return newSignaturesToFetchDetails, signaturesInspected
+	}
+
+	if !lastKnownSig.IsZero() {
+		if len(newSignaturesToFetchDetails) == len(allSignatures) {
+			slog.Info("Last processed signature not found in latest transactions, processing full batch",
+				"eventType", eventTypeName,
+				"lastSig", lastKnownSig.String(),
+				"batchSize", len(allSignatures))
+		} else {
+			slog.Info("Found new potential transactions to inspect",
+				"eventType", eventTypeName,
+				"newTxCount", len(newSignaturesToFetchDetails),
+				"lastSig", lastKnownSig.String(),
+				"inspected", signaturesInspected,
+				"total", limit)
+		}
+	} else {
+		slog.Info("No previous signature stored, processing recent transactions",
+			"eventType", eventTypeName,
+			"txCount", len(newSignaturesToFetchDetails),
+			"recent", limit)
+	}
+
+	// Reverse the slice so we process the oldest *new* signature first.
+	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
+		newSignaturesToFetchDetails[i], newSignaturesToFetchDetails[j] = newSignaturesToFetchDetails[j], newSignaturesToFetchDetails[i]
+	}
+
+	return newSignaturesToFetchDetails, signaturesInspected
+}
+
+// Helper function to merge new mint events
+func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[string]bool, newEvents []api.SolanaMintEvent, eventTypeName string) []api.SolanaMintEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateMintEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateMintEventKey(event)
+		if !existingEventKeys[key] {
+			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
+				mergedEvents = append(mergedEvents, event)
+			}
+		}
+	}
+
+	return mergedEvents
 }

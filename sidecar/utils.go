@@ -56,13 +56,33 @@ func loadStateDataFromFile(filename string) (latestState *sidecartypes.OracleSta
 }
 
 func (o *Oracle) SaveToFile(filename string) error {
-	file, err := os.Create(filename)
+	// Write to a temporary file first for atomicity
+	tempFile := filename + ".tmp"
+	file, err := os.Create(tempFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer file.Close()
 
-	return json.NewEncoder(file).Encode(o.stateCache)
+	if err := json.NewEncoder(file).Encode(o.stateCache); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to encode state: %w", err)
+	}
+
+	if err := file.Sync(); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to sync temp file: %w", err)
+	}
+
+	file.Close() // Close before rename
+
+	// Atomically replace the original file
+	if err := os.Rename(tempFile, filename); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to rename temp file: %w", err)
+	}
+
+	return nil
 }
 
 func (o *Oracle) CacheState() {
