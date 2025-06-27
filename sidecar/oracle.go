@@ -1011,7 +1011,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		// Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
-			slog.Debug("Error querying ZenBTC for mint event (txSig: %s): %v", event.TxSig, err)
+			slog.Debug("Error querying ZenBTC for mint event", "txSig", event.TxSig, "error", err)
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
@@ -1023,7 +1023,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if !foundOnChain {
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
-				slog.Debug("Error querying ZenTP for mint event (txSig: %s): %v", event.TxSig, err)
+				slog.Debug("Error querying ZenTP for mint event", "txSig", event.TxSig, "error", err)
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
@@ -1034,7 +1034,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			remainingEvents = append(remainingEvents, event)
 		} else {
 			updatedCleanedEvents[key] = true
-			log.Printf("Removing Solana mint event from cache as it's now on chain (txSig: %s, sigHash: %s)", event.TxSig, key)
+			slog.Info("Removing Solana mint event from cache as it's now on chain", "txSig", event.TxSig, "sigHash", key)
 		}
 	}
 
@@ -1057,7 +1057,7 @@ func (o *Oracle) cleanUpMintEvents() {
 
 	remainingMintEvents, updatedCleanedMintEvents := o.reconcileMintEventsWithZRChain(ctx, currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
 	if len(remainingMintEvents) != initialMintCount {
-		log.Printf("Removed %d Solana mint events from cache", initialMintCount-len(remainingMintEvents))
+		slog.Info("Removed Solana mint events from cache", "count", initialMintCount-len(remainingMintEvents))
 		stateChanged = true
 	}
 
@@ -1067,9 +1067,9 @@ func (o *Oracle) cleanUpMintEvents() {
 		newState.CleanedSolanaMintEvents = updatedCleanedMintEvents
 		o.currentState.Store(&newState)
 		o.CacheState()
-		log.Println("Mint event cache state updated and saved.")
+		slog.Info("Mint event cache state updated and saved.")
 	} else {
-		log.Println("No mint events removed from cache during cleanup.")
+		slog.Info("No mint events removed from cache during cleanup.")
 	}
 }
 
@@ -1351,7 +1351,7 @@ func (o *Oracle) processMintTransaction(
 		if eventNameField.String() == "TokensMintedWithFee" {
 			recipient, value, fee, mint, ok := getEventData(eventDataField.Interface())
 			if !ok {
-				log.Printf("Type assertion failed for %s TokensMintedWithFeeEventData on tx %s", eventTypeName, sig)
+				slog.Warn("Type assertion failed for TokensMintedWithFeeEventData", "eventType", eventTypeName, "tx", sig)
 				continue
 			}
 			mintEvent := api.SolanaMintEvent{
@@ -1365,15 +1365,15 @@ func (o *Oracle) processMintTransaction(
 			}
 			mintEvents = append(mintEvents, mintEvent)
 			if debugMode {
-				log.Printf("%s Event: TxSig=%s, SigHash=%x, Recipient=%s, Height=%d, Value=%d, Fee=%d, Mint=%s",
-					eventTypeName,
-					sig.String(),
-					mintEvent.SigHash,
-					solana.PublicKeyFromBytes(mintEvent.Recipient).String(),
-					mintEvent.Height,
-					mintEvent.Value,
-					mintEvent.Fee,
-					solana.PublicKeyFromBytes(mintEvent.Mint).String())
+				slog.Debug("Solana Mint Event",
+					"eventType", eventTypeName,
+					"txSig", sig.String(),
+					"sigHash", fmt.Sprintf("%x", mintEvent.SigHash),
+					"recipient", solana.PublicKeyFromBytes(mintEvent.Recipient).String(),
+					"height", mintEvent.Height,
+					"value", mintEvent.Value,
+					"fee", mintEvent.Fee,
+					"mint", solana.PublicKeyFromBytes(mintEvent.Mint).String())
 			}
 		}
 	}
@@ -1575,18 +1575,21 @@ func (o *Oracle) processBurnTransaction(
 	}
 
 	if debugMode {
-		log.Printf("%s - Processing tx %s: found %d events", eventTypeName, sig, len(decodedEvents))
+		slog.Debug("Processing tx: found events", "eventType", eventTypeName, "tx", sig, "eventCount", len(decodedEvents))
 		for i, event := range decodedEvents {
 			// Use reflection to see event details for debugging
 			eventValue := reflect.ValueOf(event)
 			if eventValue.Kind() == reflect.Ptr {
 				eventValue = eventValue.Elem()
 			}
-			if eventValue.Kind() == reflect.Struct {
-				eventNameField := eventValue.FieldByName("Name")
-				if eventNameField.IsValid() {
-					log.Printf("  Event %d: Name='%s', Type=%T", i, eventNameField.String(), event)
-				}
+
+			if eventValue.Kind() != reflect.Struct {
+				continue // Should not happen with current implementation
+			}
+
+			eventNameField := eventValue.FieldByName("Name")
+			if eventNameField.IsValid() {
+				slog.Debug("Event details", "eventIndex", i, "eventName", eventNameField.String(), "eventType", fmt.Sprintf("%T", event))
 			}
 		}
 	}
@@ -1614,7 +1617,7 @@ func (o *Oracle) processBurnTransaction(
 		if eventNameField.String() == "TokenRedemption" {
 			destAddr, value, ok := getEventData(eventDataField.Interface())
 			if !ok {
-				log.Printf("Type assertion failed for %s TokenRedemptionEventData on tx %s", eventTypeName, sig)
+				slog.Warn("Type assertion failed for TokenRedemptionEventData", "eventType", eventTypeName, "tx", sig)
 				continue
 			}
 			burnEvent := api.BurnEvent{
@@ -1628,13 +1631,13 @@ func (o *Oracle) processBurnTransaction(
 			}
 			burnEvents = append(burnEvents, burnEvent)
 			if debugMode {
-				log.Printf("%s Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
-					eventTypeName,
-					burnEvent.TxID,
-					burnEvent.LogIndex,
-					burnEvent.ChainID,
-					burnEvent.DestinationAddr,
-					burnEvent.Amount)
+				slog.Debug("Burn Event",
+					"eventType", eventTypeName,
+					"txID", burnEvent.TxID,
+					"logIndex", burnEvent.LogIndex,
+					"chainID", burnEvent.ChainID,
+					"destinationAddr", fmt.Sprintf("%x", burnEvent.DestinationAddr),
+					"amount", burnEvent.Amount)
 			}
 		}
 	}
@@ -1769,7 +1772,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 	// This is for zentp (ROCK) burns for now.
 	events, err := rock_spl_token.DecodeEvents(txResult, program)
 	if err != nil {
-		log.Printf("Failed to decode Solana ROCK burn events for backfill tx %s. Event is likely of an unrelated type. Error: %v", sig, err)
+		slog.Warn("Failed to decode Solana ROCK burn events for backfill tx. Event is likely of an unrelated type.", "tx", sig, "error", err)
 		return nil, err
 	}
 
@@ -1777,7 +1780,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 		if event.Name == "TokenRedemption" {
 			eventData, ok := event.Data.(*rock_spl_token.TokenRedemptionEventData)
 			if !ok {
-				log.Printf("Type assertion failed for Solana ROCK TokenRedemptionEventData on backfill tx %s", sig)
+				slog.Warn("Type assertion failed for Solana ROCK TokenRedemptionEventData on backfill tx", "tx", sig)
 				continue
 			}
 			burnEvent := &api.BurnEvent{
@@ -1790,12 +1793,12 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 				Height:          uint64(txResult.Slot),
 			}
 			if o.DebugMode {
-				log.Printf("Backfilled Solana ROCK Burn Event: TxID=%s, LogIndex=%d, ChainID=%s, DestinationAddr=%x, Amount=%d",
-					burnEvent.TxID,
-					burnEvent.LogIndex,
-					burnEvent.ChainID,
-					burnEvent.DestinationAddr,
-					burnEvent.Amount)
+				slog.Debug("Backfilled Solana ROCK Burn Event",
+					"txID", burnEvent.TxID,
+					"logIndex", burnEvent.LogIndex,
+					"chainID", burnEvent.ChainID,
+					"destinationAddr", fmt.Sprintf("%x", burnEvent.DestinationAddr),
+					"amount", burnEvent.Amount)
 			}
 			// Return the first matching event found.
 			return burnEvent, nil
@@ -1818,13 +1821,14 @@ func (o *Oracle) processBackfillRequests(
 		backfillResp, err := o.zrChainQueryClient.ValidationQueryClient.BackfillRequests(context.Background())
 		if err != nil {
 			// Don't push to errChan, as this is not a critical failure. Just log it.
-			log.Printf("Failed to query backfill requests: %v", err)
+			slog.Error("Failed to query backfill requests", "error", err)
 			return
 		}
 
 		if backfillResp == nil || backfillResp.BackfillRequests == nil || len(backfillResp.BackfillRequests.Requests) == 0 {
 			return // No backfill requests
 		}
+		slog.Info("Found backfill requests to process", "count", len(backfillResp.BackfillRequests.Requests))
 		o.handleBackfillRequests(backfillResp.BackfillRequests.Requests, update, updateMutex)
 	}()
 }
@@ -1835,18 +1839,16 @@ func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEv
 		return
 	}
 
-	log.Printf("Found %d backfill requests to process", len(requests))
-
 	var newBurnEvents []api.BurnEvent
 
 	for i, req := range requests {
 		// For now, only handle ZenTP burn events.
 		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
-			log.Printf("Processing zentp burn backfill request for tx: %s", req.TxHash)
+			slog.Info("Processing zentp burn backfill request", "txHash", req.TxHash)
 			programID := sidecartypes.SolRockProgramID[o.Config.Network]
 			event, err := o.getSolanaBurnEventFromSig(req.TxHash, programID)
 			if err != nil {
-				log.Printf("Error processing backfill request for tx %s: %v", req.TxHash, err)
+				slog.Error("Error processing backfill request", "txHash", req.TxHash, "error", err)
 				continue
 			}
 			if event != nil {
@@ -1887,7 +1889,7 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 	case sidecartypes.SolRockBurn:
 		sigStr = o.lastSolRockBurnSigStr
 	default:
-		log.Printf("Warning: Unknown Solana event type for GetLastProcessedSolSignature: %s", eventType)
+		slog.Warn("Unknown Solana event type for GetLastProcessedSolSignature", "eventType", eventType)
 		return solana.Signature{} // Return zero signature for unknown types
 	}
 
@@ -1897,7 +1899,7 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 	sig, err := solana.SignatureFromBase58(sigStr)
 	if err != nil {
 		// Log the error but return a zero signature to proceed as if no prior sig exists
-		log.Printf("Warning: could not parse stored signature string '%s' for event type %s: %v. Treating as no prior signature.", sigStr, eventType, err)
+		slog.Warn("Could not parse stored signature string for event type. Treating as no prior signature.", "sigString", sigStr, "eventType", eventType, "error", err)
 		return solana.Signature{}
 	}
 	return sig
@@ -1906,7 +1908,7 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 // Helper function to parse RPC response ID into request index
 func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool) {
 	if resp == nil {
-		log.Printf("Nil RPCResponse object in sub-batch response (%s)", eventType)
+		slog.Error("Nil RPCResponse object in sub-batch response", "eventType", eventType)
 		return 0, false
 	}
 
@@ -1921,12 +1923,12 @@ func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool)
 	case json.Number:
 		idInt64, err := id.Int64()
 		if err != nil {
-			log.Printf("Failed to convert json.Number ID to int64 (%s): %v", eventType, err)
+			slog.Error("Failed to convert json.Number ID to int64", "eventType", eventType, "error", err)
 			return 0, false
 		}
 		requestIndex = int(idInt64)
 	default:
-		log.Printf("Invalid response ID type %T received (%s)", resp.ID, eventType)
+		slog.Error("Invalid response ID type received", "idType", fmt.Sprintf("%T", resp.ID), "eventType", eventType)
 		return 0, false
 	}
 	return requestIndex, true
@@ -1935,7 +1937,7 @@ func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool)
 // Helper function to validate request index bounds
 func validateRequestIndex(requestIndex int, batchSize int, eventType string) bool {
 	if requestIndex < 0 || requestIndex >= batchSize {
-		log.Printf("Invalid response ID %d received for sub-batch (%s)", requestIndex, eventType)
+		slog.Error("Invalid response ID received for sub-batch", "requestIndex", requestIndex, "eventType", eventType)
 		return false
 	}
 	return true
@@ -2060,6 +2062,9 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 		if !existingEventKeys[key] {
 			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
 				mergedEvents = append(mergedEvents, event)
+				slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig)
+			} else {
+				slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig)
 			}
 		}
 	}
