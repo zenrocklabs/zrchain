@@ -219,7 +219,7 @@ func resetStateForVersion(stateFile string) bool {
 		var m meta
 		if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
 			// Cache already corresponds to current version – no reset needed.
-			slog.Info("Cache is already aligned with current version", "version", currentVersion)
+			slog.Info("Cache is already aligned", "version", currentVersion)
 			return false
 		}
 	}

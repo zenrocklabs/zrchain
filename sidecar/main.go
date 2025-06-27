@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -36,13 +35,13 @@ func main() {
 
 	// Handle version command
 	if *version {
-		fmt.Printf("Sidecar version: %s\n", sidecartypes.SidecarVersionName)
+		slog.Info("zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 		os.Exit(0)
 	}
 
 	cfg := LoadConfig()
 
-	slog.Info("Starting Zenrock Sidecar", "version", sidecartypes.SidecarVersionName)
+	slog.Info("Starting zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 
 	if !cfg.Enabled {
 		for {
@@ -64,7 +63,7 @@ func main() {
 	// Reset state if version requires it – firstBoot will be true only once per version
 	firstBoot := resetStateForVersion(cfg.StateFile)
 	if firstBoot {
-		slog.Info("Completed first-boot cache reset for sidecar version", "version", sidecartypes.SidecarVersionName)
+		slog.Info("Completed first-boot cache reset for zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 	}
 
 	// Set Neutrino port from flag or config
