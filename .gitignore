@@ -24,6 +24,7 @@ sidecar/neutrino/neutrino_*/peers.json
 sidecar/sidecar
 sidecar/sidecar.log
 sidecar/cache.json
+sidecar/cache.json.meta
 sidecar/cache_alt.json
 
 .env
