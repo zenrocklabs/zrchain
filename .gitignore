@@ -1,23 +1,36 @@
+# General file types
 *.dot
 *.log
 *.ign
 *.out
 
-release/
+# IDE/Editor files
 .idea/
 .vscode/
 .DS_Store
+
+# Build artifacts and generated files
+release/
 build/
-genesis.json
+cmd/zenrockd/zenrockd*
 react
 ts-client
 node_modules/
+
+# Temporary files
+tmp_app.toml
+genesis.json
 gentx
-cmd/zenrockd/zenrockd*
-scripts/bootstrap/**
-!scripts/bootstrap/main.sh
 reset.sh
 
+# Test files
+contracts/solrock/durablenonce_test.go
+
+# Scripts (with exceptions)
+scripts/bootstrap/**
+!scripts/bootstrap/main.sh
+
+# Sidecar files
 sidecar/neutrino/neutrino_*/*.bin
 sidecar/neutrino/neutrino_*/*.db
 sidecar/neutrino/neutrino_*/peers.json
@@ -27,6 +40,7 @@ sidecar/cache.json
 sidecar/cache.json.meta
 sidecar/cache_alt.json
 
+# Configuration files
 .env
 sidecar/config.yaml
 sidecar/eigen_operator_config.yaml

@@ -5,13 +5,13 @@ zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
 network: "mainnet"
 eth_rpc:
-  devnet: "https://rpc.ankr.com/eth_holesky"
-  testnet: "https://rpc.ankr.com/eth_holesky"
-  mainnet: "https://rpc.ankr.com/eth"
+  devnet: "https://holesky.gateway.tenderly.co/"
+  testnet: "https://holesky.gateway.tenderly.co/"
+  mainnet: "https://mainnet.gateway.tenderly.co/"
 # Contract addresses + more are now defined in shared/types.go
 solana_rpc:
-  devnet: "https://api.devnet.solana.com"
-  testnet: "https://api.devnet.solana.com"
+  devnet: "https://api.devnet.solana.com/"
+  testnet: "https://api.devnet.solana.com/"
   mainnet: "https://api.mainnet-beta.solana.com/"
 neutrino:
   path: "./neutrino"
