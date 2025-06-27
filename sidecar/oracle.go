@@ -589,15 +589,46 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		}
 
 		// Merge and sort
-		allSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
-		sort.Slice(allSolanaBurnEvents, func(i, j int) bool {
-			if allSolanaBurnEvents[i].Height != allSolanaBurnEvents[j].Height {
-				return allSolanaBurnEvents[i].Height < allSolanaBurnEvents[j].Height
+		allNewSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
+		sort.Slice(allNewSolanaBurnEvents, func(i, j int) bool {
+			if allNewSolanaBurnEvents[i].Height != allNewSolanaBurnEvents[j].Height {
+				return allNewSolanaBurnEvents[i].Height < allNewSolanaBurnEvents[j].Height
 			}
-			return allSolanaBurnEvents[i].LogIndex < allSolanaBurnEvents[j].LogIndex
+			return allNewSolanaBurnEvents[i].LogIndex < allNewSolanaBurnEvents[j].LogIndex
 		})
 
-		o.addUniqueSolanaBurnEvents(update, allSolanaBurnEvents, updateMutex)
+		// Get current state to merge with new burn events
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+		// Create a map of existing events for quick lookup
+		existingBurnEvents := make(map[string]bool)
+		for _, event := range currentState.SolanaBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			existingBurnEvents[key] = true
+		}
+		// Also check against already cleaned events from the main state
+		for key := range currentState.CleanedSolanaBurnEvents {
+			existingBurnEvents[key] = true
+		}
+
+		// Start with the list of existing, unprocessed events
+		mergedBurnEvents := make([]api.BurnEvent, len(currentState.SolanaBurnEvents))
+		copy(mergedBurnEvents, currentState.SolanaBurnEvents)
+
+		// Add new events if they are not duplicates and not cleaned
+		for _, event := range allNewSolanaBurnEvents {
+			key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+			if !existingBurnEvents[key] {
+				mergedBurnEvents = append(mergedBurnEvents, event)
+				log.Printf("Added Solana burn event to state: TxID=%s", event.TxID)
+			} else {
+				log.Printf("Skipping already present Solana burn event: TxID=%s", event.TxID)
+			}
+		}
+
+		updateMutex.Lock()
+		update.solanaBurnEvents = mergedBurnEvents
+		updateMutex.Unlock()
 	}()
 }
 
@@ -1831,13 +1862,8 @@ func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEv
 			}
 		}
 	}
-	o.addUniqueSolanaBurnEvents(update, newBurnEvents, updateMutex)
-}
 
-// addUniqueSolanaBurnEvents safely adds new burn events to the update's slice,
-// ensuring no duplicates are added from the current update, or from previously cleaned events.
-func (o *Oracle) addUniqueSolanaBurnEvents(update *oracleStateUpdate, newEvents []api.BurnEvent, updateMutex *sync.Mutex) {
-	if len(newEvents) == 0 {
+	if len(newBurnEvents) == 0 {
 		return
 	}
 
@@ -1845,25 +1871,26 @@ func (o *Oracle) addUniqueSolanaBurnEvents(update *oracleStateUpdate, newEvents 
 	defer updateMutex.Unlock()
 
 	// Create a map of existing events for quick lookup to avoid duplicates.
+	// This checks against events already in the current update from the main fetch.
 	existingBurnEvents := make(map[string]bool)
 	for _, event := range update.solanaBurnEvents {
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
 		existingBurnEvents[key] = true
 	}
 
-	// Also check against already cleaned events
+	// Also check against already cleaned events from the persisted state.
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 	for key := range currentState.CleanedSolanaBurnEvents {
 		existingBurnEvents[key] = true
 	}
 
-	for _, event := range newEvents {
+	for _, event := range newBurnEvents {
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
 		if !existingBurnEvents[key] {
 			update.solanaBurnEvents = append(update.solanaBurnEvents, event)
-			log.Printf("Added Solana burn event to state: TxID=%s", event.TxID)
+			log.Printf("Added backfilled Solana burn event to state: TxID=%s", event.TxID)
 		} else {
-			log.Printf("Skipping already present Solana burn event: TxID=%s", event.TxID)
+			log.Printf("Skipping already present or backfilled Solana burn event: TxID=%s", event.TxID)
 		}
 	}
 }
