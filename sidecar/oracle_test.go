@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFetchSolanaBurnEvents_PersistsUnprocessedEvents(t *testing.T) {
-	
+func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
+	t.Skip("Skipping test on CI as it makes a real network call to Solana")
 
 	// 1. Setup
 	cfg := LoadConfig()
@@ -73,4 +73,76 @@ func TestFetchSolanaBurnEvents_PersistsUnprocessedEvents(t *testing.T) {
 	}
 
 	require.True(t, foundPreExisting, "Pre-existing burn event should be preserved")
+}
+
+func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
+	// 1. Setup
+	oracle := &Oracle{}
+	oracle.Config.Network = sidecartypes.NetworkTestnet
+	oracle.currentState.Store(&sidecartypes.OracleState{
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+	})
+
+	// 2. Simulate pre-existing state
+	preExistingEvent := api.BurnEvent{
+		TxID:     "pre-existing-tx-unit-test",
+		LogIndex: 1,
+		ChainID:  sidecartypes.SolanaCAIP2[oracle.Config.Network],
+		Amount:   1000,
+		IsZenBTC: true,
+	}
+	initialState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	initialState.SolanaBurnEvents = []api.BurnEvent{preExistingEvent}
+	oracle.currentState.Store(initialState)
+
+	// 3. Simulate newly fetched events via the mock functions
+	newEvent := api.BurnEvent{
+		TxID:     "new-tx-unit-test",
+		LogIndex: 2,
+		ChainID:  sidecartypes.SolanaCAIP2[oracle.Config.Network],
+		Amount:   2000,
+		IsZenBTC: false, // A ROCK burn
+	}
+
+	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		return []api.BurnEvent{}, solana.Signature{}, nil // No new zenBTC burns
+	}
+	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		return []api.BurnEvent{newEvent}, solana.Signature{}, nil
+	}
+
+	// 4. Execute the function under test
+	var wg sync.WaitGroup
+	update := &oracleStateUpdate{
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]solana.Signature),
+	}
+	var updateMutex sync.Mutex
+	errChan := make(chan error, 2)
+
+	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+
+	wg.Wait() // Wait for the main goroutine
+	close(errChan)
+	for err := range errChan {
+		require.NoError(t, err)
+	}
+
+	// 5. Assert the results
+	require.NotNil(t, update.solanaBurnEvents)
+	require.Len(t, update.solanaBurnEvents, 2, "Should contain both the pre-existing and the new event")
+
+	foundPreExisting := false
+	foundNew := false
+	for _, event := range update.solanaBurnEvents {
+		if event.TxID == "pre-existing-tx-unit-test" {
+			foundPreExisting = true
+		}
+		if event.TxID == "new-tx-unit-test" {
+			foundNew = true
+		}
+	}
+
+	require.True(t, foundPreExisting, "Pre-existing burn event was not preserved in the state")
+	require.True(t, foundNew, "New burn event was not added to the state")
 }

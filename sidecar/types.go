@@ -54,6 +54,10 @@ type Oracle struct {
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// Function fields for mocking
+	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 }
 
 type oracleStateUpdate struct {

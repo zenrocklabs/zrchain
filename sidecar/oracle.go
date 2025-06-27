@@ -92,6 +92,10 @@ func NewOracle(
 		}
 	}
 
+	// Initialize the function fields with the real implementations
+	o.getSolanaZenBTCBurnEventsFn = o.getSolanaZenBTCBurnEvents
+	o.getSolanaRockBurnEventsFn = o.getSolanaRockBurnEvents
+
 	return o
 }
 
@@ -549,7 +553,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		defer wgEvents.Done()
 		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 		var newestSig solana.Signature
-		zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
+		zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEventsFn(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
 		if zenBtcErr == nil && !newestSig.IsZero() {
 			updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
@@ -563,7 +567,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		defer wgEvents.Done()
 		lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 		var newestSig solana.Signature
-		rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
+		rockEvents, newestSig, rockErr = o.getSolanaRockBurnEventsFn(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
 		if rockErr == nil && !newestSig.IsZero() {
 			updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
