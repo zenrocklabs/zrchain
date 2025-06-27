@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -28,12 +28,21 @@ func main() {
 	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
 	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
+	version := flag.Bool("version", false, "Display version information and exit")
 
 	if !flag.Parsed() {
 		flag.Parse()
 	}
 
+	// Handle version command
+	if *version {
+		fmt.Printf("Sidecar version: %s\n", sidecartypes.SidecarVersionName)
+		os.Exit(0)
+	}
+
 	cfg := LoadConfig()
+
+	slog.Info("Starting Zenrock Sidecar", "version", sidecartypes.SidecarVersionName)
 
 	if !cfg.Enabled {
 		for {
@@ -72,12 +81,14 @@ func main() {
 	} else if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
-		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
+		slog.Error("No RPC endpoint found for network", "network", cfg.Network)
+		os.Exit(1)
 	}
 
 	ethClient, err := ethclient.Dial(rpcAddress)
 	if err != nil {
-		log.Fatalf("failed to connect to the Ethereum client: %v", err)
+		slog.Error("Failed to connect to the Ethereum client", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -90,7 +101,8 @@ func main() {
 
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
-		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
+		slog.Error("Refresh Address Client: failed to get new client", "error", err)
+		os.Exit(1)
 	}
 
 	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug, *skipInitialWait)
@@ -108,7 +120,8 @@ func main() {
 	if !*noAVS {
 		go func() {
 			if err := oracle.runEigenOperator(); err != nil {
-				log.Fatalf("Error starting EigenLayer Operator: %v", err)
+				slog.Error("Error starting EigenLayer Operator", "error", err)
+				os.Exit(1)
 			}
 		}()
 	}
