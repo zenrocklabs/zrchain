@@ -164,7 +164,7 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	require.NoError(t, err)
 
 	oracle.getTransactionFn = func(ctx context.Context, signature solana.Signature, opts *rpc.GetTransactionOpts) (*rpc.GetTransactionResult, error) {
-		return &rpc.GetTransactionResult{Json: mockTxResult}, nil
+		return &rpc.GetTransactionResult{Context: rpc.JsonRpcResponseContext{Slot: 123}, Value: &rpc.TransactionResultEnvelope{}}, nil
 	}
 
 	// Mock the processTransaction function to return a dummy event

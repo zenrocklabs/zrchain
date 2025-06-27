@@ -1219,7 +1219,7 @@ func (o *Oracle) getSolanaEvents(
 		var err error
 		// Execute the batch request with retries
 		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
-			batchResponses, err = o.rpcCallBatchFn(context.Background(), batchRequests)
+			batchResponses, err = o.rpcCallBatchFn(context.Background(), batchRequests...)
 			if err == nil {
 				// Quick check for any errors inside the response. If so, we'll retry the whole batch.
 				hasErrors := false
