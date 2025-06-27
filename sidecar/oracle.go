@@ -69,7 +69,7 @@ func NewOracle(
 	// Load initial state from cache file
 	latestDiskState, historicalStates, err := loadStateDataFromFile(o.Config.StateFile)
 	if err != nil {
-		log.Printf("Critical error loading state from file %s: %v. Initializing with empty state.", o.Config.StateFile, err)
+		slog.Error("Critical error loading state from file, initializing with empty state", "file", o.Config.StateFile, "error", err)
 		o.currentState.Store(&EmptyOracleState)
 		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 		// lastSol*SigStr fields will remain empty strings (zero value)
@@ -81,11 +81,14 @@ func NewOracle(
 			o.lastSolZenBTCMintSigStr = latestDiskState.LastSolZenBTCMintSig
 			o.lastSolZenBTCBurnSigStr = latestDiskState.LastSolZenBTCBurnSig
 			o.lastSolRockBurnSigStr = latestDiskState.LastSolRockBurnSig
-			log.Printf("Loaded state from file. Last Solana signatures: RockMint='%s', ZenBTCMint='%s', ZenBTCBurn='%s', RockBurn='%s'",
-				o.lastSolRockMintSigStr, o.lastSolZenBTCMintSigStr, o.lastSolZenBTCBurnSigStr, o.lastSolRockBurnSigStr)
+			slog.Info("Loaded state from file",
+				"rockMintSig", o.lastSolRockMintSigStr,
+				"zenBTCMintSig", o.lastSolZenBTCMintSigStr,
+				"zenBTCBurnSig", o.lastSolZenBTCBurnSigStr,
+				"rockBurnSig", o.lastSolRockBurnSigStr)
 		} else {
 			// File didn't exist, was empty, or had non-critical parse issues treated as fresh start
-			log.Printf("State file %s not found or empty/invalid. Initializing with empty state.", o.Config.StateFile)
+			slog.Info("State file not found or empty/invalid, initializing with empty state", "file", o.Config.StateFile)
 			o.currentState.Store(&EmptyOracleState)
 			o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 			// lastSol*SigStr fields will remain empty strings
@@ -145,7 +148,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
 	defer mainLoopTicker.Stop()
 	o.mainLoopTicker = mainLoopTicker
-	log.Printf("Ticker synched, awaiting initial oracle data fetch (%v interval)...", mainLoopTickerIntervalDuration)
+	slog.Info("Ticker synced, awaiting initial oracle data fetch", "interval", mainLoopTickerIntervalDuration)
 
 	for {
 		select {
@@ -169,7 +172,7 @@ func (o *Oracle) processOracleTick(
 	successfulFetch := true
 	newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
-		log.Printf("Error fetching and processing state: %v", err)
+		slog.Error("Error fetching and processing state", "error", err)
 		successfulFetch = false
 	}
 
@@ -230,12 +233,12 @@ func (o *Oracle) fetchAndProcessState(
 	ctx := context.Background()
 	var wg sync.WaitGroup
 
-	log.Printf("Retrieving latest %s header at %v", sidecartypes.NetworkNames[o.Config.Network], time.Now().Format("15:04:05.00"))
+	slog.Info("Retrieving latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "time", time.Now().Format("15:04:05.00"))
 	latestHeader, err := o.EthClient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
-	log.Printf("Retrieved latest %s header (block %d) at %v", sidecartypes.NetworkNames[o.Config.Network], latestHeader.Number.Uint64(), time.Now().Format("15:04:05.00"))
+	slog.Info("Retrieved latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "block", latestHeader.Number.Uint64(), "time", time.Now().Format("15:04:05.00"))
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
@@ -274,7 +277,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Check for errors
 	for err := range errChan {
 		if err != nil {
-			log.Printf("Error during state fetch: %v", err)
+			slog.Error("Error during state fetch", "error", err)
 			return sidecartypes.OracleState{}, err
 		}
 	}
@@ -619,8 +622,11 @@ func (o *Oracle) buildFinalState(
 		if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
 			o.lastSolRockBurnSigStr = sig.String()
 		}
-		log.Printf("Updated latest Solana signatures: RockMint=%s, ZenBTCMint=%s, ZenBTCBurn=%s, RockBurn=%s",
-			o.lastSolRockMintSigStr, o.lastSolZenBTCMintSigStr, o.lastSolZenBTCBurnSigStr, o.lastSolRockBurnSigStr)
+		slog.Info("Updated latest Solana signatures",
+			"rockMint", o.lastSolRockMintSigStr,
+			"zenBTCMint", o.lastSolZenBTCMintSigStr,
+			"zenBTCBurn", o.lastSolZenBTCBurnSigStr,
+			"rockBurn", o.lastSolRockBurnSigStr)
 	}
 
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
@@ -680,10 +686,10 @@ func (o *Oracle) buildFinalState(
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
 		if err != nil {
-			log.Printf("\nError marshalling state to JSON for logging: %v\n", err)
-			log.Printf("\nState fetched (pre-update send - fallback): %+v\n", newState)
+			slog.Error("Error marshalling state to JSON for logging", "error", err)
+			slog.Info("State fetched (pre-update send - fallback)", "state", newState)
 		} else {
-			log.Printf("\nState fetched (pre-update send):\n%s\n", string(jsonData))
+			slog.Info("State fetched (pre-update send)", "state", string(jsonData))
 		}
 	}
 
@@ -694,23 +700,23 @@ func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecar
 	// Ensure update fields that might not have been populated are not nil
 	if update.suggestedTip == nil {
 		update.suggestedTip = big.NewInt(0)
-		log.Println("Warning: suggestedTip was nil, using 0.")
+		slog.Warn("suggestedTip was nil, using 0")
 	}
 	if update.ROCKUSDPrice.IsNil() {
 		update.ROCKUSDPrice = currentState.ROCKUSDPrice
-		log.Println("Warning: ROCKUSDPrice was nil, using last known state value.")
+		slog.Warn("ROCKUSDPrice was nil, using last known state value")
 	}
 	if update.BTCUSDPrice.IsNil() {
 		update.BTCUSDPrice = currentState.BTCUSDPrice
-		log.Println("Warning: BTCUSDPrice was nil, using last known state value.")
+		slog.Warn("BTCUSDPrice was nil, using last known state value")
 	}
 	if update.ETHUSDPrice.IsNil() {
 		update.ETHUSDPrice = currentState.ETHUSDPrice
-		log.Println("Warning: ETHUSDPrice was nil, using last known state value.")
+		slog.Warn("ETHUSDPrice was nil, using last known state value")
 	}
 	if update.solanaLamportsPerSignature == 0 {
 		update.solanaLamportsPerSignature = currentState.SolanaLamportsPerSignature
-		log.Println("Warning: solanaLamportsPerSignature was 0, using last known state value.")
+		slog.Warn("solanaLamportsPerSignature was 0, using last known state value")
 	}
 }
 
@@ -744,7 +750,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 			// Get the stake amount for the operator
 			amount, err := contractInstance.GetEigenStake(callOpts, operator, quorumNumber)
 			if err != nil {
-				log.Printf("Failed to get stake for operator %s: %v", operator.Hex(), err)
+				slog.Error("Failed to get stake for operator", "operator", operator.Hex(), "error", err)
 				continue
 			}
 
@@ -799,7 +805,7 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		// Check if this specific event was already cleaned in a previous run but is still in the eventsToClean list for some reason
 		key := fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
 		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
-			log.Printf("Skipping already cleaned %s burn event (txID: %s, logIndex: %d, chainID: %s)", chainTypeName, event.TxID, event.LogIndex, event.ChainID)
+			slog.Info("Skipping already cleaned burn event", "chain", chainTypeName, "txID", event.TxID, "logIndex", event.LogIndex, "chainID", event.ChainID)
 			continue // Skip to next event if already marked as cleaned
 		}
 
@@ -1952,9 +1958,9 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 		key := generateBurnEventKey(event)
 		if !existingEventKeys[key] {
 			mergedEvents = append(mergedEvents, event)
-			log.Printf("Added %s burn event to state: TxID=%s", eventTypeName, event.TxID)
+			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
 		} else {
-			log.Printf("Skipping already present %s burn event: TxID=%s", eventTypeName, event.TxID)
+			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
 		}
 	}
 
