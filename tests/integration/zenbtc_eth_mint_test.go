@@ -86,6 +86,13 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 	})
 
 	It("deposits on Bitcoin", func() {
+		// TODO: Remove after fixing the issue with the first mint
+		r, err := env.Docker.Exec("bitcoin", []string{"/app/mine.sh", bitcoinAddress})
+		Expect(err).ToNot(HaveOccurred())
+		GinkgoWriter.Printf("response docker cmd: %s\n", r)
+		time.Sleep(10 * time.Second)
+		// Until here
+
 		r, err := env.Docker.Exec("bitcoin", []string{"/app/mine.sh", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
 		GinkgoWriter.Printf("response docker cmd: %s\n", r)
