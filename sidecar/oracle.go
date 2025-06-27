@@ -375,7 +375,7 @@ func (o *Oracle) fetchNetworkData(
 			return
 		}
 		updateMutex.Lock()
-		update.estimatedGas = (estimatedGas * 110) / 100
+		update.estimatedGas = (estimatedGas * sidecartypes.GasEstimationBuffer) / 100
 		updateMutex.Unlock()
 	}()
 }
@@ -390,7 +390,7 @@ func (o *Oracle) fetchPriceData(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	const httpTimeout = 10 * time.Second
+	httpTimeout := sidecartypes.DefaultHTTPTimeout
 
 	// Fetches the latest ROCK/USD price from the specified public endpoint.
 	wg.Add(1)
@@ -766,7 +766,7 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 		return nil, fmt.Errorf("failed to get all validators: %w", err)
 	}
 
-	quorumNumber := uint8(0)
+	quorumNumber := sidecartypes.EigenLayerQuorumNumber
 
 	// Iterate over all validators
 	for _, validator := range allValidators {
@@ -906,6 +906,9 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 }
 
 func (o *Oracle) cleanUpBurnEvents() {
+	o.cleanupMutex.Lock()
+	defer o.cleanupMutex.Unlock()
+
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	// Check if there are any events to clean up at all
@@ -1083,6 +1086,9 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 }
 
 func (o *Oracle) cleanUpMintEvents() {
+	o.cleanupMutex.Lock()
+	defer o.cleanupMutex.Unlock()
+
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	initialMintCount := len(currentState.SolanaMintEvents)
@@ -1193,7 +1199,7 @@ func (o *Oracle) getSolanaEvents(
 	var processedEvents []any
 	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize
-	v0 := uint64(0)
+	maxTxVersion := sidecartypes.SolanaTransactionVersion0
 
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
@@ -1208,7 +1214,7 @@ func (o *Oracle) getSolanaEvents(
 					map[string]any{
 						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
-						"maxSupportedTransactionVersion": &v0,
+						"maxSupportedTransactionVersion": &maxTxVersion,
 					},
 				},
 				ID:      uint64(j),
@@ -1258,7 +1264,7 @@ func (o *Oracle) getSolanaEvents(
 					txResult, err = o.getTransactionFn(context.Background(), sigInfo.Signature, &solrpc.GetTransactionOpts{
 						Encoding:                       solana.EncodingBase64,
 						Commitment:                     solrpc.CommitmentConfirmed,
-						MaxSupportedTransactionVersion: &v0,
+						MaxSupportedTransactionVersion: &maxTxVersion,
 					})
 					if err == nil && txResult != nil {
 						break // Success, exit retry loop
@@ -1534,12 +1540,12 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	// Get a recent blockhash
 	recentBlockhashResult, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentConfirmed)
 	if err != nil {
-		log.Printf("Failed to GetLatestBlockhash for fee calculation: %v. Returning default 5000 lamports/sig.", err)
-		return 5000, fmt.Errorf("GetLatestBlockhash RPC call failed: %w", err)
+		log.Printf("Failed to GetLatestBlockhash for fee calculation: %v. Returning default %d lamports/sig.", err, sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash RPC call failed: %w", err)
 	}
 	if recentBlockhashResult == nil || recentBlockhashResult.Value == nil {
-		log.Printf("Incomplete GetLatestBlockhash result for fee calculation. Returning default 5000 lamports/sig.")
-		return 5000, fmt.Errorf("GetLatestBlockhash returned nil result or value")
+		log.Printf("Incomplete GetLatestBlockhash result for fee calculation. Returning default %d lamports/sig.", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash returned nil result or value")
 	}
 	recentBlockhash := recentBlockhashResult.Value.Blockhash
 
@@ -1562,29 +1568,29 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 	// First, build the transaction.
 	tx, err := txBuilder.Build()
 	if err != nil {
-		log.Printf("Failed to build transaction for fee calculation: %v. Returning default 5000 lamports/sig.", err)
-		return 5000, fmt.Errorf("failed to build transaction for fee calculation: %w", err)
+		log.Printf("Failed to build transaction for fee calculation: %v. Returning default %d lamports/sig.", err, sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to build transaction for fee calculation: %w", err)
 	}
 	messageData := tx.Message // tx.Message is of type solana.Message (a struct)
 
 	// Get the serialized message bytes using the standard MarshalBinary interface:
 	serializedMessage, err := messageData.MarshalBinary()
 	if err != nil {
-		log.Printf("Failed to serialize message using messageData.MarshalBinary for fee calculation: %v. Returning default 5000 lamports/sig.", err)
-		return 5000, fmt.Errorf("failed to serialize message using messageData.MarshalBinary: %w", err)
+		log.Printf("Failed to serialize message using messageData.MarshalBinary for fee calculation: %v. Returning default %d lamports/sig.", err, sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to serialize message using messageData.MarshalBinary: %w", err)
 	}
 
 	// Call GetFeeForMessage (expects base64 encoded message string)
 	msgBase64 := base64.StdEncoding.EncodeToString(serializedMessage)
 	resp, err := o.solanaClient.GetFeeForMessage(ctx, msgBase64, solrpc.CommitmentConfirmed)
 	if err != nil {
-		log.Printf("Failed to get Solana fees via GetFeeForMessage: %v. Returning default 5000 lamports/sig.", err)
-		return 5000, fmt.Errorf("GetFeeForMessage RPC call failed: %w", err)
+		log.Printf("Failed to get Solana fees via GetFeeForMessage: %v. Returning default %d lamports/sig.", err, sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage RPC call failed: %w", err)
 	}
 
 	if resp == nil || resp.Value == nil {
-		log.Printf("Incomplete fee data from Solana RPC (GetFeeForMessage response or value is nil). Returning default 5000 lamports/sig.")
-		return 5000, fmt.Errorf("GetFeeForMessage returned nil response or value")
+		log.Printf("Incomplete fee data from Solana RPC (GetFeeForMessage response or value is nil). Returning default %d lamports/sig.", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage returned nil response or value")
 	}
 
 	// The fee is returned in lamports for the entire message.
@@ -1600,7 +1606,7 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 		// It's possible for fees to be 0 on devnet/testnet or if priority fees are not needed.
 		// However, consistently returning 0 might indicate an issue or a need for a non-zero default
 		// if the oracle relies on a non-zero fee for some calculations.
-		log.Printf("Warning: Solana GetFeeForMessage returned 0 for LamportsPerSignature, using default 5000 if required by downstream logic, otherwise using 0.")
+		log.Printf("Warning: Solana GetFeeForMessage returned 0 for LamportsPerSignature, using default %d if required by downstream logic, otherwise using 0.", sidecartypes.DefaultSolanaFeeReturned)
 		// Depending on requirements, you might return 0 here, or stick to a default like 5000.
 		// Let's return 0 if the network says 0, but log it. If downstream MUST have non-zero, this is an issue.
 		return 0, nil // Or return 5000, nil if a non-zero value is strictly necessary downstream

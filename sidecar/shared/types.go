@@ -115,6 +115,13 @@ var (
 	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
 	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
 
+	// HTTP and RPC constants
+	DefaultHTTPTimeout        = 10 * time.Second
+	DefaultSolanaFeeReturned  = uint64(5000) // Default fee in lamports per signature
+	SolanaTransactionVersion0 = uint64(0)    // Solana transaction version 0
+	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
+	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
+
 	SidecarVersionName = "mead_moon"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.

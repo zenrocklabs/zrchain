@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -50,6 +51,9 @@ type Oracle struct {
 	mainLoopTicker     *time.Ticker
 	DebugMode          bool
 	SkipInitialWait    bool
+
+	// Mutex for protecting state cleanup operations
+	cleanupMutex sync.Mutex
 
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
