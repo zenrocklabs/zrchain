@@ -112,6 +112,7 @@ var (
 	SolanaSleepInterval         = 250 * time.Millisecond // Sleep between batches
 	SolanaFallbackSleepInterval = 25 * time.Millisecond  // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries  = 10
+	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
 	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
 
 	SidecarVersionName = "mead_moon"

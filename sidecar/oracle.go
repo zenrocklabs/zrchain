@@ -1250,17 +1250,34 @@ func (o *Oracle) getSolanaEvents(
 		if err != nil {
 			log.Printf("Batch request for %s failed after all retries. Falling back to individual requests.", eventTypeName)
 			for _, sigInfo := range currentBatchSignatures {
-				txResult, err := o.getTransactionFn(context.Background(), sigInfo.Signature, &solrpc.GetTransactionOpts{
-					Encoding:                       solana.EncodingBase64,
-					Commitment:                     solrpc.CommitmentConfirmed,
-					MaxSupportedTransactionVersion: &v0,
-				})
+				var txResult *solrpc.GetTransactionResult
+				var err error
+
+				// Retry individual fallback requests
+				for retry := 0; retry < sidecartypes.SolanaFallbackMaxRetries; retry++ {
+					txResult, err = o.getTransactionFn(context.Background(), sigInfo.Signature, &solrpc.GetTransactionOpts{
+						Encoding:                       solana.EncodingBase64,
+						Commitment:                     solrpc.CommitmentConfirmed,
+						MaxSupportedTransactionVersion: &v0,
+					})
+					if err == nil && txResult != nil {
+						break // Success, exit retry loop
+					}
+
+					// Log retry attempts
+					if retry < sidecartypes.SolanaFallbackMaxRetries-1 {
+						log.Printf("Fallback GetTransaction failed for tx %s (%s): %v. Retrying in %v... (%d/%d)",
+							sigInfo.Signature, eventTypeName, err, sidecartypes.SolanaEventFetchRetrySleep, retry+1, sidecartypes.SolanaFallbackMaxRetries)
+						time.Sleep(sidecartypes.SolanaEventFetchRetrySleep)
+					}
+				}
+
 				if err != nil {
-					log.Printf("Error in fallback GetTransaction for tx %s (%s): %v", sigInfo.Signature, eventTypeName, err)
+					log.Printf("Error in fallback GetTransaction for tx %s (%s) after all retries: %v", sigInfo.Signature, eventTypeName, err)
 					continue
 				}
 				if txResult == nil {
-					log.Printf("Nil result in fallback GetTransaction for tx %s (%s)", sigInfo.Signature, eventTypeName)
+					log.Printf("Nil result in fallback GetTransaction for tx %s (%s) after all retries", sigInfo.Signature, eventTypeName)
 					continue
 				}
 
