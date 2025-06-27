@@ -8,11 +8,14 @@ import (
 	"math/big"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/fatih/color"
 	solana "github.com/gagliardetto/solana-go"
+	"github.com/lmittmann/tint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -243,4 +246,104 @@ func resetStateForVersion(stateFile string) bool {
 	}
 
 	return true
+}
+
+var colorMap = map[string]*color.Color{
+	// System and configuration
+	"version":  color.New(color.FgHiCyan, color.Bold),
+	"port":     color.New(color.FgHiGreen, color.Bold),
+	"endpoint": color.New(color.FgHiBlue, color.Bold),
+	"file":     color.New(color.FgHiCyan),
+	"key":      color.New(color.FgCyan),
+	"status":   color.New(color.FgHiYellow),
+	"response": color.New(color.FgYellow),
+
+	// Error handling
+	"error":      color.New(color.FgHiRed, color.Bold),
+	"retryCount": color.New(color.FgHiRed),
+	"maxRetries": color.New(color.FgRed),
+
+	// Time and duration related
+	"time":             color.New(color.FgYellow),
+	"interval":         color.New(color.FgCyan),
+	"sleepDuration":    color.New(color.FgMagenta),
+	"alignmentSource":  color.New(color.FgCyan),
+	"nextIntervalMark": color.New(color.FgHiYellow),
+
+	// Blockchain and blocks
+	"network": color.New(color.FgHiBlue, color.Bold),
+	"chain":   color.New(color.FgHiBlue),
+	"chainID": color.New(color.FgBlue),
+	"block":   color.New(color.FgHiYellow, color.Bold),
+	"height":  color.New(color.FgHiYellow, color.Bold),
+	"state":   color.New(color.FgHiBlue),
+
+	// Transactions and signatures
+	"tx":                     color.New(color.FgHiWhite, color.Bold),
+	"txID":                   color.New(color.FgHiWhite, color.Bold),
+	"txSig":                  color.New(color.FgHiWhite, color.Bold),
+	"txHash":                 color.New(color.FgHiWhite, color.Bold),
+	"sigHash":                color.New(color.FgWhite),
+	"lastSig":                color.New(color.FgHiBlue),
+	"newestLastProcessedSig": color.New(color.FgHiWhite),
+
+	// Addresses and identifiers
+	"address":         color.New(color.FgHiCyan),
+	"destinationAddr": color.New(color.FgCyan),
+	"recipient":       color.New(color.FgHiCyan),
+	"addressLength":   color.New(color.FgCyan),
+
+	// Events and processing
+	"eventType":  color.New(color.FgHiBlue),
+	"eventIndex": color.New(color.FgBlue),
+	"eventName":  color.New(color.FgHiBlue),
+	"eventCount": color.New(color.FgMagenta),
+	"type":       color.New(color.FgBlue),
+	"logIndex":   color.New(color.FgMagenta),
+
+	// Values and amounts
+	"amount":          color.New(color.FgHiYellow),
+	"value":           color.New(color.FgYellow),
+	"fee":             color.New(color.FgHiRed),
+	"mint":            color.New(color.FgHiGreen),
+	"ROCK/USD":        color.New(color.FgHiGreen, color.Bold),
+	"BTC/USD":         color.New(color.FgHiYellow, color.Bold),
+	"ETH/USD":         color.New(color.FgHiBlue, color.Bold),
+	"defaultLamports": color.New(color.FgYellow),
+
+	// Counts and metrics
+	"count":        color.New(color.FgHiMagenta, color.Bold),
+	"batchSize":    color.New(color.FgMagenta),
+	"requestIndex": color.New(color.FgCyan),
+	"newTxCount":   color.New(color.FgHiMagenta),
+	"inspected":    color.New(color.FgMagenta),
+	"total":        color.New(color.FgHiMagenta),
+	"newest":       color.New(color.FgHiYellow),
+	"recent":       color.New(color.FgYellow),
+
+	// Solana-specific signatures
+	"rockMintSig":   color.New(color.FgHiGreen),
+	"zenBTCMintSig": color.New(color.FgHiYellow),
+	"zenBTCBurnSig": color.New(color.FgHiMagenta),
+	"rockBurnSig":   color.New(color.FgHiCyan),
+}
+
+// initLogger sets up coloured structured logging
+func initLogger(debug bool) {
+	level := slog.LevelInfo
+	if debug {
+		level = slog.LevelDebug
+	}
+
+	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
+		Level:      level,
+		TimeFormat: time.DateTime,
+		AddSource:  debug,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if colorFunc, exists := colorMap[a.Key]; exists {
+				a.Value = slog.StringValue(colorFunc.Sprint(a.Value.String()))
+			}
+			return a
+		},
+	})))
 }

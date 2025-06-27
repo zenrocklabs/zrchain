@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	// Parse flags first to determine debug level
 	port := flag.Int("port", 9191, "Override GRPC port from config")
 	cacheFile := flag.String("cache-file", "cache.json", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 12345, "Override Neutrino RPC port (default: 12345)")
@@ -32,6 +33,9 @@ func main() {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
+
+	// Set up coloured structured logging
+	initLogger(*debug)
 
 	// Handle version command
 	if *version {
