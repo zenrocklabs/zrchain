@@ -1274,7 +1274,7 @@ func (o *Oracle) getSolanaEvents(
 					processedEvents = append(processedEvents, events...)
 				}
 				lastSuccessfullyProcessedSig = sigInfo.Signature
-				time.Sleep(sidecartypes.SolanaSleepInterval) // Rate limit individual requests
+				time.Sleep(sidecartypes.SolanaFallbackSleepInterval) // Rate limit individual fallback requests
 			}
 			continue // Skip the rest of the loop for this batch
 		}
@@ -1892,7 +1892,7 @@ func (o *Oracle) handleBackfillRequests(requests []*validationtypes.MsgTriggerEv
 
 			// Pause between requests to avoid rate-limiting, but not after the final one.
 			if i < len(requests)-1 {
-				time.Sleep(sidecartypes.SolanaSleepInterval)
+				time.Sleep(sidecartypes.SolanaFallbackSleepInterval)
 			}
 		}
 	}
