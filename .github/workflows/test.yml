@@ -60,10 +60,6 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
-      # - uses: actions/setup-go@v5
-      #   with:
-      #     go-version: '1.24.3'
-      #     cache-dependency-path: "**/*.sum"
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: eu-west-1
@@ -71,13 +67,15 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      - name: Clone zenrock stack repo
+      - name: Start zenrock stack services
         run: |
           git clone git@github.com:zenrocklabs/zenrock-stack.git
-      # - name: Start Docker Compose stack
-      #   run: docker compose up -d --force-recreate --build
-      # - name: Run integration tests
-      #   run: go test -v --tags=integration ./tests/integration/...
-      # - name: Stop Docker Compose stack
-      #   if: always()
-      #   run: docker compose -f docker-compose.yml down
+          cd zenrock-stack
+          docker compose up -d --force-recreate --build
+      - name: Run integration tests
+        run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
+      - name: Stop Docker Compose stack
+        if: always()
+        run: |
+          cd zenrock-stack
+          docker compose -f docker-compose.yml down
