@@ -72,10 +72,8 @@ jobs:
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
       - name: Clone zenrock stack repo
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://x-access-token:${TOKEN}@github.com/zenrocklabs/zenrock-stack.git
+          git clone git@github.com:zenrocklabs/zenrock-stack.git
       # - name: Start Docker Compose stack
       #   run: docker compose up -d --force-recreate --build
       # - name: Run integration tests
