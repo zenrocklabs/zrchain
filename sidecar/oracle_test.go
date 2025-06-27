@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"testing"
@@ -156,15 +155,21 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 
 	// Mock the RPC calls
-	oracle.rpcCallBatchFn = func(ctx context.Context, rpcs ...jsonrpc.RPCRequest) (jsonrpc.RPCResponses, error) {
+	oracle.rpcCallBatchFn = func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error) {
 		return nil, errors.New("batch request failed")
 	}
 
-	mockTxResult, err := json.Marshal(&rpc.GetTransactionResult{})
-	require.NoError(t, err)
+	// Create a dummy transaction result that can be unmarshaled
+	// This needs to be a realistic structure that processTransaction expects.
+	dummyTxResult := rpc.GetTransactionResult{
+		Slot: 123,
+		Meta: &rpc.TransactionMeta{
+			LogMessages: []string{"Program log: TokenRedemption"},
+		},
+	}
 
 	oracle.getTransactionFn = func(ctx context.Context, signature solana.Signature, opts *rpc.GetTransactionOpts) (*rpc.GetTransactionResult, error) {
-		return &rpc.GetTransactionResult{Context: rpc.JsonRpcResponseContext{Slot: 123}, Value: &rpc.TransactionResultEnvelope{}}, nil
+		return &dummyTxResult, nil
 	}
 
 	// Mock the processTransaction function to return a dummy event
@@ -177,5 +182,6 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 
 	// Assertions
 	require.NoError(t, err)
-	require.Len(t, events, 0) // The mock getTransaction returns a result with no events, so this should be 0
+	// The mock getTransaction returns a result with a dummy event, so we expect events
+	require.Greater(t, len(events), 0, "Expected events to be processed via fallback")
 }

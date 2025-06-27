@@ -60,7 +60,7 @@ type Oracle struct {
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
-	rpcCallBatchFn              func(ctx context.Context, rpcs ...*jsonrpc.RPCRequest) (jsonrpc.RPCResponses, error)
+	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
 }
 
