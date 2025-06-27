@@ -161,7 +161,7 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	// Mock the RPC calls
 	oracle.getSignaturesForAddressFn = func(ctx context.Context, account solana.PublicKey, opts *rpc.GetSignaturesForAddressOpts) ([]*rpc.TransactionSignature, error) {
 		// Return one dummy signature to be processed
-		sig, err := solana.SignatureFromBase58("3NeFkZ2FendDtins4bYxm9fEMpA9n1aWzD1yT4vBfH8FDSS18aA3A33sGTc32sW2N524n7J1P1B3a33")
+		sig, err := solana.SignatureFromBase58("4VuT4FhozCRPDjtLjh9A7iajMBoRgqfBaKZm4LnCrhAV4L5EuGoht1LY4Tc6797zuZjDmCx9kqpB6jJWTA8xQS4i")
 		if err != nil {
 			t.Fatalf("Failed to create test signature: %v", err)
 		}
