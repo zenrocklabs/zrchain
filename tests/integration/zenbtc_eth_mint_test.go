@@ -93,7 +93,7 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 		time.Sleep(10 * time.Second)
 		// Until here
 
-		r, err := env.Docker.Exec("bitcoin", []string{"/app/mine.sh", bitcoinAddress})
+		r, err = env.Docker.Exec("bitcoin", []string{"/app/mine.sh", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
 		GinkgoWriter.Printf("response docker cmd: %s\n", r)
 	})
