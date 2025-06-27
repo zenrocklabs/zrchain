@@ -67,6 +67,10 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache-dependency-path: "**/*.sum"
       - name: Install ginkgo CLI
         run: go install github.com/onsi/ginkgo/v2/ginkgo@latest
       - name: Add Go bin to PATH
