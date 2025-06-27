@@ -1128,6 +1128,7 @@ func (o *Oracle) getSolanaEvents(
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize
 	maxTxVersion := sidecartypes.SolanaTransactionVersion0
 
+outerLoop:
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
@@ -1215,18 +1216,18 @@ func (o *Oracle) getSolanaEvents(
 				}
 
 				if err != nil {
-					slog.Error("Error in fallback GetTransaction after all retries", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
-					continue
+					slog.Error("Unrecoverable error in fallback GetTransaction after all retries. Stopping processing for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
+					break outerLoop
 				}
 				if txResult == nil {
-					slog.Error("Nil result in fallback GetTransaction after all retries", "tx", sigInfo.Signature, "eventType", eventTypeName)
-					continue
+					slog.Error("Unrecoverable nil result in fallback GetTransaction after all retries. Stopping processing for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName)
+					break outerLoop
 				}
 
 				events, err := processTransaction(txResult, program, sigInfo.Signature, o.DebugMode)
 				if err != nil {
-					slog.Error("Failed to process events in fallback, skipping. Event is likely of an unrelated type.", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
-					continue
+					slog.Error("Unrecoverable error processing events in fallback, stopping for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
+					break outerLoop
 				}
 
 				if len(events) > 0 {
@@ -1245,34 +1246,36 @@ func (o *Oracle) getSolanaEvents(
 		for _, resp := range batchResponses {
 			requestIndex, ok := parseRPCResponseID(resp, eventTypeName)
 			if !ok {
-				continue
+				// The error is already logged in the helper function. Stop processing to be safe.
+				break outerLoop
 			}
 			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), eventTypeName) {
-				continue
+				// The error is already logged in the helper function. Stop processing to be safe.
+				break outerLoop
 			}
 			sig := currentBatchSignatures[requestIndex].Signature
 
 			if resp.Error != nil {
 				// This should ideally not be hit if the retry logic above is working, but kept as a safeguard.
-				slog.Error("Error in sub-batch GetTransaction result. This transaction will be missed in this cycle.", "tx", sig, "eventType", eventTypeName, "error", resp.Error)
-				continue
+				slog.Error("Unrecoverable error in sub-batch GetTransaction result. This transaction will be missed in this cycle. Stopping processing to prevent data loss.", "tx", sig, "eventType", eventTypeName, "error", resp.Error)
+				break outerLoop
 			}
 			if resp.Result == nil {
-				slog.Error("Nil result field in sub-batch response", "tx", sig, "eventType", eventTypeName)
-				continue
+				slog.Error("Unrecoverable nil result field in sub-batch response. Stopping processing for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName)
+				break outerLoop
 			}
 
 			var txResult solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
-				slog.Error("Failed to unmarshal GetTransactionResult", "tx", sig, "eventType", eventTypeName, "error", err)
-				continue
+				slog.Error("Unrecoverable error: failed to unmarshal GetTransactionResult. Stopping processing for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName, "error", err)
+				break outerLoop
 			}
 
 			// Call the processor function to handle the token-specific logic.
 			events, err := processTransaction(&txResult, program, sig, o.DebugMode)
 			if err != nil {
-				slog.Warn("Failed to process events, skipping. Event is likely of an unrelated type.", "tx", sig, "eventType", eventTypeName, "error", err)
-				continue // Skip this transaction
+				slog.Warn("Unrecoverable error: failed to process events. Stopping for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName, "error", err)
+				break outerLoop // Stop processing this batch.
 			}
 
 			if len(events) > 0 {
