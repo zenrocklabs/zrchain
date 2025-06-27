@@ -87,8 +87,8 @@ jobs:
         run: sleep 90
       - name: Run integration tests
         run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
-      # - name: Stop Docker Compose stack
-      #   if: always()
-      #   run: |
-      #     cd zenrock-stack
-      #     docker compose -f docker-compose.yaml down --remove-orphans -v
+      - name: Stop Docker Compose stack
+        if: always()
+        run: |
+          cd zenrock-stack
+          docker compose -f docker-compose.yaml down --remove-orphans -v
