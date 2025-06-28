@@ -260,9 +260,10 @@ var colorMap = map[string]func(string) string{
 	"state":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
 
 	// Timing
-	"time":          func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
-	"interval":      func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
-	"sleepDuration": func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"time":             func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
+	"interval":         func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"sleepDuration":    func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"nextIntervalMark": func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
 
 	// Transactions & signatures
 	"tx":                     func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
@@ -287,6 +288,7 @@ var colorMap = map[string]func(string) string{
 	"amount":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
 	"value":    func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
 	"fee":      func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+	"block":    func(s string) string { return color.HEX("FFFFFF").Sprint(s) }, // White
 	"ROCK/USD": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
 	"BTC/USD":  func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
 	"ETH/USD":  func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
@@ -303,7 +305,7 @@ var colorMap = map[string]func(string) string{
 	"rockMintSig":   func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
 	"zenBTCMintSig": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
 	"rockBurnSig":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
-	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B4T4").Sprint(s) }, // Yellow
+	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
 }
 
 // initLogger sets up coloured structured logging
