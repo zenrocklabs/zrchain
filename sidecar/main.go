@@ -98,7 +98,7 @@ func main() {
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
+	neutrinoServer.Initialize(cfg.Network, cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
