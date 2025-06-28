@@ -13,8 +13,8 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
-	"github.com/fatih/color"
 	solana "github.com/gagliardetto/solana-go"
+	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
 	"gopkg.in/yaml.v3"
 )
@@ -248,84 +248,62 @@ func resetStateForVersion(stateFile string) bool {
 	return true
 }
 
-var colorMap = map[string]*color.Color{
-	// System and configuration
-	"version":  color.New(color.FgHiCyan, color.Bold),
-	"port":     color.New(color.FgHiGreen, color.Bold),
-	"endpoint": color.New(color.FgHiBlue, color.Bold),
-	"file":     color.New(color.FgHiCyan),
-	"key":      color.New(color.FgCyan),
-	"status":   color.New(color.FgHiYellow),
-	"response": color.New(color.FgYellow),
+var colorMap = map[string]func(string) string{
+	// Core categories
+	"error": func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
 
-	// Error handling
-	"error":      color.New(color.FgHiRed, color.Bold),
-	"retryCount": color.New(color.FgHiRed),
-	"maxRetries": color.New(color.FgRed),
+	// Info & identifiers
+	"version": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"network": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chain":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chainID": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"state":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
 
-	// Time and duration related
-	"time":             color.New(color.FgYellow),
-	"interval":         color.New(color.FgCyan),
-	"sleepDuration":    color.New(color.FgMagenta),
-	"alignmentSource":  color.New(color.FgCyan),
-	"nextIntervalMark": color.New(color.FgHiYellow),
+	// Timing
+	"time":          func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"interval":      func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"sleepDuration": func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
 
-	// Blockchain and blocks
-	"network": color.New(color.FgHiBlue, color.Bold),
-	"chain":   color.New(color.FgHiBlue),
-	"chainID": color.New(color.FgBlue),
-	"block":   color.New(color.FgHiYellow, color.Bold),
-	"height":  color.New(color.FgHiYellow, color.Bold),
-	"state":   color.New(color.FgHiBlue),
+	// Transactions & signatures
+	"tx":                     func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txID":                   func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txSig":                  func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txHash":                 func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"lastSig":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"newestLastProcessedSig": func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"sigHash":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
 
-	// Transactions and signatures
-	"tx":                     color.New(color.FgHiWhite, color.Bold),
-	"txID":                   color.New(color.FgHiWhite, color.Bold),
-	"txSig":                  color.New(color.FgHiWhite, color.Bold),
-	"txHash":                 color.New(color.FgHiWhite, color.Bold),
-	"sigHash":                color.New(color.FgWhite),
-	"lastSig":                color.New(color.FgHiBlue),
-	"newestLastProcessedSig": color.New(color.FgHiWhite),
+	// Addresses
+	"address":         func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"destinationAddr": func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"recipient":       func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
 
-	// Addresses and identifiers
-	"address":         color.New(color.FgHiCyan),
-	"destinationAddr": color.New(color.FgCyan),
-	"recipient":       color.New(color.FgHiCyan),
-	"addressLength":   color.New(color.FgCyan),
+	// Events
+	"eventType":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventName":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventIndex": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
 
-	// Events and processing
-	"eventType":  color.New(color.FgHiBlue),
-	"eventIndex": color.New(color.FgBlue),
-	"eventName":  color.New(color.FgHiBlue),
-	"eventCount": color.New(color.FgMagenta),
-	"type":       color.New(color.FgBlue),
-	"logIndex":   color.New(color.FgMagenta),
+	// Values / amounts
+	"amount":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"value":    func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"fee":      func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+	"ROCK/USD": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"BTC/USD":  func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"ETH/USD":  func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
 
-	// Values and amounts
-	"amount":          color.New(color.FgHiYellow),
-	"value":           color.New(color.FgYellow),
-	"fee":             color.New(color.FgHiRed),
-	"mint":            color.New(color.FgHiGreen),
-	"ROCK/USD":        color.New(color.FgHiGreen, color.Bold),
-	"BTC/USD":         color.New(color.FgHiYellow, color.Bold),
-	"ETH/USD":         color.New(color.FgHiBlue, color.Bold),
-	"defaultLamports": color.New(color.FgYellow),
+	// Metrics
+	"count":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"batchSize":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"total":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"inspected":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"newTxCount":   func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"requestIndex": func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
 
-	// Counts and metrics
-	"count":        color.New(color.FgHiMagenta, color.Bold),
-	"batchSize":    color.New(color.FgMagenta),
-	"requestIndex": color.New(color.FgCyan),
-	"newTxCount":   color.New(color.FgHiMagenta),
-	"inspected":    color.New(color.FgMagenta),
-	"total":        color.New(color.FgHiMagenta),
-	"newest":       color.New(color.FgHiYellow),
-	"recent":       color.New(color.FgYellow),
-
-	// Solana-specific signatures
-	"rockMintSig":   color.New(color.FgHiGreen),
-	"zenBTCMintSig": color.New(color.FgHiYellow),
-	"zenBTCBurnSig": color.New(color.FgHiMagenta),
-	"rockBurnSig":   color.New(color.FgHiCyan),
+	// Burn / Mint signatures
+	"rockMintSig":   func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"zenBTCMintSig": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"rockBurnSig":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B4T4").Sprint(s) }, // Yellow
 }
 
 // initLogger sets up coloured structured logging
@@ -340,8 +318,8 @@ func initLogger(debug bool) {
 		TimeFormat: time.DateTime,
 		AddSource:  debug,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if colorFunc, exists := colorMap[a.Key]; exists {
-				a.Value = slog.StringValue(colorFunc.Sprint(a.Value.String()))
+			if f, ok := colorMap[a.Key]; ok {
+				a.Value = slog.StringValue(f(a.Value.String()))
 			}
 			return a
 		},
