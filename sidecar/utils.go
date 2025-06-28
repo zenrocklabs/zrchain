@@ -320,6 +320,12 @@ func initLogger(debug bool) {
 		TimeFormat: time.DateTime,
 		AddSource:  debug,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// Handle timestamp coloring
+			if a.Key == slog.TimeKey {
+				a.Value = slog.StringValue(color.HEX("FFFACD").Sprint(a.Value.String()))
+				return a
+			}
+			// Handle other custom fields
 			if f, ok := colorMap[a.Key]; ok {
 				a.Value = slog.StringValue(f(a.Value.String()))
 			}
