@@ -816,7 +816,7 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		// 1. Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, event.TxID, event.LogIndex, event.ChainID)
 		if err != nil {
-			slog.Error("Error querying ZenBTC for burn event", "chain", chainTypeName, "txID", event.TxID, "logIndex", event.LogIndex, "chainID", event.ChainID, "error", err)
+			slog.Error("Error querying zrChain for burn event", "chain", chainTypeName, "txID", event.TxID, "logIndex", event.LogIndex, "chainID", event.ChainID, "error", err)
 			// Keep events that we failed to query, they might succeed next time. We'll let it continue to the ZenTP check.
 		}
 
@@ -830,11 +830,11 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 			if len(event.DestinationAddr) >= 20 {
 				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", event.DestinationAddr[:20])
 				if err != nil {
-					slog.Error("Error converting destination address to bech32 for ZenTP query", "txID", event.TxID, "error", err)
+					slog.Error("Error converting destination address to bech32 for ZenTP query on zrChain", "txID", event.TxID, "error", err)
 				} else {
 					zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, event.TxID)
 					if err != nil {
-						slog.Error("Error querying ZenTP for Solana burn event", "txID", event.TxID, "address", bech32Addr, "error", err)
+						slog.Error("Error querying zrChain for Solana burn event", "txID", event.TxID, "address", bech32Addr, "error", err)
 					}
 					// Check zentpResp and its content.
 					if zentpResp != nil && len(zentpResp.Burns) > 0 {
@@ -1010,7 +1010,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		// Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
-			slog.Debug("Error querying ZenBTC for mint event", "txSig", event.TxSig, "error", err)
+			slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
@@ -1022,7 +1022,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if !foundOnChain {
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
-				slog.Debug("Error querying ZenTP for mint event", "txSig", event.TxSig, "error", err)
+				slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
