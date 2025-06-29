@@ -8,11 +8,14 @@ import (
 	"math/big"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	solana "github.com/gagliardetto/solana-go"
+	"github.com/gookit/color"
+	"github.com/lmittmann/tint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,13 +59,33 @@ func loadStateDataFromFile(filename string) (latestState *sidecartypes.OracleSta
 }
 
 func (o *Oracle) SaveToFile(filename string) error {
-	file, err := os.Create(filename)
+	// Write to a temporary file first for atomicity
+	tempFile := filename + ".tmp"
+	file, err := os.Create(tempFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer file.Close()
 
-	return json.NewEncoder(file).Encode(o.stateCache)
+	if err := json.NewEncoder(file).Encode(o.stateCache); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to encode state: %w", err)
+	}
+
+	if err := file.Sync(); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to sync temp file: %w", err)
+	}
+
+	file.Close() // Close before rename
+
+	// Atomically replace the original file
+	if err := os.Rename(tempFile, filename); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to rename temp file: %w", err)
+	}
+
+	return nil
 }
 
 func (o *Oracle) CacheState() {
@@ -199,7 +222,7 @@ func resetStateForVersion(stateFile string) bool {
 		var m meta
 		if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
 			// Cache already corresponds to current version – no reset needed.
-			slog.Info("Cache is already aligned with current version", "version", currentVersion)
+			slog.Info("Cache is already aligned", "version", currentVersion)
 			return false
 		}
 	}
@@ -223,4 +246,90 @@ func resetStateForVersion(stateFile string) bool {
 	}
 
 	return true
+}
+
+var colorMap = map[string]func(string) string{
+	// Core categories
+	"error": func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+
+	// Info & identifiers
+	"version": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"network": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chain":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chainID": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"state":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+
+	// Timing
+	"time":             func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
+	"interval":         func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"sleepDuration":    func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"nextIntervalMark": func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
+
+	// Transactions & signatures
+	"tx":                     func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txID":                   func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txSig":                  func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txHash":                 func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"lastSig":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"newestLastProcessedSig": func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"sigHash":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+
+	// Addresses
+	"address":         func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"destinationAddr": func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"recipient":       func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+
+	// Events
+	"eventType":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventName":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventIndex": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+
+	// Values / amounts
+	"amount":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"value":    func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"fee":      func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+	"block":    func(s string) string { return color.HEX("FFFFFF").Sprint(s) }, // White
+	"ROCK/USD": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"BTC/USD":  func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"ETH/USD":  func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+
+	// Metrics
+	"count":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"batchSize":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"total":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"inspected":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"newTxCount":   func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"requestIndex": func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+
+	// Burn / Mint signatures
+	"rockMintSig":   func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"zenBTCMintSig": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"rockBurnSig":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+}
+
+// initLogger sets up coloured structured logging
+func initLogger(debug bool) {
+	level := slog.LevelInfo
+	if debug {
+		level = slog.LevelDebug
+	}
+
+	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
+		Level:      level,
+		TimeFormat: time.DateTime,
+		AddSource:  debug,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// Handle timestamp coloring
+			if a.Key == slog.TimeKey {
+				a.Value = slog.StringValue(color.HEX("FFFACD").Sprint(a.Value.String()))
+				return a
+			}
+			// Handle other custom fields
+			if f, ok := colorMap[a.Key]; ok {
+				a.Value = slog.StringValue(f(a.Value.String()))
+			}
+			return a
+		},
+	})))
 }

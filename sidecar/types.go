@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	sol "github.com/gagliardetto/solana-go"
 	solana "github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
@@ -49,11 +52,21 @@ type Oracle struct {
 	DebugMode          bool
 	SkipInitialWait    bool
 
+	// Mutex for protecting state cleanup operations
+	cleanupMutex sync.Mutex
+
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// Function fields for mocking
+	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
+	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
+	getSignaturesForAddressFn   func(ctx context.Context, account sol.PublicKey, opts *solana.GetSignaturesForAddressOpts) ([]*solana.TransactionSignature, error)
 }
 
 type oracleStateUpdate struct {
