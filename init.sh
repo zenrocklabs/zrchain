@@ -61,8 +61,7 @@ while [[ $# -gt 0 ]]; do
             START_ONLY=true
             shift
             ;;
-        *)
-            --dynamic)
+        --dynamic)
             DYNAMIC=true
             shift
             ;;
