@@ -10,6 +10,7 @@ import (
 )
 
 func Test_ProxyFunctions_Testnet3(t *testing.T) {
+	t.Skip("manual test that requires local bitcoin proxy and may take time to sync; skipped in automated runs")
 	//Do not run as part of CI.
 
 	//This test requires 2 additional pieces of setup, so will not work out of the box
@@ -22,7 +23,7 @@ func Test_ProxyFunctions_Testnet3(t *testing.T) {
 	*/
 
 	ns := neutrino.NeutrinoServer{}
-	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
+	ns.Initialize("testnet", "http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
 
 	time.Sleep(30 * time.Second)
 
@@ -47,6 +48,7 @@ func Test_ProxyFunctions_Testnet3(t *testing.T) {
 }
 
 func Test_ProxyFunctions_Testnet4(t *testing.T) {
+	t.Skip("manual test that requires local bitcoin proxy and may take time to sync; skipped in automated runs")
 	//Do not run as part of CI.
 
 	//This test requires 2 additional pieces of setup, so will not work out of the box
@@ -59,7 +61,7 @@ func Test_ProxyFunctions_Testnet4(t *testing.T) {
 	*/
 
 	ns := neutrino.NeutrinoServer{}
-	ns.Initialize("http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
+	ns.Initialize("testnet", "http://127.0.0.1:1234", "user", "secret", "./neutrino", 12345, "/neutrino_")
 	time.Sleep(30 * time.Second)
 
 	//Get via the Neutrino Node

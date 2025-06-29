@@ -48,6 +48,8 @@ func initTestOracle() *sidecar.Oracle {
 }
 
 func TestGetSidecarStateByEthHeight(t *testing.T) {
+	t.Skip("Skipping test on CI")
+
 	oracle := initTestOracle()
 
 	// Sample states

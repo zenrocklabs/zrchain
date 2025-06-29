@@ -20,6 +20,7 @@ import (
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 	"github.com/lightninglabs/neutrino"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/btcsuite/btclog"
 )
 
@@ -83,42 +84,45 @@ func buildNeutrinoNode(chainParams chaincfg.Params, logLevel btclog.Level, nodes
 	return nodeMap, err
 }
 
-func (ns *NeutrinoServer) Initialize(url, user, password, path string, port int, neutrinoPath string) {
-	var err error
+func (ns *NeutrinoServer) Initialize(network string, url, user, password, path string, port int, neutrinoPath string) {
+	// Only start a local Neutrino node when validating on mainnet. For all other
+	// networks we rely entirely on the proxy fallback implemented in
+	// GetBlockHeader… methods.
+
+	// Build Neutrino nodes
 	nodes := make(map[string]LiteNode)
 
-	//Testnet
-	nodes, err = buildNeutrinoNode(chaincfg.TestNet3Params, btclog.LevelError, &nodes, path, neutrinoPath)
-	if err != nil {
-		log.Printf("Failed to Start Node Testnet3")
+	if network == shared.NetworkMainnet {
+		if built, err := buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes, path, neutrinoPath); err != nil {
+			log.Printf("Failed to start Neutrino node for mainnet: %v", err)
+		} else {
+			nodes = built
+		}
 	}
-	nodes["testnet"] = nodes["testnet3"]
+
+	// Assign (possibly empty) map so the struct is always initialised
 	ns.Nodes = nodes
 
-	//Mainnet
-	nodes, err = buildNeutrinoNode(chaincfg.MainNetParams, btclog.LevelError, &nodes, path, neutrinoPath)
-	if err != nil {
-		log.Printf("Failed to Start Node Mainnet")
-	}
-	ns.Nodes = nodes
+	// ---------------------------------------------------------------------
+	// RPC proxy setup – always running so Oracle can still serve requests
+	// even when no local Neutrino nodes are present.
+	// ---------------------------------------------------------------------
 
-	// Register RPC server
 	rpc.Register(ns)
 	rpc.HandleHTTP()
-	// Listen for requests on specified port (default: 12345)
-	if port <= 0 {
-		port = 12345 // Use default port if invalid port is provided
-	}
-	l, e := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if e != nil {
-		log.Fatal("listen error:", e)
-	}
-	go http.Serve(l, nil)
 
-	//Connect to Proxy
-	var caller *rpcservice.RpcCaller
+	if port <= 0 {
+		port = 12345 // default port
+	}
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	go http.Serve(listener, nil)
+
+	// Connect to external proxy if provided
 	if url != "" {
-		caller = rpcservice.NewRpcCaller(url, user, password)
+		caller := rpcservice.NewRpcCaller(url, user, password)
 		ns.Proxy = caller
 	}
 }

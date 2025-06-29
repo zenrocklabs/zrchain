@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -19,6 +18,7 @@ import (
 )
 
 func main() {
+	// Parse flags first to determine debug level
 	port := flag.Int("port", 9191, "Override GRPC port from config")
 	cacheFile := flag.String("cache-file", "cache.json", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 12345, "Override Neutrino RPC port (default: 12345)")
@@ -28,12 +28,24 @@ func main() {
 	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
 	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
+	version := flag.Bool("version", false, "Display version information and exit")
 
 	if !flag.Parsed() {
 		flag.Parse()
 	}
 
+	// Set up coloured structured logging
+	initLogger(*debug)
+
+	// Handle version command
+	if *version {
+		slog.Info("zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
+		os.Exit(0)
+	}
+
 	cfg := LoadConfig()
+
+	slog.Info("Starting zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 
 	if !cfg.Enabled {
 		for {
@@ -55,7 +67,7 @@ func main() {
 	// Reset state if version requires it – firstBoot will be true only once per version
 	firstBoot := resetStateForVersion(cfg.StateFile)
 	if firstBoot {
-		slog.Info("Completed first-boot cache reset for sidecar version", "version", sidecartypes.SidecarVersionName)
+		slog.Info("Completed first-boot cache reset for zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 	}
 
 	// Set Neutrino port from flag or config
@@ -72,25 +84,28 @@ func main() {
 	} else if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
-		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
+		slog.Error("No RPC endpoint found for network", "network", cfg.Network)
+		os.Exit(1)
 	}
 
 	ethClient, err := ethclient.Dial(rpcAddress)
 	if err != nil {
-		log.Fatalf("failed to connect to the Ethereum client: %v", err)
+		slog.Error("Failed to connect to the Ethereum client", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
+	neutrinoServer.Initialize(cfg.Network, cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
-		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
+		slog.Error("Refresh Address Client: failed to get new client", "error", err)
+		os.Exit(1)
 	}
 
 	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug, *skipInitialWait)
@@ -108,7 +123,8 @@ func main() {
 	if !*noAVS {
 		go func() {
 			if err := oracle.runEigenOperator(); err != nil {
-				log.Fatalf("Error starting EigenLayer Operator: %v", err)
+				slog.Error("Error starting EigenLayer Operator", "error", err)
+				os.Exit(1)
 			}
 		}()
 	}

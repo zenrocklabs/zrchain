@@ -103,21 +103,30 @@ var (
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
-	MainLoopTickerInterval     = 60 * time.Second
-	OracleCacheSize            = 20
-	EthBurnEventsBlockRange    = 1000
-	EthBlocksBeforeFinality    = int64(5) // TODO: should this be increased?
-	SolanaEventScanTxLimit     = 500
-	SolanaEventFetchBatchSize  = 25
-	SolanaSleepInterval        = 250 * time.Millisecond
-	SolanaEventFetchMaxRetries = 10
-	SolanaEventFetchRetrySleep = 250 * time.Millisecond
+	MainLoopTickerInterval      = 60 * time.Second
+	OracleCacheSize             = 20
+	EthBurnEventsBlockRange     = 1000
+	EthBlocksBeforeFinality     = int64(5) // TODO: should this be increased?
+	SolanaEventScanTxLimit      = 500
+	SolanaEventFetchBatchSize   = 25
+	SolanaSleepInterval         = 250 * time.Millisecond // Sleep between batches
+	SolanaFallbackSleepInterval = 25 * time.Millisecond  // Sleep between individual fallback requests
+	SolanaEventFetchMaxRetries  = 10
+	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
+	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
 
-	SidecarVersionName = "rose_moon"
+	// HTTP and RPC constants
+	DefaultHTTPTimeout        = 10 * time.Second
+	DefaultSolanaFeeReturned  = uint64(5000) // Default fee in lamports per signature
+	SolanaTransactionVersion0 = uint64(0)    // Solana transaction version 0
+	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
+	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
+
+	SidecarVersionName = "thunder_moon"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon"}
+	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon"}
 )
 
 // PriceFeed struct with fields for different price feeds

@@ -11,8 +11,8 @@ avs_registry_coordinator_address: 0xFbFECE8f29f499c32206d8bFfA57da2b124790C7
 operator_state_retriever_address: 0x03d0452e70711f169eB6B6F5Ab33d8571c313ef6
 
 # ETH RPC URL
-eth_rpc_url: 
-eth_ws_url: 
+eth_rpc_url: https://mainnet.gateway.tenderly.co/
+eth_ws_url: wss://mainnet.gateway.tenderly.co/
 
 # If you are running locally using `go run .`, these should be full path to your keystore files
 ecdsa_private_key_store_path: keys/test.ecdsa.key.json
