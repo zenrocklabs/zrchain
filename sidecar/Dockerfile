@@ -56,7 +56,7 @@ RUN mkdir /app && \
 
 # Copy binary to a scratch container. Let's keep our images nice and small!
 COPY --from=go_builder /zrchain/validator_sidecar /app/validator_sidecar
-COPY --from=go_builder /zrchain/sidecar/config.yaml /app/config.yaml
+COPY --from=go_builder /zrchain/sidecar/config.yaml.example /app/config.yaml
 
 # Set user and workdir
 USER appuser
