@@ -52,7 +52,15 @@ RUN adduser -Ds /bin/bash appuser
 
 # Copy binary to a scratch container. Let's keep our images nice and small!
 COPY --from=go_builder /zrchain/validator_sidecar /validator_sidecar
-COPY --from=go_builder /zrchain/sidecar/config.yaml /config.yaml
+
+# Copy config file (use config.yaml if it exists, otherwise use example)
+COPY --from=go_builder /zrchain/sidecar/config.yaml* /tmp/
+RUN if [ -f /tmp/config.yaml ]; then \
+        cp /tmp/config.yaml /config.yaml; \
+    else \
+        cp /tmp/config.yaml.example /config.yaml; \
+    fi && \
+    rm -rf /tmp/config.yaml*
 
 # Set user
 USER appuser
