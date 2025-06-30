@@ -71,6 +71,10 @@ jobs:
         with:
           go-version: '1.24.3'
           cache-dependency-path: "**/*.sum"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Install ginkgo CLI
         run: go install github.com/onsi/ginkgo/v2/ginkgo@latest
       - name: Add Go bin to PATH
@@ -79,9 +83,11 @@ jobs:
         run: ginkgo version
       - name: Start zenrock stack services
         run: |
+          CURRENT_PATH=$(pwd)
           rm -rf zenrock-stack
           git clone git@github.com:zenrocklabs/zenrock-stack.git
           cd zenrock-stack
+          ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
       - name: Wait for 90 seconds
         run: sleep 90
