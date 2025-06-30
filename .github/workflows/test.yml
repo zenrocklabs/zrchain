@@ -89,8 +89,8 @@ jobs:
           cd zenrock-stack
           ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
-      - name: Wait for 180 seconds
-        run: sleep 180
+      - name: Wait for 90 seconds
+        run: sleep 90
       - name: Run integration tests
         run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
       - name: Stop Docker Compose stack
