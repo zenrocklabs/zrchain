@@ -8,11 +8,13 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	ubermock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtestutil "github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -30,7 +32,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 var (
@@ -59,6 +60,7 @@ type ValidationKeeperTestSuite struct {
 	accountKeeper    *validationtestutil.MockAccountKeeper
 	queryClient      validationtypes.QueryClient
 	msgServer        validationtypes.MsgServer
+	zenBTCCtrl       *ubermock.Controller
 }
 
 func (s *KeeperTestSuite) SetupTest() {
@@ -134,12 +136,31 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	newctrl := ubermock.NewController(s.T())
 	zenBTCKeeper := validationtestutil.NewMockZenBTCKeeper(newctrl)
 	// Set up expectations for key ID methods that are called by getZenBTCKeyIDs
-	zenBTCKeeper.EXPECT().GetStakerKeyID(ctx).Return(uint64(1)).AnyTimes()
-	zenBTCKeeper.EXPECT().GetEthMinterKeyID(ctx).Return(uint64(2)).AnyTimes()
-	zenBTCKeeper.EXPECT().GetUnstakerKeyID(ctx).Return(uint64(3)).AnyTimes()
-	zenBTCKeeper.EXPECT().GetCompleterKeyID(ctx).Return(uint64(4)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetStakerKeyID(ubermock.Any()).Return(uint64(1)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetEthMinterKeyID(ubermock.Any()).Return(uint64(2)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetUnstakerKeyID(ubermock.Any()).Return(uint64(3)).AnyTimes()
+	zenBTCKeeper.EXPECT().GetCompleterKeyID(ubermock.Any()).Return(uint64(4)).AnyTimes()
 	// Set up expectation for GetSolanaParams which is called by retrieveSolanaNonces
-	zenBTCKeeper.EXPECT().GetSolanaParams(ctx).Return(&zenbtctypes.Solana{NonceAccountKey: 456}).AnyTimes()
+	zenBTCKeeper.EXPECT().GetSolanaParams(ubermock.Any()).Return(&zenbtctypes.Solana{NonceAccountKey: 456}).AnyTimes()
+
+	// // Set up expectations for redemption-related methods
+	// zenBTCKeeper.EXPECT().GetFirstRedemptionAwaitingSign(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().SetFirstRedemptionAwaitingSign(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().GetSupply(ubermock.Any()).Return(zenbtctypes.Supply{}, nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().SetSupply(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().GetExchangeRate(ubermock.Any()).Return(math.LegacyNewDec(1), nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().GetRedemptionsStore().Return(nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().GetBurnEventsStore().Return(nil).AnyTimes()
+	// zenBTCKeeper.EXPECT().GetPendingMintTransactionsStore().Return(nil).AnyTimes()
+
+	// Create a proper ZRConfig for testing
+	zrConfig := &params.ZRConfig{
+		IsValidator: true, // Set to true for testing validator behavior
+		SidecarAddr: "localhost:8080",
+	}
+
+	// Create a proper tx decoder for testing
+	txDecoder := encCfg.TxConfig.TxDecoder()
 
 	keeper := validationkeeper.NewKeeper(
 		encCfg.Codec,
@@ -147,8 +168,8 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		nil,
-		nil,
+		txDecoder,
+		zrConfig,
 		treasuryKeeper,
 		zenBTCKeeper,
 		zentpKeeper,
@@ -180,6 +201,9 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	validationtypes.RegisterQueryServer(queryHelper, validationkeeper.Querier{Keeper: keeper})
 	s.queryClient = validationtypes.NewQueryClient(queryHelper)
 	s.msgServer = validationkeeper.NewMsgServerImpl(keeper)
+
+	// Store the zenBTC controller in the suite for cleanup
+	s.zenBTCCtrl = newctrl
 
 	return keeper, ctrl
 }
