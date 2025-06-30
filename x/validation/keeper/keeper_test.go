@@ -8,7 +8,6 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	ubermock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
@@ -129,8 +128,16 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	bankKeeper.EXPECT().GetAllBalances(ctx, notBondedAcc.GetAddress()).Return(sdk.NewCoins()).AnyTimes()
 
 	zentpKeeper := validationtestutil.NewMockZentpKeeper(ctrl)
-	zentpKeeper.EXPECT().GetSolanaParams(ctx).Return(&zentptypes.Solana{NonceAccountKey: 123}).AnyTimes()
-
+	zentpKeeper.EXPECT().GetSolanaParams(gomock.Any()).Return(&zentptypes.Solana{
+		SignerKeyId:       10,
+		ProgramId:         "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+		NonceAuthorityKey: 11,
+		NonceAccountKey:   12,
+		MintAddress:       "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
+		FeeWallet:         "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+		Fee:               0,
+		Btl:               20,
+	}).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())
@@ -141,7 +148,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	zenBTCKeeper.EXPECT().GetUnstakerKeyID(ubermock.Any()).Return(uint64(3)).AnyTimes()
 	zenBTCKeeper.EXPECT().GetCompleterKeyID(ubermock.Any()).Return(uint64(4)).AnyTimes()
 	// Set up expectation for GetSolanaParams which is called by retrieveSolanaNonces
-	zenBTCKeeper.EXPECT().GetSolanaParams(ubermock.Any()).Return(&zenbtctypes.Solana{NonceAccountKey: 456}).AnyTimes()
+	zenBTCKeeper.EXPECT().GetSolanaParams(ubermock.Any()).Return(validationtestutil.DefaultSolana).AnyTimes()
 
 	// // Set up expectations for redemption-related methods
 	// zenBTCKeeper.EXPECT().GetFirstRedemptionAwaitingSign(ubermock.Any()).Return(uint64(0), nil).AnyTimes()

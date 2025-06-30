@@ -186,6 +186,22 @@ func TestExtendVoteHandler(t *testing.T) {
 			},
 			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtension},
 		},
+		{
+			name: "PASS: extend vote handler",
+			args: args{
+				req: &abci.RequestExtendVote{
+					Hash:               []byte("test"),
+					Height:             2,
+					Time:               time.Now(),
+					Txs:                [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
+					ProposedLastCommit: createTestLastCommit(),
+					Misbehavior:        nil,
+					NextValidatorsHash: []byte("test-next-validators-hash"),
+					ProposerAddress:    []byte("test-proposer-address"),
+				},
+			},
+			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtensionHeight2},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -475,8 +491,8 @@ func TestPreBlocker(t *testing.T) {
 			name: "PASS: pre blocker with vote extensions enabled, but with empty oracle data",
 			args: args{
 				req: &abci.RequestFinalizeBlock{
-					Txs:    [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
-					Height: 1,
+					Txs:    [][]byte{[]byte(`{"BTCUSDPrice":"106603.530000000000000000","ETHUSDPrice":"2422.093500000000000000","EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
+					Height: 3,
 					Time:   time.Now(),
 					DecidedLastCommit: abci.CommitInfo{
 						Round: 1,
@@ -514,12 +530,112 @@ func TestPreBlocker(t *testing.T) {
 
 			consensusParams := ctx.ConsensusParams()
 			consensusParams.Abci = &cmtproto.ABCIParams{
-				VoteExtensionsEnableHeight: 1,
+				VoteExtensionsEnableHeight: 2,
 			}
 			ctx = ctx.WithConsensusParams(consensusParams)
 
 			err := keeper.PreBlocker(ctx, tt.args.req)
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestGetValidatedOracleData(t *testing.T) {
+
+	type args struct {
+		voteExt         keeper.VoteExtension
+		fieldVotePowers map[keeper.VoteExtensionField]int64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *keeper.OracleData
+		wantErr bool
+	}{
+		{
+			name: "PASS: get validated oracle data",
+			args: args{
+				voteExt: validationtestutil.SampleDecodedVoteExtension,
+				fieldVotePowers: map[keeper.VoteExtensionField]int64{
+					keeper.VEFieldZRChainBlockHeight:      1,
+					keeper.VEFieldEigenDelegationsHash:    1,
+					keeper.VEFieldRequestedBtcBlockHeight: 1,
+					keeper.VEFieldRequestedBtcHeaderHash:  1,
+					keeper.VEFieldEthBlockHeight:          1,
+					keeper.VEFieldEthGasLimit:             1,
+					keeper.VEFieldEthBaseFee:              1,
+					keeper.VEFieldEthTipCap:               1,
+					keeper.VEFieldRequestedStakerNonce:    1,
+					keeper.VEFieldRequestedEthMinterNonce: 1,
+					keeper.VEFieldRequestedUnstakerNonce:  1,
+					keeper.VEFieldRequestedCompleterNonce: 1,
+					keeper.VEFieldSolanaMintNoncesHash:    1,
+					keeper.VEFieldSolanaAccountsHash:      1,
+					keeper.VEFieldEthBurnEventsHash:       1,
+					keeper.VEFieldSolanaBurnEventsHash:    1,
+					keeper.VEFieldSolanaMintEventsHash:    1,
+					keeper.VEFieldRedemptionsHash:         1,
+					keeper.VEFieldROCKUSDPrice:            1,
+					keeper.VEFieldBTCUSDPrice:             1,
+					keeper.VEFieldETHUSDPrice:             1,
+					keeper.VEFieldLatestBtcBlockHeight:    1,
+					keeper.VEFieldLatestBtcHeaderHash:     1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			suite := new(ValidationKeeperTestSuite)
+			suite.SetT(&testing.T{})
+			keeper, ctrl := suite.ValidationKeeperSetupTest()
+			defer ctrl.Finish()
+
+			ctx := sdk.UnwrapSDKContext(suite.ctx)
+			ctx = ctx.WithBlockHeight(3)
+
+			consensusParams := ctx.ConsensusParams()
+			consensusParams.Abci = &cmtproto.ABCIParams{
+				VoteExtensionsEnableHeight: 2,
+			}
+			ctx = ctx.WithConsensusParams(consensusParams)
+
+			got, err := keeper.GetValidatedOracleData(ctx, tt.args.voteExt, tt.args.fieldVotePowers)
+			require.NoError(t, err)
+			require.NotNil(t, got)
+		})
+	}
+}
+
+func TestUpdateValidatorStakes(t *testing.T) {
+
+	type args struct {
+		oracleData keeper.OracleData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "PASS: update validator stakes",
+			args: args{
+				oracleData: validationtestutil.SampleOracleData,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			suite := new(ValidationKeeperTestSuite)
+			suite.SetT(&testing.T{})
+			keeper, ctrl := suite.ValidationKeeperSetupTest()
+			defer ctrl.Finish()
+
+			ctx := sdk.UnwrapSDKContext(suite.ctx)
+			keeper.UpdateValidatorStakes(ctx, tt.args.oracleData)
+			// No error to check since the function doesn't return anything
 		})
 	}
 }
