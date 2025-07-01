@@ -1769,6 +1769,11 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 	cleanedEvents map[string]bool,
 	chainTypeName string,
 ) ([]api.BurnEvent, map[string]bool) {
+	// Use mock function if available (for testing)
+	if o.reconcileBurnEventsFn != nil {
+		return o.reconcileBurnEventsFn(ctx, eventsToClean, cleanedEvents, chainTypeName)
+	}
+
 	remaining := make([]api.BurnEvent, 0, len(eventsToClean))
 	updated := make(map[string]bool)
 	maps.Copy(updated, cleanedEvents)

@@ -67,6 +67,7 @@ type Oracle struct {
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
 	getSignaturesForAddressFn   func(ctx context.Context, account sol.PublicKey, opts *solana.GetSignaturesForAddressOpts) ([]*solana.TransactionSignature, error)
+	reconcileBurnEventsFn       func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool)
 }
 
 type oracleStateUpdate struct {
