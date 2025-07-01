@@ -73,7 +73,7 @@ jobs:
             -v $(pwd):/workspace \
             -v ~/.aws:/root/.aws \
             validator_sidecar:${TAG} \
-            "/validator_sidecar" "/workspace/validator_sidecar"
+            "/app/validator_sidecar" "/workspace/validator_sidecar"
           zip validator_sidecar.zip validator_sidecar
       - name: Semantic release
         env:
