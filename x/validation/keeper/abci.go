@@ -253,7 +253,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
+	oracleData, err := k.GetValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
@@ -330,7 +330,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	// Validator updates - only if EigenDelegationsHash has consensus
 	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
-		k.updateValidatorStakes(ctx, oracleData)
+		k.UpdateValidatorStakes(ctx, oracleData)
 		k.updateAVSDelegationStore(ctx, oracleData)
 	}
 
@@ -437,7 +437,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
 // Only validates fields that have reached consensus as indicated in fieldVotePowers.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
+func (k *Keeper) GetValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
 	// We only fetch Ethereum state if we have consensus on EthBlockHeight
 	var oracleData *OracleData
 	var err error
@@ -533,7 +533,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 //
 
 // updateValidatorStakes updates validator stake values and delegation mappings.
-func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) UpdateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
 	for _, delegation := range oracleData.ValidatorDelegations {
@@ -569,18 +569,18 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 		validatorInAVSDelegationSet[valAddr.String()] = true
 	}
 
-	k.removeStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
+	k.RemoveStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
 }
 
 // removeStaleValidatorDelegations removes delegation entries for validators not present in the current AVS data.
-func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
+func (k *Keeper) RemoveStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
 	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake sdkmath.Int) (bool, error) {
 		if !validatorInAVSDelegationSet[valAddr] {
 			validatorsToRemove = append(validatorsToRemove, valAddr)
 		}
-		return true, nil
+		return false, nil
 	}); err != nil {
 		k.Logger(ctx).Error("error walking validator delegations", "error", err)
 	}
