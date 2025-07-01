@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"math/big"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -52,9 +51,6 @@ type Oracle struct {
 	DebugMode          bool
 	SkipInitialWait    bool
 
-	// Mutex for protecting state cleanup operations
-	cleanupMutex sync.Mutex
-
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
@@ -67,6 +63,7 @@ type Oracle struct {
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
 	getSignaturesForAddressFn   func(ctx context.Context, account sol.PublicKey, opts *solana.GetSignaturesForAddressOpts) ([]*solana.TransactionSignature, error)
+	reconcileBurnEventsFn       func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool)
 }
 
 type oracleStateUpdate struct {
@@ -75,12 +72,15 @@ type oracleStateUpdate struct {
 	suggestedTip               *big.Int
 	estimatedGas               uint64
 	ethBurnEvents              []api.BurnEvent
+	cleanedEthBurnEvents       map[string]bool
 	solanaBurnEvents           []api.BurnEvent
+	cleanedSolanaBurnEvents    map[string]bool
 	ROCKUSDPrice               math.LegacyDec
 	BTCUSDPrice                math.LegacyDec
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
+	cleanedSolanaMintEvents    map[string]bool
 	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
 }
 

@@ -118,7 +118,13 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 		return []api.BurnEvent{newEvent}, solana.Signature{}, nil
 	}
 
-	// 4. Execute the function under test
+	// 4. Mock the reconciliation function to avoid zrChain client dependency
+	oracle.reconcileBurnEventsFn = func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool) {
+		// For this test, return all events as still needing to be processed (none are cleaned)
+		return eventsToClean, cleanedEvents
+	}
+
+	// 5. Execute the function under test
 	var wg sync.WaitGroup
 	update := &oracleStateUpdate{
 		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]solana.Signature),
@@ -134,7 +140,7 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// 5. Assert the results
+	// 6. Assert the results
 	require.NotNil(t, update.solanaBurnEvents)
 	require.Len(t, update.solanaBurnEvents, 2, "Should contain both the pre-existing and the new event")
 
