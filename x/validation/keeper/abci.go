@@ -2051,7 +2051,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err != nil {
 				firstPendingID = 0
 			}
-			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
+			return k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
 		// txDispatchCallback: Constructs and submits an Ethereum transaction to call the 'complete' function
 		// on the EigenLayer contracts, which finalizes the unstaking process.
@@ -2118,7 +2118,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		startingIndex = 0
 	}
 
-	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
+	redemptions, err := k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
 	if err != nil {
 		k.Logger(ctx).Error("error getting redemptions", "error", err)
 		return

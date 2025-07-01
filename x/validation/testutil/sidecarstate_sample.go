@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/math"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	cmtabci "github.com/cometbft/cometbft/abci/types"
 )
 
 var SampleSidecarState = &sidecar.SidecarStateResponse{
@@ -78,6 +79,20 @@ var SampleOracleData = keeper.OracleData{
 	BTCUSDPrice:                "106603.530000000000000000",
 	ETHUSDPrice:                "2422.093500000000000000",
 	LatestBtcBlockHeight:       902951,
+	ConsensusData: cmtabci.ExtendedCommitInfo{
+		Round: 1,
+		Votes: []cmtabci.ExtendedVoteInfo{
+			{
+				Validator: cmtabci.Validator{
+					Address: []byte("QDagxuKQqu3HMpWLmNIgCEhR9b0="), // Base64 encoded validator address
+					Power:   125000000,                              // Higher power for consensus
+				},
+				BlockIdFlag:        2,                                                                                                  // BlockIDFlagCommit for consensus
+				VoteExtension:      []byte{},                                                                                           // Empty vote extension
+				ExtensionSignature: []byte("QB/lPpqzBJAW+iNF37X5PVrHpuHJ/ZmKWcFX6JdwTxYPAjomEHI9BqzF9EOSpp3CQ1/OikFMlITSR+eqIhgaCg=="), // Base64 encoded signature
+			},
+		},
+	},
 }
 
 // Bitcoin header responses
