@@ -3794,7 +3794,8 @@ type MsgUpdateParams struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// NOTE: All parameters must be supplied.
 	Params *Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
@@ -3869,13 +3870,15 @@ type MsgBridge struct {
 	unknownFields protoimpl.UnknownFields
 
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	// source_address is the address on the source chain where the tokens are coming from.
+	// source_address is the address on the source chain where the tokens are
+	// coming from.
 	//
 	// Deprecated: Do not use.
 	SourceAddress string `protobuf:"bytes,2,opt,name=source_address,json=sourceAddress,proto3" json:"source_address,omitempty"` // Deprecated
 	// amount is the amount to mint on the destination chain
 	Amount uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	// denom is the denomination of the token being minted on the destination chain.
+	// denom is the denomination of the token being minted on the destination
+	// chain.
 	Denom string `protobuf:"bytes,4,opt,name=denom,proto3" json:"denom,omitempty"`
 	// destination is the caip identifier for the destination chain
 	DestinationChain string `protobuf:"bytes,5,opt,name=destination_chain,json=destinationChain,proto3" json:"destination_chain,omitempty"`
@@ -3989,7 +3992,8 @@ type MsgBurn struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority     string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	ModuleAccount string `protobuf:"bytes,2,opt,name=module_account,json=moduleAccount,proto3" json:"module_account,omitempty"`
 	Denom         string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`

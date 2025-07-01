@@ -40,7 +40,7 @@ message KeyRequest {
   string keyring_addr = 4;
   KeyType key_type = 5;
   KeyRequestStatus status = 6;
-  repeated bytes keyring_party_signatures = 7 [deprecated = true];
+  repeated bytes keyring_party_signatures = 7 [ deprecated = true ];
   string reject_reason = 8;
   uint64 index = 9;
   uint64 sign_policy_id = 10;

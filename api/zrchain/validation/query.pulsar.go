@@ -17355,7 +17355,8 @@ func (x *QueryParamsResponse) GetHVParams() *HVParams {
 	return nil
 }
 
-// QueryPowerRequest is the request type for the Query/ValidatorPower RPC method.
+// QueryPowerRequest is the request type for the Query/ValidatorPower RPC
+// method.
 type QueryPowerRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -17455,7 +17456,8 @@ func (x *ValidatorPower) GetStatus() BondStatus {
 	return BondStatus_BOND_STATUS_UNSPECIFIED
 }
 
-// QueryPowerResponse is the response type for the Query/ValidatorPower RPC method.
+// QueryPowerResponse is the response type for the Query/ValidatorPower RPC
+// method.
 type QueryPowerResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -17510,7 +17512,8 @@ func (x *QueryPowerResponse) GetHeight() int64 {
 	return 0
 }
 
-// QueryBackfillRequestsRequest is the request type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsRequest is the request type for the
+// Query/BackfillRequests RPC method.
 type QueryBackfillRequestsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -17537,7 +17540,8 @@ func (*QueryBackfillRequestsRequest) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_query_proto_rawDescGZIP(), []int{31}
 }
 
-// QueryBackfillRequestsResponse is the response type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsResponse is the response type for the
+// Query/BackfillRequests RPC method.
 type QueryBackfillRequestsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

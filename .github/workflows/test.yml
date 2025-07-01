@@ -34,7 +34,7 @@ jobs:
         run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
 
   unit-test-self-hosted:
-    if: github.repository == 'zenrocklabs/zrchainn'
+    if: github.repository == 'zenrocklabs/zrchain'
     name: Unit Tests (zenrocklabs-hosted)
     runs-on: zrchain
     defaults:
