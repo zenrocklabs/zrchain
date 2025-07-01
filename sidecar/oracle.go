@@ -1117,8 +1117,10 @@ func (o *Oracle) getSolanaEvents(
 	newestSigFromNode := initialSignatures[0].Signature
 	newSignaturesToFetchDetails, err := o.fetchAndFillSignatureGap(program, lastKnownSig, initialSignatures, limit, eventTypeName)
 	if err != nil {
-		// Log the error but continue with what we have to not halt the oracle. The gap may be resolved in the next tick.
-		slog.Error("Failed to fill signature gap. Processing may be incomplete.", "eventType", eventTypeName, "error", err)
+		// If we fail to bridge the gap, we must return an error and the original lastKnownSig
+		// to ensure we retry the entire process from the same starting point on the next tick.
+		// Continuing would risk advancing the watermark and permanently skipping the events in the gap.
+		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
 	}
 	if len(newSignaturesToFetchDetails) == 0 {
 		return []any{}, newestSigFromNode, nil
@@ -1129,7 +1131,6 @@ func (o *Oracle) getSolanaEvents(
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize
 	maxTxVersion := sidecartypes.SolanaTransactionVersion0
 
-outerLoop:
 	for i := 0; i < len(newSignaturesToFetchDetails); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignaturesToFetchDetails))
 		currentBatchSignatures := newSignaturesToFetchDetails[i:end]
@@ -1218,17 +1219,20 @@ outerLoop:
 
 				if err != nil {
 					slog.Error("Unrecoverable error in fallback GetTransaction after all retries. Stopping processing for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
-					break outerLoop
+					// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+					return nil, lastKnownSig, err
 				}
 				if txResult == nil {
 					slog.Error("Unrecoverable nil result in fallback GetTransaction after all retries. Stopping processing for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName)
-					break outerLoop
+					// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+					return nil, lastKnownSig, fmt.Errorf("unrecoverable nil result for tx %s", sigInfo.Signature)
 				}
 
 				events, err := processTransaction(txResult, program, sigInfo.Signature, o.DebugMode)
 				if err != nil {
 					slog.Error("Unrecoverable error processing events in fallback, stopping for this cycle to avoid data loss.", "tx", sigInfo.Signature, "eventType", eventTypeName, "error", err)
-					break outerLoop
+					// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+					return nil, lastKnownSig, err
 				}
 
 				if len(events) > 0 {
@@ -1248,35 +1252,41 @@ outerLoop:
 			requestIndex, ok := parseRPCResponseID(resp, eventTypeName)
 			if !ok {
 				// The error is already logged in the helper function. Stop processing to be safe.
-				break outerLoop
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, fmt.Errorf("failed to parse RPC response ID")
 			}
 			if !validateRequestIndex(requestIndex, len(currentBatchSignatures), eventTypeName) {
 				// The error is already logged in the helper function. Stop processing to be safe.
-				break outerLoop
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, fmt.Errorf("invalid request index %d", requestIndex)
 			}
 			sig := currentBatchSignatures[requestIndex].Signature
 
 			if resp.Error != nil {
 				// This should ideally not be hit if the retry logic above is working, but kept as a safeguard.
 				slog.Error("Unrecoverable error in sub-batch GetTransaction result. This transaction will be missed in this cycle. Stopping processing to prevent data loss.", "tx", sig, "eventType", eventTypeName, "error", resp.Error)
-				break outerLoop
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, fmt.Errorf("unrecoverable error in batch response for tx %s", sig)
 			}
 			if resp.Result == nil {
 				slog.Error("Unrecoverable nil result field in sub-batch response. Stopping processing for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName)
-				break outerLoop
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, fmt.Errorf("unrecoverable nil result in batch response for tx %s", sig)
 			}
 
 			var txResult solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txResult); err != nil {
 				slog.Error("Unrecoverable error: failed to unmarshal GetTransactionResult. Stopping processing for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName, "error", err)
-				break outerLoop
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, err
 			}
 
 			// Call the processor function to handle the token-specific logic.
 			events, err := processTransaction(&txResult, program, sig, o.DebugMode)
 			if err != nil {
 				slog.Warn("Unrecoverable error: failed to process events. Stopping for this cycle to avoid data loss.", "tx", sig, "eventType", eventTypeName, "error", err)
-				break outerLoop // Stop processing this batch.
+				// Return original lastKnownSig to force a full retry of the entire signature batch on the next tick
+				return nil, lastKnownSig, err
 			}
 
 			if len(events) > 0 {
