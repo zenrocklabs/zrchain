@@ -13,7 +13,6 @@ import (
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
@@ -88,7 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ethClient, err := ethclient.Dial(rpcAddress)
+	ethClient, err := connectWithRetry(rpcAddress, 20, 3*time.Second)
 	if err != nil {
 		slog.Error("Failed to connect to the Ethereum client", "error", err)
 		os.Exit(1)

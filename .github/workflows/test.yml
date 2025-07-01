@@ -34,7 +34,7 @@ jobs:
         run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
 
   unit-test-self-hosted:
-    if: github.repository == 'zenrocklabs/zrchain'
+    if: github.repository == 'zenrocklabs/zrchainn'
     name: Unit Tests (zenrocklabs-hosted)
     runs-on: zrchain
     defaults:
@@ -60,10 +60,6 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.2'
-          cache-dependency-path: "**/*.sum"
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: eu-west-1
@@ -71,10 +67,34 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      # - name: Start Docker Compose stack
-      #   run: docker compose up -d --force-recreate --build
-      # - name: Run integration tests
-      #   run: go test -v --tags=integration ./tests/integration/...
-      # - name: Stop Docker Compose stack
-      #   if: always()
-      #   run: docker compose -f docker-compose.yml down
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache-dependency-path: "**/*.sum"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ginkgo CLI
+        run: go install github.com/onsi/ginkgo/v2/ginkgo@latest
+      - name: Add Go bin to PATH
+        run: echo "$HOME/go/bin" >> $GITHUB_PATH
+      - name: ginkgo version
+        run: ginkgo version
+      - name: Start zenrock stack services
+        run: |
+          CURRENT_PATH=$(pwd)
+          rm -rf zenrock-stack
+          git clone git@github.com:zenrocklabs/zenrock-stack.git
+          cd zenrock-stack
+          ./set_compose_path.py ${CURRENT_PATH}
+          docker compose up -d --force-recreate --build
+      - name: Wait for 90 seconds
+        run: sleep 90
+      - name: Run integration tests
+        run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
+      - name: Stop Docker Compose stack
+        if: always()
+        run: |
+          cd zenrock-stack
+          docker compose -f docker-compose.yaml down --remove-orphans -v
