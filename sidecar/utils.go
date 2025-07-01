@@ -15,6 +15,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/gookit/color"
@@ -452,4 +453,30 @@ func initLogger(debug bool) {
 			return a
 		},
 	})))
+}
+
+func connectWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
+	var client *ethclient.Client
+	var err error
+
+	for i := 0; i < maxRetries || maxRetries == 0; i++ {
+		client, err = ethclient.Dial(rpcAddress)
+		if err == nil {
+			// Check if client can respond to eth_blockNumber
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			_, err = client.BlockNumber(ctx)
+			if err == nil {
+				slog.Info("Successfully connected to Ethereum client", "rpc", rpcAddress)
+				return client, err
+			}
+			client.Close()
+		}
+
+		slog.Warn("Retrying connection to Ethereum client", "attempt", i+1, "error", err)
+		time.Sleep(delay)
+	}
+
+	return nil, err
 }
