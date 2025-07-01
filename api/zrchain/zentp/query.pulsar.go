@@ -5724,7 +5724,8 @@ func (x *QueryStatsResponse) GetBurnsCount() uint64 {
 	return 0
 }
 
-// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply RPC method.
+// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply
+// RPC method.
 type QuerySolanaROCKSupplyRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5751,7 +5752,8 @@ func (*QuerySolanaROCKSupplyRequest) Descriptor() ([]byte, []int) {
 	return file_zrchain_zentp_query_proto_rawDescGZIP(), []int{8}
 }
 
-// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply RPC method.
+// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply
+// RPC method.
 type QuerySolanaROCKSupplyResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

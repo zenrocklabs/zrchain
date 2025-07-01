@@ -114,7 +114,8 @@ func Caip2ToKeyType(caip string) (KeyType, error) {
 	switch caip {
 	case "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // solana mainnet
 		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // solana devnet
-		"solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z": // solana testnet
+		"solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", // solana testnet
+		"solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD": // solana regnet
 		return KeyType_KEY_TYPE_EDDSA_ED25519, nil
 	case "eip155:1", // eth mainnet
 		"eip155:11155111",  // sepolia
