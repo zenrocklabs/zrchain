@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -715,11 +714,6 @@ func TestRemoveStaleValidatorDelegations(t *testing.T) {
 				validatorDelegations++
 				return false, nil
 			})
-
-			fmt.Println("initialCount", initialCount)
-			fmt.Println("validatorDelegations after removal", validatorDelegations)
-			fmt.Println("existingValidators", len(tt.args.existingValidators))
-			fmt.Println("validatorInAVSDelegationSet", len(tt.args.validatorInAVSDelegationSet))
 
 			require.Equal(t, tt.want, validatorDelegations)
 
