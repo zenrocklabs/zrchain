@@ -2,11 +2,14 @@ package keeper_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtestutil "github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -636,6 +639,90 @@ func TestUpdateValidatorStakes(t *testing.T) {
 			ctx := sdk.UnwrapSDKContext(suite.ctx)
 			keeper.UpdateValidatorStakes(ctx, tt.args.oracleData)
 			// No error to check since the function doesn't return anything
+		})
+	}
+}
+
+func TestRemoveStaleValidatorDelegations(t *testing.T) {
+	type args struct {
+		validatorInAVSDelegationSet map[string]bool
+		existingValidators          map[string]sdkmath.Int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "PASS: update validator stakes",
+			args: args{
+				validatorInAVSDelegationSet: map[string]bool{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": true,
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": true,
+				},
+				existingValidators: map[string]sdkmath.Int{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": sdkmath.NewInt(1000000),
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": sdkmath.NewInt(1000000),
+					"zenvaloper1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7ves9zy": sdkmath.NewInt(1000000),
+				},
+			},
+			want: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			suite := new(ValidationKeeperTestSuite)
+			suite.SetT(&testing.T{})
+			keeper, ctrl := suite.ValidationKeeperSetupTest()
+			defer ctrl.Finish()
+
+			ctx := sdk.UnwrapSDKContext(suite.ctx)
+
+			for validator, amount := range tt.args.existingValidators {
+				// Create validator in the validator store
+				validatorHV := types.ValidatorHV{
+					OperatorAddress:   validator,
+					ConsensusPubkey:   nil, // Not needed for this test
+					Jailed:            false,
+					Status:            types.Bonded,
+					TokensNative:      amount,
+					DelegatorShares:   sdkmath.LegacyNewDecFromInt(amount),
+					Description:       types.Description{},
+					UnbondingHeight:   0,
+					UnbondingTime:     time.Time{},
+					Commission:        types.Commission{},
+					MinSelfDelegation: sdkmath.ZeroInt(),
+					TokensAVS:         sdkmath.ZeroInt(),
+				}
+
+				err := keeper.SetValidator(ctx, validatorHV)
+				require.NoError(t, err)
+
+				err = keeper.ValidatorDelegations.Set(ctx, validator, amount)
+				require.NoError(t, err)
+			}
+
+			initialCount := 0
+			keeper.ValidatorDelegations.Walk(ctx, nil, func(key string, value sdkmath.Int) (bool, error) {
+				initialCount++
+				return false, nil
+			})
+
+			keeper.RemoveStaleValidatorDelegations(ctx, tt.args.validatorInAVSDelegationSet)
+
+			validatorDelegations := 0
+			keeper.ValidatorDelegations.Walk(ctx, nil, func(key string, value sdkmath.Int) (bool, error) {
+				validatorDelegations++
+				return false, nil
+			})
+
+			fmt.Println("initialCount", initialCount)
+			fmt.Println("validatorDelegations after removal", validatorDelegations)
+			fmt.Println("existingValidators", len(tt.args.existingValidators))
+			fmt.Println("validatorInAVSDelegationSet", len(tt.args.validatorInAVSDelegationSet))
+
+			require.Equal(t, tt.want, validatorDelegations)
+
 		})
 	}
 }

@@ -569,18 +569,18 @@ func (k *Keeper) UpdateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 		validatorInAVSDelegationSet[valAddr.String()] = true
 	}
 
-	k.removeStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
+	k.RemoveStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
 }
 
 // removeStaleValidatorDelegations removes delegation entries for validators not present in the current AVS data.
-func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
+func (k *Keeper) RemoveStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
 	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake sdkmath.Int) (bool, error) {
 		if !validatorInAVSDelegationSet[valAddr] {
 			validatorsToRemove = append(validatorsToRemove, valAddr)
 		}
-		return true, nil
+		return false, nil
 	}); err != nil {
 		k.Logger(ctx).Error("error walking validator delegations", "error", err)
 	}
