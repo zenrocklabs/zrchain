@@ -1100,7 +1100,7 @@ func (o *Oracle) getSolanaEvents(
 	}
 
 	// Fetch latest signatures for the program address
-	allSignatures, err := o.getSignaturesForAddressFn(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+	initialSignatures, err := o.getSignaturesForAddressFn(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: solrpc.CommitmentConfirmed,
 	})
@@ -1108,17 +1108,18 @@ func (o *Oracle) getSolanaEvents(
 		return nil, lastKnownSig, fmt.Errorf("failed to get %s signatures: %w", eventTypeName, err)
 	}
 
-	if len(allSignatures) == 0 {
+	if len(initialSignatures) == 0 {
 		slog.Info("Retrieved 0 events (no signatures found)", "eventType", eventTypeName)
 		return []any{}, lastKnownSig, nil
 	}
 
 	// The newest signature from the node's perspective for this program address.
-	newestSigFromNode := allSignatures[0].Signature
-	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
-
-	// Filter and prepare signatures for processing
-	newSignaturesToFetchDetails, _ = o.filterNewSignatures(allSignatures, lastKnownSig, eventTypeName, newestSigFromNode, limit)
+	newestSigFromNode := initialSignatures[0].Signature
+	newSignaturesToFetchDetails, err := o.fetchAndFillSignatureGap(program, lastKnownSig, initialSignatures, limit, eventTypeName)
+	if err != nil {
+		// Log the error but continue with what we have to not halt the oracle. The gap may be resolved in the next tick.
+		slog.Error("Failed to fill signature gap. Processing may be incomplete.", "eventType", eventTypeName, "error", err)
+	}
 	if len(newSignaturesToFetchDetails) == 0 {
 		return []any{}, newestSigFromNode, nil
 	}
@@ -1292,6 +1293,100 @@ outerLoop:
 		"eventType", eventTypeName,
 		"newestLastProcessedSig", lastSuccessfullyProcessedSig.String())
 	return processedEvents, lastSuccessfullyProcessedSig, nil
+}
+
+// fetchAndFillSignatureGap handles the logic of finding new signatures, and if a gap is detected
+// (i.e., lastKnownSig is not in the initial fetch), it paginates backwards to fill the gap.
+func (o *Oracle) fetchAndFillSignatureGap(
+	program solana.PublicKey,
+	lastKnownSig solana.Signature,
+	initialSignatures []*solrpc.TransactionSignature,
+	limit int,
+	eventTypeName string,
+) ([]*solrpc.TransactionSignature, error) {
+	newSignatures := make([]*solrpc.TransactionSignature, 0)
+	foundLastSig := false
+
+	for _, sigInfo := range initialSignatures {
+		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
+			foundLastSig = true
+			break
+		}
+		newSignatures = append(newSignatures, sigInfo)
+	}
+
+	// If lastKnownSig was found, we have all we need.
+	if foundLastSig || lastKnownSig.IsZero() {
+		if !lastKnownSig.IsZero() {
+			if len(newSignatures) == 0 {
+				slog.Info("No new signatures found since last processed", "eventType", eventTypeName, "lastSig", lastKnownSig.String())
+			} else {
+				slog.Info("Found new potential transactions to inspect", "eventType", eventTypeName, "newTxCount", len(newSignatures))
+			}
+		} else {
+			slog.Info("No previous signature stored, processing recent transactions", "eventType", eventTypeName, "txCount", len(newSignatures))
+		}
+		// Reverse to process oldest first
+		for i, j := 0, len(newSignatures)-1; i < j; i, j = i+1, j-1 {
+			newSignatures[i], newSignatures[j] = newSignatures[j], newSignatures[i]
+		}
+		return newSignatures, nil
+	}
+
+	// If we are here, we have a gap. `newSignatures` currently contains the entire `initialSignatures` page.
+	slog.Warn("Last processed signature not found in initial fetch, starting back-pagination to fill gap.", "lastSig", lastKnownSig, "eventType", eventTypeName)
+
+	// Start paginating backwards.
+	for i := 0; i < sidecartypes.SolanaMaxBackfillPages; i++ {
+		if len(initialSignatures) == 0 {
+			slog.Error("Back-pagination stopped: ran out of signatures before finding last known signature.", "lastSig", lastKnownSig, "eventType", eventTypeName)
+			break
+		}
+		oldestSigInPage := initialSignatures[len(initialSignatures)-1].Signature
+
+		backfillPage, err := o.getSignaturesForAddressFn(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+			Limit:      &limit,
+			Commitment: solrpc.CommitmentConfirmed,
+			Before:     oldestSigInPage,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch backfill page of signatures: %w", err)
+		}
+
+		pageContainsLastSig := false
+		var endOfGapIndex int
+		for endOfGapIndex = 0; endOfGapIndex < len(backfillPage); endOfGapIndex++ {
+			if backfillPage[endOfGapIndex].Signature == lastKnownSig {
+				pageContainsLastSig = true
+				break
+			}
+		}
+
+		// Prepend the newly found signatures to our list.
+		if pageContainsLastSig {
+			newSignatures = append(backfillPage[:endOfGapIndex], newSignatures...)
+			slog.Info("Successfully filled gap after back-paginating.", "lastSig", lastKnownSig, "eventType", eventTypeName, "pages", i+1)
+			// Reverse to process oldest first
+			for i, j := 0, len(newSignatures)-1; i < j; i, j = i+1, j-1 {
+				newSignatures[i], newSignatures[j] = newSignatures[j], newSignatures[i]
+			}
+			return newSignatures, nil
+		}
+
+		// lastKnownSig not in this page, prepend the whole page and continue.
+		newSignatures = append(backfillPage, newSignatures...)
+		initialSignatures = backfillPage // for the next iteration's `oldestSigInPage`
+
+		if i == sidecartypes.SolanaMaxBackfillPages-1 {
+			slog.Error("Exceeded max backfill pages without finding last known signature. Processing what has been fetched to avoid getting stuck.", "lastSig", lastKnownSig, "eventType", eventTypeName)
+		}
+	}
+
+	// Reverse to process oldest first, even if we didn't find the sig.
+	for i, j := 0, len(newSignatures)-1; i < j; i, j = i+1, j-1 {
+		newSignatures[i], newSignatures[j] = newSignatures[j], newSignatures[i]
+	}
+	return newSignatures, nil
 }
 
 // processMintTransaction is a generic helper that processes a single Solana transaction to extract mint events.
@@ -1984,65 +2079,6 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 	}
 
 	return mergedEvents
-}
-
-// Helper function to filter new signatures for processing
-func (o *Oracle) filterNewSignatures(allSignatures []*solrpc.TransactionSignature, lastKnownSig solana.Signature, eventTypeName string, newestSigFromNode solana.Signature, limit int) ([]*solrpc.TransactionSignature, int) {
-	newSignaturesToFetchDetails := make([]*solrpc.TransactionSignature, 0)
-
-	// Filter signatures: find signatures newer than the last one we processed.
-	var signaturesInspected int
-	for _, sigInfo := range allSignatures {
-		signaturesInspected++
-		if !lastKnownSig.IsZero() && sigInfo.Signature == lastKnownSig {
-			break // Found the last processed signature, stop collecting.
-		}
-		newSignaturesToFetchDetails = append(newSignaturesToFetchDetails, sigInfo)
-	}
-
-	if len(newSignaturesToFetchDetails) == 0 {
-		if !lastKnownSig.IsZero() {
-			slog.Info("No new signatures found since last processed",
-				"eventType", eventTypeName,
-				"lastSig", lastKnownSig.String(),
-				"inspected", signaturesInspected,
-				"total", limit,
-				"newest", newestSigFromNode.String())
-		} else {
-			slog.Info("No signatures found in recent transactions",
-				"eventType", eventTypeName,
-				"recent", limit)
-		}
-		return newSignaturesToFetchDetails, signaturesInspected
-	}
-
-	if !lastKnownSig.IsZero() {
-		if len(newSignaturesToFetchDetails) == len(allSignatures) {
-			slog.Info("Last processed signature not found in latest transactions, processing full batch",
-				"eventType", eventTypeName,
-				"lastSig", lastKnownSig.String(),
-				"batchSize", len(allSignatures))
-		} else {
-			slog.Info("Found new potential transactions to inspect",
-				"eventType", eventTypeName,
-				"newTxCount", len(newSignaturesToFetchDetails),
-				"lastSig", lastKnownSig.String(),
-				"inspected", signaturesInspected,
-				"total", limit)
-		}
-	} else {
-		slog.Info("No previous signature stored, processing recent transactions",
-			"eventType", eventTypeName,
-			"txCount", len(newSignaturesToFetchDetails),
-			"recent", limit)
-	}
-
-	// Reverse the slice so we process the oldest *new* signature first.
-	for i, j := 0, len(newSignaturesToFetchDetails)-1; i < j; i, j = i+1, j-1 {
-		newSignaturesToFetchDetails[i], newSignaturesToFetchDetails[j] = newSignaturesToFetchDetails[j], newSignaturesToFetchDetails[i]
-	}
-
-	return newSignaturesToFetchDetails, signaturesInspected
 }
 
 // Helper function to merge new mint events
