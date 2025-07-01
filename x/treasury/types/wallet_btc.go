@@ -152,7 +152,7 @@ func VerifyBitcoinSigHashes(dataForSigning [][]byte, tx []byte) (status Verifica
 	if tx == nil {
 		return Verification_NotVerified, nil
 	}
-	if dataForSigning == nil || len(dataForSigning) == 0 {
+	if len(dataForSigning) == 0 {
 		return Verification_NotVerified, nil
 	}
 	msgTx, err := DeserializeTransaction(tx)

@@ -13,23 +13,21 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  
+
   // Parameters queries the parameters of the module.
-  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/zrchain/zentp/params";
-  
   }
-  
+
   // Queries a list of Mints.
-  rpc Mints (QueryMintsRequest) returns (QueryMintsResponse) {
-    option (google.api.http).get = "/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}";
-  
+  rpc Mints(QueryMintsRequest) returns (QueryMintsResponse) {
+    option (google.api.http).get =
+        "/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}";
   }
-  
+
   // Queries a list of Burns items.
-  rpc Burns (QueryBurnsRequest) returns (QueryBurnsResponse) {
+  rpc Burns(QueryBurnsRequest) returns (QueryBurnsResponse) {
     option (google.api.http).get = "/zrchain/v6/zentp/burns/{id}/{denom}";
-  
   }
 
   // Stats queries the total amounts of mints and burns for an address
@@ -38,7 +36,8 @@ service Query {
   }
 
   // QuerySolanaROCKSupply queries the amount of ROCK on Solana.
-  rpc QuerySolanaROCKSupply(QuerySolanaROCKSupplyRequest) returns (QuerySolanaROCKSupplyResponse) {
+  rpc QuerySolanaROCKSupply(QuerySolanaROCKSupplyRequest)
+      returns (QuerySolanaROCKSupplyResponse) {
     option (google.api.http).get = "/zrchain/zentp/solana_rock_supply";
   }
 }
@@ -48,43 +47,43 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-  
+
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // QueryMintsRequest is request type for the Query/Mints RPC method.
 message QueryMintsRequest {
-  uint64                                id         = 1;
-  string                                creator    = 2;
-  BridgeStatus                          status     = 3;
-  string                                denom      = 4;
+  uint64 id = 1;
+  string creator = 2;
+  BridgeStatus status = 3;
+  string denom = 4;
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
-  uint64                                tx_id      = 6;
-  string                                source_tx_hash = 7;
+  uint64 tx_id = 6;
+  string source_tx_hash = 7;
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.
 message QueryMintsResponse {
-  repeated Bridge                        mints      = 1;
+  repeated Bridge mints = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryBurnsRequest is request type for the Query/Burns RPC method.
 message QueryBurnsRequest {
-  uint64                                id         = 1;
-  string                                denom      = 2;
-  BridgeStatus                          status     = 3;
-  uint64                                tx_id      = 4;
-  string                                recipient_address = 5;
-  string                                source_tx_hash = 6;
+  uint64 id = 1;
+  string denom = 2;
+  BridgeStatus status = 3;
+  uint64 tx_id = 4;
+  string recipient_address = 5;
+  string source_tx_hash = 6;
   cosmos.base.query.v1beta1.PageRequest pagination = 7;
-
 }
 
 // QueryBurnsResponse is response type for the Query/Burns RPC method.
 message QueryBurnsResponse {
-  repeated Bridge                        burns      = 1;
+  repeated Bridge burns = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
@@ -102,10 +101,10 @@ message QueryStatsResponse {
   uint64 burns_count = 4;
 }
 
-// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply RPC method.
+// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply
+// RPC method.
 message QuerySolanaROCKSupplyRequest {}
 
-// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply RPC method.
-message QuerySolanaROCKSupplyResponse {
-  uint64 amount = 1;
-}
+// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply
+// RPC method.
+message QuerySolanaROCKSupplyResponse { uint64 amount = 1; }

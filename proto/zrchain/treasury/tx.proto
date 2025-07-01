@@ -183,6 +183,7 @@ enum SolanaNetworkType {
   MAINNET = 1;
   DEVNET = 2;
   TESTNET = 3;
+  REGNET = 4;
 }
 
 // MetadataSolana defines the network (i.e. mainnet, devnet, testnet) for a

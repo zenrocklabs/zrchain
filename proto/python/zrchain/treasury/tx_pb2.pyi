@@ -26,12 +26,14 @@ class SolanaNetworkType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     MAINNET: _ClassVar[SolanaNetworkType]
     DEVNET: _ClassVar[SolanaNetworkType]
     TESTNET: _ClassVar[SolanaNetworkType]
+    REGNET: _ClassVar[SolanaNetworkType]
 UNKNOWN: VerificationVersion
 BITCOIN_PLUS: VerificationVersion
 UNDEFINED: SolanaNetworkType
 MAINNET: SolanaNetworkType
 DEVNET: SolanaNetworkType
 TESTNET: SolanaNetworkType
+REGNET: SolanaNetworkType
 
 class MsgUpdateParams(_message.Message):
     __slots__ = ("authority", "params")
