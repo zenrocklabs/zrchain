@@ -69,13 +69,14 @@ message SidecarStateResponse {
   uint64 EthBaseFee = 4;
   uint64 EthTipCap = 5;
   uint64 SolanaLamportsPerSignature = 6;
-  repeated BurnEvent EthBurnEvents = 7 [(gogoproto.nullable) = false];
-  repeated Redemption Redemptions = 8 [(gogoproto.nullable) = false];
+  repeated BurnEvent EthBurnEvents = 7 [ (gogoproto.nullable) = false ];
+  repeated Redemption Redemptions = 8 [ (gogoproto.nullable) = false ];
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
-  repeated SolanaMintEvent SolanaMintEvents = 12 [(gogoproto.nullable) = false];
-  repeated BurnEvent SolanaBurnEvents = 13 [(gogoproto.nullable) = false];
+  repeated SolanaMintEvent SolanaMintEvents = 12
+      [ (gogoproto.nullable) = false ];
+  repeated BurnEvent SolanaBurnEvents = 13 [ (gogoproto.nullable) = false ];
   string SidecarVersionName = 14;
 }
 

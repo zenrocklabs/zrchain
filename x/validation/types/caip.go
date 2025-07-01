@@ -76,7 +76,11 @@ func ValidateSolanaChainID(ctx context.Context, caip2 string) (string, error) {
 	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
 		allowedChain = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" // mainnet
 	} else {
-		allowedChain = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1" // devnet
+		if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "docker") {
+			allowedChain = "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD" // regnet
+		} else {
+			allowedChain = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1" // devnet
+		}
 	}
 
 	if caip2 != allowedChain {

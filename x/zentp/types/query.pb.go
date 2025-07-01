@@ -528,7 +528,8 @@ func (m *QueryStatsResponse) GetBurnsCount() uint64 {
 	return 0
 }
 
-// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply RPC method.
+// QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply
+// RPC method.
 type QuerySolanaROCKSupplyRequest struct {
 }
 
@@ -565,7 +566,8 @@ func (m *QuerySolanaROCKSupplyRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySolanaROCKSupplyRequest proto.InternalMessageInfo
 
-// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply RPC method.
+// QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply
+// RPC method.
 type QuerySolanaROCKSupplyResponse struct {
 	Amount uint64 `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
 }
@@ -890,7 +892,6 @@ func _Query_QuerySolanaROCKSupply_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.zentp.Query",
 	HandlerType: (*QueryServer)(nil),

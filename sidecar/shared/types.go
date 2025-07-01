@@ -94,7 +94,7 @@ var (
 	// Solana devnet is used for both devnet and testnet environments
 	SolanaCAIP2 = map[string]string{
 		NetworkDevnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-		NetworkRegnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkRegnet:  "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD",
 		NetworkTestnet: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 		NetworkMainnet: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}

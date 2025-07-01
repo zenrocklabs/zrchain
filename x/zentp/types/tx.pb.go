@@ -33,7 +33,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
 type MsgUpdateParams struct {
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// NOTE: All parameters must be supplied.
 	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
@@ -127,11 +128,13 @@ var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 // MsgUpdateParams is the Msg/UpdateParams request type.
 type MsgBridge struct {
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	// source_address is the address on the source chain where the tokens are coming from.
+	// source_address is the address on the source chain where the tokens are
+	// coming from.
 	SourceAddress string `protobuf:"bytes,2,opt,name=source_address,json=sourceAddress,proto3" json:"source_address,omitempty"` // Deprecated: Do not use.
 	// amount is the amount to mint on the destination chain
 	Amount uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	// denom is the denomination of the token being minted on the destination chain.
+	// denom is the denomination of the token being minted on the destination
+	// chain.
 	Denom string `protobuf:"bytes,4,opt,name=denom,proto3" json:"denom,omitempty"`
 	// destination is the caip identifier for the destination chain
 	DestinationChain string `protobuf:"bytes,5,opt,name=destination_chain,json=destinationChain,proto3" json:"destination_chain,omitempty"`
@@ -263,7 +266,8 @@ func (m *MsgBridgeResponse) GetId() uint64 {
 
 // MsgBurn is the Msg/Burn request type and gated through governance
 type MsgBurn struct {
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority     string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	ModuleAccount string `protobuf:"bytes,2,opt,name=module_account,json=moduleAccount,proto3" json:"module_account,omitempty"`
 	Denom         string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
@@ -692,7 +696,6 @@ func _Msg_SetSolanaROCKSupply_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.zentp.Msg",
 	HandlerType: (*MsgServer)(nil),
