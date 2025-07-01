@@ -75,12 +75,15 @@ type oracleStateUpdate struct {
 	suggestedTip               *big.Int
 	estimatedGas               uint64
 	ethBurnEvents              []api.BurnEvent
+	cleanedEthBurnEvents       map[string]bool
 	solanaBurnEvents           []api.BurnEvent
+	cleanedSolanaBurnEvents    map[string]bool
 	ROCKUSDPrice               math.LegacyDec
 	BTCUSDPrice                math.LegacyDec
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
+	cleanedSolanaMintEvents    map[string]bool
 	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
 }
 
