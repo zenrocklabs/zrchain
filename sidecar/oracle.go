@@ -554,7 +554,8 @@ func (o *Oracle) processSolanaMintEvents(
 		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
 
 		updateMutex.Lock()
-		update.SolanaMintEvents = mergedMintEvents
+		// Re-merge with the current update state to defend against race conditions.
+		update.SolanaMintEvents = mergeNewMintEvents(update.SolanaMintEvents, cleanedEvents, mergedMintEvents, "Solana mint")
 		update.cleanedSolanaMintEvents = cleanedEvents
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
@@ -635,7 +636,8 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		mergedBurnEvents := mergeNewBurnEvents(remainingEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
 
 		updateMutex.Lock()
-		update.solanaBurnEvents = mergedBurnEvents
+		// Re-merge with the current update state to include any backfilled events that may have been added in parallel.
+		update.solanaBurnEvents = mergeNewBurnEvents(update.solanaBurnEvents, cleanedEvents, mergedBurnEvents, "Solana")
 		update.cleanedSolanaBurnEvents = cleanedEvents
 		updateMutex.Unlock()
 	}()
@@ -753,6 +755,10 @@ func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecar
 	if update.solanaLamportsPerSignature == 0 {
 		update.solanaLamportsPerSignature = currentState.SolanaLamportsPerSignature
 		slog.Warn("solanaLamportsPerSignature was 0, using last known state value")
+	}
+	if update.estimatedGas == 0 {
+		update.estimatedGas = currentState.EthGasLimit
+		slog.Warn("estimatedGas was 0, using last known state value")
 	}
 }
 
