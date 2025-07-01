@@ -68,6 +68,7 @@ const (
 	SolanaNetworkType_MAINNET   SolanaNetworkType = 1
 	SolanaNetworkType_DEVNET    SolanaNetworkType = 2
 	SolanaNetworkType_TESTNET   SolanaNetworkType = 3
+	SolanaNetworkType_REGNET    SolanaNetworkType = 4
 )
 
 var SolanaNetworkType_name = map[int32]string{
