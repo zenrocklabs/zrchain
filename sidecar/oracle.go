@@ -215,14 +215,35 @@ func (o *Oracle) processOracleTick(
 	if successfulFetch {
 		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
 		slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
-		o.currentState.Store(&newState)
-		o.CacheState()
+		o.applyStateUpdate(newState)
 	}
 
 	// Clean up burn events *after* sending state update
 	o.cleanUpBurnEvents()
 	// Clean up mint events *after* sending state update
 	o.cleanUpMintEvents()
+}
+
+// applyStateUpdate commits a new state to the oracle. It updates the current in-memory state,
+// updates the high-watermark fields on the oracle object itself, and persists the new state to disk.
+// This is the single, atomic point of truth for state transitions.
+func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
+	o.currentState.Store(&newState)
+
+	// Update the oracle's high-watermark fields from the newly applied state.
+	// These are used as the starting point for the next fetch cycle.
+	o.lastSolRockMintSigStr = newState.LastSolRockMintSig
+	o.lastSolZenBTCMintSigStr = newState.LastSolZenBTCMintSig
+	o.lastSolZenBTCBurnSigStr = newState.LastSolZenBTCBurnSig
+	o.lastSolRockBurnSigStr = newState.LastSolRockBurnSig
+
+	slog.Info("Applied new state and updated watermarks",
+		"rockMint", o.lastSolRockMintSigStr,
+		"zenBTCMint", o.lastSolZenBTCMintSigStr,
+		"zenBTCBurn", o.lastSolZenBTCBurnSigStr,
+		"rockBurn", o.lastSolRockBurnSigStr)
+
+	o.CacheState()
 }
 
 func (o *Oracle) fetchAndProcessState(
@@ -610,25 +631,23 @@ func (o *Oracle) buildFinalState(
 	latestHeader *ethtypes.Header,
 	targetBlockNumber *big.Int,
 ) (sidecartypes.OracleState, error) {
-	// Update the main Oracle's last signature strings
-	if len(update.latestSolanaSigs) > 0 {
-		if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockMint]; ok && !sig.IsZero() {
-			o.lastSolRockMintSigStr = sig.String()
-		}
-		if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCMint]; ok && !sig.IsZero() {
-			o.lastSolZenBTCMintSigStr = sig.String()
-		}
-		if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCBurn]; ok && !sig.IsZero() {
-			o.lastSolZenBTCBurnSigStr = sig.String()
-		}
-		if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
-			o.lastSolRockBurnSigStr = sig.String()
-		}
-		slog.Info("Updated latest Solana signatures",
-			"rockMint", o.lastSolRockMintSigStr,
-			"zenBTCMint", o.lastSolZenBTCMintSigStr,
-			"zenBTCBurn", o.lastSolZenBTCBurnSigStr,
-			"rockBurn", o.lastSolRockBurnSigStr)
+	// Start with the current watermarks and update them if new signatures were found.
+	lastSolRockMintSig := o.lastSolRockMintSigStr
+	lastSolZenBTCMintSig := o.lastSolZenBTCMintSigStr
+	lastSolZenBTCBurnSig := o.lastSolZenBTCBurnSigStr
+	lastSolRockBurnSig := o.lastSolRockBurnSigStr
+
+	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockMint]; ok && !sig.IsZero() {
+		lastSolRockMintSig = sig.String()
+	}
+	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCMint]; ok && !sig.IsZero() {
+		lastSolZenBTCMintSig = sig.String()
+	}
+	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCBurn]; ok && !sig.IsZero() {
+		lastSolZenBTCBurnSig = sig.String()
+	}
+	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
+		lastSolRockBurnSig = sig.String()
 	}
 
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
@@ -679,10 +698,10 @@ func (o *Oracle) buildFinalState(
 		ROCKUSDPrice:               update.ROCKUSDPrice,
 		BTCUSDPrice:                update.BTCUSDPrice,
 		ETHUSDPrice:                update.ETHUSDPrice,
-		LastSolRockMintSig:         o.lastSolRockMintSigStr,
-		LastSolZenBTCMintSig:       o.lastSolZenBTCMintSigStr,
-		LastSolZenBTCBurnSig:       o.lastSolZenBTCBurnSigStr,
-		LastSolRockBurnSig:         o.lastSolRockBurnSigStr,
+		LastSolRockMintSig:         lastSolRockMintSig,
+		LastSolZenBTCMintSig:       lastSolZenBTCMintSig,
+		LastSolZenBTCBurnSig:       lastSolZenBTCBurnSig,
+		LastSolRockBurnSig:         lastSolRockBurnSig,
 	}
 
 	if o.DebugMode {
