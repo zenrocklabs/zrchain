@@ -581,7 +581,7 @@ func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVS
 		if !validatorInAVSDelegationSet[valAddr] {
 			validatorsToRemove = append(validatorsToRemove, valAddr)
 		}
-		return true, nil
+		return false, nil
 	}); err != nil {
 		k.Logger(ctx).Error("error walking validator delegations", "error", err)
 	}

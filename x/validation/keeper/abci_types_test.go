@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -47,7 +48,7 @@ var defaultVe = VoteExtension{
 	ETHUSDPrice:                "1000000000",
 	LatestBtcBlockHeight:       100000,
 	LatestBtcHeaderHash:        []byte("randomhash"),
-	SidecarVersionName:         "thunder_moon",
+	SidecarVersionName:         sidecartypes.SidecarVersionName,
 }
 
 func TestContainsVoteExtension(t *testing.T) {

@@ -107,7 +107,8 @@ var (
 	OracleCacheSize             = 20
 	EthBurnEventsBlockRange     = 1000
 	EthBlocksBeforeFinality     = int64(5) // TODO: should this be increased?
-	SolanaEventScanTxLimit      = 500
+	SolanaEventScanTxLimit      = 1000
+	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize   = 25
 	SolanaSleepInterval         = 250 * time.Millisecond // Sleep between batches
 	SolanaFallbackSleepInterval = 25 * time.Millisecond  // Sleep between individual fallback requests
@@ -122,11 +123,11 @@ var (
 	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
 	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "thunder_moon"
+	SidecarVersionName = "salmon_moon"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon"}
+	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon", "salmon_moon"}
 )
 
 // PriceFeed struct with fields for different price feeds
