@@ -171,11 +171,10 @@ func (o *Oracle) processOracleTick(
 	tickTime time.Time,
 	mainLoopTickerIntervalDuration time.Duration,
 ) {
-	successfulFetch := true
 	newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
-		slog.Error("Error fetching and processing state", "error", err)
-		successfulFetch = false
+		slog.Error("Error fetching and processing state - applying partial update with fallbacks", "error", err)
+		// Continue to apply the partial state rather than aborting entirely
 	}
 
 	// --- Intra-loop NTP check and wait (with fallback to ticker time) ---
@@ -211,12 +210,11 @@ func (o *Oracle) processOracleTick(
 	}
 	// --- End of intra-loop wait ---
 
-	// Send the fetched state exactly at the interval mark (or immediately if delayed)
-	if successfulFetch {
-		slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
-		slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
-		o.applyStateUpdate(newState)
-	}
+	// Always apply the state update (even if partial) - the individual event fetching functions
+	// have their own watermark protection to prevent event loss
+	slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
+	slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+	o.applyStateUpdate(newState)
 }
 
 // applyStateUpdate commits a new state to the oracle. It updates the current in-memory state,
@@ -292,16 +290,28 @@ func (o *Oracle) fetchAndProcessState(
 	wg.Wait()
 	close(errChan)
 
-	// Check for errors
+	// Collect all errors but don't fail - log them and continue with partial state
+	var collectedErrors []error
 	for err := range errChan {
 		if err != nil {
-			slog.Error("Error during state fetch", "error", err)
-			return sidecartypes.OracleState{}, err
+			collectedErrors = append(collectedErrors, err)
+			slog.Warn("Component error during state fetch (continuing with partial state)", "error", err)
 		}
 	}
 
-	// Update signature strings and build final state
-	return o.buildFinalState(update, latestHeader, targetBlockNumber)
+	// Build final state with fallbacks for any failed components
+	finalState, err := o.buildFinalState(update, latestHeader, targetBlockNumber)
+	if err != nil {
+		return sidecartypes.OracleState{}, fmt.Errorf("failed to build final state: %w", err)
+	}
+
+	// Return the state even if some components failed - watermark safety is handled
+	// by individual event fetching functions
+	if len(collectedErrors) > 0 {
+		return finalState, fmt.Errorf("partial state update due to %d component failures", len(collectedErrors))
+	}
+
+	return finalState, nil
 }
 
 func (o *Oracle) fetchEthereumContractData(
