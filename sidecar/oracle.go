@@ -504,8 +504,8 @@ func (o *Oracle) fetchEthereumBurnEvents(
 		toBlock := latestHeader.Number
 		newEvents, err := o.getEthBurnEvents(fromBlock, toBlock)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to process Ethereum burn events: %w", err)
-			return
+			errChan <- fmt.Errorf("failed to get Ethereum burn events, proceeding with reconciliation only: %w", err)
+			newEvents = []api.BurnEvent{} // Ensure slice is not nil
 		}
 
 		// Reconcile and merge
@@ -536,15 +536,15 @@ func (o *Oracle) processSolanaMintEvents(
 		lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
 		rockEvents, newRockSig, err := o.getSolROCKMints(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana zenBTC mint events: %w", err)
-			return
+			errChan <- fmt.Errorf("failed to get Solana ROCK mint events, proceeding with reconciliation only: %w", err)
+			rockEvents = []api.SolanaMintEvent{} // Ensure slice is not nil
 		}
 
 		lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
 		zenbtcEvents, newZenBTCSig, err := o.getSolZenBTCMints(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to process Solana zenBTC mint events: %w", err)
-			return
+			errChan <- fmt.Errorf("failed to get Solana zenBTC mint events, proceeding with reconciliation only: %w", err)
+			zenbtcEvents = []api.SolanaMintEvent{} // Ensure slice is not nil
 		}
 
 		allNewEvents := append(rockEvents, zenbtcEvents...)
@@ -611,17 +611,14 @@ func (o *Oracle) fetchSolanaBurnEvents(
 
 		if zenBtcErr != nil {
 			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events: %w", zenBtcErr)
+			zenBtcEvents = []api.BurnEvent{} // Ensure slice is not nil for append
 		}
 		if rockErr != nil {
 			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", rockErr)
+			rockEvents = []api.BurnEvent{} // Ensure slice is not nil for append
 		}
 
-		// If either failed, we don't proceed with merging to avoid partial state.
-		if zenBtcErr != nil || rockErr != nil {
-			return
-		}
-
-		// Merge and sort
+		// Merge and sort all new events (which will be empty if fetches failed)
 		allNewSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
 		sort.Slice(allNewSolanaBurnEvents, func(i, j int) bool {
 			if allNewSolanaBurnEvents[i].Height != allNewSolanaBurnEvents[j].Height {

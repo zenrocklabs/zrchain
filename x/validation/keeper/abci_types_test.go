@@ -47,7 +47,7 @@ var defaultVe = VoteExtension{
 	ETHUSDPrice:                "1000000000",
 	LatestBtcBlockHeight:       100000,
 	LatestBtcHeaderHash:        []byte("randomhash"),
-	SidecarVersionName:         "thunder_moon",
+	SidecarVersionName:         "salmon_moon",
 }
 
 func TestContainsVoteExtension(t *testing.T) {
