@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,10 +11,12 @@ import (
 	"slices"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	solana "github.com/gagliardetto/solana-go"
+	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
 	"gopkg.in/yaml.v3"
@@ -169,14 +172,131 @@ func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
 	}
 }
 
+// Helper function to parse RPC response ID into request index
+func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool) {
+	if resp == nil {
+		slog.Error("Nil RPCResponse object in sub-batch response", "eventType", eventType)
+		return 0, false
+	}
+
+	var requestIndex int
+	switch id := resp.ID.(type) {
+	case float64: // JSON numbers often decode to float64
+		requestIndex = int(id)
+	case int:
+		requestIndex = id
+	case uint64: // Match the type we put in the request
+		requestIndex = int(id)
+	case json.Number:
+		idInt64, err := id.Int64()
+		if err != nil {
+			slog.Error("Failed to convert json.Number ID to int64", "eventType", eventType, "error", err)
+			return 0, false
+		}
+		requestIndex = int(idInt64)
+	default:
+		slog.Error("Invalid response ID type received", "idType", fmt.Sprintf("%T", resp.ID), "eventType", eventType)
+		return 0, false
+	}
+	return requestIndex, true
+}
+
+// Helper function to validate request index bounds
+func validateRequestIndex(requestIndex int, batchSize int, eventType string) bool {
+	if requestIndex < 0 || requestIndex >= batchSize {
+		slog.Error("Invalid response ID received for sub-batch", "requestIndex", requestIndex, "eventType", eventType)
+		return false
+	}
+	return true
+}
+
+// Helper function to generate event keys for deduplication
+func generateBurnEventKey(event api.BurnEvent) string {
+	return fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+}
+
+func generateMintEventKey(event api.SolanaMintEvent) string {
+	return base64.StdEncoding.EncodeToString(event.SigHash)
+}
+
+// Helper function to check if events already exist and merge new ones
+func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string]bool, newEvents []api.BurnEvent, eventTypeName string) []api.BurnEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateBurnEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Also check against already cleaned events
+	for key := range cleanedEvents {
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.BurnEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateBurnEventKey(event)
+		if !existingEventKeys[key] {
+			mergedEvents = append(mergedEvents, event)
+			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
+		} else {
+			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
+		}
+	}
+
+	return mergedEvents
+}
+
+// Helper function to merge new mint events
+func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[string]bool, newEvents []api.SolanaMintEvent, eventTypeName string) []api.SolanaMintEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateMintEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateMintEventKey(event)
+		if !existingEventKeys[key] {
+			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
+				mergedEvents = append(mergedEvents, event)
+				slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig)
+			} else {
+				slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig)
+			}
+		}
+	}
+
+	return mergedEvents
+}
+
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	return &oracleStateUpdate{
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]solana.Signature),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		ethBurnEvents:    []api.BurnEvent{},
+		eigenDelegations:           make(map[string]map[string]*big.Int),
+		suggestedTip:               big.NewInt(0),
+		solanaLamportsPerSignature: 0,
+		estimatedGas:               0,
+		ROCKUSDPrice:               math.LegacyZeroDec(),
+		BTCUSDPrice:                math.LegacyZeroDec(),
+		ETHUSDPrice:                math.LegacyZeroDec(),
+		ethBurnEvents:              make([]api.BurnEvent, 0),
+		cleanedEthBurnEvents:       make(map[string]bool),
+		solanaBurnEvents:           make([]api.BurnEvent, 0),
+		cleanedSolanaBurnEvents:    make(map[string]bool),
+		redemptions:                make([]api.Redemption, 0),
+		SolanaMintEvents:           make([]api.SolanaMintEvent, 0),
+		cleanedSolanaMintEvents:    make(map[string]bool),
+		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]solana.Signature),
 	}
 }
 
