@@ -34,8 +34,9 @@ sequenceDiagram
     Note over zrchain_val,EigenLayer: Consensus: Staking on EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCStaking()
     zrchain_val->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
-    MPC Cluster-->>zrchain_val: Signed Stake Tx
-    zrchain_val->>Relayer: Forward Signed Tx
+    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+    Relayer->>zrchain: Poll for fulfilled requests
+    zrchain-->>Relayer: Signed Stake Tx
     Relayer->>EigenLayer: Broadcast Stake Tx
 
     EigenLayer-->>zrchain_val: Oracle sees Stake Event (via Sidecar)
@@ -46,8 +47,9 @@ sequenceDiagram
         Note over zrchain_val,Solana: Consensus: Minting zenBTC on Solana
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsSolana()
         zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
-        MPC Cluster-->>zrchain_val: Signed Mint Tx
-        zrchain_val->>Relayer: Forward Signed Tx
+        MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+        Relayer->>zrchain: Poll for fulfilled requests
+        zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Solana: Broadcast Mint Tx
         Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
         zrchain_val->>zrchain: PreBlocker: processSolanaZenBTCMintEvents()
@@ -57,8 +59,9 @@ sequenceDiagram
         Note over zrchain_val,Ethereum: Consensus: Minting zenBTC on Ethereum
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsEthereum()
         zrchain_val->>MPC Cluster: constructMintTx() -> SignTransactionRequest
-        MPC Cluster-->>zrchain_val: Signed Mint Tx
-        zrchain_val->>Relayer: Forward Signed Tx
+        MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+        Relayer->>zrchain: Poll for fulfilled requests
+        zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Ethereum: Broadcast Mint Tx
         Ethereum-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
         zrchain_val->>zrchain: txContinuationCallback: Update PendingMintTransaction (status: MINTED)
@@ -93,8 +96,9 @@ sequenceDiagram
     Note over zrchain_val,EigenLayer: Consensus: Unstaking from EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCBurnEvents()
     zrchain_val->>MPC Cluster: constructUnstakeTx() -> SignTransactionRequest
-    MPC Cluster-->>zrchain_val: Signed Unstake Tx
-    zrchain_val->>Relayer: Forward Signed Tx
+    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+    Relayer->>zrchain: Poll for fulfilled requests
+    zrchain-->>Relayer: Signed Unstake Tx
     Relayer->>EigenLayer: Broadcast Unstake Tx
     EigenLayer-->>zrchain_val: Oracle sees Unstake Event (via Sidecar)
     zrchain_val->>zrchain: txContinuationCallback: Update BurnEvent (status: UNSTAKING)
@@ -108,17 +112,21 @@ sequenceDiagram
     Note over zrchain_val,EigenLayer: Consensus: Completing Unstake
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCRedemptions()
     zrchain_val->>MPC Cluster: constructCompleteTx() -> SignTransactionRequest
-    MPC Cluster-->>zrchain_val: Signed CompleteUnstake Tx
-    zrchain_val->>Relayer: Forward Signed Tx
+    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+    Relayer->>zrchain: Poll for fulfilled requests
+    zrchain-->>Relayer: Signed CompleteUnstake Tx
     Relayer->>EigenLayer: Broadcast CompleteUnstake Tx
     EigenLayer-->>zrchain_val: Oracle sees CompleteUnstake Event (via Sidecar)
     zrchain_val->>zrchain: txContinuationCallback: Update Redemption (status: COMPLETED)
 
-    Note over Bitcoin Proxy, zrchain: Proxy waits for redemption completion
+    Note over Bitcoin Proxy, zrchain: Proxy polls for completed redemptions
+    Bitcoin Proxy->>zrchain: Poll for COMPLETED redemptions
+    zrchain-->>Bitcoin Proxy: Completed Redemption Info
     Bitcoin Proxy->>zrchain: MsgSubmitUnsignedRedemptionTx(UTXOs)
     zrchain->>MPC Cluster: Request signature for BTC tx
-    MPC Cluster-->>zrchain: Signed BTC Transaction
-    zrchain-->>Bitcoin Proxy: Return signed tx
+    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+    Bitcoin Proxy->>zrchain: Poll for fulfilled BTC tx
+    zrchain-->>Bitcoin Proxy: Signed BTC Transaction
     Bitcoin Proxy->>Bitcoin: Broadcast signed tx
     Bitcoin-->>User: Receives redeemed BTC
 ```
@@ -148,8 +156,9 @@ sequenceDiagram
     Note over zrchain_val,Solana: Consensus for Minting solROCK on Solana
     zrchain_val->>zrchain_val: PreBlocker: processSolanaROCKMints()
     zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
-    MPC Cluster-->>zrchain_val: Signed Mint Tx
-    zrchain_val->>Relayer: Forward Signed Tx
+    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
+    Relayer->>zrchain: Poll for fulfilled requests
+    zrchain-->>Relayer: Signed Mint Tx
     Relayer->>Solana: Broadcast Mint Tx
 
     Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
