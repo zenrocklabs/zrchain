@@ -34,29 +34,35 @@ sequenceDiagram
     zrchain->>zrchain: Create PendingMintTransaction (status: DEPOSITED)
     zrchain->>zrchain_val: Request Staker Nonce
 
-    Note over zrchain_val, Ethereum: Consensus for Staking on EigenLayer
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus for Staking on EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCStaking()
     zrchain_val->>Ethereum: Construct & Submit Stake Tx (via Treasury)
     Ethereum-->>Sidecar: Stake Event
     Sidecar-->>zrchain_val: Oracle data (nonce update)
+    end
 
     zrchain_val->>zrchain: Update PendingMintTransaction (status: STAKED)
     zrchain_val->>zrchain_val: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Ethereum
-        Note over zrchain_val, Sidecar, Ethereum: Consensus for Minting zenBTC on Ethereum
+        rect rgb(240, 240, 240)
+        Note right of zrchain_val: Consensus for Minting zenBTC on Ethereum
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsEthereum()
         zrchain_val->>Ethereum: Construct & Submit Mint Tx (via Treasury)
         Ethereum-->>Sidecar: Mint Event
         Sidecar-->>zrchain_val: Oracle data (nonce update)
+        end
         zrchain_val->>zrchain: Update PendingMintTransaction (status: MINTED)
         zrchain->>User: zenBTC minted
     else Mint on Solana
-        Note over zrchain_val, Sidecar, Solana: Consensus for Minting zenBTC on Solana
+        rect rgb(240, 240, 240)
+        Note right of zrchain_val: Consensus for Minting zenBTC on Solana
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsSolana()
         zrchain_val->>Solana: Construct & Submit Mint Tx (via Treasury)
         Solana-->>Sidecar: Mint Event
         Sidecar-->>zrchain_val: Oracle data (mint event)
+        end
         zrchain_val->>zrchain: processSolanaZenBTCMintEvents()
         zrchain->>zrchain: Update PendingMintTransaction (status: MINTED)
         zrchain->>User: zenBTC minted
@@ -81,30 +87,39 @@ sequenceDiagram
     Ethereum-->>Sidecar: Burn Event
     Sidecar-->>zrchain_val: Oracle data (burn event)
 
-    Note over zrchain_val: Consensus on Burn Event
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus on Burn Event
     zrchain_val->>zrchain: PreBlocker: storeNewZenBTCBurnEvents()
     zrchain->>zrchain: Create BurnEvent (status: BURNED)
     zrchain->>zrchain_val: Request Unstaker Nonce
+    end
 
-    Note over zrchain_val, Sidecar, EigenLayer: Consensus for Unstaking from EigenLayer
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus for Unstaking from EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCBurnEvents()
     zrchain_val->>EigenLayer: Construct & Submit Unstake Tx (via Treasury)
     EigenLayer-->>Sidecar: Unstake Initiated Event
     Sidecar-->>zrchain_val: Oracle data (nonce update)
+    end
     zrchain_val->>zrchain: Update BurnEvent (status: UNSTAKING)
 
-    Note over Sidecar, EigenLayer: Sidecar monitors EigenLayer for unstake completion
+    rect rgb(240, 240, 240)
+    Note right of Sidecar: Sidecar monitors for unstake completion
     EigenLayer-->>Sidecar: Unstake Ready Event
     Sidecar-->>zrchain_val: Oracle data (redemption ready)
+    end
 
     zrchain_val->>zrchain: PreBlocker: storeNewZenBTCRedemptions()
     zrchain->>zrchain: Update Redemption (status: READY)
     zrchain_val->>zrchain_val: Request Completer Nonce
 
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus for Completing Unstake
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCRedemptions()
     zrchain_val->>EigenLayer: Construct & Submit CompleteUnstake Tx (via Treasury)
     EigenLayer-->>Sidecar: Unstake Complete Event
     Sidecar-->>zrchain_val: Oracle data (nonce update)
+    end
     zrchain_val->>zrchain: Update Redemption (status: COMPLETED)
 
     User->>zrchain: MsgSubmitUnsignedRedemptionTx(unsignedBtcTx)
@@ -135,9 +150,11 @@ sequenceDiagram
     zrchain->>zrchain: Create Bridge object (status: PENDING)
     zrchain->>zrchain_val: Request Solana Nonce & Account Info
 
-    Note over zrchain_val, Sidecar, Solana: Consensus for Minting solROCK on Solana
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus for Minting solROCK on Solana
     zrchain_val->>zrchain_val: PreBlocker: processSolanaROCKMints()
     zrchain_val->>Solana: Construct & Submit Mint Tx (via Treasury)
+    end
 
     Solana-->>Sidecar: Mint Event (TokensMintedWithFee)
     Sidecar-->>zrchain_val: Oracle data (mint event)
@@ -166,9 +183,11 @@ sequenceDiagram
     Solana-->>Sidecar: Burn Event (TokenRedemption)
     Sidecar-->>zrchain_val: Oracle data (burn event)
 
-    Note over zrchain_val: Consensus on Burn Event
+    rect rgb(240, 240, 240)
+    Note right of zrchain_val: Consensus on Burn Event
     zrchain_val->>zrchain_val: PreBlocker: processSolanaROCKBurnEvents()
     zrchain->>zrchain: Verify burn event is new
     zrchain->>zrchain: Mint native ROCK tokens
     zrchain->>User: Send native ROCK tokens to user's zrchain address
+    end
 ```
