@@ -1,4 +1,4 @@
-"""# zenBTC and zenTP Flows
+# zenBTC and zenTP Flows
 
 This document outlines the sequence of operations for the zenBTC and zenTP protocols within the zrchain ecosystem, illustrated with Mermaid sequence diagrams.
 
@@ -222,4 +222,5 @@ sequenceDiagram
     zrchain->>zrchain: Verify burn event is new
     zrchain->>zrchain: Mint native ROCK tokens
     zrchain->>User: Send native ROCK tokens to user's zrchain address
-```""
+```
+""
