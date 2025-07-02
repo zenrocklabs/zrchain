@@ -8,21 +8,24 @@ ZenBTC allows for the trust-minimized bridging of Bitcoin to and from other bloc
 
 ### Deposit and Mint
 
-This flow describes how a user deposits BTC and mints zenBTC on a destination chain.
+This flow describes how a user deposits BTC and how it is relayed to mint zenBTC on a destination chain.
 
 ```mermaid
 sequenceDiagram
     participant User
+    participant Bitcoin
+    participant Bitcoin Proxy
     participant zrchain as zrchain (zenbtc)
     participant zrchain_val as zrchain (validation)
-    participant Sidecar
-    participant Bitcoin
+    participant MPC Cluster
+    participant Relayer
     participant EigenLayer
     participant Solana
     participant Ethereum
 
     User->>Bitcoin: Deposit BTC
-    User->>zrchain: MsgVerifyDepositBlockInclusion(proof)
+    Bitcoin Proxy->>Bitcoin: Detects deposit
+    Bitcoin Proxy->>zrchain: MsgVerifyDepositBlockInclusion(proof)
 
     zrchain->>zrchain_val: Get BTC Block Header (via Sidecar)
     zrchain->>zrchain: Verify proof, Create PendingMintTransaction (status: DEPOSITED)
@@ -30,28 +33,34 @@ sequenceDiagram
 
     Note over zrchain_val,EigenLayer: Consensus: Staking on EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCStaking()
-    zrchain_val->>EigenLayer: constructStakeTx & submitEthereumTransaction
-    EigenLayer-->>Sidecar: Stake Event
-    Sidecar-->>zrchain_val: Oracle data (nonce update)
+    zrchain_val->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
+    MPC Cluster-->>zrchain_val: Signed Stake Tx
+    zrchain_val->>Relayer: Forward Signed Tx
+    Relayer->>EigenLayer: Broadcast Stake Tx
 
+    EigenLayer-->>zrchain_val: Oracle sees Stake Event (via Sidecar)
     zrchain_val->>zrchain: txContinuationCallback: Update PendingMintTransaction (status: STAKED)
     zrchain_val->>zrchain_val: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
         Note over zrchain_val,Solana: Consensus: Minting zenBTC on Solana
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsSolana()
-        zrchain_val->>Solana: PrepareSolanaMintTx & submitSolanaTransaction
-        Solana-->>Sidecar: Mint Event (TokensMintedWithFee)
-        Sidecar-->>zrchain_val: Oracle data (SolanaMintEvents)
+        zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
+        MPC Cluster-->>zrchain_val: Signed Mint Tx
+        zrchain_val->>Relayer: Forward Signed Tx
+        Relayer->>Solana: Broadcast Mint Tx
+        Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
         zrchain_val->>zrchain: PreBlocker: processSolanaZenBTCMintEvents()
         zrchain->>zrchain: Match event, Update PendingMintTransaction (status: MINTED)
         zrchain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Note over zrchain_val,Ethereum: Consensus: Minting zenBTC on Ethereum
         zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsEthereum()
-        zrchain_val->>Ethereum: constructMintTx & submitEthereumTransaction
-        Ethereum-->>Sidecar: Mint Event
-        Sidecar-->>zrchain_val: Oracle data (nonce update)
+        zrchain_val->>MPC Cluster: constructMintTx() -> SignTransactionRequest
+        MPC Cluster-->>zrchain_val: Signed Mint Tx
+        zrchain_val->>Relayer: Forward Signed Tx
+        Relayer->>Ethereum: Broadcast Mint Tx
+        Ethereum-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
         zrchain_val->>zrchain: txContinuationCallback: Update PendingMintTransaction (status: MINTED)
         zrchain-->>User: zenBTC minted on Ethereum
     end
@@ -67,13 +76,14 @@ sequenceDiagram
     participant DestinationChain as Ethereum / Solana
     participant zrchain as zrchain (zenbtc)
     participant zrchain_val as zrchain (validation)
-    participant Sidecar
+    participant MPC Cluster
+    participant Relayer
     participant EigenLayer
+    participant Bitcoin Proxy
     participant Bitcoin
 
     User->>DestinationChain: Burn zenBTC
-    DestinationChain-->>Sidecar: Burn Event
-    Sidecar-->>zrchain_val: Oracle data (burn event)
+    DestinationChain-->>zrchain_val: Oracle sees Burn Event (via Sidecar)
 
     Note over zrchain_val: Consensus on Burn Event
     zrchain_val->>zrchain: PreBlocker: storeNewZenBTCBurnEvents()
@@ -82,31 +92,35 @@ sequenceDiagram
 
     Note over zrchain_val,EigenLayer: Consensus: Unstaking from EigenLayer
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCBurnEvents()
-    zrchain_val->>EigenLayer: constructUnstakeTx & submitEthereumTransaction
-    EigenLayer-->>Sidecar: Unstake Initiated Event
-    Sidecar-->>zrchain_val: Oracle data (nonce update)
+    zrchain_val->>MPC Cluster: constructUnstakeTx() -> SignTransactionRequest
+    MPC Cluster-->>zrchain_val: Signed Unstake Tx
+    zrchain_val->>Relayer: Forward Signed Tx
+    Relayer->>EigenLayer: Broadcast Unstake Tx
+    EigenLayer-->>zrchain_val: Oracle sees Unstake Event (via Sidecar)
     zrchain_val->>zrchain: txContinuationCallback: Update BurnEvent (status: UNSTAKING)
 
-    Note over Sidecar,EigenLayer: Sidecar monitors for unstake completion
-    EigenLayer-->>Sidecar: Unstake Ready Event
-    Sidecar-->>zrchain_val: Oracle data (redemption ready)
-
+    Note over zrchain_val,EigenLayer: Sidecar monitors for unstake completion
+    EigenLayer-->>zrchain_val: Oracle sees Unstake Ready Event (via Sidecar)
     zrchain_val->>zrchain: PreBlocker: storeNewZenBTCRedemptions()
     zrchain->>zrchain: Update Redemption (status: READY)
     zrchain_val->>zrchain_val: Request Completer Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Completing Unstake
     zrchain_val->>zrchain_val: PreBlocker: processZenBTCRedemptions()
-    zrchain_val->>EigenLayer: constructCompleteTx & submitEthereumTransaction
-    EigenLayer-->>Sidecar: Unstake Complete Event
-    Sidecar-->>zrchain_val: Oracle data (nonce update)
+    zrchain_val->>MPC Cluster: constructCompleteTx() -> SignTransactionRequest
+    MPC Cluster-->>zrchain_val: Signed CompleteUnstake Tx
+    zrchain_val->>Relayer: Forward Signed Tx
+    Relayer->>EigenLayer: Broadcast CompleteUnstake Tx
+    EigenLayer-->>zrchain_val: Oracle sees CompleteUnstake Event (via Sidecar)
     zrchain_val->>zrchain: txContinuationCallback: Update Redemption (status: COMPLETED)
 
-    User->>zrchain: MsgSubmitUnsignedRedemptionTx(unsignedBtcTx)
-    zrchain->>zrchain: Verify unsigned tx
-    zrchain->>Bitcoin: Request signature for BTC tx (via Treasury)
-    Bitcoin-->>User: Signed BTC Transaction
-    User->>Bitcoin: Broadcast signed tx
+    Note over Bitcoin Proxy, zrchain: Proxy waits for redemption completion
+    Bitcoin Proxy->>zrchain: MsgSubmitUnsignedRedemptionTx(UTXOs)
+    zrchain->>MPC Cluster: Request signature for BTC tx
+    MPC Cluster-->>zrchain: Signed BTC Transaction
+    zrchain-->>Bitcoin Proxy: Return signed tx
+    Bitcoin Proxy->>Bitcoin: Broadcast signed tx
+    Bitcoin-->>User: Receives redeemed BTC
 ```
 
 ## ZenTP Protocol
@@ -122,7 +136,8 @@ sequenceDiagram
     participant User
     participant zrchain as zrchain (zentp)
     participant zrchain_val as zrchain (validation)
-    participant Sidecar
+    participant MPC Cluster
+    participant Relayer
     participant Solana
 
     User->>zrchain: MsgBridge(amount, solana_addr)
@@ -132,11 +147,12 @@ sequenceDiagram
 
     Note over zrchain_val,Solana: Consensus for Minting solROCK on Solana
     zrchain_val->>zrchain_val: PreBlocker: processSolanaROCKMints()
-    zrchain_val->>Solana: PrepareSolanaMintTx & submitSolanaTransaction
+    zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
+    MPC Cluster-->>zrchain_val: Signed Mint Tx
+    zrchain_val->>Relayer: Forward Signed Tx
+    Relayer->>Solana: Broadcast Mint Tx
 
-    Solana-->>Sidecar: Mint Event (TokensMintedWithFee)
-    Sidecar-->>zrchain_val: Oracle data (mint event)
-
+    Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
     zrchain_val->>zrchain: PreBlocker: processSolanaROCKMintEvents()
     zrchain->>zrchain: Match event to Bridge object
     zrchain->>zrchain: Burn locked native tokens
@@ -154,12 +170,10 @@ sequenceDiagram
     participant User
     participant zrchain as zrchain (zentp)
     participant zrchain_val as zrchain (validation)
-    participant Sidecar
     participant Solana
 
     User->>Solana: Burn solROCK (providing zrchain address)
-    Solana-->>Sidecar: Burn Event (TokenRedemption)
-    Sidecar-->>zrchain_val: Oracle data (burn event)
+    Solana-->>zrchain_val: Oracle sees Burn Event (via Sidecar)
 
     Note over zrchain_val: Consensus on Burn Event
     zrchain_val->>zrchain_val: PreBlocker: processSolanaROCKBurnEvents()
