@@ -13,17 +13,25 @@ This flow describes how a user deposits BTC and how it is relayed to mint zenBTC
 ```mermaid
 sequenceDiagram
     participant User
+    participant Web Frontend
+    participant zrchain as zrchain (zenbtc)
+    participant MPC Cluster
     participant Bitcoin
     participant Bitcoin Proxy
-    participant zrchain as zrchain (zenBTC)
     participant zrchain_val as zrchain (validation)
-    participant MPC Cluster
     participant Relayer
     participant EigenLayer
     participant Solana
     participant Ethereum
 
-    User->>Bitcoin: Deposit BTC
+    User->>Web Frontend: Request BTC Deposit Address
+    Web Frontend->>zrchain: Request new deposit address
+    zrchain->>MPC Cluster: Request new key provisioning
+    MPC Cluster-->>zrchain: New Bitcoin Address
+    zrchain-->>Web Frontend: Return deposit address
+    Web Frontend-->>User: Display deposit address
+
+    User->>Bitcoin: Deposit BTC to provided address
     Bitcoin Proxy->>Bitcoin: Detects deposit
     Bitcoin Proxy->>zrchain: MsgVerifyDepositBlockInclusion(proof)
 
@@ -32,7 +40,7 @@ sequenceDiagram
     zrchain->>zrchain_val: Request Staker Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Staking on EigenLayer
-    zrchain_val->>zrchain_val: PreBlocker: processzenBTCStaking()
+    zrchain_val->>zrchain_val: PreBlocker: processZenBTCStaking()
     zrchain_val->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Relayer->>zrchain: Poll for fulfilled requests
@@ -45,19 +53,19 @@ sequenceDiagram
 
     alt Mint on Solana
         Note over zrchain_val,Solana: Consensus: Minting zenBTC on Solana
-        zrchain_val->>zrchain_val: PreBlocker: processzenBTCMintsSolana()
+        zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsSolana()
         zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
         MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
         Relayer->>zrchain: Poll for fulfilled requests
         zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Solana: Broadcast Mint Tx
         Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
-        zrchain_val->>zrchain: PreBlocker: processSolanazenBTCMintEvents()
+        zrchain_val->>zrchain: PreBlocker: processSolanaZenBTCMintEvents()
         zrchain->>zrchain: Match event, Update PendingMintTransaction (status: MINTED)
         zrchain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Note over zrchain_val,Ethereum: Consensus: Minting zenBTC on Ethereum
-        zrchain_val->>zrchain_val: PreBlocker: processzenBTCMintsEthereum()
+        zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsEthereum()
         zrchain_val->>MPC Cluster: constructMintTx() -> SignTransactionRequest
         MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
         Relayer->>zrchain: Poll for fulfilled requests
