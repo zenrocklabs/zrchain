@@ -1,4 +1,4 @@
-# zenBTC and zenTP Flows
+"""# zenBTC and zenTP Flows
 
 This document outlines the sequence of operations for the zenBTC and zenTP protocols within the zrchain ecosystem, illustrated with Mermaid sequence diagrams.
 
@@ -48,8 +48,10 @@ sequenceDiagram
     zrchain-->>Relayer: Signed Stake Tx
     Relayer->>EigenLayer: Broadcast Stake Tx
 
-    Note over zrchain_val, zrchain: zrchain confirms tx inclusion (via nonce)
-    zrchain_val->>zrchain: Update PendingMintTransaction (status: STAKED)
+    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
+    Sidecar-->>zrchain_val: Reports new nonce
+    Note over zrchain_val: Data is verified via Vote Extension consensus
+    zrchain_val->>zrchain: PreBlocker confirms tx, updates status to STAKED
     zrchain_val->>zrchain_val: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
@@ -76,10 +78,10 @@ sequenceDiagram
         zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Ethereum: Broadcast Mint Tx
 
-        Sidecar->>Ethereum: Scans for Mint Events
-        Sidecar-->>zrchain_val: Reports new Mint Events
+        Sidecar->>Ethereum: Polls for nonce update after tx broadcast
+        Sidecar-->>zrchain_val: Reports new nonce
         Note over zrchain_val: Data is verified via Vote Extension consensus
-        zrchain_val->>zrchain: Update PendingMintTransaction (status: MINTED)
+        zrchain_val->>zrchain: PreBlocker confirms tx, updates status to MINTED
         zrchain-->>User: zenBTC minted on Ethereum
     end
 ```
@@ -118,8 +120,10 @@ sequenceDiagram
     zrchain-->>Relayer: Signed Unstake Tx
     Relayer->>EigenLayer: Broadcast Unstake Tx
     
-    Note over zrchain_val, zrchain: zrchain confirms tx inclusion (via nonce)
-    zrchain_val->>zrchain: Update BurnEvent (status: UNSTAKING)
+    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
+    Sidecar-->>zrchain_val: Reports new nonce
+    Note over zrchain_val: Data is verified via Vote Extension consensus
+    zrchain_val->>zrchain: PreBlocker confirms tx, updates status to UNSTAKING
 
     Note over Sidecar,EigenLayer: Sidecar polls EigenLayer for unstake completion
     Sidecar->>EigenLayer: Polls for unstake completion
@@ -136,8 +140,10 @@ sequenceDiagram
     zrchain-->>Relayer: Signed CompleteWithdrawal Tx
     Relayer->>EigenLayer: Broadcast Tx
     
-    Note over zrchain_val, zrchain: zrchain confirms tx inclusion (via nonce)
-    zrchain_val->>zrchain: Update Redemption (status: READY_FOR_BTC_RELEASE)
+    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
+    Sidecar-->>zrchain_val: Reports new nonce
+    Note over zrchain_val: Data is verified via Vote Extension consensus
+    zrchain_val->>zrchain: PreBlocker confirms tx, updates status to READY_FOR_BTC_RELEASE
 
     Note over Bitcoin Proxy, zrchain: Proxy polls for redemptions
     Bitcoin Proxy->>zrchain: Poll for READY_FOR_BTC_RELEASE redemptions
@@ -216,4 +222,4 @@ sequenceDiagram
     zrchain->>zrchain: Verify burn event is new
     zrchain->>zrchain: Mint native ROCK tokens
     zrchain->>User: Send native ROCK tokens to user's zrchain address
-```
+```""
