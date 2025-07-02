@@ -1,10 +1,10 @@
-# ZenBTC and ZenTP Flows
+# zenBTC and zenTP Flows
 
-This document outlines the sequence of operations for the ZenBTC and ZenTP protocols within the zrchain ecosystem, illustrated with Mermaid sequence diagrams.
+This document outlines the sequence of operations for the zenBTC and zenTP protocols within the zrchain ecosystem, illustrated with Mermaid sequence diagrams.
 
-## ZenBTC Protocol
+## zenBTC Protocol
 
-ZenBTC allows for the trust-minimized bridging of Bitcoin to and from other blockchains like Ethereum and Solana.
+zenBTC allows for the trust-minimized bridging of Bitcoin to and from other blockchains like Ethereum and Solana.
 
 ### Deposit and Mint
 
@@ -15,7 +15,7 @@ sequenceDiagram
     participant User
     participant Bitcoin
     participant Bitcoin Proxy
-    participant zrchain as zrchain (zenbtc)
+    participant zrchain as zrchain (zenBTC)
     participant zrchain_val as zrchain (validation)
     participant MPC Cluster
     participant Relayer
@@ -32,7 +32,7 @@ sequenceDiagram
     zrchain->>zrchain_val: Request Staker Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Staking on EigenLayer
-    zrchain_val->>zrchain_val: PreBlocker: processZenBTCStaking()
+    zrchain_val->>zrchain_val: PreBlocker: processzenBTCStaking()
     zrchain_val->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Relayer->>zrchain: Poll for fulfilled requests
@@ -45,19 +45,19 @@ sequenceDiagram
 
     alt Mint on Solana
         Note over zrchain_val,Solana: Consensus: Minting zenBTC on Solana
-        zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsSolana()
+        zrchain_val->>zrchain_val: PreBlocker: processzenBTCMintsSolana()
         zrchain_val->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
         MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
         Relayer->>zrchain: Poll for fulfilled requests
         zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Solana: Broadcast Mint Tx
         Solana-->>zrchain_val: Oracle sees Mint Event (via Sidecar)
-        zrchain_val->>zrchain: PreBlocker: processSolanaZenBTCMintEvents()
+        zrchain_val->>zrchain: PreBlocker: processSolanazenBTCMintEvents()
         zrchain->>zrchain: Match event, Update PendingMintTransaction (status: MINTED)
         zrchain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Note over zrchain_val,Ethereum: Consensus: Minting zenBTC on Ethereum
-        zrchain_val->>zrchain_val: PreBlocker: processZenBTCMintsEthereum()
+        zrchain_val->>zrchain_val: PreBlocker: processzenBTCMintsEthereum()
         zrchain_val->>MPC Cluster: constructMintTx() -> SignTransactionRequest
         MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
         Relayer->>zrchain: Poll for fulfilled requests
@@ -77,7 +77,7 @@ This flow describes how a user burns zenBTC on a destination chain to redeem the
 sequenceDiagram
     participant User
     participant DestinationChain as Ethereum / Solana
-    participant zrchain as zrchain (zenbtc)
+    participant zrchain as zrchain (zenBTC)
     participant zrchain_val as zrchain (validation)
     participant MPC Cluster
     participant Relayer
@@ -89,12 +89,12 @@ sequenceDiagram
     DestinationChain-->>zrchain_val: Oracle sees Burn Event (via Sidecar)
 
     Note over zrchain_val: Consensus on Burn Event
-    zrchain_val->>zrchain: PreBlocker: storeNewZenBTCBurnEvents()
+    zrchain_val->>zrchain: PreBlocker: storeNewzenBTCBurnEvents()
     zrchain->>zrchain: Create BurnEvent (status: BURNED)
     zrchain->>zrchain_val: Request Unstaker Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Unstaking from EigenLayer
-    zrchain_val->>zrchain_val: PreBlocker: processZenBTCBurnEvents()
+    zrchain_val->>zrchain_val: PreBlocker: processzenBTCBurnEvents()
     zrchain_val->>MPC Cluster: constructUnstakeTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Relayer->>zrchain: Poll for fulfilled requests
@@ -105,12 +105,12 @@ sequenceDiagram
 
     Note over zrchain_val,EigenLayer: Sidecar monitors for unstake completion
     EigenLayer-->>zrchain_val: Oracle sees Unstake Ready Event (via Sidecar)
-    zrchain_val->>zrchain: PreBlocker: storeNewZenBTCRedemptions()
+    zrchain_val->>zrchain: PreBlocker: storeNewzenBTCRedemptions()
     zrchain->>zrchain: Update Redemption (status: READY)
     zrchain_val->>zrchain_val: Request Completer Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Completing Unstake
-    zrchain_val->>zrchain_val: PreBlocker: processZenBTCRedemptions()
+    zrchain_val->>zrchain_val: PreBlocker: processzenBTCRedemptions()
     zrchain_val->>MPC Cluster: constructCompleteTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Relayer->>zrchain: Poll for fulfilled requests
@@ -131,9 +131,9 @@ sequenceDiagram
     Bitcoin-->>User: Receives redeemed BTC
 ```
 
-## ZenTP Protocol
+## zenTP Protocol
 
-ZenTP (Zenrock Transport Protocol) is used for bridging native zrchain assets to other blockchains, such as Solana.
+zenTP (Zenrock Transport Protocol) is used for bridging native zrchain assets to other blockchains, such as Solana.
 
 ### Bridge to Solana (Mint solROCK)
 
@@ -142,7 +142,7 @@ This flow describes bridging a native asset from zrchain to Solana, resulting in
 ```mermaid
 sequenceDiagram
     participant User
-    participant zrchain as zrchain (zentp)
+    participant zrchain as zrchain (zenTP)
     participant zrchain_val as zrchain (validation)
     participant MPC Cluster
     participant Relayer
@@ -177,7 +177,7 @@ This flow describes burning an SPL token on Solana to redeem the original native
 ```mermaid
 sequenceDiagram
     participant User
-    participant zrchain as zrchain (zentp)
+    participant zrchain as zrchain (zenTP)
     participant zrchain_val as zrchain (validation)
     participant Solana
 
