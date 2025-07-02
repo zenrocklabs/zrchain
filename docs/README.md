@@ -77,7 +77,7 @@ This flow describes how a user burns zenBTC on a destination chain to redeem the
 sequenceDiagram
     participant User
     participant DestinationChain as Ethereum / Solana
-    participant zrchain as zrchain (zenBTC)
+    participant zrchain as zrchain (zenbtc)
     participant zrchain_val as zrchain (validation)
     participant MPC Cluster
     participant Relayer
@@ -89,12 +89,12 @@ sequenceDiagram
     DestinationChain-->>zrchain_val: Oracle sees Burn Event (via Sidecar)
 
     Note over zrchain_val: Consensus on Burn Event
-    zrchain_val->>zrchain: PreBlocker: storeNewzenBTCBurnEvents()
+    zrchain_val->>zrchain: PreBlocker: storeNewZenBTCBurnEvents()
     zrchain->>zrchain: Create BurnEvent (status: BURNED)
     zrchain->>zrchain_val: Request Unstaker Nonce
 
     Note over zrchain_val,EigenLayer: Consensus: Unstaking from EigenLayer
-    zrchain_val->>zrchain_val: PreBlocker: processzenBTCBurnEvents()
+    zrchain_val->>zrchain_val: PreBlocker: processZenBTCBurnEvents()
     zrchain_val->>MPC Cluster: constructUnstakeTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Relayer->>zrchain: Poll for fulfilled requests
@@ -105,23 +105,12 @@ sequenceDiagram
 
     Note over zrchain_val,EigenLayer: Sidecar monitors for unstake completion
     EigenLayer-->>zrchain_val: Oracle sees Unstake Ready Event (via Sidecar)
-    zrchain_val->>zrchain: PreBlocker: storeNewzenBTCRedemptions()
-    zrchain->>zrchain: Update Redemption (status: READY)
-    zrchain_val->>zrchain_val: Request Completer Nonce
+    zrchain_val->>zrchain: PreBlocker: storeNewZenBTCRedemptions()
+    zrchain->>zrchain: Update Redemption (status: UNSTAKED)
 
-    Note over zrchain_val,EigenLayer: Consensus: Completing Unstake
-    zrchain_val->>zrchain_val: PreBlocker: processzenBTCRedemptions()
-    zrchain_val->>MPC Cluster: constructCompleteTx() -> SignTransactionRequest
-    MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
-    Relayer->>zrchain: Poll for fulfilled requests
-    zrchain-->>Relayer: Signed CompleteUnstake Tx
-    Relayer->>EigenLayer: Broadcast CompleteUnstake Tx
-    EigenLayer-->>zrchain_val: Oracle sees CompleteUnstake Event (via Sidecar)
-    zrchain_val->>zrchain: txContinuationCallback: Update Redemption (status: COMPLETED)
-
-    Note over Bitcoin Proxy, zrchain: Proxy polls for completed redemptions
-    Bitcoin Proxy->>zrchain: Poll for COMPLETED redemptions
-    zrchain-->>Bitcoin Proxy: Completed Redemption Info
+    Note over Bitcoin Proxy, zrchain: Proxy polls for unstaked redemptions
+    Bitcoin Proxy->>zrchain: Poll for UNSTAKED redemptions
+    zrchain-->>Bitcoin Proxy: Unstaked Redemption Info (UTXOs)
     Bitcoin Proxy->>zrchain: MsgSubmitUnsignedRedemptionTx(UTXOs)
     zrchain->>MPC Cluster: Request signature for BTC tx
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
@@ -129,6 +118,8 @@ sequenceDiagram
     zrchain-->>Bitcoin Proxy: Signed BTC Transaction
     Bitcoin Proxy->>Bitcoin: Broadcast signed tx
     Bitcoin-->>User: Receives redeemed BTC
+    
+    Note over zrchain: (Post-broadcast) Redemption marked as COMPLETED
 ```
 
 ## zenTP Protocol
