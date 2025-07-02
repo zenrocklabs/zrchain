@@ -550,8 +550,20 @@ func (o *Oracle) processSolanaMintEvents(
 		allNewEvents := append(rockEvents, zenbtcEvents...)
 
 		// Reconcile and merge
-		remainingEvents, cleanedEvents := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
-		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+		remainingEvents, cleanedEvents, reconcileErr := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
+		var mergedMintEvents []api.SolanaMintEvent
+		if reconcileErr != nil {
+			// Reconciliation failed, so 'remainingEvents' contains all the previously pending events.
+			// We should only merge the 'allNewEvents' fetched in this tick to avoid re-adding old ones.
+			// The 'cleanedEvents' map is unchanged. We pass nil to the new events parameter of the first
+			// merge call because the new events will be merged in the second call.
+			slog.Warn("Failed to reconcile Solana mint events with zrchain. Carrying over pending events.", "error", reconcileErr)
+			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, nil, "Solana mint (retained from previous state)")
+			mergedMintEvents = mergeNewMintEvents(mergedMintEvents, cleanedEvents, allNewEvents, "Solana mint (newly fetched)")
+		} else {
+			// Reconciliation was successful. `remainingEvents` contains only the events that are still pending.
+			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+		}
 
 		updateMutex.Lock()
 		// Re-merge with the current update state to defend against race conditions.
@@ -896,7 +908,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	ctx context.Context,
 	eventsToClean []api.SolanaMintEvent,
 	cleanedEvents map[string]bool,
-) ([]api.SolanaMintEvent, map[string]bool) {
+) ([]api.SolanaMintEvent, map[string]bool, error) {
 	remainingEvents := make([]api.SolanaMintEvent, 0)
 	updatedCleanedEvents := make(map[string]bool)
 	maps.Copy(updatedCleanedEvents, cleanedEvents)
@@ -913,6 +925,10 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
 			slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
+			// If we fail to query zrChain, we can't determine the status of any pending mints.
+			// To be safe, we should abort reconciliation for this cycle and retry all events next time.
+			// Return the original set of events to be cleaned, the original cleaned map, and the error.
+			return eventsToClean, cleanedEvents, err
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
@@ -925,6 +941,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
 				slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
+				// Similar to the above, abort the entire reconciliation process on any zrChain query error.
+				return eventsToClean, cleanedEvents, err
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
@@ -939,7 +957,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		}
 	}
 
-	return remainingEvents, updatedCleanedEvents
+	return remainingEvents, updatedCleanedEvents, nil
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1784,15 +1802,24 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		}
 		found := false
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, ev.TxID, ev.LogIndex, ev.ChainID)
-		if err == nil && zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
+		if err != nil {
+			slog.Error("Error querying zrChain for zenBTC burn event", "txID", ev.TxID, "logIndex", ev.LogIndex, "chainID", ev.ChainID, "error", err)
+		} else if zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
 			found = true
 		}
+
 		if !found && chainTypeName == "Solana" {
 			if len(ev.DestinationAddr) >= 20 {
-				bech32Addr, _ := sdkBech32.ConvertAndEncode("zen", ev.DestinationAddr[:20])
-				ztp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, ev.TxID)
-				if err == nil && ztp != nil && len(ztp.Burns) > 0 {
-					found = true
+				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", ev.DestinationAddr[:20])
+				if err != nil {
+					slog.Error("Error encoding destination address for ZenTP burn check", "address", ev.DestinationAddr, "error", err)
+				} else {
+					ztp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, ev.TxID)
+					if err != nil {
+						slog.Error("Error querying zrChain for ZenTP burn event", "txID", ev.TxID, "address", bech32Addr, "error", err)
+					} else if ztp != nil && len(ztp.Burns) > 0 {
+						found = true
+					}
 				}
 			}
 		}
