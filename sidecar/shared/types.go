@@ -104,7 +104,7 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 	MainLoopTickerInterval      = 60 * time.Second
-	OracleCacheSize             = 20
+	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
 	EthBlocksBeforeFinality     = int64(5) // TODO: should this be increased?
 	SolanaEventScanTxLimit      = 1000
