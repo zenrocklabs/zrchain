@@ -880,25 +880,40 @@ func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.
 		}
 		firstPendingID = 0
 	}
-	return getPendingTransactions(
-		ctx,
-		k.zenBTCKeeper.GetPendingMintTransactionsStore(),
-		func(tx zenbtctypes.PendingMintTransaction) bool {
-			isMatchingStatus := tx.Status == status
-			if walletType == zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED {
-				return isMatchingStatus
+	var results []zenbtctypes.PendingMintTransaction
+	err = k.zenBTCKeeper.WalkPendingMintTransactions(ctx, func(id uint64, tx zenbtctypes.PendingMintTransaction) (bool, error) {
+		if id < firstPendingID {
+			return false, nil // continue walking
+		}
+
+		isMatchingStatus := tx.Status == status
+		if walletType == zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED {
+			if isMatchingStatus {
+				results = append(results, tx)
+				if len(results) >= 2 {
+					return true, nil // stop walking
+				}
 			}
-			isMatchingNetwork := false
-			if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
-				isMatchingNetwork = types.IsSolanaCAIP2(ctx, tx.Caip2ChainId)
-			} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
-				isMatchingNetwork = types.IsEthereumCAIP2(ctx, tx.Caip2ChainId)
+			return false, nil // continue walking
+		}
+
+		isMatchingNetwork := false
+		if walletType == zenbtctypes.WalletType_WALLET_TYPE_SOLANA {
+			isMatchingNetwork = types.IsSolanaCAIP2(ctx, tx.Caip2ChainId)
+		} else if walletType == zenbtctypes.WalletType_WALLET_TYPE_EVM {
+			isMatchingNetwork = types.IsEthereumCAIP2(ctx, tx.Caip2ChainId)
+		}
+
+		if isMatchingStatus && isMatchingNetwork {
+			results = append(results, tx)
+			if len(results) >= 2 {
+				return true, nil // stop walking
 			}
-			return isMatchingStatus && isMatchingNetwork
-		},
-		firstPendingID,
-		2,
-	)
+		}
+		return false, nil // continue walking
+	})
+
+	return results, err
 }
 
 // getPendingBurnEvents retrieves up to 2 pending burn events with status BURNED.
@@ -910,29 +925,43 @@ func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent,
 		}
 		firstPendingID = 0
 	}
-	return getPendingTransactions(
-		ctx,
-		k.zenBTCKeeper.GetBurnEventsStore(),
-		func(event zenbtctypes.BurnEvent) bool {
-			return event.Status == zenbtctypes.BurnStatus_BURN_STATUS_BURNED
-		},
-		firstPendingID,
-		2,
-	)
+	var results []zenbtctypes.BurnEvent
+	err = k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, event zenbtctypes.BurnEvent) (bool, error) {
+		if id < firstPendingID {
+			return false, nil // continue walking
+		}
+
+		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_BURNED {
+			results = append(results, event)
+			if len(results) >= 2 {
+				return true, nil // stop walking
+			}
+		}
+		return false, nil // continue walking
+	})
+
+	return results, err
 }
 
 // getPendingRedemptions retrieves pending redemptions with the specified status.
 // If limit is 0, all matching redemptions will be returned.
-func (k *Keeper) getRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus, limit int, startingIndex uint64) ([]zenbtctypes.Redemption, error) {
-	return getPendingTransactions(
-		ctx,
-		k.zenBTCKeeper.GetRedemptionsStore(),
-		func(r zenbtctypes.Redemption) bool {
-			return r.Status == status
-		},
-		startingIndex,
-		limit,
-	)
+func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus, limit int, startingIndex uint64) ([]zenbtctypes.Redemption, error) {
+	var results []zenbtctypes.Redemption
+	err := k.zenBTCKeeper.WalkRedemptions(ctx, func(id uint64, r zenbtctypes.Redemption) (bool, error) {
+		if id < startingIndex {
+			return false, nil // continue walking
+		}
+
+		if r.Status == status {
+			results = append(results, r)
+			if limit > 0 && len(results) >= limit {
+				return true, nil // stop walking
+			}
+		}
+		return false, nil // continue walking
+	})
+
+	return results, err
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {

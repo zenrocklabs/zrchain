@@ -47,100 +47,6 @@ func createTestExtendedLastCommit() abci.ExtendedCommitInfo {
 	}
 }
 
-// func TestProcessSolanaROCKBurnEvents(t *testing.T) {
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
-
-// 	// Create store service
-// 	key := storetypes.NewKVStoreKey("test")
-// 	storeService := runtime.NewKVStoreService(key)
-
-// 	// Create mock keepers
-// 	mockAccountKeeper := testutil.NewMockAccountKeeper(ctrl)
-// 	mockBankKeeper := testutil.NewMockBankKeeper(ctrl)
-// 	mockTreasuryKeeper := testutil.NewMockTreasuryKeeper(ctrl)
-// 	mockZentpKeeper := testutil.NewMockZentpKeeper(ctrl)
-// 	mockSidecarClient := testutil.NewMocksidecarClient(ctrl)
-
-// 	// Set up mock expectations
-// 	mockAccountKeeper.EXPECT().GetModuleAddress(types.BondedPoolName).Return(sdk.AccAddress{}).AnyTimes()
-// 	mockAccountKeeper.EXPECT().GetModuleAddress(types.NotBondedPoolName).Return(sdk.AccAddress{}).AnyTimes()
-// 	mockAccountKeeper.EXPECT().AddressCodec().Return(address.NewBech32Codec("zen")).AnyTimes()
-
-// 	// Use governance module address as authority
-// 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
-// 	mockAccountKeeper.EXPECT().GetModuleAddress(govtypes.ModuleName).Return(govAddr).AnyTimes()
-// 	authority := govAddr.String()
-
-// 	// Create keeper with mock client
-// 	keeper := NewKeeper(
-// 		codec.NewProtoCodec(nil), // cdc
-// 		storeService,             // storeService
-// 		mockAccountKeeper,        // accountKeeper
-// 		mockBankKeeper,           // bankKeeper
-// 		authority,
-// 		nil,                                  // txDecoder
-// 		nil,                                  // zrConfig
-// 		mockTreasuryKeeper,                   // treasuryKeeper
-// 		nil,                                  // zenBTCKeeper
-// 		mockZentpKeeper,                      // zentpKeeper
-// 		address.NewBech32Codec("zenvaloper"), // validatorAddressCodec
-// 		address.NewBech32Codec("zenvalcons"), // consensusAddressCodec
-// 	)
-// 	keeper.SetSidecarClient(mockSidecarClient)
-
-// 	tests := []struct {
-// 		name       string
-// 		oracleData OracleData
-// 		expected   []*zentptypes.Bridge
-// 	}{
-// 		{
-// 			name: "successfully processes solana burn events",
-// 			oracleData: OracleData{
-// 				SolanaBurnEvents: []sidecarapitypes.BurnEvent{
-// 					{
-// 						ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-// 						TxID:            "DmHoxWBZYiupo2GGxwpYNBUHgJSzZPki6tkasJdhyK7dcBu31eGqwktXti5oDX89AU9r52bYhQMjNy7Bx33BcZg",
-// 						DestinationAddr: []byte{0x3a, 0x1f, 0x8b, 0x7c, 0x2a, 0x9e, 0x4d, 0xf0, 0x6c, 0x9d, 0x77, 0x5e, 0x3c, 0x2b, 0x8a, 0x4d, 0x7a, 0x5d, 0x1e, 0x8f},
-// 						Amount:          1000,
-// 					},
-// 				},
-// 			},
-// 			expected: []*zentptypes.Bridge{
-// 				{
-// 					Id:          1,
-// 					Denom:       "urock",
-// 					Amount:      1000,
-// 					SourceChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-// 					TxHash:      "DmHoxWBZYiupo2GGxwpYNBUHgJSzZPki6tkasJdhyK7dcBu31eGqwktXti5oDX89AU9r52bYhQMjNy7Bx33BcZg",
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	// Convert destination address to Bech32
-// 	addr, err := sdk.Bech32ifyAddressBytes("zen", tests[0].oracleData.SolanaBurnEvents[0].DestinationAddr[:20])
-// 	require.NoError(t, err)
-
-// 	// Set up the expected GetBurns call with the Bech32 address
-// 	mockZentpKeeper.EXPECT().GetBurns(
-// 		gomock.Any(),
-// 		addr,
-// 		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-// 		tests[0].oracleData.SolanaBurnEvents[0].TxID,
-// 	).Return(tests[0].expected, nil).AnyTimes()
-
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			keeper.processSolanaROCKBurnEvents(sdk.Context{}, tt.oracleData)
-
-// 			burns, err := keeper.zentpKeeper.GetBurns(sdk.Context{}, addr, "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", tt.oracleData.SolanaBurnEvents[0].TxID)
-// 			require.NoError(t, err)
-// 			require.Equal(t, tt.expected, burns)
-// 		})
-// 	}
-// }
-
 func TestBeginBlocker(t *testing.T) {
 	suite := new(ValidationKeeperTestSuite)
 	suite.SetT(&testing.T{})
@@ -481,7 +387,8 @@ func TestProcessProposal(t *testing.T) {
 func TestPreBlocker(t *testing.T) {
 
 	type args struct {
-		req *abci.RequestFinalizeBlock
+		req         *abci.RequestFinalizeBlock
+		blockHeight int64
 	}
 	tests := []struct {
 		name    string
@@ -490,7 +397,7 @@ func TestPreBlocker(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "PASS: pre blocker with vote extensions enabled, but with empty oracle data",
+			name: "PASS: pre blocker with vote extensions enabled and consensus data",
 			args: args{
 				req: &abci.RequestFinalizeBlock{
 					Txs:    [][]byte{[]byte(`{"BTCUSDPrice":"106603.530000000000000000","ETHUSDPrice":"2422.093500000000000000","EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
@@ -512,6 +419,33 @@ func TestPreBlocker(t *testing.T) {
 					NextValidatorsHash: []byte("test-next-validators-hash"),
 					ProposerAddress:    []byte("test-proposer-address"),
 				},
+				blockHeight: 3,
+			},
+		},
+		{
+			name: "PASS: pre blocker with vote extensions enabled and consensus data",
+			args: args{
+				req: &abci.RequestFinalizeBlock{
+					Txs:    [][]byte{[]byte(validationtestutil.VoteExt)},
+					Height: 3,
+					Time:   time.Now(),
+					DecidedLastCommit: abci.CommitInfo{
+						Round: 1,
+						Votes: []abci.VoteInfo{
+							{
+								Validator: abci.Validator{
+									Address: []byte("QDagxuKQqu3HMpWLmNIgCEhR9b0="),
+									Power:   1000000,
+								},
+								BlockIdFlag: 1,
+							},
+						},
+					},
+					Misbehavior:        nil,
+					NextValidatorsHash: []byte("test-next-validators-hash"),
+					ProposerAddress:    []byte("test-proposer-address"),
+				},
+				blockHeight: 4,
 			},
 		},
 	}
@@ -522,13 +456,8 @@ func TestPreBlocker(t *testing.T) {
 			keeper, ctrl := suite.ValidationKeeperSetupTest()
 			defer ctrl.Finish()
 
-			// // Get the ubermock controller from the suite and finish it too
-			// if suite.zenBTCCtrl != nil {
-			// 	defer suite.zenBTCCtrl.Finish()
-			// }
-
 			ctx := sdk.UnwrapSDKContext(suite.ctx)
-			ctx = ctx.WithBlockHeight(3)
+			ctx = ctx.WithBlockHeight(tt.args.blockHeight)
 
 			consensusParams := ctx.ConsensusParams()
 			consensusParams.Abci = &cmtproto.ABCIParams{
@@ -666,6 +595,61 @@ func TestRemoveStaleValidatorDelegations(t *testing.T) {
 				},
 			},
 			want: 2,
+		},
+		{
+			name: "PASS: remove validator from validatorInAVSDelegationSet",
+			args: args{
+				validatorInAVSDelegationSet: map[string]bool{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": true,
+				},
+				existingValidators: map[string]sdkmath.Int{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": sdkmath.NewInt(1000000),
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": sdkmath.NewInt(1000000),
+					"zenvaloper1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7ves9zy": sdkmath.NewInt(1000000),
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "PASS: no validators in validatorInAVSDelegationSet",
+			args: args{
+				validatorInAVSDelegationSet: map[string]bool{},
+				existingValidators: map[string]sdkmath.Int{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": sdkmath.NewInt(1000000),
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": sdkmath.NewInt(1000000),
+					"zenvaloper1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7ves9zy": sdkmath.NewInt(1000000),
+				},
+			},
+			want: 0,
+		},
+		{
+			name: "PASS: three validators in validatorInAVSDelegationSet",
+			args: args{
+				validatorInAVSDelegationSet: map[string]bool{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": true,
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": true,
+					"zenvaloper1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7ves9zy": true,
+				},
+				existingValidators: map[string]sdkmath.Int{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": sdkmath.NewInt(1000000),
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": sdkmath.NewInt(1000000),
+					"zenvaloper1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7ves9zy": sdkmath.NewInt(1000000),
+				},
+			},
+			want: 3,
+		},
+		{
+			name: "PASS: remove validators gracefully when validator store is empty",
+			args: args{
+				validatorInAVSDelegationSet: map[string]bool{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": true,
+				},
+				existingValidators: map[string]sdkmath.Int{
+					"zenvaloper1tnh2q55v8wyygtt9srz5safamzdengsns4jcd6": sdkmath.NewInt(1000000),
+					"zenvaloper1ghekyjucln7y67ntx7cf27m9dpuxxemn953g2g": sdkmath.NewInt(1000000),
+				},
+			},
+			want: 1,
 		},
 	}
 	for _, tt := range tests {
