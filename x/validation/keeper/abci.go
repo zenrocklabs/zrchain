@@ -631,7 +631,7 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 // =============================================================================
 //
 
-// storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
+// storeBitcoinBlockHeaders stores the Bitcoin header and handles historical header requests.
 func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData) error {
 	// Get requested headers and latest stored height early
 	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
@@ -646,65 +646,79 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 		// Do not return, as we can still proceed, but log the error.
 	}
 
-	// 1. Process the latest Bitcoin header from the oracle
-	if oracleData.LatestBtcBlockHeight > 0 && oracleData.LatestBtcBlockHeader.MerkleRoot != "" {
-		latestHeaderExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.LatestBtcBlockHeight)
-		if err != nil {
-			k.Logger(ctx).Error("error checking if latest Bitcoin header exists", "height", oracleData.LatestBtcBlockHeight, "error", err)
-		} else if !latestHeaderExists {
-			// Store the new latest header
-			if err := k.BtcBlockHeaders.Set(ctx, oracleData.LatestBtcBlockHeight, oracleData.LatestBtcBlockHeader); err != nil {
-				k.Logger(ctx).Error("error storing latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight, "error", err)
-			} else {
-				k.Logger(ctx).Info("stored new latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight)
-				// If this new header is ahead of our last known high-water mark, perform reorg/gap check and update the mark.
-				if oracleData.LatestBtcBlockHeight > latestBtcHeaderHeight {
-					k.checkForBitcoinReorg(ctx, oracleData.LatestBtcBlockHeight, latestBtcHeaderHeight, &requestedHeaders)
-					if err := k.LatestBtcHeaderHeight.Set(ctx, oracleData.LatestBtcBlockHeight); err != nil {
-						k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
-					}
-					latestBtcHeaderHeight = oracleData.LatestBtcBlockHeight // Update local variable for subsequent logic
-				}
-			}
+	// Process the latest and requested headers. The order matters if they are different,
+	// but typically for a new block they might be the same. Processing both ensures
+	// we handle all cases, and the existence check prevents duplicate work.
+	if newHeight, updated := k.processAndStoreBtcHeader(ctx, oracleData.LatestBtcBlockHeight, &oracleData.LatestBtcBlockHeader, latestBtcHeaderHeight, &requestedHeaders, "latest"); updated {
+		latestBtcHeaderHeight = newHeight
+	}
+
+	// Process requested header only if it's different from the latest one to avoid redundant processing
+	if oracleData.RequestedBtcBlockHeight != oracleData.LatestBtcBlockHeight {
+		if newHeight, updated := k.processAndStoreBtcHeader(ctx, oracleData.RequestedBtcBlockHeight, &oracleData.RequestedBtcBlockHeader, latestBtcHeaderHeight, &requestedHeaders, "requested"); updated {
+			latestBtcHeaderHeight = newHeight
 		}
 	}
 
-	// 2. Process the specifically requested Bitcoin header from the oracle
-	headerHeight := oracleData.RequestedBtcBlockHeight
-	if headerHeight > 0 && oracleData.RequestedBtcBlockHeader.MerkleRoot != "" {
-		headerExists, err := k.BtcBlockHeaders.Has(ctx, headerHeight)
-		if err != nil {
-			k.Logger(ctx).Error("error checking if requested Bitcoin header exists", "height", headerHeight, "error", err)
-		} else if !headerExists {
-			// Store the new historical/requested header
-			if err := k.BtcBlockHeaders.Set(ctx, headerHeight, oracleData.RequestedBtcBlockHeader); err != nil {
-				k.Logger(ctx).Error("error storing requested Bitcoin header", "height", headerHeight, "error", err)
-			} else {
-				k.Logger(ctx).Info("stored new requested Bitcoin header", "height", headerHeight)
-				// If this new header is ahead of our last known high-water mark, perform reorg/gap check and update the mark.
-				if headerHeight > latestBtcHeaderHeight {
-					k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, &requestedHeaders)
-					if err := k.LatestBtcHeaderHeight.Set(ctx, headerHeight); err != nil {
-						k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
-					}
-				}
-			}
-		}
+	// Clean up the list of requested headers by removing any that have now been stored.
+	if len(requestedHeaders.Heights) > 0 {
+		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
+			has, _ := k.BtcBlockHeaders.Has(ctx, height)
+			return has
+		})
 	}
 
-	// 3. Clean up the list of requested headers
-	// Remove any headers that now exist in our store.
-	requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
-		has, _ := k.BtcBlockHeaders.Has(ctx, height)
-		return has
-	})
-
-	// 4. Persist the updated list of requested headers
+	// Persist the updated list of requested headers
 	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
 		k.Logger(ctx).Error("error updating requested historical Bitcoin headers", "error", err)
 	}
 
 	return nil
+}
+
+// processAndStoreBtcHeader checks if a given Bitcoin header is new, stores it,
+// and triggers a reorg check if it's a new high-water mark.
+// It returns the updated latestBtcHeaderHeight and a boolean indicating if it was updated.
+func (k *Keeper) processAndStoreBtcHeader(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestBtcHeaderHeight int64,
+	requestedHeaders *zenbtctypes.RequestedBitcoinHeaders,
+	headerType string,
+) (int64, bool) {
+	if headerHeight <= 0 || header == nil || header.MerkleRoot == "" {
+		return latestBtcHeaderHeight, false
+	}
+
+	headerExists, err := k.BtcBlockHeaders.Has(ctx, headerHeight)
+	if err != nil {
+		k.Logger(ctx).Error("error checking if bitcoin header exists", "type", headerType, "height", headerHeight, "error", err)
+		return latestBtcHeaderHeight, false
+	}
+
+	if headerExists {
+		return latestBtcHeaderHeight, false
+	}
+
+	// Store the new header
+	if err := k.BtcBlockHeaders.Set(ctx, headerHeight, *header); err != nil {
+		k.Logger(ctx).Error("error storing bitcoin header", "type", headerType, "height", headerHeight, "error", err)
+		return latestBtcHeaderHeight, false
+	}
+
+	k.Logger(ctx).Info("stored new bitcoin header", "type", headerType, "height", headerHeight)
+
+	// If this new header is ahead of our last known high-water mark, perform reorg/gap check and update the mark.
+	if headerHeight > latestBtcHeaderHeight {
+		k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, requestedHeaders)
+		if err := k.LatestBtcHeaderHeight.Set(ctx, headerHeight); err != nil {
+			k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
+		}
+		return headerHeight, true
+	}
+
+	return latestBtcHeaderHeight, false
 }
 
 // checkForBitcoinReorg checks for gaps and requests previous headers for reorg detection.
