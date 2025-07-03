@@ -4,9 +4,10 @@ This document outlines the sequence of operations for the zenBTC and zenTP proto
 
 ## Overview of Consensus Mechanism
 
-The zrchain network uses a **Vote Extension** based consensus mechanism where validators run sidecar processes that monitor external blockchains (Ethereum, Solana, Bitcoin) and report their state. Each validator submits their observed data as a vote extension, and only data that reaches **supermajority consensus** (>2/3 of voting power) is accepted and processed on-chain.
+The zrChain network uses a **Vote Extension** based consensus mechanism where validators run sidecar processes that monitor external blockchains (Bitcoin, Solana, Ethereum) and report their state. Each validator submits their observed data as a vote extension, and only data that reaches **supermajority consensus** (>67% of voting power) is accepted and processed on-chain.
 
 ### Vote Extension Lifecycle
+
 1. **ExtendVoteHandler**: Each validator's sidecar collects oracle data and creates vote extensions containing hashes
 2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity  
 3. **PrepareProposal**: The proposer aggregates vote extensions and determines consensus fields
@@ -14,6 +15,7 @@ The zrchain network uses a **Vote Extension** based consensus mechanism where va
 5. **PreBlocker**: Oracle data with consensus is applied to on-chain state and triggers transaction processing
 
 ### Vote Extension Process
+
 1. **Sidecar Data Collection**: Each validator's sidecar monitors external chains and collects oracle data
 2. **Vote Extension Creation**: During `ExtendVoteHandler`, validators create vote extensions containing hashes of their observed data
 3. **Consensus Verification**: In `PrepareProposal`/`ProcessProposal`, the network determines which fields have supermajority consensus
@@ -40,7 +42,7 @@ This granular consensus approach maximizes system uptime by allowing critical op
 
 ## zenBTC Protocol
 
-zenBTC allows for the trust-minimized bridging of Bitcoin to and from other blockchains like Ethereum and Solana.
+zenBTC allows for the trust-minimized bridging of Bitcoin to and from other blockchains like Solana and Ethereum.
 
 ### Deposit and Mint
 
