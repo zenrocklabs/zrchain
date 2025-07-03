@@ -550,8 +550,20 @@ func (o *Oracle) processSolanaMintEvents(
 		allNewEvents := append(rockEvents, zenbtcEvents...)
 
 		// Reconcile and merge
-		remainingEvents, cleanedEvents := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
-		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+		remainingEvents, cleanedEvents, reconcileErr := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
+		var mergedMintEvents []api.SolanaMintEvent
+		if reconcileErr != nil {
+			// Reconciliation failed, so 'remainingEvents' contains all the previously pending events.
+			// We should only merge the 'allNewEvents' fetched in this tick to avoid re-adding old ones.
+			// The 'cleanedEvents' map is unchanged. We pass nil to the new events parameter of the first
+			// merge call because the new events will be merged in the second call.
+			slog.Warn("Failed to reconcile Solana mint events with zrchain. Carrying over pending events.", "error", reconcileErr)
+			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, nil, "Solana mint (retained from previous state)")
+			mergedMintEvents = mergeNewMintEvents(mergedMintEvents, cleanedEvents, allNewEvents, "Solana mint (newly fetched)")
+		} else {
+			// Reconciliation was successful. `remainingEvents` contains only the events that are still pending.
+			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+		}
 
 		updateMutex.Lock()
 		// Re-merge with the current update state to defend against race conditions.
@@ -789,6 +801,10 @@ func (o *Oracle) getServiceManagerState(contractInstance *middleware.ContractZrS
 
 		// Iterate over operators associated with the validator
 		for _, operator := range operators {
+			// TODO: remove this optimisation when we support multiple EigenLayer operators
+			if operator != common.HexToAddress("0x4B2D2fE4DFa633C8a43FcECC05eAE4f4A84EF9f7") {
+				continue
+			}
 			// Get the stake amount for the operator
 			amount, err := contractInstance.GetEigenStake(callOpts, operator, quorumNumber)
 			if err != nil {
@@ -896,7 +912,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	ctx context.Context,
 	eventsToClean []api.SolanaMintEvent,
 	cleanedEvents map[string]bool,
-) ([]api.SolanaMintEvent, map[string]bool) {
+) ([]api.SolanaMintEvent, map[string]bool, error) {
 	remainingEvents := make([]api.SolanaMintEvent, 0)
 	updatedCleanedEvents := make(map[string]bool)
 	maps.Copy(updatedCleanedEvents, cleanedEvents)
@@ -913,6 +929,10 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
 			slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
+			// If we fail to query zrChain, we can't determine the status of any pending mints.
+			// To be safe, we should abort reconciliation for this cycle and retry all events next time.
+			// Return the original set of events to be cleaned, the original cleaned map, and the error.
+			return eventsToClean, cleanedEvents, err
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
@@ -925,6 +945,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
 				slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
+				// Similar to the above, abort the entire reconciliation process on any zrChain query error.
+				return eventsToClean, cleanedEvents, err
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
@@ -939,7 +961,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		}
 	}
 
-	return remainingEvents, updatedCleanedEvents
+	return remainingEvents, updatedCleanedEvents, nil
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1028,92 +1050,6 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	return mintEvents, newWatermark, nil
-}
-
-// getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
-// Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
-func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
-	// Create a simple dummy transaction to estimate fees.
-	// Using placeholder public keys. These don't need to exist or have funds
-	// as the transaction is not actually sent, only used for fee calculation.
-	dummySigner := solana.MustPublicKeyFromBase58("1nc1nerator11111111111111111111111111111111")   // Use Sol Incinerator or other valid non-program ID
-	dummyReceiver := solana.MustPublicKeyFromBase58("Stake11111111111111111111111111111111111111") // Use StakeProgramID as another valid key
-
-	// Get a recent blockhash
-	recentBlockhashResult, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentConfirmed)
-	if err != nil {
-		slog.Warn("Failed to GetLatestBlockhash for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash RPC call failed: %w", err)
-	}
-	if recentBlockhashResult == nil || recentBlockhashResult.Value == nil {
-		slog.Warn("Incomplete GetLatestBlockhash result for fee calculation. Returning default lamports/sig.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash returned nil result or value")
-	}
-	recentBlockhash := recentBlockhashResult.Value.Blockhash
-
-	// Create a new transaction builder
-	txBuilder := solana.NewTransactionBuilder()
-
-	// Add a simple transfer instruction (e.g., transfer 1 lamport)
-	// The actual details of the instruction don't matter as much as its presence and size.
-	transferIx := solanagoSystem.NewTransferInstruction(
-		1,           // 1 lamport
-		dummySigner, // Use dummySigner as the source of the transfer
-		dummyReceiver,
-	).Build()
-	txBuilder.AddInstruction(transferIx)
-	txBuilder.SetFeePayer(dummySigner) // dummySigner is also the fee payer
-	txBuilder.SetRecentBlockHash(recentBlockhash)
-
-	// The message needs to be compiled and serialized.
-	// For `getFeeForMessage`, we typically don't need to sign it.
-	// First, build the transaction.
-	tx, err := txBuilder.Build()
-	if err != nil {
-		slog.Warn("Failed to build transaction for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to build transaction for fee calculation: %w", err)
-	}
-	messageData := tx.Message // tx.Message is of type solana.Message (a struct)
-
-	// Get the serialized message bytes using the standard MarshalBinary interface:
-	serializedMessage, err := messageData.MarshalBinary()
-	if err != nil {
-		slog.Warn("Failed to serialize message using messageData.MarshalBinary for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to serialize message using messageData.MarshalBinary: %w", err)
-	}
-
-	// Call GetFeeForMessage (expects base64 encoded message string)
-	msgBase64 := base64.StdEncoding.EncodeToString(serializedMessage)
-	resp, err := o.solanaClient.GetFeeForMessage(ctx, msgBase64, solrpc.CommitmentConfirmed)
-	if err != nil {
-		slog.Warn("Failed to get Solana fees via GetFeeForMessage. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage RPC call failed: %w", err)
-	}
-
-	if resp == nil || resp.Value == nil {
-		slog.Warn("Incomplete fee data from Solana RPC (GetFeeForMessage response or value is nil). Returning default lamports/sig.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage returned nil response or value")
-	}
-
-	// The fee is returned in lamports for the entire message.
-	// To get lamports per signature, we'd typically divide by the number of signatures
-	// in a standard transaction. For now, let's assume the fee returned is representative enough
-	// or that it implicitly means per signature in this context for typical transactions.
-	// Solana's documentation on `getFeeForMessage` states it returns the fee for the message in lamports.
-	// If a transaction has 1 signature, this value is effectively lamports per signature.
-	// If it could have more, this logic might need refinement or be based on a typical tx signature count.
-	// For now, we'll use the direct value, assuming it's the intended lamports-per-signature proxy.
-	lamports := *resp.Value
-	if lamports == 0 {
-		// It's possible for fees to be 0 on devnet/testnet or if priority fees are not needed.
-		// However, consistently returning 0 might indicate an issue or a need for a non-zero default
-		// if the oracle relies on a non-zero fee for some calculations.
-		slog.Warn("Solana GetFeeForMessage returned 0 for LamportsPerSignature, using default if required by downstream logic, otherwise using 0.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
-		// Depending on requirements, you might return 0 here, or stick to a default like 5000.
-		// Let's return 0 if the network says 0, but log it.
-		return 0, nil // Or return 5000, nil if a non-zero value is strictly necessary downstream
-	}
-	return lamports, nil
 }
 
 // processBurnTransaction is a generic helper that processes a single Solana transaction to extract burn events.
@@ -1784,15 +1720,24 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		}
 		found := false
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, ev.TxID, ev.LogIndex, ev.ChainID)
-		if err == nil && zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
+		if err != nil {
+			slog.Error("Error querying zrChain for zenBTC burn event", "txID", ev.TxID, "logIndex", ev.LogIndex, "chainID", ev.ChainID, "error", err)
+		} else if zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
 			found = true
 		}
+
 		if !found && chainTypeName == "Solana" {
 			if len(ev.DestinationAddr) >= 20 {
-				bech32Addr, _ := sdkBech32.ConvertAndEncode("zen", ev.DestinationAddr[:20])
-				ztp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, ev.TxID)
-				if err == nil && ztp != nil && len(ztp.Burns) > 0 {
-					found = true
+				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", ev.DestinationAddr[:20])
+				if err != nil {
+					slog.Error("Error encoding destination address for ZenTP burn check", "address", ev.DestinationAddr, "error", err)
+				} else {
+					ztp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, ev.TxID)
+					if err != nil {
+						slog.Error("Error querying zrChain for ZenTP burn event", "txID", ev.TxID, "address", bech32Addr, "error", err)
+					} else if ztp != nil && len(ztp.Burns) > 0 {
+						found = true
+					}
 				}
 			}
 		}
@@ -1803,4 +1748,90 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		}
 	}
 	return remaining, updated
+}
+
+// getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
+// Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
+func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
+	// Create a simple dummy transaction to estimate fees.
+	// Using placeholder public keys. These don't need to exist or have funds
+	// as the transaction is not actually sent, only used for fee calculation.
+	dummySigner := solana.MustPublicKeyFromBase58("1nc1nerator11111111111111111111111111111111")   // Use Sol Incinerator or other valid non-program ID
+	dummyReceiver := solana.MustPublicKeyFromBase58("Stake11111111111111111111111111111111111111") // Use StakeProgramID as another valid key
+
+	// Get a recent blockhash
+	recentBlockhashResult, err := o.solanaClient.GetLatestBlockhash(ctx, solrpc.CommitmentConfirmed)
+	if err != nil {
+		slog.Warn("Failed to GetLatestBlockhash for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash RPC call failed: %w", err)
+	}
+	if recentBlockhashResult == nil || recentBlockhashResult.Value == nil {
+		slog.Warn("Incomplete GetLatestBlockhash result for fee calculation. Returning default lamports/sig.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetLatestBlockhash returned nil result or value")
+	}
+	recentBlockhash := recentBlockhashResult.Value.Blockhash
+
+	// Create a new transaction builder
+	txBuilder := solana.NewTransactionBuilder()
+
+	// Add a simple transfer instruction (e.g., transfer 1 lamport)
+	// The actual details of the instruction don't matter as much as its presence and size.
+	transferIx := solanagoSystem.NewTransferInstruction(
+		1,           // 1 lamport
+		dummySigner, // Use dummySigner as the source of the transfer
+		dummyReceiver,
+	).Build()
+	txBuilder.AddInstruction(transferIx)
+	txBuilder.SetFeePayer(dummySigner) // dummySigner is also the fee payer
+	txBuilder.SetRecentBlockHash(recentBlockhash)
+
+	// The message needs to be compiled and serialized.
+	// For `getFeeForMessage`, we typically don't need to sign it.
+	// First, build the transaction.
+	tx, err := txBuilder.Build()
+	if err != nil {
+		slog.Warn("Failed to build transaction for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to build transaction for fee calculation: %w", err)
+	}
+	messageData := tx.Message // tx.Message is of type solana.Message (a struct)
+
+	// Get the serialized message bytes using the standard MarshalBinary interface:
+	serializedMessage, err := messageData.MarshalBinary()
+	if err != nil {
+		slog.Warn("Failed to serialize message using messageData.MarshalBinary for fee calculation. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("failed to serialize message using messageData.MarshalBinary: %w", err)
+	}
+
+	// Call GetFeeForMessage (expects base64 encoded message string)
+	msgBase64 := base64.StdEncoding.EncodeToString(serializedMessage)
+	resp, err := o.solanaClient.GetFeeForMessage(ctx, msgBase64, solrpc.CommitmentConfirmed)
+	if err != nil {
+		slog.Warn("Failed to get Solana fees via GetFeeForMessage. Returning default lamports/sig.", "error", err, "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage RPC call failed: %w", err)
+	}
+
+	if resp == nil || resp.Value == nil {
+		slog.Warn("Incomplete fee data from Solana RPC (GetFeeForMessage response or value is nil). Returning default lamports/sig.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		return sidecartypes.DefaultSolanaFeeReturned, fmt.Errorf("GetFeeForMessage returned nil response or value")
+	}
+
+	// The fee is returned in lamports for the entire message.
+	// To get lamports per signature, we'd typically divide by the number of signatures
+	// in a standard transaction. For now, let's assume the fee returned is representative enough
+	// or that it implicitly means per signature in this context for typical transactions.
+	// Solana's documentation on `getFeeForMessage` states it returns the fee for the message in lamports.
+	// If a transaction has 1 signature, this value is effectively lamports per signature.
+	// If it could have more, this logic might need refinement or be based on a typical tx signature count.
+	// For now, we'll use the direct value, assuming it's the intended lamports-per-signature proxy.
+	lamports := *resp.Value
+	if lamports == 0 {
+		// It's possible for fees to be 0 on devnet/testnet or if priority fees are not needed.
+		// However, consistently returning 0 might indicate an issue or a need for a non-zero default
+		// if the oracle relies on a non-zero fee for some calculations.
+		slog.Warn("Solana GetFeeForMessage returned 0 for LamportsPerSignature, using default if required by downstream logic, otherwise using 0.", "defaultLamports", sidecartypes.DefaultSolanaFeeReturned)
+		// Depending on requirements, you might return 0 here, or stick to a default like 5000.
+		// Let's return 0 if the network says 0, but log it.
+		return 0, nil // Or return 5000, nil if a non-zero value is strictly necessary downstream
+	}
+	return lamports, nil
 }
