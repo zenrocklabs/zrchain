@@ -645,9 +645,9 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 		// Do not return, as we can still proceed, but log the error.
 	}
 
-	// Process the latest and requested headers. The order matters if they are different,
-	// but typically for a new block they might be the same. Processing both ensures
-	// we handle all cases, and the existence check prevents duplicate work.
+	// Process the latest and requested headers. The latest header is the current Bitcoin tip,
+	// while requested headers are typically historical blocks needed for reorg detection or gap filling.
+	// Most blocks have no requested headers, and when they do exist, they're usually older than the latest.
 	if newHeight, updated := k.processAndStoreBtcHeader(ctx, oracleData.LatestBtcBlockHeight, &oracleData.LatestBtcBlockHeader, latestBtcHeaderHeight, &requestedHeaders, "latest"); updated {
 		latestBtcHeaderHeight = newHeight
 	}
