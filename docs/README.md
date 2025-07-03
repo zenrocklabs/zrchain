@@ -228,9 +228,9 @@ sequenceDiagram
     zrChain->>zrChain: Mark redemption as COMPLETED
 ```
 
-## zenTP Protocol
+## zenTP (Zenrock Transport Protocol)
 
-zenTP (Zenrock Transport Protocol) is used for bridging native zrChain assets (currently only ROCK) to other blockchains (currently only Solana).
+zenTP is used for bridging native zrChain assets (currently only ROCK) to other blockchains (currently only Solana).
 The protocol is a stripped-back iteration of zenBTC's bridging system, omitting restaking features amongst others.
 
 ### Bridge to Solana (Mint solROCK)
