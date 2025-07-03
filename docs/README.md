@@ -36,7 +36,7 @@ This granular consensus approach maximizes system uptime by allowing critical op
 
 - **Sidecar**: Synchronised oracle system, polled by zrChain validators and enshrined by ROCK stake
 - **Vote Extensions**: CometBFT mechanism to extend consensus over arbitrary non-tx data
-- **MPC Cluster**: Multi-party computation system for generating cryptographic signatures
+- **MPC Stack**: Multi-party computation system that polls zrChain for key/signature requests and submits fulfillment transactions back to the chain
 - **Relayer**: Service that broadcasts signed transactions to external blockchains
 - **Bitcoin Proxy**: Specialized service for Bitcoin transaction monitoring and construction
 
@@ -54,7 +54,7 @@ sequenceDiagram
     participant User
     participant Web Frontend
     participant zrChain
-    participant MPC Cluster
+    participant MPC Stack
     participant Bitcoin
     participant Bitcoin Proxy
     participant Sidecar
@@ -65,8 +65,11 @@ sequenceDiagram
 
     User->>Web Frontend: Request BTC Deposit Address
     Web Frontend->>zrChain: Request new deposit address
-    zrChain->>MPC Cluster: Request new key provisioning
-    MPC Cluster-->>zrChain: New Bitcoin Address
+    zrChain->>zrChain: Create new Bitcoin key request
+    MPC Stack->>zrChain: Poll for key requests
+    zrChain-->>MPC Stack: Bitcoin key request found
+    MPC Stack->>MPC Stack: Generate new Bitcoin key
+    MPC Stack->>zrChain: Submit key request fulfillment transaction
     zrChain-->>Web Frontend: Return deposit address
     Web Frontend-->>User: Display deposit address
 
@@ -93,8 +96,11 @@ sequenceDiagram
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
     zrChain->>zrChain: PreBlocker: processZenBTCStaking()
-    zrChain->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
-    MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+    zrChain->>zrChain: Create SignTransactionRequest for staking
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: Staking transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Stake Tx
     Relayer->>EigenLayer: Broadcast Stake Tx
@@ -111,8 +117,11 @@ sequenceDiagram
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsSolana()
         Note over zrChain: Checks for consensus on required data for transaction construction
-        zrChain->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
-        MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+        zrChain->>zrChain: Create SignTransactionRequest for Solana mint
+        MPC Stack->>zrChain: Poll for signature requests
+        zrChain-->>MPC Stack: Solana mint transaction request found
+        MPC Stack->>MPC Stack: Generate signature
+        MPC Stack->>zrChain: Submit signature request fulfillment transaction
         Relayer->>zrChain: Poll for fulfilled requests
         zrChain-->>Relayer: Signed Mint Tx
         Relayer->>Solana: Broadcast Mint Tx
@@ -133,8 +142,11 @@ sequenceDiagram
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsEthereum()
         Note over zrChain: Checks for consensus on required data for transaction construction
-        zrChain->>MPC Cluster: constructMintTx() -> SignTransactionRequest
-        MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+        zrChain->>zrChain: Create SignTransactionRequest for Ethereum mint
+        MPC Stack->>zrChain: Poll for signature requests
+        zrChain-->>MPC Stack: Ethereum mint transaction request found
+        MPC Stack->>MPC Stack: Generate signature
+        MPC Stack->>zrChain: Submit signature request fulfillment transaction
         Relayer->>zrChain: Poll for fulfilled requests
         zrChain-->>Relayer: Signed Mint Tx
         Relayer->>Ethereum: Broadcast Mint Tx
@@ -158,7 +170,7 @@ sequenceDiagram
     participant DestinationChain as Ethereum / Solana
     participant Sidecar
     participant zrChain
-    participant MPC Cluster
+    participant MPC Stack
     participant Relayer
     participant EigenLayer
     participant Bitcoin Proxy
@@ -178,8 +190,11 @@ sequenceDiagram
     Sidecar-->>zrChain: Report nonce data via Vote Extension
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     zrChain->>zrChain: PreBlocker: processZenBTCBurnEvents()
-    zrChain->>MPC Cluster: constructUnstakeTx() -> SignTransactionRequest
-    MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+    zrChain->>zrChain: Create SignTransactionRequest for unstaking
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: Unstaking transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Unstake Tx
     Relayer->>EigenLayer: Broadcast Unstake Tx
@@ -203,8 +218,11 @@ sequenceDiagram
     Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
     Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
     zrChain->>zrChain: PreBlocker: processZenBTCRedemptions()
-    zrChain->>MPC Cluster: constructCompleteWithdrawalTx() -> SignTransactionRequest
-    MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+    zrChain->>zrChain: Create SignTransactionRequest for unstaking completion
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: Unstaking completion transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed CompleteWithdrawal Tx
     Relayer->>EigenLayer: Broadcast Tx
@@ -223,8 +241,11 @@ sequenceDiagram
     zrChain->>zrChain: Validate invariants (minted zenBTC ≥ redemption amount)
     zrChain->>zrChain: Calculate BTC amount using current exchange rate
     zrChain->>zrChain: Flag redemptions as processed to prevent double-spending
-    zrChain->>MPC Cluster: Request signature for BTC tx
-    MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+    zrChain->>zrChain: Create SignTransactionRequest for BTC redemption
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: BTC redemption transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Bitcoin Proxy->>zrChain: Poll for fulfilled BTC tx
     zrChain-->>Bitcoin Proxy: Signed BTC Transaction
     Bitcoin Proxy->>Bitcoin: Broadcast signed tx
@@ -251,7 +272,7 @@ This flow describes bridging a native asset from zrChain to Solana, resulting in
 sequenceDiagram
     participant User
     participant zrChain
-    participant MPC Cluster
+    participant MPC Stack
     participant Relayer
     participant Sidecar
     participant Solana
@@ -269,8 +290,11 @@ sequenceDiagram
     zrChain->>zrChain: PreBlocker: processSolanaROCKMints()
     Note over zrChain: Validates consensus on required fields (nonce, accounts) before transaction
     zrChain->>zrChain: Check if transaction already processed
-    zrChain->>MPC Cluster: PrepareSolanaMintTx() -> SignTransactionRequest
-    MPC Cluster-->>zrChain: Fulfill SignTransactionRequest
+    zrChain->>zrChain: Create SignTransactionRequest for Solana ROCK mint
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: Solana ROCK mint transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Mint Tx
     Relayer->>Solana: Broadcast Mint Tx
