@@ -206,9 +206,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
 	}
 
-	for _, backfillRequest := range data.BackfillRequests {
-		k.BackfillRequests.Set(ctx, backfillRequest)
-	}
+	k.BackfillRequests.Set(ctx, data.BackfillRequest)
 
 	for _, ethereumNonce := range data.LastUsedEthereumNonce {
 		k.EthereumNonceRequested.Set(ctx, ethereumNonce.Nonce, true)
@@ -398,7 +396,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
-	backfillRequests, err := k.GetBackfillRequests(ctx)
+	backfillRequest, err := k.GetBackfillRequests(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -455,7 +453,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		ValidationInfos:                   validationInfos,
 		BtcBlockHeaders:                   btcBlockHeaders,
 		LastUsedSolanaNonce:               lastUsedSolanaNonce,
-		BackfillRequests:                  backfillRequests,
+		BackfillRequest:                   backfillRequest,
 		LastUsedEthereumNonce:             lastUsedEthereumNonce,
 		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
 		AvsRewardsPool:                    avsRewardsPool,

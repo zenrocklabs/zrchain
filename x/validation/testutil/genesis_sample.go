@@ -115,10 +115,8 @@ func TestGenesis() *validationtypes.GenesisState {
 	}
 
 	// Create backfill requests with actual data
-	backfillRequests := []validationtypes.BackfillRequests{
-		{
-			Requests: nil,
-		},
+	backfillRequest := validationtypes.BackfillRequests{
+		Requests: nil,
 	}
 
 	// Create requested historical bitcoin headers with actual data
@@ -159,7 +157,7 @@ func TestGenesis() *validationtypes.GenesisState {
 		ValidationInfos:                   validationInfos,
 		BtcBlockHeaders:                   nil,
 		LastUsedSolanaNonce:               nil,
-		BackfillRequests:                  backfillRequests,
+		BackfillRequest:                   backfillRequest,
 		LastUsedEthereumNonce:             nil,
 		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
 		AvsRewardsPool:                    avsRewardsPool,

@@ -82,7 +82,7 @@ message GenesisState {
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // backfill_requests defines the backfill requests at genesis.
-  repeated BackfillRequests backfill_requests = 17
+  BackfillRequests backfill_request = 17
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // last_used_ethereum_nonce defines the last used Ethereum nonce at genesis.
