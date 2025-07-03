@@ -784,7 +784,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "zenbtc_burn_1",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{1, 2, 3, 4},
 					Amount:          1000000,
 					IsZenBTC:        true,
@@ -792,7 +792,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "zenbtc_burn_2",
 					LogIndex:        1,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{5, 6, 7, 8},
 					Amount:          2000000,
 					IsZenBTC:        true,
@@ -802,7 +802,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "rock_burn_1",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{9, 10, 11, 12},
 					Amount:          500000,
 					IsZenBTC:        false,
@@ -824,7 +824,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 					{
 						TxID:            "existing_zenbtc_burn",
 						LogIndex:        0,
-						ChainID:         "solana:devnet",
+						ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 						DestinationAddr: []byte{1, 1, 1, 1},
 						Amount:          100000,
 						IsZenBTC:        true,
@@ -832,7 +832,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 					{
 						TxID:            "existing_rock_burn",
 						LogIndex:        0,
-						ChainID:         "solana:devnet",
+						ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 						DestinationAddr: []byte{2, 2, 2, 2},
 						Amount:          200000,
 						IsZenBTC:        false,
@@ -848,7 +848,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "new_zenbtc_burn",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{3, 3, 3, 3},
 					Amount:          300000,
 					IsZenBTC:        true,
@@ -858,7 +858,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "new_rock_burn",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{4, 4, 4, 4},
 					Amount:          400000,
 					IsZenBTC:        false,
@@ -878,8 +878,8 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 			existingState: sidecartypes.OracleState{
 				SolanaBurnEvents: []api.BurnEvent{},
 				CleanedSolanaBurnEvents: map[string]bool{
-					"solana:devnet-zenbtc_burn_1-0": true,
-					"solana:devnet-rock_burn_1-0":   true,
+					"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-zenbtc_burn_1-0": true,
+					"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-rock_burn_1-0":   true,
 				},
 			},
 			lastKnownSigs: map[sidecartypes.SolanaEventType]string{
@@ -890,7 +890,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "zenbtc_burn_1",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{1, 2, 3, 4},
 					Amount:          1000000,
 					IsZenBTC:        true,
@@ -900,7 +900,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "rock_burn_1",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{5, 6, 7, 8},
 					Amount:          500000,
 					IsZenBTC:        false,
@@ -922,7 +922,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 					{
 						TxID:            "existing_burn",
 						LogIndex:        0,
-						ChainID:         "solana:devnet",
+						ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 						DestinationAddr: []byte{1, 1, 1, 1},
 						Amount:          100000,
 						IsZenBTC:        true,
@@ -952,14 +952,14 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 					{
 						TxID:            "existing_burn",
 						LogIndex:        0,
-						ChainID:         "solana:devnet",
+						ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 						DestinationAddr: []byte{1, 1, 1, 1},
 						Amount:          100000,
 						IsZenBTC:        true,
 					},
 				},
 				CleanedSolanaBurnEvents: map[string]bool{
-					"solana:devnet-cleaned_burn-0": true,
+					"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-cleaned_burn-0": true,
 				},
 			},
 			lastKnownSigs: map[sidecartypes.SolanaEventType]string{
@@ -970,7 +970,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "cleaned_burn",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{2, 2, 2, 2},
 					Amount:          200000,
 					IsZenBTC:        true,
@@ -978,7 +978,7 @@ func TestFetchSolanaBurnEvents(t *testing.T) {
 				{
 					TxID:            "new_burn",
 					LogIndex:        0,
-					ChainID:         "solana:devnet",
+					ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 					DestinationAddr: []byte{3, 3, 3, 3},
 					Amount:          300000,
 					IsZenBTC:        true,
@@ -1047,7 +1047,7 @@ func createMockBurnEvent(txID string, logIndex uint64, isZenBTC bool, amount uin
 	return api.BurnEvent{
 		TxID:            txID,
 		LogIndex:        logIndex,
-		ChainID:         "solana:devnet",
+		ChainID:         "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
 		DestinationAddr: []byte{1, 2, 3, 4},
 		Amount:          amount,
 		IsZenBTC:        isZenBTC,
@@ -1089,7 +1089,7 @@ func TestBurnEventProcessingLogic(t *testing.T) {
 	t.Run("Cleaned event filtering", func(t *testing.T) {
 		existingEvents := []api.BurnEvent{}
 		cleanedEvents := map[string]bool{
-			"solana:devnet-cleaned_tx-0": true,
+			"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-cleaned_tx-0": true,
 		}
 		state := createMockOracleState(existingEvents, cleanedEvents)
 
@@ -1109,8 +1109,8 @@ func TestBurnEventProcessingLogic(t *testing.T) {
 
 		assert.True(t, zenBTCEvent.IsZenBTC, "ZenBTC event should be marked as IsZenBTC=true")
 		assert.False(t, rockEvent.IsZenBTC, "ROCK event should be marked as IsZenBTC=false")
-		assert.Equal(t, "solana:devnet", zenBTCEvent.ChainID, "Event should have correct chain ID")
-		assert.Equal(t, "solana:devnet", rockEvent.ChainID, "Event should have correct chain ID")
+		assert.Equal(t, "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", zenBTCEvent.ChainID, "Event should have correct chain ID")
+		assert.Equal(t, "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", rockEvent.ChainID, "Event should have correct chain ID")
 	})
 }
 
@@ -1347,8 +1347,8 @@ func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
 	oracle := createTestOracle()
 
 	cleanedEvents := map[string]bool{
-		"solana:devnet-cleaned_tx_1-0": true,
-		"solana:devnet-cleaned_tx_2-0": true,
+		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-cleaned_tx_1-0": true,
+		"solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1-cleaned_tx_2-0": true,
 	}
 
 	oracle.SetStateCacheForTesting([]sidecartypes.OracleState{
