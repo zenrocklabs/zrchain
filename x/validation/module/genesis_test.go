@@ -71,7 +71,8 @@ func TestExportGenesisWithEmptyCollections(t *testing.T) {
 
 	// The default genesis state only sets Params, other fields are zero values
 	require.NotNil(t, genesisState.Params)
-	require.Nil(t, genesisState.BackfillRequests)                  // nil slice
+	require.NotNil(t, genesisState.BackfillRequest)                // non-nil struct
+	require.Nil(t, genesisState.BackfillRequest.Requests)          // nil slice inside struct
 	require.Nil(t, genesisState.RequestedHistoricalBitcoinHeaders) // nil slice
 	require.Equal(t, int64(0), genesisState.LastValidVeHeight)     // zero value
 }
@@ -80,7 +81,8 @@ func TestInitGenesis(t *testing.T) {
 	genesisState := validationtestutil.DefaultGenesis()
 
 	require.NotNil(t, genesisState.Params)
-	require.Nil(t, genesisState.BackfillRequests)                  // nil slice
+	require.NotNil(t, genesisState.BackfillRequest)                // non-nil struct
+	require.Nil(t, genesisState.BackfillRequest.Requests)          // nil slice inside struct
 	require.Nil(t, genesisState.RequestedHistoricalBitcoinHeaders) // nil slice
 	require.Equal(t, int64(0), genesisState.LastValidVeHeight)     // zero value
 }

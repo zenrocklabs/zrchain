@@ -411,17 +411,17 @@ func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) ([]types.SolanaNonce
 	return lastUsedSolanaNonce, nil
 }
 
-func (k Keeper) GetBackfillRequests(ctx context.Context) ([]types.BackfillRequests, error) {
-	backfillRequests, err := k.BackfillRequests.Get(ctx)
+func (k Keeper) GetBackfillRequests(ctx context.Context) (types.BackfillRequests, error) {
+	backfillRequest, err := k.BackfillRequests.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			// Return empty BackfillRequests when the collection is empty
-			return []types.BackfillRequests{{}}, nil
+			return types.BackfillRequests{}, nil
 		}
-		return nil, err
+		return types.BackfillRequests{}, err
 	}
 
-	return []types.BackfillRequests{backfillRequests}, nil
+	return backfillRequest, nil
 }
 
 func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) ([]zenbtctypes.NonceData, error) {
