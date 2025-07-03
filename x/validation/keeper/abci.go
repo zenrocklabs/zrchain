@@ -633,6 +633,16 @@ func (k *Keeper) updateAVSDelegationStore(ctx sdk.Context, oracleData OracleData
 
 // storeBitcoinBlockHeader stores the Bitcoin header and handles historical header requests.
 func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData) error {
+	// Get requested headers early as it's needed for reorg checks
+	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "error", err)
+			return err
+		}
+		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised")
+	}
+
 	// First store the latest Bitcoin header if available
 	if oracleData.LatestBtcBlockHeight > 0 && oracleData.LatestBtcBlockHeader.MerkleRoot != "" {
 		latestHeaderExists, err := k.BtcBlockHeaders.Has(ctx, oracleData.LatestBtcBlockHeight)
@@ -644,6 +654,10 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 				k.Logger(ctx).Error("error storing latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight, "error", err)
 			} else {
 				k.Logger(ctx).Info("stored latest Bitcoin header", "height", oracleData.LatestBtcBlockHeight)
+				// Check for reorgs for new headers
+				if err := k.checkForBitcoinReorg(ctx, oracleData.LatestBtcBlockHeight, &requestedHeaders); err != nil {
+					k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", oracleData.LatestBtcBlockHeight, "error", err)
+				}
 			}
 		}
 	}
@@ -653,16 +667,6 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 	if headerHeight == 0 || oracleData.RequestedBtcBlockHeader.MerkleRoot == "" {
 		k.Logger(ctx).Debug("no requested bitcoin header")
 		return nil
-	}
-
-	// Get requested headers
-	requestedHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("error getting requested historical Bitcoin headers", "error", err)
-			return err
-		}
-		k.Logger(ctx).Info("requested historical Bitcoin headers store not initialised", "height", headerHeight)
 	}
 
 	// Check if the header is historical
@@ -703,11 +707,6 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 
 		logger.Debug("removed processed historical header request",
 			"remaining_requests", len(requestedHeaders.Heights))
-	} else if !headerExists {
-		// Only check for reorgs for non-historical headers that weren't already stored
-		if err := k.checkForBitcoinReorg(ctx, oracleData, requestedHeaders); err != nil {
-			k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", headerHeight, "error", err)
-		}
 	}
 
 	return nil
@@ -724,15 +723,30 @@ func (k *Keeper) isHistoricalHeader(height int64, requestedHeights []int64) bool
 }
 
 // checkForBitcoinReorg detects reorgs by requesting previous headers when a new one is received.
-func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, requestedHeaders zenbtctypes.RequestedBitcoinHeaders) error {
+func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, newHeaderHeight int64, requestedHeaders *zenbtctypes.RequestedBitcoinHeaders) error {
 	var numHistoricalHeadersToRequest int64 = 20
 	if strings.HasPrefix(ctx.ChainID(), "diamond") {
 		numHistoricalHeadersToRequest = 6
 	}
 
+	// Update latest BTC header height
+	latestBtcHeaderHeight, err := k.LatestBtcHeaderHeight.Get(ctx)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error getting latest BTC header height", "error", err)
+	} else if newHeaderHeight > latestBtcHeaderHeight {
+		if err := k.LatestBtcHeaderHeight.Set(ctx, newHeaderHeight); err != nil {
+			k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
+		}
+	}
+
+	// Check for gaps between the latest stored header and the new header
+	for i := latestBtcHeaderHeight + 1; i < newHeaderHeight; i++ {
+		requestedHeaders.Heights = append(requestedHeaders.Heights, i)
+	}
+
 	prevHeights := make([]int64, 0, numHistoricalHeadersToRequest)
 	for i := int64(1); i <= numHistoricalHeadersToRequest; i++ {
-		prevHeight := oracleData.RequestedBtcBlockHeight - i
+		prevHeight := newHeaderHeight - i
 		if prevHeight <= 0 {
 			break
 		}
@@ -740,12 +754,12 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, oracleData OracleData, re
 	}
 
 	if len(prevHeights) == 0 {
-		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", oracleData.RequestedBtcBlockHeight)
+		k.Logger(ctx).Error("no previous heights to request (this should not happen with a valid VE)", "height", newHeaderHeight)
 		return nil
 	}
 
 	requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
-	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHeaders); err != nil {
+	if err := k.RequestedHistoricalBitcoinHeaders.Set(ctx, *requestedHeaders); err != nil {
 		k.Logger(ctx).Error("error setting requested historical Bitcoin headers", "error", err)
 		return err
 	}
