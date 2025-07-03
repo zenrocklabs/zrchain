@@ -891,10 +891,12 @@ func processTransaction[T any](
 	checkForUpdateAndDispatchTx(k, ctx, keyID, requestedEthNonce, requestedSolNonce, nonceReqStore, pendingTxs, txDispatchCallback, txContinuationCallback)
 }
 
-// getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
+// getPendingTransactions is a generic helper that walks a store with key type uint64
 // and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
 // If limit is 0, all matching items will be returned.
-func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64, T], predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
+func getPendingTransactions[T any](ctx sdk.Context, store interface {
+	Walk(ctx sdk.Context, rng *collections.Range[uint64], fn func(key uint64, value T) (bool, error)) error
+}, predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
 	var results []T
 	queryRange := &collections.Range[uint64]{}
 	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
@@ -1661,7 +1663,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	}
 	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Processing with first pending ID.", "first_pending_id", firstPendingID)
 
-	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransaction(ctx, firstPendingID)
 	if err != nil {
 		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting pending mint transaction from store.", "id", firstPendingID, "error", err)
 		return

@@ -31,6 +31,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 var (
@@ -138,6 +139,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		Fee:               0,
 		Btl:               20,
 	}).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatus(gomock.Any(), gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())
@@ -149,16 +151,35 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	zenBTCKeeper.EXPECT().GetCompleterKeyID(ubermock.Any()).Return(uint64(4)).AnyTimes()
 	// Set up expectation for GetSolanaParams which is called by retrieveSolanaNonces
 	zenBTCKeeper.EXPECT().GetSolanaParams(ubermock.Any()).Return(validationtestutil.DefaultSolana).AnyTimes()
-
-	// // Set up expectations for redemption-related methods
-	// zenBTCKeeper.EXPECT().GetFirstRedemptionAwaitingSign(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().SetFirstRedemptionAwaitingSign(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().GetSupply(ubermock.Any()).Return(zenbtctypes.Supply{}, nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().SetSupply(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().GetExchangeRate(ubermock.Any()).Return(math.LegacyNewDec(1), nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().GetRedemptionsStore().Return(nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().GetBurnEventsStore().Return(nil).AnyTimes()
-	// zenBTCKeeper.EXPECT().GetPendingMintTransactionsStore().Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstRedemptionAwaitingSign(ubermock.Any()).Return(uint64(1), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstRedemptionAwaitingSign(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetSupply(ubermock.Any()).Return(zenbtctypes.Supply{CustodiedBTC: 1, MintedZenBTC: 1, PendingZenBTC: 1}, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetSupply(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetExchangeRate(ubermock.Any()).Return(math.LegacyNewDec(1), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().WalkRedemptions(ubermock.Any(), ubermock.Any()).DoAndReturn(func(ctx sdk.Context, fn func(id uint64, r zenbtctypes.Redemption) (bool, error)) error { return nil }).AnyTimes()
+	zenBTCKeeper.EXPECT().WalkBurnEvents(ubermock.Any(), ubermock.Any()).DoAndReturn(func(ctx sdk.Context, fn func(id uint64, event zenbtctypes.BurnEvent) (bool, error)) error { return nil }).AnyTimes()
+	zenBTCKeeper.EXPECT().WalkPendingMintTransactions(ubermock.Any(), ubermock.Any()).DoAndReturn(func(ctx sdk.Context, fn func(id uint64, tx zenbtctypes.PendingMintTransaction) (bool, error)) error {
+		return nil
+	}).AnyTimes()
+	zenBTCKeeper.EXPECT().GetPendingMintTransaction(ubermock.Any(), ubermock.Any()).Return(zenbtctypes.PendingMintTransaction{}, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().HasPendingMintTransaction(ubermock.Any(), ubermock.Any()).Return(false, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().HasRedemption(ubermock.Any(), ubermock.Any()).Return(false, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetRedemption(ubermock.Any(), ubermock.Any()).Return(zenbtctypes.Redemption{}, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetBurnEvent(ubermock.Any(), ubermock.Any()).Return(zenbtctypes.BurnEvent{}, nil).AnyTimes()
+	zenBTCKeeper.EXPECT().CreateBurnEvent(ubermock.Any(), ubermock.Any()).Return(uint64(1), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstPendingSolMintTransaction(ubermock.Any()).Return(uint64(1), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstPendingStakeTransaction(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstPendingEthMintTransaction(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstPendingBurnEvent(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().GetFirstPendingRedemption(ubermock.Any()).Return(uint64(0), nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetPendingMintTransaction(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetBurnEvent(ubermock.Any(), ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetRedemption(ubermock.Any(), ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstPendingStakeTransaction(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstPendingEthMintTransaction(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstPendingSolMintTransaction(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstPendingBurnEvent(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zenBTCKeeper.EXPECT().SetFirstPendingRedemption(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
 
 	// Create a proper ZRConfig for testing
 	zrConfig := &params.ZRConfig{

@@ -13,7 +13,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	collections "cosmossdk.io/collections"
 	math "cosmossdk.io/math"
 	types "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	gomock "go.uber.org/mock/gomock"
@@ -85,20 +84,6 @@ func (m *MockZenBTCKeeper) GetBurnEvent(ctx context.Context, id uint64) (types.B
 func (mr *MockZenBTCKeeperMockRecorder) GetBurnEvent(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBurnEvent", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetBurnEvent), ctx, id)
-}
-
-// GetBurnEventsStore mocks base method.
-func (m *MockZenBTCKeeper) GetBurnEventsStore() collections.Map[uint64, types.BurnEvent] {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBurnEventsStore")
-	ret0, _ := ret[0].(collections.Map[uint64, types.BurnEvent])
-	return ret0
-}
-
-// GetBurnEventsStore indicates an expected call of GetBurnEventsStore.
-func (mr *MockZenBTCKeeperMockRecorder) GetBurnEventsStore() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBurnEventsStore", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetBurnEventsStore))
 }
 
 // GetChangeAddressKeyIDs mocks base method.
@@ -291,32 +276,34 @@ func (mr *MockZenBTCKeeperMockRecorder) GetParams(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetParams), ctx)
 }
 
-// GetPendingMintTransactionsStore mocks base method.
-func (m *MockZenBTCKeeper) GetPendingMintTransactionsStore() collections.Map[uint64, types.PendingMintTransaction] {
+// GetPendingMintTransaction mocks base method.
+func (m *MockZenBTCKeeper) GetPendingMintTransaction(ctx context.Context, id uint64) (types.PendingMintTransaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPendingMintTransactionsStore")
-	ret0, _ := ret[0].(collections.Map[uint64, types.PendingMintTransaction])
-	return ret0
+	ret := m.ctrl.Call(m, "GetPendingMintTransaction", ctx, id)
+	ret0, _ := ret[0].(types.PendingMintTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetPendingMintTransactionsStore indicates an expected call of GetPendingMintTransactionsStore.
-func (mr *MockZenBTCKeeperMockRecorder) GetPendingMintTransactionsStore() *gomock.Call {
+// GetPendingMintTransaction indicates an expected call of GetPendingMintTransaction.
+func (mr *MockZenBTCKeeperMockRecorder) GetPendingMintTransaction(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingMintTransactionsStore", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetPendingMintTransactionsStore))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingMintTransaction", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetPendingMintTransaction), ctx, id)
 }
 
-// GetRedemptionsStore mocks base method.
-func (m *MockZenBTCKeeper) GetRedemptionsStore() collections.Map[uint64, types.Redemption] {
+// GetRedemption mocks base method.
+func (m *MockZenBTCKeeper) GetRedemption(ctx context.Context, id uint64) (types.Redemption, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRedemptionsStore")
-	ret0, _ := ret[0].(collections.Map[uint64, types.Redemption])
-	return ret0
+	ret := m.ctrl.Call(m, "GetRedemption", ctx, id)
+	ret0, _ := ret[0].(types.Redemption)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetRedemptionsStore indicates an expected call of GetRedemptionsStore.
-func (mr *MockZenBTCKeeperMockRecorder) GetRedemptionsStore() *gomock.Call {
+// GetRedemption indicates an expected call of GetRedemption.
+func (mr *MockZenBTCKeeperMockRecorder) GetRedemption(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRedemptionsStore", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetRedemptionsStore))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRedemption", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetRedemption), ctx, id)
 }
 
 // GetRewardsDepositKeyID mocks base method.
@@ -388,6 +375,21 @@ func (m *MockZenBTCKeeper) GetUnstakerKeyID(ctx context.Context) uint64 {
 func (mr *MockZenBTCKeeperMockRecorder) GetUnstakerKeyID(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnstakerKeyID", reflect.TypeOf((*MockZenBTCKeeper)(nil).GetUnstakerKeyID), ctx)
+}
+
+// HasPendingMintTransaction mocks base method.
+func (m *MockZenBTCKeeper) HasPendingMintTransaction(ctx context.Context, id uint64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasPendingMintTransaction", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasPendingMintTransaction indicates an expected call of HasPendingMintTransaction.
+func (mr *MockZenBTCKeeperMockRecorder) HasPendingMintTransaction(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPendingMintTransaction", reflect.TypeOf((*MockZenBTCKeeper)(nil).HasPendingMintTransaction), ctx, id)
 }
 
 // HasRedemption mocks base method.
