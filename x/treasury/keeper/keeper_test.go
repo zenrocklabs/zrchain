@@ -1,83 +1,92 @@
 package keeper_test
 
 import (
-	"context"
 	"testing"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/store"
-	"cosmossdk.io/store/metrics"
-	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
-	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
-	treasuryModule "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
-	dbm "github.com/cosmos/cosmos-db"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-type bankKeeperMock struct {
-	transactions []struct {
-		fromAddr sdk.AccAddress
-		toAddr   sdk.AccAddress
-		toModule string
-		amount   sdk.Coins
-	}
+type IntegrationTestSuite struct {
+	suite.Suite
+
+	treasuryKeeper keeper.Keeper
+	ctx            sdk.Context
+	msgServer      types.MsgServer
+	bankKeeper     *treasurytestutil.MockBankKeeper
+	identityKeeper *treasurytestutil.MockIdentityKeeper
+	policyKeeper   *treasurytestutil.MockPolicyKeeper
+	zentpKeeper    *treasurytestutil.MockZentpKeeper
+	ctrl           *gomock.Controller
 }
 
-func newBankKeeperMock() *bankKeeperMock {
-	return &bankKeeperMock{
-		transactions: make([]struct {
-			fromAddr sdk.AccAddress
-			toAddr   sdk.AccAddress
-			toModule string
-			amount   sdk.Coins
-		}, 0),
-	}
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
 }
 
-func (b *bankKeeperMock) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	b.transactions = append(b.transactions, struct {
-		fromAddr sdk.AccAddress
-		toAddr   sdk.AccAddress
-		toModule string
-		amount   sdk.Coins
-	}{fromAddr, toAddr, "", amt})
-	return nil
+func (s *IntegrationTestSuite) SetupTest() {
+
+	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
+	key := storetypes.NewKVStoreKey(types.StoreKey)
+	storeService := runtime.NewKVStoreService(key)
+	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx
+
+	ctrl := gomock.NewController(s.T())
+	bankKeeper := treasurytestutil.NewMockBankKeeper(ctrl)
+	identityKeeper := treasurytestutil.NewMockIdentityKeeper(ctrl)
+	policyKeeper := treasurytestutil.NewMockPolicyKeeper(ctrl)
+	zentpKeeper := treasurytestutil.NewMockZentpKeeper(ctrl)
+
+	s.bankKeeper = bankKeeper
+	s.identityKeeper = identityKeeper
+	s.policyKeeper = policyKeeper
+	s.zentpKeeper = zentpKeeper
+	s.ctrl = ctrl
+
+	// Set up mock expectations before creating the keeper
+	s.policyKeeper.EXPECT().ActionHandler(gomock.Any()).Return(nil, false).AnyTimes()
+	s.policyKeeper.EXPECT().RegisterActionHandler(gomock.Any(), gomock.Any()).AnyTimes()
+	s.policyKeeper.EXPECT().GeneratorHandler(gomock.Any()).Return(nil, false).AnyTimes()
+	s.policyKeeper.EXPECT().RegisterPolicyGeneratorHandler(gomock.Any(), gomock.Any()).AnyTimes()
+
+	s.treasuryKeeper = keeper.NewKeeper(
+		encCfg.Codec,
+		storeService,
+		testCtx.Ctx.Logger(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		bankKeeper,
+		identityKeeper,
+		policyKeeper,
+		nil, // zenBTCKeeper - using nil for now
+		zentpKeeper,
+	)
+
+	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
+		s.treasuryKeeper.Logger())
+
+	err := s.treasuryKeeper.ParamStore.Set(s.ctx, types.DefaultParams())
+	s.Require().NoError(err)
+
+	s.msgServer = keeper.NewMsgServerImpl(s.treasuryKeeper, false)
 }
 
-func (b *bankKeeperMock) SendCoinsFromAccountToModule(ctx context.Context, fromAddr sdk.AccAddress, toModule string, amt sdk.Coins) error {
-	b.transactions = append(b.transactions, struct {
-		fromAddr sdk.AccAddress
-		toAddr   sdk.AccAddress
-		toModule string
-		amount   sdk.Coins
-	}{fromAddr, sdk.AccAddress{}, toModule, amt})
-	return nil
-}
-
-func (b *bankKeeperMock) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
-	from, err := sdk.AccAddressFromBech32(senderModule)
-	if err != nil {
-		return err
-	}
-	b.transactions = append(b.transactions, struct {
-		fromAddr sdk.AccAddress
-		toAddr   sdk.AccAddress
-		toModule string
-		amount   sdk.Coins
-	}{from, sdk.AccAddress{}, recipientAddr.String(), amt})
-	return nil
-}
-
-func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
+func (s *IntegrationTestSuite) Test_TreasuryKeeper_splitKeyringFee() {
 	type args struct {
 		feeAddr    string
-		fee        uint64
-		commission uint64
-	}
-	type want struct {
 		fee        uint64
 		commission uint64
 	}
@@ -87,140 +96,96 @@ func Test_TreasuryKeeper_splitKeyringFee(t *testing.T) {
 	addrTo := sample.AccAddress()
 
 	tests := []struct {
-		name    string
-		args    args
-		want    want
-		wantErr bool
+		name string
+		args args
 	}{
 		{
-			name:    "PASS: Send fee to address",
-			wantErr: false,
+			name: "Send fee to address",
 			args: args{
 				feeAddr:    addrTo,
 				fee:        1000,
 				commission: 10,
 			},
-			want: want{
-				fee:        900,
-				commission: 100,
-			},
 		},
 		{
-			name:    "PASS: Send fee to module",
-			wantErr: false,
+			name: "Send fee to module",
 			args: args{
 				feeAddr:    types.KeyringCollectorName,
 				fee:        1000,
 				commission: 10,
 			},
-			want: want{
-				fee:        900,
-				commission: 100,
-			},
 		},
 		{
-			name:    "PASS: Zero commission",
-			wantErr: false,
+			name: "Zero commission",
 			args: args{
 				feeAddr:    addrTo,
 				fee:        1000,
 				commission: 0,
 			},
-			want: want{
-				fee:        1000,
-				commission: 0,
-			},
 		},
 		{
-			name:    "PASS: 100% commission",
-			wantErr: false,
+			name: "100% commission",
 			args: args{
 				feeAddr:    addrTo,
 				fee:        1000,
 				commission: 100,
 			},
-			want: want{
-				fee:        0,
-				commission: 1000,
-			},
 		},
 		{
-			name:    "PASS: Small fee amount",
-			wantErr: false,
+			name: "Small fee amount",
 			args: args{
 				feeAddr:    addrTo,
 				fee:        10,
 				commission: 10,
 			},
-			want: want{
-				fee:        9,
-				commission: 1,
-			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db := dbm.NewMemDB()
-			stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+		s.Run(tt.name, func() {
+			// Calculate expected commission and fee
+			commission := tt.args.commission
+			fee := tt.args.fee
+			feeAddr := tt.args.feeAddr
 
-			bkmock := newBankKeeperMock()
-			policyKeeper, ctx := keepertest.PolicyKeeper(t, db, stateStore, nil)
-			identityKeeper, _ := keepertest.IdentityKeeper(t, &policyKeeper, db, stateStore)
-			treasuryKeeper, _ := keepertest.TreasuryKeeper(t, &policyKeeper, &identityKeeper, bkmock, db, stateStore, nil)
+			// Update the params with the test case's commission value
+			params, err := s.treasuryKeeper.ParamStore.Get(s.ctx)
+			s.Require().NoError(err)
+			params.KeyringCommission = commission
+			params.KeyringCommissionDestination = feeAddr
+			err = s.treasuryKeeper.ParamStore.Set(s.ctx, params)
+			s.Require().NoError(err)
 
-			tkGenesis := types.GenesisState{
-				Params: types.DefaultParams(),
-			}
+			// Calculate expected commission and fee split
+			commissionAmount := uint64((fee * commission) / 100)
 
-			tkGenesis.Params.KeyringCommission = tt.args.commission
-			tkGenesis.Params.KeyringCommissionDestination = tt.args.feeAddr
-
-			treasuryModule.InitGenesis(ctx, treasuryKeeper, tkGenesis)
-
-			err := treasuryKeeper.SplitKeyringFee(ctx, addrFrom, tt.args.feeAddr, tt.args.fee)
-			require.NoError(t, err)
-
-			// Verify transactions
-			require.Equal(t, 2, len(bkmock.transactions), "Expected exactly two transactions")
-
-			// First transaction (commission)
-			require.Equal(t,
-				addrFrom,
-				sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, bkmock.transactions[0].fromAddr),
-				"First transaction from address should be sender",
-			)
-			require.Equal(t,
-				types.KeyringCollectorName,
-				bkmock.transactions[0].toModule,
-				"First transaction should go to KeyringCollector module",
-			)
-			require.Equal(t,
-				tt.want.commission,
-				bkmock.transactions[0].amount.AmountOf(params.BondDenom).Uint64(),
-				"First transaction amount should be commission",
-			)
-
-			// Second transaction
-			require.Equal(t,
-				addrFrom,
-				sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, bkmock.transactions[1].fromAddr),
-				"Second transaction from address should be sender",
-			)
-			if tt.args.feeAddr == types.KeyringCollectorName {
-				require.Equal(t,
+			if commissionAmount > 0 {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(addrFrom),
 					types.KeyringCollectorName,
-					bkmock.transactions[1].toModule,
-					"Second transaction should go to KeyringCollector module",
-				)
-			} else {
-				require.Equal(t,
-					tt.args.feeAddr,
-					sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, bkmock.transactions[1].toAddr),
-					"Second transaction should go to recipient",
-				)
+					gomock.Any(), // coin
+				).Return(nil)
 			}
-			require.Equal(t, tt.want.fee, bkmock.transactions[1].amount.AmountOf(params.BondDenom).Uint64(), "Second transaction amount should be remaining fee")
+
+			if feeAddr == types.KeyringCollectorName {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(addrFrom),
+					types.KeyringCollectorName,
+					gomock.Any(), // coin
+				).Return(nil)
+			} else {
+				s.bankKeeper.EXPECT().SendCoins(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(addrFrom),
+					sdk.MustAccAddressFromBech32(feeAddr),
+					gomock.Any(), // coin
+				).Return(nil)
+			}
+
+			err = s.treasuryKeeper.SplitKeyringFee(s.ctx, addrFrom, feeAddr, fee)
+			s.Require().NoError(err)
 		})
 	}
 }

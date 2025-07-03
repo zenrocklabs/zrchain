@@ -965,6 +965,10 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return nil, lastKnownSig, err
+	}
+
 	eventTypeName := "Solana ROCK mint"
 	// processor defines how to extract ROCK mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1009,6 +1013,10 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return nil, lastKnownSig, err
+	}
+
 	eventTypeName := "Solana zenBTC mint"
 	// processor defines how to extract zenBTC mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1144,6 +1152,10 @@ func (o *Oracle) processBurnTransaction(
 
 // getSolanaZenBTCBurnEvents retrieves ZenBTC burn events from Solana.
 func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return nil, lastKnownSig, err
+	}
+
 	eventTypeName := "Solana zenBTC burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1191,6 +1203,10 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
 func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return nil, lastKnownSig, err
+	}
+
 	eventTypeName := "Solana ROCK burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1238,6 +1254,10 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 
 // getSolanaBurnEventFromSig fetches and decodes burn events from a single Solana transaction signature.
 func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*api.BurnEvent, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return nil, err
+	}
+
 	program, err := solana.PublicKeyFromBase58(programID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to obtain program public key for burn event backfill: %w", err)
@@ -1753,6 +1773,10 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 // getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
 // Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
 func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
+	if err := o.checkSolanaClient(); err != nil {
+		return 5000, err
+	}
+
 	// Create a simple dummy transaction to estimate fees.
 	// Using placeholder public keys. These don't need to exist or have funds
 	// as the transaction is not actually sent, only used for fee calculation.
@@ -1834,4 +1858,11 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 		return 0, nil // Or return 5000, nil if a non-zero value is strictly necessary downstream
 	}
 	return lamports, nil
+}
+
+func (o *Oracle) checkSolanaClient() error {
+	if o.solanaClient == nil {
+		return fmt.Errorf("Solana client is not initialized")
+	}
+	return nil
 }

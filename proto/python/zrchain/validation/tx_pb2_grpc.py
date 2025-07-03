@@ -124,13 +124,16 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def UpdateHVParams(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """UpdateHVParams defines an operation for updating the x/validation module
+        parameters with Hybrid Validation parameters.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def TriggerEventBackfill(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

@@ -6,15 +6,10 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
-
-var defaultWs = types.Workspace{
-	Address: "workspace14a2hpadpsy9h4auve2z8lw",
-	Creator: "testOwner",
-	Owners:  []string{"testOwner"},
-}
 
 func Test_msgServer_AddWorkspaceOwner(t *testing.T) {
 	type args struct {
@@ -31,7 +26,7 @@ func Test_msgServer_AddWorkspaceOwner(t *testing.T) {
 		{
 			name: "PASS: add workspace owner",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgAddWorkspaceOwner("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "testOwner2", 1000),
 			},
 			want: &types.MsgAddWorkspaceOwnerResponse{},
@@ -45,7 +40,7 @@ func Test_msgServer_AddWorkspaceOwner(t *testing.T) {
 		{
 			name: "FAIL: workspace is nil or not found",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgAddWorkspaceOwner("testOwner", "notAWorkspace", "testOwner2", 1000),
 			},
 			want:    &types.MsgAddWorkspaceOwnerResponse{},
@@ -54,7 +49,7 @@ func Test_msgServer_AddWorkspaceOwner(t *testing.T) {
 		{
 			name: "FAIL: owner is already owner",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgAddWorkspaceOwner("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "testOwner", 1000),
 			},
 			want:    &types.MsgAddWorkspaceOwnerResponse{},
@@ -63,7 +58,7 @@ func Test_msgServer_AddWorkspaceOwner(t *testing.T) {
 		{
 			name: "FAIL: creator is no admin owner",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgAddWorkspaceOwner("noOwner", "workspace14a2hpadpsy9h4auve2z8lw", "testOwner", 1000),
 			},
 			want:    &types.MsgAddWorkspaceOwnerResponse{},
