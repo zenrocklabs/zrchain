@@ -75,17 +75,17 @@ sequenceDiagram
 
     User->>Bitcoin: Deposit BTC to provided address
     
-    par Bitcoin Monitoring
-        Bitcoin Proxy->>Bitcoin: Detects deposit
-        Bitcoin Proxy->>Bitcoin Proxy: Generate Merkle proof of BTC deposit transaction
-        Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
-    and Oracle Data Collection
-        Sidecar->>Bitcoin: Polls for new block headers
-        Sidecar->>Ethereum: Polls for ETH/BTC price feeds (Chainlink)
-        Sidecar->>Ethereum: Polls for gas prices and estimates
-        Sidecar->>Solana: Polls for lamports per signature fee
-        Sidecar-->>zrChain: Report BTC Block Header, prices & network fees (via vote extension)
-    end
+    Sidecar->>Bitcoin: Polls for new block headers
+    Sidecar->>Ethereum: Polls for ETH/BTC price feeds (Chainlink)
+    Sidecar->>Ethereum: Polls for gas prices and estimates
+    Sidecar->>Solana: Polls for lamports per signature fee
+    
+    Note over Bitcoin: Block mined (deposit tx included)
+    
+    Sidecar-->>zrChain: Report BTC Block Header, prices & network fees (via vote extension)
+    Bitcoin Proxy->>Bitcoin: Detects deposit
+    Bitcoin Proxy->>Bitcoin Proxy: Generate Merkle proof of BTC deposit transaction
+    Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
     Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
 
     zrChain->>zrChain: Verify Merkle proof against Bitcoin block headers
