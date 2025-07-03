@@ -6,6 +6,13 @@ This document outlines the sequence of operations for the zenBTC and zenTP proto
 
 The zrchain network uses a **Vote Extension** based consensus mechanism where validators run sidecar processes that monitor external blockchains (Ethereum, Solana, Bitcoin) and report their state. Each validator submits their observed data as a vote extension, and only data that reaches **supermajority consensus** (>2/3 of voting power) is accepted and processed on-chain.
 
+### Vote Extension Lifecycle
+1. **ExtendVoteHandler**: Each validator's sidecar collects oracle data and creates vote extensions containing hashes
+2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity  
+3. **PrepareProposal**: The proposer aggregates vote extensions and determines consensus fields
+4. **ProcessProposal**: All validators verify the proposed oracle data matches consensus
+5. **PreBlocker**: Oracle data with consensus is applied to on-chain state and triggers transaction processing
+
 ### Vote Extension Process
 1. **Sidecar Data Collection**: Each validator's sidecar monitors external chains and collects oracle data
 2. **Vote Extension Creation**: During `ExtendVoteHandler`, validators create vote extensions containing hashes of their observed data
@@ -25,8 +32,8 @@ This granular consensus approach maximizes system uptime by allowing critical op
 
 ## Key Components
 
-- **Sidecar**: Off-chain process that monitors external blockchains and provides oracle data
-- **Vote Extensions**: Consensus mechanism for external data verification  
+- **Sidecar**: Synchronised oracle system, polled by zrChain and enshrined by ROCK stake
+- **Vote Extensions**: CometBFT mechanism to extend consensus over arbitrary non-tx data
 - **MPC Cluster**: Multi-party computation system for generating cryptographic signatures
 - **Relayer**: Service that broadcasts signed transactions to external blockchains
 - **Bitcoin Proxy**: Specialized service for Bitcoin transaction monitoring and construction
