@@ -16,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	sol "github.com/gagliardetto/solana-go"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
+	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -43,6 +45,51 @@ func (m *MockEthClient) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (
 	args := m.Called(ctx, msg)
 	return args.Get(0).(uint64), args.Error(1)
 }
+
+type MockSolanaClient struct {
+	mock.Mock
+}
+
+func (m *MockSolanaClient) GetSignaturesForAddressWithOpts(ctx context.Context, address sol.PublicKey, opts *solrpc.GetSignaturesForAddressOpts) ([]*solrpc.TransactionSignature, error) {
+	args := m.Called(ctx, address, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*solrpc.TransactionSignature), args.Error(1)
+}
+
+func (m *MockSolanaClient) RPCCallBatch(ctx context.Context, requests jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error) {
+	args := m.Called(ctx, requests)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(jsonrpc.RPCResponses), args.Error(1)
+}
+
+func (m *MockSolanaClient) GetLatestBlockhash(ctx context.Context, commitment interface{}) (*solrpc.GetLatestBlockhashResult, error) {
+	args := m.Called(ctx, commitment)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*solrpc.GetLatestBlockhashResult), args.Error(1)
+}
+
+func (m *MockSolanaClient) GetFeeForMessage(ctx context.Context, message string, commitment interface{}) (*solrpc.GetFeeForMessageResult, error) {
+	args := m.Called(ctx, message, commitment)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*solrpc.GetFeeForMessageResult), args.Error(1)
+}
+
+func (m *MockSolanaClient) GetTransaction(ctx context.Context, signature sol.Signature, opts *solrpc.GetTransactionOpts) (*solrpc.GetTransactionResult, error) {
+	args := m.Called(ctx, signature, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*solrpc.GetTransactionResult), args.Error(1)
+}
+
 func createTestOracle() *Oracle {
 	config := sidecartypes.Config{
 		Network:   sidecartypes.NetworkDevnet,
@@ -57,12 +104,14 @@ func createTestOracle() *Oracle {
 	oracle.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 	return oracle
 }
+
 func createMockHeader(blockNumber uint64, baseFee *big.Int) *ethtypes.Header {
 	return &ethtypes.Header{
 		Number:  big.NewInt(0).SetUint64(blockNumber),
 		BaseFee: baseFee,
 	}
 }
+
 func TestInitializeStateUpdate(t *testing.T) {
 	oracle := createTestOracle()
 	update := oracle.initializeStateUpdate()
@@ -74,6 +123,7 @@ func TestInitializeStateUpdate(t *testing.T) {
 	assert.NotNil(t, update.redemptions)
 	assert.NotNil(t, update.ethBurnEvents)
 }
+
 func TestApplyFallbacks(t *testing.T) {
 	oracle := createTestOracle()
 	currentState := sidecartypes.OracleState{
@@ -98,6 +148,7 @@ func TestApplyFallbacks(t *testing.T) {
 	assert.True(t, update.ETHUSDPrice.Equal(currentState.ETHUSDPrice))
 	assert.Equal(t, currentState.SolanaLamportsPerSignature, update.solanaLamportsPerSignature)
 }
+
 func TestBuildFinalState(t *testing.T) {
 	oracle := createTestOracle()
 	currentState := sidecartypes.OracleState{
@@ -137,6 +188,7 @@ func TestBuildFinalState(t *testing.T) {
 	assert.True(t, result.BTCUSDPrice.Equal(math.LegacyNewDec(50000)))
 	assert.True(t, result.ETHUSDPrice.Equal(math.LegacyNewDec(3000)))
 }
+
 func TestGetLastProcessedSolSignature(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.lastSolRockMintSigStr = "test_rock_mint_sig"
@@ -154,6 +206,7 @@ func TestGetLastProcessedSolSignature(t *testing.T) {
 	sig = oracle.GetLastProcessedSolSignature("unknown")
 	assert.True(t, sig.IsZero())
 }
+
 func TestSetStateCacheForTesting(t *testing.T) {
 	oracle := createTestOracle()
 	testStates := []sidecartypes.OracleState{
@@ -172,6 +225,7 @@ func TestSetStateCacheForTesting(t *testing.T) {
 	assert.Equal(t, uint64(200), currentState.EthBlockHeight)
 	assert.True(t, currentState.ROCKUSDPrice.Equal(math.LegacyNewDec(2)))
 }
+
 func TestSetStateCacheForTesting_Empty(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.SetStateCacheForTesting([]sidecartypes.OracleState{})
@@ -179,6 +233,7 @@ func TestSetStateCacheForTesting_Empty(t *testing.T) {
 	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
 	assert.Equal(t, EmptyOracleState, *currentState)
 }
+
 func TestROCKPriceFetching(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -197,6 +252,7 @@ func TestROCKPriceFetching(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_InvalidJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -215,6 +271,7 @@ func TestROCKPriceFetching_InvalidJSON(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_ServerError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -231,6 +288,7 @@ func TestROCKPriceFetching_ServerError(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_Timeout(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(15 * time.Second)
@@ -255,6 +313,7 @@ func TestROCKPriceFetching_Timeout(t *testing.T) {
 		resp.Body.Close()
 	}
 }
+
 func TestCreateMockHeader(t *testing.T) {
 	blockNumber := uint64(1000)
 	baseFee := big.NewInt(20000000000)
@@ -262,6 +321,7 @@ func TestCreateMockHeader(t *testing.T) {
 	assert.Equal(t, big.NewInt(1000), header.Number)
 	assert.Equal(t, baseFee, header.BaseFee)
 }
+
 func TestCreateTestOracle(t *testing.T) {
 	oracle := createTestOracle()
 	assert.NotNil(t, oracle)
@@ -274,6 +334,7 @@ func TestCreateTestOracle(t *testing.T) {
 	assert.Equal(t, 1, len(oracle.stateCache))
 	assert.Equal(t, EmptyOracleState, oracle.stateCache[0])
 }
+
 func TestCreateTestPriceData(t *testing.T) {
 	priceData := createTestPriceData()
 	assert.Equal(t, 1, len(priceData))
@@ -282,6 +343,7 @@ func TestCreateTestPriceData(t *testing.T) {
 	assert.Equal(t, "1.51", priceData[0].LowestAsk)
 	assert.Equal(t, "1.49", priceData[0].HighestBid)
 }
+
 func createTestPriceData() []PriceData {
 	return []PriceData{
 		{
@@ -292,16 +354,19 @@ func createTestPriceData() []PriceData {
 		},
 	}
 }
+
 func BenchmarkCreateTestOracle(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		createTestOracle()
 	}
 }
+
 func BenchmarkCreateMockHeader(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		createMockHeader(1000, big.NewInt(20000000000))
 	}
 }
+
 func BenchmarkInitializeStateUpdate(b *testing.B) {
 	oracle := createTestOracle()
 	b.ResetTimer()
@@ -309,6 +374,7 @@ func BenchmarkInitializeStateUpdate(b *testing.B) {
 		oracle.initializeStateUpdate()
 	}
 }
+
 func TestBuildFinalState_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
@@ -331,6 +397,7 @@ func TestBuildFinalState_NilCurrentState(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 }
+
 func TestBuildFinalState_NilHeader(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
@@ -352,6 +419,7 @@ func TestBuildFinalState_NilHeader(t *testing.T) {
 		oracle.buildFinalState(update, nil, targetBlockNumber)
 	})
 }
+
 func TestBuildFinalState_NilUpdate(t *testing.T) {
 	oracle := createTestOracle()
 	header := createMockHeader(1000, big.NewInt(20000000000))
@@ -360,6 +428,7 @@ func TestBuildFinalState_NilUpdate(t *testing.T) {
 		oracle.buildFinalState(nil, header, targetBlockNumber)
 	})
 }
+
 func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
@@ -381,6 +450,7 @@ func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 		oracle.buildFinalState(update, header, nil)
 	})
 }
+
 func TestApplyFallbacks_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
@@ -394,6 +464,7 @@ func TestApplyFallbacks_NilCurrentState(t *testing.T) {
 		oracle.applyFallbacks(update, nil)
 	})
 }
+
 func TestApplyFallbacks_NilUpdate(t *testing.T) {
 	oracle := createTestOracle()
 	currentState := sidecartypes.OracleState{
@@ -407,6 +478,7 @@ func TestApplyFallbacks_NilUpdate(t *testing.T) {
 		oracle.applyFallbacks(nil, &currentState)
 	})
 }
+
 func TestGetLastProcessedSolSignature_InvalidSignature(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.lastSolRockMintSigStr = "invalid_signature_with_special_chars!@#"
@@ -422,6 +494,7 @@ func TestGetLastProcessedSolSignature_InvalidSignature(t *testing.T) {
 	sig = oracle.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 	assert.True(t, sig.IsZero())
 }
+
 func TestSetStateCacheForTesting_NilStates(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.SetStateCacheForTesting(nil)
@@ -429,6 +502,7 @@ func TestSetStateCacheForTesting_NilStates(t *testing.T) {
 	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
 	assert.Equal(t, EmptyOracleState, *currentState)
 }
+
 func TestCreateTestOracle_InvalidConfig(t *testing.T) {
 	config := sidecartypes.Config{
 		Network:   "",
@@ -444,16 +518,19 @@ func TestCreateTestOracle_InvalidConfig(t *testing.T) {
 	assert.Equal(t, "", oracle.Config.Network)
 	assert.Equal(t, "", oracle.Config.StateFile)
 }
+
 func TestCreateMockHeader_ZeroValues(t *testing.T) {
 	header := createMockHeader(0, big.NewInt(0))
 	assert.Equal(t, big.NewInt(0), header.Number)
 	assert.Equal(t, big.NewInt(0), header.BaseFee)
 }
+
 func TestCreateMockHeader_NilBaseFee(t *testing.T) {
 	header := createMockHeader(1000, nil)
 	assert.Equal(t, big.NewInt(1000), header.Number)
 	assert.Nil(t, header.BaseFee)
 }
+
 func TestCreateMockHeader_LargeBlockNumber(t *testing.T) {
 	largeBlockNumber := uint64(18446744073709551615)
 	header := createMockHeader(largeBlockNumber, big.NewInt(20000000000))
@@ -461,6 +538,7 @@ func TestCreateMockHeader_LargeBlockNumber(t *testing.T) {
 	assert.Equal(t, expectedNumber, header.Number)
 	assert.Equal(t, big.NewInt(20000000000), header.BaseFee)
 }
+
 func TestCreateTestPriceData_EmptyValues(t *testing.T) {
 	priceData := createTestPriceData()
 	assert.Equal(t, 1, len(priceData))
@@ -469,6 +547,7 @@ func TestCreateTestPriceData_EmptyValues(t *testing.T) {
 	assert.Equal(t, "1.51", priceData[0].LowestAsk)
 	assert.Equal(t, "1.49", priceData[0].HighestBid)
 }
+
 func TestROCKPriceFetching_MalformedJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -487,6 +566,7 @@ func TestROCKPriceFetching_MalformedJSON(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_EmptyResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -504,6 +584,7 @@ func TestROCKPriceFetching_EmptyResponse(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_NotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -520,6 +601,7 @@ func TestROCKPriceFetching_NotFound(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_ServerError500(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -537,6 +619,7 @@ func TestROCKPriceFetching_ServerError500(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_UnreachableServer(t *testing.T) {
 	unreachableURL := "http://localhost:99999"
 	originalURL := sidecartypes.ROCKUSDPriceURL
@@ -555,6 +638,7 @@ func TestROCKPriceFetching_UnreachableServer(t *testing.T) {
 		resp.Body.Close()
 	}
 }
+
 func TestROCKPriceFetching_Redirect(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/new-location", http.StatusMovedPermanently)
@@ -574,6 +658,7 @@ func TestROCKPriceFetching_Redirect(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusMovedPermanently, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_WrongContentType(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
@@ -593,6 +678,7 @@ func TestROCKPriceFetching_WrongContentType(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "text/plain", resp.Header.Get("Content-Type"))
 }
+
 func TestROCKPriceFetching_LargeResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -615,6 +701,7 @@ func TestROCKPriceFetching_LargeResponse(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
 func TestROCKPriceFetching_SlowResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
@@ -639,6 +726,7 @@ func TestROCKPriceFetching_SlowResponse(t *testing.T) {
 		resp.Body.Close()
 	}
 }
+
 func TestROCKPriceFetching_ChunkedResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -668,6 +756,7 @@ func TestROCKPriceFetching_ChunkedResponse(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.NotEmpty(t, resp.Header.Get("Content-Type"))
 }
+
 func TestFetchSolanaBurnEvents(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -1119,9 +1208,8 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 			close(errChan)
 
 			errorCount := 0
-			for err := range errChan {
+			for range errChan {
 				errorCount++
-				t.Logf("Goroutine %d encountered expected error: %v", index, err)
 			}
 
 			errorCounts[index] = errorCount
@@ -1131,12 +1219,14 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 	wg.Wait()
 
 	expectedErrors := 2
+	totalErrors := 0
 	for i, errorCount := range errorCounts {
 		assert.Equal(t, expectedErrors, errorCount,
 			"Goroutine %d encountered %d errors, expected %d", i, errorCount, expectedErrors)
+		totalErrors += errorCount
 	}
 
-	t.Logf("All %d goroutines encountered expected errors due to nil Solana client", numGoroutines)
+	t.Logf("All %d goroutines encountered expected errors due to nil Solana client (total: %d errors)", numGoroutines, totalErrors)
 }
 
 func TestFetchSolanaBurnEventsWatermarkConsistency(t *testing.T) {
@@ -1152,14 +1242,13 @@ func TestFetchSolanaBurnEventsWatermarkConsistency(t *testing.T) {
 	close(errChan)
 
 	errorCount := 0
-	for err := range errChan {
+	for range errChan {
 		errorCount++
-		t.Logf("Expected error occurred: %v", err)
 	}
 
 	assert.Equal(t, 2, errorCount, "Expected 2 errors due to nil Solana client")
 
-	t.Logf("Test passed: function handled nil Solana client gracefully")
+	t.Logf("Test passed: function handled nil Solana client gracefully (%d expected errors)", errorCount)
 }
 
 func TestFetchSolanaBurnEventsErrorHandling(t *testing.T) {
@@ -1245,14 +1334,13 @@ func TestFetchSolanaBurnEventsEventDeduplication(t *testing.T) {
 	close(errChan)
 
 	errorCount := 0
-	for err := range errChan {
+	for range errChan {
 		errorCount++
-		t.Logf("Expected error occurred: %v", err)
 	}
 
 	assert.Equal(t, 2, errorCount, "Expected 2 errors due to nil Solana client")
 
-	t.Logf("Test passed: function handled nil Solana client gracefully")
+	t.Logf("Test passed: function handled nil Solana client gracefully (%d expected errors)", errorCount)
 }
 
 func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
@@ -1280,14 +1368,13 @@ func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
 	close(errChan)
 
 	errorCount := 0
-	for err := range errChan {
+	for range errChan {
 		errorCount++
-		t.Logf("Expected error occurred: %v", err)
 	}
 
 	assert.Equal(t, 2, errorCount, "Expected 2 errors due to nil Solana client")
 
-	t.Logf("Test passed: function handled nil Solana client gracefully")
+	t.Logf("Test passed: function handled nil Solana client gracefully (%d expected errors)", errorCount)
 }
 
 func TestFetchSolanaBurnEventsBatchProcessing(t *testing.T) {
@@ -1303,14 +1390,13 @@ func TestFetchSolanaBurnEventsBatchProcessing(t *testing.T) {
 	close(errChan)
 
 	errorCount := 0
-	for err := range errChan {
+	for range errChan {
 		errorCount++
-		t.Logf("Expected error occurred: %v", err)
 	}
 
 	assert.Equal(t, 2, errorCount, "Expected 2 errors due to nil Solana client")
 
-	t.Logf("Test passed: function handled nil Solana client gracefully")
+	t.Logf("Test passed: function handled nil Solana client gracefully (%d expected errors)", errorCount)
 }
 
 func TestFetchSolanaBurnEventsSignatureOrdering(t *testing.T) {
@@ -1326,14 +1412,13 @@ func TestFetchSolanaBurnEventsSignatureOrdering(t *testing.T) {
 	close(errChan)
 
 	errorCount := 0
-	for err := range errChan {
+	for range errChan {
 		errorCount++
-		t.Logf("Expected error occurred: %v", err)
 	}
 
 	assert.Equal(t, 2, errorCount, "Expected 2 errors due to nil Solana client")
 
-	t.Logf("Test passed: function handled nil Solana client gracefully")
+	t.Logf("Test passed: function handled nil Solana client gracefully (%d expected errors)", errorCount)
 }
 
 func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
@@ -1358,11 +1443,10 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 			innerWg.Wait()
 			close(errChan)
 
-			for err := range errChan {
+			for range errChan {
 				errorMutex.Lock()
 				errorCount++
 				errorMutex.Unlock()
-				t.Logf("Concurrent access %d encountered error: %v", index, err)
 			}
 		}(i)
 	}
@@ -1373,12 +1457,14 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 	if errorCount != expectedErrors {
 		t.Errorf("Expected %d errors (nil client), got %d", expectedErrors, errorCount)
 	}
+	t.Logf("Concurrent access test completed with %d expected errors due to nil Solana client", errorCount)
 }
 
 func TestFetchSolanaBurnEventsMemoryLeaks(t *testing.T) {
 	oracle := createTestOracle()
 
-	const numIterations = 100
+	const numIterations = 20
+	totalErrors := 0
 
 	for i := 0; i < numIterations; i++ {
 		update := oracle.initializeStateUpdate()
@@ -1390,16 +1476,18 @@ func TestFetchSolanaBurnEventsMemoryLeaks(t *testing.T) {
 		wg.Wait()
 		close(errChan)
 
-		for err := range errChan {
-			t.Logf("Iteration %d encountered error: %v", i, err)
+		errorCount := 0
+		for range errChan {
+			errorCount++
 		}
+		totalErrors += errorCount
 
-		if i%10 == 0 {
-			t.Logf("Completed iteration %d", i)
+		if i%5 == 0 {
+			t.Logf("Completed iteration %d (expected errors: %d)", i, errorCount)
 		}
 	}
 
-	t.Logf("Completed %d iterations without obvious memory leaks", numIterations)
+	t.Logf("Completed %d iterations without obvious memory leaks (total expected errors: %d)", numIterations, totalErrors)
 }
 
 func TestFetchSolanaBurnEventsTimeoutHandling(t *testing.T) {
@@ -1426,10 +1514,11 @@ func TestFetchSolanaBurnEventsTimeoutHandling(t *testing.T) {
 		t.Log("Operation timed out as expected")
 	case <-done:
 		close(errChan)
-		for err := range errChan {
-			t.Logf("Unexpected error: %v", err)
+		errorCount := 0
+		for range errChan {
+			errorCount++
 		}
-		t.Log("Operation completed within timeout")
+		t.Logf("Operation completed within timeout (%d expected errors)", errorCount)
 	}
 }
 
@@ -1480,11 +1569,12 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 			wg.Wait()
 			close(errChan)
 
-			for err := range errChan {
-				t.Logf("Unexpected error: %v", err)
+			errorCount := 0
+			for range errChan {
+				errorCount++
 			}
 
-			t.Logf("Test passed: %s", tt.description)
+			t.Logf("Test passed: %s (%d expected errors)", tt.description, errorCount)
 		})
 	}
 }

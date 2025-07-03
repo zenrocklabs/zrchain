@@ -2079,7 +2079,6 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 	return true
 }
 
-// Helper function to check if Solana client is available
 func (o *Oracle) checkSolanaClient() error {
 	if o.solanaClient == nil {
 		return fmt.Errorf("Solana client is not initialized")
