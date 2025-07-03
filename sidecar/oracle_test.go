@@ -3,8 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/big"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -14,12 +19,6 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/stretchr/testify/require"
-
-	"fmt"
-	"math/big"
-	"net/http"
-	"net/http/httptest"
-	"time"
 
 	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum"
