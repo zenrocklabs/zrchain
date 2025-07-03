@@ -85,6 +85,7 @@ sequenceDiagram
     Sidecar->>EigenLayer: Polls for nonce values
     Sidecar-->>zrchain: Report nonce data via Vote Extension
     Note over zrchain: Vote Extensions reach supermajority consensus on nonce data
+    Note over zrchain: Validates consensus on required fields (nonce, gas, prices) before transaction
     zrchain->>zrchain: PreBlocker: processZenBTCStaking()
     zrchain->>MPC Cluster: constructStakeTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
@@ -108,12 +109,14 @@ sequenceDiagram
         Relayer->>zrchain: Poll for fulfilled requests
         zrchain-->>Relayer: Signed Mint Tx
         Relayer->>Solana: Broadcast Mint Tx
+        Note over zrchain: Solana transactions have BTL (Blocks To Live) timeout with retry logic
         
         Sidecar->>Solana: Scans for Mint Events
         Sidecar-->>zrchain: Reports new Mint Events (via vote extension)
         Note over zrchain: Vote Extensions reach supermajority consensus on mint events
         zrchain->>zrchain: PreBlocker: processSolanaZenBTCMintEvents()
         zrchain->>zrchain: Match event, Update PendingMintTransaction (status: MINTED)
+        Note over zrchain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrchain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Sidecar->>Ethereum: Polls for nonce values 
@@ -130,6 +133,7 @@ sequenceDiagram
         Sidecar-->>zrchain: Reports updated nonce (via vote extension)
         Note over zrchain: Vote Extensions reach supermajority consensus on updated nonce
         zrchain->>zrchain: PreBlocker confirms tx, updates status to MINTED
+        Note over zrchain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrchain-->>User: zenBTC minted on Ethereum
     end
 ```
@@ -186,6 +190,7 @@ sequenceDiagram
     Sidecar->>EigenLayer: Polls for completer nonce values
     Sidecar-->>zrchain: Report completer nonce data via Vote Extension
     Note over zrchain: Vote Extensions reach supermajority consensus on completer nonce
+    Note over zrchain: Validates consensus on required fields (nonce, gas, prices) before transaction
     zrchain->>zrchain: PreBlocker: processZenBTCRedemptions()
     zrchain->>MPC Cluster: constructCompleteWithdrawalTx() -> SignTransactionRequest
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
@@ -202,6 +207,8 @@ sequenceDiagram
     zrchain-->>Bitcoin Proxy: Redemption Info (UTXOs)
     Bitcoin Proxy->>zrchain: MsgSubmitUnsignedRedemptionTx(UTXOs)
     zrchain->>MPC Cluster: Request signature for BTC tx
+    Note over zrchain: Performs invariant checks (sufficient minted zenBTC and custodied BTC)
+    Note over zrchain: Calculates BTC amount using current exchange rate
     MPC Cluster-->>zrchain: Fulfill SignTransactionRequest
     Bitcoin Proxy->>zrchain: Poll for fulfilled BTC tx
     zrchain-->>Bitcoin Proxy: Signed BTC Transaction
@@ -211,6 +218,7 @@ sequenceDiagram
     Sidecar->>Bitcoin: Monitors for transaction confirmation
     Sidecar-->>zrchain: Reports transaction inclusion (via vote extension)
     Note over zrchain: Vote Extensions reach consensus on Bitcoin transaction confirmation
+    Note over zrchain: System monitors for Bitcoin reorgs by requesting 20 previous headers
     zrchain->>zrchain: Mark redemption as COMPLETED
 ```
 
@@ -245,6 +253,7 @@ sequenceDiagram
     Relayer->>zrchain: Poll for fulfilled requests
     zrchain-->>Relayer: Signed Mint Tx
     Relayer->>Solana: Broadcast Mint Tx
+    Note over zrchain: Solana transactions have BTL (Blocks To Live) timeout with retry logic
 
     Sidecar->>Solana: Scans for Mint Events
     Sidecar-->>zrchain: Reports new Mint Events (via vote extension)
@@ -252,6 +261,7 @@ sequenceDiagram
     zrchain->>zrchain: PreBlocker: processSolanaROCKMintEvents()
     zrchain->>zrchain: Match event to Bridge object
     zrchain->>zrchain: Burn locked native tokens
+    Note over zrchain: Enforces 1bn token supply cap with invariant checks
     zrchain->>zrchain: Update solanaROCKSupply
     zrchain->>zrchain: Update Bridge object (status: COMPLETED)
     User->>Solana: Receives solROCK
