@@ -315,5 +315,6 @@ sequenceDiagram
     zrChain->>zrChain: Send (burn_amount - fee) to user's address
     zrChain->>zrChain: Retain fee in module account
     zrChain->>zrChain: Create Bridge record (status: COMPLETED)
+    zrChain->>zrChain: Clear any corresponding backfill requests for processed events
     zrChain->>User: Native ROCK tokens received on zrChain
 ```
