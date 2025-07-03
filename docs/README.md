@@ -34,7 +34,7 @@ This granular consensus approach maximizes system uptime by allowing critical op
 
 ## Key Components
 
-- **Sidecar**: Synchronised oracle system, polled by zrChain and enshrined by ROCK stake
+- **Sidecar**: Synchronised oracle system, polled by zrChain validators and enshrined by ROCK stake
 - **Vote Extensions**: CometBFT mechanism to extend consensus over arbitrary non-tx data
 - **MPC Cluster**: Multi-party computation system for generating cryptographic signatures
 - **Relayer**: Service that broadcasts signed transactions to external blockchains
@@ -290,14 +290,3 @@ sequenceDiagram
     zrchain->>zrchain: Mint native ROCK tokens
     zrchain->>User: Send native ROCK tokens to user's zrchain address
 ```
-
-## Event Backfill Mechanism
-
-The system includes a robust backfill mechanism to handle missed events:
-
-1. **Gap Detection**: Sidecars detect missing events by tracking signature watermarks
-2. **Backfill Requests**: On-chain `MsgTriggerEventBackfill` requests can be submitted 
-3. **Automatic Recovery**: Sidecars automatically back-page through missed signatures
-4. **Consensus Verification**: Backfilled events go through the same vote extension consensus process
-
-This ensures no critical events (burns, mints, deposits) are lost even during temporary sidecar outages.
