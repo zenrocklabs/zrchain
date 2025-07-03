@@ -707,6 +707,11 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 
 		logger.Debug("removed processed historical header request",
 			"remaining_requests", len(requestedHeaders.Heights))
+	} else if !headerExists {
+		// Only check for reorgs for non-historical headers that weren't already stored
+		if err := k.checkForBitcoinReorg(ctx, headerHeight, &requestedHeaders); err != nil {
+			k.Logger(ctx).Error("error handling potential Bitcoin reorg", "height", headerHeight, "error", err)
+		}
 	}
 
 	return nil
