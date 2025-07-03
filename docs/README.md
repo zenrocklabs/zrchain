@@ -4,7 +4,7 @@ This document outlines the sequence of operations for the zenBTC and zenTP proto
 
 ## Overview of Consensus Mechanism
 
-The zrChain network uses a **Vote Extension** based consensus mechanism where validators run sidecar processes that monitor external blockchains (Bitcoin, Solana, Ethereum) and report their state. Each validator submits their observed data as a vote extension, and only data that reaches **supermajority consensus** (>67% of voting power) is accepted and processed on-chain.
+The zrChain network uses a **Vote Extension** based consensus mechanism where validators run sidecar processes that monitor external blockchains (Bitcoin, Solana, Ethereum) and report their state. Each validator submits their observed data as a vote extension, and only data that reaches **supermajority consensus** (>67% of voting power) is accepted and processed on-chain (except for less critical fields that only require a simple majority).
 
 ### Vote Extension Lifecycle
 
@@ -35,10 +35,10 @@ This granular consensus approach maximizes system uptime by allowing critical op
 ## Key Components
 
 - **Sidecar**: Synchronised oracle system, polled by zrChain validators and enshrined by ROCK stake
-- **Vote Extensions**: CometBFT mechanism to extend consensus over arbitrary non-tx data
-- **MPC Stack**: Multi-party computation system that polls zrChain for key/signature requests and submits fulfillment transactions back to the chain
+- **Vote Extensions**: CometBFT mechanism to extend consensus over arbitrary non-transaction data
+- **MPC Stack**: Monitors zrChain for cryptographic requests and generates keys/signatures using threshold cryptography (GG21 MPC algo)
 - **Relayer**: Service that broadcasts signed transactions to external blockchains
-- **Bitcoin Proxy**: Specialized service for Bitcoin transaction monitoring and construction
+- **Bitcoin Proxy**: Specialized trustless service for Bitcoin transaction monitoring and construction
 
 ## zenBTC Protocol
 
@@ -47,7 +47,8 @@ The system allows for liquid restaking of tokens via platforms such as EigenLaye
 
 ### Deposit and Mint
 
-This flow describes how a user deposits BTC and how it is relayed to mint zenBTC on a destination chain.
+This flow shows the complete process from depositing BTC to receiving zenBTC tokens on the destination chain.
+Deposited BTC is automatically staked through EigenLayer, with zenBTC serving as a liquid token representing a claim on the underlying staked Bitcoin.
 
 ```mermaid
 sequenceDiagram
@@ -104,7 +105,7 @@ sequenceDiagram
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Stake Tx
+    zrChain-->>Relayer: Signed Stake Tx picked up
     Relayer->>EigenLayer: Broadcast Stake Tx
 
     Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
@@ -125,7 +126,7 @@ sequenceDiagram
         MPC Stack->>MPC Stack: Generate signature
         MPC Stack->>zrChain: Submit signature request fulfillment transaction
         Relayer->>zrChain: Poll for fulfilled requests
-        zrChain-->>Relayer: Signed Mint Tx
+        zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Solana: Broadcast Mint Tx
         Note over zrChain: Transaction has BTL timeout - will retry if sidecars have consensus + nonce doesn't advance
         Note over zrChain: Tracks AwaitingEventSince for timeout management
@@ -150,7 +151,7 @@ sequenceDiagram
         MPC Stack->>MPC Stack: Generate signature
         MPC Stack->>zrChain: Submit signature request fulfillment transaction
         Relayer->>zrChain: Poll for fulfilled requests
-        zrChain-->>Relayer: Signed Mint Tx
+        zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Ethereum: Broadcast Mint Tx
 
         Sidecar->>Ethereum: Polls for nonce update after tx broadcast
@@ -198,7 +199,7 @@ sequenceDiagram
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Unstake Tx
+    zrChain-->>Relayer: Signed Unstake Tx picked up
     Relayer->>EigenLayer: Broadcast Unstake Tx
     
     Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
@@ -226,7 +227,7 @@ sequenceDiagram
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed CompleteWithdrawal Tx
+    zrChain-->>Relayer: Signed CompleteWithdrawal Tx picked up
     Relayer->>EigenLayer: Broadcast Tx
     
     Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
@@ -298,7 +299,7 @@ sequenceDiagram
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Mint Tx
+    zrChain-->>Relayer: Signed Mint Tx picked up
     Relayer->>Solana: Broadcast Mint Tx
     Note over zrChain: Transaction has BTL timeout - will retry if nonce doesn't advance
     Note over zrChain: Tracks AwaitingEventSince for timeout management
