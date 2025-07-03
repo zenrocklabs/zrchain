@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"cosmossdk.io/collections"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -655,9 +654,7 @@ func (k *Keeper) storeBitcoinBlockHeaders(ctx sdk.Context, oracleData OracleData
 
 	// Process requested header only if it's different from the latest one to avoid redundant processing
 	if oracleData.RequestedBtcBlockHeight != oracleData.LatestBtcBlockHeight {
-		if newHeight, updated := k.processAndStoreBtcHeader(ctx, oracleData.RequestedBtcBlockHeight, &oracleData.RequestedBtcBlockHeader, latestBtcHeaderHeight, &requestedHeaders, "requested"); updated {
-			latestBtcHeaderHeight = newHeight
-		}
+		k.processAndStoreBtcHeader(ctx, oracleData.RequestedBtcBlockHeight, &oracleData.RequestedBtcBlockHeader, latestBtcHeaderHeight, &requestedHeaders, "requested")
 	}
 
 	// Clean up the list of requested headers by removing any that have now been stored.
@@ -691,17 +688,33 @@ func (k *Keeper) processAndStoreBtcHeader(
 		return latestBtcHeaderHeight, false
 	}
 
-	headerExists, err := k.BtcBlockHeaders.Has(ctx, headerHeight)
-	if err != nil {
+	// Check if header already exists by comparing hashes
+	existingHeader, err := k.BtcBlockHeaders.Get(ctx, headerHeight)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
 		k.Logger(ctx).Error("error checking if bitcoin header exists", "type", headerType, "height", headerHeight, "error", err)
 		return latestBtcHeaderHeight, false
 	}
 
-	if headerExists {
-		return latestBtcHeaderHeight, false
+	// If header exists, compare hashes to see if it's different
+	if err == nil {
+		existingHash, err := deriveHash(existingHeader)
+		if err != nil {
+			k.Logger(ctx).Error("error deriving hash for existing header", "type", headerType, "height", headerHeight, "error", err)
+			return latestBtcHeaderHeight, false
+		}
+
+		newHash, err := deriveHash(*header)
+		if err != nil {
+			k.Logger(ctx).Error("error deriving hash for new header", "type", headerType, "height", headerHeight, "error", err)
+			return latestBtcHeaderHeight, false
+		}
+
+		if bytes.Equal(existingHash[:], newHash[:]) {
+			return latestBtcHeaderHeight, false
+		}
 	}
 
-	// Store the new header
+	// Store the new header (either no header existed or hash is different)
 	if err := k.BtcBlockHeaders.Set(ctx, headerHeight, *header); err != nil {
 		k.Logger(ctx).Error("error storing bitcoin header", "type", headerType, "height", headerHeight, "error", err)
 		return latestBtcHeaderHeight, false
@@ -709,15 +722,18 @@ func (k *Keeper) processAndStoreBtcHeader(
 
 	k.Logger(ctx).Info("stored new bitcoin header", "type", headerType, "height", headerHeight)
 
-	// If this new header is ahead of our last known high-water mark, perform reorg/gap check and update the mark.
+	// Always perform reorg/gap check when a new header is stored
+	k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, requestedHeaders)
+
+	// Update the latest height if this header is newer than what we had before
 	if headerHeight > latestBtcHeaderHeight {
-		k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, requestedHeaders)
 		if err := k.LatestBtcHeaderHeight.Set(ctx, headerHeight); err != nil {
 			k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
 		}
 		return headerHeight, true
 	}
 
+	// Header was stored but it's not newer than our current latest height
 	return latestBtcHeaderHeight, false
 }
 
@@ -1608,7 +1624,7 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 
 				// Perform the paramount check *before* any state change.
-				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, math.ZeroInt()); err != nil {
+				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
 					// ABORT. The invariant would be violated. Do not complete the bridge.
 					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION DETECTED: A mint on Solana would breach the 1bn cap. Aborting bridge completion.", "bridge_id", pendingMint.Id, "error", err.Error())
 					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
