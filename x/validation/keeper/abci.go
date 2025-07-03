@@ -736,17 +736,27 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, newHeaderHeight int64, re
 
 	// Update latest BTC header height
 	latestBtcHeaderHeight, err := k.LatestBtcHeaderHeight.Get(ctx)
-	if err != nil && !errors.Is(err, collections.ErrNotFound) {
-		k.Logger(ctx).Error("error getting latest BTC header height", "error", err)
-	} else if newHeaderHeight > latestBtcHeaderHeight {
-		if err := k.LatestBtcHeaderHeight.Set(ctx, newHeaderHeight); err != nil {
-			k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Info("initializing latest BTC header height", "height", newHeaderHeight)
+			latestBtcHeaderHeight = newHeaderHeight
+		} else {
+			k.Logger(ctx).Error("error getting latest BTC header height", "error", err)
 		}
 	}
 
 	// Check for gaps between the latest stored header and the new header
-	for i := latestBtcHeaderHeight + 1; i < newHeaderHeight; i++ {
-		requestedHeaders.Heights = append(requestedHeaders.Heights, i)
+	if newHeaderHeight > latestBtcHeaderHeight {
+		for i := latestBtcHeaderHeight + 1; i < newHeaderHeight; i++ {
+			requestedHeaders.Heights = append(requestedHeaders.Heights, i)
+		}
+	}
+
+	// Update the latest height in the store if the new one is greater
+	if newHeaderHeight > latestBtcHeaderHeight {
+		if err := k.LatestBtcHeaderHeight.Set(ctx, newHeaderHeight); err != nil {
+			k.Logger(ctx).Error("error setting latest BTC header height", "error", err)
+		}
 	}
 
 	prevHeights := make([]int64, 0, numHistoricalHeadersToRequest)
