@@ -27,6 +27,7 @@ func main() {
 	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
 	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
+	configFile := flag.String("config", "", "Override config file path (default: config.yaml, fallback: config.yaml.example)")
 	version := flag.Bool("version", false, "Display version information and exit")
 
 	if !flag.Parsed() {
@@ -42,7 +43,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := LoadConfig()
+	cfg := LoadConfig(*configFile)
 
 	slog.Info("Starting zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 
