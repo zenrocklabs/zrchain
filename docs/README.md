@@ -65,7 +65,7 @@ sequenceDiagram
 
     User->>Web Frontend: Request BTC Deposit Address
     Web Frontend->>zrChain: Request new deposit address
-    zrChain->>zrChain: Create new Bitcoin key request
+    Note over zrChain: Create new Bitcoin key request
     MPC Stack->>zrChain: Poll for key requests
     zrChain-->>MPC Stack: Bitcoin key request found
     MPC Stack->>MPC Stack: Generate new Bitcoin key
@@ -103,7 +103,7 @@ sequenceDiagram
     Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
-    zrChain->>zrChain: PreBlocker: processZenBTCStaking()
+    Note over zrChain: PreBlocker: processZenBTCStaking()
     zrChain->>zrChain: Create SignTransactionRequest for staking
     MPC Stack->>zrChain: Poll for signature requests
     zrChain-->>MPC Stack: Staking transaction request found
@@ -119,7 +119,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
     Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: PreBlocker confirms tx, updates status to STAKED
+    Note over zrChain: PreBlocker confirms tx, updates status to STAKED
     zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
@@ -129,7 +129,7 @@ sequenceDiagram
         Sidecar-->>zrChain: Return Solana data hashes for vote extension
         Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
-        zrChain->>zrChain: PreBlocker: processZenBTCMintsSolana()
+        Note over zrChain: PreBlocker: processZenBTCMintsSolana()
         Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
         Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Solana mint
@@ -149,7 +149,7 @@ sequenceDiagram
         Sidecar-->>zrChain: Return mint event hashes for vote extension
         Note over zrChain: PrepareProposal: Proposer validates mint events against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on mint events
-        zrChain->>zrChain: PreBlocker: processSolanaZenBTCMintEvents()
+        Note over zrChain: PreBlocker: processSolanaZenBTCMintEvents()
         zrChain->>zrChain: Match event to PendingMintTransaction
         zrChain->>zrChain: Update PendingMintTransaction (status: MINTED)
         Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
@@ -161,7 +161,7 @@ sequenceDiagram
         Sidecar-->>zrChain: Return Ethereum nonce hashes for vote extension
         Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-        zrChain->>zrChain: PreBlocker: processZenBTCMintsEthereum()
+        Note over zrChain: PreBlocker: processZenBTCMintsEthereum()
         Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
         Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Ethereum mint
@@ -179,7 +179,7 @@ sequenceDiagram
         Sidecar-->>zrChain: Return updated nonce hash for vote extension
         Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-        zrChain->>zrChain: PreBlocker confirms tx, updates status to MINTED
+        Note over zrChain: PreBlocker confirms tx, updates status to MINTED
         Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Ethereum
     end
@@ -209,7 +209,7 @@ sequenceDiagram
     Note over zrChain: PrepareProposal: Proposer validates burn events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on burn events
 
-    zrChain->>zrChain: PreBlocker: storeNewZenBTCBurnEvents()
+    Note over zrChain: PreBlocker: storeNewZenBTCBurnEvents()
     zrChain->>zrChain: Check burn event not already processed (prevent duplicates)
     zrChain->>zrChain: Create BurnEvent (status: BURNED)
     zrChain->>zrChain: Request Unstaker Nonce for EigenLayer
@@ -220,7 +220,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return nonce data hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-    zrChain->>zrChain: PreBlocker: processZenBTCBurnEvents()
+    Note over zrChain: PreBlocker: processZenBTCBurnEvents()
     zrChain->>zrChain: Create SignTransactionRequest for unstaking
     MPC Stack->>zrChain: Poll for signature requests
     zrChain-->>MPC Stack: Unstaking transaction request found
@@ -236,7 +236,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
     Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: PreBlocker confirms tx, updates status to UNSTAKING
+    Note over zrChain: PreBlocker confirms tx, updates status to UNSTAKING
 
     Sidecar->>Ethereum: Polls for unstake completion status
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for redemption data
@@ -244,7 +244,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return redemption data hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates redemption data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on redemption data
-    zrChain->>zrChain: PreBlocker: storeNewZenBTCRedemptions()
+    Note over zrChain: PreBlocker: storeNewZenBTCRedemptions()
     zrChain->>zrChain: Update Redemption (status: UNSTAKED)
     zrChain->>zrChain: Wait for EigenLayer withdrawal delay period
 
@@ -257,7 +257,7 @@ sequenceDiagram
     Note over zrChain: PrepareProposal: Proposer validates completer nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
     Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
-    zrChain->>zrChain: PreBlocker: processZenBTCRedemptions()
+    Note over zrChain: PreBlocker: processZenBTCRedemptions()
     zrChain->>zrChain: Create SignTransactionRequest for unstaking completion
     MPC Stack->>zrChain: Poll for signature requests
     zrChain-->>MPC Stack: Unstaking completion transaction request found
@@ -273,7 +273,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
     Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: PreBlocker confirms tx, updates status to READY_FOR_BTC_RELEASE
+    Note over zrChain: PreBlocker confirms tx, updates status to READY_FOR_BTC_RELEASE
 
     Bitcoin Proxy->>zrChain: Poll for READY_FOR_BTC_RELEASE redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)
@@ -336,7 +336,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return Solana data hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
-    zrChain->>zrChain: PreBlocker: processSolanaROCKMints()
+    Note over zrChain: PreBlocker: processSolanaROCKMints()
     Note over zrChain: Validates consensus on required fields (nonce, accounts) before transaction
     zrChain->>zrChain: Check if transaction already processed
     zrChain->>zrChain: Create SignTransactionRequest for Solana ROCK mint
@@ -356,7 +356,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return mint event hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates mint events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on mint events
-    zrChain->>zrChain: PreBlocker: processSolanaROCKMintEvents()
+    Note over zrChain: PreBlocker: processSolanaROCKMintEvents()
     zrChain->>zrChain: Match event to Bridge request
     zrChain->>zrChain: Verify event not already processed
     zrChain->>zrChain: Burn locked native tokens from zenTP module
@@ -385,7 +385,7 @@ sequenceDiagram
     Note over zrChain: PrepareProposal: Proposer validates burn events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on burn events
 
-    zrChain->>zrChain: PreBlocker: processSolanaROCKBurnEvents()
+    Note over zrChain: PreBlocker: processSolanaROCKBurnEvents()
     zrChain->>zrChain: Check burn not already processed (primary key = TxID + ChainID)
     zrChain->>zrChain: Check sufficient Solana ROCK supply exists
     zrChain->>zrChain: Calculate bridge fee as percentage of burned amount
