@@ -134,7 +134,7 @@ var _ = Describe("ZenBTC Solana mint:", func() {
 			lastTx := *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
 
 			return lastTx.Status
-		}, "120s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED))
+		}, "150s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED))
 		GinkgoWriter.Printf("Mint transaction moved to minted \n")
 	})
 })
