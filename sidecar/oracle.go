@@ -998,9 +998,6 @@ func (o *Oracle) cleanUpMintEvents() {
 }
 
 func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return nil, lastKnownSig, err
-	}
 
 	limit := sidecartypes.SolanaEventScanTxLimit
 	program, err := solana.PublicKeyFromBase58(programID)
@@ -1201,9 +1198,6 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return nil, lastKnownSig, err
-	}
 
 	limit := sidecartypes.SolanaEventScanTxLimit // Use constant
 
@@ -1405,9 +1399,6 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 // getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
 // Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
 func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return 5000, err
-	}
 
 	// Create a simple dummy transaction to estimate fees.
 	// Using placeholder public keys. These don't need to exist or have funds
@@ -1494,9 +1485,6 @@ func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, err
 
 // getSolanaZenBTCBurnEvents retrieves ZenBTC burn events from Solana.
 func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return nil, lastKnownSig, err
-	}
 
 	limit := sidecartypes.SolanaEventScanTxLimit
 
@@ -1680,9 +1668,6 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
 func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return nil, lastKnownSig, err
-	}
 
 	limit := sidecartypes.SolanaEventScanTxLimit
 	program, err := solana.PublicKeyFromBase58(programID)
@@ -1856,9 +1841,6 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 
 // getSolanaBurnEventFromSig fetches and decodes burn events from a single Solana transaction signature.
 func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*api.BurnEvent, error) {
-	if err := o.checkSolanaClient(); err != nil {
-		return nil, err
-	}
 
 	program, err := solana.PublicKeyFromBase58(programID)
 	if err != nil {
@@ -2077,11 +2059,4 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 		return false
 	}
 	return true
-}
-
-func (o *Oracle) checkSolanaClient() error {
-	if o.solanaClient == nil {
-		return fmt.Errorf("Solana client is not initialized")
-	}
-	return nil
 }
