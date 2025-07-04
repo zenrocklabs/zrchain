@@ -78,7 +78,7 @@ sequenceDiagram
     Note over Bitcoin: Block mined (deposit tx included)
     
     Sidecar->>Bitcoin: Polls for new block headers
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with BTC headers/prices/fees
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with BTC headers/prices/fees
     zrChain->>Sidecar: PrepareProposal: Proposer validates sidecar state against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
     
@@ -95,7 +95,7 @@ sequenceDiagram
 
     Sidecar->>Ethereum: Polls for ETH/BTC price feeds and gas prices
     Sidecar->>Ethereum: Polls for nonce values
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with ETH nonces/gas data
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with ETH nonces/gas data
     zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
@@ -110,14 +110,14 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Stake Tx (EigenLayer contracts)
 
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce data
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce data
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
     zrChain->>zrChain: Updates status to STAKED
     zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
         Sidecar->>Solana: Polls for fees, nonce and account data
-        Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with SOL nonces/accounts
+        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with SOL nonces/accounts
         zrChain->>Sidecar: PrepareProposal: Proposer validates Solana data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         Note over zrChain: PreBlocker: processZenBTCMintsSolana()
@@ -136,7 +136,7 @@ sequenceDiagram
         zrChain->>zrChain: Set AwaitingEventSince timestamp to track confirmation wait time for secondary timeout logic
 
         Sidecar->>Solana: Scans for mint events
-        Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with SOL mint events
+        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with SOL mint events
         zrChain->>Sidecar: PrepareProposal: Proposer validates mint events against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on mint events
         Note over zrChain: PreBlocker: processSolanaZenBTCMintEvents()
@@ -146,7 +146,7 @@ sequenceDiagram
         zrChain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Sidecar->>Ethereum: Polls for gas prices and nonce values
-        Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with ETH nonces/gas data
+        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with ETH nonces/gas data
         zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         Note over zrChain: PreBlocker: processZenBTCMintsEthereum()
@@ -162,7 +162,7 @@ sequenceDiagram
         Relayer->>Ethereum: Broadcast Mint Tx
 
         Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
+        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
         zrChain->>zrChain: Updates status to MINTED
         zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
@@ -188,7 +188,7 @@ sequenceDiagram
 
     User->>DestinationChain: Burn zenBTC
     Sidecar->>DestinationChain: Scans for Burn Events
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with zenBTC burn events
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with zenBTC burn events
     zrChain->>Sidecar: PrepareProposal: Proposer validates burn events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on burn events
 
@@ -198,7 +198,7 @@ sequenceDiagram
     zrChain->>zrChain: Request Unstaker Nonce for EigenLayer
 
     Sidecar->>Ethereum: Polls for nonce values
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with unstaker nonces
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with unstaker nonces
     zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     Note over zrChain: PreBlocker: processZenBTCBurnEvents()
@@ -212,12 +212,12 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Unstake Tx (EigenLayer contracts)
     
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
     zrChain->>zrChain: Updates status to UNSTAKING
 
     Sidecar->>Ethereum: Polls for unstake completion status
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with EigenLayer redemption data
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with EigenLayer redemption data
     zrChain->>Sidecar: PrepareProposal: Proposer validates redemption data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on redemption data
     Note over zrChain: PreBlocker: storeNewZenBTCRedemptions()
@@ -227,7 +227,7 @@ sequenceDiagram
     Note over zrChain: After withdrawal delay, redemption becomes available for completion
 
     Sidecar->>Ethereum: Polls for nonce values
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with completer nonces
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with completer nonces
     zrChain->>Sidecar: PrepareProposal: Proposer validates completer nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
     zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
@@ -242,7 +242,7 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Tx (EigenLayer contracts)
     
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
     zrChain->>zrChain: Updates status to UNSTAKED
 
@@ -298,7 +298,7 @@ sequenceDiagram
     zrChain->>zrChain: Request Solana Nonce & Account Info
 
     Sidecar->>Solana: Polls for nonce and account data
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with SOL nonces/accounts
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with SOL nonces/accounts
     zrChain->>Sidecar: PrepareProposal: Proposer validates Solana data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
     Note over zrChain: PreBlocker: processSolanaROCKMints()
@@ -317,7 +317,7 @@ sequenceDiagram
     zrChain->>zrChain: Set AwaitingEventSince timestamp to track confirmation wait time for secondary timeout logic
 
     Sidecar->>Solana: Scans for Mint Events
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with solROCK mint events
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with solROCK mint events
     zrChain->>Sidecar: PrepareProposal: Proposer validates mint events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on mint events
     Note over zrChain: PreBlocker: processSolanaROCKMintEvents()
@@ -343,7 +343,7 @@ sequenceDiagram
 
     User->>Solana: Burn solROCK (embedding zrChain destination address into event)
     Sidecar->>Solana: Scans for Burn Events from bridge contract
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with solROCK burn events
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with solROCK burn events
     zrChain->>Sidecar: PrepareProposal: Proposer validates burn events against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on burn events
 
