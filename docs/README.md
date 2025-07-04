@@ -273,9 +273,9 @@ sequenceDiagram
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
     Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    Note over zrChain: PreBlocker confirms tx, updates status to READY_FOR_BTC_RELEASE
+    Note over zrChain: PreBlocker confirms tx, updates status to UNSTAKED
 
-    Bitcoin Proxy->>zrChain: Poll for READY_FOR_BTC_RELEASE redemptions
+    Bitcoin Proxy->>zrChain: Poll for UNSTAKED redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)
     Bitcoin Proxy->>Bitcoin: Query UTXOs for available funds
     Bitcoin Proxy->>Bitcoin Proxy: Construct unsigned Bitcoin redemption transaction
@@ -284,11 +284,16 @@ sequenceDiagram
     zrChain->>zrChain: Validate invariants (minted zenBTC ≥ redemption amount)
     zrChain->>zrChain: Calculate BTC redemption amount: Convert burned zenBTC to BTC using current exchange rate
     zrChain->>zrChain: Flag redemptions as processed to prevent double-spending
+    zrChain->>zrChain: Update redemption status to AWAITING_SIGN
     zrChain->>zrChain: Create SignTransactionRequest for BTC redemption
     MPC Stack->>zrChain: Poll for signature requests
     zrChain-->>MPC Stack: BTC redemption transaction request found
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
+    
+    Note over zrChain: checkForRedemptionFulfilment() monitors AWAITING_SIGN redemptions
+    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED
+    
     Bitcoin Proxy->>zrChain: Poll for fulfilled BTC tx
     zrChain-->>Bitcoin Proxy: Signed BTC Transaction
     Bitcoin Proxy->>Bitcoin: Broadcast signed tx
