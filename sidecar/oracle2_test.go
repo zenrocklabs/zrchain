@@ -102,6 +102,25 @@ func createTestOracle() *Oracle {
 	}
 	oracle.currentState.Store(&EmptyOracleState)
 	oracle.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+
+	// Initialize function fields to prevent nil pointer dereference
+	// These functions should return errors when solanaClient is nil to simulate real behavior
+	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+		if oracle.solanaClient == nil {
+			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
+		}
+		return []api.BurnEvent{}, sol.Signature{}, nil
+	}
+	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+		if oracle.solanaClient == nil {
+			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
+		}
+		return []api.BurnEvent{}, sol.Signature{}, nil
+	}
+	oracle.reconcileBurnEventsFn = func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool) {
+		return eventsToClean, cleanedEvents
+	}
+
 	return oracle
 }
 
