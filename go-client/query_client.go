@@ -70,9 +70,9 @@ func NewClientConn(url string, insecure bool) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{
 		// setting the keepalive parameters
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                30 * time.Second, // ping the server if no activity is seen for this long.
-			Timeout:             10 * time.Second, // wait this long for ping ack before considering the connection dead.
-			PermitWithoutStream: true,             // send pings even without active RPCs.
+			Time:                120 * time.Second, // ping the server if no activity is seen for this long.
+			Timeout:             10 * time.Second,  // wait this long for ping ack before considering the connection dead.
+			PermitWithoutStream: true,              // send pings even without active RPCs.
 		}),
 	}
 

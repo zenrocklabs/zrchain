@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 #SSL certs
 FROM alpine:3.18.0 AS certs
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates jq
 RUN adduser -Ds /bin/bash appuser
 
 # Copy binary to a scratch container. Let's keep our images nice and small!
