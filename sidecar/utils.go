@@ -131,33 +131,10 @@ func LoadConfig(configFileFlag string) sidecartypes.Config {
 }
 
 func getConfigFile(configFileFlag string) string {
-	var configFile string
-	var usingExample bool
-
-	// Priority: 1. Flag, 2. Environment variable, 3. Default with fallback
 	if configFileFlag != "" {
-		configFile = configFileFlag
-	} else if envFile := os.Getenv("SIDECAR_CONFIG_FILE"); envFile != "" {
-		configFile = envFile
-	} else {
-		// Try default config.yaml first, fallback to config.yaml.example
-		configFile = "config.yaml"
-		if _, err := os.Stat(configFile); os.IsNotExist(err) {
-			configFile = "config.yaml.example"
-			usingExample = true
-		}
+		return configFileFlag
 	}
-
-	// Warn if using example config
-	if usingExample || (configFile == "config.yaml.example") {
-		slog.Warn("------------------------------------------------------------")
-		slog.Warn("WARNING: using example endpoints, please replace with your own as these will likely not work properly", "configFile", configFile)
-		slog.Warn("------------------------------------------------------------")
-		slog.Info("Sleeping for 5 seconds to ensure warning is visible...")
-		time.Sleep(5 * time.Second)
-	}
-
-	return configFile
+	return "config.yaml"
 }
 
 func readConfig(configFile string) (sidecartypes.Config, error) {
