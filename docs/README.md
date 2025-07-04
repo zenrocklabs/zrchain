@@ -91,6 +91,8 @@ sequenceDiagram
     Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
 
     zrChain->>zrChain: Verify Merkle proof against Bitcoin block headers
+    zrChain->>zrChain: System monitors for Bitcoin reorgs by requesting 6 previous headers
+    zrChain->>zrChain: Compare + store historical Bitcoin headers for reorg protection
     zrChain->>zrChain: Validate transaction outputs and amounts
     zrChain->>zrChain: Create PendingMintTransaction (status: DEPOSITED)
     zrChain->>zrChain: Request Staker Nonce for EigenLayer
@@ -102,7 +104,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return nonce data hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-    Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
+    zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
     Note over zrChain: PreBlocker: processZenBTCStaking()
     zrChain->>zrChain: Create SignTransactionRequest for staking
     MPC Stack->>zrChain: Poll for signature requests
@@ -130,8 +132,8 @@ sequenceDiagram
         Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         Note over zrChain: PreBlocker: processZenBTCMintsSolana()
-        Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
-        Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
+        zrChain->>zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        zrChain->>zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Solana mint
         MPC Stack->>zrChain: Poll for signature requests
         zrChain-->>MPC Stack: Solana mint transaction request found
@@ -140,9 +142,10 @@ sequenceDiagram
         Relayer->>zrChain: Poll for fulfilled requests
         zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Solana: Broadcast Mint Tx
-        Note over zrChain: Transaction has BTL timeout - will retry if sidecars have consensus + nonce doesn't advance
-        Note over zrChain: Tracks AwaitingEventSince for timeout management
-        
+        Note over zrChain: Timeout management (when sidecars have consensus): BTL expiry check and AwaitingEventSince tracking
+        zrChain->>zrChain: Check transaction BTL (blocks-to-live) expiry for retry timeout management
+        zrChain->>zrChain: Set AwaitingEventSince timestamp to track confirmation wait time for secondary timeout logic
+
         Sidecar->>Solana: Scans for mint events
         Note over zrChain: ExtendVoteHandler: Validators query sidecar for Solana mint events
         zrChain->>Sidecar: Query new Solana mint events
@@ -152,7 +155,7 @@ sequenceDiagram
         Note over zrChain: PreBlocker: processSolanaZenBTCMintEvents()
         zrChain->>zrChain: Match event to PendingMintTransaction
         zrChain->>zrChain: Update PendingMintTransaction (status: MINTED)
-        Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
+        zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
         Sidecar->>Ethereum: Polls for gas prices and nonce values
@@ -162,8 +165,8 @@ sequenceDiagram
         Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         Note over zrChain: PreBlocker: processZenBTCMintsEthereum()
-        Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
-        Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
+        zrChain->>zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        zrChain->>zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Ethereum mint
         MPC Stack->>zrChain: Poll for signature requests
         zrChain-->>MPC Stack: Ethereum mint transaction request found
@@ -180,7 +183,7 @@ sequenceDiagram
         Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
         Note over zrChain: PreBlocker confirms tx, updates status to MINTED
-        Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
+        zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Ethereum
     end
 ```
@@ -256,7 +259,7 @@ sequenceDiagram
     Sidecar-->>zrChain: Return completer nonce hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates completer nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
-    Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
+    zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
     Note over zrChain: PreBlocker: processZenBTCRedemptions()
     zrChain->>zrChain: Create SignTransactionRequest for unstaking completion
     MPC Stack->>zrChain: Poll for signature requests
@@ -305,8 +308,6 @@ sequenceDiagram
     Sidecar-->>zrChain: Return transaction inclusion hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates Bitcoin confirmation against vote extensions
     Note over zrChain: Vote Extensions reach consensus on Bitcoin transaction confirmation
-    Note over zrChain: System monitors for Bitcoin reorgs by requesting 20 previous headers
-    zrChain->>zrChain: Store historical Bitcoin headers for reorg protection
     zrChain->>zrChain: Mark redemption as COMPLETED
 ```
 
@@ -342,7 +343,7 @@ sequenceDiagram
     Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
     Note over zrChain: PreBlocker: processSolanaROCKMints()
-    Note over zrChain: Validates consensus on required fields (nonce, accounts) before transaction
+    zrChain->>zrChain: Validates consensus on required fields (nonce, accounts) before transaction
     zrChain->>zrChain: Check if transaction already processed
     zrChain->>zrChain: Create SignTransactionRequest for Solana ROCK mint
     MPC Stack->>zrChain: Poll for signature requests
@@ -352,8 +353,9 @@ sequenceDiagram
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Mint Tx picked up
     Relayer->>Solana: Broadcast Mint Tx
-    Note over zrChain: Transaction has BTL timeout - will retry if nonce doesn't advance
-    Note over zrChain: Tracks AwaitingEventSince for timeout management
+    Note over zrChain: Timeout management (when sidecars have consensus): BTL expiry check and AwaitingEventSince tracking
+    zrChain->>zrChain: Check transaction BTL (blocks-to-live) expiry for retry timeout management
+    zrChain->>zrChain: Set AwaitingEventSince timestamp to track confirmation wait time for secondary timeout logic
 
     Sidecar->>Solana: Scans for Mint Events
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for mint events
@@ -365,7 +367,7 @@ sequenceDiagram
     zrChain->>zrChain: Match event to Bridge request
     zrChain->>zrChain: Verify event not already processed
     zrChain->>zrChain: Burn locked native tokens from zenTP module
-    Note over zrChain: Enforces 1bn token supply cap with invariant checks
+    zrChain->>zrChain: Enforces 1bn token supply cap with invariant checks
     zrChain->>zrChain: Update solanaROCKSupply
     zrChain->>zrChain: Update Bridge object (status: COMPLETED)
     User->>Solana: Receives solROCK
