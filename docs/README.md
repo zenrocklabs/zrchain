@@ -82,7 +82,6 @@ sequenceDiagram
     zrChain->>Sidecar: Query current oracle state (BTC headers, prices, fees)
     Sidecar-->>zrChain: Return oracle data hashes for vote extension
     zrChain->>Sidecar: PrepareProposal: Proposer validates sidecar state against vote extensions
-    Sidecar-->>zrChain: Return full oracle data for validation
     Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
     
     Bitcoin Proxy->>Bitcoin: Detects deposit
