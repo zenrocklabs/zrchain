@@ -130,7 +130,8 @@ sequenceDiagram
         Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsSolana()
-        Note over zrChain: Checks for consensus on required data for transaction construction
+        Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Solana mint
         MPC Stack->>zrChain: Poll for signature requests
         zrChain-->>MPC Stack: Solana mint transaction request found
@@ -161,7 +162,8 @@ sequenceDiagram
         Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsEthereum()
-        Note over zrChain: Checks for consensus on required data for transaction construction
+        Note over zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        Note over zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Ethereum mint
         MPC Stack->>zrChain: Poll for signature requests
         zrChain-->>MPC Stack: Ethereum mint transaction request found
@@ -280,7 +282,7 @@ sequenceDiagram
     Bitcoin Proxy->>zrChain: MsgSubmitUnsignedRedemptionTx(unsigned_tx)
     zrChain->>zrChain: Parse and verify unsigned BTC transaction outputs
     zrChain->>zrChain: Validate invariants (minted zenBTC ≥ redemption amount)
-    zrChain->>zrChain: Calculate BTC amount using current exchange rate
+    zrChain->>zrChain: Calculate BTC redemption amount: Convert burned zenBTC to BTC using current exchange rate
     zrChain->>zrChain: Flag redemptions as processed to prevent double-spending
     zrChain->>zrChain: Create SignTransactionRequest for BTC redemption
     MPC Stack->>zrChain: Poll for signature requests
@@ -323,7 +325,7 @@ sequenceDiagram
 
     User->>zrChain: MsgBridge(amount, solana_addr)
     zrChain->>zrChain: Validate amount against 1bn supply cap
-    zrChain->>zrChain: Calculate total cost (amount + base + fee)
+    zrChain->>zrChain: Calculate bridge fee as percentage of amount and add to total cost
     zrChain->>zrChain: Lock User's native tokens in module
     zrChain->>zrChain: Create Bridge object (status: PENDING)
     zrChain->>zrChain: Request Solana Nonce & Account Info
@@ -386,7 +388,7 @@ sequenceDiagram
     zrChain->>zrChain: PreBlocker: processSolanaROCKBurnEvents()
     zrChain->>zrChain: Check burn not already processed (primary key = TxID + ChainID)
     zrChain->>zrChain: Check sufficient Solana ROCK supply exists
-    zrChain->>zrChain: Calculate bridge fee (deducted from burn amount)
+    zrChain->>zrChain: Calculate bridge fee as percentage of burned amount
     zrChain->>zrChain: Mint total burn amount to zentp module
     zrChain->>zrChain: Deduct from Solana ROCK supply tracking
     zrChain->>zrChain: Send (burn_amount - fee) to user's address
