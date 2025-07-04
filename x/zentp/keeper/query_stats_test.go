@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
-	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
+	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/stretchr/testify/require"
 )
@@ -66,69 +67,49 @@ func TestStatsQueryWithPagination(t *testing.T) {
 }
 
 func TestStatsQuery(t *testing.T) {
-	k, ctx := keepertest.ZentpKeeper(t)
-	msgs := make([]types.Bridge, 2)
-	burns := make([]types.Bridge, 2)
-
-	addr := "zenrock1vpg325p5a7v73jaqyk02muh6n22p852h60anxx"
-
-	msgs[0] = types.Bridge{
-		Creator: addr,
-		Amount:  100,
-		Denom:   "urock",
-		State:   types.BridgeStatus_BRIDGE_STATUS_COMPLETED,
-	}
-	msgs[1] = types.Bridge{
-		Creator: addr,
-		Amount:  200,
-		Denom:   "urock",
-		State:   types.BridgeStatus_BRIDGE_STATUS_COMPLETED,
-	}
-
-	burns[0] = types.Bridge{
-		Creator:          addr,
-		RecipientAddress: addr,
-		Amount:           50,
-		Denom:            "urock",
-		State:            types.BridgeStatus_BRIDGE_STATUS_COMPLETED,
-	}
-	burns[1] = types.Bridge{
-		Creator:          addr,
-		RecipientAddress: addr,
-		Amount:           25,
-		Denom:            "urock",
-		State:            types.BridgeStatus_BRIDGE_STATUS_COMPLETED,
-	}
-
-	k.UpdateMint(ctx, 0, &msgs[0])
-	k.UpdateMint(ctx, 1, &msgs[1])
-	k.UpdateBurn(ctx, 0, &burns[0])
-	k.UpdateBurn(ctx, 1, &burns[1])
 
 	tests := []struct {
 		desc     string
+		mints    []types.Bridge
+		burns    []types.Bridge
 		request  *types.QueryStatsRequest
 		response *types.QueryStatsResponse
 		err      error
 	}{
 		{
 			desc:    "Total",
+			mints:   testutil.DefaultMints,
+			burns:   testutil.DefaultBurns,
 			request: &types.QueryStatsRequest{},
 			response: &types.QueryStatsResponse{
-				TotalMinted: 300,
+				TotalMinted: 4000100,
 				MintsCount:  2,
-				TotalBurned: 75,
-				BurnsCount:  2,
+				TotalBurned: 3000050,
+				BurnsCount:  6,
 			},
 		},
 		{
 			desc:    "By Address",
-			request: &types.QueryStatsRequest{Address: addr},
+			mints:   testutil.DefaultMints,
+			burns:   testutil.DefaultBurns,
+			request: &types.QueryStatsRequest{Address: testutil.DefaultMints[0].Creator},
 			response: &types.QueryStatsResponse{
-				TotalMinted: 300,
-				MintsCount:  2,
-				TotalBurned: 75,
+				TotalMinted: 100,
+				MintsCount:  1,
+				TotalBurned: 1100000,
 				BurnsCount:  2,
+			},
+		},
+		{
+			desc:    "By Denom",
+			mints:   testutil.DefaultMints,
+			burns:   testutil.DefaultBurns,
+			request: &types.QueryStatsRequest{Denom: "urock"},
+			response: &types.QueryStatsResponse{
+				TotalMinted: 4000100,
+				MintsCount:  2,
+				TotalBurned: 3000050,
+				BurnsCount:  6,
 			},
 		},
 		{
@@ -139,15 +120,21 @@ func TestStatsQuery(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := k.Stats(ctx, tc.request)
+			zk, ctx := keepertest.ZentpKeeper(t)
+
+			genesis := types.GenesisState{
+				Params: types.DefaultParams(),
+				Burns:  tc.burns,
+				Mints:  tc.mints,
+			}
+
+			zentp.InitGenesis(ctx, zk, genesis)
+			response, err := zk.Stats(ctx, tc.request)
 			if tc.err != nil {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t,
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
-				)
+				require.Equal(t, tc.response, response)
 			}
 		})
 	}

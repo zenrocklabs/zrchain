@@ -58,7 +58,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	}
 
 	mintsCount++
-	if err = k.mintStore.Set(ctx, mintsCount, types.Bridge{
+	if err = k.MintStore.Set(ctx, mintsCount, types.Bridge{
 		Id:               mintsCount,
 		Creator:          req.Creator,
 		SourceAddress:    req.Creator,

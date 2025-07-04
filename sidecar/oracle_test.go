@@ -111,6 +111,7 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 		IsZenBTC: false, // A ROCK burn
 	}
 
+	// Initialize function fields to prevent nil pointer dereference
 	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil // No new zenBTC burns
 	}
@@ -163,6 +164,14 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle := &Oracle{}
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 	oracle.DebugMode = false
+
+	// Initialize function fields to prevent nil pointer dereference
+	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		return []api.BurnEvent{}, solana.Signature{}, nil
+	}
+	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		return []api.BurnEvent{}, solana.Signature{}, nil
+	}
 
 	// Mock the RPC calls
 	oracle.getSignaturesForAddressFn = func(ctx context.Context, account solana.PublicKey, opts *rpc.GetSignaturesForAddressOpts) ([]*rpc.TransactionSignature, error) {

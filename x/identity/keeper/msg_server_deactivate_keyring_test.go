@@ -6,26 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_DeactivateKeyring(t *testing.T) {
-	var keyring = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		IsActive:    true,
-	}
-
-	var wantKeyring = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		IsActive:    false,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -42,7 +28,7 @@ func Test_msgServer_DeactivateKeyring(t *testing.T) {
 		{
 			name: "FAIL: keyring not found",
 			args: args{
-				keyring: &keyring,
+				keyring: &testutil.Keyring,
 				msg:     types.NewMsgDeactivateKeyring("testCreator", "invalidKeyring"),
 			},
 			want:    &types.MsgDeactivateKeyringResponse{},
@@ -51,7 +37,7 @@ func Test_msgServer_DeactivateKeyring(t *testing.T) {
 		{
 			name: "FAIL: creator no keyring admin",
 			args: args{
-				keyring: &keyring,
+				keyring: &testutil.Keyring,
 				msg:     types.NewMsgDeactivateKeyring("noAdmin", "keyring1pfnq7r04rept47gaf5cpdew2"),
 			},
 			want:    &types.MsgDeactivateKeyringResponse{},
@@ -60,11 +46,11 @@ func Test_msgServer_DeactivateKeyring(t *testing.T) {
 		{
 			name: "PASS: change keyring status to false",
 			args: args{
-				keyring: &keyring,
+				keyring: &testutil.Keyring,
 				msg:     types.NewMsgDeactivateKeyring("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2"),
 			},
 			want:        &types.MsgDeactivateKeyringResponse{},
-			wantKeyring: &wantKeyring,
+			wantKeyring: &testutil.WantKeyring,
 		},
 	}
 

@@ -3,16 +3,67 @@ package types
 import (
 	"encoding/json"
 
+	"cosmossdk.io/math"
+	sidecarapi "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 // NewGenesisState creates a new GenesisState instanc e
-func NewGenesisState(params Params, validators []ValidatorHV, delegations []Delegation) *GenesisState {
+func NewGenesisState(
+	params Params,
+	validators []ValidatorHV,
+	delegations []Delegation,
+	lastTotalPower math.Int,
+	lastValidatorPower []LastValidatorPower,
+	btcBlockHeaders []sidecarapi.BTCBlockHeader,
+	solanaNonce []SolanaNonce,
+	backfillRequest BackfillRequests,
+	ethereumNonce []zenbtc.NonceData,
+	requestedHistoricalBitcoinHeaders []zenbtc.RequestedBitcoinHeaders,
+	avsRewardsPool []string,
+	ethereumNonceRequested []uint64,
+	solanaNonceRequested []uint64,
+	solanaZentpAccountsRequested []string,
+	solanaAccountsRequested []string,
+	exported bool,
+	unbondingDelegations []UnbondingDelegation,
+	redelegations []Redelegation,
+	hvParams HVParams,
+	assetPrices []*AssetData,
+	lastValidVeHeight int64,
+	slashEvents []SlashEvent,
+	slashEventCount uint64,
+	validationInfos []ValidationInfo,
+	lastUsedSolanaNonce []SolanaNonce,
+	lastUsedEthereumNonce []zenbtc.NonceData,
+) *GenesisState {
 	return &GenesisState{
-		Params:      params,
-		Validators:  validators,
-		Delegations: delegations,
+		Params:                            params,
+		LastTotalPower:                    lastTotalPower,
+		LastValidatorPowers:               lastValidatorPower,
+		Validators:                        validators,
+		Delegations:                       delegations,
+		UnbondingDelegations:              unbondingDelegations,
+		Redelegations:                     redelegations,
+		Exported:                          exported,
+		HvParams:                          &hvParams,
+		AssetPrices:                       assetPrices,
+		LastValidVeHeight:                 lastValidVeHeight,
+		SlashEvents:                       slashEvents,
+		SlashEventCount:                   slashEventCount,
+		ValidationInfos:                   validationInfos,
+		BtcBlockHeaders:                   btcBlockHeaders,
+		LastUsedSolanaNonce:               solanaNonce,
+		BackfillRequest:                   backfillRequest,
+		LastUsedEthereumNonce:             ethereumNonce,
+		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
+		AvsRewardsPool:                    avsRewardsPool,
+		EthereumNonceRequested:            ethereumNonceRequested,
+		SolanaNonceRequested:              solanaNonceRequested,
+		SolanaZentpAccountsRequested:      solanaZentpAccountsRequested,
+		SolanaAccountsRequested:           solanaAccountsRequested,
 	}
 }
 

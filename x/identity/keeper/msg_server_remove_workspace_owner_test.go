@@ -6,6 +6,7 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	pol "github.com/Zenrock-Foundation/zrchain/v6/x/policy/module"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
@@ -126,7 +127,7 @@ func Test_msgServer_RemoveWorkspaceOwner(t *testing.T) {
 				workspace: &defaultWsWithOwnersAndPolicy,
 				msg:       types.NewMsgRemoveWorkspaceOwner("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "testOwner2", 1000),
 				policies: []policytypes.Policy{
-					policy1,
+					testutil.Policy1,
 				},
 			},
 			want:    &types.MsgRemoveWorkspaceOwnerResponse{},

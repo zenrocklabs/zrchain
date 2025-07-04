@@ -6,6 +6,7 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +26,7 @@ func Test_msgServer_NewChildWorkspace(t *testing.T) {
 		{
 			name: "PASS: create new child workspace",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgNewChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1000),
 			},
 			want: &types.MsgNewChildWorkspaceResponse{
@@ -41,7 +42,7 @@ func Test_msgServer_NewChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: workspace is nil or not found",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgNewChildWorkspace("testOwner", "notAWorkspace", 1000),
 			},
 			want:    &types.MsgNewChildWorkspaceResponse{},
@@ -50,7 +51,7 @@ func Test_msgServer_NewChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: creator is not an owner",
 			args: args{
-				workspace: &defaultWs,
+				workspace: &testutil.DefaultWs,
 				msg:       types.NewMsgNewChildWorkspace("notAnOwner", "workspace14a2hpadpsy9h4auve2z8lw", 1000),
 			},
 			want:    &types.MsgNewChildWorkspaceResponse{},

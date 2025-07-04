@@ -696,6 +696,7 @@ func _Msg_SetSolanaROCKSupply_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.zentp.Msg",
 	HandlerType: (*MsgServer)(nil),

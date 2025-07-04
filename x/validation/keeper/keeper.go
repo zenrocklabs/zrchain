@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -277,4 +278,263 @@ func (k *Keeper) SetSidecarClient(client sidecarClient) {
 
 func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.BackfillRequests) error {
 	return k.BackfillRequests.Set(ctx, requests)
+}
+
+func (k Keeper) GetAssetPrices(ctx context.Context) ([]*types.AssetData, error) {
+	storeIterator, err := k.AssetPrices.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var assetPrices []*types.AssetData
+	for _, key := range keys {
+		value, err := k.AssetPrices.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		assetPrices = append(assetPrices, &types.AssetData{
+			Asset:    key,
+			PriceUSD: value,
+		})
+	}
+
+	return assetPrices, nil
+}
+
+func (k Keeper) GetLastValidVeHeight(ctx context.Context) (int64, error) {
+	lastValidVeHeight, err := k.LastValidVEHeight.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return 0 when the collection is empty
+			return 0, nil
+		}
+		return 0, err
+	}
+	return lastValidVeHeight, nil
+}
+
+func (k Keeper) GetSlashEvents(ctx context.Context) ([]types.SlashEvent, uint64, error) {
+	storeIterator, err := k.SlashEvents.Iterate(ctx, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var slashEvents []types.SlashEvent
+	var slashEventCount uint64
+	for _, key := range keys {
+		value, err := k.SlashEvents.Get(ctx, key)
+		if err != nil {
+			return nil, 0, err
+		}
+		slashEvents = append(slashEvents, value)
+		slashEventCount++
+	}
+
+	return slashEvents, slashEventCount, nil
+}
+
+func (k Keeper) GetValidationInfos(ctx context.Context) ([]types.ValidationInfo, error) {
+	storeIterator, err := k.ValidationInfos.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var validationInfos []types.ValidationInfo
+	for _, key := range keys {
+		value, err := k.ValidationInfos.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		validationInfos = append(validationInfos, value)
+	}
+	return validationInfos, nil
+}
+
+func (k Keeper) GetBtcBlockHeaders(ctx context.Context) ([]sidecar.BTCBlockHeader, error) {
+	storeIterator, err := k.BtcBlockHeaders.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var btcBlockHeaders []sidecar.BTCBlockHeader
+	for _, key := range keys {
+		value, err := k.BtcBlockHeaders.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		btcBlockHeaders = append(btcBlockHeaders, value)
+	}
+	return btcBlockHeaders, nil
+}
+
+func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) ([]types.SolanaNonce, error) {
+	storeIterator, err := k.LastUsedSolanaNonce.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var lastUsedSolanaNonce []types.SolanaNonce
+	for _, key := range keys {
+		value, err := k.LastUsedSolanaNonce.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		lastUsedSolanaNonce = append(lastUsedSolanaNonce, value)
+	}
+	return lastUsedSolanaNonce, nil
+}
+
+func (k Keeper) GetBackfillRequests(ctx context.Context) (types.BackfillRequests, error) {
+	backfillRequest, err := k.BackfillRequests.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return empty BackfillRequests when the collection is empty
+			return types.BackfillRequests{}, nil
+		}
+		return types.BackfillRequests{}, err
+	}
+
+	return backfillRequest, nil
+}
+
+func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) ([]zenbtctypes.NonceData, error) {
+	storeIterator, err := k.LastUsedEthereumNonce.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer storeIterator.Close()
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var lastUsedEthereumNonce []zenbtctypes.NonceData
+	for _, key := range keys {
+		value, err := k.LastUsedEthereumNonce.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		lastUsedEthereumNonce = append(lastUsedEthereumNonce, value)
+	}
+	return lastUsedEthereumNonce, nil
+}
+
+func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) ([]zenbtctypes.RequestedBitcoinHeaders, error) {
+	requestedHistoricalBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return empty RequestedBitcoinHeaders when the collection is empty
+			return []zenbtctypes.RequestedBitcoinHeaders{{}}, nil
+		}
+		return nil, err
+	}
+
+	return []zenbtctypes.RequestedBitcoinHeaders{requestedHistoricalBitcoinHeaders}, nil
+}
+
+func (k Keeper) GetAvsRewardsPool(ctx context.Context) ([]string, error) {
+	avsRewardsPool := []string{}
+
+	storeIterator, err := k.AVSRewardsPool.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	keys, err := storeIterator.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys {
+		avsRewardsPool = append(avsRewardsPool, key)
+	}
+
+	return avsRewardsPool, nil
+}
+
+func (k Keeper) GetEthereumNonceRequested(ctx context.Context) ([]uint64, error) {
+	ethereumNonceRequested := []uint64{}
+
+	err := k.EthereumNonceRequested.Walk(ctx, nil, func(key uint64, value bool) (stop bool, err error) {
+		ethereumNonceRequested = append(ethereumNonceRequested, key)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ethereumNonceRequested, nil
+}
+
+func (k Keeper) GetSolanaNonceRequested(ctx context.Context) ([]uint64, error) {
+	solanaNonceRequested := []uint64{}
+
+	err := k.SolanaNonceRequested.Walk(ctx, nil, func(key uint64, value bool) (stop bool, err error) {
+		solanaNonceRequested = append(solanaNonceRequested, key)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return solanaNonceRequested, nil
+}
+
+func (k Keeper) GetSolanaAccountsRequested(ctx context.Context) ([]string, error) {
+	solanaAccountsRequested := []string{}
+
+	err := k.SolanaAccountsRequested.Walk(ctx, nil, func(key string, value bool) (stop bool, err error) {
+		solanaAccountsRequested = append(solanaAccountsRequested, key)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return solanaAccountsRequested, nil
+}
+
+func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, error) {
+	solanaZenTPAccountsRequested := []string{}
+
+	err := k.SolanaZenTPAccountsRequested.Walk(ctx, nil, func(key string, value bool) (stop bool, err error) {
+		solanaZenTPAccountsRequested = append(solanaZenTPAccountsRequested, key)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return solanaZenTPAccountsRequested, nil
 }

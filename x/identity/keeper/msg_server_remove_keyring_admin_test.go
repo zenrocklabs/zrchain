@@ -6,21 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
-
-	defaultKrWithAdmins := types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator", "admin1", "admin2", "admin3"},
-		KeyReqFee:   0,
-		SigReqFee:   0,
-		IsActive:    true,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -37,7 +28,7 @@ func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
 		{
 			name: "PASS: remove keyring admin",
 			args: args{
-				keyring: &defaultKrWithAdmins,
+				keyring: &testutil.DefaultKrWithAdmins,
 				msg:     types.NewMsgRemoveKeyringAdmin("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "admin3"),
 			},
 			want: &types.MsgRemoveKeyringAdminResponse{},
@@ -71,7 +62,7 @@ func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
 		{
 			name: "FAIL: keyring is nil or not found",
 			args: args{
-				keyring: &defaultKrWithAdmins,
+				keyring: &testutil.DefaultKrWithAdmins,
 				msg:     types.NewMsgRemoveKeyringAdmin("testCreator", "notAKeyring", "admin1"),
 			},
 			want:    &types.MsgRemoveKeyringAdminResponse{},
@@ -80,7 +71,7 @@ func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
 		{
 			name: "FAIL: removed admin is no admin",
 			args: args{
-				keyring: &defaultKrWithAdmins,
+				keyring: &testutil.DefaultKrWithAdmins,
 				msg:     types.NewMsgRemoveKeyringAdmin("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "noAdmin"),
 			},
 			want:    &types.MsgRemoveKeyringAdminResponse{},
@@ -89,7 +80,7 @@ func Test_msgServer_RemoveKeyringAdmin(t *testing.T) {
 		{
 			name: "FAIL: creator is no admin owner",
 			args: args{
-				keyring: &defaultKrWithAdmins,
+				keyring: &testutil.DefaultKrWithAdmins,
 				msg:     types.NewMsgRemoveKeyringAdmin("noAdmin", "keyring1pfnq7r04rept47gaf5cpdew2", "admin1"),
 			},
 			want:    &types.MsgRemoveKeyringAdminResponse{},

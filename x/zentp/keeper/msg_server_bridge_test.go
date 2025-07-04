@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
+	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -302,6 +303,212 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 			s.Require().Error(err)
 			s.Require().Nil(response)
 			s.Require().Contains(err.Error(), tc.expectedError)
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestMsgBridgeSupply() {
+
+	type args struct {
+		mints  []types.Bridge
+		msg    *types.MsgBridge
+		supply int64
+	}
+	var tests = []struct {
+		name    string
+		args    args
+		want    *types.MsgBridgeResponse
+		wantErr bool
+	}{
+		{
+			name: "PASS: all good",
+			args: args{
+				msg: &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					Amount:           30000000000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+				},
+				mints: []types.Bridge{
+					{
+						Denom:            "urock",
+						Creator:          "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						SourceAddress:    "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+						Amount:           2000000000,
+						RecipientAddress: "9pQrjteHXNRskkoLGbn5Cp8zMwb5PDw8UHShAari6amz",
+						State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
+					},
+				},
+				supply: 196620132883289,
+			},
+			want: &types.MsgBridgeResponse{
+				Id: 2,
+			},
+			wantErr: false,
+		},
+		{
+			name: "FAIL: exceed supply cap",
+			args: args{
+				msg: &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					Amount:           3000000000000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+				},
+				mints: []types.Bridge{
+					{
+						Id:               1,
+						Denom:            "urock",
+						Creator:          "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						SourceAddress:    "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+						Amount:           2000000000,
+						RecipientAddress: "9pQrjteHXNRskkoLGbn5Cp8zMwb5PDw8UHShAari6amz",
+						State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
+					},
+					{
+						Id:               2,
+						Denom:            "urock",
+						Creator:          "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						SourceAddress:    "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+						Amount:           200000000000,
+						RecipientAddress: "9pQrjteHXNRskkoLGbn5Cp8zMwb5PDw8UHShAari6amz",
+						State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
+					},
+				},
+				supply: 196620132883289,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "FAIL: exceed supply cap",
+			args: args{
+				msg: &types.MsgBridge{
+					Creator:          "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+					Amount:           3000000000000,
+					Denom:            "urock",
+					RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
+					DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+				},
+				mints: []types.Bridge{
+					{
+						Id:               1,
+						Denom:            "urock",
+						Creator:          "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						SourceAddress:    "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+						Amount:           2000000000,
+						RecipientAddress: "9pQrjteHXNRskkoLGbn5Cp8zMwb5PDw8UHShAari6amz",
+						State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
+					},
+					{
+						Id:               2,
+						Denom:            "urock",
+						Creator:          "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						SourceAddress:    "zen197mu07hcgvkz0dsq9757u5zfgsp3aekp8a2z4c",
+						DestinationChain: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+						Amount:           200000000000,
+						RecipientAddress: "9pQrjteHXNRskkoLGbn5Cp8zMwb5PDw8UHShAari6amz",
+						State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
+					},
+				},
+				supply: 200000000000000,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+
+			// Setup test parameters
+			params := types.DefaultParams()
+			err := s.zentpKeeper.ParamStore.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			// Setup Solana ROCK supply for invariant check
+			err = s.zentpKeeper.SetSolanaROCKSupply(s.ctx, math.NewIntFromUint64(uint64(tt.args.supply)))
+			s.Require().NoError(err)
+
+			// Setup genesis with mints
+			genesis := types.GenesisState{
+				Params:           types.DefaultParams(),
+				SolanaRockSupply: uint64(tt.args.supply),
+				Mints:            tt.args.mints,
+			}
+			zentp.InitGenesis(s.ctx, s.zentpKeeper, genesis)
+
+			// Mock bank keeper GetSupply for invariant check
+			s.bankKeeper.EXPECT().GetSupply(s.ctx, "urock").Return(
+				sdk.NewCoin("urock", math.NewIntFromUint64(800000000000000)), // 800M ROCK
+			).AnyTimes()
+
+			// Mock for new check in CheckROCKSupplyCap
+			zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
+				sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
+			).AnyTimes()
+
+			// Mock getting the mint params
+			s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil).AnyTimes()
+
+			// Calculate total amount including bridge fee and Solana fee
+			baseAmountInt := math.NewIntFromUint64(tt.args.msg.Amount)
+			bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+			totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+
+			// Mock bank keeper GetBalance - return enough to cover the total amount
+			s.bankKeeper.EXPECT().GetBalance(
+				s.ctx,
+				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
+				tt.args.msg.Denom,
+			).Return(sdk.NewCoin(tt.args.msg.Denom, totalAmountInt.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
+
+			// Mock bank keeper SendCoinsFromAccountToModule
+			s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				s.ctx,
+				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
+				types.ModuleName,
+				sdk.NewCoins(sdk.NewCoin("urock", totalAmountInt)),
+			).Return(nil).AnyTimes()
+
+			// Mock validation keeper SetSolanaRequestedNonce
+			s.validationKeeper.EXPECT().SetSolanaRequestedNonce(
+				s.ctx,
+				params.Solana.NonceAccountKey, // Default nonce account key
+				true,
+			).Return(nil).AnyTimes()
+
+			// Mock validation keeper SetSolanaRequestedAccount
+			s.validationKeeper.EXPECT().SetSolanaZenTPRequestedAccount(
+				s.ctx,
+				tt.args.msg.RecipientAddress,
+				true,
+			).Return(nil).AnyTimes()
+
+			_, err = s.zentpKeeper.GetSolanaROCKSupply(s.ctx)
+			s.Require().NoError(err)
+
+			got, err := s.msgServer.Bridge(s.ctx, tt.args.msg)
+			if (err != nil) != tt.wantErr {
+				s.T().Errorf("Keeper.Bridge() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if tt.wantErr {
+				s.Require().Error(err)
+				s.Require().Nil(got)
+			} else {
+				s.Require().NoError(err)
+				s.Require().NotNil(got)
+				s.Require().Equal(tt.want.Id, got.Id)
+			}
 		})
 	}
 }
