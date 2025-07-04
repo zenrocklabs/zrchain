@@ -60,9 +60,8 @@ sequenceDiagram
     participant Bitcoin Proxy
     participant Sidecar
     participant Relayer
-    participant EigenLayer
-    participant Solana
     participant Ethereum
+    participant Solana
 
     User->>Web Frontend: Request BTC Deposit Address
     Web Frontend->>zrChain: Request new deposit address
@@ -76,14 +75,10 @@ sequenceDiagram
 
     User->>Bitcoin: Deposit BTC to provided address
     
-    Sidecar->>Bitcoin: Polls for new block headers
-    Sidecar->>Ethereum: Polls for ETH/BTC price feeds (Chainlink)
-    Sidecar->>Ethereum: Polls for gas prices and estimates
-    Sidecar->>Solana: Polls for lamports per signature fee
-    Sidecar->>EigenLayer: Polls for nonce values and staking data
-    
     Note over Bitcoin: Block mined (deposit tx included)
     
+    Sidecar->>Bitcoin: Polls for new block headers
+    Sidecar->>Ethereum: Polls for ETH/BTC price feeds (Chainlink)
     Note over zrChain: ExtendVoteHandler: Each validator queries their sidecar
     zrChain->>Sidecar: Query current oracle state (BTC headers, prices, fees)
     Sidecar-->>zrChain: Return oracle data hashes for vote extension
@@ -101,9 +96,9 @@ sequenceDiagram
     zrChain->>zrChain: Create PendingMintTransaction (status: DEPOSITED)
     zrChain->>zrChain: Request Staker Nonce for EigenLayer
 
-    Sidecar->>EigenLayer: Polls for nonce values
+    Sidecar->>Ethereum: Polls for gas prices and nonce values
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for EigenLayer nonces
-    zrChain->>Sidecar: Query EigenLayer nonce data
+    zrChain->>Sidecar: Query nonce data
     Sidecar-->>zrChain: Return nonce data hashes for vote extension
     Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
@@ -116,8 +111,9 @@ sequenceDiagram
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Stake Tx picked up
-    Relayer->>EigenLayer: Broadcast Stake Tx
+    Relayer->>Ethereum: Broadcast Stake Tx (EigenLayer contracts)
 
+    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
     zrChain->>Sidecar: Query updated EigenLayer nonce
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
@@ -127,7 +123,7 @@ sequenceDiagram
     zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
-        Sidecar->>Solana: Polls for nonce and account data
+        Sidecar->>Solana: Polls for fees, nonce and account data
         Note over zrChain: ExtendVoteHandler: Validators query sidecar for Solana data
         zrChain->>Sidecar: Query Solana nonce and account data
         Sidecar-->>zrChain: Return Solana data hashes for vote extension
@@ -158,7 +154,7 @@ sequenceDiagram
         Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
-        Sidecar->>Ethereum: Polls for nonce values
+        Sidecar->>Ethereum: Polls for gas prices and nonce values
         Note over zrChain: ExtendVoteHandler: Validators query sidecar for Ethereum nonces
         zrChain->>Sidecar: Query Ethereum nonce values
         Sidecar-->>zrChain: Return Ethereum nonce hashes for vote extension
@@ -175,7 +171,7 @@ sequenceDiagram
         zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Ethereum: Broadcast Mint Tx
 
-        Sidecar->>Ethereum: Polls for nonce updates
+        Sidecar->>Ethereum: Polls for nonce update after tx broadcast
         Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
         zrChain->>Sidecar: Query updated Ethereum nonce
         Sidecar-->>zrChain: Return updated nonce hash for vote extension
@@ -199,7 +195,7 @@ sequenceDiagram
     participant zrChain
     participant MPC Stack
     participant Relayer
-    participant EigenLayer
+    participant Ethereum
     participant Bitcoin Proxy
     participant Bitcoin
 
@@ -216,7 +212,7 @@ sequenceDiagram
     zrChain->>zrChain: Create BurnEvent (status: BURNED)
     zrChain->>zrChain: Request Unstaker Nonce for EigenLayer
 
-    Sidecar->>EigenLayer: Polls for nonce values
+    Sidecar->>Ethereum: Polls for nonce values
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for EigenLayer nonces
     zrChain->>Sidecar: Query EigenLayer nonce data
     Sidecar-->>zrChain: Return nonce data hashes for vote extension
@@ -230,9 +226,9 @@ sequenceDiagram
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed Unstake Tx picked up
-    Relayer->>EigenLayer: Broadcast Unstake Tx
+    Relayer->>Ethereum: Broadcast Unstake Tx (EigenLayer contracts)
     
-    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
+    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
     zrChain->>Sidecar: Query updated EigenLayer nonce
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
@@ -240,7 +236,7 @@ sequenceDiagram
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
     zrChain->>zrChain: PreBlocker confirms tx, updates status to UNSTAKING
 
-    Sidecar->>EigenLayer: Polls for unstake completion (redemption availability)
+    Sidecar->>Ethereum: Polls for unstake completion status
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for redemption data
     zrChain->>Sidecar: Query redemption availability data
     Sidecar-->>zrChain: Return redemption data hashes for vote extension
@@ -252,7 +248,7 @@ sequenceDiagram
 
     Note over zrChain: After withdrawal delay, redemption becomes available for completion
 
-    Sidecar->>EigenLayer: Polls for completer nonce values
+    Sidecar->>Ethereum: Polls for nonce values
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for completer nonces
     zrChain->>Sidecar: Query EigenLayer completer nonce data
     Sidecar-->>zrChain: Return completer nonce hashes for vote extension
@@ -267,9 +263,9 @@ sequenceDiagram
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     Relayer->>zrChain: Poll for fulfilled requests
     zrChain-->>Relayer: Signed CompleteWithdrawal Tx picked up
-    Relayer->>EigenLayer: Broadcast Tx
+    Relayer->>Ethereum: Broadcast Tx (EigenLayer contracts)
     
-    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
+    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
     zrChain->>Sidecar: Query updated EigenLayer completer nonce
     Sidecar-->>zrChain: Return updated nonce hash for vote extension
