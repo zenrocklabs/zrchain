@@ -92,7 +92,7 @@ jobs:
       - name: Wait for 90 seconds
         run: sleep 90
       - name: Run integration tests
-        run: ginkgo --focus="ZenBTC ETH mint:" -v tests/integration
+        run: ginkgo -v tests/integration
       - name: Stop Docker Compose stack
         if: always()
         run: |
