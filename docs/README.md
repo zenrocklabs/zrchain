@@ -110,10 +110,9 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Stake Tx (EigenLayer contracts)
 
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
-    Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce data
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    Note over zrChain: PreBlocker confirms tx, updates status to STAKED
+    zrChain->>zrChain: Updates status to STAKED
     zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
@@ -163,10 +162,9 @@ sequenceDiagram
         Relayer->>Ethereum: Broadcast Mint Tx
 
         Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-        Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
-        zrChain->>Sidecar: PrepareProposal: Proposer validates updated nonce against vote extensions
+        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-        Note over zrChain: PreBlocker confirms tx, updates status to MINTED
+        zrChain->>zrChain: Updates status to MINTED
         zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Ethereum
     end
@@ -214,10 +212,9 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Unstake Tx (EigenLayer contracts)
     
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
-    zrChain->>Sidecar: PrepareProposal: Proposer validates updated nonce against vote extensions
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    Note over zrChain: PreBlocker confirms tx, updates status to UNSTAKING
+    zrChain->>zrChain: Updates status to UNSTAKING
 
     Sidecar->>Ethereum: Polls for unstake completion status
     Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with EigenLayer redemption data
@@ -245,10 +242,9 @@ sequenceDiagram
     Relayer->>Ethereum: Broadcast Tx (EigenLayer contracts)
     
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    Note over zrChain: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
-    zrChain->>Sidecar: PrepareProposal: Proposer validates updated nonce against vote extensions
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecar to populate vote extensions with nonce updates
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    Note over zrChain: PreBlocker confirms tx, updates status to UNSTAKED
+    zrChain->>zrChain: Updates status to UNSTAKED
 
     Bitcoin Proxy->>zrChain: Poll for UNSTAKED redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)
