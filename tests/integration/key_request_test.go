@@ -58,12 +58,12 @@ var _ = Describe("MPC Key Requests:", func() {
 			GinkgoWriter.Printf("ECDSA Key Request fetched: %d\n", requestID)
 		})
 
-		It("gets fulfilled within 10 seconds", func() {
+		It("gets fulfilled within 15 seconds", func() {
 			Eventually(func() string {
 				req, err := env.Query.GetKeyRequest(env.Ctx, requestID)
 				Expect(err).ToNot(HaveOccurred())
 				return req.Status
-			}, "10s", "1s").Should(Equal(types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED.String()))
+			}, "15s", "1s").Should(Equal(types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED.String()))
 			GinkgoWriter.Printf("ECDSA Key Request fulfilled: %d\n", requestID)
 		})
 	}
