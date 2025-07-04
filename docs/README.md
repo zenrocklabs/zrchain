@@ -78,7 +78,6 @@ sequenceDiagram
     Note over Bitcoin: Block mined (deposit tx included)
     
     Sidecar->>Bitcoin: Polls for new block headers
-    Sidecar->>Ethereum: Polls for ETH/BTC price feeds (Chainlink)
     Note over zrChain: ExtendVoteHandler: Each validator queries their sidecar
     zrChain->>Sidecar: Query current oracle state (BTC headers, prices, fees)
     Sidecar-->>zrChain: Return oracle data hashes for vote extension
@@ -96,7 +95,8 @@ sequenceDiagram
     zrChain->>zrChain: Create PendingMintTransaction (status: DEPOSITED)
     zrChain->>zrChain: Request Staker Nonce for EigenLayer
 
-    Sidecar->>Ethereum: Polls for gas prices and nonce values
+    Sidecar->>Ethereum: Polls for ETH/BTC price feeds and gas prices
+    Sidecar->>Ethereum: Polls for nonce values
     Note over zrChain: ExtendVoteHandler: Validators query sidecar for EigenLayer nonces
     zrChain->>Sidecar: Query nonce data
     Sidecar-->>zrChain: Return nonce data hashes for vote extension
