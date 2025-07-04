@@ -18,7 +18,11 @@ DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bu
 
 
 export GO111MODULE = on
-build_tags = netgo
+ifeq ($(DYNAMIC),true)
+  build_tags =
+else
+  build_tags = netgo
+endif
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
     GCCEXE = $(shell where gcc.exe 2> NUL)

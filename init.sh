@@ -61,12 +61,18 @@ while [[ $# -gt 0 ]]; do
             START_ONLY=true
             shift
             ;;
+        --dynamic)
+            DYNAMIC=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
             ;;
     esac
 done
+
+
 
 if [ "$BUILD_ONLY" = true ] && [ "$START_ONLY" = true ]; then
     echo "Error: Cannot specify both --build-only and --start-only"
@@ -131,7 +137,11 @@ if [ "$START_ONLY" = false ]; then
 
     set -e
 
-    make install
+        if [ "$DYNAMIC" = true ]; then
+        make install DYNAMIC=true
+    else
+        make install
+    fi
 
     # Only build sidecar if not using --localnet 2 or --no-sidecar/--no-vote-extensions
     if [[ "$LOCALNET" != "2" && -z "$NO_SIDECAR" && -z "$NO_VOTE_EXTENSIONS" ]]; then

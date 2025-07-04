@@ -1,16 +1,26 @@
 package main
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/big"
 	"os"
+	"slices"
+	"time"
 
+	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go"
+	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	"github.com/gookit/color"
+	"github.com/lmittmann/tint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,13 +64,33 @@ func loadStateDataFromFile(filename string) (latestState *sidecartypes.OracleSta
 }
 
 func (o *Oracle) SaveToFile(filename string) error {
-	file, err := os.Create(filename)
+	// Write to a temporary file first for atomicity
+	tempFile := filename + ".tmp"
+	file, err := os.Create(tempFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer file.Close()
 
-	return json.NewEncoder(file).Encode(o.stateCache)
+	if err := json.NewEncoder(file).Encode(o.stateCache); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to encode state: %w", err)
+	}
+
+	if err := file.Sync(); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to sync temp file: %w", err)
+	}
+
+	file.Close() // Close before rename
+
+	// Atomically replace the original file
+	if err := os.Rename(tempFile, filename); err != nil {
+		os.Remove(tempFile) // Clean up on error
+		return fmt.Errorf("failed to rename temp file: %w", err)
+	}
+
+	return nil
 }
 
 func (o *Oracle) CacheState() {
@@ -144,13 +174,310 @@ func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
 	}
 }
 
+// Helper function to parse RPC response ID into request index
+func parseRPCResponseID(resp *jsonrpc.RPCResponse, eventType string) (int, bool) {
+	if resp == nil {
+		slog.Error("Nil RPCResponse object in sub-batch response", "eventType", eventType)
+		return 0, false
+	}
+
+	var requestIndex int
+	switch id := resp.ID.(type) {
+	case float64: // JSON numbers often decode to float64
+		requestIndex = int(id)
+	case int:
+		requestIndex = id
+	case uint64: // Match the type we put in the request
+		requestIndex = int(id)
+	case json.Number:
+		idInt64, err := id.Int64()
+		if err != nil {
+			slog.Error("Failed to convert json.Number ID to int64", "eventType", eventType, "error", err)
+			return 0, false
+		}
+		requestIndex = int(idInt64)
+	default:
+		slog.Error("Invalid response ID type received", "idType", fmt.Sprintf("%T", resp.ID), "eventType", eventType)
+		return 0, false
+	}
+	return requestIndex, true
+}
+
+// Helper function to validate request index bounds
+func validateRequestIndex(requestIndex int, batchSize int, eventType string) bool {
+	if requestIndex < 0 || requestIndex >= batchSize {
+		slog.Error("Invalid response ID received for sub-batch", "requestIndex", requestIndex, "eventType", eventType)
+		return false
+	}
+	return true
+}
+
+// Helper function to generate event keys for deduplication
+func generateBurnEventKey(event api.BurnEvent) string {
+	return fmt.Sprintf("%s-%s-%d", event.ChainID, event.TxID, event.LogIndex)
+}
+
+func generateMintEventKey(event api.SolanaMintEvent) string {
+	return base64.StdEncoding.EncodeToString(event.SigHash)
+}
+
+// Helper function to check if events already exist and merge new ones
+func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string]bool, newEvents []api.BurnEvent, eventTypeName string) []api.BurnEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateBurnEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Also check against already cleaned events
+	for key := range cleanedEvents {
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.BurnEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateBurnEventKey(event)
+		if !existingEventKeys[key] {
+			mergedEvents = append(mergedEvents, event)
+			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
+		} else {
+			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
+		}
+	}
+
+	return mergedEvents
+}
+
+// Helper function to merge new mint events
+func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[string]bool, newEvents []api.SolanaMintEvent, eventTypeName string) []api.SolanaMintEvent {
+	// Create a map of existing events for quick lookup
+	existingEventKeys := make(map[string]bool)
+	for _, event := range existingEvents {
+		key := generateMintEventKey(event)
+		existingEventKeys[key] = true
+	}
+
+	// Start with existing events
+	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
+	copy(mergedEvents, existingEvents)
+
+	// Add new events if they don't already exist
+	for _, event := range newEvents {
+		key := generateMintEventKey(event)
+		if !existingEventKeys[key] {
+			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
+				mergedEvents = append(mergedEvents, event)
+				slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig)
+			} else {
+				slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig)
+			}
+		}
+	}
+
+	return mergedEvents
+}
+
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	return &oracleStateUpdate{
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]solana.Signature),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		ethBurnEvents:    []api.BurnEvent{},
+		eigenDelegations:           make(map[string]map[string]*big.Int),
+		suggestedTip:               big.NewInt(0),
+		solanaLamportsPerSignature: 0,
+		estimatedGas:               0,
+		ROCKUSDPrice:               math.LegacyZeroDec(),
+		BTCUSDPrice:                math.LegacyZeroDec(),
+		ETHUSDPrice:                math.LegacyZeroDec(),
+		ethBurnEvents:              make([]api.BurnEvent, 0),
+		cleanedEthBurnEvents:       make(map[string]bool),
+		solanaBurnEvents:           make([]api.BurnEvent, 0),
+		cleanedSolanaBurnEvents:    make(map[string]bool),
+		redemptions:                make([]api.Redemption, 0),
+		SolanaMintEvents:           make([]api.SolanaMintEvent, 0),
+		cleanedSolanaMintEvents:    make(map[string]bool),
+		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]solana.Signature),
 	}
+}
+
+// resetStateForVersion ensures the state cache is wiped exactly once after upgrading to a
+// brand-new SidecarVersionName. It keeps a companion meta file (stateFile + ".meta") that
+// stores the last version the cache was written with. If the meta file is missing or the
+// version differs from the current one, the function deletes the cache file, writes the
+// updated meta, and returns true (indicating first boot for this version). Subsequent boots
+// for the same version leave the cache intact and return false.
+func resetStateForVersion(stateFile string) bool {
+	currentVersion := sidecartypes.SidecarVersionName
+	metaFile := stateFile + ".meta"
+
+	type meta struct {
+		Version string `json:"version"`
+	}
+
+	// Check if current version requires cache reset
+	requiresReset := slices.Contains(sidecartypes.VersionsRequiringCacheReset, currentVersion)
+
+	if !requiresReset {
+		// Current version doesn't require cache reset, just update meta file if needed
+		if f, err := os.Open(metaFile); err == nil {
+			defer f.Close()
+			var m meta
+			if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
+				// Meta already matches current version
+				return false
+			}
+		}
+
+		// Update meta file to current version without resetting cache
+		if f, err := os.Create(metaFile); err == nil {
+			json.NewEncoder(f).Encode(meta{Version: currentVersion})
+			f.Close()
+		}
+		return false
+	}
+
+	// Attempt to read existing meta file
+	if f, err := os.Open(metaFile); err == nil {
+		defer f.Close()
+		var m meta
+		if err := json.NewDecoder(f).Decode(&m); err == nil && m.Version == currentVersion {
+			// Cache already corresponds to current version – no reset needed.
+			slog.Info("Cache is already aligned", "version", currentVersion)
+			return false
+		}
+	}
+
+	// Either meta file missing or version mismatch → first boot for this version.
+	slog.Info("First boot detected for sidecar version requiring cache reset", "version", currentVersion)
+
+	// Remove state file if it exists.
+	if err := os.Remove(stateFile); err != nil && !os.IsNotExist(err) {
+		slog.Error("Failed to delete cache file during version reset", "file", stateFile, "error", err)
+	}
+
+	// Write new meta file with current version.
+	if f, err := os.Create(metaFile); err != nil {
+		slog.Error("Failed to create cache meta file", "file", metaFile, "error", err)
+	} else {
+		if err := json.NewEncoder(f).Encode(meta{Version: currentVersion}); err != nil {
+			slog.Error("Failed to write cache meta file", "file", metaFile, "error", err)
+		}
+		f.Close()
+	}
+
+	return true
+}
+
+var colorMap = map[string]func(string) string{
+	// Core categories
+	"error": func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+
+	// Info & identifiers
+	"version": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"network": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chain":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"chainID": func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+	"state":   func(s string) string { return color.HEX("59C2FF").Sprint(s) }, // Cyan
+
+	// Timing
+	"time":             func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
+	"interval":         func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"sleepDuration":    func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"nextIntervalMark": func(s string) string { return color.HEX("FFD580").Sprint(s) }, // Pale Yellow
+
+	// Transactions & signatures
+	"tx":                     func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txID":                   func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txSig":                  func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"txHash":                 func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"lastSig":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"newestLastProcessedSig": func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+	"sigHash":                func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+
+	// Addresses
+	"address":         func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"destinationAddr": func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+	"recipient":       func(s string) string { return color.HEX("B3B1AD").Sprint(s) }, // Foreground
+
+	// Events
+	"eventType":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventName":  func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"eventIndex": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+
+	// Values / amounts
+	"amount":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"value":    func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"fee":      func(s string) string { return color.HEX("F07178").Sprint(s) }, // Red
+	"block":    func(s string) string { return color.HEX("FFFFFF").Sprint(s) }, // White
+	"ROCK/USD": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"BTC/USD":  func(s string) string { return color.HEX("FF8F40").Sprint(s) }, // Orange
+	"ETH/USD":  func(s string) string { return color.HEX("539AFC").Sprint(s) }, // Blue
+
+	// Metrics
+	"count":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"batchSize":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"total":        func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"inspected":    func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"newTxCount":   func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+	"requestIndex": func(s string) string { return color.HEX("D2A6FF").Sprint(s) }, // Magenta
+
+	// Burn / Mint signatures
+	"rockMintSig":   func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"zenBTCMintSig": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
+	"rockBurnSig":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+}
+
+// initLogger sets up coloured structured logging
+func initLogger(debug bool) {
+	level := slog.LevelInfo
+	if debug {
+		level = slog.LevelDebug
+	}
+
+	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, &tint.Options{
+		Level:      level,
+		TimeFormat: time.DateTime,
+		AddSource:  debug,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// Handle timestamp coloring
+			if a.Key == slog.TimeKey {
+				a.Value = slog.StringValue(color.HEX("FFFACD").Sprint(a.Value.String()))
+				return a
+			}
+			// Handle other custom fields
+			if f, ok := colorMap[a.Key]; ok {
+				a.Value = slog.StringValue(f(a.Value.String()))
+			}
+			return a
+		},
+	})))
+}
+
+func connectWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
+	var client *ethclient.Client
+	var err error
+
+	for i := 0; i < maxRetries || maxRetries == 0; i++ {
+		client, err = ethclient.Dial(rpcAddress)
+		if err == nil {
+			// Check if client can respond to eth_blockNumber
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			_, err = client.BlockNumber(ctx)
+			if err == nil {
+				slog.Info("Successfully connected to Ethereum client", "rpc", rpcAddress)
+				return client, err
+			}
+			client.Close()
+		}
+
+		slog.Warn("Retrying connection to Ethereum client", "attempt", i+1, "error", err)
+		time.Sleep(delay)
+	}
+
+	return nil, err
 }

@@ -1399,7 +1399,8 @@ func (m *QueryParamsResponse) GetHVParams() HVParams {
 	return HVParams{}
 }
 
-// QueryPowerRequest is the request type for the Query/ValidatorPower RPC method.
+// QueryPowerRequest is the request type for the Query/ValidatorPower RPC
+// method.
 type QueryPowerRequest struct {
 }
 
@@ -1518,7 +1519,8 @@ func (m *ValidatorPower) GetStatus() BondStatus {
 	return Unspecified
 }
 
-// QueryPowerResponse is the response type for the Query/ValidatorPower RPC method.
+// QueryPowerResponse is the response type for the Query/ValidatorPower RPC
+// method.
 type QueryPowerResponse struct {
 	// validator_power contains the power information for all validators.
 	ValidatorPower []*ValidatorPower `protobuf:"bytes,1,rep,name=validator_power,json=validatorPower,proto3" json:"validator_power,omitempty"`
@@ -1582,7 +1584,8 @@ func (m *QueryPowerResponse) GetHeight() int64 {
 	return 0
 }
 
-// QueryBackfillRequestsRequest is the request type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsRequest is the request type for the
+// Query/BackfillRequests RPC method.
 type QueryBackfillRequestsRequest struct {
 }
 
@@ -1619,7 +1622,8 @@ func (m *QueryBackfillRequestsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBackfillRequestsRequest proto.InternalMessageInfo
 
-// QueryBackfillRequestsResponse is the response type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsResponse is the response type for the
+// Query/BackfillRequests RPC method.
 type QueryBackfillRequestsResponse struct {
 	// backfill_requests contains the list of backfill requests.
 	BackfillRequests *BackfillRequests `protobuf:"bytes,1,opt,name=backfill_requests,json=backfillRequests,proto3" json:"backfill_requests,omitempty"`
@@ -2442,7 +2446,6 @@ func _Query_QueryBackfillRequests_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.validation.Query",
 	HandlerType: (*QueryServer)(nil),

@@ -699,9 +699,11 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 // MsgUpdateHVParams is the Msg/UpdateHVParams request type.
-// This message is used to update the HVParams parameters of the validation module.
+// This message is used to update the HVParams parameters of the validation
+// module.
 type MsgUpdateHVParams struct {
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// HVParams defines the HV parameters to update.
 	// NOTE: All parameters must be supplied.
@@ -755,7 +757,8 @@ func (m *MsgUpdateHVParams) GetHVParams() HVParams {
 	return HVParams{}
 }
 
-// MsgUpdateHVParamsResponse defines the response structure for executing a MsgUpdateHVParams message.
+// MsgUpdateHVParamsResponse defines the response structure for executing a
+// MsgUpdateHVParams message.
 type MsgUpdateHVParamsResponse struct {
 }
 
@@ -793,13 +796,16 @@ func (m *MsgUpdateHVParamsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateHVParamsResponse proto.InternalMessageInfo
 
 // MsgTriggerEventBackfill is the Msg/TriggerEventBackfill request type.
-// This message is used to trigger a backfill event for a specific transaction and event type.
+// This message is used to trigger a backfill event for a specific transaction
+// and event type.
 type MsgTriggerEventBackfill struct {
-	// authority is the address that controls the module (defaults to x/gov unless overwritten).
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// tx_hash is the transaction hash for which the backfill event is triggered.
 	TxHash string `protobuf:"bytes,2,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
-	// caip2_chain_id is the CAIP-2 chain ID of the chain where the event occurred.
+	// caip2_chain_id is the CAIP-2 chain ID of the chain where the event
+	// occurred.
 	Caip2ChainId string `protobuf:"bytes,3,opt,name=caip2_chain_id,json=caip2ChainId,proto3" json:"caip2_chain_id,omitempty"`
 	// event_type specifies the type of event to backfill.
 	EventType EventType `protobuf:"varint,4,opt,name=event_type,json=eventType,proto3,enum=zrchain.validation.EventType" json:"event_type,omitempty"`
@@ -866,7 +872,8 @@ func (m *MsgTriggerEventBackfill) GetEventType() EventType {
 	return EventType_EVENT_TYPE_UNSPECIFIED
 }
 
-// MsgTriggerEventBackfillResponse defines the response structure for executing a MsgTriggerEventBackfill message.
+// MsgTriggerEventBackfillResponse defines the response structure for executing
+// a MsgTriggerEventBackfill message.
 type MsgTriggerEventBackfillResponse struct {
 }
 
@@ -1423,7 +1430,6 @@ func _Msg_TriggerEventBackfill_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.validation.Msg",
 	HandlerType: (*MsgServer)(nil),

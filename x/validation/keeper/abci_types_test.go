@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -47,6 +48,7 @@ var defaultVe = VoteExtension{
 	ETHUSDPrice:                "1000000000",
 	LatestBtcBlockHeight:       100000,
 	LatestBtcHeaderHash:        []byte("randomhash"),
+	SidecarVersionName:         sidecartypes.SidecarVersionName,
 }
 
 func TestContainsVoteExtension(t *testing.T) {
@@ -249,6 +251,12 @@ func TestIsInvalid(t *testing.T) {
 			invalidValue:  []byte{},
 			expectInvalid: true,
 		},
+		{
+			name:          "invalid sidecar version name",
+			fieldToModify: "SidecarVersionName",
+			invalidValue:  "",
+			expectInvalid: true,
+		},
 	}
 
 	// Map of field names to their setters
@@ -266,6 +274,7 @@ func TestIsInvalid(t *testing.T) {
 		"ETHUSDPrice":          func(ve *VoteExtension, v any) { ve.ETHUSDPrice = v.(string) },
 		"LatestBtcBlockHeight": func(ve *VoteExtension, v any) { ve.LatestBtcBlockHeight = v.(int64) },
 		"LatestBtcHeaderHash":  func(ve *VoteExtension, v any) { ve.LatestBtcHeaderHash = v.([]byte) },
+		"SidecarVersionName":   func(ve *VoteExtension, v any) { ve.SidecarVersionName = v.(string) },
 	}
 
 	for _, tt := range tests {

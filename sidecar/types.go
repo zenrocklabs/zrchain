@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	sol "github.com/gagliardetto/solana-go"
 	solana "github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
@@ -47,12 +49,21 @@ type Oracle struct {
 	zrChainQueryClient *client.QueryClient
 	mainLoopTicker     *time.Ticker
 	DebugMode          bool
+	SkipInitialWait    bool
 
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// Function fields for mocking
+	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
+	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
+	getSignaturesForAddressFn   func(ctx context.Context, account sol.PublicKey, opts *solana.GetSignaturesForAddressOpts) ([]*solana.TransactionSignature, error)
+	reconcileBurnEventsFn       func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool)
 }
 
 type oracleStateUpdate struct {
@@ -61,12 +72,15 @@ type oracleStateUpdate struct {
 	suggestedTip               *big.Int
 	estimatedGas               uint64
 	ethBurnEvents              []api.BurnEvent
+	cleanedEthBurnEvents       map[string]bool
 	solanaBurnEvents           []api.BurnEvent
+	cleanedSolanaBurnEvents    map[string]bool
 	ROCKUSDPrice               math.LegacyDec
 	BTCUSDPrice                math.LegacyDec
 	ETHUSDPrice                math.LegacyDec
 	solanaLamportsPerSignature uint64
 	SolanaMintEvents           []api.SolanaMintEvent
+	cleanedSolanaMintEvents    map[string]bool
 	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
 }
 

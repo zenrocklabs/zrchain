@@ -156,7 +156,8 @@ service Query {
   // BackfillRequests queries the backfill requests.
   rpc QueryBackfillRequests(QueryBackfillRequestsRequest) returns (QueryBackfillRequestsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmos/validation/v1beta1/backfill_requests";
+    option (google.api.http).get =
+        "/cosmos/validation/v1beta1/backfill_requests";
   }
 }
 
@@ -438,7 +439,8 @@ message QueryParamsResponse {
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
-// QueryPowerRequest is the request type for the Query/ValidatorPower RPC method.
+// QueryPowerRequest is the request type for the Query/ValidatorPower RPC
+// method.
 message QueryPowerRequest {}
 
 // ValidatorPower represents the power information for a validator.
@@ -455,7 +457,8 @@ message ValidatorPower {
   BondStatus status = 5;
 }
 
-// QueryPowerResponse is the response type for the Query/ValidatorPower RPC method.
+// QueryPowerResponse is the response type for the Query/ValidatorPower RPC
+// method.
 message QueryPowerResponse {
   // validator_power contains the power information for all validators.
   repeated ValidatorPower validator_power = 1;
@@ -465,10 +468,12 @@ message QueryPowerResponse {
   int64 height = 3;
 }
 
-// QueryBackfillRequestsRequest is the request type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsRequest is the request type for the
+// Query/BackfillRequests RPC method.
 message QueryBackfillRequestsRequest {}
 
-// QueryBackfillRequestsResponse is the response type for the Query/BackfillRequests RPC method.
+// QueryBackfillRequestsResponse is the response type for the
+// Query/BackfillRequests RPC method.
 message QueryBackfillRequestsResponse {
   // backfill_requests contains the list of backfill requests.
   BackfillRequests backfill_requests = 1;

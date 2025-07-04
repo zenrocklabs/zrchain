@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -12,25 +11,40 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go/rpc"
 )
 
 func main() {
+	// Parse flags first to determine debug level
 	port := flag.Int("port", 9191, "Override GRPC port from config")
 	cacheFile := flag.String("cache-file", "cache.json", "Override cache file path from config")
 	neutrinoPort := flag.Int("neutrino-port", 12345, "Override Neutrino RPC port (default: 12345)")
 	ethRPC := flag.String("eth-rpc", "", "Override Ethereum RPC endpoint from config")
 	neutrinoPath := flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory")
-	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	debug := flag.Bool("debug", false, "Enable debug mode for verbose logging")
+	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
+	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
+	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
+	version := flag.Bool("version", false, "Display version information and exit")
 
 	if !flag.Parsed() {
 		flag.Parse()
 	}
 
+	// Set up coloured structured logging
+	initLogger(*debug)
+
+	// Handle version command
+	if *version {
+		slog.Info("zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
+		os.Exit(0)
+	}
+
 	cfg := LoadConfig()
+
+	slog.Info("Starting zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 
 	if !cfg.Enabled {
 		for {
@@ -49,6 +63,12 @@ func main() {
 		cfg.StateFile = *cacheFile
 	}
 
+	// Reset state if version requires it – firstBoot will be true only once per version
+	firstBoot := resetStateForVersion(cfg.StateFile)
+	if firstBoot {
+		slog.Info("Completed first-boot cache reset for zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
+	}
+
 	// Set Neutrino port from flag or config
 	neutrinoRPCPort := *neutrinoPort
 	if neutrinoRPCPort == 0 && cfg.Neutrino.Port > 0 {
@@ -63,28 +83,31 @@ func main() {
 	} else if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
 	} else {
-		log.Fatalf("No RPC endpoint found for network: %s", cfg.Network)
+		slog.Error("No RPC endpoint found for network", "network", cfg.Network)
+		os.Exit(1)
 	}
 
-	ethClient, err := ethclient.Dial(rpcAddress)
+	ethClient, err := connectWithRetry(rpcAddress, 20, 3*time.Second)
 	if err != nil {
-		log.Fatalf("failed to connect to the Ethereum client: %v", err)
+		slog.Error("Failed to connect to the Ethereum client", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	neutrinoServer := neutrino.NeutrinoServer{}
-	neutrinoServer.Initialize(cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
+	neutrinoServer.Initialize(cfg.Network, cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *neutrinoPath)
 
 	solanaClient := solana.New(cfg.SolanaRPC[cfg.Network])
 
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
-		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
+		slog.Error("Refresh Address Client: failed to get new client", "error", err)
+		os.Exit(1)
 	}
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug, *skipInitialWait)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
@@ -99,7 +122,8 @@ func main() {
 	if !*noAVS {
 		go func() {
 			if err := oracle.runEigenOperator(); err != nil {
-				log.Fatalf("Error starting EigenLayer Operator: %v", err)
+				slog.Error("Error starting EigenLayer Operator", "error", err)
+				os.Exit(1)
 			}
 		}()
 	}

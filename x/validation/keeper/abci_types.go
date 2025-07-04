@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	VoteExtBytesLimit = 1024
+	VoteExtBytesLimit = 1280
 )
 
 var (
@@ -59,6 +59,7 @@ type (
 		ETHUSDPrice                string
 		LatestBtcBlockHeight       int64
 		LatestBtcHeaderHash        []byte
+		SidecarVersionName         string
 	}
 
 	VEWithVotePower struct {
@@ -94,6 +95,7 @@ type (
 		ETHUSDPrice                string
 		ConsensusData              abci.ExtendedCommitInfo
 		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
+		SidecarVersionName         string
 	}
 
 	ValidatorDelegations struct {
@@ -171,10 +173,6 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: EthBurnEventsHash is empty")
 		invalid = true
 	}
-	//if len(ve.SolanaBurnEventsHash) == 0 {
-	//	logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
-	//	invalid = true
-	//}
 	if len(ve.RedemptionsHash) == 0 {
 		logger.Error("invalid vote extension: RedemptionsHash is empty")
 		invalid = true
@@ -197,6 +195,26 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	}
 	if len(ve.LatestBtcHeaderHash) == 0 {
 		logger.Error("invalid vote extension: LatestBtcHeaderHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaMintNoncesHash) == 0 {
+		logger.Error("invalid vote extension: SolanaMintNonceHashes is empty")
+		invalid = true
+	}
+	if len(ve.SolanaAccountsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaAccountsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaMintEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaMintEventsHash is empty")
+		invalid = true
+	}
+	if len(ve.SolanaBurnEventsHash) == 0 {
+		logger.Error("invalid vote extension: SolanaBurnEventsHash is empty")
+		invalid = true
+	}
+	if ve.SidecarVersionName == "" {
+		logger.Error("invalid vote extension: SidecarVersionName is empty")
 		invalid = true
 	}
 
