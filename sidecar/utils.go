@@ -121,8 +121,8 @@ func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, 
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)
 }
 
-func LoadConfig() sidecartypes.Config {
-	configFile := getConfigFile()
+func LoadConfig(configFileFlag string) sidecartypes.Config {
+	configFile := getConfigFile(configFileFlag)
 	cfg, err := readConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to read config: %v", err)
@@ -130,12 +130,11 @@ func LoadConfig() sidecartypes.Config {
 	return cfg
 }
 
-func getConfigFile() string {
-	configFile := os.Getenv("SIDECAR_CONFIG_FILE")
-	if configFile == "" {
-		configFile = "config.yaml"
+func getConfigFile(configFileFlag string) string {
+	if configFileFlag != "" {
+		return configFileFlag
 	}
-	return configFile
+	return "config.yaml"
 }
 
 func readConfig(configFile string) (sidecartypes.Config, error) {

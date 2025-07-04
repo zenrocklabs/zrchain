@@ -23,9 +23,6 @@ genesis.json
 gentx
 reset.sh
 
-# Test files
-contracts/solrock/durablenonce_test.go
-
 # Scripts (with exceptions)
 scripts/bootstrap/**
 !scripts/bootstrap/main.sh

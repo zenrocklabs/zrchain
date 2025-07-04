@@ -97,9 +97,24 @@ func NewOracle(
 	// Initialize the function fields with the real implementations
 	o.getSolanaZenBTCBurnEventsFn = o.getSolanaZenBTCBurnEvents
 	o.getSolanaRockBurnEventsFn = o.getSolanaRockBurnEvents
-	o.rpcCallBatchFn = o.solanaClient.RPCCallBatch
-	o.getTransactionFn = o.solanaClient.GetTransaction
-	o.getSignaturesForAddressFn = o.solanaClient.GetSignaturesForAddressWithOpts
+
+	// Only initialize Solana-related functions if Solana client is available
+	if o.solanaClient != nil {
+		o.rpcCallBatchFn = o.solanaClient.RPCCallBatch
+		o.getTransactionFn = o.solanaClient.GetTransaction
+		o.getSignaturesForAddressFn = o.solanaClient.GetSignaturesForAddressWithOpts
+	} else {
+		// Set dummy functions that return empty results when Solana is disabled
+		o.rpcCallBatchFn = func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error) {
+			return jsonrpc.RPCResponses{}, nil
+		}
+		o.getTransactionFn = func(ctx context.Context, signature solana.Signature, opts *solrpc.GetTransactionOpts) (*solrpc.GetTransactionResult, error) {
+			return nil, fmt.Errorf("solana functionality disabled")
+		}
+		o.getSignaturesForAddressFn = func(ctx context.Context, account solana.PublicKey, opts *solrpc.GetSignaturesForAddressOpts) ([]*solrpc.TransactionSignature, error) {
+			return []*solrpc.TransactionSignature{}, nil
+		}
+	}
 
 	return o
 }
@@ -278,11 +293,15 @@ func (o *Oracle) fetchAndProcessState(
 	// Fetch zenBTC burn events from Ethereum
 	o.fetchEthereumBurnEvents(&wg, latestHeader, update, &updateMutex, errChan)
 
-	// Fetch Solana mint events for zenBTC
-	o.processSolanaMintEvents(&wg, update, &updateMutex, errChan)
+	// Fetch Solana mint events for zenBTC (only if Solana is enabled)
+	if o.solanaClient != nil {
+		o.processSolanaMintEvents(&wg, update, &updateMutex, errChan)
+	}
 
-	// Fetch Solana burn events for zenBTC and ROCK
-	o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	// Fetch Solana burn events for zenBTC and ROCK (only if Solana is enabled)
+	if o.solanaClient != nil {
+		o.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	}
 
 	// Fetch and populate backfill requests from zrChain
 	o.processBackfillRequests(&wg, update, &updateMutex)
@@ -1248,6 +1267,10 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 		return nil, fmt.Errorf("invalid signature string for backfill: %w", err)
 	}
 
+	if o.solanaClient == nil {
+		return nil, fmt.Errorf("solana functionality is disabled")
+	}
+
 	v0 := uint64(0)
 	txResult, err := o.solanaClient.GetTransaction(
 		context.Background(),
@@ -1753,6 +1776,11 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 // getSolanaLamportsPerSignature fetches the current lamports per signature from the Solana network
 // Uses the same slot rounding logic as getSolanaRecentBlockhash for consistency
 func (o *Oracle) getSolanaLamportsPerSignature(ctx context.Context) (uint64, error) {
+	if o.solanaClient == nil {
+		slog.Info("Solana functionality disabled, returning default lamports per signature")
+		return sidecartypes.DefaultSolanaFeeReturned, nil
+	}
+
 	// Create a simple dummy transaction to estimate fees.
 	// Using placeholder public keys. These don't need to exist or have funds
 	// as the transaction is not actually sent, only used for fee calculation.

@@ -20,7 +20,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	t.Skip("Skipping test on CI as it makes a real network call to Solana")
 
 	// 1. Setup
-	cfg := LoadConfig()
+	cfg := LoadConfig("")
 	var rpcAddress string
 	if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
