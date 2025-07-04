@@ -142,5 +142,5 @@ message MsgRemoveMultiGrant {
 }
 
 // MsgRemoveMultiGrantResponse defines the response structure for executing a
-// MsgRemoveMultiGrant message. 
+// MsgRemoveMultiGrant message.
 message MsgRemoveMultiGrantResponse {}

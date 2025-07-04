@@ -50,12 +50,17 @@ FROM alpine:3.18.0 AS certs
 RUN apk add --no-cache ca-certificates
 RUN adduser -Ds /bin/bash appuser
 
-# Copy binary to a scratch container. Let's keep our images nice and small!
-COPY --from=go_builder /zrchain/validator_sidecar /validator_sidecar
-COPY --from=go_builder /zrchain/sidecar/config.yaml /config.yaml
+# Create writable directory and symlink
+RUN mkdir /app && \
+    chown appuser:appuser /app
 
-# Set user
+# Copy binary to a scratch container. Let's keep our images nice and small!
+COPY --from=go_builder /zrchain/validator_sidecar /app/validator_sidecar
+COPY --from=go_builder /zrchain/sidecar/config.yaml.example /app/config.yaml
+
+# Set user and workdir
 USER appuser
+WORKDIR /app
 
 # Run the binary
-ENTRYPOINT [ "/validator_sidecar" ]
+ENTRYPOINT [ "/app/validator_sidecar" ]

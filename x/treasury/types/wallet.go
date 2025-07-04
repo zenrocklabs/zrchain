@@ -25,7 +25,7 @@ func NewWallet(k *Key, w WalletType) (Wallet, error) {
 	case WalletType_WALLET_TYPE_BTC_MAINNET:
 		return NewBTCWallet(k, &chaincfg.MainNetParams)
 	case WalletType_WALLET_TYPE_BTC_REGNET:
-		return NewBTCWallet(k, &chaincfg.MainNetParams)
+		return NewBTCWallet(k, &chaincfg.RegressionNetParams)
 	case WalletType_WALLET_TYPE_SOLANA:
 		return NewSolanaWallet(k)
 	}

@@ -189,6 +189,7 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 		SolanaAccountsHash:         solAccsHash[:],
 		SolanaMintEventsHash:       solanaMintEventsHash[:],
 		SolanaBurnEventsHash:       solanaBurnEventsHash[:],
+		SidecarVersionName:         oracleData.SidecarVersionName,
 	}
 
 	return voteExt, nil
@@ -1384,6 +1385,16 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
 		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			// If we don't have consensus on SolanaMintEventsHash we cannot reliably determine
+			// whether the associated event has arrived on-chain. In that case we should *not* run
+			// any retry or timeout logic, otherwise we risk redelivering the same transaction over
+			// and over again without a reliable confirmation signal.
+
+			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+				k.Logger(ctx).Debug("Skipping Solana mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
+				return nil
+			}
+
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
 			if tx.BlockHeight == 0 {
@@ -1519,6 +1530,16 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
 		// or requires a retry. It manages the lifecycle of the pending Solana transaction.
 		func(tx *zentptypes.Bridge) error {
+			// If we don't have consensus on SolanaMintEventsHash we cannot reliably determine
+			// whether the associated event has arrived on-chain. In that case we should *not* run
+			// any retry or timeout logic, otherwise we risk redelivering the same transaction over
+			// and over again without a reliable confirmation signal.
+
+			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+				k.Logger(ctx).Debug("Skipping Solana ROCK mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
+				return nil
+			}
+
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
 			if tx.BlockHeight == 0 {
@@ -1753,6 +1774,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
 			}
+			break // Found and processed, no need to check other events for this pending mint.
 		}
 	}
 }
@@ -1779,8 +1801,14 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	}
 
 	foundNewBurn := false
+	processedInThisRun := make(map[string]bool)
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
+		eventKey := fmt.Sprintf("%s-%d-%s", burn.TxID, burn.LogIndex, burn.ChainID)
+		if processedInThisRun[eventKey] {
+			continue
+		}
+		processedInThisRun[eventKey] = true
 		// For Solana events, we now use the explicit flag to distinguish burn types.
 		// We skip ROCK burns here. zenBTC burns will have IsZenBTC = true.
 		if !burn.IsZenBTC {
@@ -2199,10 +2227,15 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 
 func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	var toProcess []*sidecarapitypes.BurnEvent
+	processedInThisRun := make(map[string]bool)
 	for _, e := range oracleData.SolanaBurnEvents {
 		// Only process events that are explicitly marked as ROCK burns.
 		if e.IsZenBTC {
 			continue // This is a zenBTC burn, skip it.
+		}
+
+		if _, ok := processedInThisRun[e.TxID]; ok {
+			continue
 		}
 
 		addr, err := sdk.Bech32ifyAddressBytes("zen", e.DestinationAddr[:20])
@@ -2219,6 +2252,7 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			continue // burn already processed
 		} else {
 			toProcess = append(toProcess, &e)
+			processedInThisRun[e.TxID] = true
 		}
 	}
 

@@ -5,7 +5,6 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // Params defines the parameters for the module.

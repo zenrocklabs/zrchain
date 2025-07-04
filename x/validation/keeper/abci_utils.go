@@ -89,6 +89,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaBurnEvents:     resp.SolanaBurnEvents,
 		SolanaMintEvents:     resp.SolanaMintEvents,
+		SidecarVersionName:   resp.SidecarVersionName,
 	}, nil
 }
 
@@ -637,6 +638,10 @@ func (k *Keeper) getAddressByKeyID(ctx context.Context, keyID uint64, walletType
 func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
 		return "mainnet"
+	}
+	// This is the chainID needed in zrchain so it uses the bitcoin regnet node
+	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "docker") {
+		return "regnet"
 	}
 	return "testnet4"
 }
