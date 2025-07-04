@@ -16,9 +16,9 @@ The zrChain network uses a **Vote Extension** based consensus mechanism where va
 
 ### Vote Extension Process
 
-1. **Sidecar Data Collection**: Each validator's sidecar monitors external chains and collects oracle data
-2. **Vote Extension Creation**: During `ExtendVoteHandler`, validators create vote extensions containing hashes of their observed data
-3. **Consensus Verification**: In `PrepareProposal`/`ProcessProposal`, the network determines which fields have supermajority consensus
+1. **Sidecar Data Collection**: Each validator's sidecar continuously monitors external chains and collects oracle data
+2. **Vote Extension Creation**: During `ExtendVoteHandler`, validators query their sidecar and create vote extensions containing hashes of the observed data
+3. **Consensus Verification**: In `PrepareProposal`, the proposer queries sidecar state to validate it against vote extensions from the previous block, then determines which fields have supermajority consensus
 4. **State Application**: In `PreBlocker`, only fields with consensus are processed and applied to on-chain state
 
 This ensures that external blockchain state is only acted upon when there is strong validator agreement, providing security against oracle manipulation.
@@ -83,19 +83,27 @@ sequenceDiagram
     
     Note over Bitcoin: Block mined (deposit tx included)
     
-    Sidecar-->>zrChain: Report BTC Block Header, prices & network fees (via vote extension)
+    Note over zrChain: ExtendVoteHandler: Each validator queries their sidecar
+    zrChain->>Sidecar: Query current oracle state (BTC headers, prices, fees)
+    Sidecar-->>zrChain: Return oracle data hashes for vote extension
+    Note over zrChain: PrepareProposal: Proposer validates sidecar state against vote extensions
+    zrChain->>Sidecar: Query sidecar state to validate consensus
+    Sidecar-->>zrChain: Return full oracle data for validation
+    Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
+    
     Bitcoin Proxy->>Bitcoin: Detects deposit
     Bitcoin Proxy->>Bitcoin Proxy: Generate Merkle proof of BTC deposit transaction
     Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
-    Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
 
     zrChain->>zrChain: Verify Merkle proof against Bitcoin block headers
     zrChain->>zrChain: Validate transaction outputs and amounts
     zrChain->>zrChain: Create PendingMintTransaction (status: DEPOSITED)
     zrChain->>zrChain: Request Staker Nonce for EigenLayer
 
-    Sidecar->>EigenLayer: Polls for nonce values
-    Sidecar-->>zrChain: Report nonce data via Vote Extension
+    Note over zrChain: ExtendVoteHandler: Validators query sidecar for EigenLayer nonces
+    zrChain->>Sidecar: Query EigenLayer nonce data
+    Sidecar-->>zrChain: Return nonce data hashes for vote extension
+    Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
     Note over zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
     zrChain->>zrChain: PreBlocker: processZenBTCStaking()
@@ -108,15 +116,19 @@ sequenceDiagram
     zrChain-->>Relayer: Signed Stake Tx picked up
     Relayer->>EigenLayer: Broadcast Stake Tx
 
-    Sidecar->>EigenLayer: Polls for nonce update after tx broadcast
-    Sidecar-->>zrChain: Reports updated nonce (via vote extension)
+    Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
+    zrChain->>Sidecar: Query updated EigenLayer nonce
+    Sidecar-->>zrChain: Return updated nonce hash for vote extension
+    Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
     zrChain->>zrChain: PreBlocker confirms tx, updates status to STAKED
     zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
 
     alt Mint on Solana
-        Sidecar->>Solana: Polls for nonce and account data
-        Sidecar-->>zrChain: Report Solana nonce/account data via Vote Extension
+        Note over zrChain: ExtendVoteHandler: Validators query sidecar for Solana data
+        zrChain->>Sidecar: Query Solana nonce and account data
+        Sidecar-->>zrChain: Return Solana data hashes for vote extension
+        Note over zrChain: PrepareProposal: Proposer validates Solana data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsSolana()
         Note over zrChain: Checks for consensus on required data for transaction construction
@@ -131,8 +143,10 @@ sequenceDiagram
         Note over zrChain: Transaction has BTL timeout - will retry if sidecars have consensus + nonce doesn't advance
         Note over zrChain: Tracks AwaitingEventSince for timeout management
         
-        Sidecar->>Solana: Scans for Mint Events
-        Sidecar-->>zrChain: Reports new Mint Events (via vote extension)
+        Note over zrChain: ExtendVoteHandler: Validators query sidecar for Solana mint events
+        zrChain->>Sidecar: Query new Solana mint events
+        Sidecar-->>zrChain: Return mint event hashes for vote extension
+        Note over zrChain: PrepareProposal: Proposer validates mint events against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on mint events
         zrChain->>zrChain: PreBlocker: processSolanaZenBTCMintEvents()
         zrChain->>zrChain: Match event to PendingMintTransaction
@@ -140,8 +154,10 @@ sequenceDiagram
         Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
         zrChain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
-        Sidecar->>Ethereum: Polls for nonce values 
-        Sidecar-->>zrChain: Report Ethereum nonce data via Vote Extension
+        Note over zrChain: ExtendVoteHandler: Validators query sidecar for Ethereum nonces
+        zrChain->>Sidecar: Query Ethereum nonce values
+        Sidecar-->>zrChain: Return Ethereum nonce hashes for vote extension
+        Note over zrChain: PrepareProposal: Proposer validates nonce data against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         zrChain->>zrChain: PreBlocker: processZenBTCMintsEthereum()
         Note over zrChain: Checks for consensus on required data for transaction construction
@@ -154,8 +170,10 @@ sequenceDiagram
         zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Ethereum: Broadcast Mint Tx
 
-        Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-        Sidecar-->>zrChain: Reports updated nonce (via vote extension)
+        Note over zrChain: ExtendVoteHandler: Validators query sidecar for nonce updates
+        zrChain->>Sidecar: Query updated Ethereum nonce
+        Sidecar-->>zrChain: Return updated nonce hash for vote extension
+        Note over zrChain: PrepareProposal: Proposer validates updated nonce against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
         zrChain->>zrChain: PreBlocker confirms tx, updates status to MINTED
         Note over zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
