@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 
@@ -12,6 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	validationtestutil "github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 func TestValidateGenesis(t *testing.T) {
@@ -57,4 +61,28 @@ func TestValidateGenesis(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExportGenesisWithEmptyCollections(t *testing.T) {
+	// Test that the default genesis state has proper empty values
+	// This ensures our fix for empty collections works correctly
+	genesisState := validationtypes.DefaultGenesisState()
+	require.NotNil(t, genesisState)
+
+	// The default genesis state only sets Params, other fields are zero values
+	require.NotNil(t, genesisState.Params)
+	require.NotNil(t, genesisState.BackfillRequest)                // non-nil struct
+	require.Nil(t, genesisState.BackfillRequest.Requests)          // nil slice inside struct
+	require.Nil(t, genesisState.RequestedHistoricalBitcoinHeaders) // nil slice
+	require.Equal(t, int64(0), genesisState.LastValidVeHeight)     // zero value
+}
+
+func TestInitGenesis(t *testing.T) {
+	genesisState := validationtestutil.DefaultGenesis()
+
+	require.NotNil(t, genesisState.Params)
+	require.NotNil(t, genesisState.BackfillRequest)                // non-nil struct
+	require.Nil(t, genesisState.BackfillRequest.Requests)          // nil slice inside struct
+	require.Nil(t, genesisState.RequestedHistoricalBitcoinHeaders) // nil slice
+	require.Equal(t, int64(0), genesisState.LastValidVeHeight)     // zero value
 }

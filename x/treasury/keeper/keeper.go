@@ -563,16 +563,18 @@ func (k *Keeper) SplitKeyringFee(ctx context.Context, from, to string, fee uint6
 
 	zenrockFeeDec := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(fee)).Mul(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(prms.KeyringCommission)).Quo(sdkmath.LegacyNewDec(100)))
 
-	zenrockFee := uint64(zenrockFeeDec.RoundInt64())
+	zenrockFee := uint64(zenrockFeeDec.TruncateInt64())
 	keyringFee := fee - zenrockFee
 
-	if err = k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx,
-		sdk.MustAccAddressFromBech32(from),
-		types.KeyringCollectorName,
-		sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(zenrockFee))),
-	); err != nil {
-		return err
+	if zenrockFee > 0 {
+		if err = k.bankKeeper.SendCoinsFromAccountToModule(
+			ctx,
+			sdk.MustAccAddressFromBech32(from),
+			types.KeyringCollectorName,
+			sdk.NewCoins(sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(zenrockFee))),
+		); err != nil {
+			return err
+		}
 	}
 
 	if to == types.KeyringCollectorName {

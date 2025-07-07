@@ -80,9 +80,11 @@ class HVParams(_message.Message):
     def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., priceRetentionBlockRange: _Optional[int] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
-    __slots__ = ("non_voting_validators", "mismatched_vote_extensions")
+    __slots__ = ("non_voting_validators", "mismatched_vote_extensions", "block_height")
     NON_VOTING_VALIDATORS_FIELD_NUMBER: _ClassVar[int]
     MISMATCHED_VOTE_EXTENSIONS_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     non_voting_validators: _containers.RepeatedScalarFieldContainer[str]
     mismatched_vote_extensions: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, non_voting_validators: _Optional[_Iterable[str]] = ..., mismatched_vote_extensions: _Optional[_Iterable[str]] = ...) -> None: ...
+    block_height: int
+    def __init__(self, non_voting_validators: _Optional[_Iterable[str]] = ..., mismatched_vote_extensions: _Optional[_Iterable[str]] = ..., block_height: _Optional[int] = ...) -> None: ...

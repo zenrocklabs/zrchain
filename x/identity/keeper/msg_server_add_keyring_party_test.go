@@ -6,34 +6,12 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_msgServer_AddKeyringParty(t *testing.T) {
-
-	var defaultKr = types.Keyring{
-		Address:     "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:     "testCreator",
-		Description: "testDescription",
-		Admins:      []string{"testCreator"},
-		Parties:     []string{},
-		KeyReqFee:   0,
-		SigReqFee:   0,
-		IsActive:    true,
-	}
-
-	var wantKr = types.Keyring{
-		Address:        "keyring1pfnq7r04rept47gaf5cpdew2",
-		Creator:        "testCreator",
-		Description:    "testDescription",
-		Admins:         []string{"testCreator"},
-		Parties:        []string{"testParty"},
-		KeyReqFee:      0,
-		SigReqFee:      0,
-		IsActive:       true,
-		PartyThreshold: 1,
-	}
 
 	type args struct {
 		keyring *types.Keyring
@@ -49,16 +27,26 @@ func Test_msgServer_AddKeyringParty(t *testing.T) {
 		{
 			name: "PASS: add a party to a keyring",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgAddKeyringParty("testCreator", "keyring1pfnq7r04rept47gaf5cpdew2", "testParty"),
 			},
-			want:        &types.MsgAddKeyringPartyResponse{},
-			wantKeyring: &wantKr,
+			want: &types.MsgAddKeyringPartyResponse{},
+			wantKeyring: &types.Keyring{
+				Address:        testutil.DefaultKr.Address,
+				Creator:        testutil.DefaultKr.Creator,
+				Description:    testutil.DefaultKr.Description,
+				Admins:         testutil.DefaultKr.Admins,
+				Parties:        append(testutil.DefaultKr.Parties, "testParty"),
+				KeyReqFee:      testutil.DefaultKr.KeyReqFee,
+				SigReqFee:      testutil.DefaultKr.SigReqFee,
+				IsActive:       testutil.DefaultKr.IsActive,
+				PartyThreshold: 1,
+			},
 		},
 		{
 			name: "FAIL: keyring not found",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgAddKeyringParty("testCreator", "invalidKeyring", "testParty"),
 			},
 			want:    &types.MsgAddKeyringPartyResponse{},
@@ -85,7 +73,7 @@ func Test_msgServer_AddKeyringParty(t *testing.T) {
 		{
 			name: "FAIL: creator no keyring admin",
 			args: args{
-				keyring: &defaultKr,
+				keyring: &testutil.DefaultKr,
 				msg:     types.NewMsgAddKeyringParty("notKeyringAdmin", "keyring1pfnq7r04rept47gaf5cpdew2", "testParty"),
 			},
 			want:    &types.MsgAddKeyringPartyResponse{},

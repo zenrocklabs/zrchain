@@ -253,7 +253,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	oracleData, err := k.getValidatedOracleData(ctx, voteExt, fieldVotePowers)
+	oracleData, err := k.GetValidatedOracleData(ctx, voteExt, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
@@ -330,7 +330,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 	// Validator updates - only if EigenDelegationsHash has consensus
 	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
-		k.updateValidatorStakes(ctx, oracleData)
+		k.UpdateValidatorStakes(ctx, oracleData)
 		k.updateAVSDelegationStore(ctx, oracleData)
 	}
 
@@ -437,7 +437,7 @@ func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData O
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.
 // Only validates fields that have reached consensus as indicated in fieldVotePowers.
-func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
+func (k *Keeper) GetValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, fieldVotePowers map[VoteExtensionField]int64) (*OracleData, error) {
 	// We only fetch Ethereum state if we have consensus on EthBlockHeight
 	var oracleData *OracleData
 	var err error
@@ -533,7 +533,7 @@ func (k *Keeper) getValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 //
 
 // updateValidatorStakes updates validator stake values and delegation mappings.
-func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
+func (k *Keeper) UpdateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 	validatorInAVSDelegationSet := make(map[string]bool)
 
 	for _, delegation := range oracleData.ValidatorDelegations {
@@ -569,11 +569,11 @@ func (k *Keeper) updateValidatorStakes(ctx sdk.Context, oracleData OracleData) {
 		validatorInAVSDelegationSet[valAddr.String()] = true
 	}
 
-	k.removeStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
+	k.RemoveStaleValidatorDelegations(ctx, validatorInAVSDelegationSet)
 }
 
 // removeStaleValidatorDelegations removes delegation entries for validators not present in the current AVS data.
-func (k *Keeper) removeStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
+func (k *Keeper) RemoveStaleValidatorDelegations(ctx sdk.Context, validatorInAVSDelegationSet map[string]bool) {
 	var validatorsToRemove []string
 
 	if err := k.ValidatorDelegations.Walk(ctx, nil, func(valAddr string, stake sdkmath.Int) (bool, error) {
@@ -904,10 +904,12 @@ func processTransaction[T any](
 	checkForUpdateAndDispatchTx(k, ctx, keyID, requestedEthNonce, requestedSolNonce, nonceReqStore, pendingTxs, txDispatchCallback, txContinuationCallback)
 }
 
-// getPendingTransactions is a generic helper that walks a collections.Map with key type uint64
+// getPendingTransactions is a generic helper that walks a store with key type uint64
 // and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
 // If limit is 0, all matching items will be returned.
-func getPendingTransactions[T any](ctx sdk.Context, store collections.Map[uint64, T], predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
+func getPendingTransactions[T any](ctx sdk.Context, store interface {
+	Walk(ctx sdk.Context, rng *collections.Range[uint64], fn func(key uint64, value T) (bool, error)) error
+}, predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
 	var results []T
 	queryRange := &collections.Range[uint64]{}
 	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
@@ -1694,7 +1696,7 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	}
 	k.Logger(ctx).Info("ProcessSolanaZenBTCMintEvents: Processing with first pending ID.", "first_pending_id", firstPendingID)
 
-	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransactionsStore().Get(ctx, firstPendingID)
+	pendingMint, err := k.zenBTCKeeper.GetPendingMintTransaction(ctx, firstPendingID)
 	if err != nil {
 		k.Logger(ctx).Error("ProcessSolanaZenBTCMintEvents: Error getting pending mint transaction from store.", "id", firstPendingID, "error", err)
 		return
@@ -2091,7 +2093,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			if err != nil {
 				firstPendingID = 0
 			}
-			return k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
+			return k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
 		// txDispatchCallback: Constructs and submits an Ethereum transaction to call the 'complete' function
 		// on the EigenLayer contracts, which finalizes the unstaking process.
@@ -2158,7 +2160,7 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		startingIndex = 0
 	}
 
-	redemptions, err := k.getRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
+	redemptions, err := k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
 	if err != nil {
 		k.Logger(ctx).Error("error getting redemptions", "error", err)
 		return

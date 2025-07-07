@@ -6,28 +6,10 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/stretchr/testify/require"
 )
-
-var childWs = types.Workspace{
-	Address: "childWs",
-	Creator: "testOwner",
-	Owners:  []string{"testOwner"},
-}
-
-var invalidChildWs = types.Workspace{
-	Address: "invalidChildWs",
-	Creator: "testOwner2",
-	Owners:  []string{"testOwner2"},
-}
-
-var wsWithChild = types.Workspace{
-	Address:         "workspace14a2hpadpsy9h4auve2z8lw",
-	Creator:         "testOwner",
-	Owners:          []string{"testOwner"},
-	ChildWorkspaces: []string{"childWs"},
-}
 
 func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 	type args struct {
@@ -45,9 +27,9 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "PASS: add child workspace",
 			args: args{
-				workspace: &defaultWs,
-				childWs:   &childWs,
-				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", childWs.Address, 1000),
+				workspace: &testutil.DefaultWs,
+				childWs:   &testutil.ChildWs,
+				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", testutil.ChildWs.Address, 1000),
 			},
 			want: &types.MsgAppendChildWorkspaceResponse{},
 			wantWorkspace: &types.Workspace{
@@ -60,9 +42,9 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: workspace is nil or not found",
 			args: args{
-				workspace: &defaultWs,
-				childWs:   &childWs,
-				msg:       types.NewMsgAppendChildWorkspace("testOwner", "notAWorkspace", childWs.Address, 1000),
+				workspace: &testutil.DefaultWs,
+				childWs:   &testutil.ChildWs,
+				msg:       types.NewMsgAppendChildWorkspace("testOwner", "notAWorkspace", testutil.ChildWs.Address, 1000),
 			},
 			want:    &types.MsgAppendChildWorkspaceResponse{},
 			wantErr: true,
@@ -70,9 +52,9 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: creator is not an owner of parent",
 			args: args{
-				workspace: &defaultWs,
-				childWs:   &childWs,
-				msg:       types.NewMsgAppendChildWorkspace("notAnOwner", "workspace14a2hpadpsy9h4auve2z8lw", childWs.Address, 1000),
+				workspace: &testutil.DefaultWs,
+				childWs:   &testutil.ChildWs,
+				msg:       types.NewMsgAppendChildWorkspace("notAnOwner", "workspace14a2hpadpsy9h4auve2z8lw", testutil.ChildWs.Address, 1000),
 			},
 			want:    &types.MsgAppendChildWorkspaceResponse{},
 			wantErr: true,
@@ -80,9 +62,9 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: creator is not an owner of child",
 			args: args{
-				workspace: &defaultWs,
-				childWs:   &invalidChildWs,
-				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", invalidChildWs.Address, 1000),
+				workspace: &testutil.DefaultWs,
+				childWs:   &testutil.InvalidChildWs,
+				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", testutil.InvalidChildWs.Address, 1000),
 			},
 			want:    &types.MsgAppendChildWorkspaceResponse{},
 			wantErr: true,
@@ -90,8 +72,8 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: new child is already a child",
 			args: args{
-				workspace: &wsWithChild,
-				childWs:   &childWs,
+				workspace: &testutil.WsWithChild,
+				childWs:   &testutil.ChildWs,
 				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "childWs", 1000),
 			},
 			want:    &types.MsgAppendChildWorkspaceResponse{},
@@ -100,8 +82,8 @@ func Test_msgServer_AppendChildWorkspace(t *testing.T) {
 		{
 			name: "FAIL: new child is nil",
 			args: args{
-				workspace: &wsWithChild,
-				childWs:   &childWs,
+				workspace: &testutil.WsWithChild,
+				childWs:   &testutil.ChildWs,
 				msg:       types.NewMsgAppendChildWorkspace("testOwner", "workspace14a2hpadpsy9h4auve2z8lw", "noChild", 1000),
 			},
 			want:    &types.MsgAppendChildWorkspaceResponse{},
