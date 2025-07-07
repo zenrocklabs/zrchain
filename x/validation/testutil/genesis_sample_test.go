@@ -35,7 +35,7 @@ func TestTestGenesis(t *testing.T) {
 
 	// Verify other fields
 	require.True(t, genesis.Exported)
-	require.NotNil(t, genesis.HvParams)
+	require.NotNil(t, genesis.HVParams)
 	require.Len(t, genesis.AssetPrices, 3)
 	require.Len(t, genesis.AvsRewardsPool, 1)
 	require.Len(t, genesis.SolanaNonceRequested, 2)

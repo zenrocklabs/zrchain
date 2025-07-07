@@ -35,7 +35,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		panic(err)
 	}
 
-	hvParams := data.HvParams
+	hvParams := data.HVParams
 	if hvParams == nil {
 		hvParams = types.DefaultHVParams(ctx)
 	}
@@ -445,7 +445,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		UnbondingDelegations:              unbondingDelegations,
 		Redelegations:                     redelegations,
 		Exported:                          true,
-		HvParams:                          &hvParams,
+		HVParams:                          &hvParams,
 		AssetPrices:                       assetPrices,
 		LastValidVeHeight:                 lastValidVeHeight,
 		SlashEvents:                       slashEvents,

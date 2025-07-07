@@ -54,9 +54,10 @@ message GenesisState {
   // or initialized genesis.
   bool exported = 8;
 
-  // hv_params defines the hybrid validation parameters at genesis.
-  HVParams hv_params = 9;
+  // HVParams defines the hybrid validation parameters at genesis.
+  HVParams HVParams = 9;
 
+  // asset_prices defines the asset prices at genesis.
   repeated AssetData asset_prices = 10;
 
   // last_valid_ve_height defines the last valid ve height at genesis.

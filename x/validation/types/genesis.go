@@ -48,7 +48,7 @@ func NewGenesisState(
 		UnbondingDelegations:              unbondingDelegations,
 		Redelegations:                     redelegations,
 		Exported:                          exported,
-		HvParams:                          &hvParams,
+		HVParams:                          &hvParams,
 		AssetPrices:                       assetPrices,
 		LastValidVeHeight:                 lastValidVeHeight,
 		SlashEvents:                       slashEvents,

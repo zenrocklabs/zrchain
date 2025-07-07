@@ -16,7 +16,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "hv_params", "asset_prices", "last_valid_ve_height", "slash_events", "slash_event_count", "validation_infos", "btc_block_headers", "last_used_solana_nonce", "backfill_request", "last_used_ethereum_nonce", "requested_historical_bitcoin_headers", "avs_rewards_pool", "ethereum_nonce_requested", "solana_nonce_requested", "solana_zentp_accounts_requested", "solana_accounts_requested")
+    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "HVParams", "asset_prices", "last_valid_ve_height", "slash_events", "slash_event_count", "validation_infos", "btc_block_headers", "last_used_solana_nonce", "backfill_request", "last_used_ethereum_nonce", "requested_historical_bitcoin_headers", "avs_rewards_pool", "ethereum_nonce_requested", "solana_nonce_requested", "solana_zentp_accounts_requested", "solana_accounts_requested")
     PARAMS_FIELD_NUMBER: _ClassVar[int]
     LAST_TOTAL_POWER_FIELD_NUMBER: _ClassVar[int]
     LAST_VALIDATOR_POWERS_FIELD_NUMBER: _ClassVar[int]
@@ -25,7 +25,7 @@ class GenesisState(_message.Message):
     UNBONDING_DELEGATIONS_FIELD_NUMBER: _ClassVar[int]
     REDELEGATIONS_FIELD_NUMBER: _ClassVar[int]
     EXPORTED_FIELD_NUMBER: _ClassVar[int]
-    HV_PARAMS_FIELD_NUMBER: _ClassVar[int]
+    HVPARAMS_FIELD_NUMBER: _ClassVar[int]
     ASSET_PRICES_FIELD_NUMBER: _ClassVar[int]
     LAST_VALID_VE_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     SLASH_EVENTS_FIELD_NUMBER: _ClassVar[int]
@@ -49,7 +49,7 @@ class GenesisState(_message.Message):
     unbonding_delegations: _containers.RepeatedCompositeFieldContainer[_staking_pb2.UnbondingDelegation]
     redelegations: _containers.RepeatedCompositeFieldContainer[_staking_pb2.Redelegation]
     exported: bool
-    hv_params: _hybrid_validation_pb2.HVParams
+    HVParams: _hybrid_validation_pb2.HVParams
     asset_prices: _containers.RepeatedCompositeFieldContainer[_asset_data_pb2.AssetData]
     last_valid_ve_height: int
     slash_events: _containers.RepeatedCompositeFieldContainer[_hybrid_validation_pb2.SlashEvent]
@@ -65,7 +65,7 @@ class GenesisState(_message.Message):
     solana_nonce_requested: _containers.RepeatedScalarFieldContainer[int]
     solana_zentp_accounts_requested: _containers.RepeatedScalarFieldContainer[str]
     solana_accounts_requested: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., hv_params: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ..., asset_prices: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., last_valid_ve_height: _Optional[int] = ..., slash_events: _Optional[_Iterable[_Union[_hybrid_validation_pb2.SlashEvent, _Mapping]]] = ..., slash_event_count: _Optional[int] = ..., validation_infos: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidationInfo, _Mapping]]] = ..., btc_block_headers: _Optional[_Iterable[_Union[_sidecar_service_pb2.BTCBlockHeader, _Mapping]]] = ..., last_used_solana_nonce: _Optional[_Iterable[_Union[_solana_pb2.SolanaNonce, _Mapping]]] = ..., backfill_request: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ..., last_used_ethereum_nonce: _Optional[_Iterable[_Union[_mint_pb2.NonceData, _Mapping]]] = ..., requested_historical_bitcoin_headers: _Optional[_Iterable[_Union[_mint_pb2.RequestedBitcoinHeaders, _Mapping]]] = ..., avs_rewards_pool: _Optional[_Iterable[str]] = ..., ethereum_nonce_requested: _Optional[_Iterable[int]] = ..., solana_nonce_requested: _Optional[_Iterable[int]] = ..., solana_zentp_accounts_requested: _Optional[_Iterable[str]] = ..., solana_accounts_requested: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ..., asset_prices: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., last_valid_ve_height: _Optional[int] = ..., slash_events: _Optional[_Iterable[_Union[_hybrid_validation_pb2.SlashEvent, _Mapping]]] = ..., slash_event_count: _Optional[int] = ..., validation_infos: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidationInfo, _Mapping]]] = ..., btc_block_headers: _Optional[_Iterable[_Union[_sidecar_service_pb2.BTCBlockHeader, _Mapping]]] = ..., last_used_solana_nonce: _Optional[_Iterable[_Union[_solana_pb2.SolanaNonce, _Mapping]]] = ..., backfill_request: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ..., last_used_ethereum_nonce: _Optional[_Iterable[_Union[_mint_pb2.NonceData, _Mapping]]] = ..., requested_historical_bitcoin_headers: _Optional[_Iterable[_Union[_mint_pb2.RequestedBitcoinHeaders, _Mapping]]] = ..., avs_rewards_pool: _Optional[_Iterable[str]] = ..., ethereum_nonce_requested: _Optional[_Iterable[int]] = ..., solana_nonce_requested: _Optional[_Iterable[int]] = ..., solana_zentp_accounts_requested: _Optional[_Iterable[str]] = ..., solana_accounts_requested: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class LastValidatorPower(_message.Message):
     __slots__ = ("address", "power")

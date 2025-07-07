@@ -149,7 +149,7 @@ func TestGenesis() *validationtypes.GenesisState {
 		UnbondingDelegations:              nil,
 		Redelegations:                     nil,
 		Exported:                          true,
-		HvParams:                          &hvParams,
+		HVParams:                          &hvParams,
 		AssetPrices:                       assetPrices,
 		LastValidVeHeight:                 0,
 		SlashEvents:                       nil,
