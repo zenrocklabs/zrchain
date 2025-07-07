@@ -89,6 +89,7 @@ jobs:
           cd zenrock-stack
           ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
+          docker compose logs -f sidecar zrchain > /tmp/logs &
       - name: Wait for 90 seconds
         run: sleep 90
       - name: Run integration tests
@@ -96,5 +97,6 @@ jobs:
       - name: Stop Docker Compose stack
         if: always()
         run: |
+          cat /tmp/logs
           cd zenrock-stack
           docker compose -f docker-compose.yaml down --remove-orphans -v
