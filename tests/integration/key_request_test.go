@@ -1,9 +1,10 @@
 package integration_test
 
 import (
+	"strconv"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"strconv"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 )

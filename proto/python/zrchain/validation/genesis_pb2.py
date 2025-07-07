@@ -24,12 +24,17 @@ _sym_db = _symbol_database.Default()
 
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.validation import staking_pb2 as zrchain_dot_validation_dot_staking__pb2
+from zrchain.validation import solana_pb2 as zrchain_dot_validation_dot_solana__pb2
+from zrchain.validation import tx_pb2 as zrchain_dot_validation_dot_tx__pb2
+from zrchain.validation import asset_data_pb2 as zrchain_dot_validation_dot_asset__data__pb2
 from zrchain.validation import hybrid_validation_pb2 as zrchain_dot_validation_dot_hybrid__validation__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 from amino import amino_pb2 as amino_dot_amino__pb2
+from api import sidecar_service_pb2 as api_dot_sidecar__service__pb2
+from zrchain.zenbtc import mint_pb2 as zrchain_dot_zenbtc_dot_mint__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n zrchain/validation/genesis.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a zrchain/validation/staking.proto\x1a*zrchain/validation/hybrid_validation.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\"\xbb\x05\n\x0cGenesisState\x12=\n\x06params\x18\x01 \x01(\x0b\x32\x1a.zrchain.validation.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12Z\n\x10last_total_power\x18\x02 \x01(\x0c\x42\x30\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0elastTotalPower\x12\x65\n\x15last_validator_powers\x18\x03 \x03(\x0b\x32&.zrchain.validation.LastValidatorPowerB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastValidatorPowers\x12J\n\nvalidators\x18\x04 \x03(\x0b\x32\x1f.zrchain.validation.ValidatorHVB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nvalidators\x12K\n\x0b\x64\x65legations\x18\x05 \x03(\x0b\x32\x1e.zrchain.validation.DelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0b\x64\x65legations\x12g\n\x15unbonding_delegations\x18\x06 \x03(\x0b\x32\'.zrchain.validation.UnbondingDelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x14unbondingDelegations\x12Q\n\rredelegations\x18\x07 \x03(\x0b\x32 .zrchain.validation.RedelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\rredelegations\x12\x1a\n\x08\x65xported\x18\x08 \x01(\x08R\x08\x65xported\x12\x38\n\x08HVParams\x18\t \x01(\x0b\x32\x1c.zrchain.validation.HVParamsR\x08HVParams\"h\n\x12LastValidatorPower\x12\x32\n\x07\x61\x64\x64ress\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x07\x61\x64\x64ress\x12\x14\n\x05power\x18\x02 \x01(\x03R\x05power:\x08\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x42=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n zrchain/validation/genesis.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a zrchain/validation/staking.proto\x1a\x1fzrchain/validation/solana.proto\x1a\x1bzrchain/validation/tx.proto\x1a#zrchain/validation/asset_data.proto\x1a*zrchain/validation/hybrid_validation.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\x1a\x19\x61pi/sidecar_service.proto\x1a\x19zrchain/zenbtc/mint.proto\"\xb0\x0e\n\x0cGenesisState\x12=\n\x06params\x18\x01 \x01(\x0b\x32\x1a.zrchain.validation.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12Z\n\x10last_total_power\x18\x02 \x01(\x0c\x42\x30\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0elastTotalPower\x12\x65\n\x15last_validator_powers\x18\x03 \x03(\x0b\x32&.zrchain.validation.LastValidatorPowerB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastValidatorPowers\x12J\n\nvalidators\x18\x04 \x03(\x0b\x32\x1f.zrchain.validation.ValidatorHVB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nvalidators\x12K\n\x0b\x64\x65legations\x18\x05 \x03(\x0b\x32\x1e.zrchain.validation.DelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0b\x64\x65legations\x12g\n\x15unbonding_delegations\x18\x06 \x03(\x0b\x32\'.zrchain.validation.UnbondingDelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x14unbondingDelegations\x12Q\n\rredelegations\x18\x07 \x03(\x0b\x32 .zrchain.validation.RedelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\rredelegations\x12\x1a\n\x08\x65xported\x18\x08 \x01(\x08R\x08\x65xported\x12\x38\n\x08HVParams\x18\t \x01(\x0b\x32\x1c.zrchain.validation.HVParamsR\x08HVParams\x12@\n\x0c\x61sset_prices\x18\n \x03(\x0b\x32\x1d.zrchain.validation.AssetDataR\x0b\x61ssetPrices\x12/\n\x14last_valid_ve_height\x18\x0b \x01(\x03R\x11lastValidVeHeight\x12L\n\x0cslash_events\x18\x0c \x03(\x0b\x32\x1e.zrchain.validation.SlashEventB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0bslashEvents\x12*\n\x11slash_event_count\x18\r \x01(\x04R\x0fslashEventCount\x12X\n\x10validation_infos\x18\x0e \x03(\x0b\x32\".zrchain.validation.ValidationInfoB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0fvalidationInfos\x12J\n\x11\x62tc_block_headers\x18\x0f \x03(\x0b\x32\x13.api.BTCBlockHeaderB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62tcBlockHeaders\x12_\n\x16last_used_solana_nonce\x18\x10 \x03(\x0b\x32\x1f.zrchain.validation.SolanaNonceB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastUsedSolanaNonce\x12Z\n\x10\x62\x61\x63kfill_request\x18\x11 \x01(\x0b\x32$.zrchain.validation.BackfillRequestsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62\x61\x63kfillRequest\x12]\n\x18last_used_ethereum_nonce\x18\x12 \x03(\x0b\x32\x19.zrchain.zenbtc.NonceDataB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x15lastUsedEthereumNonce\x12\x83\x01\n$requested_historical_bitcoin_headers\x18\x13 \x03(\x0b\x32\'.zrchain.zenbtc.RequestedBitcoinHeadersB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R!requestedHistoricalBitcoinHeaders\x12/\n\x10\x61vs_rewards_pool\x18\x14 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x0e\x61vsRewardsPool\x12?\n\x18\x65thereum_nonce_requested\x18\x15 \x03(\x04\x42\x05\xa8\xe7\xb0*\x01R\x16\x65thereumNonceRequested\x12;\n\x16solana_nonce_requested\x18\x16 \x03(\x04\x42\x05\xa8\xe7\xb0*\x01R\x14solanaNonceRequested\x12L\n\x1fsolana_zentp_accounts_requested\x18\x17 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x1csolanaZentpAccountsRequested\x12\x41\n\x19solana_accounts_requested\x18\x18 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x17solanaAccountsRequested\"h\n\x12LastValidatorPower\x12\x32\n\x07\x61\x64\x64ress\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x07\x61\x64\x64ress\x12\x14\n\x05power\x18\x02 \x01(\x03R\x05power:\x08\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x42=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -51,12 +56,36 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['unbonding_delegations']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['redelegations']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['redelegations']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['slash_events']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['slash_events']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['validation_infos']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['validation_infos']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['btc_block_headers']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['btc_block_headers']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['last_used_solana_nonce']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['last_used_solana_nonce']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['backfill_request']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['backfill_request']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['last_used_ethereum_nonce']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['last_used_ethereum_nonce']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['requested_historical_bitcoin_headers']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['requested_historical_bitcoin_headers']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['avs_rewards_pool']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['avs_rewards_pool']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['ethereum_nonce_requested']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['ethereum_nonce_requested']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['solana_nonce_requested']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['solana_nonce_requested']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['solana_zentp_accounts_requested']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['solana_zentp_accounts_requested']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['solana_accounts_requested']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['solana_accounts_requested']._serialized_options = b'\250\347\260*\001'
   _globals['_LASTVALIDATORPOWER'].fields_by_name['address']._loaded_options = None
   _globals['_LASTVALIDATORPOWER'].fields_by_name['address']._serialized_options = b'\322\264-\024cosmos.AddressString'
   _globals['_LASTVALIDATORPOWER']._loaded_options = None
   _globals['_LASTVALIDATORPOWER']._serialized_options = b'\210\240\037\000\350\240\037\000'
-  _globals['_GENESISSTATE']._serialized_start=203
-  _globals['_GENESISSTATE']._serialized_end=902
-  _globals['_LASTVALIDATORPOWER']._serialized_start=904
-  _globals['_LASTVALIDATORPOWER']._serialized_end=1008
+  _globals['_GENESISSTATE']._serialized_start=356
+  _globals['_GENESISSTATE']._serialized_end=2196
+  _globals['_LASTVALIDATORPOWER']._serialized_start=2198
+  _globals['_LASTVALIDATORPOWER']._serialized_end=2302
 # @@protoc_insertion_point(module_scope)
