@@ -91,7 +91,7 @@ func main() {
 	}
 
 	// Validate and create zrChain client
-	zrChainQueryClient, err := validateZrChainClient(cfg, ctx)
+	zrChainQueryClient, err := validateZrChainClient(cfg)
 	if err != nil {
 		slog.Error("zrChain client validation failed", "error", err)
 		os.Exit(1)
@@ -218,23 +218,10 @@ func validateSolanaClient(cfg sidecartypes.Config, noSolana bool) (*solana.Clien
 }
 
 // validateZrChainClient creates and validates a zrChain query client connection
-func validateZrChainClient(cfg sidecartypes.Config, ctx context.Context) (*client.QueryClient, error) {
-	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
+func validateZrChainClient(cfg sidecartypes.Config) (*client.QueryClient, error) {
+	zrChainQueryClient, err := connectZrChainWithRetry(cfg.ZRChainRPC, sidecartypes.RPCConnectionMaxRetries, sidecartypes.RPCConnectionRetryDelay)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create zrChain query client: %w", err)
-	}
-
-	// Validate zrChain connectivity with a simple query
-	if zrChainQueryClient == nil {
-		return nil, fmt.Errorf("zrChain query client is nil after creation")
-	}
-
-	// Test connectivity with a simple query
-	zrChainHealthCtx, zrChainHealthCancel := context.WithTimeout(ctx, 10*time.Second)
-	_, err = zrChainQueryClient.BondedValidators(zrChainHealthCtx, nil)
-	zrChainHealthCancel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify zrChain client connectivity - BondedValidators call failed: %w", err)
+		return nil, fmt.Errorf("failed to connect to zrChain client: %w", err)
 	}
 
 	slog.Info("Successfully verified zrChain client connectivity", "endpoint", cfg.ZRChainRPC)
