@@ -116,6 +116,10 @@ var (
 	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
 	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
 
+	// RPC connection retry parameters
+	RPCConnectionMaxRetries = 20
+	RPCConnectionRetryDelay = 3 * time.Second
+
 	// HTTP and RPC constants
 	DefaultHTTPTimeout        = 10 * time.Second
 	DefaultSolanaFeeReturned  = uint64(5000) // Default fee in lamports per signature
@@ -123,11 +127,11 @@ var (
 	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
 	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon"
+	SidecarVersionName = "salmon_moon_r1"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon", "salmon_moon"}
+	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon", "salmon_moon_r1"}
 )
 
 // PriceFeed struct with fields for different price feeds

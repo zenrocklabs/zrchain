@@ -84,7 +84,7 @@ func main() {
 	neutrinoServer.Initialize(cfg.Network, cfg.ProxyRPC.URL, cfg.ProxyRPC.User, cfg.ProxyRPC.Password, cfg.Neutrino.Path, neutrinoRPCPort, *flags.neutrinoPath)
 
 	// Validate and create Solana client
-	solanaClient, err := validateSolanaClient(cfg, *flags.noSolana, ctx)
+	solanaClient, err := validateSolanaClient(cfg, *flags.noSolana)
 	if err != nil {
 		slog.Error("Solana client validation failed", "error", err)
 		os.Exit(1)
@@ -178,7 +178,7 @@ func validateEthereumClient(cfg sidecartypes.Config, ethRPCOverride string) (*et
 		return nil, fmt.Errorf("no Ethereum RPC endpoint found for network: %s", cfg.Network)
 	}
 
-	ethClient, err := connectWithRetry(rpcAddress, 20, 3*time.Second)
+	ethClient, err := connectEthereumWithRetry(rpcAddress, sidecartypes.RPCConnectionMaxRetries, sidecartypes.RPCConnectionRetryDelay)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client: %w", err)
 	}
@@ -197,7 +197,7 @@ func validateEthereumClient(cfg sidecartypes.Config, ethRPCOverride string) (*et
 }
 
 // validateSolanaClient creates and validates a Solana client connection if not disabled
-func validateSolanaClient(cfg sidecartypes.Config, noSolana bool, ctx context.Context) (*solana.Client, error) {
+func validateSolanaClient(cfg sidecartypes.Config, noSolana bool) (*solana.Client, error) {
 	if noSolana {
 		slog.Info("Solana functionality disabled for testing")
 		return nil, nil
@@ -209,22 +209,11 @@ func validateSolanaClient(cfg sidecartypes.Config, noSolana bool, ctx context.Co
 		return nil, fmt.Errorf("no Solana RPC endpoint configured for network: %s. Consider using --no-solana flag if Solana functionality is not needed", cfg.Network)
 	}
 
-	solanaClient := solana.New(solanaEndpoint)
-
-	// Validate Solana client connectivity early
-	if solanaClient == nil {
-		return nil, fmt.Errorf("failed to create Solana client")
-	}
-
-	// Test basic connectivity with a simple RPC call
-	healthCtx, healthCancel := context.WithTimeout(ctx, 10*time.Second)
-	_, err := solanaClient.GetHealth(healthCtx)
-	healthCancel()
+	solanaClient, err := connectSolanaWithRetry(solanaEndpoint, sidecartypes.RPCConnectionMaxRetries, sidecartypes.RPCConnectionRetryDelay)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Solana client - health check failed: %w. Consider using --no-solana flag if Solana functionality is not needed", err)
+		return nil, fmt.Errorf("failed to connect to Solana client: %w. Consider using --no-solana flag if Solana functionality is not needed", err)
 	}
 
-	slog.Info("Successfully connected to Solana client", "endpoint", solanaEndpoint)
 	return solanaClient, nil
 }
 

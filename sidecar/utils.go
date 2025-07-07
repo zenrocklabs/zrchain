@@ -18,6 +18,7 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go"
+	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
@@ -455,28 +456,71 @@ func initLogger(debug bool) {
 	})))
 }
 
-func connectWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
-	var client *ethclient.Client
+func connectWithRetry[T any](
+	serviceName string,
+	rpcAddress string,
+	maxRetries int,
+	delay time.Duration,
+	createClient func(string) (T, error),
+	healthCheck func(T, context.Context) error,
+) (T, error) {
+	var client T
 	var err error
 
 	for i := 0; i < maxRetries || maxRetries == 0; i++ {
-		client, err = ethclient.Dial(rpcAddress)
+		client, err = createClient(rpcAddress)
 		if err == nil {
-			// Check if client can respond to eth_blockNumber
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			_, err = client.BlockNumber(ctx)
-			if err == nil {
-				slog.Info("Successfully connected to Ethereum client", "rpc", rpcAddress)
-				return client, err
+			if err = healthCheck(client, ctx); err == nil {
+				slog.Info("Successfully connected to client", "service", serviceName, "rpc", rpcAddress)
+				return client, nil
 			}
-			client.Close()
 		}
 
-		slog.Warn("Retrying connection to Ethereum client", "attempt", i+1, "error", err)
+		slog.Warn("Retrying connection to client", "service", serviceName, "attempt", i+1, "error", err)
 		time.Sleep(delay)
 	}
 
-	return nil, err
+	return client, err
+}
+
+func connectEthereumWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
+	return connectWithRetry(
+		"Ethereum",
+		rpcAddress,
+		maxRetries,
+		delay,
+		func(addr string) (*ethclient.Client, error) {
+			return ethclient.Dial(addr)
+		},
+		func(client *ethclient.Client, ctx context.Context) error {
+			_, err := client.BlockNumber(ctx)
+			if err != nil {
+				client.Close()
+			}
+			return err
+		},
+	)
+}
+
+func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*solanarpc.Client, error) {
+	return connectWithRetry(
+		"Solana",
+		rpcAddress,
+		maxRetries,
+		delay,
+		func(addr string) (*solanarpc.Client, error) {
+			client := solanarpc.New(addr)
+			if client == nil {
+				return nil, fmt.Errorf("failed to create Solana client")
+			}
+			return client, nil
+		},
+		func(client *solanarpc.Client, ctx context.Context) error {
+			_, err := client.GetHealth(ctx)
+			return err
+		},
+	)
 }
