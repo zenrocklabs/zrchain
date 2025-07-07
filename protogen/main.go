@@ -218,13 +218,23 @@ func generatePulsarCode() {
 
 	fmt.Println("Generating proto pulsar code")
 
-	// Run buf generate command
+	// Run buf generate command for main proto files
 	bufGenCmd := exec.Command("buf", "generate", "-v", "--template", filepath.Join(projectRootDir, "proto", "buf.gen.pulsar.yaml"))
 	bufGenCmd.Dir = projectRootDir
 	bufGenCmd.Stdout = os.Stdout
 	bufGenCmd.Stderr = os.Stderr
 	if err := bufGenCmd.Run(); err != nil {
 		log.Fatalf("Failed to run buf generate: %v", err)
+	}
+
+	// Also generate pulsar code for sidecar proto files
+	fmt.Println("Generating sidecar proto pulsar code")
+	sidecarBufGenCmd := exec.Command("buf", "generate", "-v", "--template", filepath.Join(projectRootDir, "proto", "buf.gen.pulsar.yaml"), "buf.build/zenrock-foundation/sidecar")
+	sidecarBufGenCmd.Dir = projectRootDir
+	sidecarBufGenCmd.Stdout = os.Stdout
+	sidecarBufGenCmd.Stderr = os.Stderr
+	if err := sidecarBufGenCmd.Run(); err != nil {
+		log.Printf("Warning: Failed to generate sidecar pulsar code: %v", err)
 	}
 
 	fmt.Println("Pulsar files generated.")

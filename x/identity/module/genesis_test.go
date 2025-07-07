@@ -6,6 +6,7 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
 	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 
 	"github.com/stretchr/testify/require"
@@ -13,8 +14,10 @@ import (
 
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
-		Params: types.DefaultParams(),
-		PortId: types.PortID,
+		Params:     types.DefaultParams(),
+		PortId:     types.PortID,
+		Keyrings:   []types.Keyring{testutil.DefaultKr},
+		Workspaces: []types.Workspace{testutil.DefaultWs},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 

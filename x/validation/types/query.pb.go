@@ -1882,7 +1882,9 @@ type QueryClient interface {
 	Pool(ctx context.Context, in *QueryPoolRequest, opts ...grpc.CallOption) (*QueryPoolResponse, error)
 	// Parameters queries the staking parameters.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// ValidatorPower queries the voting power of a validator.
 	ValidatorPower(ctx context.Context, in *QueryPowerRequest, opts ...grpc.CallOption) (*QueryPowerResponse, error)
+	// BackfillRequests queries the backfill requests.
 	QueryBackfillRequests(ctx context.Context, in *QueryBackfillRequestsRequest, opts ...grpc.CallOption) (*QueryBackfillRequestsResponse, error)
 }
 
@@ -2093,7 +2095,9 @@ type QueryServer interface {
 	Pool(context.Context, *QueryPoolRequest) (*QueryPoolResponse, error)
 	// Parameters queries the staking parameters.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// ValidatorPower queries the voting power of a validator.
 	ValidatorPower(context.Context, *QueryPowerRequest) (*QueryPowerResponse, error)
+	// BackfillRequests queries the backfill requests.
 	QueryBackfillRequests(context.Context, *QueryBackfillRequestsRequest) (*QueryBackfillRequestsResponse, error)
 }
 
@@ -2442,6 +2446,7 @@ func _Query_QueryBackfillRequests_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.validation.Query",
 	HandlerType: (*QueryServer)(nil),

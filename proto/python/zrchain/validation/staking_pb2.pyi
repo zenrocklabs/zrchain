@@ -1,12 +1,10 @@
 from gogoproto import gogo_pb2 as _gogo_pb2
-from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from amino import amino_pb2 as _amino_pb2
-from tendermint.types import types_pb2 as _types_pb2
-from tendermint.abci import types_pb2 as _types_pb2_1
+from tendermint.abci import types_pb2 as _types_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -218,5 +216,5 @@ class Pool(_message.Message):
 class ValidatorUpdates(_message.Message):
     __slots__ = ("updates",)
     UPDATES_FIELD_NUMBER: _ClassVar[int]
-    updates: _containers.RepeatedCompositeFieldContainer[_types_pb2_1.ValidatorUpdate]
-    def __init__(self, updates: _Optional[_Iterable[_Union[_types_pb2_1.ValidatorUpdate, _Mapping]]] = ...) -> None: ...
+    updates: _containers.RepeatedCompositeFieldContainer[_types_pb2.ValidatorUpdate]
+    def __init__(self, updates: _Optional[_Iterable[_Union[_types_pb2.ValidatorUpdate, _Mapping]]] = ...) -> None: ...

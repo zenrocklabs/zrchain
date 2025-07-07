@@ -358,8 +358,6 @@ func Test_msgServer_NewSignatureRequest(t *testing.T) {
 			}
 			policymodule.InitGenesis(ctx, *pk, pGenesis)
 
-			keepers.ZentpKeeper.EXPECT().GetSignerKeyID(ctx).Return(uint64(0)).AnyTimes()
-
 			msgSer := keeper.NewMsgServerImpl(*tk, true)
 			got, err := msgSer.NewSignatureRequest(ctx, tt.args.msg)
 
