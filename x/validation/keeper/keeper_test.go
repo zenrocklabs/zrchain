@@ -140,7 +140,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		Btl:               20,
 	}).AnyTimes()
 	zentpKeeper.EXPECT().GetMintsWithStatus(ubermock.Any(), ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
-	zentpKeeper.EXPECT().GetMintsWithPendingStatus(ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatusPending(ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())

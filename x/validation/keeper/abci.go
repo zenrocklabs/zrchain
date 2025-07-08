@@ -1447,7 +1447,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		// pendingGetter: Fetches pending solROCK mints that are in the PENDING state.
 		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
-			mints, err := k.zentpKeeper.GetMintsWithPendingStatus(ctx)
+			mints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 			return mints, err
 		},
 		// txDispatchCallback: Constructs and dispatches a Solana transaction to mint ROCK tokens.
@@ -1583,7 +1583,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 
-	pendingMints, err := k.zentpKeeper.GetMintsWithPendingStatus(ctx)
+	pendingMints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return

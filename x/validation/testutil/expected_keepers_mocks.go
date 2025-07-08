@@ -877,21 +877,6 @@ func (mr *MockZentpKeeperMockRecorder) GetBurns(goCtx, arg1, chainID, txHash any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBurns", reflect.TypeOf((*MockZentpKeeper)(nil).GetBurns), goCtx, arg1, chainID, txHash)
 }
 
-// GetMintsWithPendingStatus mocks base method.
-func (m *MockZentpKeeper) GetMintsWithPendingStatus(goCtx context.Context) ([]*types1.Bridge, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMintsWithPendingStatus", goCtx)
-	ret0, _ := ret[0].([]*types1.Bridge)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetMintsWithPendingStatus indicates an expected call of GetMintsWithPendingStatus.
-func (mr *MockZentpKeeperMockRecorder) GetMintsWithPendingStatus(goCtx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMintsWithPendingStatus", reflect.TypeOf((*MockZentpKeeper)(nil).GetMintsWithPendingStatus), goCtx)
-}
-
 // GetMintsWithStatus mocks base method.
 func (m *MockZentpKeeper) GetMintsWithStatus(goCtx context.Context, status types1.BridgeStatus) ([]*types1.Bridge, error) {
 	m.ctrl.T.Helper()
@@ -905,6 +890,21 @@ func (m *MockZentpKeeper) GetMintsWithStatus(goCtx context.Context, status types
 func (mr *MockZentpKeeperMockRecorder) GetMintsWithStatus(goCtx, status any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMintsWithStatus", reflect.TypeOf((*MockZentpKeeper)(nil).GetMintsWithStatus), goCtx, status)
+}
+
+// GetMintsWithStatusPending mocks base method.
+func (m *MockZentpKeeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types1.Bridge, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMintsWithStatusPending", goCtx)
+	ret0, _ := ret[0].([]*types1.Bridge)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMintsWithStatusPending indicates an expected call of GetMintsWithStatusPending.
+func (mr *MockZentpKeeperMockRecorder) GetMintsWithStatusPending(goCtx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMintsWithStatusPending", reflect.TypeOf((*MockZentpKeeper)(nil).GetMintsWithStatusPending), goCtx)
 }
 
 // GetSignerKeyID mocks base method.
