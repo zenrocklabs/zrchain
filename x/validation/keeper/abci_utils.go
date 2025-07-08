@@ -36,7 +36,6 @@ import (
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
-	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -866,6 +865,31 @@ func (k Keeper) CalculateZenBTCMintFee(
 	return feeZenBTC
 }
 
+// CalculateFlatZenBTCMintFee calculates a flat $5 fee in zenBTC
+// Returns 0 if BTCUSDPrice is zero
+func (k Keeper) CalculateFlatZenBTCMintFee(
+	btcUSDPrice math.LegacyDec,
+	exchangeRate math.LegacyDec,
+) uint64 {
+	if btcUSDPrice.IsZero() {
+		return 0
+	}
+
+	// Flat $5 fee
+	feeUSD := math.LegacyNewDec(5)
+
+	// Convert USD fee to BTC
+	feeInBTC := feeUSD.Quo(btcUSDPrice)
+
+	// Convert to satoshis (multiply by 1e8)
+	satoshis := feeInBTC.Mul(math.LegacyNewDec(1e8)).TruncateInt().Uint64()
+
+	// Convert BTC fee to zenBTC using exchange rate
+	feeZenBTC := math.LegacyNewDecFromInt(math.NewIntFromUint64(satoshis)).Quo(exchangeRate).TruncateInt().Uint64()
+
+	return feeZenBTC
+}
+
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
 func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.MintTransactionStatus, walletType zenbtctypes.WalletType) ([]zenbtctypes.PendingMintTransaction, error) {
 	firstPendingID := uint64(0)
@@ -978,12 +1002,12 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 
 	// Keep track of unique validators that had mismatches in this block - O(N)
 	mismatchedValidators := make(map[string]struct{})
-	
+
 	for _, v := range consensusData.Votes {
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
 			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
 			mismatchedValidators[validatorHexAddr] = struct{}{}
-			
+
 			// Still record in ValidationInfo for backward compatibility
 			info, err := k.ValidationInfos.Get(ctx, height)
 			if err != nil {
@@ -995,7 +1019,7 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 			}
 		}
 	}
-	
+
 	// Update the sliding window counters for each mismatched validator - O(M) where M = unique mismatched validators
 	for validatorHexAddr := range mismatchedValidators {
 		k.updateValidatorMismatchCount(ctx, validatorHexAddr, height)
@@ -1006,11 +1030,11 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 // Time complexity: O(1) amortized per call
 func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr string, blockHeight int64) {
 	const windowSize = 100
-	
+
 	// Get existing count or create new one
 	mismatchCount, err := k.ValidatorMismatchCounts.Get(ctx, validatorHexAddr)
 	if err != nil {
-		// No existing record, create new one
+		// No existing record, create new
 		mismatchCount = types.ValidatorMismatchCount{
 			ValidatorAddress: validatorHexAddr,
 			MismatchBlocks:   []int64{blockHeight},
@@ -1021,25 +1045,25 @@ func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr 
 		}
 		return
 	}
-	
+
 	// Remove blocks that are outside the sliding window (older than 100 blocks)
 	windowStart := blockHeight - windowSize + 1
 	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
-	
+
 	// Keep only blocks within the window - O(W) where W is window size (100)
 	for _, block := range mismatchCount.MismatchBlocks {
 		if block >= windowStart {
 			newMismatchBlocks = append(newMismatchBlocks, block)
 		}
 	}
-	
+
 	// Add the new block (maintaining sorted order since we always append increasing heights)
 	newMismatchBlocks = append(newMismatchBlocks, blockHeight)
-	
+
 	// Update the count
 	mismatchCount.MismatchBlocks = newMismatchBlocks
 	mismatchCount.TotalCount = uint32(len(newMismatchBlocks))
-	
+
 	if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
 		k.Logger(ctx).Error("error updating validator mismatch count", "validator", validatorHexAddr, "error", err)
 	}
@@ -1628,7 +1652,7 @@ func (k Keeper) populateAccountsForSolanaMints(
 	requestStore collections.Map[string, bool],
 	mintAddress string,
 	flowDescription string, // For logging purposes, e.g., "ZenBTC" or "ZenTP"
-	solAccs map[string]solToken.Account, // Map to populate
+	solAccs map[string]token.Account, // Map to populate
 ) error {
 	storeIterator, err := requestStore.Iterate(ctx, nil)
 	if err != nil {
@@ -1683,8 +1707,8 @@ func (k Keeper) populateAccountsForSolanaMints(
 
 // retrieveSolanaAccounts retrieves all requested Solana token accounts.
 // The returned map keys are ATA addresses.
-func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
-	solAccs := make(map[string]solToken.Account) // Key: ATA Address string
+func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Account, error) {
+	solAccs := make(map[string]token.Account) // Key: ATA Address string
 
 	// 1. Process ZenBTC related accounts
 	zenBTCMintAddress := ""

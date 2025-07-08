@@ -1148,7 +1148,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			}
 
 			// Check for consensus
-			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
@@ -1165,18 +1165,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				k.Logger(ctx).Error("invalid BTC/USD price", "error", err)
 				return nil
 			}
-			ethUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
-			if err != nil || ethUSDPrice.IsNil() || ethUSDPrice.IsZero() {
-				k.Logger(ctx).Error("invalid ETH/USD price", "error", err)
-				return nil
-			}
 
-			feeZenBTC := k.CalculateZenBTCMintFee(
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-				oracleData.EthGasLimit,
+			feeZenBTC := k.CalculateFlatZenBTCMintFee(
 				btcUSDPrice,
-				ethUSDPrice,
 				exchangeRate,
 			)
 
@@ -1284,7 +1275,6 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			requiredFields := []VoteExtensionField{
 				VEFieldSolanaMintNoncesHash,
 				VEFieldBTCUSDPrice,
-				VEFieldETHUSDPrice,
 				VEFieldSolanaAccountsHash,
 			}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
@@ -1298,23 +1288,14 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				k.Logger(ctx).Error("invalid BTC/USD price", "error", err)
 				return nil
 			}
-			ethUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
-			if err != nil || ethUSDPrice.IsNil() || ethUSDPrice.IsZero() {
-				k.Logger(ctx).Error("invalid ETH/USD price", "error", err)
-				return nil
-			}
 
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 			if err != nil {
 				return err
 			}
 
-			feeZenBTC := k.CalculateZenBTCMintFee(
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-				oracleData.EthGasLimit,
+			feeZenBTC := k.CalculateFlatZenBTCMintFee(
 				btcUSDPrice,
-				ethUSDPrice,
 				exchangeRate,
 			)
 
