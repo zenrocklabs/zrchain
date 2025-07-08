@@ -1783,9 +1783,6 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
 			}
-			if err = k.zenBTCKeeper.SetFirstPendingSolMintTransaction(ctx, 0); err != nil {
-				k.Logger(ctx).Error("zenBTCKeeper.SetFirstPendingSolMintTransaction: ", err.Error())
-			}
 			break // Found and processed, no need to check other events for this pending mint.
 		}
 	}
