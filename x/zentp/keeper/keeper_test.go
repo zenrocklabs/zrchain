@@ -217,7 +217,7 @@ func (s *IntegrationTestSuite) TestGetMintsWithStatus() {
 	err = s.zentpKeeper.UpdateMint(s.ctx, 1, &mint)
 	s.Require().NoError(err)
 
-	mints, err := s.zentpKeeper.GetMintsWithStatus(s.ctx, types.BridgeStatus_BRIDGE_STATUS_PENDING)
+	mints, err := s.zentpKeeper.GetMintsWithStatusPending(s.ctx)
 	s.Require().NoError(err)
 	s.Require().Len(mints, 1)
 	s.Require().Equal(mint, *mints[0])
