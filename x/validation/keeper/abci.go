@@ -1357,9 +1357,6 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				"recipient", tx.RecipientAddress,
 				"amount", tx.Amount,
 				"nonce", oracleData.SolanaMintNonces[solParams.NonceAccountKey],
-				"gas_limit", oracleData.EthGasLimit,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
 			)
 
 			txID, err := k.submitSolanaTransaction(
