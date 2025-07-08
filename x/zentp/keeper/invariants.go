@@ -20,7 +20,7 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 		return errors.Wrap(err, "failed to get solana rock supply")
 	}
 
-	pendingMints, err := k.GetMintsWithStatus(ctx, types.BridgeStatus_BRIDGE_STATUS_PENDING)
+	pendingMints, err := k.GetMintsWithStatusPending(ctx)
 	if err != nil {
 		// It's ok if there are no pending mints, so we don't return an error.
 	}

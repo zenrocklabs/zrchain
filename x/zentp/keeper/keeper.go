@@ -194,6 +194,31 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 	return mints, nil
 }
 
+func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridge, error) {
+	pendingmints, _, err := query.CollectionFilteredPaginate(
+		goCtx,
+		k.MintStore,
+		&query.PageRequest{
+			Reverse: true,
+		},
+		func(key uint64, value types.Bridge) (bool, error) {
+			// stop iteration when we encounter a completed mint
+			if value.State == types.BridgeStatus_BRIDGE_STATUS_COMPLETED {
+				return false, nil
+			}
+			return value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING, nil
+		},
+		func(key uint64, value types.Bridge) (*types.Bridge, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return pendingmints, nil
+}
+
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
 	return k.MintStore.Set(ctx, id, *mint)
 }
