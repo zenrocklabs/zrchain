@@ -924,6 +924,21 @@ func (mr *MockZentpKeeperMockRecorder) GetSolanaROCKSupply(ctx interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSolanaROCKSupply", reflect.TypeOf((*MockZentpKeeper)(nil).GetSolanaROCKSupply), ctx)
 }
 
+// GetTotalROCKSupply mocks base method.
+func (m *MockZentpKeeper) GetTotalROCKSupply(ctx types2.Context) (math.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalROCKSupply", ctx)
+	ret0, _ := ret[0].(math.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalROCKSupply indicates an expected call of GetTotalROCKSupply.
+func (mr *MockZentpKeeperMockRecorder) GetTotalROCKSupply(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalROCKSupply", reflect.TypeOf((*MockZentpKeeper)(nil).GetTotalROCKSupply), ctx)
+}
+
 // SetSolanaROCKSupply mocks base method.
 func (m *MockZentpKeeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error {
 	m.ctrl.T.Helper()
