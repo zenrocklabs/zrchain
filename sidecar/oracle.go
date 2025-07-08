@@ -1271,14 +1271,13 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 		return nil, fmt.Errorf("solana functionality is disabled")
 	}
 
-	v0 := uint64(0)
 	txResult, err := o.solanaClient.GetTransaction(
 		context.Background(),
 		sig,
 		&solrpc.GetTransactionOpts{
 			Encoding:                       solana.EncodingBase64,
 			Commitment:                     solrpc.CommitmentConfirmed,
-			MaxSupportedTransactionVersion: &v0,
+			MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
 		},
 	)
 	if err != nil {
@@ -1480,7 +1479,6 @@ func (o *Oracle) getSolanaEvents(
 	var processedEvents []any
 	lastSuccessfullyProcessedSig := lastKnownSig
 	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize
-	maxTxVersion := sidecartypes.SolanaTransactionVersion0
 
 	for i := 0; i < len(newSignatures); i += internalBatchSize {
 		end := min(i+internalBatchSize, len(newSignatures))
@@ -1494,7 +1492,7 @@ func (o *Oracle) getSolanaEvents(
 					map[string]any{
 						"encoding":                       solana.EncodingBase64,
 						"commitment":                     solrpc.CommitmentConfirmed,
-						"maxSupportedTransactionVersion": &maxTxVersion,
+						"maxSupportedTransactionVersion": &sidecartypes.MaxSupportedSolanaTxVersion,
 					},
 				},
 				ID:      uint64(j),
@@ -1532,7 +1530,7 @@ func (o *Oracle) getSolanaEvents(
 					txRes, txErr = o.getTransactionFn(context.Background(), sigInfo.Signature, &solrpc.GetTransactionOpts{
 						Encoding:                       solana.EncodingBase64,
 						Commitment:                     solrpc.CommitmentConfirmed,
-						MaxSupportedTransactionVersion: &maxTxVersion,
+						MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
 					})
 					if txErr == nil && txRes != nil {
 						break
