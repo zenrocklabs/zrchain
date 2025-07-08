@@ -73,6 +73,8 @@ type Keeper struct {
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 	// BackfillRequests - key: tx hash | value: bool (is requested)
 	BackfillRequests collections.Item[types.BackfillRequests]
+	// ValidatorMismatchCounts - key: validator hex address | value: mismatch count data
+	ValidatorMismatchCounts collections.Map[string, types.ValidatorMismatchCount]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -158,6 +160,7 @@ func NewKeeper(
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
+		ValidatorMismatchCounts:           collections.NewMap(sb, types.ValidatorMismatchCounts, types.ValidatorMismatchCountsIndex, collections.StringKey, codec.CollValue[types.ValidatorMismatchCount](cdc)),
 	}
 }
 

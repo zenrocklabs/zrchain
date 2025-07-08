@@ -102,6 +102,7 @@ var (
 	SolanaZenTPAccountsRequestedIndex      = "solana_zentp_accounts_requested"
 	BackfillRequestsIndex                  = "backfill_requests"
 	LatestBtcHeaderHeightIndex             = "latest_btc_header_height"
+	ValidatorMismatchCountsIndex           = "validator_mismatch_counts"
 )
 
 const (

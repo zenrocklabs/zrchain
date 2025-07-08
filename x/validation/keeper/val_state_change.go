@@ -245,6 +245,15 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		return nil, fmt.Errorf("failed to check validators for vote extension mismatches: %w", err)
 	}
 
+	// Cleanup old mismatch count records every 100 blocks to prevent storage bloat
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.BlockHeight()%100 == 0 {
+		if err := k.cleanupOldMismatchCounts(ctx, sdkCtx.BlockHeight()); err != nil {
+			k.Logger(ctx).Error("Failed to cleanup old mismatch counts", "error", err)
+			// Don't return error here as it's not critical for validator set updates
+		}
+	}
+
 	iterator, err := k.ValidatorsPowerStoreIterator(ctx)
 	if err != nil {
 		return nil, err
@@ -560,7 +569,8 @@ func (k Keeper) UnbondingToUnbonded(ctx context.Context, validator types.Validat
 
 // checkAndJailValidatorsForMismatchedVoteExtensions checks all bonded validators
 // and jails those who have submitted mismatched vote extensions for at least 50
-// out of the last 100 blocks.
+// out of the last 100 blocks. This optimized version uses a sliding window counter
+// to achieve O(V) time complexity instead of O(V × B × M).
 func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	currentHeight := sdkCtx.BlockHeight()
@@ -570,10 +580,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 		return nil
 	}
 
-	// Get the range of blocks to check (last 100 blocks)
-	startHeight := currentHeight - 99 // -99 to include the current block (100 total blocks)
-
-	// Get all bonded validators
+	// Get all bonded validators - O(V)
 	bonded := make([]types.ValidatorHV, 0)
 	err := k.IterateBondedZenrockValidatorsByPower(ctx, func(_ int64, validator types.ValidatorHV) error {
 		if !validator.Jailed {
@@ -585,7 +592,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 		return err
 	}
 
-	// For each bonded validator, count mismatched vote extensions in the last 100 blocks
+	// For each bonded validator, check their mismatch count - O(V)
 	for _, validator := range bonded {
 		consAddr, err := validator.GetConsAddr()
 		if err != nil {
@@ -594,32 +601,21 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 		}
 
 		validatorHexAddr := hex.EncodeToString(consAddr)
-		mismatchCount := 0
 
-		// Check each block in the range
-		for height := startHeight; height <= currentHeight; height++ {
-			validationInfo, err := k.ValidationInfos.Get(ctx, height)
-			if err != nil {
-				// If ValidationInfo doesn't exist for this height, skip
-				continue
-			}
-
-			// Check if this validator is in the mismatched vote extensions list
-			for _, mismatchedAddr := range validationInfo.MismatchedVoteExtensions {
-				if mismatchedAddr == validatorHexAddr {
-					mismatchCount++
-					break // Only count once per block even if there are duplicates
-				}
-			}
+		// Get the current mismatch count for this validator - O(1)
+		mismatchCount, err := k.ValidatorMismatchCounts.Get(ctx, validatorHexAddr)
+		if err != nil {
+			// If no record exists, validator has no mismatches
+			continue
 		}
 
 		// If the validator has 50 or more mismatches, jail them
-		if mismatchCount >= 50 {
+		if mismatchCount.TotalCount >= 50 {
 			k.Logger(ctx).Info(
 				"Jailing validator for excessive mismatched vote extensions",
 				"validator", validator.OperatorAddress,
 				"consensus_addr", sdk.ConsAddress(consAddr).String(),
-				"mismatch_count", mismatchCount,
+				"mismatch_count", mismatchCount.TotalCount,
 				"blocks_checked", 100,
 			)
 
@@ -638,10 +634,57 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 					"validator_jailed_vote_extension_mismatch",
 					sdk.NewAttribute("validator", validator.OperatorAddress),
 					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
-					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount)),
+					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
 					sdk.NewAttribute("blocks_checked", "100"),
 				),
 			)
+		}
+	}
+
+	return nil
+}
+
+// cleanupOldMismatchCounts removes mismatch count records for validators that have
+// no mismatches in the current window. This should be called periodically to prevent
+// storage bloat.
+func (k Keeper) cleanupOldMismatchCounts(ctx context.Context, currentHeight int64) error {
+	const windowSize = 100
+	windowStart := currentHeight - windowSize + 1
+
+	// Iterate through all mismatch count records
+	var toDelete []string
+	err := k.ValidatorMismatchCounts.Walk(ctx, nil, func(validatorHexAddr string, mismatchCount types.ValidatorMismatchCount) (bool, error) {
+		// Remove blocks outside the window
+		validBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks))
+		for _, block := range mismatchCount.MismatchBlocks {
+			if block >= windowStart {
+				validBlocks = append(validBlocks, block)
+			}
+		}
+
+		if len(validBlocks) == 0 {
+			// No mismatches in the current window, mark for deletion
+			toDelete = append(toDelete, validatorHexAddr)
+		} else if len(validBlocks) != len(mismatchCount.MismatchBlocks) {
+			// Update the record with cleaned blocks
+			mismatchCount.MismatchBlocks = validBlocks
+			mismatchCount.TotalCount = uint32(len(validBlocks))
+			if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
+				return false, err
+			}
+		}
+
+		return false, nil // continue iteration
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Delete records with no recent mismatches
+	for _, validatorHexAddr := range toDelete {
+		if err := k.ValidatorMismatchCounts.Remove(ctx, validatorHexAddr); err != nil {
+			k.Logger(ctx).Error("Failed to remove old mismatch count record", "validator", validatorHexAddr, "error", err)
 		}
 	}
 
