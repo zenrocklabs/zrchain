@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	m "math"
@@ -237,6 +238,11 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 	last, err := k.getLastValidatorsByAddr(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check and jail validators with excessive mismatched vote extensions
+	if err := k.checkAndJailValidatorsForMismatchedVoteExtensions(ctx); err != nil {
+		return nil, fmt.Errorf("failed to check validators for vote extension mismatches: %w", err)
 	}
 
 	iterator, err := k.ValidatorsPowerStoreIterator(ctx)
@@ -550,6 +556,96 @@ func (k Keeper) UnbondingToUnbonded(ctx context.Context, validator types.Validat
 	}
 
 	return k.completeUnbondingValidator(ctx, validator)
+}
+
+// checkAndJailValidatorsForMismatchedVoteExtensions checks all bonded validators
+// and jails those who have submitted mismatched vote extensions for at least 50
+// out of the last 100 blocks.
+func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Context) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentHeight := sdkCtx.BlockHeight()
+
+	// Only check if we have at least 100 blocks of data
+	if currentHeight < 100 {
+		return nil
+	}
+
+	// Get the range of blocks to check (last 100 blocks)
+	startHeight := currentHeight - 99 // -99 to include the current block (100 total blocks)
+
+	// Get all bonded validators
+	bonded := make([]types.ValidatorHV, 0)
+	err := k.IterateBondedZenrockValidatorsByPower(ctx, func(_ int64, validator types.ValidatorHV) error {
+		if !validator.Jailed {
+			bonded = append(bonded, validator)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// For each bonded validator, count mismatched vote extensions in the last 100 blocks
+	for _, validator := range bonded {
+		consAddr, err := validator.GetConsAddr()
+		if err != nil {
+			k.Logger(ctx).Error("Failed to get consensus address for validator", "validator", validator.OperatorAddress, "error", err)
+			continue
+		}
+
+		validatorHexAddr := hex.EncodeToString(consAddr)
+		mismatchCount := 0
+
+		// Check each block in the range
+		for height := startHeight; height <= currentHeight; height++ {
+			validationInfo, err := k.ValidationInfos.Get(ctx, height)
+			if err != nil {
+				// If ValidationInfo doesn't exist for this height, skip
+				continue
+			}
+
+			// Check if this validator is in the mismatched vote extensions list
+			for _, mismatchedAddr := range validationInfo.MismatchedVoteExtensions {
+				if mismatchedAddr == validatorHexAddr {
+					mismatchCount++
+					break // Only count once per block even if there are duplicates
+				}
+			}
+		}
+
+		// If the validator has 50 or more mismatches, jail them
+		if mismatchCount >= 50 {
+			k.Logger(ctx).Info(
+				"Jailing validator for excessive mismatched vote extensions",
+				"validator", validator.OperatorAddress,
+				"consensus_addr", sdk.ConsAddress(consAddr).String(),
+				"mismatch_count", mismatchCount,
+				"blocks_checked", 100,
+			)
+
+			if err := k.jailValidator(ctx, validator); err != nil {
+				k.Logger(ctx).Error(
+					"Failed to jail validator for mismatched vote extensions",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Emit an event for the jailing
+			sdkCtx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					"validator_jailed_vote_extension_mismatch",
+					sdk.NewAttribute("validator", validator.OperatorAddress),
+					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
+					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount)),
+					sdk.NewAttribute("blocks_checked", "100"),
+				),
+			)
+		}
+	}
+
+	return nil
 }
 
 // send a validator to jail
