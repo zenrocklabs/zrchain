@@ -106,7 +106,7 @@ var (
 	MainLoopTickerInterval      = 60 * time.Second
 	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
-	EthBlocksBeforeFinality     = int64(5) // TODO: should this be increased?
+	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
 	SolanaEventScanTxLimit      = 1000
 	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize   = 25
@@ -121,17 +121,17 @@ var (
 	RPCConnectionRetryDelay = 3 * time.Second
 
 	// HTTP and RPC constants
-	DefaultHTTPTimeout        = 10 * time.Second
-	DefaultSolanaFeeReturned  = uint64(5000) // Default fee in lamports per signature
-	SolanaTransactionVersion0 = uint64(0)    // Solana transaction version 0
-	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
-	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
+	DefaultHTTPTimeout          = 10 * time.Second
+	DefaultSolanaFeeReturned    = uint64(5000) // Default fee in lamports per signature
+	MaxSupportedSolanaTxVersion = uint64(0)    // Solana transaction version 0
+	EigenLayerQuorumNumber      = uint8(0)     // EigenLayer quorum number for service manager
+	GasEstimationBuffer         = uint64(110)  // 110% buffer for gas estimation (10% extra)
 
 	SidecarVersionName = "salmon_moon_r1"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon", "salmon_moon_r1"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r1"}
 )
 
 // PriceFeed struct with fields for different price feeds

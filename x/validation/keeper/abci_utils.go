@@ -976,17 +976,72 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 		return
 	}
 
+	// Keep track of unique validators that had mismatches in this block - O(N)
+	mismatchedValidators := make(map[string]struct{})
+	
 	for _, v := range consensusData.Votes {
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
+			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
+			mismatchedValidators[validatorHexAddr] = struct{}{}
+			
+			// Still record in ValidationInfo for backward compatibility
 			info, err := k.ValidationInfos.Get(ctx, height)
 			if err != nil {
 				info = types.ValidationInfo{}
 			}
-			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, hex.EncodeToString(v.Validator.Address))
+			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, validatorHexAddr)
 			if err := k.ValidationInfos.Set(ctx, height, info); err != nil {
 				k.Logger(ctx).Error("error setting validation info", "height", height, "error", err)
 			}
 		}
+	}
+	
+	// Update the sliding window counters for each mismatched validator - O(M) where M = unique mismatched validators
+	for validatorHexAddr := range mismatchedValidators {
+		k.updateValidatorMismatchCount(ctx, validatorHexAddr, height)
+	}
+}
+
+// updateValidatorMismatchCount updates the sliding window counter for a validator's mismatches
+// Time complexity: O(1) amortized per call
+func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr string, blockHeight int64) {
+	const windowSize = 100
+	
+	// Get existing count or create new one
+	mismatchCount, err := k.ValidatorMismatchCounts.Get(ctx, validatorHexAddr)
+	if err != nil {
+		// No existing record, create new one
+		mismatchCount = types.ValidatorMismatchCount{
+			ValidatorAddress: validatorHexAddr,
+			MismatchBlocks:   []int64{blockHeight},
+			TotalCount:       1,
+		}
+		if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
+			k.Logger(ctx).Error("error setting validator mismatch count", "validator", validatorHexAddr, "error", err)
+		}
+		return
+	}
+	
+	// Remove blocks that are outside the sliding window (older than 100 blocks)
+	windowStart := blockHeight - windowSize + 1
+	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
+	
+	// Keep only blocks within the window - O(W) where W is window size (100)
+	for _, block := range mismatchCount.MismatchBlocks {
+		if block >= windowStart {
+			newMismatchBlocks = append(newMismatchBlocks, block)
+		}
+	}
+	
+	// Add the new block (maintaining sorted order since we always append increasing heights)
+	newMismatchBlocks = append(newMismatchBlocks, blockHeight)
+	
+	// Update the count
+	mismatchCount.MismatchBlocks = newMismatchBlocks
+	mismatchCount.TotalCount = uint32(len(newMismatchBlocks))
+	
+	if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
+		k.Logger(ctx).Error("error updating validator mismatch count", "validator", validatorHexAddr, "error", err)
 	}
 }
 

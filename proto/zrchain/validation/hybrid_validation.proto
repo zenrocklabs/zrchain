@@ -141,3 +141,10 @@ message ValidationInfo {
   repeated string mismatched_vote_extensions = 2;
   uint64 block_height = 3;
 }
+
+// ValidatorMismatchCount tracks mismatched vote extensions for a validator over a sliding window
+message ValidatorMismatchCount {
+  string validator_address = 1;  // hex-encoded consensus address
+  repeated int64 mismatch_blocks = 2;  // sorted list of block heights where mismatches occurred
+  uint32 total_count = 3;  // total number of mismatches in the current window
+}
