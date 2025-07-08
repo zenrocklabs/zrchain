@@ -88,3 +88,13 @@ class ValidationInfo(_message.Message):
     mismatched_vote_extensions: _containers.RepeatedScalarFieldContainer[str]
     block_height: int
     def __init__(self, non_voting_validators: _Optional[_Iterable[str]] = ..., mismatched_vote_extensions: _Optional[_Iterable[str]] = ..., block_height: _Optional[int] = ...) -> None: ...
+
+class ValidatorMismatchCount(_message.Message):
+    __slots__ = ("validator_address", "mismatch_blocks", "total_count")
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    MISMATCH_BLOCKS_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_COUNT_FIELD_NUMBER: _ClassVar[int]
+    validator_address: str
+    mismatch_blocks: _containers.RepeatedScalarFieldContainer[int]
+    total_count: int
+    def __init__(self, validator_address: _Optional[str] = ..., mismatch_blocks: _Optional[_Iterable[int]] = ..., total_count: _Optional[int] = ...) -> None: ...
