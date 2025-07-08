@@ -217,6 +217,15 @@ func (k Keeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error 
 	return k.SolanaROCKSupply.Set(ctx, supply)
 }
 
+func (k Keeper) GetTotalROCKSupply(ctx sdk.Context) (math.Int, error) {
+	solanaSupply, err := k.GetSolanaROCKSupply(ctx)
+	if err != nil {
+		return math.Int{}, fmt.Errorf("failed to get solana rock supply: %w", err)
+	}
+	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
+	return zrchainSupply.Add(solanaSupply), nil
+}
+
 func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
 	burnID, err := k.BurnCount.Get(ctx)
 	if err != nil {

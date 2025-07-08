@@ -41,7 +41,7 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 	// A bridge operation does not change the total supply, so we do not add newAmount here.
 	// We just check if the current total supply is already over the cap.
 	if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-		return errors.Errorf("total ROCK supply %s exceeds cap (%d), bridge disabled", totalSupply.String(), rockCap)
+		return errors.Errorf("total ROCK supply %s exceeds cap (%s), bridge disabled", totalSupply.String(), sdkmath.NewIntFromUint64(rockCap).String())
 	}
 	return nil
 }

@@ -389,6 +389,13 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	k.recordNonVotingValidators(ctx, req)
 	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
 
+	// Perform final invariant checks for the block.
+	if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
+		// This is a critical failure. In a real-world scenario, this should halt the chain.
+		k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION: ROCK supply cap check failed at end of block.", "error", err.Error())
+		// For now, we will log a critical error. The chain will continue, but this indicates a serious issue.
+	}
+
 	return nil
 }
 
@@ -1638,6 +1645,13 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 
 				// --- Invariant holds, proceed with bridge completion ---
 
+				// Capture total supply before the state change for conservation check.
+				totalSupplyBefore, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
+				if err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to get total rock supply before bridge completion.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
 				err = k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount))))
 				if err != nil {
 					k.Logger(ctx).Error("CRITICAL: Failed to burn coins for completed Solana bridge AFTER invariant check. State is now inconsistent.", "denom", pendingMint.Denom, "error", err.Error(), "bridge_id", pendingMint.Id)
@@ -1654,6 +1668,24 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				newSolanaSupply := solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
 				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
 					k.Logger(ctx).Error("CRITICAL: Failed to set solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
+				// Perform the supply conservation check.
+				totalSupplyAfter, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
+				if err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to get total rock supply after bridge completion for conservation check.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
+				if !totalSupplyBefore.Equal(totalSupplyAfter) {
+					k.Logger(ctx).Error("CRITICAL INVARIANT VIOLATION: Total ROCK supply changed during bridge operation.", "before", totalSupplyBefore.String(), "after", totalSupplyAfter.String(), "bridge_id", pendingMint.Id)
+					// Here we should ideally halt the chain or take other drastic measures.
+					// For now, we will fail the mint and log a critical error.
+					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
+					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+						k.Logger(ctx).Error("CRITICAL: Failed to update mint status to FAILED after supply conservation violation.", "error", err, "bridge_id", pendingMint.Id)
+					}
 					continue
 				}
 
