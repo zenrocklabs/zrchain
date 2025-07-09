@@ -165,6 +165,27 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 	oracle.DebugMode = false
 
+	// Initialize the solanaRateLimiter channel to prevent blocking
+	oracle.solanaRateLimiter = make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls)
+
+	// Initialize pools to prevent nil pointer dereference
+	oracle.eventProcessorPool = &sync.Pool{
+		New: func() any {
+			return &EventProcessor{
+				events: make([]any, 0, 100),
+			}
+		},
+	}
+	oracle.batchRequestPool = &sync.Pool{
+		New: func() any {
+			return make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
+		},
+	}
+
+	// Initialize transaction cache and mutex
+	oracle.transactionCache = make(map[string]*CachedTxResult)
+	oracle.transactionCacheMutex = sync.RWMutex{}
+
 	// Initialize function fields to prevent nil pointer dereference
 	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil
