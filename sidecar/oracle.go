@@ -65,12 +65,17 @@ func NewOracle(
 		SkipInitialWait:    skipInitialWait,
 
 		// Initialize performance optimization fields
-		solanaRateLimiter: make(chan struct{}, 10), // Allow 10 concurrent Solana RPC calls
+		solanaRateLimiter: make(chan struct{}, 20), // Increased from 10 to 20 concurrent Solana RPC calls
 		transactionCache:  make(map[string]*CachedTxResult),
 		httpClientPool: &sync.Pool{
 			New: func() interface{} {
 				return &http.Client{
-					Timeout: sidecartypes.DefaultHTTPTimeout,
+					Timeout: sidecartypes.SolanaRPCTimeout, // Use longer timeout for Solana operations
+					Transport: &http.Transport{
+						MaxIdleConns:        100,
+						MaxIdleConnsPerHost: 10,
+						IdleConnTimeout:     90 * time.Second,
+					},
 				}
 			},
 		},
@@ -1508,12 +1513,12 @@ func (o *Oracle) getSolanaEvents(
 	select {
 	case o.solanaRateLimiter <- struct{}{}:
 		defer func() { <-o.solanaRateLimiter }()
-	case <-time.After(5 * time.Second):
-		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s", eventTypeName)
+	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
+		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
 	}
 
 	// Fetch initial signatures with timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), sidecartypes.DefaultHTTPTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), sidecartypes.SolanaRPCTimeout)
 	defer cancel()
 
 	initialSignatures, err := o.getSignaturesForAddressFn(ctx, program, &solrpc.GetSignaturesForAddressOpts{
@@ -1585,7 +1590,12 @@ func (o *Oracle) getSolanaEvents(
 		retryDelay := sidecartypes.SolanaEventFetchRetrySleep
 
 		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
-			batchCtx, batchCancel := context.WithTimeout(context.Background(), sidecartypes.DefaultHTTPTimeout)
+			// Progressive timeout: increase timeout for retries
+			timeoutDuration := sidecartypes.SolanaBatchTimeout
+			if retry > 0 {
+				timeoutDuration = time.Duration(float64(timeoutDuration) * (1.0 + 0.5*float64(retry)))
+			}
+			batchCtx, batchCancel := context.WithTimeout(context.Background(), timeoutDuration)
 			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, batchRequests)
 			batchCancel()
 
@@ -1603,9 +1613,13 @@ func (o *Oracle) getSolanaEvents(
 				batchErr = fmt.Errorf("response contains errors")
 			}
 
-			if retry < sidecartypes.SolanaEventFetchMaxRetries-1 {
-				slog.Warn("Sub-batch GetTransaction failed, retrying with backoff",
-					"eventType", eventTypeName, "error", batchErr, "retry", retry+1, "delay", retryDelay)
+			if batchErr != nil && retry < sidecartypes.SolanaEventFetchMaxRetries-1 {
+				if batchCtx.Err() == context.DeadlineExceeded {
+					slog.Warn("Batch RPC call timed out, retrying", "eventType", eventTypeName, "retry", retry+1, "timeout", timeoutDuration)
+				} else {
+					slog.Warn("Sub-batch GetTransaction failed, retrying with backoff",
+						"eventType", eventTypeName, "error", batchErr, "retry", retry+1, "delay", retryDelay)
+				}
 				time.Sleep(retryDelay)
 				retryDelay = min(retryDelay*2, 5*time.Second) // Exponential backoff with cap
 			}
@@ -1738,7 +1752,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 			retryDelay := sidecartypes.SolanaEventFetchRetrySleep
 
 			for retry := 0; retry < sidecartypes.SolanaFallbackMaxRetries; retry++ {
-				fallbackCtx, fallbackCancel := context.WithTimeout(context.Background(), sidecartypes.DefaultHTTPTimeout)
+				fallbackCtx, fallbackCancel := context.WithTimeout(context.Background(), sidecartypes.SolanaRPCTimeout)
 				txRes, txErr = o.getTransactionFn(fallbackCtx, sigInfo.Signature, &solrpc.GetTransactionOpts{
 					Encoding:                       solana.EncodingBase64,
 					Commitment:                     solrpc.CommitmentConfirmed,

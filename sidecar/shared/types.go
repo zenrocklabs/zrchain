@@ -99,10 +99,11 @@ var (
 		NetworkMainnet: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
-	// ROCK Price feed URL
+	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
+
 	MainLoopTickerInterval      = 60 * time.Second
 	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
@@ -122,6 +123,9 @@ var (
 
 	// HTTP and RPC constants
 	DefaultHTTPTimeout          = 10 * time.Second
+	SolanaRPCTimeout            = 15 * time.Second // Longer timeout for Solana RPC operations
+	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
+	SolanaRateLimiterTimeout    = 10 * time.Second
 	DefaultSolanaFeeReturned    = uint64(5000) // Default fee in lamports per signature
 	MaxSupportedSolanaTxVersion = uint64(0)    // Solana transaction version 0
 	EigenLayerQuorumNumber      = uint8(0)     // EigenLayer quorum number for service manager
