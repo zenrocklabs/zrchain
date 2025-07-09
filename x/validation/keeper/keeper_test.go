@@ -140,6 +140,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		Btl:               20,
 	}).AnyTimes()
 	zentpKeeper.EXPECT().GetMintsWithStatus(gomock.Any(), gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatusPending(gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
 	zentpKeeper.EXPECT().GetTotalROCKSupply(gomock.Any()).Return(math.NewInt(1000000), nil).AnyTimes()
 	zentpKeeper.EXPECT().CheckROCKSupplyCap(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	zentpKeeper.EXPECT().UpdateMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
