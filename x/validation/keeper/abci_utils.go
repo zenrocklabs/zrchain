@@ -126,12 +126,15 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldEigenDelegationsHash; i <= VEFieldSidecarVersionName; i++ {
+	for i := VEFieldEigenDelegationsHash; i <= VEFieldSolanaLamportsPerSignature; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
 	var totalVotePower int64
 	fieldVotePowers := make(map[VoteExtensionField]int64)
+
+	// Track informational fields that don't require consensus
+	var firstSidecarVersionName string
 
 	// Get field handlers
 	fieldHandlers := initializeFieldHandlers()
@@ -143,6 +146,11 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		voteExt, err := k.validateVote(ctx, vote, currentHeight)
 		if err != nil {
 			continue
+		}
+
+		// Capture informational fields from first valid vote (no consensus required)
+		if firstSidecarVersionName == "" && voteExt.SidecarVersionName != "" {
+			firstSidecarVersionName = voteExt.SidecarVersionName
 		}
 
 		// Process each field using the field handlers
@@ -165,6 +173,9 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 	// Create consensus VoteExtension with fields that have supermajority
 	var consensusVE VoteExtension
+
+	// Set informational fields that don't require consensus
+	consensusVE.SidecarVersionName = firstSidecarVersionName
 
 	superMajorityThreshold := superMajorityVotePower(totalVotePower)
 	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)

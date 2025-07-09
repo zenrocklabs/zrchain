@@ -294,7 +294,6 @@ const (
 	VEFieldSolanaAccountsHash
 	VEFieldSolanaMintEventsHash
 	VEFieldSolanaLamportsPerSignature
-	VEFieldSidecarVersionName
 )
 
 // FieldHandler defines operations for processing a specific vote extension field
@@ -506,13 +505,6 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldSolanaLamportsPerSignature,
 			GetValue: func(ve VoteExtension) any { return ve.SolanaLamportsPerSignature },
 			SetValue: func(v any, ve *VoteExtension) { ve.SolanaLamportsPerSignature = v.(uint64) },
-		},
-
-		// String fields
-		{
-			Field:    VEFieldSidecarVersionName,
-			GetValue: func(ve VoteExtension) any { return ve.SidecarVersionName },
-			SetValue: func(v any, ve *VoteExtension) { ve.SidecarVersionName = v.(string) },
 		},
 	}
 }
