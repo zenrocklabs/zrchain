@@ -1447,7 +1447,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		// pendingGetter: Fetches pending solROCK mints that are in the PENDING state.
 		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
-			mints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+			mints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 			return mints, err
 		},
 		// txDispatchCallback: Constructs and dispatches a Solana transaction to mint ROCK tokens.
@@ -1583,12 +1583,12 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 // processROCKBurns processes pending mint transactions.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
 
-	pendingMints, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	pendingMints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return
 		}
-		k.Logger(ctx).Error("GetMintsWithStatus: ", err.Error())
+		k.Logger(ctx).Error("GetMintsWithPendingStatus: ", err.Error())
 		return
 	}
 
@@ -1654,6 +1654,11 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				newSolanaSupply := solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))
 				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply); err != nil {
 					k.Logger(ctx).Error("CRITICAL: Failed to set solana rock supply after burning coins. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
+				if err := k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id); err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to set last completed zentp mint. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
 					continue
 				}
 

@@ -148,6 +148,9 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap() {
 				sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(tt.zentpModuleBalance)),
 			).AnyTimes()
 
+			// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+			s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
+
 			// Setup: Set solana supply
 			err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, sdkmath.NewIntFromUint64(tt.solanaSupply))
 			s.Require().NoError(err)
@@ -254,6 +257,9 @@ func (s *IntegrationTestSuite) TestCheckCanBurnFromSolana() {
 				sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(tt.zrchainSupply)),
 			).AnyTimes()
 
+			// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+			s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
+
 			// Setup: Set solana supply
 			err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, sdkmath.NewIntFromUint64(tt.solanaSupply))
 			s.Require().NoError(err)
@@ -311,6 +317,9 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
 		).AnyTimes()
 
+		// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+		s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
+
 		// The function should not fail even if GetMintsWithStatus has issues
 		// (our implementation treats this as "no pending mints")
 		err = s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
@@ -333,6 +342,9 @@ func (s *IntegrationTestSuite) TestCheckROCKSupplyCap_ErrorHandling() {
 		s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, params.BondDenom).Return(
 			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
 		).AnyTimes()
+
+		// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+		s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
 
 		// The function should succeed with zero solana supply
 		err := s.zentpKeeper.CheckROCKSupplyCap(s.ctx, sdkmath.NewIntFromUint64(1000))
@@ -368,6 +380,9 @@ func (s *IntegrationTestSuite) TestInvariants_EdgeCases() {
 			sdk.NewCoin(params.BondDenom, sdkmath.NewIntFromUint64(maxSupply)),
 		).AnyTimes()
 
+		// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+		s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
+
 		err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, sdkmath.NewIntFromUint64(maxSupply))
 		s.Require().NoError(err)
 
@@ -384,6 +399,9 @@ func (s *IntegrationTestSuite) TestInvariants_EdgeCases() {
 		s.bankKeeper.EXPECT().GetSupply(s.ctx, params.BondDenom).Return(
 			sdk.NewCoin(params.BondDenom, sdkmath.ZeroInt()),
 		).AnyTimes()
+
+		// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+		s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
 
 		err := s.zentpKeeper.SetSolanaROCKSupply(s.ctx, sdkmath.ZeroInt())
 		s.Require().NoError(err)
