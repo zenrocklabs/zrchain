@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/e2e')
 
   unit-test-self-hosted:
     if: github.repository == 'zenrocklabs/zrchain'
@@ -49,7 +49,7 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/e2e')
 
   integration-test:
     if: github.repository == 'zenrocklabs/zrchain'
@@ -92,8 +92,8 @@ jobs:
           docker compose logs -f sidecar zrchain > /tmp/logs &
       - name: Wait for 90 seconds
         run: sleep 90
-      - name: Run integration tests
-        run: ginkgo -v tests/integration
+      - name: Run e2e tests
+        run: ginkgo -v tests/e2e
       - name: Stop Docker Compose stack
         if: always()
         run: |
