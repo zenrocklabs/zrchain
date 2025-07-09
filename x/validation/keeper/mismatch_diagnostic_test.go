@@ -101,7 +101,6 @@ func TestMismatchDiagnostic(t *testing.T) {
 		RequestedCompleterNonce:    40,
 		SolanaMintNoncesHash:       []byte("diagnostic_solana_mint_nonces"),
 		SolanaAccountsHash:         []byte("diagnostic_solana_accounts"),
-		SolanaLamportsPerSignature: 5000,
 		EthBurnEventsHash:          []byte("diagnostic_eth_burn_events"),
 		SolanaBurnEventsHash:       []byte("diagnostic_solana_burn_events"),
 		SolanaMintEventsHash:       []byte("diagnostic_solana_mint_events"),

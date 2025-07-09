@@ -66,34 +66,33 @@ type (
 	}
 
 	OracleData struct {
-		EigenDelegationsMap        map[string]map[string]*big.Int
-		ValidatorDelegations       []ValidatorDelegations
-		RequestedBtcBlockHeight    int64
-		RequestedBtcBlockHeader    sidecar.BTCBlockHeader
-		LatestBtcBlockHeight       int64
-		LatestBtcBlockHeader       sidecar.BTCBlockHeader
-		EthBlockHeight             uint64
-		EthGasLimit                uint64
-		EthBaseFee                 uint64
-		EthTipCap                  uint64
-		RequestedStakerNonce       uint64
-		RequestedEthMinterNonce    uint64
-		RequestedUnstakerNonce     uint64
-		RequestedCompleterNonce    uint64
-		SolanaMintNonces           map[uint64]*solSystem.NonceAccount
-		SolanaAccounts             map[string]solToken.Account
-		SolanaLamportsPerSignature uint64
-		SolanaMintEvents           []api.SolanaMintEvent
-		SolanaZenBTCMintEvents     []api.SolanaMintEvent
-		EthBurnEvents              []api.BurnEvent
-		SolanaBurnEvents           []api.BurnEvent
-		Redemptions                []api.Redemption
-		ROCKUSDPrice               string
-		BTCUSDPrice                string
-		ETHUSDPrice                string
-		ConsensusData              abci.ExtendedCommitInfo
-		FieldVotePowers            map[VoteExtensionField]int64 // Track which fields reached consensus
-		SidecarVersionName         string
+		EigenDelegationsMap     map[string]map[string]*big.Int
+		ValidatorDelegations    []ValidatorDelegations
+		RequestedBtcBlockHeight int64
+		RequestedBtcBlockHeader sidecar.BTCBlockHeader
+		LatestBtcBlockHeight    int64
+		LatestBtcBlockHeader    sidecar.BTCBlockHeader
+		EthBlockHeight          uint64
+		EthGasLimit             uint64
+		EthBaseFee              uint64
+		EthTipCap               uint64
+		RequestedStakerNonce    uint64
+		RequestedEthMinterNonce uint64
+		RequestedUnstakerNonce  uint64
+		RequestedCompleterNonce uint64
+		SolanaMintNonces        map[uint64]*solSystem.NonceAccount
+		SolanaAccounts          map[string]solToken.Account
+		SolanaMintEvents        []api.SolanaMintEvent
+		SolanaZenBTCMintEvents  []api.SolanaMintEvent
+		EthBurnEvents           []api.BurnEvent
+		SolanaBurnEvents        []api.BurnEvent
+		Redemptions             []api.Redemption
+		ROCKUSDPrice            string
+		BTCUSDPrice             string
+		ETHUSDPrice             string
+		ConsensusData           abci.ExtendedCommitInfo
+		FieldVotePowers         map[VoteExtensionField]int64 // Track which fields reached consensus
+		SidecarVersionName      string
 	}
 
 	ValidatorDelegations struct {
@@ -292,7 +291,6 @@ const (
 	VEFieldSolanaMintNoncesHash
 	VEFieldSolanaAccountsHash
 	VEFieldSolanaMintEventsHash
-	VEFieldSolanaLamportsPerSignature
 )
 
 // FieldHandler defines operations for processing a specific vote extension field

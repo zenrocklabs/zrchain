@@ -61,7 +61,7 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	voteExt, err := k.constructVoteExtension(ctx, req.Height, oracleData)
+	voteExt, err := k.ConstructVoteExtension(ctx, req.Height, oracleData)
 	if err != nil {
 		k.Logger(ctx).Error("error creating vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
@@ -82,7 +82,7 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 }
 
 // constructVoteExtension builds the vote extension based on oracle data and on-chain state.
-func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
+func (k *Keeper) ConstructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
 	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)

@@ -367,7 +367,7 @@ func TestIsGasField(t *testing.T) {
 			valid: true,
 		},
 		{
-			name:  "invalid gas field: solana lamports per signature",
+			name:  "invalid gas field: requested btc block height",
 			field: VEFieldRequestedBtcBlockHeight,
 			valid: false,
 		},
