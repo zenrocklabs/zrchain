@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.msgServer = stakingkeeper.NewMsgServerImpl(keeper)
 }
 
-func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeeper.Keeper, *gomock.Controller) {
+func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeeper.Keeper, *ubermock.Controller) {
 	require := s.Require()
 	key := storetypes.NewKVStoreKey(validationtypes.StoreKey)
 	storeService := runtime.NewKVStoreService(key)
@@ -110,7 +110,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	ctx := testCtx.Ctx.WithBlockHeader(cmtproto.Header{Time: cmttime.Now()})
 	encCfg := moduletestutil.MakeTestEncodingConfig()
 
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 	accountKeeper := validationtestutil.NewMockAccountKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(validationtypes.BondedPoolName).Return(bondedAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAddress(validationtypes.NotBondedPoolName).Return(notBondedAcc.GetAddress())
@@ -129,7 +129,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	bankKeeper.EXPECT().GetAllBalances(ctx, notBondedAcc.GetAddress()).Return(sdk.NewCoins()).AnyTimes()
 
 	zentpKeeper := validationtestutil.NewMockZentpKeeper(ctrl)
-	zentpKeeper.EXPECT().GetSolanaParams(gomock.Any()).Return(&zentptypes.Solana{
+	zentpKeeper.EXPECT().GetSolanaParams(ubermock.Any()).Return(&zentptypes.Solana{
 		SignerKeyId:       10,
 		ProgramId:         "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
 		NonceAuthorityKey: 11,
@@ -139,7 +139,8 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		Fee:               0,
 		Btl:               20,
 	}).AnyTimes()
-	zentpKeeper.EXPECT().GetMintsWithStatus(gomock.Any(), gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatus(ubermock.Any(), ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatusPending(ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())
@@ -207,7 +208,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	require.NoError(keeper.SetParams(ctx, validationtypes.DefaultParams()))
 
 	// Set up mock sidecar client
-	mockSidecarClient := validationtestutil.NewMocksidecarClient(ctrl)
+	mockSidecarClient := validationtestutil.NewMocksidecarClient(newctrl)
 	keeper.SetSidecarClient(mockSidecarClient)
 
 	mockSidecarClient.EXPECT().GetSidecarState(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
@@ -233,7 +234,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	// Store the zenBTC controller in the suite for cleanup
 	s.zenBTCCtrl = newctrl
 
-	return keeper, ctrl
+	return keeper, newctrl
 }
 
 func (s *ValidationKeeperTestSuite) SetupTest() {
@@ -394,7 +395,7 @@ func (s *ValidationKeeperTestSuite) TestGetLastTotalPower() {
 }
 
 func (s *ValidationKeeperTestSuite) TestHooks() {
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 
 	tests := []struct {
 		name     string
