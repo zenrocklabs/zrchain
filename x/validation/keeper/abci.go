@@ -55,13 +55,13 @@ func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error)
 // ExtendVoteHandler is called by all validators to extend the consensus vote
 // with additional data to be voted on.
 func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
-	oracleData, err := k.GetSidecarState(ctx, req.Height)
+	oracleData, err := k.gatherOracleDataForVoteExtension(ctx, req.Height)
 	if err != nil {
-		k.Logger(ctx).Error("error retrieving AVS delegations", "height", req.Height, "error", err)
+		k.Logger(ctx).Error("error gathering oracle data for vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	voteExt, err := k.ConstructVoteExtension(ctx, req.Height, oracleData)
+	voteExt, err := ConstructVoteExtension(oracleData)
 	if err != nil {
 		k.Logger(ctx).Error("error creating vote extension", "height", req.Height, "error", err)
 		return &abci.ResponseExtendVote{VoteExtension: []byte{}}, nil
@@ -81,8 +81,69 @@ func (k *Keeper) ExtendVoteHandler(ctx context.Context, req *abci.RequestExtendV
 	return &abci.ResponseExtendVote{VoteExtension: voteExtBz}, nil
 }
 
-// constructVoteExtension builds the vote extension based on oracle data and on-chain state.
-func (k *Keeper) ConstructVoteExtension(ctx context.Context, height int64, oracleData *OracleData) (VoteExtension, error) {
+// gatherOracleDataForVoteExtension fetches all necessary on-chain and sidecar data to build a vote extension.
+func (k *Keeper) gatherOracleDataForVoteExtension(ctx context.Context, height int64) (*OracleData, error) {
+	oracleData, err := k.GetSidecarState(ctx, height)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving sidecar state: %w", err)
+	}
+
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if latestHeader != nil {
+		oracleData.LatestBtcBlockHeight = latestHeader.BlockHeight
+		if latestHeader.BlockHeader != nil {
+			oracleData.LatestBtcBlockHeader = *latestHeader.BlockHeader
+		}
+	}
+	if requestedHeader != nil {
+		oracleData.RequestedBtcBlockHeight = requestedHeader.BlockHeight
+		if requestedHeader.BlockHeader != nil {
+			oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
+		}
+	}
+
+	nonces := make(map[uint64]uint64)
+	for _, key := range k.getZenBTCKeyIDs(ctx) {
+		requested, err := k.EthereumNonceRequested.Get(ctx, key)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				return nil, err
+			}
+			requested = false
+		}
+		if requested {
+			nonce, err := k.lookupEthereumNonce(ctx, key)
+			if err != nil {
+				return nil, err
+			}
+			nonces[key] = nonce
+		}
+	}
+	oracleData.RequestedStakerNonce = nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)]
+	oracleData.RequestedEthMinterNonce = nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)]
+	oracleData.RequestedUnstakerNonce = nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)]
+	oracleData.RequestedCompleterNonce = nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)]
+
+	solNonce, err := k.retrieveSolanaNonces(ctx)
+	if err != nil {
+		return nil, err
+	}
+	oracleData.SolanaMintNonces = solNonce
+
+	solAccs, err := k.retrieveSolanaAccounts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving solana accounts: %w", err)
+	}
+	oracleData.SolanaAccounts = solAccs
+
+	return oracleData, nil
+}
+
+// ConstructVoteExtension builds the vote extension based on oracle data.
+func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 	avsDelegationsHash, err := deriveHash(oracleData.EigenDelegationsMap)
 	if err != nil {
 		return VoteExtension{}, fmt.Errorf("error deriving AVS contract delegation state hash: %w", err)
@@ -97,59 +158,27 @@ func (k *Keeper) ConstructVoteExtension(ctx context.Context, height int64, oracl
 		return VoteExtension{}, fmt.Errorf("error deriving redemptions hash: %w", err)
 	}
 
-	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
-	if err != nil {
-		return VoteExtension{}, err
-	}
-	latestBitcoinHeaderHash, err := deriveHash(latestHeader.BlockHeader)
+	latestBitcoinHeaderHash, err := deriveHash(oracleData.LatestBtcBlockHeader)
 	if err != nil {
 		return VoteExtension{}, err
 	}
 
 	// Only set requested header fields if there's a requested header
-	requestedBtcBlockHeight := int64(0)
 	var requestedBtcHeaderHash []byte
-	if requestedHeader != nil {
-		requestedBitcoinHeaderHash, err := deriveHash(requestedHeader.BlockHeader)
+	if oracleData.RequestedBtcBlockHeight > 0 {
+		requestedBitcoinHeaderHash, err := deriveHash(oracleData.RequestedBtcBlockHeader)
 		if err != nil {
 			return VoteExtension{}, err
 		}
-		requestedBtcBlockHeight = requestedHeader.BlockHeight
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
-	nonces := make(map[uint64]uint64)
-	for _, key := range k.getZenBTCKeyIDs(ctx) {
-		requested, err := k.EthereumNonceRequested.Get(ctx, key)
-		if err != nil {
-			if !errors.Is(err, collections.ErrNotFound) {
-				return VoteExtension{}, err
-			}
-			requested = false
-		}
-		if requested {
-			nonce, err := k.lookupEthereumNonce(ctx, key)
-			if err != nil {
-				return VoteExtension{}, err
-			}
-			nonces[key] = nonce
-		}
-	}
-
-	solNonce, err := k.retrieveSolanaNonces(ctx)
-	if err != nil {
-		return VoteExtension{}, err
-	}
-	solNonceHash, err := deriveHash(solNonce)
+	solNonceHash, err := deriveHash(oracleData.SolanaMintNonces)
 	if err != nil {
 		return VoteExtension{}, err
 	}
 
-	solAccs, err := k.retrieveSolanaAccounts(ctx)
-	if err != nil {
-		return VoteExtension{}, fmt.Errorf("error retrieving solana accounts: %w", err)
-	}
-	solAccsHash, err := deriveHash(solAccs)
+	solAccsHash, err := deriveHash(oracleData.SolanaAccounts)
 	if err != nil {
 		return VoteExtension{}, err
 	}
@@ -170,18 +199,18 @@ func (k *Keeper) ConstructVoteExtension(ctx context.Context, height int64, oracl
 		EigenDelegationsHash:    avsDelegationsHash[:],
 		EthBurnEventsHash:       ethBurnEventsHash[:],
 		RedemptionsHash:         redemptionsHash[:],
-		RequestedBtcBlockHeight: requestedBtcBlockHeight,
+		RequestedBtcBlockHeight: oracleData.RequestedBtcBlockHeight,
 		RequestedBtcHeaderHash:  requestedBtcHeaderHash,
-		LatestBtcBlockHeight:    latestHeader.BlockHeight,
+		LatestBtcBlockHeight:    oracleData.LatestBtcBlockHeight,
 		LatestBtcHeaderHash:     latestBitcoinHeaderHash[:],
 		EthBlockHeight:          oracleData.EthBlockHeight,
 		EthGasLimit:             oracleData.EthGasLimit,
 		EthBaseFee:              oracleData.EthBaseFee,
 		EthTipCap:               oracleData.EthTipCap,
-		RequestedStakerNonce:    nonces[k.zenBTCKeeper.GetStakerKeyID(ctx)],
-		RequestedEthMinterNonce: nonces[k.zenBTCKeeper.GetEthMinterKeyID(ctx)],
-		RequestedUnstakerNonce:  nonces[k.zenBTCKeeper.GetUnstakerKeyID(ctx)],
-		RequestedCompleterNonce: nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)],
+		RequestedStakerNonce:    oracleData.RequestedStakerNonce,
+		RequestedEthMinterNonce: oracleData.RequestedEthMinterNonce,
+		RequestedUnstakerNonce:  oracleData.RequestedUnstakerNonce,
+		RequestedCompleterNonce: oracleData.RequestedCompleterNonce,
 		SolanaMintNoncesHash:    solNonceHash[:],
 		SolanaAccountsHash:      solAccsHash[:],
 		SolanaMintEventsHash:    solanaMintEventsHash[:],

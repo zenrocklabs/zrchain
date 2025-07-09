@@ -139,18 +139,18 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		Fee:               0,
 		Btl:               20,
 	}).AnyTimes()
-	zentpKeeper.EXPECT().GetMintsWithStatus(gomock.Any(), gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
-	zentpKeeper.EXPECT().GetMintsWithStatusPending(gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
-	zentpKeeper.EXPECT().GetTotalROCKSupply(gomock.Any()).Return(math.NewInt(1000000), nil).AnyTimes()
-	zentpKeeper.EXPECT().CheckROCKSupplyCap(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	zentpKeeper.EXPECT().UpdateMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	zentpKeeper.EXPECT().GetSolanaROCKSupply(gomock.Any()).Return(math.NewInt(500000), nil).AnyTimes()
-	zentpKeeper.EXPECT().SetSolanaROCKSupply(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	zentpKeeper.EXPECT().GetBurns(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
-	zentpKeeper.EXPECT().CheckCanBurnFromSolana(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	zentpKeeper.EXPECT().GetBridgeFeeParams(gomock.Any()).Return(sdk.AccAddress{}, math.LegacyNewDec(0), nil).AnyTimes()
-	zentpKeeper.EXPECT().GetBridgeFeeAmount(gomock.Any(), gomock.Any(), gomock.Any()).Return(sdk.NewCoins(), nil).AnyTimes()
-	zentpKeeper.EXPECT().AddBurn(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatus(ubermock.Any(), ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetMintsWithStatusPending(ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().GetTotalROCKSupply(ubermock.Any()).Return(math.NewInt(1000000), nil).AnyTimes()
+	zentpKeeper.EXPECT().CheckROCKSupplyCap(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zentpKeeper.EXPECT().UpdateMint(ubermock.Any(), ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zentpKeeper.EXPECT().GetSolanaROCKSupply(ubermock.Any()).Return(math.NewInt(500000), nil).AnyTimes()
+	zentpKeeper.EXPECT().SetSolanaROCKSupply(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zentpKeeper.EXPECT().GetBurns(ubermock.Any(), ubermock.Any(), ubermock.Any(), ubermock.Any()).Return([]*zentptypes.Bridge{}, nil).AnyTimes()
+	zentpKeeper.EXPECT().CheckCanBurnFromSolana(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
+	zentpKeeper.EXPECT().GetBridgeFeeParams(ubermock.Any()).Return(sdk.AccAddress{}, math.LegacyNewDec(0), nil).AnyTimes()
+	zentpKeeper.EXPECT().GetBridgeFeeAmount(ubermock.Any(), ubermock.Any(), ubermock.Any()).Return(sdk.NewCoins(), nil).AnyTimes()
+	zentpKeeper.EXPECT().AddBurn(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())
@@ -221,14 +221,14 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	mockSidecarClient := validationtestutil.NewMocksidecarClient(newctrl)
 	keeper.SetSidecarClient(mockSidecarClient)
 
-	mockSidecarClient.EXPECT().GetSidecarState(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
-	mockSidecarClient.EXPECT().GetSidecarStateByEthHeight(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
-	mockSidecarClient.EXPECT().GetBitcoinBlockHeaderByHeight(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
-	mockSidecarClient.EXPECT().GetLatestBitcoinBlockHeader(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetSidecarState(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetSidecarStateByEthHeight(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetBitcoinBlockHeaderByHeight(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetLatestBitcoinBlockHeader(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
 
-	mockSidecarClient.EXPECT().GetLatestEthereumNonceForAccount(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleNonceResponse, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetLatestEthereumNonceForAccount(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleNonceResponse, nil).AnyTimes()
 
-	mockSidecarClient.EXPECT().GetSolanaAccountInfo(gomock.Any(), gomock.Any()).Return(validationtestutil.SampleSolanaAccount, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetSolanaAccountInfo(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleSolanaAccount, nil).AnyTimes()
 
 	s.ctx = ctx
 	s.validationKeeper = keeper
