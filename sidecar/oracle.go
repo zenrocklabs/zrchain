@@ -636,7 +636,14 @@ func (o *Oracle) processSolanaMintEvents(
 		allNewEvents := append(rockEvents, zenbtcEvents...)
 
 		// Reconcile and merge
+		slog.Info("Before reconciliation",
+			"pendingMintEvents", len(currentState.SolanaMintEvents),
+			"cleanedMintEventsMap", len(currentState.CleanedSolanaMintEvents))
 		remainingEvents, cleanedEvents, reconcileErr := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
+		slog.Info("After reconciliation",
+			"remainingEvents", len(remainingEvents),
+			"cleanedEventsMap", len(cleanedEvents),
+			"reconcileErr", reconcileErr)
 		var mergedMintEvents []api.SolanaMintEvent
 		if reconcileErr != nil {
 			// Reconciliation failed, so 'remainingEvents' contains all the previously pending events.
@@ -653,8 +660,15 @@ func (o *Oracle) processSolanaMintEvents(
 
 		updateMutex.Lock()
 		// Re-merge with the current update state to defend against race conditions.
+		slog.Info("Before final merge",
+			"updateMintEvents", len(update.SolanaMintEvents),
+			"cleanedEventsForMerge", len(cleanedEvents),
+			"mergedMintEvents", len(mergedMintEvents))
 		update.SolanaMintEvents = mergeNewMintEvents(update.SolanaMintEvents, cleanedEvents, mergedMintEvents, "Solana mint")
 		update.cleanedSolanaMintEvents = cleanedEvents
+		slog.Info("After final merge and state update",
+			"finalMintEvents", len(update.SolanaMintEvents),
+			"finalCleanedEvents", len(update.cleanedSolanaMintEvents))
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
 		}

@@ -240,15 +240,25 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 	copy(mergedEvents, existingEvents)
 
 	// Add new events if they don't already exist
+	addedCount := 0
+	skippedCount := 0
 	for _, event := range newEvents {
 		key := generateBurnEventKey(event)
 		if !existingEventKeys[key] {
 			mergedEvents = append(mergedEvents, event)
-			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
+			addedCount++
+			slog.Debug("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
 		} else {
-			slog.Info("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
+			skippedCount++
+			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
 		}
 	}
+
+	slog.Info("Burn event merge summary",
+		"type", eventTypeName,
+		"added", addedCount,
+		"skipped", skippedCount,
+		"totalAfterMerge", len(mergedEvents))
 
 	return mergedEvents
 }
@@ -287,10 +297,10 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 		if !existingEventKeys[key] {
 			mergedEvents = append(mergedEvents, event)
 			addedCount++
-			slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
+			slog.Debug("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
 		} else {
 			skippedCount++
-			slog.Info("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
+			slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
 		}
 	}
 
