@@ -72,9 +72,24 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 		burnPagination.CountTotal = false
 	}
 
+	if req.Fees {
+		zentpFees, err := k.ZentpFees.Get(goCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		return &types.QueryStatsResponse{
+			TotalMinted: totalMinted.Mul(math.NewInt(1000000)).Uint64(),
+			TotalBurned: totalBurned.Mul(math.NewInt(1000000)).Uint64(),
+			MintsCount:  mintsCount,
+			BurnsCount:  burnsCount,
+			ZentpFees:   &zentpFees,
+		}, nil
+	}
+
 	return &types.QueryStatsResponse{
-		TotalMinted: totalMinted.Uint64(),
-		TotalBurned: totalBurned.Uint64(),
+		TotalMinted: totalMinted.Mul(math.NewInt(1000000)).Uint64(),
+		TotalBurned: totalBurned.Mul(math.NewInt(1000000)).Uint64(),
 		MintsCount:  mintsCount,
 		BurnsCount:  burnsCount,
 	}, nil

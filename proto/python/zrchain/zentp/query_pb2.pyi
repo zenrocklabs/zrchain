@@ -2,6 +2,7 @@ from amino import amino_pb2 as _amino_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
+from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from zrchain.zentp import params_pb2 as _params_pb2
 from zrchain.zentp import bridge_pb2 as _bridge_pb2
 from google.protobuf.internal import containers as _containers
@@ -74,24 +75,28 @@ class QueryBurnsResponse(_message.Message):
     def __init__(self, burns: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
 
 class QueryStatsRequest(_message.Message):
-    __slots__ = ("address", "denom")
+    __slots__ = ("address", "denom", "fees")
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
+    FEES_FIELD_NUMBER: _ClassVar[int]
     address: str
     denom: str
-    def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ...) -> None: ...
+    fees: bool
+    def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ..., fees: bool = ...) -> None: ...
 
 class QueryStatsResponse(_message.Message):
-    __slots__ = ("total_minted", "total_burned", "mints_count", "burns_count")
+    __slots__ = ("total_minted", "total_burned", "mints_count", "burns_count", "zentp_fees")
     TOTAL_MINTED_FIELD_NUMBER: _ClassVar[int]
     TOTAL_BURNED_FIELD_NUMBER: _ClassVar[int]
     MINTS_COUNT_FIELD_NUMBER: _ClassVar[int]
     BURNS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    ZENTP_FEES_FIELD_NUMBER: _ClassVar[int]
     total_minted: int
     total_burned: int
     mints_count: int
     burns_count: int
-    def __init__(self, total_minted: _Optional[int] = ..., total_burned: _Optional[int] = ..., mints_count: _Optional[int] = ..., burns_count: _Optional[int] = ...) -> None: ...
+    zentp_fees: _coin_pb2.Coin
+    def __init__(self, total_minted: _Optional[int] = ..., total_burned: _Optional[int] = ..., mints_count: _Optional[int] = ..., burns_count: _Optional[int] = ..., zentp_fees: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ...) -> None: ...
 
 class QuerySolanaROCKSupplyRequest(_message.Message):
     __slots__ = ()
