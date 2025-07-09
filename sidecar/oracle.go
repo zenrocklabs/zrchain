@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"cosmossdk.io/math"
@@ -195,12 +196,27 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	o.mainLoopTicker = mainLoopTicker
 	slog.Info("Ticker synced, awaiting initial oracle data fetch", "interval", mainLoopTickerIntervalDuration)
 
+	// Track active tick processing to prevent overlapping ticks
+	var tickInProgress int32 // 0 = idle, 1 = processing
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
-			o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime, mainLoopTickerIntervalDuration)
+			// Check if a tick is already in progress
+			if atomic.LoadInt32(&tickInProgress) == 1 {
+				slog.Warn("Previous tick still in progress, skipping this tick to prevent overlap",
+					"tickTime", tickTime.Format("15:04:05.00"))
+				continue
+			}
+
+			// Mark tick as in progress and process asynchronously
+			atomic.StoreInt32(&tickInProgress, 1)
+			go func(tickTime time.Time) {
+				defer atomic.StoreInt32(&tickInProgress, 0)
+				o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime, mainLoopTickerIntervalDuration)
+			}(tickTime)
 		}
 	}
 }
