@@ -1528,6 +1528,14 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 	return sig
 }
 
+// formatWatermarkForLogging returns a user-friendly representation of a watermark signature
+func formatWatermarkForLogging(sig solana.Signature) string {
+	if sig.IsZero() {
+		return "<none>"
+	}
+	return sig.String()
+}
+
 // processTransactionFunc defines the function signature for processing a single Solana transaction.
 // It returns a slice of events (as any), and an error if processing fails.
 type processTransactionFunc func(
@@ -1593,11 +1601,11 @@ func (o *Oracle) getSolanaEvents(
 		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
 	}
 	if len(newSignatures) == 0 {
-		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", lastKnownSig)
+		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", formatWatermarkForLogging(lastKnownSig))
 		return []any{}, newestSigFromNode, nil
 	}
 
-	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", lastKnownSig, "newest", newestSigFromNode)
+	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
 
 	// Get event processor from pool for memory efficiency
 	ep := o.eventProcessorPool.Get().(*EventProcessor)

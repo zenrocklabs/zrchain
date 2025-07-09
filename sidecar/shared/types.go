@@ -104,7 +104,7 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
-	MainLoopTickerInterval      = 60 * time.Second
+	MainLoopTickerInterval      = 30 * time.Second
 	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
 	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
