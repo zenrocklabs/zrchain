@@ -126,7 +126,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldEigenDelegationsHash; i <= VEFieldSolanaMintEventsHash; i++ {
+	for i := VEFieldEigenDelegationsHash; i <= VEFieldSidecarVersionName; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
