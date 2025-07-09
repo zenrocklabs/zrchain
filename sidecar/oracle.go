@@ -991,11 +991,11 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		// Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
-			slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
-			// If we fail to query zrChain, we can't determine the status of any pending mints.
-			// To be safe, we should abort reconciliation for this cycle and retry all events next time.
-			// Return the original set of events to be cleaned, the original cleaned map, and the error.
-			return eventsToClean, cleanedEvents, err
+			slog.Warn("Error querying zrChain for mint event, keeping in cache", "txSig", event.TxSig, "error", err)
+			// If we fail to query zrChain for this specific event, we keep it in the cache
+			// to retry later, but continue processing other events
+			remainingEvents = append(remainingEvents, event)
+			continue
 		}
 
 		if zenbtcResp != nil && zenbtcResp.PendingMintTransaction != nil &&
@@ -1007,9 +1007,10 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if !foundOnChain {
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
-				slog.Error("Error querying zrChain for mint event", "txSig", event.TxSig, "error", err)
-				// Similar to the above, abort the entire reconciliation process on any zrChain query error.
-				return eventsToClean, cleanedEvents, err
+				slog.Warn("Error querying zrChain ZenTP for mint event, keeping in cache", "txSig", event.TxSig, "error", err)
+				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
+				remainingEvents = append(remainingEvents, event)
+				continue
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
 				foundOnChain = true
