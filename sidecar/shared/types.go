@@ -104,7 +104,7 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
-	MainLoopTickerInterval      = 30 * time.Second
+	MainLoopTickerInterval      = 60 * time.Second
 	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
 	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
@@ -124,9 +124,9 @@ var (
 	// HTTP and RPC constants
 	DefaultHTTPTimeout          = 10 * time.Second
 	SolanaRPCTimeout            = 15 * time.Second // Longer timeout for Solana RPC operations
-	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
+	SolanaBatchTimeout          = 25 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
-	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
+	SolanaMaxConcurrentRPCCalls = 25          // Maximum concurrent Solana RPC calls (semaphore size)
 	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)

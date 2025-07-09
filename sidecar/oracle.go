@@ -1016,6 +1016,9 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	updatedCleanedEvents := make(map[string]bool)
 	maps.Copy(updatedCleanedEvents, cleanedEvents)
 
+	var zenbtcQueryErrors, zentpQueryErrors int
+	var lastZenbtcError, lastZentpError error
+
 	for _, event := range eventsToClean {
 		key := base64.StdEncoding.EncodeToString(event.SigHash)
 		if _, alreadyCleaned := updatedCleanedEvents[key]; alreadyCleaned {
@@ -1027,7 +1030,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		// Check ZenBTC keeper
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.PendingMintTransaction(ctx, event.TxSig)
 		if err != nil {
-			slog.Warn("Error querying zrChain for mint event, keeping in cache", "txSig", event.TxSig, "error", err)
+			zenbtcQueryErrors++
+			lastZenbtcError = err
 			// If we fail to query zrChain for this specific event, we keep it in the cache
 			// to retry later, but continue processing other events
 			remainingEvents = append(remainingEvents, event)
@@ -1043,7 +1047,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if !foundOnChain {
 			zentpResp, err := o.zrChainQueryClient.ZenTPQueryClient.Mints(ctx, "", event.TxSig, zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED)
 			if err != nil {
-				slog.Warn("Error querying zrChain ZenTP for mint event, keeping in cache", "txSig", event.TxSig, "error", err)
+				zentpQueryErrors++
+				lastZentpError = err
 				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
 				remainingEvents = append(remainingEvents, event)
 				continue
@@ -1059,6 +1064,20 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			updatedCleanedEvents[key] = true
 			slog.Info("Removing Solana mint event from cache as it's now on chain", "txSig", event.TxSig, "sigHash", key)
 		}
+	}
+
+	// Log summary of any query errors
+	if zenbtcQueryErrors > 0 {
+		slog.Warn("Failed to query zrChain ZenBTC for mint events, keeping in cache",
+			"failedCount", zenbtcQueryErrors,
+			"totalEvents", len(eventsToClean),
+			"lastError", lastZenbtcError)
+	}
+	if zentpQueryErrors > 0 {
+		slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
+			"failedCount", zentpQueryErrors,
+			"totalEvents", len(eventsToClean),
+			"lastError", lastZentpError)
 	}
 
 	return remainingEvents, updatedCleanedEvents, nil
@@ -1984,6 +2003,10 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 	remaining := make([]api.BurnEvent, 0, len(eventsToClean))
 	updated := make(map[string]bool)
 	maps.Copy(updated, cleanedEvents)
+
+	var zenbtcQueryErrors, zentpQueryErrors, bech32EncodingErrors int
+	var lastZenbtcError, lastZentpError, lastBech32Error error
+
 	for _, ev := range eventsToClean {
 		key := fmt.Sprintf("%s-%s-%d", ev.ChainID, ev.TxID, ev.LogIndex)
 		if updated[key] {
@@ -1992,7 +2015,8 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 		found := false
 		zenbtcResp, err := o.zrChainQueryClient.ZenBTCQueryClient.BurnEvents(ctx, 0, ev.TxID, ev.LogIndex, ev.ChainID)
 		if err != nil {
-			slog.Error("Error querying zrChain for zenBTC burn event", "txID", ev.TxID, "logIndex", ev.LogIndex, "chainID", ev.ChainID, "error", err)
+			zenbtcQueryErrors++
+			lastZenbtcError = err
 		} else if zenbtcResp != nil && len(zenbtcResp.BurnEvents) > 0 {
 			found = true
 		}
@@ -2001,11 +2025,13 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 			if len(ev.DestinationAddr) >= 20 {
 				bech32Addr, err := sdkBech32.ConvertAndEncode("zen", ev.DestinationAddr[:20])
 				if err != nil {
-					slog.Error("Error encoding destination address for ZenTP burn check", "address", ev.DestinationAddr, "error", err)
+					bech32EncodingErrors++
+					lastBech32Error = err
 				} else {
 					ztp, err := o.zrChainQueryClient.ZenTPQueryClient.Burns(ctx, bech32Addr, ev.TxID)
 					if err != nil {
-						slog.Error("Error querying zrChain for ZenTP burn event", "txID", ev.TxID, "address", bech32Addr, "error", err)
+						zentpQueryErrors++
+						lastZentpError = err
 					} else if ztp != nil && len(ztp.Burns) > 0 {
 						found = true
 					}
@@ -2018,5 +2044,29 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 			remaining = append(remaining, ev)
 		}
 	}
+
+	// Log summary of any query errors
+	if zenbtcQueryErrors > 0 {
+		slog.Warn("Failed to query zrChain for zenBTC burn events",
+			"failedCount", zenbtcQueryErrors,
+			"totalEvents", len(eventsToClean),
+			"chainType", chainTypeName,
+			"lastError", lastZenbtcError)
+	}
+	if zentpQueryErrors > 0 {
+		slog.Warn("Failed to query zrChain for ZenTP burn events",
+			"failedCount", zentpQueryErrors,
+			"totalEvents", len(eventsToClean),
+			"chainType", chainTypeName,
+			"lastError", lastZentpError)
+	}
+	if bech32EncodingErrors > 0 {
+		slog.Warn("Failed to encode destination addresses for ZenTP burn checks",
+			"failedCount", bech32EncodingErrors,
+			"totalEvents", len(eventsToClean),
+			"chainType", chainTypeName,
+			"lastError", lastBech32Error)
+	}
+
 	return remaining, updated
 }
