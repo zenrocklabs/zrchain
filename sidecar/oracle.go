@@ -264,6 +264,12 @@ func (o *Oracle) processOracleTick(
 // updates the high-watermark fields on the oracle object itself, and persists the new state to disk.
 // This is the single, atomic point of truth for state transitions.
 func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
+	// Log watermark changes for debugging
+	oldRockMint := o.lastSolRockMintSigStr
+	oldZenBTCMint := o.lastSolZenBTCMintSigStr
+	oldZenBTCBurn := o.lastSolZenBTCBurnSigStr
+	oldRockBurn := o.lastSolRockBurnSigStr
+
 	o.currentState.Store(&newState)
 
 	// Update the oracle's high-watermark fields from the newly applied state.
@@ -272,6 +278,20 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 	o.lastSolZenBTCMintSigStr = newState.LastSolZenBTCMintSig
 	o.lastSolZenBTCBurnSigStr = newState.LastSolZenBTCBurnSig
 	o.lastSolRockBurnSigStr = newState.LastSolRockBurnSig
+
+	// Log any watermark changes
+	if oldRockMint != o.lastSolRockMintSigStr {
+		slog.Info("Updated ROCK mint watermark", "old", oldRockMint, "new", o.lastSolRockMintSigStr)
+	}
+	if oldZenBTCMint != o.lastSolZenBTCMintSigStr {
+		slog.Info("Updated zenBTC mint watermark", "old", oldZenBTCMint, "new", o.lastSolZenBTCMintSigStr)
+	}
+	if oldZenBTCBurn != o.lastSolZenBTCBurnSigStr {
+		slog.Info("Updated zenBTC burn watermark", "old", oldZenBTCBurn, "new", o.lastSolZenBTCBurnSigStr)
+	}
+	if oldRockBurn != o.lastSolRockBurnSigStr {
+		slog.Info("Updated ROCK burn watermark", "old", oldRockBurn, "new", o.lastSolRockBurnSigStr)
+	}
 
 	slog.Info("Applied new state and updated watermarks",
 		"rockMint", o.lastSolRockMintSigStr,
@@ -1142,7 +1162,7 @@ func (o *Oracle) processBurnTransaction(
 	}
 
 	if debugMode {
-		slog.Debug("Processing tx: found events", "eventType", eventTypeName, "tx", sig, "eventCount", len(decodedEvents))
+		slog.Info("Processing tx: found events", "eventType", eventTypeName, "tx", sig, "eventCount", len(decodedEvents))
 		for i, event := range decodedEvents {
 			// Use reflection to see event details for debugging
 			eventValue := reflect.ValueOf(event)
@@ -1156,7 +1176,7 @@ func (o *Oracle) processBurnTransaction(
 
 			eventNameField := eventValue.FieldByName("Name")
 			if eventNameField.IsValid() {
-				slog.Debug("Event details", "eventIndex", i, "eventName", eventNameField.String(), "eventType", fmt.Sprintf("%T", event))
+				slog.Info("Event details", "eventIndex", i, "eventName", eventNameField.String(), "eventType", fmt.Sprintf("%T", event))
 			}
 		}
 	}
@@ -1198,7 +1218,7 @@ func (o *Oracle) processBurnTransaction(
 			}
 			burnEvents = append(burnEvents, burnEvent)
 			if debugMode {
-				slog.Debug("Burn Event",
+				slog.Info("Burn Event",
 					"eventType", eventTypeName,
 					"txID", burnEvent.TxID,
 					"logIndex", burnEvent.LogIndex,
@@ -1363,7 +1383,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(sigStr string, programID string) (*ap
 				Height:          uint64(txResult.Slot),
 			}
 			if o.DebugMode {
-				slog.Debug("Backfilled Solana ROCK Burn Event",
+				slog.Info("Backfilled Solana ROCK Burn Event",
 					"txID", burnEvent.TxID,
 					"logIndex", burnEvent.LogIndex,
 					"chainID", burnEvent.ChainID,
@@ -1464,6 +1484,7 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 	}
 
 	if sigStr == "" {
+		slog.Info("No watermark signature stored yet", "eventType", eventType)
 		return solana.Signature{} // No signature stored yet, so zero value
 	}
 	sig, err := solana.SignatureFromBase58(sigStr)
@@ -1472,6 +1493,8 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 		slog.Warn("Could not parse stored signature string for event type. Treating as no prior signature.", "sigString", sigStr, "eventType", eventType, "error", err)
 		return solana.Signature{}
 	}
+
+	slog.Info("Retrieved watermark signature", "eventType", eventType, "sig", sigStr)
 	return sig
 }
 
@@ -1540,8 +1563,11 @@ func (o *Oracle) getSolanaEvents(
 		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
 	}
 	if len(newSignatures) == 0 {
+		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", lastKnownSig)
 		return []any{}, newestSigFromNode, nil
 	}
+
+	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", lastKnownSig, "newest", newestSigFromNode)
 
 	// Get event processor from pool for memory efficiency
 	ep := o.eventProcessorPool.Get().(*EventProcessor)
@@ -1917,7 +1943,7 @@ func (o *Oracle) processMintTransaction(
 			TxSig:     sig.String(),
 		})
 		if debugMode {
-			slog.Debug("Mint event", "eventType", eventTypeName, "tx", sig)
+			slog.Info("Mint event", "eventType", eventTypeName, "tx", sig)
 		}
 	}
 	return out, nil

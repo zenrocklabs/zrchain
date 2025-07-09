@@ -246,7 +246,7 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 			mergedEvents = append(mergedEvents, event)
 			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
 		} else {
-			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
+			slog.Info("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
 		}
 	}
 
@@ -262,22 +262,43 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 		existingEventKeys[key] = true
 	}
 
+	// Also check against already cleaned events
+	for key := range cleanedEvents {
+		existingEventKeys[key] = true
+	}
+
 	// Start with existing events
 	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
 	copy(mergedEvents, existingEvents)
 
+	// Add detailed logging for debugging
+	slog.Info("Mint event merge debug info",
+		"type", eventTypeName,
+		"existingCount", len(existingEvents),
+		"cleanedCount", len(cleanedEvents),
+		"newCount", len(newEvents),
+		"existingKeys", len(existingEventKeys))
+
 	// Add new events if they don't already exist
+	addedCount := 0
+	skippedCount := 0
 	for _, event := range newEvents {
 		key := generateMintEventKey(event)
 		if !existingEventKeys[key] {
-			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
-				mergedEvents = append(mergedEvents, event)
-				slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig)
-			} else {
-				slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig)
-			}
+			mergedEvents = append(mergedEvents, event)
+			addedCount++
+			slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
+		} else {
+			skippedCount++
+			slog.Info("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
 		}
 	}
+
+	slog.Info("Mint event merge summary",
+		"type", eventTypeName,
+		"added", addedCount,
+		"skipped", skippedCount,
+		"totalAfterMerge", len(mergedEvents))
 
 	return mergedEvents
 }
