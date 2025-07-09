@@ -245,9 +245,9 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		return nil, fmt.Errorf("failed to check validators for vote extension mismatches: %w", err)
 	}
 
-	// Cleanup old mismatch count records every 100 blocks to prevent storage bloat
+	// Cleanup old mismatch count records every window size blocks to prevent storage bloat
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if sdkCtx.BlockHeight()%100 == 0 {
+	if sdkCtx.BlockHeight()%voteExtensionWindowSize == 0 {
 		if err := k.cleanupOldMismatchCounts(ctx, sdkCtx.BlockHeight()); err != nil {
 			k.Logger(ctx).Error("Failed to cleanup old mismatch counts", "error", err)
 			// Don't return error here as it's not critical for validator set updates
@@ -567,16 +567,24 @@ func (k Keeper) UnbondingToUnbonded(ctx context.Context, validator types.Validat
 	return k.completeUnbondingValidator(ctx, validator)
 }
 
+// Vote extension mismatch detection configuration
+const (
+	// Number of recent blocks to check for vote extension mismatches
+	voteExtensionWindowSize = 200
+	// Number of mismatched vote extensions required to jail a validator
+	voteExtensionJailThreshold = 100
+)
+
 // checkAndJailValidatorsForMismatchedVoteExtensions checks all bonded validators
-// and jails those who have submitted mismatched vote extensions for at least 50
-// out of the last 100 blocks. This optimized version uses a sliding window counter
+// and jails those who have submitted mismatched vote extensions for at least 100
+// out of the last 200 blocks. This optimized version uses a sliding window counter
 // to achieve O(V) time complexity instead of O(V × B × M).
 func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	currentHeight := sdkCtx.BlockHeight()
 
-	// Only check if we have at least 100 blocks of data
-	if currentHeight < 100 {
+	// Only check if we have at least the full window size of blocks of data
+	if currentHeight < voteExtensionWindowSize {
 		return nil
 	}
 
@@ -609,14 +617,14 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 			continue
 		}
 
-		// If the validator has 50 or more mismatches, jail them
-		if mismatchCount.TotalCount >= 50 {
+		// If the validator has reached the jail threshold or more mismatches, jail them
+		if mismatchCount.TotalCount >= voteExtensionJailThreshold {
 			k.Logger(ctx).Info(
 				"Jailing validator for excessive mismatched vote extensions",
 				"validator", validator.OperatorAddress,
 				"consensus_addr", sdk.ConsAddress(consAddr).String(),
 				"mismatch_count", mismatchCount.TotalCount,
-				"blocks_checked", 100,
+				"blocks_checked", voteExtensionWindowSize,
 			)
 
 			if err := k.jailValidator(ctx, validator); err != nil {
@@ -635,7 +643,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 					sdk.NewAttribute("validator", validator.OperatorAddress),
 					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
 					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
-					sdk.NewAttribute("blocks_checked", "100"),
+					sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", voteExtensionWindowSize)),
 				),
 			)
 		}
@@ -648,8 +656,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 // no mismatches in the current window. This should be called periodically to prevent
 // storage bloat.
 func (k Keeper) cleanupOldMismatchCounts(ctx context.Context, currentHeight int64) error {
-	const windowSize = 100
-	windowStart := currentHeight - windowSize + 1
+	windowStart := currentHeight - voteExtensionWindowSize + 1
 
 	// Iterate through all mismatch count records
 	var toDelete []string
