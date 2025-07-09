@@ -635,12 +635,10 @@ func (o *Oracle) processSolanaMintEvents(
 
 		// Handle errors after parallel execution
 		if rockErr != nil {
-			errChan <- fmt.Errorf("failed to get Solana ROCK mint events, proceeding with reconciliation only: %w", rockErr)
-			rockEvents = []api.SolanaMintEvent{} // Ensure slice is not nil
+			errChan <- fmt.Errorf("failed to get Solana ROCK mint events, applying partial results: %w", rockErr)
 		}
 		if zenbtcErr != nil {
-			errChan <- fmt.Errorf("failed to get Solana zenBTC mint events, proceeding with reconciliation only: %w", zenbtcErr)
-			zenbtcEvents = []api.SolanaMintEvent{} // Ensure slice is not nil
+			errChan <- fmt.Errorf("failed to get Solana zenBTC mint events, applying partial results: %w", zenbtcErr)
 		}
 
 		allNewEvents := append(rockEvents, zenbtcEvents...)
@@ -717,7 +715,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 			var newestSig solana.Signature
 			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEventsFn(sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
-			if zenBtcErr == nil && !newestSig.IsZero() {
+			if !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
 				updateMutex.Unlock()
@@ -731,7 +729,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 			var newestSig solana.Signature
 			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEventsFn(sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
-			if rockErr == nil && !newestSig.IsZero() {
+			if !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
 				updateMutex.Unlock()
@@ -741,12 +739,10 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		burnWg.Wait() // Wait for both parallel burn fetches to complete
 
 		if zenBtcErr != nil {
-			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events: %w", zenBtcErr)
-			zenBtcEvents = []api.BurnEvent{} // Ensure slice is not nil for append
+			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events, applying partial results: %w", zenBtcErr)
 		}
 		if rockErr != nil {
-			errChan <- fmt.Errorf("failed to process Solana ROCK burn events: %w", rockErr)
-			rockEvents = []api.BurnEvent{} // Ensure slice is not nil for append
+			errChan <- fmt.Errorf("failed to process Solana ROCK burn events, applying partial results: %w", rockErr)
 		}
 
 		// Merge and sort all new events (which will be empty if fetches failed)
@@ -1129,16 +1125,15 @@ func (o *Oracle) getSolROCKMints(programID string, lastKnownSig solana.Signature
 	}
 
 	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
-	if err != nil {
-		return nil, lastKnownSig, err
-	}
 
+	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
 	for i, untypedEvent := range untypedEvents {
 		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
 	}
 
-	return mintEvents, newWatermark, nil
+	// Return the (potentially partial) events and the updated watermark along with the error.
+	return mintEvents, newWatermark, err
 }
 
 func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1173,16 +1168,15 @@ func (o *Oracle) getSolZenBTCMints(programID string, lastKnownSig solana.Signatu
 	}
 
 	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
-	if err != nil {
-		return nil, lastKnownSig, err
-	}
 
+	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
 	for i, untypedEvent := range untypedEvents {
 		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
 	}
 
-	return mintEvents, newWatermark, nil
+	// Return the (potentially partial) events and the updated watermark along with the error.
+	return mintEvents, newWatermark, err
 }
 
 // processBurnTransaction is a generic helper that processes a single Solana transaction to extract burn events.
@@ -1310,16 +1304,15 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(programID string, lastKnownSig solana
 	}
 
 	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
-	if err != nil {
-		return nil, lastKnownSig, err
-	}
 
+	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
 	for i, untypedEvent := range untypedEvents {
 		burnEvents[i] = untypedEvent.(api.BurnEvent)
 	}
 
-	return burnEvents, newWatermark, nil
+	// Return the (potentially partial) events and the updated watermark along with the error.
+	return burnEvents, newWatermark, err
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
@@ -1357,16 +1350,15 @@ func (o *Oracle) getSolanaRockBurnEvents(programID string, lastKnownSig solana.S
 	}
 
 	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
-	if err != nil {
-		return nil, lastKnownSig, err
-	}
 
+	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
 	for i, untypedEvent := range untypedEvents {
 		burnEvents[i] = untypedEvent.(api.BurnEvent)
 	}
 
-	return burnEvents, newWatermark, nil
+	// Return the (potentially partial) events and the updated watermark along with the error.
+	return burnEvents, newWatermark, err
 }
 
 // getSolanaBurnEventFromSig fetches and decodes burn events from a single Solana transaction signature.
@@ -1561,9 +1553,9 @@ type processTransactionFunc func(
 
 // getSolanaEvents is an optimized generic helper to fetch signatures for a given program, detect and heal
 // gaps using the watermark (lastKnownSig), then download and process each transaction using the
-// provided `processTransaction` callback. It guarantees "all-or-nothing" semantics: if any part
-// of the pipeline fails the original `lastKnownSig` is returned so the entire batch will be
-// retried from scratch on the next tick.
+// provided `processTransaction` callback. If any part of the transaction processing pipeline fails,
+// it returns any partially processed events along with the watermark of the last successfully
+// processed transaction. This allows the oracle to make incremental progress.
 
 // PERFORMANCE OPTIMIZATIONS:
 // - Rate limiting with semaphore to prevent RPC overload
@@ -1708,7 +1700,8 @@ func (o *Oracle) getSolanaEvents(
 			// Optimized fallback with individual transaction caching
 			if err := o.processFallbackTransactionsWithCaching(currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
 				o.batchRequestPool.Put(&batchRequests)
-				return nil, lastKnownSig, err
+				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
+				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 			o.batchRequestPool.Put(&batchRequests)
 			continue
@@ -1735,19 +1728,21 @@ func (o *Oracle) getSolanaEvents(
 		for idx, sigInfo := range currentBatch {
 			resp, exists := responseMap[idx]
 			if !exists {
-				slog.Error("Missing batch response for index", "eventType", eventTypeName, "idx", idx, "tx", sigInfo.Signature)
-				return nil, lastKnownSig, fmt.Errorf("missing batch response for index %d", idx)
+				err := fmt.Errorf("missing batch response for index %d", idx)
+				slog.Warn("Aborting batch due to missing response, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			if resp.Error != nil || resp.Result == nil {
-				slog.Error("Unrecoverable batch response error – aborting cycle", "eventType", eventTypeName, "tx", sigInfo.Signature, "respErr", resp.Error)
-				return nil, lastKnownSig, fmt.Errorf("batch response error")
+				err := fmt.Errorf("batch response error: %v", resp.Error)
+				slog.Warn("Aborting batch due to response error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			var txRes solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
-				slog.Error("Unmarshal error", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
-				return nil, lastKnownSig, err
+				slog.Warn("Aborting batch due to unmarshal error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			// Cache the transaction result for potential reuse
@@ -1755,8 +1750,8 @@ func (o *Oracle) getSolanaEvents(
 
 			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
 			if err != nil {
-				slog.Error("Processing error – aborting cycle", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
-				return nil, lastKnownSig, err
+				slog.Warn("Aborting batch due to processing error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			if len(events) > 0 {
@@ -1850,14 +1845,15 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 			}
 
 			if txErr != nil || txRes == nil {
-				slog.Error("Unrecoverable transaction fetch error – aborting cycle to avoid data loss", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", txErr)
-				return fmt.Errorf("tx fetch error: %w", txErr)
+				err := fmt.Errorf("unrecoverable tx fetch error: %w", txErr)
+				slog.Error("Aborting fallback processing to avoid data loss", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
+				return err
 			}
 		}
 
 		events, err := processTransaction(txRes, program, sigInfo.Signature, o.DebugMode)
 		if err != nil {
-			slog.Error("Unrecoverable processing error – aborting cycle", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
+			slog.Error("Unrecoverable processing error in fallback", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
 			return err
 		}
 
