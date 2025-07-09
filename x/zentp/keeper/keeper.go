@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -195,17 +196,25 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 }
 
 func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridge, error) {
-	pendingmints, _, err := query.CollectionFilteredPaginate(
+	lastCompletedZentpMint, err := k.validationKeeper.GetLastCompletedZentpMintID(goCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	startKey := lastCompletedZentpMint + 1
+
+	// Encode the startKey as a proper uint64 byte representation
+	keyBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(keyBytes, startKey)
+
+	pendingMints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.MintStore,
 		&query.PageRequest{
-			Reverse: true,
+			Key: keyBytes,
 		},
 		func(key uint64, value types.Bridge) (bool, error) {
-			// stop iteration when we encounter a completed mint
-			if value.State == types.BridgeStatus_BRIDGE_STATUS_COMPLETED {
-				return false, nil
-			}
+			// Only include mints with pending status
 			return value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
@@ -216,7 +225,7 @@ func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridg
 		return nil, err
 	}
 
-	return pendingmints, nil
+	return pendingMints, nil
 }
 
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {

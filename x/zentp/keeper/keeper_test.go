@@ -8,8 +8,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
-	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	idTypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
@@ -53,7 +53,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.ctx = testCtx.Ctx
 
 	// gomock initializations
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 	accountKeeper := zentptestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := zentptestutil.NewMockBankKeeper(ctrl)
 	treasuryKeeper := zentptestutil.NewMockTreasuryKeeper(ctrl)
@@ -188,6 +188,8 @@ func (s *IntegrationTestSuite) TestAddMint() {
 	err = s.zentpKeeper.UpdateMint(s.ctx, 1, &mint)
 	s.Require().NoError(err)
 
+	s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(1), nil).AnyTimes()
+
 	// Verify the mint was stored correctly
 	mints, err = s.zentpKeeper.GetMints(s.ctx, "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty", "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1")
 	s.Require().NoError(err)
@@ -213,6 +215,8 @@ func (s *IntegrationTestSuite) TestGetMintsWithStatus() {
 		TxHash:           "123",
 		State:            types.BridgeStatus_BRIDGE_STATUS_PENDING,
 	}
+
+	s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
 
 	err = s.zentpKeeper.UpdateMint(s.ctx, 1, &mint)
 	s.Require().NoError(err)

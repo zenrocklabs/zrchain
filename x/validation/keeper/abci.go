@@ -1657,6 +1657,11 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 					continue
 				}
 
+				if err := k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id); err != nil {
+					k.Logger(ctx).Error("CRITICAL: Failed to set last completed zentp mint. State is now inconsistent.", "error", err.Error(), "bridge_id", pendingMint.Id)
+					continue
+				}
+
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
 				err = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
 				if err != nil {

@@ -45,6 +45,7 @@ type IdentityKeeper interface {
 type ValidationKeeper interface {
 	SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error
 	SetSolanaZenTPRequestedAccount(ctx context.Context, address string, state bool) error
+	GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 }
 
 type MintKeeper interface {

@@ -165,5 +165,6 @@ func TestGenesis() *validationtypes.GenesisState {
 		SolanaNonceRequested:              solanaNonceRequested,
 		SolanaZentpAccountsRequested:      []string{},
 		SolanaAccountsRequested:           []string{},
+		LastCompletedZentpMintId:          0,
 	}
 }
