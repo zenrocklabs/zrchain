@@ -92,7 +92,7 @@ message QueryBurnsResponse {
 message QueryStatsRequest {
   string address = 1; // Optional
   string denom = 2;   // Optional
-  bool fees = 3; // Optional
+  bool show_fees = 3; // Optional
 }
 
 // QueryStatsResponse is response type for the Query/Stats RPC method.

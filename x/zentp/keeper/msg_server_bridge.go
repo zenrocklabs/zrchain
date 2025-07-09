@@ -85,10 +85,6 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
-	if err = k.UpdateZentpFees(ctx, sdk.NewCoin(params.BondDenom, feeInt)); err != nil {
-		return nil, err
-	}
-
 	if err = k.validationKeeper.SetSolanaRequestedNonce(goCtx, k.GetSolanaParams(ctx).NonceAccountKey, true); err != nil {
 		return nil, err
 	}

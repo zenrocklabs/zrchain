@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,12 +71,13 @@ func TestStatsQueryWithPagination(t *testing.T) {
 func TestStatsQuery(t *testing.T) {
 
 	tests := []struct {
-		desc     string
-		mints    []types.Bridge
-		burns    []types.Bridge
-		request  *types.QueryStatsRequest
-		response *types.QueryStatsResponse
-		err      error
+		desc      string
+		mints     []types.Bridge
+		burns     []types.Bridge
+		zentpFees sdk.Coin
+		request   *types.QueryStatsRequest
+		response  *types.QueryStatsResponse
+		err       error
 	}{
 		{
 			desc:    "Total",
@@ -117,15 +120,30 @@ func TestStatsQuery(t *testing.T) {
 			request: nil,
 			err:     fmt.Errorf("request is nil"),
 		},
+		{
+			desc:      "Show Fees",
+			mints:     testutil.DefaultMints,
+			burns:     testutil.DefaultBurns,
+			zentpFees: sdk.Coin{Denom: "urock", Amount: math.NewInt(1000000)},
+			request:   &types.QueryStatsRequest{ShowFees: true},
+			response: &types.QueryStatsResponse{
+				TotalMinted: 4000100,
+				MintsCount:  2,
+				TotalBurned: 3000050,
+				BurnsCount:  6,
+				ZentpFees:   &sdk.Coin{Denom: "urock", Amount: math.NewInt(1000000)},
+			},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			zk, ctx := keepertest.ZentpKeeper(t)
 
 			genesis := types.GenesisState{
-				Params: types.DefaultParams(),
-				Burns:  tc.burns,
-				Mints:  tc.mints,
+				Params:    types.DefaultParams(),
+				Burns:     tc.burns,
+				Mints:     tc.mints,
+				ZentpFees: tc.zentpFees,
 			}
 
 			zentp.InitGenesis(ctx, zk, genesis)

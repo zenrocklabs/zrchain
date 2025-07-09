@@ -24,6 +24,7 @@ type Keeper struct {
 	stakingKeeper types.StakingKeeper
 	bankKeeper    types.BankKeeper
 	accountKeeper types.AccountKeeper
+	zentpKeeper   types.ZentpKeeper
 
 	feeCollectorName string
 
@@ -43,6 +44,7 @@ func NewKeeper(
 	sk types.StakingKeeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
+	zk types.ZentpKeeper,
 	feeCollectorName string,
 	authority string,
 ) Keeper {
@@ -58,6 +60,7 @@ func NewKeeper(
 		stakingKeeper:    sk,
 		accountKeeper:    ak,
 		bankKeeper:       bk,
+		zentpKeeper:      zk,
 		feeCollectorName: feeCollectorName,
 		authority:        authority,
 		Params:           collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
@@ -159,6 +162,11 @@ func (k Keeper) ClaimZentpFees(ctx context.Context) (sdk.Coin, error) {
 	zentpAddr := k.accountKeeper.GetModuleAddress(zentptypes.ModuleName)
 	zentpRewards := bankKeeper.GetBalance(ctx, zentpAddr, params.MintDenom)
 	err = bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ModuleName, types.ModuleName, sdk.NewCoins(zentpRewards))
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	err = k.zentpKeeper.UpdateZentpFees(ctx, zentpRewards)
 	if err != nil {
 		return sdk.Coin{}, err
 	}

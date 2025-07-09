@@ -75,14 +75,14 @@ class QueryBurnsResponse(_message.Message):
     def __init__(self, burns: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
 
 class QueryStatsRequest(_message.Message):
-    __slots__ = ("address", "denom", "fees")
+    __slots__ = ("address", "denom", "show_fees")
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
-    FEES_FIELD_NUMBER: _ClassVar[int]
+    SHOW_FEES_FIELD_NUMBER: _ClassVar[int]
     address: str
     denom: str
-    fees: bool
-    def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ..., fees: bool = ...) -> None: ...
+    show_fees: bool
+    def __init__(self, address: _Optional[str] = ..., denom: _Optional[str] = ..., show_fees: bool = ...) -> None: ...
 
 class QueryStatsResponse(_message.Message):
     __slots__ = ("total_minted", "total_burned", "mints_count", "burns_count", "zentp_fees")
