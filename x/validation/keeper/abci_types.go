@@ -35,7 +35,6 @@ var (
 
 type (
 	VoteExtension struct {
-		ZRChainBlockHeight         int64
 		EigenDelegationsHash       []byte
 		RequestedBtcBlockHeight    int64
 		RequestedBtcHeaderHash     []byte
@@ -145,10 +144,6 @@ func VoteExtensionsEnabled(ctx sdk.Context) bool {
 func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	invalid := false
 
-	if ve.ZRChainBlockHeight == 0 {
-		logger.Error("invalid vote extension: ZRChainBlockHeight is 0")
-		invalid = true
-	}
 	if len(ve.EigenDelegationsHash) == 0 {
 		logger.Error("invalid vote extension: EigenDelegationsHash is empty")
 		invalid = true

@@ -164,7 +164,6 @@ func (k *Keeper) constructVoteExtension(ctx context.Context, height int64, oracl
 	}
 
 	voteExt := VoteExtension{
-		ZRChainBlockHeight:         height,
 		ROCKUSDPrice:               oracleData.ROCKUSDPrice,
 		BTCUSDPrice:                oracleData.BTCUSDPrice,
 		ETHUSDPrice:                oracleData.ETHUSDPrice,
@@ -211,11 +210,6 @@ func (k *Keeper) VerifyVoteExtensionHandler(ctx context.Context, req *abci.Reque
 		return REJECT_VOTE, nil
 	}
 
-	if req.Height != voteExt.ZRChainBlockHeight {
-		k.Logger(ctx).Error("mismatched height for vote extension", "expected", req.Height, "got", voteExt.ZRChainBlockHeight)
-		return REJECT_VOTE, nil
-	}
-
 	if voteExt.IsInvalid(k.Logger(ctx)) {
 		k.Logger(ctx).Error("invalid vote extension in VerifyVoteExtension", "height", req.Height)
 		return REJECT_VOTE, nil
@@ -246,11 +240,6 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 	if len(fieldVotePowers) == 0 { // no field reached consensus
 		k.Logger(ctx).Warn("no fields reached consensus in vote extension", "height", req.Height)
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit, FieldVotePowers: fieldVotePowers})
-	}
-
-	if voteExt.ZRChainBlockHeight != req.Height-1 { // vote extension is from previous block
-		k.Logger(ctx).Error("mismatched height for vote extension", "height", req.Height, "voteExt.ZRChainBlockHeight", voteExt.ZRChainBlockHeight)
-		return nil, nil
 	}
 
 	oracleData, err := k.GetValidatedOracleData(ctx, voteExt, fieldVotePowers)

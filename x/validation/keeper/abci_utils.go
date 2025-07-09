@@ -164,7 +164,6 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 	// Create consensus VoteExtension with fields that have supermajority
 	var consensusVE VoteExtension
-	consensusVE.ZRChainBlockHeight = currentHeight - 1
 
 	superMajorityThreshold := superMajorityVotePower(totalVotePower)
 	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)
@@ -297,7 +296,6 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 		return VoteExtension{}, err
 	}
 
-	voteExt.ZRChainBlockHeight = currentHeight - 1
 	if voteExt.IsInvalid(k.Logger(ctx)) {
 		return VoteExtension{}, fmt.Errorf("invalid vote extension")
 	}

@@ -24,7 +24,6 @@ import (
 )
 
 var defaultVe = VoteExtension{
-	ZRChainBlockHeight:         100,
 	EigenDelegationsHash:       []byte("randomhash"),
 	RequestedBtcBlockHeight:    100000,
 	RequestedBtcHeaderHash:     []byte("randomhash"),
@@ -261,7 +260,6 @@ func TestIsInvalid(t *testing.T) {
 
 	// Map of field names to their setters
 	fieldSetters := map[string]func(*VoteExtension, any){
-		"ZRChainBlockHeight":   func(ve *VoteExtension, v any) { ve.ZRChainBlockHeight = v.(int64) },
 		"EigenDelegationsHash": func(ve *VoteExtension, v any) { ve.EigenDelegationsHash = v.([]byte) },
 		"EthBlockHeight":       func(ve *VoteExtension, v any) { ve.EthBlockHeight = v.(uint64) },
 		"EthBaseFee":           func(ve *VoteExtension, v any) { ve.EthBaseFee = v.(uint64) },

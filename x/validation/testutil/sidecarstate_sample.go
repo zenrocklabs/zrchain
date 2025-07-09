@@ -28,7 +28,6 @@ var SampleSidecarState = &sidecar.SidecarStateResponse{
 }
 
 var SampleDecodedVoteExtension = keeper.VoteExtension{
-	ZRChainBlockHeight:         3401684,
 	EigenDelegationsHash:       []byte("uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI="),
 	RequestedBtcBlockHeight:    0,
 	RequestedBtcHeaderHash:     nil,

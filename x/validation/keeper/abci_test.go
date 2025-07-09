@@ -229,14 +229,13 @@ func TestPrepareProposal(t *testing.T) {
 	// WIP - requires proper vote extension and oracle data to fully test
 
 	voteExt := keeper.VoteExtension{
-		ZRChainBlockHeight: 1,
-		EthBlockHeight:     12345,
-		EthGasLimit:        21000,
-		EthBaseFee:         20000000000,
-		EthTipCap:          1000000000,
-		BTCUSDPrice:        "50000.00",
-		ETHUSDPrice:        "3000.00",
-		ROCKUSDPrice:       "1.00",
+		EthBlockHeight: 12345,
+		EthGasLimit:    21000,
+		EthBaseFee:     20000000000,
+		EthTipCap:      1000000000,
+		BTCUSDPrice:    "50000.00",
+		ETHUSDPrice:    "3000.00",
+		ROCKUSDPrice:   "1.00",
 	}
 	voteExtBytes, err := json.Marshal(voteExt)
 	require.NoError(t, err)
