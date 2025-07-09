@@ -90,10 +90,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Validate and create zrChain client
-	zrChainQueryClient, err := validateZrChainClient(cfg)
+	// Create zrChain client without validation for better UX
+	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
-		slog.Error("zrChain client validation failed", "error", err)
+		slog.Error("Failed to create zrChain client", "error", err)
 		os.Exit(1)
 	}
 

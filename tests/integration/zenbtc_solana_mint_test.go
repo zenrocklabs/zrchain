@@ -56,19 +56,23 @@ var _ = Describe("ZenBTC Solana mint:", func() {
 	})
 
 	It("fetches the bitcoin key request within 5 seconds", func() {
-		Eventually(func() uint64 {
+		Eventually(func() (uint64, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, requestID)
-			Expect(err).ToNot(HaveOccurred())
-			return req.Id
+			if err != nil {
+				return 0, err
+			}
+			return req.Id, nil
 		}, "5s", "1s").Should(Equal(requestID))
 		GinkgoWriter.Printf("Bitcoin Key Request fetched: %d\n", requestID)
 	})
 
 	It("gets fulfilled within 15 seconds", func() {
-		Eventually(func() string {
+		Eventually(func() (string, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, requestID)
-			Expect(err).ToNot(HaveOccurred())
-			return req.Status
+			if err != nil {
+				return "", err
+			}
+			return req.Status, nil
 		}, "15s", "1s").Should(Equal(types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED.String()))
 		GinkgoWriter.Printf("Bitcoin Key Request fulfilled: %d\n", requestID)
 	})
@@ -101,15 +105,17 @@ var _ = Describe("ZenBTC Solana mint:", func() {
 
 		var newTx zentype.PendingMintTransaction
 
-		Eventually(func() int {
+		Eventually(func() (int, error) {
 			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
-			Expect(err).ToNot(HaveOccurred())
+			if err != nil {
+				return 0, err
+			}
 
 			if len(resp.PendingMintTransactions) > lastCount {
 				newTx = *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
 			}
 
-			return len(resp.PendingMintTransactions)
+			return len(resp.PendingMintTransactions), nil
 		}, "30s", "2s").Should(BeNumerically(">", lastCount))
 
 		Expect(newTx.Status).To(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED))
@@ -117,23 +123,33 @@ var _ = Describe("ZenBTC Solana mint:", func() {
 	})
 
 	It("mint gets staked", func() {
-		Eventually(func() zentype.MintTransactionStatus {
+		Eventually(func() (zentype.MintTransactionStatus, error) {
 			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
-			Expect(err).ToNot(HaveOccurred())
+			if err != nil {
+				return 0, err
+			}
+			if len(resp.PendingMintTransactions) == 0 {
+				return 0, nil // Return 0 status if no transactions
+			}
 			lastTx := *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
 
-			return lastTx.Status
+			return lastTx.Status, nil
 		}, "90s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED))
 		GinkgoWriter.Printf("Mint transaction moved to staked \n")
 	})
 
 	It("mint gets minted", func() {
-		Eventually(func() zentype.MintTransactionStatus {
+		Eventually(func() (zentype.MintTransactionStatus, error) {
 			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
-			Expect(err).ToNot(HaveOccurred())
+			if err != nil {
+				return 0, err
+			}
+			if len(resp.PendingMintTransactions) == 0 {
+				return 0, nil // Return 0 status if no transactions
+			}
 			lastTx := *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
 
-			return lastTx.Status
+			return lastTx.Status, nil
 		}, "150s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED))
 		GinkgoWriter.Printf("Mint transaction moved to minted \n")
 	})
