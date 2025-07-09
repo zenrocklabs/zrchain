@@ -859,6 +859,57 @@ func (x *_GenesisState_24_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_25_list)(nil)
+
+type _GenesisState_25_list struct {
+	list *[]*ValidatorMismatchCount
+}
+
+func (x *_GenesisState_25_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_25_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_25_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ValidatorMismatchCount)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_25_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ValidatorMismatchCount)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_25_list) AppendMutable() protoreflect.Value {
+	v := new(ValidatorMismatchCount)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_25_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_25_list) NewElement() protoreflect.Value {
+	v := new(ValidatorMismatchCount)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_25_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_GenesisState                                      protoreflect.MessageDescriptor
 	fd_GenesisState_params                               protoreflect.FieldDescriptor
@@ -885,6 +936,7 @@ var (
 	fd_GenesisState_solana_nonce_requested               protoreflect.FieldDescriptor
 	fd_GenesisState_solana_zentp_accounts_requested      protoreflect.FieldDescriptor
 	fd_GenesisState_solana_accounts_requested            protoreflect.FieldDescriptor
+	fd_GenesisState_validator_mismatch_counts            protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -914,6 +966,7 @@ func init() {
 	fd_GenesisState_solana_nonce_requested = md_GenesisState.Fields().ByName("solana_nonce_requested")
 	fd_GenesisState_solana_zentp_accounts_requested = md_GenesisState.Fields().ByName("solana_zentp_accounts_requested")
 	fd_GenesisState_solana_accounts_requested = md_GenesisState.Fields().ByName("solana_accounts_requested")
+	fd_GenesisState_validator_mismatch_counts = md_GenesisState.Fields().ByName("validator_mismatch_counts")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -1125,6 +1178,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if len(x.ValidatorMismatchCounts) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_25_list{list: &x.ValidatorMismatchCounts})
+		if !f(fd_GenesisState_validator_mismatch_counts, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -1188,6 +1247,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.SolanaZentpAccountsRequested) != 0
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		return len(x.SolanaAccountsRequested) != 0
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		return len(x.ValidatorMismatchCounts) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -1252,6 +1313,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.SolanaZentpAccountsRequested = nil
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		x.SolanaAccountsRequested = nil
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		x.ValidatorMismatchCounts = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -1391,6 +1454,12 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		}
 		listValue := &_GenesisState_24_list{list: &x.SolanaAccountsRequested}
 		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		if len(x.ValidatorMismatchCounts) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_25_list{})
+		}
+		listValue := &_GenesisState_25_list{list: &x.ValidatorMismatchCounts}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -1493,6 +1562,10 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		lv := value.List()
 		clv := lv.(*_GenesisState_24_list)
 		x.SolanaAccountsRequested = *clv.list
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		lv := value.List()
+		clv := lv.(*_GenesisState_25_list)
+		x.ValidatorMismatchCounts = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -1630,6 +1703,12 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_24_list{list: &x.SolanaAccountsRequested}
 		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		if x.ValidatorMismatchCounts == nil {
+			x.ValidatorMismatchCounts = []*ValidatorMismatchCount{}
+		}
+		value := &_GenesisState_25_list{list: &x.ValidatorMismatchCounts}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.GenesisState.last_total_power":
 		panic(fmt.Errorf("field last_total_power of message zrchain.validation.GenesisState is not mutable"))
 	case "zrchain.validation.GenesisState.exported":
@@ -1719,6 +1798,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		list := []string{}
 		return protoreflect.ValueOfList(&_GenesisState_24_list{list: &list})
+	case "zrchain.validation.GenesisState.validator_mismatch_counts":
+		list := []*ValidatorMismatchCount{}
+		return protoreflect.ValueOfList(&_GenesisState_25_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -1917,6 +1999,12 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				n += 2 + l + runtime.Sov(uint64(l))
 			}
 		}
+		if len(x.ValidatorMismatchCounts) > 0 {
+			for _, e := range x.ValidatorMismatchCounts {
+				l = options.Size(e)
+				n += 2 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1945,6 +2033,24 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.ValidatorMismatchCounts) > 0 {
+			for iNdEx := len(x.ValidatorMismatchCounts) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.ValidatorMismatchCounts[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x1
+				i--
+				dAtA[i] = 0xca
+			}
 		}
 		if len(x.SolanaAccountsRequested) > 0 {
 			for iNdEx := len(x.SolanaAccountsRequested) - 1; iNdEx >= 0; iNdEx-- {
@@ -3197,6 +3303,40 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				}
 				x.SolanaAccountsRequested = append(x.SolanaAccountsRequested, string(dAtA[iNdEx:postIndex]))
 				iNdEx = postIndex
+			case 25:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValidatorMismatchCounts", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ValidatorMismatchCounts = append(x.ValidatorMismatchCounts, &ValidatorMismatchCount{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ValidatorMismatchCounts[len(x.ValidatorMismatchCounts)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -3770,6 +3910,8 @@ type GenesisState struct {
 	SolanaZentpAccountsRequested []string `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty"`
 	// solana_accounts_requested defines the Solana accounts requested at genesis.
 	SolanaAccountsRequested []string `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty"`
+	// validator_mismatch_counts defines the validator mismatch counts at genesis.
+	ValidatorMismatchCounts []*ValidatorMismatchCount `protobuf:"bytes,25,rep,name=validator_mismatch_counts,json=validatorMismatchCounts,proto3" json:"validator_mismatch_counts,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -3960,6 +4102,13 @@ func (x *GenesisState) GetSolanaAccountsRequested() []string {
 	return nil
 }
 
+func (x *GenesisState) GetValidatorMismatchCounts() []*ValidatorMismatchCount {
+	if x != nil {
+		return x.ValidatorMismatchCounts
+	}
+	return nil
+}
+
 // LastValidatorPower required for validator set update logic.
 type LastValidatorPower struct {
 	state         protoimpl.MessageState
@@ -4031,7 +4180,7 @@ var file_zrchain_validation_genesis_proto_rawDesc = []byte{
 	0x2f, 0x73, 0x69, 0x64, 0x65, 0x63, 0x61, 0x72, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f,
 	0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63, 0x2f, 0x6d, 0x69, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0xb0, 0x0e, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61,
+	0x6f, 0x22, 0xa3, 0x0f, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61,
 	0x74, 0x65, 0x12, 0x3d, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0x09,
@@ -4146,25 +4295,32 @@ var file_zrchain_validation_genesis_proto_rawDesc = []byte{
 	0x75, 0x6e, 0x74, 0x73, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x18, 0x18,
 	0x20, 0x03, 0x28, 0x09, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x17, 0x73, 0x6f, 0x6c,
 	0x61, 0x6e, 0x61, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x65, 0x64, 0x22, 0x68, 0x0a, 0x12, 0x4c, 0x61, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x32, 0x0a, 0x07, 0x61, 0x64,
-	0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d,
-	0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53,
-	0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14,
-	0x0a, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x70,
-	0x6f, 0x77, 0x65, 0x72, 0x3a, 0x08, 0x88, 0xa0, 0x1f, 0x00, 0xe8, 0xa0, 0x1f, 0x00, 0x42, 0xb4,
-	0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73,
-	0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
-	0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02,
-	0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02,
-	0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea,
-	0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x74, 0x65, 0x64, 0x12, 0x71, 0x0a, 0x19, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x5f, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x73, 0x18, 0x19, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f,
+	0x75, 0x6e, 0x74, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x17,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63,
+	0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x22, 0x68, 0x0a, 0x12, 0x4c, 0x61, 0x73, 0x74, 0x56,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x32, 0x0a,
+	0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
+	0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x12, 0x14, 0x0a, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x05, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x3a, 0x08, 0x88, 0xa0, 0x1f, 0x00, 0xe8, 0xa0, 0x1f,
+	0x00, 0x42, 0xb4, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x0c, 0x47, 0x65,
+	0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61,
+	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4197,6 +4353,7 @@ var file_zrchain_validation_genesis_proto_goTypes = []interface{}{
 	(*BackfillRequests)(nil),               // 13: zrchain.validation.BackfillRequests
 	(*zenbtc.NonceData)(nil),               // 14: zrchain.zenbtc.NonceData
 	(*zenbtc.RequestedBitcoinHeaders)(nil), // 15: zrchain.zenbtc.RequestedBitcoinHeaders
+	(*ValidatorMismatchCount)(nil),         // 16: zrchain.validation.ValidatorMismatchCount
 }
 var file_zrchain_validation_genesis_proto_depIdxs = []int32{
 	2,  // 0: zrchain.validation.GenesisState.params:type_name -> zrchain.validation.Params
@@ -4214,11 +4371,12 @@ var file_zrchain_validation_genesis_proto_depIdxs = []int32{
 	13, // 12: zrchain.validation.GenesisState.backfill_request:type_name -> zrchain.validation.BackfillRequests
 	14, // 13: zrchain.validation.GenesisState.last_used_ethereum_nonce:type_name -> zrchain.zenbtc.NonceData
 	15, // 14: zrchain.validation.GenesisState.requested_historical_bitcoin_headers:type_name -> zrchain.zenbtc.RequestedBitcoinHeaders
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	16, // 15: zrchain.validation.GenesisState.validator_mismatch_counts:type_name -> zrchain.validation.ValidatorMismatchCount
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_validation_genesis_proto_init() }
