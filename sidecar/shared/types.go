@@ -162,22 +162,21 @@ const (
 )
 
 type OracleState struct {
-	EigenDelegations           map[string]map[string]*big.Int `json:"eigenDelegations"`
-	EthBlockHeight             uint64                         `json:"ethBlockHeight"`
-	EthGasLimit                uint64                         `json:"ethGasLimit"`
-	EthBaseFee                 uint64                         `json:"ethBaseFee"`
-	EthTipCap                  uint64                         `json:"ethTipCap"`
-	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
-	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
-	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
-	SolanaBurnEvents           []api.BurnEvent                `json:"solanaBurnEvents"`
-	CleanedSolanaBurnEvents    map[string]bool                `json:"cleanedSolanaBurnEvents"`
-	Redemptions                []api.Redemption               `json:"redemptions"`
-	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
-	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
-	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
-	SolanaMintEvents           []api.SolanaMintEvent          `json:"solanaMintEvents"`
-	CleanedSolanaMintEvents    map[string]bool                `json:"cleanedSolanaMintEvents"`
+	EigenDelegations        map[string]map[string]*big.Int `json:"eigenDelegations"`
+	EthBlockHeight          uint64                         `json:"ethBlockHeight"`
+	EthGasLimit             uint64                         `json:"ethGasLimit"`
+	EthBaseFee              uint64                         `json:"ethBaseFee"`
+	EthTipCap               uint64                         `json:"ethTipCap"`
+	EthBurnEvents           []api.BurnEvent                `json:"ethBurnEvents"`
+	CleanedEthBurnEvents    map[string]bool                `json:"cleanedEthBurnEvents"`
+	SolanaBurnEvents        []api.BurnEvent                `json:"solanaBurnEvents"`
+	CleanedSolanaBurnEvents map[string]bool                `json:"cleanedSolanaBurnEvents"`
+	Redemptions             []api.Redemption               `json:"redemptions"`
+	ROCKUSDPrice            math.LegacyDec                 `json:"rockUSDPrice"`
+	BTCUSDPrice             math.LegacyDec                 `json:"btcUSDPrice"`
+	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
+	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
+	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
 	// Fields for watermarking Solana events
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`

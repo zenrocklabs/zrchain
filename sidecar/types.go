@@ -21,22 +21,21 @@ import (
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
-		EigenDelegations:           make(map[string]map[string]*big.Int),
-		EthBlockHeight:             0,
-		EthGasLimit:                0,
-		EthBaseFee:                 0,
-		EthTipCap:                  0,
-		SolanaLamportsPerSignature: 0,
-		EthBurnEvents:              []api.BurnEvent{},
-		CleanedEthBurnEvents:       make(map[string]bool),
-		SolanaBurnEvents:           []api.BurnEvent{},
-		CleanedSolanaBurnEvents:    make(map[string]bool),
-		Redemptions:                []api.Redemption{},
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		CleanedSolanaMintEvents:    make(map[string]bool),
-		ROCKUSDPrice:               math.LegacyNewDec(0),
-		BTCUSDPrice:                math.LegacyNewDec(0),
-		ETHUSDPrice:                math.LegacyNewDec(0),
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		EthBlockHeight:          0,
+		EthGasLimit:             0,
+		EthBaseFee:              0,
+		EthTipCap:               0,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		Redemptions:             []api.Redemption{},
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(0),
+		BTCUSDPrice:             math.LegacyNewDec(0),
+		ETHUSDPrice:             math.LegacyNewDec(0),
 	}
 )
 
@@ -82,21 +81,20 @@ type CachedTxResult struct {
 }
 
 type oracleStateUpdate struct {
-	eigenDelegations           map[string]map[string]*big.Int
-	redemptions                []api.Redemption
-	suggestedTip               *big.Int
-	estimatedGas               uint64
-	ethBurnEvents              []api.BurnEvent
-	cleanedEthBurnEvents       map[string]bool
-	solanaBurnEvents           []api.BurnEvent
-	cleanedSolanaBurnEvents    map[string]bool
-	ROCKUSDPrice               math.LegacyDec
-	BTCUSDPrice                math.LegacyDec
-	ETHUSDPrice                math.LegacyDec
-	solanaLamportsPerSignature uint64
-	SolanaMintEvents           []api.SolanaMintEvent
-	cleanedSolanaMintEvents    map[string]bool
-	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
+	eigenDelegations        map[string]map[string]*big.Int
+	redemptions             []api.Redemption
+	suggestedTip            *big.Int
+	estimatedGas            uint64
+	ethBurnEvents           []api.BurnEvent
+	cleanedEthBurnEvents    map[string]bool
+	solanaBurnEvents        []api.BurnEvent
+	cleanedSolanaBurnEvents map[string]bool
+	ROCKUSDPrice            math.LegacyDec
+	BTCUSDPrice             math.LegacyDec
+	ETHUSDPrice             math.LegacyDec
+	SolanaMintEvents        []api.SolanaMintEvent
+	cleanedSolanaMintEvents map[string]bool
+	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
 }
 
 type PriceData struct {

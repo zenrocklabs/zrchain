@@ -35,30 +35,29 @@ var (
 
 type (
 	VoteExtension struct {
-		EigenDelegationsHash       []byte
-		RequestedBtcBlockHeight    int64
-		RequestedBtcHeaderHash     []byte
-		EthBlockHeight             uint64
-		EthGasLimit                uint64
-		EthBaseFee                 uint64
-		EthTipCap                  uint64
-		RequestedStakerNonce       uint64
-		RequestedEthMinterNonce    uint64
-		RequestedUnstakerNonce     uint64
-		RequestedCompleterNonce    uint64
-		SolanaMintNoncesHash       []byte
-		SolanaAccountsHash         []byte
-		SolanaLamportsPerSignature uint64
-		EthBurnEventsHash          []byte
-		SolanaBurnEventsHash       []byte
-		SolanaMintEventsHash       []byte
-		RedemptionsHash            []byte
-		ROCKUSDPrice               string
-		BTCUSDPrice                string
-		ETHUSDPrice                string
-		LatestBtcBlockHeight       int64
-		LatestBtcHeaderHash        []byte
-		SidecarVersionName         string
+		EigenDelegationsHash    []byte
+		RequestedBtcBlockHeight int64
+		RequestedBtcHeaderHash  []byte
+		EthBlockHeight          uint64
+		EthGasLimit             uint64
+		EthBaseFee              uint64
+		EthTipCap               uint64
+		RequestedStakerNonce    uint64
+		RequestedEthMinterNonce uint64
+		RequestedUnstakerNonce  uint64
+		RequestedCompleterNonce uint64
+		SolanaMintNoncesHash    []byte
+		SolanaAccountsHash      []byte
+		EthBurnEventsHash       []byte
+		SolanaBurnEventsHash    []byte
+		SolanaMintEventsHash    []byte
+		RedemptionsHash         []byte
+		ROCKUSDPrice            string
+		BTCUSDPrice             string
+		ETHUSDPrice             string
+		LatestBtcBlockHeight    int64
+		LatestBtcHeaderHash     []byte
+		SidecarVersionName      string
 	}
 
 	VEWithVotePower struct {
@@ -498,13 +497,6 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
 			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
-		},
-
-		// Additional integer field
-		{
-			Field:    VEFieldSolanaLamportsPerSignature,
-			GetValue: func(ve VoteExtension) any { return ve.SolanaLamportsPerSignature },
-			SetValue: func(v any, ve *VoteExtension) { ve.SolanaLamportsPerSignature = v.(uint64) },
 		},
 	}
 }
