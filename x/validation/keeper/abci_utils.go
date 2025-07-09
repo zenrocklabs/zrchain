@@ -1746,7 +1746,7 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 }
 
 func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
-	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatus(ctx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
+	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 	}

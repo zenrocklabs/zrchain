@@ -269,6 +269,13 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		}
 	}
 
+	if data.LastCompletedZentpMintId > 0 {
+		err = k.LastCompletedZentpMintID.Set(ctx, data.LastCompletedZentpMintId)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// don't need to run CometBFT updates if we exported
 	if data.Exported {
 		for _, lv := range data.LastValidatorPowers {
@@ -445,6 +452,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	lastCompletedZentpMintID, err := k.GetLastCompletedZentpMintID(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		Params:                            types.Params(params),
 		LastTotalPower:                    totalPower,
@@ -471,5 +483,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		SolanaZentpAccountsRequested:      solanaZenTPAccountsRequested,
 		SolanaAccountsRequested:           solanaAccountsRequested,
 		ValidatorMismatchCounts:           validatorMismatchCounts,
+		LastCompletedZentpMintId:          lastCompletedZentpMintID,
 	}
 }

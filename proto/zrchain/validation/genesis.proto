@@ -118,6 +118,9 @@ message GenesisState {
   repeated ValidatorMismatchCount validator_mismatch_counts = 25
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
+  // last_completed_zentp_mint_id defines the last completed Zentp mint id at genesis.
+  uint64 last_completed_zentp_mint_id = 26
+      [ (amino.dont_omitempty) = true ];
 }
 
 // LastValidatorPower required for validator set update logic.

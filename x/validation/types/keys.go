@@ -44,9 +44,10 @@ var (
 	//
 	// The next available key currently is 103.
 	// ====================================================================================================
-	BackfillRequestsKey      = collections.NewPrefix(100)
-	LatestBtcHeaderHeightKey = collections.NewPrefix(101)
-	ValidatorMismatchCounts  = collections.NewPrefix(102)
+	BackfillRequestsKey         = collections.NewPrefix(100)
+	LatestBtcHeaderHeightKey    = collections.NewPrefix(101)
+	ValidatorMismatchCounts     = collections.NewPrefix(102)
+	LastCompletedZentpMintIDKey = collections.NewPrefix(103)
 )
 
 var (
@@ -103,6 +104,7 @@ var (
 	BackfillRequestsIndex                  = "backfill_requests"
 	LatestBtcHeaderHeightIndex             = "latest_btc_header_height"
 	ValidatorMismatchCountsIndex           = "validator_mismatch_counts"
+	LastCompletedZentpMintIDIndex          = "last_completed_zentp_mint_id"
 )
 
 const (

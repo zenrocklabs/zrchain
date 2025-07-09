@@ -19,13 +19,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	ubermock "go.uber.org/mock/gomock"
 )
 
 // setupTestKeeper creates a new keeper instance with mocked dependencies for testing
-func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testutil.MocksidecarClient, *gomock.Controller) {
-	ctrl := gomock.NewController(t)
+func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testutil.MocksidecarClient, *ubermock.Controller) {
+	ctrl := ubermock.NewController(t)
 
 	// Create store service
 	key := storetypes.NewKVStoreKey(types.StoreKey)

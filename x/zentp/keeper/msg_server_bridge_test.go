@@ -39,6 +39,9 @@ func (s *IntegrationTestSuite) TestBridge() {
 		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
 	).AnyTimes()
 
+	// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+	s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
+
 	// Mock getting the mint params
 	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil)
 
@@ -113,6 +116,9 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance for most tests
 	).AnyTimes()
+
+	// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+	s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
 
 	// Mock getting the mint params
 	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil).AnyTimes()
@@ -453,6 +459,9 @@ func (s *IntegrationTestSuite) TestMsgBridgeSupply() {
 			s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 				sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
 			).AnyTimes()
+
+			// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
+			s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
 
 			// Mock getting the mint params
 			s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil).AnyTimes()
