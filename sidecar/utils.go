@@ -254,11 +254,14 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 		}
 	}
 
-	slog.Info("Burn event merge summary",
-		"type", eventTypeName,
-		"added", addedCount,
-		"skipped", skippedCount,
-		"totalAfterMerge", len(mergedEvents))
+	// Only log if there were actual changes
+	if addedCount > 0 || skippedCount > 0 {
+		slog.Info("Burn event merge summary",
+			"type", eventTypeName,
+			"added", addedCount,
+			"skipped", skippedCount,
+			"totalAfterMerge", len(mergedEvents))
+	}
 
 	return mergedEvents
 }
@@ -281,14 +284,6 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
 	copy(mergedEvents, existingEvents)
 
-	// Add detailed logging for debugging
-	slog.Info("Mint event merge debug info",
-		"type", eventTypeName,
-		"existingCount", len(existingEvents),
-		"cleanedCount", len(cleanedEvents),
-		"newCount", len(newEvents),
-		"existingKeys", len(existingEventKeys))
-
 	// Add new events if they don't already exist
 	addedCount := 0
 	skippedCount := 0
@@ -304,11 +299,24 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 		}
 	}
 
-	slog.Info("Mint event merge summary",
-		"type", eventTypeName,
-		"added", addedCount,
-		"skipped", skippedCount,
-		"totalAfterMerge", len(mergedEvents))
+	// Only log if there were actual changes or new events to process
+	if addedCount > 0 || skippedCount > 0 || len(newEvents) > 0 {
+		// Add detailed logging for debugging - but only when there's activity
+		if addedCount > 0 || len(newEvents) > 0 {
+			slog.Info("Mint event merge debug info",
+				"type", eventTypeName,
+				"existingCount", len(existingEvents),
+				"cleanedCount", len(cleanedEvents),
+				"newCount", len(newEvents),
+				"existingKeys", len(existingEventKeys))
+		}
+
+		slog.Info("Mint event merge summary",
+			"type", eventTypeName,
+			"added", addedCount,
+			"skipped", skippedCount,
+			"totalAfterMerge", len(mergedEvents))
+	}
 
 	return mergedEvents
 }
@@ -555,25 +563,25 @@ func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Durati
 	)
 }
 
-func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
-	return connectWithRetry(
-		"zrChain",
-		rpcAddress,
-		maxRetries,
-		delay,
-		func(addr string) (*client.QueryClient, error) {
-			client, err := client.NewQueryClient(addr, true)
-			if err != nil {
-				return nil, err
-			}
-			if client == nil {
-				return nil, fmt.Errorf("zrChain query client is nil after creation")
-			}
-			return client, nil
-		},
-		func(client *client.QueryClient, ctx context.Context) error {
-			_, err := client.BondedValidators(ctx, nil)
-			return err
-		},
-	)
-}
+// func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
+// 	return connectWithRetry(
+// 		"zrChain",
+// 		rpcAddress,
+// 		maxRetries,
+// 		delay,
+// 		func(addr string) (*client.QueryClient, error) {
+// 			client, err := client.NewQueryClient(addr, true)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			if client == nil {
+// 				return nil, fmt.Errorf("zrChain query client is nil after creation")
+// 			}
+// 			return client, nil
+// 		},
+// 		func(client *client.QueryClient, ctx context.Context) error {
+// 			_, err := client.BondedValidators(ctx, nil)
+// 			return err
+// 		},
+// 	)
+// }

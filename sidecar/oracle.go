@@ -295,24 +295,32 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 	o.lastSolRockBurnSigStr = newState.LastSolRockBurnSig
 
 	// Log any watermark changes
+	watermarkChanged := false
 	if oldRockMint != o.lastSolRockMintSigStr {
 		slog.Info("Updated ROCK mint watermark", "old", oldRockMint, "new", o.lastSolRockMintSigStr)
+		watermarkChanged = true
 	}
 	if oldZenBTCMint != o.lastSolZenBTCMintSigStr {
 		slog.Info("Updated zenBTC mint watermark", "old", oldZenBTCMint, "new", o.lastSolZenBTCMintSigStr)
+		watermarkChanged = true
 	}
 	if oldZenBTCBurn != o.lastSolZenBTCBurnSigStr {
 		slog.Info("Updated zenBTC burn watermark", "old", oldZenBTCBurn, "new", o.lastSolZenBTCBurnSigStr)
+		watermarkChanged = true
 	}
 	if oldRockBurn != o.lastSolRockBurnSigStr {
 		slog.Info("Updated ROCK burn watermark", "old", oldRockBurn, "new", o.lastSolRockBurnSigStr)
+		watermarkChanged = true
 	}
 
-	slog.Info("Applied new state and updated watermarks",
-		"rockMint", o.lastSolRockMintSigStr,
-		"zenBTCMint", o.lastSolZenBTCMintSigStr,
-		"zenBTCBurn", o.lastSolZenBTCBurnSigStr,
-		"rockBurn", o.lastSolRockBurnSigStr)
+	// Only log the comprehensive watermark summary if any watermarks actually changed
+	if watermarkChanged {
+		slog.Info("Applied new state and updated watermarks",
+			"rockMint", o.lastSolRockMintSigStr,
+			"zenBTCMint", o.lastSolZenBTCMintSigStr,
+			"zenBTCBurn", o.lastSolZenBTCBurnSigStr,
+			"rockBurn", o.lastSolRockBurnSigStr)
+	}
 
 	o.CacheState()
 }
@@ -642,10 +650,14 @@ func (o *Oracle) processSolanaMintEvents(
 			"pendingMintEvents", len(currentState.SolanaMintEvents),
 			"cleanedMintEventsMap", len(currentState.CleanedSolanaMintEvents))
 		remainingEvents, cleanedEvents, reconcileErr := o.reconcileMintEventsWithZRChain(context.Background(), currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
-		slog.Info("After reconciliation",
-			"remainingEvents", len(remainingEvents),
-			"cleanedEventsMap", len(cleanedEvents),
-			"reconcileErr", reconcileErr)
+
+		// Only log reconciliation results if there was activity or errors
+		if reconcileErr != nil || len(remainingEvents) != len(currentState.SolanaMintEvents) || len(cleanedEvents) != len(currentState.CleanedSolanaMintEvents) {
+			slog.Info("After reconciliation",
+				"remainingEvents", len(remainingEvents),
+				"cleanedEventsMap", len(cleanedEvents),
+				"reconcileErr", reconcileErr)
+		}
 		var mergedMintEvents []api.SolanaMintEvent
 		if reconcileErr != nil {
 			// Reconciliation failed, so 'remainingEvents' contains all the previously pending events.
@@ -662,15 +674,17 @@ func (o *Oracle) processSolanaMintEvents(
 
 		updateMutex.Lock()
 		// Re-merge with the current update state to defend against race conditions.
-		slog.Info("Before final merge",
-			"updateMintEvents", len(update.SolanaMintEvents),
-			"cleanedEventsForMerge", len(cleanedEvents),
-			"mergedMintEvents", len(mergedMintEvents))
+		initialUpdateCount := len(update.SolanaMintEvents)
 		update.SolanaMintEvents = mergeNewMintEvents(update.SolanaMintEvents, cleanedEvents, mergedMintEvents, "Solana mint")
 		update.cleanedSolanaMintEvents = cleanedEvents
-		slog.Info("After final merge and state update",
-			"finalMintEvents", len(update.SolanaMintEvents),
-			"finalCleanedEvents", len(update.cleanedSolanaMintEvents))
+
+		// Only log if there were actual changes in the final merge
+		if len(update.SolanaMintEvents) != initialUpdateCount || len(mergedMintEvents) > 0 {
+			slog.Info("Final merge and state update completed",
+				"finalMintEvents", len(update.SolanaMintEvents),
+				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
+				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount)
+		}
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
 		}
@@ -1693,10 +1707,10 @@ func (o *Oracle) getSolanaEvents(
 			slog.Warn("Batch request ultimately failed – falling back to per-tx requests", "eventType", eventTypeName)
 			// Optimized fallback with individual transaction caching
 			if err := o.processFallbackTransactionsWithCaching(currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-				o.batchRequestPool.Put(batchRequests)
+				o.batchRequestPool.Put(&batchRequests)
 				return nil, lastKnownSig, err
 			}
-			o.batchRequestPool.Put(batchRequests)
+			o.batchRequestPool.Put(&batchRequests)
 			continue
 		}
 
@@ -1754,7 +1768,7 @@ func (o *Oracle) getSolanaEvents(
 		}
 
 		// Return batch request slice to pool
-		o.batchRequestPool.Put(batchRequests)
+		o.batchRequestPool.Put(&batchRequests)
 	}
 
 	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
@@ -2047,21 +2061,23 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 
 	// Log summary of any query errors
 	if zenbtcQueryErrors > 0 {
-		slog.Warn("Failed to query zrChain for zenBTC burn events",
+		slog.Error("Failed to query zrChain for zenBTC burn events",
 			"failedCount", zenbtcQueryErrors,
 			"totalEvents", len(eventsToClean),
 			"chainType", chainTypeName,
 			"lastError", lastZenbtcError)
 	}
+
 	if zentpQueryErrors > 0 {
-		slog.Warn("Failed to query zrChain for ZenTP burn events",
+		slog.Error("Failed to query zrChain for ZenTP burn events",
 			"failedCount", zentpQueryErrors,
 			"totalEvents", len(eventsToClean),
 			"chainType", chainTypeName,
 			"lastError", lastZentpError)
 	}
+
 	if bech32EncodingErrors > 0 {
-		slog.Warn("Failed to encode destination addresses for ZenTP burn checks",
+		slog.Error("Failed to encode destination addresses for ZenTP burn checks",
 			"failedCount", bech32EncodingErrors,
 			"totalEvents", len(eventsToClean),
 			"chainType", chainTypeName,
