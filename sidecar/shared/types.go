@@ -109,12 +109,12 @@ var (
 	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
 	SolanaEventScanTxLimit      = 1000
 	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
-	SolanaEventFetchBatchSize   = 25
-	SolanaSleepInterval         = 250 * time.Millisecond // Sleep between batches
-	SolanaFallbackSleepInterval = 25 * time.Millisecond  // Sleep between individual fallback requests
+	SolanaEventFetchBatchSize   = 50
+	SolanaSleepInterval         = 100 * time.Millisecond
+	SolanaFallbackSleepInterval = 25 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries  = 10
 	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
-	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
+	SolanaEventFetchRetrySleep  = 200 * time.Millisecond
 
 	// RPC connection retry parameters
 	RPCConnectionMaxRetries = 20
