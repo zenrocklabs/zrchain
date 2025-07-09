@@ -173,12 +173,6 @@ func TestIsInvalid(t *testing.T) {
 			expectInvalid: false,
 		},
 		{
-			name:          "invalid zr chain block height",
-			fieldToModify: "ZRChainBlockHeight",
-			invalidValue:  int64(0),
-			expectInvalid: true,
-		},
-		{
 			name:          "invalid eigen delegations hash",
 			fieldToModify: "EigenDelegationsHash",
 			invalidValue:  []byte{},
@@ -728,11 +722,6 @@ func TestVoteExtensionFieldString(t *testing.T) {
 		field VoteExtensionField
 		str   string
 	}{
-		{
-			name:  "valid field: zr chain block height",
-			field: VEFieldZRChainBlockHeight,
-			str:   "ZRChainBlockHeight",
-		},
 		{
 			name:  "valid field: eigen delegations hash",
 			field: VEFieldEigenDelegationsHash,

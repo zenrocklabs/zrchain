@@ -271,8 +271,7 @@ func anyFieldHasConsensus(fieldVotePowers map[VoteExtensionField]int64, fields [
 type VoteExtensionField int
 
 const (
-	VEFieldZRChainBlockHeight VoteExtensionField = iota
-	VEFieldEigenDelegationsHash
+	VEFieldEigenDelegationsHash VoteExtensionField = iota
 	VEFieldEthBurnEventsHash
 	VEFieldSolanaBurnEventsHash
 	VEFieldRedemptionsHash
@@ -332,8 +331,6 @@ func genericGetKey(value any) string {
 // String returns the string representation of a VoteExtensionField
 func (f VoteExtensionField) String() string {
 	switch f {
-	case VEFieldZRChainBlockHeight:
-		return "ZRChainBlockHeight"
 	case VEFieldEigenDelegationsHash:
 		return "EigenDelegationsHash"
 	case VEFieldEthBurnEventsHash:
