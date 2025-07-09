@@ -475,6 +475,7 @@ func NewZenrockApp(
 		app.ValidationKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
+		app.ZentpKeeper,
 		authtypes.FeeCollectorName,
 		authAddr,
 	)

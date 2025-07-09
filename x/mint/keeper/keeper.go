@@ -166,9 +166,11 @@ func (k Keeper) ClaimZentpFees(ctx context.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 
-	err = k.zentpKeeper.UpdateZentpFees(ctx, zentpRewards)
-	if err != nil {
-		return sdk.Coin{}, err
+	if !zentpRewards.IsZero() {
+		err = k.zentpKeeper.UpdateZentpFees(ctx, zentpRewards)
+		if err != nil {
+			return sdk.Coin{}, err
+		}
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
