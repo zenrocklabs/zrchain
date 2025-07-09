@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -992,6 +993,10 @@ func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
+	// If the canonical VE is empty, it means no consensus was reached.
+	// In this case, a validator that submitted an empty vote extension should not be penalized.
+	isCanonicalEmpty := reflect.DeepEqual(canonicalVoteExt, VoteExtension{})
+
 	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
@@ -1002,6 +1007,11 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 	mismatchedValidators := make(map[string]struct{})
 
 	for _, v := range consensusData.Votes {
+		// If the canonical VE is empty and the validator also submitted an empty VE, it's not a mismatch.
+		if isCanonicalEmpty && len(v.VoteExtension) == 0 {
+			continue
+		}
+
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
 			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
 			mismatchedValidators[validatorHexAddr] = struct{}{}
