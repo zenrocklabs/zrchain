@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -48,7 +49,7 @@ func TestHandleBackfillRequests(t *testing.T) {
 	}
 	var updateMutex sync.Mutex
 
-	oracle.handleBackfillRequests(requests, update, &updateMutex)
+	oracle.handleBackfillRequests(context.Background(), requests, update, &updateMutex)
 
 	// 5. Assertions
 	require.Len(t, update.solanaBurnEvents, 1, "should have one burn event")

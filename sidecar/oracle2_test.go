@@ -105,21 +105,19 @@ func createTestOracle() *Oracle {
 
 	// Initialize function fields to prevent nil pointer dereference
 	// These functions should return errors when solanaClient is nil to simulate real behavior
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
 		if oracle.solanaClient == nil {
 			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
 		}
 		return []api.BurnEvent{}, sol.Signature{}, nil
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
 		if oracle.solanaClient == nil {
 			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
 		}
 		return []api.BurnEvent{}, sol.Signature{}, nil
 	}
-	oracle.reconcileBurnEventsFn = func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool) {
-		return eventsToClean, cleanedEvents
-	}
+	
 
 	return oracle
 }
@@ -1174,7 +1172,7 @@ func TestFetchSolanaBurnEventsComprehensive(t *testing.T) {
 			errChan := make(chan error, 2) // Buffer for both goroutines
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 			wg.Wait()
 			close(errChan)
@@ -1212,7 +1210,7 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&innerWg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &innerWg, update, &updateMutex, errChan)
 			innerWg.Wait()
 			close(errChan)
 
@@ -1246,7 +1244,7 @@ func TestFetchSolanaBurnEventsWatermarkConsistency(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1299,7 +1297,7 @@ func TestFetchSolanaBurnEventsErrorHandling(t *testing.T) {
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 			wg.Wait()
 			close(errChan)
 
@@ -1338,7 +1336,7 @@ func TestFetchSolanaBurnEventsEventDeduplication(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1372,7 +1370,7 @@ func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1394,7 +1392,7 @@ func TestFetchSolanaBurnEventsBatchProcessing(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1416,7 +1414,7 @@ func TestFetchSolanaBurnEventsSignatureOrdering(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1448,7 +1446,7 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&innerWg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &innerWg, update, &updateMutex, errChan)
 			innerWg.Wait()
 			close(errChan)
 
@@ -1481,7 +1479,7 @@ func TestFetchSolanaBurnEventsMemoryLeaks(t *testing.T) {
 		errChan := make(chan error, 2)
 		var wg sync.WaitGroup
 
-		oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+		oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 		wg.Wait()
 		close(errChan)
 
@@ -1510,7 +1508,7 @@ func TestFetchSolanaBurnEventsTimeoutHandling(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	done := make(chan struct{})
 	go func() {
@@ -1574,7 +1572,7 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 			wg.Wait()
 			close(errChan)
 

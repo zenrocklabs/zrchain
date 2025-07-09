@@ -55,7 +55,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	wg.Wait() // Wait for the main goroutine
 	close(errChan)
@@ -112,10 +112,10 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	}
 
 	// Initialize function fields to prevent nil pointer dereference
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil // No new zenBTC burns
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{newEvent}, solana.Signature{}, nil
 	}
 
@@ -133,7 +133,7 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	wg.Wait() // Wait for the main goroutine
 	close(errChan)
@@ -187,10 +187,10 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle.transactionCacheMutex = sync.RWMutex{}
 
 	// Initialize function fields to prevent nil pointer dereference
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil
 	}
 
@@ -231,7 +231,7 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	}
 
 	// Run the test
-	events, _, err := oracle.getSolanaEvents("11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction)
+	events, _, err := oracle.getSolanaEvents(context.Background(), "11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction)
 
 	// Assertions
 	require.NoError(t, err)
