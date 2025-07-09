@@ -1699,11 +1699,11 @@ func (o *Oracle) getSolanaEvents(
 			slog.Warn("Batch request ultimately failed – falling back to per-tx requests", "eventType", eventTypeName)
 			// Optimized fallback with individual transaction caching
 			if err := o.processFallbackTransactionsWithCaching(currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-				o.batchRequestPool.Put(&batchRequests)
+				o.batchRequestPool.Put(batchRequests)
 				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
-			o.batchRequestPool.Put(&batchRequests)
+			o.batchRequestPool.Put(batchRequests)
 			continue
 		}
 
@@ -1763,7 +1763,7 @@ func (o *Oracle) getSolanaEvents(
 		}
 
 		// Return batch request slice to pool
-		o.batchRequestPool.Put(&batchRequests)
+		o.batchRequestPool.Put(batchRequests)
 	}
 
 	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
