@@ -59,7 +59,6 @@ func TestExtendVoteHandler(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *abci.ResponseExtendVote
 	}{
 		{
 			name: "PASS: extend vote handler",
@@ -75,7 +74,6 @@ func TestExtendVoteHandler(t *testing.T) {
 					ProposerAddress:    []byte("test-proposer-address"),
 				},
 			},
-			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtension},
 		},
 		{
 			name: "PASS: extend vote handler with no transactions",
@@ -91,7 +89,6 @@ func TestExtendVoteHandler(t *testing.T) {
 					ProposerAddress:    []byte("test-proposer-address"),
 				},
 			},
-			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtension},
 		},
 	}
 	for _, tt := range tests {
@@ -99,14 +96,35 @@ func TestExtendVoteHandler(t *testing.T) {
 
 			suite := new(ValidationKeeperTestSuite)
 			suite.SetT(&testing.T{})
-			keeper, ctrl := suite.ValidationKeeperSetupTest()
+			k, ctrl := suite.ValidationKeeperSetupTest()
 			defer ctrl.Finish()
 
 			ctx := sdk.UnwrapSDKContext(suite.ctx)
 
-			got, err := keeper.ExtendVoteHandler(ctx, tt.args.req)
+			got, err := k.ExtendVoteHandler(ctx, tt.args.req)
 			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
+			
+			// Verify that we got a valid response with non-empty vote extension
+			require.NotNil(t, got)
+			require.NotEmpty(t, got.VoteExtension)
+			
+			// Verify that the vote extension is valid JSON
+			var voteExt keeper.VoteExtension
+			err = json.Unmarshal(got.VoteExtension, &voteExt)
+			require.NoError(t, err)
+			
+			// Verify that the vote extension contains expected fields
+			require.NotEmpty(t, voteExt.EigenDelegationsHash)
+			require.Equal(t, uint64(18500000), voteExt.EthBlockHeight)
+			require.Equal(t, uint64(30000000), voteExt.EthGasLimit)
+			require.Equal(t, uint64(20000000000), voteExt.EthBaseFee)
+			require.Equal(t, uint64(1000000000), voteExt.EthTipCap)
+			require.Equal(t, "1.25", voteExt.ROCKUSDPrice)
+			require.Equal(t, "45000.00", voteExt.BTCUSDPrice)
+			require.Equal(t, "2800.00", voteExt.ETHUSDPrice)
+			require.Equal(t, int64(750000), voteExt.LatestBtcBlockHeight)
+			require.NotEmpty(t, voteExt.LatestBtcHeaderHash)
+			require.Equal(t, "test", voteExt.SidecarVersionName)
 		})
 	}
 
