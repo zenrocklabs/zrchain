@@ -1120,7 +1120,7 @@ func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnow
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1163,7 +1163,7 @@ func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKn
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1299,7 +1299,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -1345,7 +1345,7 @@ func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, 
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -1584,15 +1584,17 @@ func (o *Oracle) getSolanaEvents(
 	select {
 	case o.solanaRateLimiter <- struct{}{}:
 		defer func() { <-o.solanaRateLimiter }()
+	case <-ctx.Done():
+		return nil, lastKnownSig, ctx.Err()
 	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
 		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
 	}
 
 	// Fetch initial signatures with timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), sidecartypes.SolanaRPCTimeout)
+	fetchCtx, cancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
 	defer cancel()
 
-	initialSignatures, err := o.getSignaturesForAddressFn(ctx, program, &solrpc.GetSignaturesForAddressOpts{
+	initialSignatures, err := o.getSignaturesForAddressFn(fetchCtx, program, &solrpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: solrpc.CommitmentConfirmed,
 	})
@@ -1606,7 +1608,7 @@ func (o *Oracle) getSolanaEvents(
 
 	newestSigFromNode := initialSignatures[0].Signature
 
-	newSignatures, err := o.fetchAndFillSignatureGap(program, lastKnownSig, initialSignatures, limit, eventTypeName)
+	newSignatures, err := o.fetchAndFillSignatureGap(ctx, program, lastKnownSig, initialSignatures, limit, eventTypeName)
 	if err != nil {
 		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
 	}
@@ -1638,12 +1640,13 @@ func (o *Oracle) getSolanaEvents(
 		currentBatch := newSignatures[i:end]
 
 		// Get batch request slice from pool
-		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
-		batchRequests = batchRequests[:0] // Reset slice but keep capacity
+		batchRequests := o.batchRequestPool.Get().(*jsonrpc.RPCRequests)
+		defer o.batchRequestPool.Put(batchRequests)
+		*batchRequests = (*batchRequests)[:0] // Reset slice but keep capacity
 
 		// Build batch requests
 		for j, sigInfo := range currentBatch {
-			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+			*batchRequests = append(*batchRequests, &jsonrpc.RPCRequest{
 				Method: "getTransaction",
 				Params: []any{
 					sigInfo.Signature.String(),
@@ -1669,8 +1672,8 @@ func (o *Oracle) getSolanaEvents(
 			if retry > 0 {
 				timeoutDuration = time.Duration(float64(timeoutDuration) * (1.0 + 0.5*float64(retry)))
 			}
-			batchCtx, batchCancel := context.WithTimeout(context.Background(), timeoutDuration)
-			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, batchRequests)
+			batchCtx, batchCancel := context.WithTimeout(ctx, timeoutDuration)
+			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, *batchRequests)
 			batchCancel()
 
 			if batchErr == nil {
@@ -1702,12 +1705,10 @@ func (o *Oracle) getSolanaEvents(
 		if batchErr != nil {
 			slog.Warn("Batch request ultimately failed – falling back to per-tx requests", "eventType", eventTypeName)
 			// Optimized fallback with individual transaction caching
-			if err := o.processFallbackTransactionsWithCaching(currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-				o.batchRequestPool.Put(batchRequests)
+			if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
 				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
-			o.batchRequestPool.Put(batchRequests)
 			continue
 		}
 
@@ -1765,9 +1766,6 @@ func (o *Oracle) getSolanaEvents(
 			}
 			lastSuccessfullyProcessedSig = sigInfo.Signature
 		}
-
-		// Return batch request slice to pool
-		o.batchRequestPool.Put(batchRequests)
 	}
 
 	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
@@ -1809,6 +1807,7 @@ func (o *Oracle) getCachedTransactionResult(sigStr string) (*solrpc.GetTransacti
 
 // processFallbackTransactionsWithCaching handles individual transaction fetching with caching when batch processing fails
 func (o *Oracle) processFallbackTransactionsWithCaching(
+	ctx context.Context,
 	currentBatch []*solrpc.TransactionSignature,
 	program solana.PublicKey,
 	ep *EventProcessor,
@@ -1829,7 +1828,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 			retryDelay := sidecartypes.SolanaEventFetchRetrySleep
 
 			for retry := 0; retry < sidecartypes.SolanaFallbackMaxRetries; retry++ {
-				fallbackCtx, fallbackCancel := context.WithTimeout(context.Background(), sidecartypes.SolanaRPCTimeout)
+				fallbackCtx, fallbackCancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
 				txRes, txErr = o.getTransactionFn(fallbackCtx, sigInfo.Signature, &solrpc.GetTransactionOpts{
 					Encoding:                       solana.EncodingBase64,
 					Commitment:                     solrpc.CommitmentConfirmed,
@@ -1875,6 +1874,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 // fetchAndFillSignatureGap back-pages the Solana signature list until the provided watermark is
 // found or `SolanaMaxBackfillPages` is exceeded.
 func (o *Oracle) fetchAndFillSignatureGap(
+	ctx context.Context,
 	program solana.PublicKey,
 	lastKnownSig solana.Signature,
 	initialSignatures []*solrpc.TransactionSignature,
@@ -1903,7 +1903,7 @@ func (o *Oracle) fetchAndFillSignatureGap(
 			break
 		}
 		before := initialSignatures[len(initialSignatures)-1].Signature
-		pageSigs, err := o.getSignaturesForAddressFn(context.Background(), program, &solrpc.GetSignaturesForAddressOpts{
+		pageSigs, err := o.getSignaturesForAddressFn(ctx, program, &solrpc.GetSignaturesForAddressOpts{
 			Limit:      &limit,
 			Commitment: solrpc.CommitmentConfirmed,
 			Before:     before,
