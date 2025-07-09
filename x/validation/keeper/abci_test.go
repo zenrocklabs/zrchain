@@ -57,10 +57,9 @@ func TestExtendVoteHandler(t *testing.T) {
 		req *abci.RequestExtendVote
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *abci.ResponseExtendVote
-		wantErr bool
+		name string
+		args args
+		want *abci.ResponseExtendVote
 	}{
 		{
 			name: "PASS: extend vote handler",
@@ -79,13 +78,13 @@ func TestExtendVoteHandler(t *testing.T) {
 			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtension},
 		},
 		{
-			name: "PASS: extend vote handler with different request data",
+			name: "PASS: extend vote handler with no transactions",
 			args: args{
 				req: &abci.RequestExtendVote{
-					Hash:               []byte("test"),
+					Hash:               []byte("test-empty"),
 					Height:             2,
 					Time:               time.Now(),
-					Txs:                [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o="}`)},
+					Txs:                [][]byte{}, // No transactions
 					ProposedLastCommit: createTestLastCommit(),
 					Misbehavior:        nil,
 					NextValidatorsHash: []byte("test-next-validators-hash"),
