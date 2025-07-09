@@ -541,3 +541,17 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, 
 
 	return solanaZenTPAccountsRequested, nil
 }
+
+func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) ([]types.ValidatorMismatchCount, error) {
+	validatorMismatchCounts := []types.ValidatorMismatchCount{}
+
+	err := k.ValidatorMismatchCounts.Walk(ctx, nil, func(key string, value types.ValidatorMismatchCount) (stop bool, err error) {
+		validatorMismatchCounts = append(validatorMismatchCounts, value)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return validatorMismatchCounts, nil
+}

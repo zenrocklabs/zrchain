@@ -241,6 +241,10 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
 	}
 
+	for _, validatorMismatchCount := range data.ValidatorMismatchCounts {
+		k.ValidatorMismatchCounts.Set(ctx, validatorMismatchCount.ValidatorAddress, validatorMismatchCount)
+	}
+
 	// TODO: check if this is correct
 	var slashEventCount uint64
 	for _, slashEvent := range data.SlashEvents {
@@ -436,6 +440,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	validatorMismatchCounts, err := k.GetValidatorMismatchCounts(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		Params:                            types.Params(params),
 		LastTotalPower:                    totalPower,
@@ -461,5 +470,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		SolanaNonceRequested:              solanaNonceRequested,
 		SolanaZentpAccountsRequested:      solanaZenTPAccountsRequested,
 		SolanaAccountsRequested:           solanaAccountsRequested,
+		ValidatorMismatchCounts:           validatorMismatchCounts,
 	}
 }
