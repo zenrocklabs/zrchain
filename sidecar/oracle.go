@@ -66,7 +66,7 @@ func NewOracle(
 		SkipInitialWait:    skipInitialWait,
 
 		// Initialize performance optimization fields
-		solanaRateLimiter: make(chan struct{}, 20), // Increased from 10 to 20 concurrent Solana RPC calls
+		solanaRateLimiter: make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls), // Configurable concurrent Solana RPC calls
 		transactionCache:  make(map[string]*CachedTxResult),
 		httpClientPool: &sync.Pool{
 			New: func() interface{} {

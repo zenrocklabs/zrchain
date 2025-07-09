@@ -126,6 +126,7 @@ var (
 	SolanaRPCTimeout            = 15 * time.Second // Longer timeout for Solana RPC operations
 	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
+	SolanaMaxConcurrentRPCCalls = 20           // Maximum concurrent Solana RPC calls (semaphore size)
 	DefaultSolanaFeeReturned    = uint64(5000) // Default fee in lamports per signature
 	MaxSupportedSolanaTxVersion = uint64(0)    // Solana transaction version 0
 	EigenLayerQuorumNumber      = uint8(0)     // EigenLayer quorum number for service manager
