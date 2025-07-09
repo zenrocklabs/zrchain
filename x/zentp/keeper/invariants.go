@@ -20,11 +20,7 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 		return errors.Wrap(err, "failed to get solana rock supply")
 	}
 
-		zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
-	pendingMints, err := k.GetMintsWithStatusPending(ctx)
-	if err != nil {
-		// It's ok if there are no pending mints, so we don't return an error.
-	}
+	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
 
 	if newAmount.IsPositive() {
 		// This check is for new bridge requests from zrchain to solana.
