@@ -65,6 +65,8 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
+      - name: Add Go binary to PATH
+        run: echo "/usr/local/go/bin" >> $GITHUB_PATH
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
