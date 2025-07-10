@@ -36,10 +36,10 @@ type (
 		identityKeeper   types.IdentityKeeper
 		validationKeeper types.ValidationKeeper
 		mintKeeper       types.MintKeeper
-		mintStore        collections.Map[uint64, types.Bridge] // old mint store, required for migrating
+		mintStore        collections.Map[uint64, types.Bridge] // DEPRECATED
 		MintStore        collections.Map[uint64, types.Bridge]
 		MintCount        collections.Item[uint64]
-		burnStore        collections.Map[uint64, types.Bridge] // old burn store, required for migrating
+		burnStore        collections.Map[uint64, types.Bridge] // DEPRECATED
 		BurnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
@@ -80,6 +80,8 @@ func NewKeeper(
 		memStoreService:  memStoreService,
 		MintStore:        collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		BurnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		mintStore:        collections.NewMap(sb, types.MintsKeyDeprecated, types.MintsIndexDeprecated, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		burnStore:        collections.NewMap(sb, types.BurnsKeyDeprecated, types.BurnsIndexDeprecated, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
