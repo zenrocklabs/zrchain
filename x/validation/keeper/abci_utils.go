@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -36,7 +37,6 @@ import (
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
-	solToken "github.com/gagliardetto/solana-go/programs/token"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -126,12 +126,15 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldZRChainBlockHeight; i <= VEFieldSolanaMintEventsHash; i++ {
+	for i := VEFieldEigenDelegationsHash; i <= VEFieldSolanaMintEventsHash; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
 	var totalVotePower int64
 	fieldVotePowers := make(map[VoteExtensionField]int64)
+
+	// Track informational fields that don't require consensus
+	var firstSidecarVersionName string
 
 	// Get field handlers
 	fieldHandlers := initializeFieldHandlers()
@@ -143,6 +146,11 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 		voteExt, err := k.validateVote(ctx, vote, currentHeight)
 		if err != nil {
 			continue
+		}
+
+		// Capture informational fields from first valid vote (no consensus required)
+		if firstSidecarVersionName == "" && voteExt.SidecarVersionName != "" {
+			firstSidecarVersionName = voteExt.SidecarVersionName
 		}
 
 		// Process each field using the field handlers
@@ -165,7 +173,9 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 	// Create consensus VoteExtension with fields that have supermajority
 	var consensusVE VoteExtension
-	consensusVE.ZRChainBlockHeight = currentHeight - 1
+
+	// Set informational fields that don't require consensus
+	consensusVE.SidecarVersionName = firstSidecarVersionName
 
 	superMajorityThreshold := superMajorityVotePower(totalVotePower)
 	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)
@@ -260,12 +270,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldZRChainBlockHeight; field <= VEFieldSolanaMintEventsHash; field++ {
-		// Skip logging the ZRChainBlockHeight field
-		if field == VEFieldZRChainBlockHeight {
-			continue
-		}
-
+	for field := VEFieldEigenDelegationsHash; field <= VEFieldSolanaMintEventsHash; field++ {
 		_, hasConsensus := fieldVotePowers[field]
 		if hasConsensus {
 			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
@@ -298,7 +303,6 @@ func (k Keeper) validateVote(ctx context.Context, vote abci.ExtendedVoteInfo, cu
 		return VoteExtension{}, err
 	}
 
-	voteExt.ZRChainBlockHeight = currentHeight - 1
 	if voteExt.IsInvalid(k.Logger(ctx)) {
 		return VoteExtension{}, fmt.Errorf("invalid vote extension")
 	}
@@ -866,6 +870,31 @@ func (k Keeper) CalculateZenBTCMintFee(
 	return feeZenBTC
 }
 
+// CalculateFlatZenBTCMintFee calculates a flat $5 fee in zenBTC
+// Returns 0 if BTCUSDPrice is zero
+func (k Keeper) CalculateFlatZenBTCMintFee(
+	btcUSDPrice math.LegacyDec,
+	exchangeRate math.LegacyDec,
+) uint64 {
+	if btcUSDPrice.IsZero() {
+		return 0
+	}
+
+	// Flat $5 fee
+	feeUSD := math.LegacyNewDec(5)
+
+	// Convert USD fee to BTC
+	feeInBTC := feeUSD.Quo(btcUSDPrice)
+
+	// Convert to satoshis (multiply by 1e8)
+	satoshis := feeInBTC.Mul(math.LegacyNewDec(1e8)).TruncateInt().Uint64()
+
+	// Convert BTC fee to zenBTC using exchange rate
+	feeZenBTC := math.LegacyNewDecFromInt(math.NewIntFromUint64(satoshis)).Quo(exchangeRate).TruncateInt().Uint64()
+
+	return feeZenBTC
+}
+
 // getPendingMintTransactionsByStatus retrieves up to 2 pending mint transactions matching the given status.
 func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.MintTransactionStatus, walletType zenbtctypes.WalletType) ([]zenbtctypes.PendingMintTransaction, error) {
 	firstPendingID := uint64(0)
@@ -970,23 +999,87 @@ func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
+	// If the canonical VE is empty, it means no consensus was reached.
+	// In this case, a validator that submitted an empty vote extension should not be penalized.
+	isCanonicalEmpty := reflect.DeepEqual(canonicalVoteExt, VoteExtension{})
+
 	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
 		return
 	}
 
+	// Keep track of unique validators that had mismatches in this block - O(N)
+	mismatchedValidators := make(map[string]struct{})
+
 	for _, v := range consensusData.Votes {
+		// If the canonical VE is empty and the validator also submitted an empty VE, it's not a mismatch.
+		if isCanonicalEmpty && len(v.VoteExtension) == 0 {
+			continue
+		}
+
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
+			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
+			mismatchedValidators[validatorHexAddr] = struct{}{}
+
+			// Still record in ValidationInfo for backward compatibility
 			info, err := k.ValidationInfos.Get(ctx, height)
 			if err != nil {
 				info = types.ValidationInfo{}
 			}
-			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, hex.EncodeToString(v.Validator.Address))
+			info.MismatchedVoteExtensions = append(info.MismatchedVoteExtensions, validatorHexAddr)
 			if err := k.ValidationInfos.Set(ctx, height, info); err != nil {
 				k.Logger(ctx).Error("error setting validation info", "height", height, "error", err)
 			}
 		}
+	}
+
+	// Update the sliding window counters for each mismatched validator - O(M) where M = unique mismatched validators
+	for validatorHexAddr := range mismatchedValidators {
+		k.updateValidatorMismatchCount(ctx, validatorHexAddr, height)
+	}
+}
+
+// updateValidatorMismatchCount updates the sliding window counter for a validator's mismatches
+// Time complexity: O(1) amortized per call
+func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr string, blockHeight int64) {
+	const windowSize = 100
+
+	// Get existing count or create new one
+	mismatchCount, err := k.ValidatorMismatchCounts.Get(ctx, validatorHexAddr)
+	if err != nil {
+		// No existing record, create new
+		mismatchCount = types.ValidatorMismatchCount{
+			ValidatorAddress: validatorHexAddr,
+			MismatchBlocks:   []int64{blockHeight},
+			TotalCount:       1,
+		}
+		if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
+			k.Logger(ctx).Error("error setting validator mismatch count", "validator", validatorHexAddr, "error", err)
+		}
+		return
+	}
+
+	// Remove blocks that are outside the sliding window (older than 100 blocks)
+	windowStart := blockHeight - windowSize + 1
+	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
+
+	// Keep only blocks within the window - O(W) where W is window size (100)
+	for _, block := range mismatchCount.MismatchBlocks {
+		if block >= windowStart {
+			newMismatchBlocks = append(newMismatchBlocks, block)
+		}
+	}
+
+	// Add the new block (maintaining sorted order since we always append increasing heights)
+	newMismatchBlocks = append(newMismatchBlocks, blockHeight)
+
+	// Update the count
+	mismatchCount.MismatchBlocks = newMismatchBlocks
+	mismatchCount.TotalCount = uint32(len(newMismatchBlocks))
+
+	if err := k.ValidatorMismatchCounts.Set(ctx, validatorHexAddr, mismatchCount); err != nil {
+		k.Logger(ctx).Error("error updating validator mismatch count", "validator", validatorHexAddr, "error", err)
 	}
 }
 
@@ -1573,7 +1666,7 @@ func (k Keeper) populateAccountsForSolanaMints(
 	requestStore collections.Map[string, bool],
 	mintAddress string,
 	flowDescription string, // For logging purposes, e.g., "ZenBTC" or "ZenTP"
-	solAccs map[string]solToken.Account, // Map to populate
+	solAccs map[string]token.Account, // Map to populate
 ) error {
 	storeIterator, err := requestStore.Iterate(ctx, nil)
 	if err != nil {
@@ -1628,8 +1721,8 @@ func (k Keeper) populateAccountsForSolanaMints(
 
 // retrieveSolanaAccounts retrieves all requested Solana token accounts.
 // The returned map keys are ATA addresses.
-func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]solToken.Account, error) {
-	solAccs := make(map[string]solToken.Account) // Key: ATA Address string
+func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Account, error) {
+	solAccs := make(map[string]token.Account) // Key: ATA Address string
 
 	// 1. Process ZenBTC related accounts
 	zenBTCMintAddress := ""

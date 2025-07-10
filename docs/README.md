@@ -221,10 +221,10 @@ sequenceDiagram
     zrChain->>Sidecar: PrepareProposal: Proposer validates redemption data against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on redemption data
     Note over zrChain: PreBlocker: storeNewZenBTCRedemptions()
-    zrChain->>zrChain: Update Redemption (status: UNSTAKED)
-    zrChain->>zrChain: Wait for EigenLayer withdrawal delay period
+    zrChain->>zrChain: Create Redemption object (status: INITIATED)
+    zrChain->>zrChain: Wait for EigenLayer withdrawal ecrow period to elapse
 
-    Note over zrChain: After withdrawal delay, redemption becomes available for completion
+    Note over zrChain: After withdrawal ecrow period elapsed, redemption becomes available for completion
 
     Sidecar->>Ethereum: Polls for nonce values
     zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with completer nonces
@@ -244,7 +244,7 @@ sequenceDiagram
     Sidecar->>Ethereum: Polls for nonce update after tx broadcast
     zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
     Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates status to UNSTAKED
+    zrChain->>zrChain: Updates redemption status to UNSTAKED
 
     Bitcoin Proxy->>zrChain: Poll for UNSTAKED redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)

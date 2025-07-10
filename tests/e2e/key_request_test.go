@@ -1,4 +1,4 @@
-package integration_test
+package e2e
 
 import (
 	"strconv"
@@ -51,19 +51,23 @@ var _ = Describe("MPC Key Requests:", func() {
 		})
 
 		It("fetches the request within 5 seconds", func() {
-			Eventually(func() uint64 {
+			Eventually(func() (uint64, error) {
 				req, err := env.Query.GetKeyRequest(env.Ctx, requestID)
-				Expect(err).ToNot(HaveOccurred())
-				return req.Id
+				if err != nil {
+					return 0, err
+				}
+				return req.Id, nil
 			}, "5s", "1s").Should(Equal(requestID))
 			GinkgoWriter.Printf("ECDSA Key Request fetched: %d\n", requestID)
 		})
 
 		It("gets fulfilled within 15 seconds", func() {
-			Eventually(func() string {
+			Eventually(func() (string, error) {
 				req, err := env.Query.GetKeyRequest(env.Ctx, requestID)
-				Expect(err).ToNot(HaveOccurred())
-				return req.Status
+				if err != nil {
+					return "", err
+				}
+				return req.Status, nil
 			}, "15s", "1s").Should(Equal(types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED.String()))
 			GinkgoWriter.Printf("ECDSA Key Request fulfilled: %d\n", requestID)
 		})

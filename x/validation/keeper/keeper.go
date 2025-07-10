@@ -73,6 +73,8 @@ type Keeper struct {
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 	// BackfillRequests - key: tx hash | value: bool (is requested)
 	BackfillRequests collections.Item[types.BackfillRequests]
+	// ValidatorMismatchCounts - key: validator hex address | value: mismatch count data
+	ValidatorMismatchCounts collections.Map[string, types.ValidatorMismatchCount]
 	// LastCompletedZentpMintID - value: id of last completed zentp mint
 	LastCompletedZentpMintID collections.Item[uint64]
 }
@@ -160,6 +162,7 @@ func NewKeeper(
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
+		ValidatorMismatchCounts:           collections.NewMap(sb, types.ValidatorMismatchCounts, types.ValidatorMismatchCountsIndex, collections.StringKey, codec.CollValue[types.ValidatorMismatchCount](cdc)),
 		LastCompletedZentpMintID:          collections.NewItem(sb, types.LastCompletedZentpMintIDKey, types.LastCompletedZentpMintIDIndex, collections.Uint64Value),
 	}
 }
@@ -552,4 +555,18 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, 
 	}
 
 	return solanaZenTPAccountsRequested, nil
+}
+
+func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) ([]types.ValidatorMismatchCount, error) {
+	validatorMismatchCounts := []types.ValidatorMismatchCount{}
+
+	err := k.ValidatorMismatchCounts.Walk(ctx, nil, func(key string, value types.ValidatorMismatchCount) (stop bool, err error) {
+		validatorMismatchCounts = append(validatorMismatchCounts, value)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return validatorMismatchCounts, nil
 }

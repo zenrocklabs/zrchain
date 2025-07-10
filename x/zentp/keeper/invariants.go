@@ -20,16 +20,6 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 		return errors.Wrap(err, "failed to get solana rock supply")
 	}
 
-	pendingMints, err := k.GetMintsWithStatusPending(ctx)
-	if err != nil {
-		// It's ok if there are no pending mints, so we don't return an error.
-	}
-
-	var pendingAmount math.Int = math.ZeroInt()
-	for _, mint := range pendingMints {
-		pendingAmount = pendingAmount.Add(math.NewIntFromUint64(mint.Amount))
-	}
-
 	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
 
 	if newAmount.IsPositive() {
@@ -43,13 +33,15 @@ func (k Keeper) CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error {
 		}
 	}
 
-	totalSupply := zrchainSupply.Add(solanaSupply).Add(pendingAmount)
-	if newAmount.IsPositive() {
-		totalSupply = totalSupply.Add(newAmount)
-	}
+	// Total supply is the sum of ROCK on zrchain and ROCK on Solana.
+	// The zrchainSupply from the bank keeper includes all tokens, even those
+	// held in the module account for pending bridges. This is the correct total.
+	totalSupply := zrchainSupply.Add(solanaSupply)
 
+	// A bridge operation does not change the total supply, so we do not add newAmount here.
+	// We just check if the current total supply is already over the cap.
 	if totalSupply.GT(sdkmath.NewIntFromUint64(rockCap)) {
-		return errors.Errorf("total ROCK supply including pending would exceed cap (%s), bridge disabled", totalSupply.String())
+		return errors.Errorf("total ROCK supply %s exceeds cap (%s), bridge disabled", totalSupply.String(), sdkmath.NewIntFromUint64(rockCap).String())
 	}
 	return nil
 }

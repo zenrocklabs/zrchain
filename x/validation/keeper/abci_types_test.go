@@ -24,31 +24,29 @@ import (
 )
 
 var defaultVe = VoteExtension{
-	ZRChainBlockHeight:         100,
-	EigenDelegationsHash:       []byte("randomhash"),
-	RequestedBtcBlockHeight:    100000,
-	RequestedBtcHeaderHash:     []byte("randomhash"),
-	EthBlockHeight:             100000,
-	EthGasLimit:                2000000000,
-	EthBaseFee:                 1000000000,
-	EthTipCap:                  1000000000,
-	RequestedStakerNonce:       1,
-	RequestedEthMinterNonce:    1,
-	RequestedUnstakerNonce:     1,
-	RequestedCompleterNonce:    1,
-	SolanaMintNoncesHash:       []byte("randomhash"),
-	SolanaAccountsHash:         []byte("randomhash"),
-	SolanaLamportsPerSignature: 1000000000,
-	EthBurnEventsHash:          []byte("randomhash"),
-	SolanaBurnEventsHash:       []byte("randomhash"),
-	SolanaMintEventsHash:       []byte("randomhash"),
-	RedemptionsHash:            []byte("randomhash"),
-	ROCKUSDPrice:               "1000000000",
-	BTCUSDPrice:                "1000000000",
-	ETHUSDPrice:                "1000000000",
-	LatestBtcBlockHeight:       100000,
-	LatestBtcHeaderHash:        []byte("randomhash"),
-	SidecarVersionName:         sidecartypes.SidecarVersionName,
+	EigenDelegationsHash:    []byte("randomhash"),
+	RequestedBtcBlockHeight: 100000,
+	RequestedBtcHeaderHash:  []byte("randomhash"),
+	EthBlockHeight:          100000,
+	EthGasLimit:             2000000000,
+	EthBaseFee:              1000000000,
+	EthTipCap:               1000000000,
+	RequestedStakerNonce:    1,
+	RequestedEthMinterNonce: 1,
+	RequestedUnstakerNonce:  1,
+	RequestedCompleterNonce: 1,
+	SolanaMintNoncesHash:    []byte("randomhash"),
+	SolanaAccountsHash:      []byte("randomhash"),
+	EthBurnEventsHash:       []byte("randomhash"),
+	SolanaBurnEventsHash:    []byte("randomhash"),
+	SolanaMintEventsHash:    []byte("randomhash"),
+	RedemptionsHash:         []byte("randomhash"),
+	ROCKUSDPrice:            "1000000000",
+	BTCUSDPrice:             "1000000000",
+	ETHUSDPrice:             "1000000000",
+	LatestBtcBlockHeight:    100000,
+	LatestBtcHeaderHash:     []byte("randomhash"),
+	SidecarVersionName:      sidecartypes.SidecarVersionName,
 }
 
 func TestContainsVoteExtension(t *testing.T) {
@@ -174,12 +172,6 @@ func TestIsInvalid(t *testing.T) {
 			expectInvalid: false,
 		},
 		{
-			name:          "invalid zr chain block height",
-			fieldToModify: "ZRChainBlockHeight",
-			invalidValue:  int64(0),
-			expectInvalid: true,
-		},
-		{
 			name:          "invalid eigen delegations hash",
 			fieldToModify: "EigenDelegationsHash",
 			invalidValue:  []byte{},
@@ -261,7 +253,6 @@ func TestIsInvalid(t *testing.T) {
 
 	// Map of field names to their setters
 	fieldSetters := map[string]func(*VoteExtension, any){
-		"ZRChainBlockHeight":   func(ve *VoteExtension, v any) { ve.ZRChainBlockHeight = v.(int64) },
 		"EigenDelegationsHash": func(ve *VoteExtension, v any) { ve.EigenDelegationsHash = v.([]byte) },
 		"EthBlockHeight":       func(ve *VoteExtension, v any) { ve.EthBlockHeight = v.(uint64) },
 		"EthBaseFee":           func(ve *VoteExtension, v any) { ve.EthBaseFee = v.(uint64) },
@@ -376,7 +367,7 @@ func TestIsGasField(t *testing.T) {
 			valid: true,
 		},
 		{
-			name:  "invalid gas field: solana lamports per signature",
+			name:  "invalid gas field: requested btc block height",
 			field: VEFieldRequestedBtcBlockHeight,
 			valid: false,
 		},
@@ -730,11 +721,6 @@ func TestVoteExtensionFieldString(t *testing.T) {
 		field VoteExtensionField
 		str   string
 	}{
-		{
-			name:  "valid field: zr chain block height",
-			field: VEFieldZRChainBlockHeight,
-			str:   "ZRChainBlockHeight",
-		},
 		{
 			name:  "valid field: eigen delegations hash",
 			field: VEFieldEigenDelegationsHash,

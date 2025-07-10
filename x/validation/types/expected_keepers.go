@@ -135,6 +135,7 @@ type ZentpKeeper interface {
 	SetSolanaROCKSupply(ctx context.Context, supply math.Int) error
 	CheckROCKSupplyCap(ctx sdk.Context, newAmount math.Int) error
 	CheckCanBurnFromSolana(ctx sdk.Context, burnAmount math.Int) error
+	GetTotalROCKSupply(ctx sdk.Context) (math.Int, error)
 }
 
 type TreasuryKeeper interface {
