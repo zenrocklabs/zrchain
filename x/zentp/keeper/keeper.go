@@ -44,6 +44,7 @@ type (
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
 		SolanaROCKSupply collections.Item[math.Int]
+		ZentpFees        collections.Item[sdk.Coin]
 	}
 )
 
@@ -91,6 +92,7 @@ func NewKeeper(
 		identityKeeper:   identityKeeper,
 		validationKeeper: validationKeeper,
 		mintKeeper:       mintKeeper,
+		ZentpFees:        collections.NewItem(sb, types.ZentpFeesKey, types.ZentpFeesIndex, codec.CollValue[sdk.Coin](cdc)),
 	}
 
 	return k
@@ -319,4 +321,13 @@ func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64
 	}
 
 	return totalAmount.Uint64(), nil
+}
+
+func (k Keeper) UpdateZentpFees(ctx context.Context, fees sdk.Coin) error {
+	zentpFees, err := k.ZentpFees.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	return k.ZentpFees.Set(ctx, zentpFees.Add(fees))
 }

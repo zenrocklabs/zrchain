@@ -38,12 +38,15 @@ func (s *IntegrationTestSuite) TestBridge() {
 	s.bankKeeper.EXPECT().GetBalance(s.ctx, zentpModuleAddr, "urock").Return(
 		sdk.NewCoin("urock", math.ZeroInt()), // Assume module has zero balance
 	).AnyTimes()
+	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+		s.ctx,
+		types.ModuleName,
+		types.ZentpCollectorName,
+		sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(100000000))),
+	).Return(nil).AnyTimes()
 
 	// Mock GetLastCompletedZentpMintID for GetMintsWithStatusPending
 	s.validationKeeper.EXPECT().GetLastCompletedZentpMintID(s.ctx).Return(uint64(0), nil).AnyTimes()
-
-	// Mock getting the mint params
-	s.mintKeeper.EXPECT().GetParams(s.ctx).Return(minttypes.DefaultParams(), nil)
 
 	// Create test message
 	msg := &types.MsgBridge{
@@ -54,24 +57,34 @@ func (s *IntegrationTestSuite) TestBridge() {
 		RecipientAddress: "1BbzosnmC3EVe7XcMgHYd6fUtcfdzUvfeaVZxaZ2QsE",
 	}
 
+	// Calculate bridge fee
+	baseAmountInt := math.NewIntFromUint64(msg.Amount)
+	bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+
+	// Calculate total amount for balance check
+	totalAmountForBalance := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+
 	// Mock bank keeper GetBalance
 	s.bankKeeper.EXPECT().GetBalance(
 		s.ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
 		msg.Denom,
-	).Return(sdk.NewCoin(msg.Denom, math.NewIntFromUint64(msg.Amount+100000000+params.Solana.Fee*2)))
+	).Return(sdk.NewCoin(msg.Denom, totalAmountForBalance.Add(math.NewIntFromUint64(100000000))))
 
-	// Calculate total amount including bridge fee and Solana fee
-	baseAmountInt := math.NewIntFromUint64(msg.Amount)
-	bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
-	totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
-
-	// Mock bank keeper SendCoinsFromAccountToModule
+	// Mock bank keeper SendCoinsFromAccountToModule for base amount
 	s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 		s.ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("urock", totalAmountInt)),
+		sdk.NewCoins(sdk.NewCoin("urock", baseAmountInt)),
+	).Return(nil)
+
+	// Mock bank keeper SendCoinsFromAccountToModule for bridge fee
+	s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+		s.ctx,
+		sdk.MustAccAddressFromBech32(msg.Creator),
+		types.ZentpCollectorName,
+		sdk.NewCoins(sdk.NewCoin("urock", bridgeFeeAmount)),
 	).Return(nil)
 
 	// Mock validation keeper SetSolanaRequestedNonce
@@ -192,12 +205,20 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 					testMsg.Denom,
 				).Return(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(100))).AnyTimes() // Less than required amount
 
-				// Mock SendCoinsFromAccountToModule even though it shouldn't be called
+				// Mock SendCoinsFromAccountToModule calls even though they shouldn't be called
+				// (balance check will fail first)
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 					s.ctx,
 					sdk.MustAccAddressFromBech32(testMsg.Creator),
 					types.ModuleName,
-					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(testMsg.Amount+10))),
+					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(testMsg.Amount))),
+				).Return(nil).AnyTimes()
+
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					s.ctx,
+					sdk.MustAccAddressFromBech32(testMsg.Creator),
+					types.ZentpCollectorName,
+					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(5000000000))), // 0.5% of 1T
 				).Return(nil).AnyTimes()
 
 				// Mock validation keeper calls
@@ -478,12 +499,20 @@ func (s *IntegrationTestSuite) TestMsgBridgeSupply() {
 				tt.args.msg.Denom,
 			).Return(sdk.NewCoin(tt.args.msg.Denom, totalAmountInt.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
 
-			// Mock bank keeper SendCoinsFromAccountToModule
+			// Mock bank keeper SendCoinsFromAccountToModule for base amount
 			s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 				s.ctx,
 				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
 				types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin("urock", totalAmountInt)),
+				sdk.NewCoins(sdk.NewCoin("urock", baseAmountInt)),
+			).Return(nil).AnyTimes()
+
+			// Mock bank keeper SendCoinsFromAccountToModule for bridge fee
+			s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				s.ctx,
+				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
+				types.ZentpCollectorName,
+				sdk.NewCoins(sdk.NewCoin("urock", bridgeFeeAmount)),
 			).Return(nil).AnyTimes()
 
 			// Mock validation keeper SetSolanaRequestedNonce

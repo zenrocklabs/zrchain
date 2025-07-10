@@ -209,6 +209,7 @@ var maccPerms = map[string][]string{
 	treasurytypes.KeyringCollectorName: nil,
 	treasurytypes.KeyringEscrowName:    nil,
 	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
+	zentptypes.ZentpCollectorName:      nil,
 }
 
 var (
@@ -475,6 +476,7 @@ func NewZenrockApp(
 		app.ValidationKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
+		&app.ZentpKeeper,
 		authtypes.FeeCollectorName,
 		authAddr,
 	)

@@ -1,5 +1,11 @@
 package types
 
+import (
+	"cosmossdk.io/math"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // this line is used by starport scaffolding # genesis/types/import
 
 // DefaultIndex is the default global index
@@ -13,6 +19,7 @@ func DefaultGenesis() *GenesisState {
 		Mints:            []Bridge{},
 		Burns:            []Bridge{},
 		SolanaRockSupply: 0,
+		ZentpFees:        sdk.Coin{Denom: appparams.BondDenom, Amount: math.NewInt(0)},
 	}
 }
 
