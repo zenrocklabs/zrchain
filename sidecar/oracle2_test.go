@@ -117,7 +117,12 @@ func createTestOracle() *Oracle {
 		}
 		return []api.BurnEvent{}, sol.Signature{}, nil
 	}
-	
+
+	// Mock the reconcileBurnEventsFn to prevent nil pointer dereference in zrChainQueryClient
+	oracle.reconcileBurnEventsFn = func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool) {
+		// For testing, just return the events unchanged (simulate no events are found on-chain)
+		return eventsToClean, cleanedEvents
+	}
 
 	return oracle
 }
