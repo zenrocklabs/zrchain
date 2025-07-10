@@ -871,12 +871,12 @@ func (k Keeper) CalculateZenBTCMintFee(
 }
 
 // CalculateFlatZenBTCMintFee calculates a flat $5 fee in zenBTC
-// Returns 0 if BTCUSDPrice is zero
+// Returns 0 if BTCUSDPrice is zero or exchangeRate is zero
 func (k Keeper) CalculateFlatZenBTCMintFee(
 	btcUSDPrice math.LegacyDec,
 	exchangeRate math.LegacyDec,
 ) uint64 {
-	if btcUSDPrice.IsZero() {
+	if btcUSDPrice.IsZero() || exchangeRate.IsZero() {
 		return 0
 	}
 
@@ -1043,8 +1043,6 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, c
 // updateValidatorMismatchCount updates the sliding window counter for a validator's mismatches
 // Time complexity: O(1) amortized per call
 func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr string, blockHeight int64) {
-	const windowSize = 100
-
 	// Get existing count or create new one
 	mismatchCount, err := k.ValidatorMismatchCounts.Get(ctx, validatorHexAddr)
 	if err != nil {
@@ -1061,7 +1059,7 @@ func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr 
 	}
 
 	// Remove blocks that are outside the sliding window (older than 100 blocks)
-	windowStart := blockHeight - windowSize + 1
+	windowStart := blockHeight - voteExtensionWindowSize + 1
 	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
 
 	// Keep only blocks within the window - O(W) where W is window size (100)
