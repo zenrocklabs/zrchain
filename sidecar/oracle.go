@@ -1660,7 +1660,9 @@ func (o *Oracle) getSolanaEvents(
 	}()
 
 	lastSuccessfullyProcessedSig := lastKnownSig
-	internalBatchSize := sidecartypes.SolanaEventFetchBatchSize
+	// Adaptive batching parameters
+	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
+	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
 
 	// Pre-allocate with estimated capacity to reduce allocations
 	estimatedEvents := len(newSignatures) * 2 // Estimate 2 events per signature on average
@@ -1668,13 +1670,17 @@ func (o *Oracle) getSolanaEvents(
 		ep.events = make([]any, 0, estimatedEvents)
 	}
 
-	for i := 0; i < len(newSignatures); i += internalBatchSize {
-		end := min(i+internalBatchSize, len(newSignatures))
+	// Process signatures with adaptive batching
+	for i := 0; i < len(newSignatures); {
+		if ctx.Err() != nil {
+			return ep.GetEvents(), lastSuccessfullyProcessedSig, ctx.Err()
+		}
+
+		end := min(i+currentBatchSize, len(newSignatures))
 		currentBatch := newSignatures[i:end]
 
 		// Get batch request slice from pool
 		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
-		defer o.batchRequestPool.Put(batchRequests)
 		batchRequests = (batchRequests)[:0] // Reset slice but keep capacity
 
 		// Build batch requests
@@ -1694,73 +1700,44 @@ func (o *Oracle) getSolanaEvents(
 			})
 		}
 
-		// Enhanced retry logic with exponential backoff
-		var batchResponses jsonrpc.RPCResponses
-		var batchErr error
-		retryDelay := sidecartypes.SolanaEventFetchRetrySleep
+		// Execute batch request
+		batchCtx, batchCancel := context.WithTimeout(ctx, sidecartypes.SolanaBatchTimeout)
+		batchResponses, batchErr := o.rpcCallBatchFn(batchCtx, batchRequests)
+		batchCancel()
 
-		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
-			// If the parent context has been canceled, don't attempt any more retries.
-			if ctx.Err() != nil {
-				batchErr = ctx.Err() // Propagate the cancellation error
-				break
-			}
-
-			// Progressive timeout: increase timeout for retries
-			timeoutDuration := sidecartypes.SolanaBatchTimeout
-			if retry > 0 {
-				timeoutDuration = time.Duration(float64(timeoutDuration) * (1.0 + 0.5*float64(retry)))
-			}
-			batchCtx, batchCancel := context.WithTimeout(ctx, timeoutDuration)
-			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, batchRequests)
-			batchCancel()
-
-			if batchErr == nil {
-				hasErrors := false
-				for _, resp := range batchResponses {
-					if resp.Error != nil {
-						hasErrors = true
-						break
-					}
-				}
-				if !hasErrors {
+		// Check for errors in the response itself
+		if batchErr == nil {
+			for _, resp := range batchResponses {
+				if resp.Error != nil {
+					batchErr = fmt.Errorf("response contains errors: %v", resp.Error)
 					break
 				}
-				batchErr = fmt.Errorf("response contains errors")
-			}
-
-			if batchErr != nil && retry < sidecartypes.SolanaEventFetchMaxRetries-1 {
-				if batchCtx.Err() == context.DeadlineExceeded {
-					slog.Warn("Batch RPC call timed out, retrying", "eventType", eventTypeName, "retry", retry+1, "timeout", timeoutDuration)
-				} else {
-					slog.Warn("Sub-batch GetTransaction failed, retrying with backoff",
-						"eventType", eventTypeName, "error", batchErr, "retry", retry+1, "delay", retryDelay)
-				}
-				time.Sleep(retryDelay)
-				retryDelay = min(retryDelay*2, 5*time.Second) // Exponential backoff with cap
 			}
 		}
 
+		// If the batch failed, reduce the batch size and retry the same segment.
 		if batchErr != nil {
-			slog.Warn("Batch transaction fetch exceeded retry limit - switching to individual transaction queries", "eventType", eventTypeName)
-			// Optimized fallback with individual transaction caching
-			if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+			newBatchSize := max(currentBatchSize/2, minBatchSize)
+			if currentBatchSize > minBatchSize {
+				slog.Warn("Batch GetTransaction failed, reducing batch size and retrying",
+					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
+				currentBatchSize = newBatchSize
+			} else {
+				// If we're already at the minimum batch size, switch to fallback for this batch
+				slog.Warn("Batch transaction fetch failed at minimum batch size, switching to individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
+				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
+					slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+					o.batchRequestPool.Put(batchRequests)
+					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				}
+				i += len(currentBatch) // Advance past the successfully processed fallback segment
 			}
-			continue
+			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
+			o.batchRequestPool.Put(batchRequests)
+			continue                                           // Retry the same segment `i`
 		}
 
-		// Add adaptive sleep between batches based on load
-		if end < len(newSignatures) {
-			sleepDuration := sidecartypes.SolanaSleepInterval
-			if len(currentBatch) < internalBatchSize/2 {
-				sleepDuration /= 2 // Reduce sleep for smaller batches
-			}
-			time.Sleep(sleepDuration)
-		}
-
-		// Process batch responses with optimized response mapping
+		// Success: Process the batch responses
 		responseMap := make(map[int]*jsonrpc.RPCResponse, len(batchResponses))
 		for _, resp := range batchResponses {
 			if idx, ok := parseRPCResponseID(resp, eventTypeName); ok {
@@ -1773,28 +1750,25 @@ func (o *Oracle) getSolanaEvents(
 			resp, exists := responseMap[idx]
 			if !exists {
 				err := fmt.Errorf("missing batch response for index %d", idx)
-				slog.Warn("Incomplete batch response received - stopping processing and saving progress", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
-			}
-
-			if resp.Error != nil || resp.Result == nil {
-				err := fmt.Errorf("batch response error: %v", resp.Error)
-				slog.Warn("Aborting batch due to response error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+				slog.Warn("Incomplete batch response, stopping processing and saving progress", "eventType", eventTypeName, "reason", err)
+				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			var txRes solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
-				slog.Warn("Aborting batch due to unmarshal error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+				err = fmt.Errorf("unmarshal error: %w", err)
+				slog.Warn("Aborting batch due to unmarshal error", "eventType", eventTypeName, "reason", err)
+				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
-			// Cache the transaction result for potential reuse
 			o.cacheTransactionResult(sigInfo.Signature.String(), &txRes)
 
 			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
 			if err != nil {
-				slog.Warn("Aborting batch due to processing error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+				slog.Warn("Aborting batch due to processing error", "eventType", eventTypeName, "reason", err)
+				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
@@ -1805,6 +1779,16 @@ func (o *Oracle) getSolanaEvents(
 			}
 			lastSuccessfullyProcessedSig = sigInfo.Signature
 		}
+
+		// Advance to the next segment
+		i += len(currentBatch)
+		o.batchRequestPool.Put(batchRequests) // Return the batch request slice to the pool
+
+		// Optional: slowly increase batch size on success
+		if currentBatchSize < sidecartypes.SolanaEventFetchBatchSize {
+			currentBatchSize = min(currentBatchSize+minBatchSize, sidecartypes.SolanaEventFetchBatchSize)
+		}
+		time.Sleep(sidecartypes.SolanaSleepInterval)
 	}
 
 	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)

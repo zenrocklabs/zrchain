@@ -111,6 +111,7 @@ var (
 	SolanaEventScanTxLimit      = 1000
 	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize   = 50
+	SolanaEventFetchMinBatchSize  = 5
 	SolanaSleepInterval         = 100 * time.Millisecond
 	SolanaFallbackSleepInterval = 25 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries  = 10
