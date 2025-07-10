@@ -42,6 +42,8 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
+      - name: Add Go binary to PATH
+        run: echo "/usr/local/go/bin" >> $GITHUB_PATH
       - name: Build
         run: go build -v ./...
       - name: Test
