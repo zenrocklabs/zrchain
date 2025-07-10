@@ -50,7 +50,7 @@ import (
 func sendError(ctx context.Context, errChan chan<- error, err error) {
 	select {
 	case <-ctx.Done():
-		slog.Warn("Context canceled, dropping error", "error", err)
+		slog.Warn("Context canceled, dropping error", "err", err)
 	case errChan <- err:
 	}
 }
@@ -106,7 +106,7 @@ func NewOracle(
 	// Load initial state from cache file
 	latestDiskState, historicalStates, err := loadStateDataFromFile(o.Config.StateFile)
 	if err != nil {
-		slog.Error("Critical error loading state from file, initializing with empty state", "file", o.Config.StateFile, "error", err)
+		slog.Warn("Unable to load oracle state cache from disk - starting with clean state", "file", o.Config.StateFile, "error", err)
 		o.currentState.Store(&EmptyOracleState)
 		o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 		// lastSol*SigStr fields will remain empty strings (zero value)
@@ -236,7 +236,7 @@ func (o *Oracle) processOracleTick(
 	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			slog.Info("Oracle tick processing was canceled by the next tick", "tickTime", tickTime.Format("15:04:05.00"))
+			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format("15:04:05.00"))
 		} else {
 			slog.Error("Error fetching and processing state, applying partial update with fallbacks", "error", err)
 		}
@@ -370,7 +370,7 @@ func (o *Oracle) fetchAndProcessState(
 		// All tasks completed normally.
 	case <-tickCtx.Done():
 		// Tick was canceled. The goroutines have been notified via cancelRoutines().
-		slog.Warn("State fetching canceled by new tick, proceeding with partial state.")
+		slog.Warn("Oracle tick deadline approached. Applying state updates with partial data to maintain synchronization timing.")
 		// We must wait for the goroutines to finish before closing the error channel.
 		<-waitChan
 	}
@@ -667,7 +667,7 @@ func (o *Oracle) processSolanaMintEvents(
 			// We should only merge the 'allNewEvents' fetched in this tick to avoid re-adding old ones.
 			// The 'cleanedEvents' map is unchanged. We pass nil to the new events parameter of the first
 			// merge call because the new events will be merged in the second call.
-			slog.Warn("Failed to reconcile Solana mint events with zrchain. Carrying over pending events.", "error", reconcileErr)
+			slog.Warn("Failed to reconcile Solana mint events with zrchain - retaining unconfirmed Solana mint events for next cycle", "error", reconcileErr)
 			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, nil, "Solana mint (retained from previous state)")
 			mergedMintEvents = mergeNewMintEvents(mergedMintEvents, cleanedEvents, allNewEvents, "Solana mint (newly fetched)")
 		} else {
@@ -1720,10 +1720,10 @@ func (o *Oracle) getSolanaEvents(
 		}
 
 		if batchErr != nil {
-			slog.Warn("Batch request ultimately failed – falling back to per-tx requests", "eventType", eventTypeName)
+			slog.Warn("Batch transaction fetch exceeded retry limit - switching to individual transaction queries", "eventType", eventTypeName)
 			// Optimized fallback with individual transaction caching
 			if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
+				slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 			continue
@@ -1751,19 +1751,19 @@ func (o *Oracle) getSolanaEvents(
 			resp, exists := responseMap[idx]
 			if !exists {
 				err := fmt.Errorf("missing batch response for index %d", idx)
-				slog.Warn("Aborting batch due to missing response, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				slog.Warn("Incomplete batch response received - stopping processing and saving progress", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			if resp.Error != nil || resp.Result == nil {
 				err := fmt.Errorf("batch response error: %v", resp.Error)
-				slog.Warn("Aborting batch due to response error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				slog.Warn("Aborting batch due to response error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			var txRes solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
-				slog.Warn("Aborting batch due to unmarshal error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				slog.Warn("Aborting batch due to unmarshal error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
@@ -1772,7 +1772,7 @@ func (o *Oracle) getSolanaEvents(
 
 			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
 			if err != nil {
-				slog.Warn("Aborting batch due to processing error, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "error", err)
+				slog.Warn("Aborting batch due to processing error. Advancing watermark to last successfully queried transaction.", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
@@ -1863,10 +1863,9 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 					retryDelay = min(retryDelay*2, time.Second) // Exponential backoff for fallback
 				}
 			}
-
 			if txErr != nil || txRes == nil {
 				err := fmt.Errorf("unrecoverable tx fetch error: %w", txErr)
-				slog.Error("Aborting fallback processing to avoid data loss", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
+				slog.Error("Failed to fetch transaction after exhausting all retry attempts", "eventType", eventTypeName, "tx", sigInfo.Signature, "reason", err)
 				return err
 			}
 		}
@@ -1947,7 +1946,7 @@ func (o *Oracle) fetchAndFillSignatureGap(
 		}
 		initialSignatures = pageSigs
 	}
-	slog.Error("Watermark not found after max pages – continuing with best effort", "eventType", eventTypeName)
+	slog.Error("Unable to locate starting watermark signature after scanning maximum pages. Proceeding with collected data", "eventType", eventTypeName)
 	for i, j := 0, len(newSignatures)-1; i < j; i, j = i+1, j-1 {
 		newSignatures[i], newSignatures[j] = newSignatures[j], newSignatures[i]
 	}
