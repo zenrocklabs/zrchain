@@ -104,19 +104,19 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
-	MainLoopTickerInterval      = 60 * time.Second
-	OracleCacheSize             = 10
-	EthBurnEventsBlockRange     = 1000
-	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit      = 1000
-	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
-	SolanaEventFetchBatchSize   = 50
-	SolanaEventFetchMinBatchSize  = 5
-	SolanaSleepInterval         = 100 * time.Millisecond
-	SolanaFallbackSleepInterval = 25 * time.Millisecond // Sleep between individual fallback requests
-	SolanaEventFetchMaxRetries  = 10
-	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
-	SolanaEventFetchRetrySleep  = 200 * time.Millisecond
+	MainLoopTickerInterval       = 60 * time.Second
+	OracleCacheSize              = 10
+	EthBurnEventsBlockRange      = 1000
+	EthBlocksBeforeFinality      = int64(8) // TODO: should this be increased?
+	SolanaEventScanTxLimit       = 200
+	SolanaMaxBackfillPages       = 10 // Max pages to fetch when filling a signature gap.
+	SolanaEventFetchBatchSize    = 20
+	SolanaEventFetchMinBatchSize = 5
+	SolanaSleepInterval          = 200 * time.Millisecond
+	SolanaFallbackSleepInterval  = 25 * time.Millisecond // Sleep between individual fallback requests
+	SolanaEventFetchMaxRetries   = 10
+	SolanaFallbackMaxRetries     = 3 // Retries for individual fallback requests
+	SolanaEventFetchRetrySleep   = 200 * time.Millisecond
 
 	// RPC connection retry parameters
 	RPCConnectionMaxRetries = 20
@@ -124,10 +124,10 @@ var (
 
 	// HTTP and RPC constants
 	DefaultHTTPTimeout          = 10 * time.Second
-	SolanaRPCTimeout            = 15 * time.Second // Longer timeout for Solana RPC operations
-	SolanaBatchTimeout          = 25 * time.Second // Even longer for batch operations
+	SolanaRPCTimeout            = 30 * time.Second // Longer timeout for Solana RPC operations
+	SolanaBatchTimeout          = 45 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
-	SolanaMaxConcurrentRPCCalls = 25          // Maximum concurrent Solana RPC calls (semaphore size)
+	SolanaMaxConcurrentRPCCalls = 5           // Maximum concurrent Solana RPC calls (semaphore size)
 	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)

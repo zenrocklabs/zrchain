@@ -1603,58 +1603,14 @@ type processTransactionFunc func(
 // - Parallel batch processing with improved error handling
 // - Exponential backoff retry strategy
 // - Memory-efficient slice pre-allocation
-func (o *Oracle) getSolanaEvents(
+// processSignatures takes a list of transaction signatures and processes them.
+func (o *Oracle) processSignatures(
 	ctx context.Context,
-	programIDStr string,
-	lastKnownSig solana.Signature,
+	signatures []*solrpc.TransactionSignature,
+	program solana.PublicKey,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
 ) ([]any, solana.Signature, error) {
-	limit := sidecartypes.SolanaEventScanTxLimit
-	program, err := solana.PublicKeyFromBase58(programIDStr)
-	if err != nil {
-		return nil, lastKnownSig, fmt.Errorf("failed to obtain program public key for %s: %w", eventTypeName, err)
-	}
-
-	// Rate limiting: acquire semaphore slot
-	select {
-	case o.solanaRateLimiter <- struct{}{}:
-		defer func() { <-o.solanaRateLimiter }()
-	case <-ctx.Done():
-		return nil, lastKnownSig, ctx.Err()
-	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
-		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
-	}
-
-	// Fetch initial signatures with timeout context
-	fetchCtx, cancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
-	defer cancel()
-
-	initialSignatures, err := o.getSignaturesForAddressFn(fetchCtx, program, &solrpc.GetSignaturesForAddressOpts{
-		Limit:      &limit,
-		Commitment: solrpc.CommitmentConfirmed,
-	})
-	if err != nil {
-		return nil, lastKnownSig, fmt.Errorf("failed to get %s signatures: %w", eventTypeName, err)
-	}
-	if len(initialSignatures) == 0 {
-		slog.Info("Retrieved 0 events (no signatures found)", "eventType", eventTypeName)
-		return []any{}, lastKnownSig, nil
-	}
-
-	newestSigFromNode := initialSignatures[0].Signature
-
-	newSignatures, err := o.fetchAndFillSignatureGap(ctx, program, lastKnownSig, initialSignatures, limit, eventTypeName)
-	if err != nil {
-		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
-	}
-	if len(newSignatures) == 0 {
-		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", formatWatermarkForLogging(lastKnownSig))
-		return []any{}, newestSigFromNode, nil
-	}
-
-	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
-
 	// Get event processor from pool for memory efficiency
 	ep := o.eventProcessorPool.Get().(*EventProcessor)
 	defer func() {
@@ -1662,25 +1618,25 @@ func (o *Oracle) getSolanaEvents(
 		o.eventProcessorPool.Put(ep)
 	}()
 
-	lastSuccessfullyProcessedSig := lastKnownSig
+	var lastSuccessfullyProcessedSig solana.Signature
 	// Adaptive batching parameters
 	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
 	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
 
 	// Pre-allocate with estimated capacity to reduce allocations
-	estimatedEvents := len(newSignatures) * 2 // Estimate 2 events per signature on average
+	estimatedEvents := len(signatures) * 2 // Estimate 2 events per signature on average
 	if cap(ep.events) < estimatedEvents {
 		ep.events = make([]any, 0, estimatedEvents)
 	}
 
 	// Process signatures with adaptive batching
-	for i := 0; i < len(newSignatures); {
+	for i := 0; i < len(signatures); {
 		if ctx.Err() != nil {
 			return ep.GetEvents(), lastSuccessfullyProcessedSig, ctx.Err()
 		}
 
-		end := min(i+currentBatchSize, len(newSignatures))
-		currentBatch := newSignatures[i:end]
+		end := min(i+currentBatchSize, len(signatures))
+		currentBatch := signatures[i:end]
 
 		// Get batch request slice from pool
 		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
@@ -1796,6 +1752,79 @@ func (o *Oracle) getSolanaEvents(
 
 	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
 	return ep.GetEvents(), lastSuccessfullyProcessedSig, nil
+}
+
+// getSolanaEvents is an optimized generic helper to fetch signatures for a given program, detect and heal
+// gaps using the watermark (lastKnownSig), then download and process each transaction using the
+// provided `processTransaction` callback. If any part of the transaction processing pipeline fails,
+// it returns any partially processed events along with the watermark of the last successfully
+// processed transaction. This allows the oracle to make incremental progress.
+
+// PERFORMANCE OPTIMIZATIONS:
+// - Rate limiting with semaphore to prevent RPC overload
+// - Object pooling for batch requests and event processors
+// - Transaction caching with TTL
+// - Parallel batch processing with improved error handling
+// - Exponential backoff retry strategy
+// - Memory-efficient slice pre-allocation
+func (o *Oracle) getSolanaEvents(
+	ctx context.Context,
+	programIDStr string,
+	lastKnownSig solana.Signature,
+	eventTypeName string,
+	processTransaction processTransactionFunc,
+) ([]any, solana.Signature, error) {
+	limit := sidecartypes.SolanaEventScanTxLimit
+	program, err := solana.PublicKeyFromBase58(programIDStr)
+	if err != nil {
+		return nil, lastKnownSig, fmt.Errorf("failed to obtain program public key for %s: %w", eventTypeName, err)
+	}
+
+	// Rate limiting: acquire semaphore slot
+	select {
+	case o.solanaRateLimiter <- struct{}{}:
+		defer func() { <-o.solanaRateLimiter }()
+	case <-ctx.Done():
+		return nil, lastKnownSig, ctx.Err()
+	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
+		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
+	}
+
+	// Fetch initial signatures with timeout context
+	fetchCtx, cancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
+	defer cancel()
+
+	initialSignatures, err := o.getSignaturesForAddressFn(fetchCtx, program, &solrpc.GetSignaturesForAddressOpts{
+		Limit:      &limit,
+		Commitment: solrpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return nil, lastKnownSig, fmt.Errorf("failed to get %s signatures: %w", eventTypeName, err)
+	}
+	if len(initialSignatures) == 0 {
+		slog.Info("Retrieved 0 events (no signatures found)", "eventType", eventTypeName)
+		return []any{}, lastKnownSig, nil
+	}
+
+	newestSigFromNode := initialSignatures[0].Signature
+
+	newSignatures, err := o.fetchAndFillSignatureGap(ctx, program, lastKnownSig, initialSignatures, limit, eventTypeName)
+	if err != nil {
+		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
+	}
+	if len(newSignatures) == 0 {
+		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", formatWatermarkForLogging(lastKnownSig))
+		return []any{}, newestSigFromNode, nil
+	}
+
+	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
+
+	events, lastSig, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
+	if err != nil {
+		return events, lastSig, err
+	}
+
+	return events, newestSigFromNode, nil
 }
 
 // cacheTransactionResult caches a transaction result with TTL
