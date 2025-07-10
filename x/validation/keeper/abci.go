@@ -2336,6 +2336,12 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 			k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToAccount: %w", err).Error())
 		}
 
+		if bridgeFeeCoins.AmountOf(params.BondDenom).IsPositive() {
+			if err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ModuleName, zentptypes.ZentpCollectorName, bridgeFeeCoins); err != nil {
+				k.Logger(ctx).Error(fmt.Errorf("SendCoinsFromModuleToModule: %w", err).Error())
+			}
+		}
+
 		err = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{
 			Denom:            params.BondDenom,
 			Amount:           burn.Amount,

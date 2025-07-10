@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -32,6 +32,7 @@ type IntegrationTestSuite struct {
 	stakingKeeper *minttestutil.MockStakingKeeper
 	bankKeeper    *minttestutil.MockBankKeeper
 	accountKeeper *minttestutil.MockAccountKeeper
+	zentpKeeper   *minttestutil.MockZentpKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -46,10 +47,11 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.ctx = testCtx.Ctx
 
 	// gomock initializations
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
+	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
 
 	// Assign the mock keepers to the suite fields
@@ -62,6 +64,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		stakingKeeper,
 		accountKeeper,
 		bankKeeper,
+		zentpKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

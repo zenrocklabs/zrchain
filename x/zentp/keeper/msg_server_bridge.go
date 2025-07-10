@@ -37,14 +37,12 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.New("invalid denomination")
 	}
 
-	baseAmount, err := k.AddFeeToBridgeAmount(ctx, req.Amount)
+	baseAmountInt := sdkmath.NewIntFromUint64(req.Amount)
+	zentpParams, err := k.ParamStore.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	// Use safe math to prevent overflow
-	baseAmountInt := sdkmath.NewIntFromUint64(baseAmount)
-	feeInt := sdkmath.NewIntFromUint64(k.GetSolanaParams(ctx).Fee)
+	feeInt := math.LegacyNewDecFromInt(baseAmountInt).Mul(zentpParams.BridgeFee).TruncateInt()
 	totalAmountInt := baseAmountInt.Add(feeInt)
 
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), params.BondDenom)
@@ -80,7 +78,16 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		ctx,
 		sdk.MustAccAddressFromBech32(req.Creator),
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin(params.BondDenom, totalAmountInt)),
+		sdk.NewCoins(sdk.NewCoin(params.BondDenom, baseAmountInt)),
+	); err != nil {
+		return nil, err
+	}
+
+	if err = k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		sdk.MustAccAddressFromBech32(req.Creator),
+		types.ZentpCollectorName,
+		sdk.NewCoins(sdk.NewCoin(params.BondDenom, feeInt)),
 	); err != nil {
 		return nil, err
 	}

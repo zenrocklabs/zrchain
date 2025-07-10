@@ -30,5 +30,11 @@ func (k *Keeper) ExportState(ctx sdk.Context, genState *types.GenesisState) erro
 	}
 	genState.SolanaRockSupply = solanaRockSupply.Uint64()
 
+	zentpFees, err := k.ZentpFees.Get(ctx)
+	if err != nil {
+		return err
+	}
+	genState.ZentpFees = zentpFees
+
 	return nil
 }

@@ -50,10 +50,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Stats",
 					Use:       "stats",
-					Short:     "Query total mints and burns optionally by address and denom",
+					Short:     "Query total mints and burns optionally by address, denom, and fees",
 					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"address": {Usage: "The address to query stats for (optional)"},
-						"denom":   {Usage: "The denom to query stats for (optional)"},
+						"address":   {Usage: "The address to query stats for (optional)"},
+						"denom":     {Usage: "The denom to query stats for (optional)"},
+						"show_fees": {Usage: "Whether to include fees in the response (optional)"},
 					},
 				},
 				// this line is used by ignite scaffolding # autocli/query

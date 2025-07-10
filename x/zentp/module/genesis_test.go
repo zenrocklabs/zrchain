@@ -17,6 +17,7 @@ func TestGenesis(t *testing.T) {
 		Burns:            testutil.DefaultBurns,
 		Mints:            testutil.DefaultMints,
 		SolanaRockSupply: 1000000,
+		ZentpFees:        types.DefaultGenesis().ZentpFees,
 
 		// this line is used by starport scaffolding # genesis/test/state
 	}

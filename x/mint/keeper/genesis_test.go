@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
@@ -44,7 +44,7 @@ func (s *GenesisTestSuite) SetupTest() {
 	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
 
 	// gomock initializations
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 	s.cdc = codec.NewProtoCodec(encCfg.InterfaceRegistry)
 	s.sdkCtx = testCtx.Ctx
 	s.key = key
@@ -52,11 +52,12 @@ func (s *GenesisTestSuite) SetupTest() {
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
+	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
 	s.accountKeeper = accountKeeper
 	accountKeeper.EXPECT().GetModuleAddress(minterAcc.Name).Return(minterAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAccount(s.sdkCtx, minterAcc.Name).Return(minterAcc)
 
-	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, authtypes.FeeCollectorName, "")
+	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, zentpKeeper, authtypes.FeeCollectorName, "")
 }
 
 func (s *GenesisTestSuite) TestImportExportGenesis() {

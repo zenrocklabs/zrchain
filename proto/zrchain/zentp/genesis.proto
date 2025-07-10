@@ -5,7 +5,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zentp/params.proto";
 import "zrchain/zentp/bridge.proto";
-
+import "cosmos/base/v1beta1/coin.proto";
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // GenesisState defines the zentp module's genesis state.
@@ -18,4 +18,5 @@ message GenesisState {
   repeated Bridge mints = 2 [ (gogoproto.nullable) = false ];
   repeated Bridge burns = 3 [ (gogoproto.nullable) = false ];
   uint64 solana_rock_supply = 4;
+  cosmos.base.v1beta1.Coin zentp_fees = 5 [ (gogoproto.nullable) = false ];
 }
