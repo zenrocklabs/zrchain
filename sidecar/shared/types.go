@@ -108,15 +108,15 @@ var (
 	OracleCacheSize              = 10
 	EthBurnEventsBlockRange      = 1000
 	EthBlocksBeforeFinality      = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit       = 200
+	SolanaEventScanTxLimit       = 440
 	SolanaMaxBackfillPages       = 10 // Max pages to fetch when filling a signature gap.
-	SolanaEventFetchBatchSize    = 20
-	SolanaEventFetchMinBatchSize = 5
-	SolanaSleepInterval          = 200 * time.Millisecond
-	SolanaFallbackSleepInterval  = 25 * time.Millisecond // Sleep between individual fallback requests
+	SolanaEventFetchBatchSize    = 10
+	SolanaEventFetchMinBatchSize = 2
+	SolanaSleepInterval          = 50 * time.Millisecond
+	SolanaFallbackSleepInterval  = 10 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries   = 10
 	SolanaFallbackMaxRetries     = 3 // Retries for individual fallback requests
-	SolanaEventFetchRetrySleep   = 200 * time.Millisecond
+	SolanaEventFetchRetrySleep   = 100 * time.Millisecond
 
 	// RPC connection retry parameters
 	RPCConnectionMaxRetries = 20
@@ -124,10 +124,10 @@ var (
 
 	// HTTP and RPC constants
 	DefaultHTTPTimeout          = 10 * time.Second
-	SolanaRPCTimeout            = 30 * time.Second // Longer timeout for Solana RPC operations
-	SolanaBatchTimeout          = 45 * time.Second // Even longer for batch operations
+	SolanaRPCTimeout            = 25 * time.Second // Longer timeout for Solana RPC operations
+	SolanaBatchTimeout          = 35 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
-	SolanaMaxConcurrentRPCCalls = 5           // Maximum concurrent Solana RPC calls (semaphore size)
+	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
 	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)

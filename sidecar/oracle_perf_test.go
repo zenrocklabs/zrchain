@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -19,88 +18,52 @@ import (
 
 func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 	testCases := []struct {
-		name                          string
-		solanaEventScanTxLimit        int
-		solanaEventFetchBatchSize     int
-		solanaEventFetchMinBatchSize  int
-		solanaMaxConcurrentRPCCalls   int
-		solanaSleepInterval           time.Duration
-		solanaFallbackSleepInterval   time.Duration
-		solanaEventFetchRetrySleep    time.Duration
-		solanaRPCTimeout              time.Duration
-		solanaBatchTimeout            time.Duration
+		name                         string
+		solanaEventScanTxLimit       int
+		solanaEventFetchBatchSize    int
+		solanaEventFetchMinBatchSize int
+		solanaMaxConcurrentRPCCalls  int
+		solanaSleepInterval          time.Duration
+		solanaFallbackSleepInterval  time.Duration
+		solanaEventFetchRetrySleep   time.Duration
+		solanaRPCTimeout             time.Duration
+		solanaBatchTimeout           time.Duration
 	}{
 		{
-			name:                          "Control_The_Winner",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     10,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   20,
-			solanaSleepInterval:           50 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              20 * time.Second,
-			solanaBatchTimeout:            30 * time.Second,
+			name:                         "Top1_Winner_High_Concurrency_Tiny_Batch",
+			solanaEventScanTxLimit:       440,
+			solanaEventFetchBatchSize:    10,
+			solanaEventFetchMinBatchSize: 2,
+			solanaMaxConcurrentRPCCalls:  20,
+			solanaSleepInterval:          50 * time.Millisecond,
+			solanaFallbackSleepInterval:  10 * time.Millisecond,
+			solanaEventFetchRetrySleep:   100 * time.Millisecond,
+			solanaRPCTimeout:             20 * time.Second,
+			solanaBatchTimeout:           30 * time.Second,
 		},
 		{
-			name:                          "Permutation_More_Concurrency",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     10,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   25,
-			solanaSleepInterval:           50 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              20 * time.Second,
-			solanaBatchTimeout:            30 * time.Second,
+			name:                         "Top2_Contender_Permutation_Less_Concurrency",
+			solanaEventScanTxLimit:       440,
+			solanaEventFetchBatchSize:    10,
+			solanaEventFetchMinBatchSize: 2,
+			solanaMaxConcurrentRPCCalls:  15,
+			solanaSleepInterval:          50 * time.Millisecond,
+			solanaFallbackSleepInterval:  10 * time.Millisecond,
+			solanaEventFetchRetrySleep:   100 * time.Millisecond,
+			solanaRPCTimeout:             20 * time.Second,
+			solanaBatchTimeout:           30 * time.Second,
 		},
 		{
-			name:                          "Permutation_Less_Concurrency",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     10,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   15,
-			solanaSleepInterval:           50 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              20 * time.Second,
-			solanaBatchTimeout:            30 * time.Second,
-		},
-		{
-			name:                          "Permutation_Larger_Tiny_Batch",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     12,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   20,
-			solanaSleepInterval:           50 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              20 * time.Second,
-			solanaBatchTimeout:            30 * time.Second,
-		},
-		{
-			name:                          "Permutation_Faster_Sleep",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     10,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   20,
-			solanaSleepInterval:           25 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              20 * time.Second,
-			solanaBatchTimeout:            30 * time.Second,
-		},
-		{
-			name:                          "Permutation_Longer_Timeout",
-			solanaEventScanTxLimit:        440,
-			solanaEventFetchBatchSize:     10,
-			solanaEventFetchMinBatchSize:  2,
-			solanaMaxConcurrentRPCCalls:   20,
-			solanaSleepInterval:           50 * time.Millisecond,
-			solanaFallbackSleepInterval:   10 * time.Millisecond,
-			solanaEventFetchRetrySleep:    100 * time.Millisecond,
-			solanaRPCTimeout:              25 * time.Second,
-			solanaBatchTimeout:            35 * time.Second,
+			name:                         "Top3_Contender_Permutation_Longer_Timeout",
+			solanaEventScanTxLimit:       440,
+			solanaEventFetchBatchSize:    10,
+			solanaEventFetchMinBatchSize: 2,
+			solanaMaxConcurrentRPCCalls:  20,
+			solanaSleepInterval:          50 * time.Millisecond,
+			solanaFallbackSleepInterval:  10 * time.Millisecond,
+			solanaEventFetchRetrySleep:   100 * time.Millisecond,
+			solanaRPCTimeout:             25 * time.Second,
+			solanaBatchTimeout:           35 * time.Second,
 		},
 	}
 
