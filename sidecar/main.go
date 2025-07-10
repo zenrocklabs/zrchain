@@ -31,7 +31,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := LoadConfig(*flags.configFile)
+	cfg := LoadConfig(*flags.configFile, *flags.configDir)
 
 	slog.Info("Starting zrChain Validator Sidecar", "version", sidecartypes.SidecarVersionName)
 
@@ -136,6 +136,7 @@ type flagConfig struct {
 	neutrinoPath    *string
 	debug           *bool
 	configFile      *string
+	configDir       *string
 	version         *bool
 	noAVS           *bool
 	skipInitialWait *bool
@@ -152,6 +153,7 @@ func parseFlags() *flagConfig {
 		neutrinoPath:    flag.String("neutrino-path", "/neutrino_", "Path prefix for neutrino directory"),
 		debug:           flag.Bool("debug", false, "Enable debug mode for verbose logging"),
 		configFile:      flag.String("config", "", "Override config file path (default: config.yaml)"),
+		configDir:       flag.String("config-dir", "", "Directory to search for config.yaml"),
 		version:         flag.Bool("version", false, "Display version information and exit"),
 		noAVS:           flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)"),
 		skipInitialWait: flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately"),
