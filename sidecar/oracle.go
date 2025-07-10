@@ -45,6 +45,16 @@ import (
 	// Added for bin.Marshal
 )
 
+// sendError sends an error to the channel if the context is not done.
+// This prevents panics from sending on a closed channel.
+func sendError(ctx context.Context, errChan chan<- error, err error) {
+	select {
+	case <-ctx.Done():
+		slog.Warn("Context canceled, dropping error", "error", err)
+	case errChan <- err:
+	}
+}
+
 func NewOracle(
 	config sidecartypes.Config,
 	ethClient *ethclient.Client,
@@ -411,7 +421,7 @@ func (o *Oracle) fetchEthereumContractData(
 		defer wg.Done()
 		delegations, err := o.getServiceManagerState(ctx, serviceManager, targetBlockNumber)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to get contract state: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to get contract state: %w", err))
 			return
 		}
 		updateMutex.Lock()
@@ -425,7 +435,7 @@ func (o *Oracle) fetchEthereumContractData(
 		defer wg.Done()
 		redemptions, err := o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to get zenBTC contract state: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to get zenBTC contract state: %w", err))
 			return
 		}
 		updateMutex.Lock()
@@ -447,7 +457,7 @@ func (o *Oracle) fetchNetworkData(
 		defer wg.Done()
 		suggestedTip, err := o.EthClient.SuggestGasTipCap(ctx)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to get suggested priority fee: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to get suggested priority fee: %w", err))
 			return
 		}
 		updateMutex.Lock()
@@ -461,7 +471,7 @@ func (o *Oracle) fetchNetworkData(
 		defer wg.Done()
 		stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(1000000000))
 		if err != nil {
-			errChan <- fmt.Errorf("failed to encode stake call data: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to encode stake call data: %w", err))
 			return
 		}
 		addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
@@ -471,7 +481,7 @@ func (o *Oracle) fetchNetworkData(
 			Data: stakeCallData,
 		})
 		if err != nil {
-			errChan <- fmt.Errorf("failed to estimate gas for stake call: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to estimate gas for stake call: %w", err))
 			return
 		}
 		updateMutex.Lock()
@@ -501,19 +511,19 @@ func (o *Oracle) fetchPriceData(
 		}
 		resp, err := client.Get(sidecartypes.ROCKUSDPriceURL)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to retrieve ROCK price data: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to retrieve ROCK price data: %w", err))
 			return
 		}
 		defer resp.Body.Close()
 
 		var priceData []PriceData
 		if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil || len(priceData) == 0 {
-			errChan <- fmt.Errorf("failed to decode ROCK price data or empty data: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to decode ROCK price data or empty data: %w", err))
 			return
 		}
 		priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to parse ROCK price data: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to parse ROCK price data: %w", err))
 			return
 		}
 		updateMutex.Lock()
@@ -527,25 +537,25 @@ func (o *Oracle) fetchPriceData(
 		defer wg.Done()
 		mainnetLatestHeader, err := tempEthClient.HeaderByNumber(ctx, nil)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch latest mainnet block: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to fetch latest mainnet block: %w", err))
 			return
 		}
 		targetBlockNumberMainnet := new(big.Int).Sub(mainnetLatestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 		if btcPriceFeed == nil || ethPriceFeed == nil {
-			errChan <- fmt.Errorf("BTC or ETH price feed not initialized")
+			sendError(ctx, errChan, fmt.Errorf("BTC or ETH price feed not initialized"))
 			return
 		}
 
 		btcPrice, err := o.fetchPrice(btcPriceFeed, targetBlockNumberMainnet)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch BTC price: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to fetch BTC price: %w", err))
 			return
 		}
 
 		ethPrice, err := o.fetchPrice(ethPriceFeed, targetBlockNumberMainnet)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to fetch ETH price: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to fetch ETH price: %w", err))
 			return
 		}
 
@@ -574,7 +584,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 		toBlock := latestHeader.Number
 		newEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to get Ethereum burn events, proceeding with reconciliation only: %w", err)
+			sendError(ctx, errChan, fmt.Errorf("failed to get Ethereum burn events, proceeding with reconciliation only: %w", err))
 			newEvents = []api.BurnEvent{} // Ensure slice is not nil
 		}
 
@@ -629,10 +639,10 @@ func (o *Oracle) processSolanaMintEvents(
 
 		// Handle errors after parallel execution
 		if rockErr != nil {
-			errChan <- fmt.Errorf("failed to get Solana ROCK mint events, applying partial results: %w", rockErr)
+			sendError(ctx, errChan, fmt.Errorf("failed to get Solana ROCK mint events, applying partial results: %w", rockErr))
 		}
 		if zenbtcErr != nil {
-			errChan <- fmt.Errorf("failed to get Solana zenBTC mint events, applying partial results: %w", zenbtcErr)
+			sendError(ctx, errChan, fmt.Errorf("failed to get Solana zenBTC mint events, applying partial results: %w", zenbtcErr))
 		}
 
 		allNewEvents := append(rockEvents, zenbtcEvents...)
@@ -734,10 +744,10 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		burnWg.Wait() // Wait for both parallel burn fetches to complete
 
 		if zenBtcErr != nil {
-			errChan <- fmt.Errorf("failed to process Solana zenBTC burn events, applying partial results: %w", zenBtcErr)
+			sendError(ctx, errChan, fmt.Errorf("failed to process Solana zenBTC burn events, applying partial results: %w", zenBtcErr))
 		}
 		if rockErr != nil {
-			errChan <- fmt.Errorf("failed to process Solana ROCK burn events, applying partial results: %w", rockErr)
+			sendError(ctx, errChan, fmt.Errorf("failed to process Solana ROCK burn events, applying partial results: %w", rockErr))
 		}
 
 		// Merge and sort all new events (which will be empty if fetches failed)
@@ -1640,13 +1650,13 @@ func (o *Oracle) getSolanaEvents(
 		currentBatch := newSignatures[i:end]
 
 		// Get batch request slice from pool
-		batchRequests := o.batchRequestPool.Get().(*jsonrpc.RPCRequests)
+		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
 		defer o.batchRequestPool.Put(batchRequests)
-		*batchRequests = (*batchRequests)[:0] // Reset slice but keep capacity
+		batchRequests = (batchRequests)[:0] // Reset slice but keep capacity
 
 		// Build batch requests
 		for j, sigInfo := range currentBatch {
-			*batchRequests = append(*batchRequests, &jsonrpc.RPCRequest{
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
 				Method: "getTransaction",
 				Params: []any{
 					sigInfo.Signature.String(),
@@ -1673,7 +1683,7 @@ func (o *Oracle) getSolanaEvents(
 				timeoutDuration = time.Duration(float64(timeoutDuration) * (1.0 + 0.5*float64(retry)))
 			}
 			batchCtx, batchCancel := context.WithTimeout(ctx, timeoutDuration)
-			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, *batchRequests)
+			batchResponses, batchErr = o.rpcCallBatchFn(batchCtx, batchRequests)
 			batchCancel()
 
 			if batchErr == nil {
