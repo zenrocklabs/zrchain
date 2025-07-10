@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math/big"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -122,8 +123,8 @@ func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, 
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)
 }
 
-func LoadConfig(configFileFlag string) sidecartypes.Config {
-	configFile := getConfigFile(configFileFlag)
+func LoadConfig(configFileFlag, configDirFlag string) sidecartypes.Config {
+	configFile := getConfigFile(configFileFlag, configDirFlag)
 	cfg, err := readConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to read config: %v", err)
@@ -131,14 +132,57 @@ func LoadConfig(configFileFlag string) sidecartypes.Config {
 	return cfg
 }
 
-func getConfigFile(configFileFlag string) string {
+func getConfigFile(configFileFlag, configDirFlag string) string {
+	// 1. Command-line flag has the highest precedence.
 	if configFileFlag != "" {
+		slog.Info("Using config file specified by flag", "path", configFileFlag)
 		return configFileFlag
 	}
+
+	// 2. Environment variable is next.
+	if envConfigFile := os.Getenv("SIDECAR_CONFIG_FILE"); envConfigFile != "" {
+		slog.Info("Using config file specified by SIDECAR_CONFIG_FILE environment variable", "path", envConfigFile)
+		return envConfigFile
+	}
+
+	// 3. --config-dir flag.
+	if configDirFlag != "" {
+		configPath := filepath.Join(configDirFlag, "config.yaml")
+		slog.Info("Using config file from directory specified by --config-dir flag", "path", configPath)
+		return configPath
+	}
+
+	// 4. Autodetection based on executable path.
+	exePath, err := os.Executable()
+	if err != nil {
+		slog.Warn("Could not determine executable path; falling back to relative path for config", "error", err)
+		return "config.yaml" // Fallback
+	}
+
+	exeDir := filepath.Dir(exePath)
+
+	// Check for config.yaml in the same directory as the executable (local setup).
+	localConfigPath := filepath.Join(exeDir, "config.yaml")
+	if _, err := os.Stat(localConfigPath); err == nil {
+		slog.Info("Found config file in the executable's directory", "path", localConfigPath)
+		return localConfigPath
+	}
+
+	// Check for config.yaml in the parent directory (container setup).
+	parentDir := filepath.Dir(exeDir)
+	parentConfigPath := filepath.Join(parentDir, "config.yaml")
+	if _, err := os.Stat(parentConfigPath); err == nil {
+		slog.Info("Found config file in the parent of the executable's directory", "path", parentConfigPath)
+		return parentConfigPath
+	}
+
+	// 5. Fallback if not found in any of the preferred locations.
+	slog.Warn("Could not find config.yaml automatically; falling back to default relative path", "path", "config.yaml")
 	return "config.yaml"
 }
 
 func readConfig(configFile string) (sidecartypes.Config, error) {
+	slog.Info("Reading configuration file", "path", configFile)
 	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
 		return sidecartypes.Config{}, fmt.Errorf("unable to read config from %s: %v", configFile, err)

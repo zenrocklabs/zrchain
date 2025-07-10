@@ -23,7 +23,7 @@ import (
 )
 
 func initTestOracle() *sidecar.Oracle {
-	cfg := sidecar.LoadConfig("")
+	cfg := sidecar.LoadConfig("", "")
 
 	var rpcAddress string
 	if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
