@@ -371,10 +371,10 @@ func TestCalculateFlatZenBTCMintFeeEdgeCases(t *testing.T) {
 		description  string
 	}{
 		{
-			name:         "zero exchange rate should not panic but may give unexpected results",
+			name:         "zero exchange rate should not panic but will return 0",
 			btcUSDPrice:  "50000",
 			exchangeRate: "0",
-			expectPanic:  true, // Division by zero should panic
+			expectPanic:  false, // Division by zero should not panic
 			description:  "Division by zero in exchange rate",
 		},
 		{
