@@ -80,10 +80,11 @@ func TestStatsQuery(t *testing.T) {
 		err       error
 	}{
 		{
-			desc:    "Total",
-			mints:   testutil.DefaultMints,
-			burns:   testutil.DefaultBurns,
-			request: &types.QueryStatsRequest{},
+			desc:      "Total",
+			mints:     testutil.DefaultMints,
+			burns:     testutil.DefaultBurns,
+			zentpFees: types.DefaultGenesis().ZentpFees,
+			request:   &types.QueryStatsRequest{ShowFees: false},
 			response: &types.QueryStatsResponse{
 				TotalMinted: 4000100,
 				MintsCount:  2,
@@ -92,10 +93,11 @@ func TestStatsQuery(t *testing.T) {
 			},
 		},
 		{
-			desc:    "By Address",
-			mints:   testutil.DefaultMints,
-			burns:   testutil.DefaultBurns,
-			request: &types.QueryStatsRequest{Address: testutil.DefaultMints[0].Creator},
+			desc:      "By Address",
+			mints:     testutil.DefaultMints,
+			burns:     testutil.DefaultBurns,
+			zentpFees: types.DefaultGenesis().ZentpFees,
+			request:   &types.QueryStatsRequest{Address: testutil.DefaultMints[0].Creator},
 			response: &types.QueryStatsResponse{
 				TotalMinted: 100,
 				MintsCount:  1,
@@ -104,10 +106,11 @@ func TestStatsQuery(t *testing.T) {
 			},
 		},
 		{
-			desc:    "By Denom",
-			mints:   testutil.DefaultMints,
-			burns:   testutil.DefaultBurns,
-			request: &types.QueryStatsRequest{Denom: "urock"},
+			desc:      "By Denom",
+			mints:     testutil.DefaultMints,
+			burns:     testutil.DefaultBurns,
+			zentpFees: types.DefaultGenesis().ZentpFees,
+			request:   &types.QueryStatsRequest{Denom: "urock"},
 			response: &types.QueryStatsResponse{
 				TotalMinted: 4000100,
 				MintsCount:  2,
@@ -116,9 +119,12 @@ func TestStatsQuery(t *testing.T) {
 			},
 		},
 		{
-			desc:    "Nil request",
-			request: nil,
-			err:     fmt.Errorf("request is nil"),
+			desc:      "Nil request",
+			mints:     testutil.DefaultMints,
+			burns:     testutil.DefaultBurns,
+			zentpFees: types.DefaultGenesis().ZentpFees,
+			request:   nil,
+			err:       fmt.Errorf("request is nil"),
 		},
 		{
 			desc:      "Show Fees",
@@ -147,6 +153,10 @@ func TestStatsQuery(t *testing.T) {
 			}
 
 			zentp.InitGenesis(ctx, zk, genesis)
+
+			_, err := zk.ZentpFees.Get(ctx)
+			require.NoError(t, err)
+
 			response, err := zk.Stats(ctx, tc.request)
 			if tc.err != nil {
 				require.Error(t, err)

@@ -2,6 +2,7 @@ package types
 
 import (
 	"cosmossdk.io/math"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -18,7 +19,7 @@ func DefaultGenesis() *GenesisState {
 		Mints:            []Bridge{},
 		Burns:            []Bridge{},
 		SolanaRockSupply: 0,
-		ZentpFees:        sdk.Coin{Denom: "urock", Amount: math.NewInt(0)},
+		ZentpFees:        sdk.Coin{Denom: appparams.BondDenom, Amount: math.NewInt(0)},
 	}
 }
 

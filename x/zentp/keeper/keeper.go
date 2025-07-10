@@ -317,10 +317,6 @@ func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64
 func (k Keeper) UpdateZentpFees(ctx context.Context, fees sdk.Coin) error {
 	zentpFees, err := k.ZentpFees.Get(ctx)
 	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			// If ZentpFees doesn't exist yet, initialize it with the provided fees
-			return k.ZentpFees.Set(ctx, fees)
-		}
 		return err
 	}
 

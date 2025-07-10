@@ -159,14 +159,14 @@ func (k Keeper) ClaimZentpFees(ctx context.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 	bankKeeper := k.bankKeeper
-	zentpAddr := k.accountKeeper.GetModuleAddress(zentptypes.ModuleName)
+	zentpAddr := k.accountKeeper.GetModuleAddress(zentptypes.ZentpCollectorName)
 	zentpRewards := bankKeeper.GetBalance(ctx, zentpAddr, params.MintDenom)
-	err = bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ModuleName, types.ModuleName, sdk.NewCoins(zentpRewards))
+	err = bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ZentpCollectorName, types.ModuleName, sdk.NewCoins(zentpRewards))
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
-	if !zentpRewards.IsZero() {
+	if zentpRewards.Amount.IsPositive() {
 		err = k.zentpKeeper.UpdateZentpFees(ctx, zentpRewards)
 		if err != nil {
 			return sdk.Coin{}, err
