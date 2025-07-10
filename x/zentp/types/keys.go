@@ -20,15 +20,7 @@ var (
 	BurnCountKey        = collections.NewPrefix(3)
 	ParamsKey           = collections.NewPrefix(4)
 	SolanaROCKSupplyKey = collections.NewPrefix(5)
-	// ====================================================================================================
-	// ATTENTION: All new `collections.NewPrefix` keys MUST be added below this block.
-	//
-	// Start new keys from 101 and increment sequentially. This creates a safe separation
-	// from legacy byte slice keys below (e.g., 0x11, 0x12) to prevent storage collisions.
-	//
-	// The next available key currently is 101.
-	// ====================================================================================================
-	ZentpFeesKey = collections.NewPrefix(100)
+	ZentpFeesKey        = collections.NewPrefix(6)
 
 	BurnsIndex            = "burns"
 	MintsIndex            = "mints"
