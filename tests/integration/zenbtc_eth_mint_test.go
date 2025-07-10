@@ -6,8 +6,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/VenimirPetkov/goem/ethereum"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	zentype "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+)
+
+const (
+	recipientAddress = "0xC50279996508f4562aB0B3f48D98653CE34a1667"
 )
 
 var _ = Describe("ZenBTC ETH mint:", func() {
@@ -25,10 +30,10 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 			"workspace1mphgzyhncnzyggfxmv4nmh",
 			"keyring1k6vc6vhp6e6l3rxalue9v4ux",
 			"bitcoin",
-			"0xC50279996508f4562aB0B3f48D98653CE34a1667",
+			recipientAddress,
 			types.WalletType_WALLET_TYPE_EVM,
-			"eip155:17000",
-			"0xC50279996508f4562aB0B3f48D98653CE34a1667",
+			ethereum.HoodiCAIP2,
+			recipientAddress,
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())

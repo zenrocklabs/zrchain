@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/VenimirPetkov/goem/ethereum"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -19,7 +20,7 @@ var defaultECDSAKeyWithZenBTCMetadata = types.Key{
 	ZenbtcMetadata: &types.ZenBTCMetadata{
 		RecipientAddr: "0x9D450478FDB879C2900Ad54A0A407B0607b20478",
 		ChainType:     types.WalletType_WALLET_TYPE_EVM,
-		Caip2ChainId:  "eip155:17000",
+		Caip2ChainId:  ethereum.HoodiCAIP2,
 		ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 	},
 }
@@ -33,7 +34,7 @@ var defaultECDSAKeyResponseWithZenBTCMetadata = types.KeyResponse{
 	ZenbtcMetadata: &types.ZenBTCMetadata{
 		RecipientAddr: "0x9D450478FDB879C2900Ad54A0A407B0607b20478",
 		ChainType:     types.WalletType_WALLET_TYPE_EVM,
-		Caip2ChainId:  "eip155:17000",
+		Caip2ChainId:  ethereum.HoodiCAIP2,
 		ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 	},
 }

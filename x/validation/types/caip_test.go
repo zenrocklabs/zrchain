@@ -3,6 +3,7 @@ package types
 import (
 	"testing"
 
+	"github.com/VenimirPetkov/goem/ethereum"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,13 +111,15 @@ func TestValidateEVMChainID(t *testing.T) {
 	}{
 		// Mainnet context tests
 		{"Mainnet Ctx - Valid Mainnet EVM", mainnetCtx, "eip155:1", 1, false},
-		{"Mainnet Ctx - Valid Holesky EVM", mainnetCtx, "eip155:17000", 17000, false},
+		{"Mainnet Ctx - Valid Holesky EVM", mainnetCtx, ethereum.HoleskyCAIP2, ethereum.HoleskyChainId.Uint64(), false},
+		{"Mainnet Ctx - Valid Hoodi EVM", mainnetCtx, ethereum.HoodiCAIP2, ethereum.HoodiChainId.Uint64(), false},
 		{"Mainnet Ctx - Invalid EVM Chain", mainnetCtx, "eip155:137", 0, true},
 		{"Mainnet Ctx - Invalid Namespace", mainnetCtx, "eth:1", 0, true},
 		{"Mainnet Ctx - Not CAIP-2", mainnetCtx, "not-caip2", 0, true},
 
 		// Devnet context tests
-		{"Devnet Ctx - Valid Holesky EVM", devnetCtx, "eip155:17000", 17000, false},
+		{"Devnet Ctx - Valid Holesky EVM", devnetCtx, ethereum.HoleskyCAIP2, ethereum.HoleskyChainId.Uint64(), false},
+		{"Devnet Ctx - Valid Hoodi EVM", devnetCtx, ethereum.HoodiCAIP2, ethereum.HoodiChainId.Uint64(), false},
 		{"Devnet Ctx - Invalid Mainnet EVM", devnetCtx, "eip155:1", 0, true},
 		{"Devnet Ctx - Invalid EVM Chain", devnetCtx, "eip155:137", 0, true},
 	}
