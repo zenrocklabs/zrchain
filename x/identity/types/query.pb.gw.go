@@ -497,15 +497,15 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Workspaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "workspaces"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Workspaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "workspaces"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_WorkspaceByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "identity", "workspace_by_address", "workspace_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_WorkspaceByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "identity", "workspace_by_address", "workspace_addr"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Keyrings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "keyrings"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Keyrings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "identity", "keyrings"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyringByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "identity", "keyring_by_address", "keyring_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_KeyringByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "identity", "keyring_by_address", "keyring_addr"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

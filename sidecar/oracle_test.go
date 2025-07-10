@@ -20,7 +20,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	t.Skip("Skipping test on CI as it makes a real network call to Solana")
 
 	// 1. Setup
-	cfg := LoadConfig()
+	cfg := LoadConfig("")
 	var rpcAddress string
 	if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
 		rpcAddress = endpoint
@@ -55,7 +55,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	wg.Wait() // Wait for the main goroutine
 	close(errChan)
@@ -112,10 +112,10 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	}
 
 	// Initialize function fields to prevent nil pointer dereference
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil // No new zenBTC burns
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{newEvent}, solana.Signature{}, nil
 	}
 
@@ -133,7 +133,7 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	wg.Wait() // Wait for the main goroutine
 	close(errChan)
@@ -165,11 +165,32 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 	oracle.DebugMode = false
 
+	// Initialize the solanaRateLimiter channel to prevent blocking
+	oracle.solanaRateLimiter = make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls)
+
+	// Initialize pools to prevent nil pointer dereference
+	oracle.eventProcessorPool = &sync.Pool{
+		New: func() any {
+			return &EventProcessor{
+				events: make([]any, 0, 100),
+			}
+		},
+	}
+	oracle.batchRequestPool = &sync.Pool{
+		New: func() any {
+			return make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
+		},
+	}
+
+	// Initialize transaction cache and mutex
+	oracle.transactionCache = make(map[string]*CachedTxResult)
+	oracle.transactionCacheMutex = sync.RWMutex{}
+
 	// Initialize function fields to prevent nil pointer dereference
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		return []api.BurnEvent{}, solana.Signature{}, nil
 	}
 
@@ -210,7 +231,7 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	}
 
 	// Run the test
-	events, _, err := oracle.getSolanaEvents("11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction)
+	events, _, err := oracle.getSolanaEvents(context.Background(), "11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction)
 
 	// Assertions
 	require.NoError(t, err)

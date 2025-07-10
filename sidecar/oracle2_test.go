@@ -105,19 +105,22 @@ func createTestOracle() *Oracle {
 
 	// Initialize function fields to prevent nil pointer dereference
 	// These functions should return errors when solanaClient is nil to simulate real behavior
-	oracle.getSolanaZenBTCBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+	oracle.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
 		if oracle.solanaClient == nil {
 			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
 		}
 		return []api.BurnEvent{}, sol.Signature{}, nil
 	}
-	oracle.getSolanaRockBurnEventsFn = func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
+	oracle.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error) {
 		if oracle.solanaClient == nil {
 			return nil, sol.Signature{}, fmt.Errorf("solana client is nil")
 		}
 		return []api.BurnEvent{}, sol.Signature{}, nil
 	}
+
+	// Mock the reconcileBurnEventsFn to prevent nil pointer dereference in zrChainQueryClient
 	oracle.reconcileBurnEventsFn = func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool) {
+		// For testing, just return the events unchanged (simulate no events are found on-chain)
 		return eventsToClean, cleanedEvents
 	}
 
@@ -146,18 +149,16 @@ func TestInitializeStateUpdate(t *testing.T) {
 func TestApplyFallbacks(t *testing.T) {
 	oracle := createTestOracle()
 	currentState := sidecartypes.OracleState{
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(40000),
-		ETHUSDPrice:                math.LegacyNewDec(2000),
-		SolanaLamportsPerSignature: 5000,
+		ROCKUSDPrice: math.LegacyNewDec(1),
+		BTCUSDPrice:  math.LegacyNewDec(40000),
+		ETHUSDPrice:  math.LegacyNewDec(2000),
 	}
 	oracle.currentState.Store(&currentState)
 	update := &oracleStateUpdate{
-		suggestedTip:               nil,
-		ROCKUSDPrice:               math.LegacyDec{},
-		BTCUSDPrice:                math.LegacyDec{},
-		ETHUSDPrice:                math.LegacyDec{},
-		solanaLamportsPerSignature: 0,
+		suggestedTip: nil,
+		ROCKUSDPrice: math.LegacyDec{},
+		BTCUSDPrice:  math.LegacyDec{},
+		ETHUSDPrice:  math.LegacyDec{},
 	}
 	oracle.applyFallbacks(update, &currentState)
 	assert.NotNil(t, update.suggestedTip)
@@ -165,7 +166,6 @@ func TestApplyFallbacks(t *testing.T) {
 	assert.True(t, update.ROCKUSDPrice.Equal(currentState.ROCKUSDPrice))
 	assert.True(t, update.BTCUSDPrice.Equal(currentState.BTCUSDPrice))
 	assert.True(t, update.ETHUSDPrice.Equal(currentState.ETHUSDPrice))
-	assert.Equal(t, currentState.SolanaLamportsPerSignature, update.solanaLamportsPerSignature)
 }
 
 func TestBuildFinalState(t *testing.T) {
@@ -180,18 +180,17 @@ func TestBuildFinalState(t *testing.T) {
 	}
 	oracle.currentState.Store(&currentState)
 	update := &oracleStateUpdate{
-		eigenDelegations:           make(map[string]map[string]*big.Int),
-		redemptions:                []api.Redemption{},
-		suggestedTip:               big.NewInt(1500000000),
-		estimatedGas:               231000,
-		ethBurnEvents:              []api.BurnEvent{},
-		solanaBurnEvents:           []api.BurnEvent{},
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(50000),
-		ETHUSDPrice:                math.LegacyNewDec(3000),
-		solanaLamportsPerSignature: 5000,
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]sol.Signature),
+		eigenDelegations: make(map[string]map[string]*big.Int),
+		redemptions:      []api.Redemption{},
+		suggestedTip:     big.NewInt(1500000000),
+		estimatedGas:     231000,
+		ethBurnEvents:    []api.BurnEvent{},
+		solanaBurnEvents: []api.BurnEvent{},
+		ROCKUSDPrice:     math.LegacyNewDec(1),
+		BTCUSDPrice:      math.LegacyNewDec(50000),
+		ETHUSDPrice:      math.LegacyNewDec(3000),
+		SolanaMintEvents: []api.SolanaMintEvent{},
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	targetBlockNumber := big.NewInt(995)
@@ -202,7 +201,6 @@ func TestBuildFinalState(t *testing.T) {
 	assert.Equal(t, uint64(20000000000), result.EthBaseFee)
 	assert.Equal(t, uint64(1500000000), result.EthTipCap)
 	assert.Equal(t, uint64(231000), result.EthGasLimit)
-	assert.Equal(t, uint64(5000), result.SolanaLamportsPerSignature)
 	assert.True(t, result.ROCKUSDPrice.Equal(math.LegacyNewDec(1)))
 	assert.True(t, result.BTCUSDPrice.Equal(math.LegacyNewDec(50000)))
 	assert.True(t, result.ETHUSDPrice.Equal(math.LegacyNewDec(3000)))
@@ -397,18 +395,17 @@ func BenchmarkInitializeStateUpdate(b *testing.B) {
 func TestBuildFinalState_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations:           make(map[string]map[string]*big.Int),
-		redemptions:                []api.Redemption{},
-		suggestedTip:               big.NewInt(1500000000),
-		estimatedGas:               231000,
-		ethBurnEvents:              []api.BurnEvent{},
-		solanaBurnEvents:           []api.BurnEvent{},
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(50000),
-		ETHUSDPrice:                math.LegacyNewDec(3000),
-		solanaLamportsPerSignature: 5000,
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]sol.Signature),
+		eigenDelegations: make(map[string]map[string]*big.Int),
+		redemptions:      []api.Redemption{},
+		suggestedTip:     big.NewInt(1500000000),
+		estimatedGas:     231000,
+		ethBurnEvents:    []api.BurnEvent{},
+		solanaBurnEvents: []api.BurnEvent{},
+		ROCKUSDPrice:     math.LegacyNewDec(1),
+		BTCUSDPrice:      math.LegacyNewDec(50000),
+		ETHUSDPrice:      math.LegacyNewDec(3000),
+		SolanaMintEvents: []api.SolanaMintEvent{},
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	targetBlockNumber := big.NewInt(995)
@@ -420,18 +417,17 @@ func TestBuildFinalState_NilCurrentState(t *testing.T) {
 func TestBuildFinalState_NilHeader(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations:           make(map[string]map[string]*big.Int),
-		redemptions:                []api.Redemption{},
-		suggestedTip:               big.NewInt(1500000000),
-		estimatedGas:               231000,
-		ethBurnEvents:              []api.BurnEvent{},
-		solanaBurnEvents:           []api.BurnEvent{},
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(50000),
-		ETHUSDPrice:                math.LegacyNewDec(3000),
-		solanaLamportsPerSignature: 5000,
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]sol.Signature),
+		eigenDelegations: make(map[string]map[string]*big.Int),
+		redemptions:      []api.Redemption{},
+		suggestedTip:     big.NewInt(1500000000),
+		estimatedGas:     231000,
+		ethBurnEvents:    []api.BurnEvent{},
+		solanaBurnEvents: []api.BurnEvent{},
+		ROCKUSDPrice:     math.LegacyNewDec(1),
+		BTCUSDPrice:      math.LegacyNewDec(50000),
+		ETHUSDPrice:      math.LegacyNewDec(3000),
+		SolanaMintEvents: []api.SolanaMintEvent{},
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
 	}
 	targetBlockNumber := big.NewInt(995)
 	assert.Panics(t, func() {
@@ -451,18 +447,17 @@ func TestBuildFinalState_NilUpdate(t *testing.T) {
 func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations:           make(map[string]map[string]*big.Int),
-		redemptions:                []api.Redemption{},
-		suggestedTip:               big.NewInt(1500000000),
-		estimatedGas:               231000,
-		ethBurnEvents:              []api.BurnEvent{},
-		solanaBurnEvents:           []api.BurnEvent{},
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(50000),
-		ETHUSDPrice:                math.LegacyNewDec(3000),
-		solanaLamportsPerSignature: 5000,
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]sol.Signature),
+		eigenDelegations: make(map[string]map[string]*big.Int),
+		redemptions:      []api.Redemption{},
+		suggestedTip:     big.NewInt(1500000000),
+		estimatedGas:     231000,
+		ethBurnEvents:    []api.BurnEvent{},
+		solanaBurnEvents: []api.BurnEvent{},
+		ROCKUSDPrice:     math.LegacyNewDec(1),
+		BTCUSDPrice:      math.LegacyNewDec(50000),
+		ETHUSDPrice:      math.LegacyNewDec(3000),
+		SolanaMintEvents: []api.SolanaMintEvent{},
+		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	assert.Panics(t, func() {
@@ -473,11 +468,10 @@ func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 func TestApplyFallbacks_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		suggestedTip:               nil,
-		ROCKUSDPrice:               math.LegacyDec{},
-		BTCUSDPrice:                math.LegacyDec{},
-		ETHUSDPrice:                math.LegacyDec{},
-		solanaLamportsPerSignature: 0,
+		suggestedTip: nil,
+		ROCKUSDPrice: math.LegacyDec{},
+		BTCUSDPrice:  math.LegacyDec{},
+		ETHUSDPrice:  math.LegacyDec{},
 	}
 	assert.Panics(t, func() {
 		oracle.applyFallbacks(update, nil)
@@ -487,10 +481,9 @@ func TestApplyFallbacks_NilCurrentState(t *testing.T) {
 func TestApplyFallbacks_NilUpdate(t *testing.T) {
 	oracle := createTestOracle()
 	currentState := sidecartypes.OracleState{
-		ROCKUSDPrice:               math.LegacyNewDec(1),
-		BTCUSDPrice:                math.LegacyNewDec(40000),
-		ETHUSDPrice:                math.LegacyNewDec(2000),
-		SolanaLamportsPerSignature: 5000,
+		ROCKUSDPrice: math.LegacyNewDec(1),
+		BTCUSDPrice:  math.LegacyNewDec(40000),
+		ETHUSDPrice:  math.LegacyNewDec(2000),
 	}
 	oracle.currentState.Store(&currentState)
 	assert.Panics(t, func() {
@@ -1184,7 +1177,7 @@ func TestFetchSolanaBurnEventsComprehensive(t *testing.T) {
 			errChan := make(chan error, 2) // Buffer for both goroutines
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 			wg.Wait()
 			close(errChan)
@@ -1222,7 +1215,7 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&innerWg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &innerWg, update, &updateMutex, errChan)
 			innerWg.Wait()
 			close(errChan)
 
@@ -1256,7 +1249,7 @@ func TestFetchSolanaBurnEventsWatermarkConsistency(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1309,7 +1302,7 @@ func TestFetchSolanaBurnEventsErrorHandling(t *testing.T) {
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 			wg.Wait()
 			close(errChan)
 
@@ -1348,7 +1341,7 @@ func TestFetchSolanaBurnEventsEventDeduplication(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1382,7 +1375,7 @@ func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1404,7 +1397,7 @@ func TestFetchSolanaBurnEventsBatchProcessing(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1426,7 +1419,7 @@ func TestFetchSolanaBurnEventsSignatureOrdering(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 	wg.Wait()
 	close(errChan)
 
@@ -1458,7 +1451,7 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&innerWg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &innerWg, update, &updateMutex, errChan)
 			innerWg.Wait()
 			close(errChan)
 
@@ -1491,7 +1484,7 @@ func TestFetchSolanaBurnEventsMemoryLeaks(t *testing.T) {
 		errChan := make(chan error, 2)
 		var wg sync.WaitGroup
 
-		oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+		oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 		wg.Wait()
 		close(errChan)
 
@@ -1520,7 +1513,7 @@ func TestFetchSolanaBurnEventsTimeoutHandling(t *testing.T) {
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
 
-	oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+	oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 
 	done := make(chan struct{})
 	go func() {
@@ -1584,7 +1577,7 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup
 
-			oracle.fetchSolanaBurnEvents(&wg, update, &updateMutex, errChan)
+			oracle.fetchSolanaBurnEvents(context.Background(), &wg, update, &updateMutex, errChan)
 			wg.Wait()
 			close(errChan)
 

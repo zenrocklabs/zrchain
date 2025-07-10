@@ -727,19 +727,19 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Actions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "actions"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Actions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "actions"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Policies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "policies"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Policies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "policy", "policies"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_PolicyById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "policy_by_id", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_PolicyById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "policy_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignMethodsByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "sign_methods_by_address", "address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SignMethodsByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "sign_methods_by_address", "address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_PoliciesByCreator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "policies_by_creator", "creators"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_PoliciesByCreator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "policies_by_creator", "creators"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ActionDetailsById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "action_details_by_id", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ActionDetailsById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "policy", "action_details_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

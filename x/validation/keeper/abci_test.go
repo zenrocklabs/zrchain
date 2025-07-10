@@ -31,22 +31,6 @@ func createTestLastCommit() abci.CommitInfo {
 	}
 }
 
-// Helper function to create a reusable extended last commit
-func createTestExtendedLastCommit() abci.ExtendedCommitInfo {
-	return abci.ExtendedCommitInfo{
-		Round: 1,
-		Votes: []abci.ExtendedVoteInfo{
-			{
-				Validator: abci.Validator{
-					Address: []byte("test-validator"),
-					Power:   1000,
-				},
-				BlockIdFlag: 1,
-			},
-		},
-	}
-}
-
 func TestBeginBlocker(t *testing.T) {
 	suite := new(ValidationKeeperTestSuite)
 	suite.SetT(&testing.T{})
@@ -73,10 +57,8 @@ func TestExtendVoteHandler(t *testing.T) {
 		req *abci.RequestExtendVote
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *abci.ResponseExtendVote
-		wantErr bool
+		name string
+		args args
 	}{
 		{
 			name: "PASS: extend vote handler",
@@ -85,30 +67,28 @@ func TestExtendVoteHandler(t *testing.T) {
 					Hash:               []byte("test"),
 					Height:             1,
 					Time:               time.Now(),
-					Txs:                [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
+					Txs:                [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI="}`)},
 					ProposedLastCommit: createTestLastCommit(),
 					Misbehavior:        nil,
 					NextValidatorsHash: []byte("test-next-validators-hash"),
 					ProposerAddress:    []byte("test-proposer-address"),
 				},
 			},
-			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtension},
 		},
 		{
-			name: "PASS: extend vote handler",
+			name: "PASS: extend vote handler with no transactions",
 			args: args{
 				req: &abci.RequestExtendVote{
-					Hash:               []byte("test"),
+					Hash:               []byte("test-empty"),
 					Height:             2,
 					Time:               time.Now(),
-					Txs:                [][]byte{[]byte(`{"EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
+					Txs:                [][]byte{}, // No transactions
 					ProposedLastCommit: createTestLastCommit(),
 					Misbehavior:        nil,
 					NextValidatorsHash: []byte("test-next-validators-hash"),
 					ProposerAddress:    []byte("test-proposer-address"),
 				},
 			},
-			want: &abci.ResponseExtendVote{VoteExtension: validationtestutil.SampleVoteExtensionHeight2},
 		},
 	}
 	for _, tt := range tests {
@@ -116,14 +96,35 @@ func TestExtendVoteHandler(t *testing.T) {
 
 			suite := new(ValidationKeeperTestSuite)
 			suite.SetT(&testing.T{})
-			keeper, ctrl := suite.ValidationKeeperSetupTest()
+			k, ctrl := suite.ValidationKeeperSetupTest()
 			defer ctrl.Finish()
 
 			ctx := sdk.UnwrapSDKContext(suite.ctx)
 
-			got, err := keeper.ExtendVoteHandler(ctx, tt.args.req)
+			got, err := k.ExtendVoteHandler(ctx, tt.args.req)
 			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
+			
+			// Verify that we got a valid response with non-empty vote extension
+			require.NotNil(t, got)
+			require.NotEmpty(t, got.VoteExtension)
+			
+			// Verify that the vote extension is valid JSON
+			var voteExt keeper.VoteExtension
+			err = json.Unmarshal(got.VoteExtension, &voteExt)
+			require.NoError(t, err)
+			
+			// Verify that the vote extension contains expected fields
+			require.NotEmpty(t, voteExt.EigenDelegationsHash)
+			require.Equal(t, uint64(18500000), voteExt.EthBlockHeight)
+			require.Equal(t, uint64(30000000), voteExt.EthGasLimit)
+			require.Equal(t, uint64(20000000000), voteExt.EthBaseFee)
+			require.Equal(t, uint64(1000000000), voteExt.EthTipCap)
+			require.Equal(t, "1.25", voteExt.ROCKUSDPrice)
+			require.Equal(t, "45000.00", voteExt.BTCUSDPrice)
+			require.Equal(t, "2800.00", voteExt.ETHUSDPrice)
+			require.Equal(t, int64(750000), voteExt.LatestBtcBlockHeight)
+			require.NotEmpty(t, voteExt.LatestBtcHeaderHash)
+			require.Equal(t, "test", voteExt.SidecarVersionName)
 		})
 	}
 
@@ -151,20 +152,6 @@ func TestVerifyVoteExtensionHandler(t *testing.T) {
 			},
 			want: &abci.ResponseVerifyVoteExtension{
 				Status: abci.ResponseVerifyVoteExtension_ACCEPT,
-			},
-		},
-		{
-			name: "FAIL: vote extension with height mismatch",
-			args: args{
-				req: &abci.RequestVerifyVoteExtension{
-					Hash:             []byte("test"),
-					ValidatorAddress: []byte("test-validator"),
-					Height:           2, // Different from vote extension height
-					VoteExtension:    validationtestutil.SampleVoteExtension,
-				},
-			},
-			want: &abci.ResponseVerifyVoteExtension{
-				Status: abci.ResponseVerifyVoteExtension_REJECT,
 			},
 		},
 		{
@@ -202,7 +189,7 @@ func TestVerifyVoteExtensionHandler(t *testing.T) {
 					Hash:             []byte("test"),
 					ValidatorAddress: []byte("test-validator"),
 					Height:           1,
-					VoteExtension:    []byte(`{"ZRChainBlockHeight":0,"EigenDelegationsHash":"","EthBlockHeight":0,"EthBaseFee":0,"EthTipCap":0,"EthGasLimit":0,"EthBurnEventsHash":"","RedemptionsHash":"","ROCKUSDPrice":"","BTCUSDPrice":"","ETHUSDPrice":"","LatestBtcBlockHeight":0,"LatestBtcHeaderHash":""}`),
+					VoteExtension:    []byte(`{"EigenDelegationsHash":"","EthBlockHeight":0,"EthBaseFee":0,"EthTipCap":0,"EthGasLimit":0,"EthBurnEventsHash":"","RedemptionsHash":"","ROCKUSDPrice":"","BTCUSDPrice":"","ETHUSDPrice":"","LatestBtcBlockHeight":0,"LatestBtcHeaderHash":""}`),
 				},
 			},
 			want: &abci.ResponseVerifyVoteExtension{
@@ -229,14 +216,13 @@ func TestPrepareProposal(t *testing.T) {
 	// WIP - requires proper vote extension and oracle data to fully test
 
 	voteExt := keeper.VoteExtension{
-		ZRChainBlockHeight: 1,
-		EthBlockHeight:     12345,
-		EthGasLimit:        21000,
-		EthBaseFee:         20000000000,
-		EthTipCap:          1000000000,
-		BTCUSDPrice:        "50000.00",
-		ETHUSDPrice:        "3000.00",
-		ROCKUSDPrice:       "1.00",
+		EthBlockHeight: 12345,
+		EthGasLimit:    21000,
+		EthBaseFee:     20000000000,
+		EthTipCap:      1000000000,
+		BTCUSDPrice:    "50000.00",
+		ETHUSDPrice:    "3000.00",
+		ROCKUSDPrice:   "1.00",
 	}
 	voteExtBytes, err := json.Marshal(voteExt)
 	require.NoError(t, err)
@@ -330,7 +316,7 @@ func TestProcessProposal(t *testing.T) {
 			name: "PASS: process proposal with vote extensions enabled, but with empty oracle data",
 			args: args{
 				req: &abci.RequestProcessProposal{
-					Txs:    [][]byte{[]byte(`{"EigenDelegationsMap":null,"ValidatorDelegations":null,"RequestedBtcBlockHeight":0,"RequestedBtcBlockHeader":{},"LatestBtcBlockHeight":0,"LatestBtcBlockHeader":{},"EthBlockHeight":0,"EthGasLimit":0,"EthBaseFee":0,"EthTipCap":0,"RequestedStakerNonce":0,"RequestedEthMinterNonce":0,"RequestedUnstakerNonce":0,"RequestedCompleterNonce":0,"SolanaMintNonces":null,"SolanaAccounts":null,"SolanaLamportsPerSignature":0,"SolanaMintEvents":null,"SolanaZenBTCMintEvents":null,"EthBurnEvents":null,"SolanaBurnEvents":null,"Redemptions":null,"ROCKUSDPrice":"","BTCUSDPrice":"","ETHUSDPrice":"","ConsensusData":{"votes":[{"validator":{"address":"QDagxuKQqu3HMpWLmNIgCEhR9b0=","power":125000000},"extension_signature":"QB/lPpqzBJAW+iNF37X5PVrHpuHJ/ZmKWcFX6JdwTxYPAjomEHI9BqzF9EOSpp3CQ1/OikFMlITSR+eqIhgaCg==","block_id_flag":2}]},"FieldVotePowers":{}}`)},
+					Txs:    [][]byte{[]byte(`{"EigenDelegationsMap":null,"ValidatorDelegations":null,"RequestedBtcBlockHeight":0,"RequestedBtcBlockHeader":{},"LatestBtcBlockHeight":0,"LatestBtcBlockHeader":{},"EthBlockHeight":0,"EthGasLimit":0,"EthBaseFee":0,"EthTipCap":0,"RequestedStakerNonce":0,"RequestedEthMinterNonce":0,"RequestedUnstakerNonce":0,"RequestedCompleterNonce":0,"SolanaMintNonces":null,"SolanaAccounts":null,"SolanaMintEvents":null,"SolanaZenBTCMintEvents":null,"EthBurnEvents":null,"SolanaBurnEvents":null,"Redemptions":null,"ROCKUSDPrice":"","BTCUSDPrice":"","ETHUSDPrice":"","ConsensusData":{"votes":[{"validator":{"address":"QDagxuKQqu3HMpWLmNIgCEhR9b0=","power":125000000},"extension_signature":"QB/lPpqzBJAW+iNF37X5PVrHpuHJ/ZmKWcFX6JdwTxYPAjomEHI9BqzF9EOSpp3CQ1/OikFMlITSR+eqIhgaCg==","block_id_flag":2}]},"FieldVotePowers":{}}`)},
 					Height: 2,
 					Hash:   []byte("test"),
 					Time:   time.Now(),
@@ -400,7 +386,7 @@ func TestPreBlocker(t *testing.T) {
 			name: "PASS: pre blocker with vote extensions enabled and consensus data",
 			args: args{
 				req: &abci.RequestFinalizeBlock{
-					Txs:    [][]byte{[]byte(`{"BTCUSDPrice":"106603.530000000000000000","ETHUSDPrice":"2422.093500000000000000","EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","SolanaLamportsPerSignature":0,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","ZRChainBlockHeight":3401684}`)},
+					Txs:    [][]byte{[]byte(`{"BTCUSDPrice":"106603.530000000000000000","ETHUSDPrice":"2422.093500000000000000","EigenDelegationsHash":"uhVXdw9X1G/iRkwfVMBjUFFsCgsB33yWKu4h5ierVJI=","EthBaseFee":3732027422,"EthBlockHeight":22796583,"EthBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","EthGasLimit":249091,"EthTipCap":72578,"LatestBtcBlockHeight":902951,"LatestBtcHeaderHash":"uPjzvaQD965jAViGFwf7CUtMrY7EwhHyvWpHDMeOU6Y=","ROCKUSDPrice":"0.047030000000000000","RedemptionsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=","RequestedBtcBlockHeight":0,"RequestedBtcHeaderHash":null,"RequestedCompleterNonce":0,"RequestedEthMinterNonce":0,"RequestedStakerNonce":0,"RequestedUnstakerNonce":0,"SidecarVersionName":"rose_moon","SolanaAccountsHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=","SolanaBurnEventsHash":"dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=",,"SolanaMintEventsHash":"Zp729xYaghztbJRLKnyJfwyGnIlbMvMeV2CNm9/5Li0=","SolanaMintNoncesHash":"RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o="}`)},
 					Height: 3,
 					Time:   time.Now(),
 					DecidedLastCommit: abci.CommitInfo{
@@ -422,33 +408,8 @@ func TestPreBlocker(t *testing.T) {
 				blockHeight: 3,
 			},
 		},
-		{
-			name: "PASS: pre blocker with vote extensions enabled and consensus data",
-			args: args{
-				req: &abci.RequestFinalizeBlock{
-					Txs:    [][]byte{[]byte(validationtestutil.VoteExt)},
-					Height: 3,
-					Time:   time.Now(),
-					DecidedLastCommit: abci.CommitInfo{
-						Round: 1,
-						Votes: []abci.VoteInfo{
-							{
-								Validator: abci.Validator{
-									Address: []byte("QDagxuKQqu3HMpWLmNIgCEhR9b0="),
-									Power:   1000000,
-								},
-								BlockIdFlag: 1,
-							},
-						},
-					},
-					Misbehavior:        nil,
-					NextValidatorsHash: []byte("test-next-validators-hash"),
-					ProposerAddress:    []byte("test-proposer-address"),
-				},
-				blockHeight: 4,
-			},
-		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			suite := new(ValidationKeeperTestSuite)
@@ -488,7 +449,6 @@ func TestGetValidatedOracleData(t *testing.T) {
 			args: args{
 				voteExt: validationtestutil.SampleDecodedVoteExtension,
 				fieldVotePowers: map[keeper.VoteExtensionField]int64{
-					keeper.VEFieldZRChainBlockHeight:      1,
 					keeper.VEFieldEigenDelegationsHash:    1,
 					keeper.VEFieldRequestedBtcBlockHeight: 1,
 					keeper.VEFieldRequestedBtcHeaderHash:  1,

@@ -99,35 +99,44 @@ var (
 		NetworkMainnet: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
-	// ROCK Price feed URL
+	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
 	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
+
 	MainLoopTickerInterval      = 60 * time.Second
 	OracleCacheSize             = 10
 	EthBurnEventsBlockRange     = 1000
-	EthBlocksBeforeFinality     = int64(5) // TODO: should this be increased?
+	EthBlocksBeforeFinality     = int64(8) // TODO: should this be increased?
 	SolanaEventScanTxLimit      = 1000
 	SolanaMaxBackfillPages      = 10 // Max pages to fetch when filling a signature gap.
-	SolanaEventFetchBatchSize   = 25
-	SolanaSleepInterval         = 250 * time.Millisecond // Sleep between batches
-	SolanaFallbackSleepInterval = 25 * time.Millisecond  // Sleep between individual fallback requests
+	SolanaEventFetchBatchSize   = 50
+	SolanaEventFetchMinBatchSize  = 5
+	SolanaSleepInterval         = 100 * time.Millisecond
+	SolanaFallbackSleepInterval = 25 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries  = 10
 	SolanaFallbackMaxRetries    = 3 // Retries for individual fallback requests
-	SolanaEventFetchRetrySleep  = 250 * time.Millisecond
+	SolanaEventFetchRetrySleep  = 200 * time.Millisecond
+
+	// RPC connection retry parameters
+	RPCConnectionMaxRetries = 20
+	RPCConnectionRetryDelay = 3 * time.Second
 
 	// HTTP and RPC constants
-	DefaultHTTPTimeout        = 10 * time.Second
-	DefaultSolanaFeeReturned  = uint64(5000) // Default fee in lamports per signature
-	SolanaTransactionVersion0 = uint64(0)    // Solana transaction version 0
-	EigenLayerQuorumNumber    = uint8(0)     // EigenLayer quorum number for service manager
-	GasEstimationBuffer       = uint64(110)  // 110% buffer for gas estimation (10% extra)
+	DefaultHTTPTimeout          = 10 * time.Second
+	SolanaRPCTimeout            = 15 * time.Second // Longer timeout for Solana RPC operations
+	SolanaBatchTimeout          = 25 * time.Second // Even longer for batch operations
+	SolanaRateLimiterTimeout    = 10 * time.Second
+	SolanaMaxConcurrentRPCCalls = 25          // Maximum concurrent Solana RPC calls (semaphore size)
+	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
+	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
+	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon"
+	SidecarVersionName = "salmon_moon_r1"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon", "thunder_moon", "salmon_moon"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r1"}
 )
 
 // PriceFeed struct with fields for different price feeds
@@ -153,22 +162,21 @@ const (
 )
 
 type OracleState struct {
-	EigenDelegations           map[string]map[string]*big.Int `json:"eigenDelegations"`
-	EthBlockHeight             uint64                         `json:"ethBlockHeight"`
-	EthGasLimit                uint64                         `json:"ethGasLimit"`
-	EthBaseFee                 uint64                         `json:"ethBaseFee"`
-	EthTipCap                  uint64                         `json:"ethTipCap"`
-	SolanaLamportsPerSignature uint64                         `json:"solanaLamportsPerSignature"`
-	EthBurnEvents              []api.BurnEvent                `json:"ethBurnEvents"`
-	CleanedEthBurnEvents       map[string]bool                `json:"cleanedEthBurnEvents"`
-	SolanaBurnEvents           []api.BurnEvent                `json:"solanaBurnEvents"`
-	CleanedSolanaBurnEvents    map[string]bool                `json:"cleanedSolanaBurnEvents"`
-	Redemptions                []api.Redemption               `json:"redemptions"`
-	ROCKUSDPrice               math.LegacyDec                 `json:"rockUSDPrice"`
-	BTCUSDPrice                math.LegacyDec                 `json:"btcUSDPrice"`
-	ETHUSDPrice                math.LegacyDec                 `json:"ethUSDPrice"`
-	SolanaMintEvents           []api.SolanaMintEvent          `json:"solanaMintEvents"`
-	CleanedSolanaMintEvents    map[string]bool                `json:"cleanedSolanaMintEvents"`
+	EigenDelegations        map[string]map[string]*big.Int `json:"eigenDelegations"`
+	EthBlockHeight          uint64                         `json:"ethBlockHeight"`
+	EthGasLimit             uint64                         `json:"ethGasLimit"`
+	EthBaseFee              uint64                         `json:"ethBaseFee"`
+	EthTipCap               uint64                         `json:"ethTipCap"`
+	EthBurnEvents           []api.BurnEvent                `json:"ethBurnEvents"`
+	CleanedEthBurnEvents    map[string]bool                `json:"cleanedEthBurnEvents"`
+	SolanaBurnEvents        []api.BurnEvent                `json:"solanaBurnEvents"`
+	CleanedSolanaBurnEvents map[string]bool                `json:"cleanedSolanaBurnEvents"`
+	Redemptions             []api.Redemption               `json:"redemptions"`
+	ROCKUSDPrice            math.LegacyDec                 `json:"rockUSDPrice"`
+	BTCUSDPrice             math.LegacyDec                 `json:"btcUSDPrice"`
+	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
+	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
+	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
 	// Fields for watermarking Solana events
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
