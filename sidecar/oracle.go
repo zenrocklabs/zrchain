@@ -370,8 +370,9 @@ func (o *Oracle) fetchAndProcessState(
 		// All tasks completed normally.
 	case <-tickCtx.Done():
 		// Tick was canceled. The goroutines have been notified via cancelRoutines().
-		// We can now proceed with building the state from whatever data we have.
 		slog.Warn("State fetching canceled by new tick, proceeding with partial state.")
+		// We must wait for the goroutines to finish before closing the error channel.
+		<-waitChan
 	}
 
 	close(errChan)
