@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math/big"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -133,12 +134,41 @@ func LoadConfig(configFileFlag string) sidecartypes.Config {
 
 func getConfigFile(configFileFlag string) string {
 	if configFileFlag != "" {
+		// If a specific path is provided, use it directly.
 		return configFileFlag
 	}
+
+	// If no path is provided, determine the executable's path.
+	exePath, err := os.Executable()
+	if err != nil {
+		slog.Warn("Could not determine executable path; falling back to relative path for config", "error", err)
+		return "config.yaml"
+	}
+
+	exeDir := filepath.Dir(exePath)
+
+	// Check for config.yaml in the same directory as the executable (local setup).
+	localConfigPath := filepath.Join(exeDir, "config.yaml")
+	if _, err := os.Stat(localConfigPath); err == nil {
+		slog.Info("Found config file in the executable's directory", "path", localConfigPath)
+		return localConfigPath
+	}
+
+	// Check for config.yaml in the parent directory (container setup).
+	parentDir := filepath.Dir(exeDir)
+	parentConfigPath := filepath.Join(parentDir, "config.yaml")
+	if _, err := os.Stat(parentConfigPath); err == nil {
+		slog.Info("Found config file in the parent of the executable's directory", "path", parentConfigPath)
+		return parentConfigPath
+	}
+
+	// Fallback if not found in preferred locations.
+	slog.Warn("Could not find config.yaml in executable's directory or its parent; falling back to relative path", "path", "config.yaml")
 	return "config.yaml"
 }
 
 func readConfig(configFile string) (sidecartypes.Config, error) {
+	slog.Info("Reading configuration file", "path", configFile)
 	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
 		return sidecartypes.Config{}, fmt.Errorf("unable to read config from %s: %v", configFile, err)
