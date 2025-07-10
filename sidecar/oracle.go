@@ -661,24 +661,23 @@ func (o *Oracle) processSolanaMintEvents(
 				"cleanedEventsMap", len(cleanedEvents),
 				"reconcileErr", reconcileErr)
 		}
-		var mergedMintEvents []api.SolanaMintEvent
+
 		if reconcileErr != nil {
 			// Reconciliation failed, so 'remainingEvents' contains all the previously pending events.
-			// We should only merge the 'allNewEvents' fetched in this tick to avoid re-adding old ones.
-			// The 'cleanedEvents' map is unchanged. We pass nil to the new events parameter of the first
-			// merge call because the new events will be merged in the second call.
 			slog.Warn("Failed to reconcile Solana mint events with zrchain - retaining unconfirmed Solana mint events for next cycle", "error", reconcileErr)
-			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, nil, "Solana mint (retained from previous state)")
-			mergedMintEvents = mergeNewMintEvents(mergedMintEvents, cleanedEvents, allNewEvents, "Solana mint (newly fetched)")
-		} else {
-			// Reconciliation was successful. `remainingEvents` contains only the events that are still pending.
-			mergedMintEvents = mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
 		}
 
+		// `remainingEvents` now contains all events that are still pending (either all of them if reconcile failed, or a subset if it succeeded).
+		// Merge the newly fetched events (`allNewEvents`) into this list.
+		// This call will produce a non-confusing log because `remainingEvents` is passed as the existing set.
+		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+
 		updateMutex.Lock()
-		// Re-merge with the current update state to defend against race conditions.
+		// Since there is no backfill for mint events, there is no race condition with other goroutines
+		// modifying update.SolanaMintEvents. We can assign the final list directly.
+		// This avoids a second, confusingly-logged merge.
 		initialUpdateCount := len(update.SolanaMintEvents)
-		update.SolanaMintEvents = mergeNewMintEvents(update.SolanaMintEvents, cleanedEvents, mergedMintEvents, "Solana mint")
+		update.SolanaMintEvents = mergedMintEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
 
 		// Only log if there were actual changes in the final merge
@@ -763,15 +762,38 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Get current state to merge with new burn events
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-		// Reconcile and merge
+		// Reconcile with zrChain to see which of the pending events have been processed.
 		remainingEvents, cleanedEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, "Solana")
-		mergedBurnEvents := mergeNewBurnEvents(remainingEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
 
 		updateMutex.Lock()
-		// Re-merge with the current update state to include any backfilled events that may have been added in parallel.
-		update.solanaBurnEvents = mergeNewBurnEvents(update.solanaBurnEvents, cleanedEvents, mergedBurnEvents, "Solana")
+		defer updateMutex.Unlock()
+
+		// Manually construct the base list of events to avoid confusing logs from `mergeNewBurnEvents`.
+		// The base list consists of events that were added by the backfill process (`update.solanaBurnEvents`)
+		// and events from the previous state that have not yet been reconciled (`remainingEvents`).
+		// A map is used to efficiently de-duplicate events by their transaction ID.
+		combinedEventsMap := make(map[string]api.BurnEvent)
+
+		// Add events that might have been added by the backfill process first.
+		for _, event := range update.solanaBurnEvents {
+			combinedEventsMap[event.TxID] = event
+		}
+		// Add the remaining unreconciled events from the previous state.
+		for _, event := range remainingEvents {
+			combinedEventsMap[event.TxID] = event
+		}
+
+		// Convert the map back to a slice. The order is not important here as the final state is sorted later.
+		baseEvents := make([]api.BurnEvent, 0, len(combinedEventsMap))
+		for _, event := range combinedEventsMap {
+			baseEvents = append(baseEvents, event)
+		}
+
+		// Now, merge the newly fetched Solana burn events (`allNewSolanaBurnEvents`) into the
+		// de-duplicated list of existing events (`baseEvents`). The log message from this
+		// call will now correctly report only the truly new events as "added".
+		update.solanaBurnEvents = mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
 		update.cleanedSolanaBurnEvents = cleanedEvents
-		updateMutex.Unlock()
 	}()
 }
 
