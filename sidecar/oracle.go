@@ -382,7 +382,10 @@ func (o *Oracle) fetchAndProcessState(
 	for err := range errChan {
 		if err != nil {
 			collectedErrors = append(collectedErrors, err)
-			slog.Warn("Component error during state fetch (continuing with partial state)", "error", err)
+			// Don't log an error if it's just a context cancellation, as this is expected when the tick times out.
+			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+				slog.Warn("Component error during state fetch (continuing with partial state)", "error", err)
+			}
 		}
 	}
 
@@ -1734,7 +1737,7 @@ func (o *Oracle) getSolanaEvents(
 			}
 			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
 			o.batchRequestPool.Put(batchRequests)
-			continue                                           // Retry the same segment `i`
+			continue // Retry the same segment `i`
 		}
 
 		// Success: Process the batch responses
