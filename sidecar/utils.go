@@ -123,8 +123,8 @@ func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, 
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)
 }
 
-func LoadConfig(configFileFlag string) sidecartypes.Config {
-	configFile := getConfigFile(configFileFlag)
+func LoadConfig(configFileFlag, configDirFlag string) sidecartypes.Config {
+	configFile := getConfigFile(configFileFlag, configDirFlag)
 	cfg, err := readConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to read config: %v", err)
@@ -132,17 +132,31 @@ func LoadConfig(configFileFlag string) sidecartypes.Config {
 	return cfg
 }
 
-func getConfigFile(configFileFlag string) string {
+func getConfigFile(configFileFlag, configDirFlag string) string {
+	// 1. Command-line flag has the highest precedence.
 	if configFileFlag != "" {
-		// If a specific path is provided, use it directly.
+		slog.Info("Using config file specified by flag", "path", configFileFlag)
 		return configFileFlag
 	}
 
-	// If no path is provided, determine the executable's path.
+	// 2. Environment variable is next.
+	if envConfigFile := os.Getenv("SIDECAR_CONFIG_FILE"); envConfigFile != "" {
+		slog.Info("Using config file specified by SIDECAR_CONFIG_FILE environment variable", "path", envConfigFile)
+		return envConfigFile
+	}
+
+	// 3. --config-dir flag.
+	if configDirFlag != "" {
+		configPath := filepath.Join(configDirFlag, "config.yaml")
+		slog.Info("Using config file from directory specified by --config-dir flag", "path", configPath)
+		return configPath
+	}
+
+	// 4. Autodetection based on executable path.
 	exePath, err := os.Executable()
 	if err != nil {
 		slog.Warn("Could not determine executable path; falling back to relative path for config", "error", err)
-		return "config.yaml"
+		return "config.yaml" // Fallback
 	}
 
 	exeDir := filepath.Dir(exePath)
@@ -162,8 +176,8 @@ func getConfigFile(configFileFlag string) string {
 		return parentConfigPath
 	}
 
-	// Fallback if not found in preferred locations.
-	slog.Warn("Could not find config.yaml in executable's directory or its parent; falling back to relative path", "path", "config.yaml")
+	// 5. Fallback if not found in any of the preferred locations.
+	slog.Warn("Could not find config.yaml automatically; falling back to default relative path", "path", "config.yaml")
 	return "config.yaml"
 }
 

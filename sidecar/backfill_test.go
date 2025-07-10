@@ -18,7 +18,7 @@ func TestHandleBackfillRequests(t *testing.T) {
 	t.Skip("Skipping test on CI as it makes a real network call to Solana")
 
 	// 1. Setup a real Solana client
-	cfg := LoadConfig("")
+	cfg := LoadConfig("", "")
 	solanaClient := solanarpc.New(cfg.SolanaRPC[cfg.Network])
 
 	// 2. Setup a minimal Oracle with the real client
