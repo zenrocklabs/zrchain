@@ -1678,6 +1678,12 @@ func (o *Oracle) getSolanaEvents(
 		retryDelay := sidecartypes.SolanaEventFetchRetrySleep
 
 		for retry := 0; retry < sidecartypes.SolanaEventFetchMaxRetries; retry++ {
+			// If the parent context has been canceled, don't attempt any more retries.
+			if ctx.Err() != nil {
+				batchErr = ctx.Err() // Propagate the cancellation error
+				break
+			}
+
 			// Progressive timeout: increase timeout for retries
 			timeoutDuration := sidecartypes.SolanaBatchTimeout
 			if retry > 0 {
