@@ -4,8 +4,8 @@ import (
 	gocontext "context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	storetypes "cosmossdk.io/store/types"
 
@@ -38,10 +38,11 @@ func (suite *MintTestSuite) SetupTest() {
 	suite.ctx = testCtx.Ctx
 
 	// gomock initializations
-	ctrl := gomock.NewController(suite.T())
+	ctrl := ubermock.NewController(suite.T())
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
+	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress("mint").Return(sdk.AccAddress{})
 
 	suite.mintKeeper = keeper.NewKeeper(
@@ -50,6 +51,7 @@ func (suite *MintTestSuite) SetupTest() {
 		stakingKeeper,
 		accountKeeper,
 		bankKeeper,
+		zentpKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

@@ -19,4 +19,5 @@ const (
 	AttributeKeyExcessAmount                = "excess_amount"
 	AttributeKeyKeyringRewards              = "keyring_rewards"
 	AttributeKeyTxFees                      = "tx_fees"
+	AttributeKeyZentpFees                   = "zentp_fees"
 )

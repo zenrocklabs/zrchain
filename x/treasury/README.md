@@ -55,6 +55,7 @@ Keys can be used to derive valid EVM, Cosmos, Solana, and Bitcoin addresses.
 Zenrock-generated addresses behave like standard self-hosted wallets and are able to interact with the relevant network natively. This exposes users to a broad range of the most popular networks.
 
 ### Signatures
+
 Zenrock provides a signature request service that allows users to either request arbitrary signatures or request for transactions to be signed.
 
 The transaction signing service may include broadcasting the transaction to the relevant layer one network as necessary.

@@ -20,6 +20,7 @@ var (
 	BurnCountKey        = collections.NewPrefix(3)
 	ParamsKey           = collections.NewPrefix(4)
 	SolanaROCKSupplyKey = collections.NewPrefix(5)
+	ZentpFeesKey        = collections.NewPrefix(6)
 
 	BurnsIndex            = "burns"
 	MintsIndex            = "mints"
@@ -27,6 +28,7 @@ var (
 	BurnCountIndex        = "burn_count"
 	ParamsIndex           = "params"
 	SolanaROCKSupplyIndex = "solana_rock_supply"
+	ZentpFeesIndex        = "zentp_fees"
 )
 
 func KeyPrefix(p string) []byte {

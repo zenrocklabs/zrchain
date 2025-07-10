@@ -3,6 +3,7 @@ package zentp
 
 import (
 	_ "cosmossdk.io/api/amino"
+	v1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	fmt "fmt"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -122,6 +123,7 @@ var (
 	fd_GenesisState_mints              protoreflect.FieldDescriptor
 	fd_GenesisState_burns              protoreflect.FieldDescriptor
 	fd_GenesisState_solana_rock_supply protoreflect.FieldDescriptor
+	fd_GenesisState_zentp_fees         protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -131,6 +133,7 @@ func init() {
 	fd_GenesisState_mints = md_GenesisState.Fields().ByName("mints")
 	fd_GenesisState_burns = md_GenesisState.Fields().ByName("burns")
 	fd_GenesisState_solana_rock_supply = md_GenesisState.Fields().ByName("solana_rock_supply")
+	fd_GenesisState_zentp_fees = md_GenesisState.Fields().ByName("zentp_fees")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -222,6 +225,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if x.ZentpFees != nil {
+		value := protoreflect.ValueOfMessage(x.ZentpFees.ProtoReflect())
+		if !f(fd_GenesisState_zentp_fees, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -245,6 +254,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.Burns) != 0
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		return x.SolanaRockSupply != uint64(0)
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		return x.ZentpFees != nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.GenesisState"))
@@ -269,6 +280,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.Burns = nil
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		x.SolanaRockSupply = uint64(0)
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		x.ZentpFees = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.GenesisState"))
@@ -303,6 +316,9 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		value := x.SolanaRockSupply
 		return protoreflect.ValueOfUint64(value)
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		value := x.ZentpFees
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.GenesisState"))
@@ -335,6 +351,8 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		x.Burns = *clv.list
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		x.SolanaRockSupply = value.Uint()
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		x.ZentpFees = value.Message().Interface().(*v1beta1.Coin)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.GenesisState"))
@@ -372,6 +390,11 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_3_list{list: &x.Burns}
 		return protoreflect.ValueOfList(value)
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		if x.ZentpFees == nil {
+			x.ZentpFees = new(v1beta1.Coin)
+		}
+		return protoreflect.ValueOfMessage(x.ZentpFees.ProtoReflect())
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		panic(fmt.Errorf("field solana_rock_supply of message zrchain.zentp.GenesisState is not mutable"))
 	default:
@@ -398,6 +421,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 		return protoreflect.ValueOfList(&_GenesisState_3_list{list: &list})
 	case "zrchain.zentp.GenesisState.solana_rock_supply":
 		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.zentp.GenesisState.zentp_fees":
+		m := new(v1beta1.Coin)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.GenesisState"))
@@ -486,6 +512,10 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.SolanaRockSupply != 0 {
 			n += 1 + runtime.Sov(uint64(x.SolanaRockSupply))
 		}
+		if x.ZentpFees != nil {
+			l = options.Size(x.ZentpFees)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -514,6 +544,20 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.ZentpFees != nil {
+			encoded, err := options.Marshal(x.ZentpFees)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x2a
 		}
 		if x.SolanaRockSupply != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.SolanaRockSupply))
@@ -738,6 +782,42 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
+			case 5:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZentpFees", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.ZentpFees == nil {
+					x.ZentpFees = &v1beta1.Coin{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ZentpFees); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -793,10 +873,11 @@ type GenesisState struct {
 	unknownFields protoimpl.UnknownFields
 
 	// params defines all the parameters of the module.
-	Params           *Params   `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
-	Mints            []*Bridge `protobuf:"bytes,2,rep,name=mints,proto3" json:"mints,omitempty"`
-	Burns            []*Bridge `protobuf:"bytes,3,rep,name=burns,proto3" json:"burns,omitempty"`
-	SolanaRockSupply uint64    `protobuf:"varint,4,opt,name=solana_rock_supply,json=solanaRockSupply,proto3" json:"solana_rock_supply,omitempty"`
+	Params           *Params       `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Mints            []*Bridge     `protobuf:"bytes,2,rep,name=mints,proto3" json:"mints,omitempty"`
+	Burns            []*Bridge     `protobuf:"bytes,3,rep,name=burns,proto3" json:"burns,omitempty"`
+	SolanaRockSupply uint64        `protobuf:"varint,4,opt,name=solana_rock_supply,json=solanaRockSupply,proto3" json:"solana_rock_supply,omitempty"`
+	ZentpFees        *v1beta1.Coin `protobuf:"bytes,5,opt,name=zentp_fees,json=zentpFees,proto3" json:"zentp_fees,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -847,6 +928,13 @@ func (x *GenesisState) GetSolanaRockSupply() uint64 {
 	return 0
 }
 
+func (x *GenesisState) GetZentpFees() *v1beta1.Coin {
+	if x != nil {
+		return x.ZentpFees
+	}
+	return nil
+}
+
 var File_zrchain_zentp_genesis_proto protoreflect.FileDescriptor
 
 var file_zrchain_zentp_genesis_proto_rawDesc = []byte{
@@ -858,7 +946,9 @@ var file_zrchain_zentp_genesis_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1a, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a,
 	0x65, 0x6e, 0x74, 0x70, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x1a, 0x1a, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70,
-	0x2f, 0x62, 0x72, 0x69, 0x64, 0x67, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xdc, 0x01,
+	0x2f, 0x62, 0x72, 0x69, 0x64, 0x67, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x62, 0x61, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74,
+	0x61, 0x31, 0x2f, 0x63, 0x6f, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9c, 0x02,
 	0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x38,
 	0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15,
 	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2e, 0x50,
@@ -872,7 +962,11 @@ var file_zrchain_zentp_genesis_proto_rawDesc = []byte{
 	0x65, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x05, 0x62, 0x75, 0x72, 0x6e, 0x73, 0x12, 0x2c,
 	0x0a, 0x12, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x5f, 0x72, 0x6f, 0x63, 0x6b, 0x5f, 0x73, 0x75,
 	0x70, 0x70, 0x6c, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x10, 0x73, 0x6f, 0x6c, 0x61,
-	0x6e, 0x61, 0x52, 0x6f, 0x63, 0x6b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x42, 0x96, 0x01, 0x0a,
+	0x6e, 0x61, 0x52, 0x6f, 0x63, 0x6b, 0x53, 0x75, 0x70, 0x70, 0x6c, 0x79, 0x12, 0x3e, 0x0a, 0x0a,
+	0x7a, 0x65, 0x6e, 0x74, 0x70, 0x5f, 0x66, 0x65, 0x65, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x76,
+	0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x42, 0x04, 0xc8, 0xde, 0x1f,
+	0x00, 0x52, 0x09, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x46, 0x65, 0x65, 0x73, 0x42, 0x96, 0x01, 0x0a,
 	0x11, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e,
 	0x74, 0x70, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f,
 	0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
@@ -902,16 +996,18 @@ var file_zrchain_zentp_genesis_proto_goTypes = []interface{}{
 	(*GenesisState)(nil), // 0: zrchain.zentp.GenesisState
 	(*Params)(nil),       // 1: zrchain.zentp.Params
 	(*Bridge)(nil),       // 2: zrchain.zentp.Bridge
+	(*v1beta1.Coin)(nil), // 3: cosmos.base.v1beta1.Coin
 }
 var file_zrchain_zentp_genesis_proto_depIdxs = []int32{
 	1, // 0: zrchain.zentp.GenesisState.params:type_name -> zrchain.zentp.Params
 	2, // 1: zrchain.zentp.GenesisState.mints:type_name -> zrchain.zentp.Bridge
 	2, // 2: zrchain.zentp.GenesisState.burns:type_name -> zrchain.zentp.Bridge
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 3: zrchain.zentp.GenesisState.zentp_fees:type_name -> cosmos.base.v1beta1.Coin
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_zentp_genesis_proto_init() }
