@@ -21,7 +21,6 @@ func setupTestEnv(t ginkgo.FullGinkgoTInterface) *TestEnv {
 
 	identity, err := client.NewIdentityFromSeed(
 		"m/44'/118'/0'/0/0",
-		// "deal liberty toilet artefact during key home calm vanish shock paddle sustain still rotate tonight spoon insane isolate pistol prosper critic kidney diesel crack",
 		"strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue",
 	)
 	if err != nil {
