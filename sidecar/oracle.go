@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -1623,6 +1624,13 @@ func (o *Oracle) processSignatures(
 	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
 	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
 
+	// Track processing results for debugging
+	totalNilResults := 0
+	successfulTransactions := 0
+	notFoundTransactions := 0
+	processingErrors := 0
+	emptyTransactions := 0
+
 	// Pre-allocate with estimated capacity to reduce allocations
 	estimatedEvents := len(signatures) * 2 // Estimate 2 events per signature on average
 	if cap(ep.events) < estimatedEvents {
@@ -1664,13 +1672,34 @@ func (o *Oracle) processSignatures(
 		batchResponses, batchErr := o.rpcCallBatchFn(batchCtx, batchRequests)
 		batchCancel()
 
+		// Debug logging for batch response
+		slog.Debug("Batch RPC call completed",
+			"eventType", eventTypeName,
+			"batchSize", len(currentBatch),
+			"requestCount", len(batchRequests),
+			"responseCount", len(batchResponses),
+			"batchError", batchErr)
+
 		// Check for errors in the response itself
 		if batchErr == nil {
-			for _, resp := range batchResponses {
+			errorCount := 0
+			for i, resp := range batchResponses {
 				if resp.Error != nil {
+					errorCount++
+					slog.Debug("Individual response error",
+						"eventType", eventTypeName,
+						"responseIndex", i,
+						"responseID", resp.ID,
+						"error", resp.Error)
 					batchErr = fmt.Errorf("response contains errors: %v", resp.Error)
 					break
 				}
+			}
+			if errorCount > 0 {
+				slog.Debug("Batch response error summary",
+					"eventType", eventTypeName,
+					"errorCount", errorCount,
+					"totalResponses", len(batchResponses))
 			}
 		}
 
@@ -1685,7 +1714,7 @@ func (o *Oracle) processSignatures(
 				// If we're already at the minimum batch size, switch to fallback for this batch
 				slog.Warn("Batch transaction fetch failed at minimum batch size, switching to individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
 				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-					slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+					slog.Warn("Fallback processing failed - stopping to prevent watermark gaps", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
 					o.batchRequestPool.Put(batchRequests)
 					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 				}
@@ -1709,15 +1738,101 @@ func (o *Oracle) processSignatures(
 			resp, exists := responseMap[idx]
 			if !exists {
 				err := fmt.Errorf("missing batch response for index %d", idx)
-				slog.Warn("Incomplete batch response, stopping processing and saving progress", "eventType", eventTypeName, "reason", err)
+				slog.Warn("Incomplete batch response - stopping to prevent watermark gaps", "eventType", eventTypeName, "reason", err, "consecutiveSuccesses", idx)
 				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+			}
+
+			// Handle nil results from RPC (transaction not found/retrievable)
+			if resp.Result == nil {
+				totalNilResults++
+				slog.Warn("Transaction returned nil result, attempting individual retry",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"responseID", resp.ID,
+					"responseError", resp.Error,
+					"nilResultCount", totalNilResults)
+
+				// Retry individual transaction
+				if retryResult, err := o.retryIndividualTransaction(ctx, sigInfo.Signature, eventTypeName); err != nil {
+					// ANY failure means we must stop to prevent gaps in watermark
+					processingErrors++
+					slog.Warn("Individual transaction retry failed - stopping to prevent watermark gaps",
+						"eventType", eventTypeName,
+						"signature", sigInfo.Signature,
+						"error", err,
+						"consecutiveSuccesses", idx,
+						"strategy", "watermark_only_advances_through_consecutive_successes",
+						"nextCycle", "will_retry_from_this_signature")
+					o.batchRequestPool.Put(batchRequests)
+					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				} else if retryResult != nil {
+					// Process the successfully retried transaction
+					events, err := processTransaction(retryResult, program, sigInfo.Signature, o.DebugMode)
+					if err != nil {
+						processingErrors++
+						slog.Warn("Failed to process retried transaction - stopping to prevent watermark gaps",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature,
+							"error", err,
+							"consecutiveSuccesses", idx)
+						o.batchRequestPool.Put(batchRequests)
+						return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+					}
+
+					if len(events) > 0 {
+						successfulTransactions++
+						slog.Debug("Successfully processed retried transaction",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature,
+							"eventCount", len(events))
+						for _, event := range events {
+							ep.AddEvent(event)
+						}
+					} else {
+						emptyTransactions++
+						slog.Debug("Retried transaction processed but contained no events",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature)
+					}
+					lastSuccessfullyProcessedSig = sigInfo.Signature
+					continue
+				} else {
+					// Still nil after retry - stop to prevent gaps
+					slog.Warn("Transaction still nil after retry - stopping to prevent watermark gaps",
+						"eventType", eventTypeName,
+						"signature", sigInfo.Signature,
+						"consecutiveSuccesses", idx,
+						"strategy", "zero_gaps_policy",
+						"nextCycle", "will_retry_from_this_signature")
+					o.batchRequestPool.Put(batchRequests)
+					return ep.GetEvents(), lastSuccessfullyProcessedSig, fmt.Errorf("transaction still nil after retry")
+				}
+			}
+
+			// Debug logging for response inspection
+			if len(resp.Result) == 0 {
+				slog.Warn("Response result is empty", "eventType", eventTypeName, "signature", sigInfo.Signature, "responseID", resp.ID)
+			} else if len(resp.Result) < 10 {
+				slog.Warn("Response result is very short", "eventType", eventTypeName, "signature", sigInfo.Signature, "rawResult", string(resp.Result), "resultLength", len(resp.Result))
 			}
 
 			var txRes solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
 				err = fmt.Errorf("unmarshal error: %w", err)
-				slog.Warn("Aborting batch due to unmarshal error", "eventType", eventTypeName, "reason", err)
+				resultStr := string(resp.Result)
+				if len(resultStr) > 500 {
+					resultStr = resultStr[:500] + "...(truncated)"
+				}
+				slog.Warn("Unmarshal error - stopping to prevent watermark gaps",
+					"eventType", eventTypeName,
+					"reason", err,
+					"signature", sigInfo.Signature,
+					"rawResult", resultStr,
+					"resultLength", len(resp.Result),
+					"responseID", resp.ID,
+					"responseError", resp.Error,
+					"consecutiveSuccesses", idx)
 				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
@@ -1726,15 +1841,29 @@ func (o *Oracle) processSignatures(
 
 			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
 			if err != nil {
-				slog.Warn("Aborting batch due to processing error", "eventType", eventTypeName, "reason", err)
+				slog.Warn("Processing error - stopping to prevent watermark gaps",
+					"eventType", eventTypeName,
+					"reason", err,
+					"signature", sigInfo.Signature,
+					"consecutiveSuccesses", idx)
 				o.batchRequestPool.Put(batchRequests)
 				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
 			}
 
 			if len(events) > 0 {
+				successfulTransactions++
+				slog.Debug("Successfully processed transaction",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"eventCount", len(events))
 				for _, event := range events {
 					ep.AddEvent(event)
 				}
+			} else {
+				emptyTransactions++
+				slog.Debug("Transaction processed but contained no events",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature)
 			}
 			lastSuccessfullyProcessedSig = sigInfo.Signature
 		}
@@ -1750,7 +1879,39 @@ func (o *Oracle) processSignatures(
 		time.Sleep(sidecartypes.SolanaSleepInterval)
 	}
 
-	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
+	// Calculate processing statistics
+	totalProcessed := len(signatures)
+	successRate := float64(successfulTransactions) / float64(totalProcessed) * 100
+
+	// Summary log with comprehensive batch processing results
+	slog.Info("Batch processing summary",
+		"eventType", eventTypeName,
+		"totalSignatures", totalProcessed,
+		"successfulTransactions", successfulTransactions,
+		"emptyTransactions", emptyTransactions,
+		"nilResults", totalNilResults,
+		"notFoundTransactions", notFoundTransactions,
+		"processingErrors", processingErrors,
+		"successRate", fmt.Sprintf("%.1f%%", successRate),
+		"extractedEvents", len(ep.GetEvents()),
+		"newWatermark", lastSuccessfullyProcessedSig,
+	)
+
+	// Explain gap prevention strategy
+	if processingErrors > 0 || totalNilResults > 0 {
+		slog.Info("Gap prevention strategy: Watermark only advances through consecutive successes",
+			"eventType", eventTypeName,
+			"strategy", "stop_on_first_failure",
+			"reason", "prevents_permanent_event_loss",
+			"nextCycleWillRetry", "failed_transactions")
+	}
+
+	if totalNilResults > 0 {
+		slog.Warn("Encountered nil results from Solana RPC", "eventType", eventTypeName, "nilResultCount", totalNilResults, "totalProcessed", len(signatures), "successfulEvents", len(ep.GetEvents()))
+	}
+	if len(ep.GetEvents()) > 0 {
+		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(ep.GetEvents()))
+	}
 	return ep.GetEvents(), lastSuccessfullyProcessedSig, nil
 }
 
@@ -1767,6 +1928,63 @@ func (o *Oracle) processSignatures(
 // - Parallel batch processing with improved error handling
 // - Exponential backoff retry strategy
 // - Memory-efficient slice pre-allocation
+// retryIndividualTransaction attempts to fetch a single transaction that returned nil in batch processing
+func (o *Oracle) retryIndividualTransaction(ctx context.Context, sig solana.Signature, eventTypeName string) (*solrpc.GetTransactionResult, error) {
+	// Check cache first
+	if cached, found := o.getCachedTransactionResult(sig.String()); found {
+		slog.Debug("Individual transaction retry found in cache", "eventType", eventTypeName, "signature", sig)
+		return cached, nil
+	}
+
+	// Rate limiting: acquire semaphore slot
+	select {
+	case o.solanaRateLimiter <- struct{}{}:
+		defer func() { <-o.solanaRateLimiter }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
+		return nil, fmt.Errorf("rate limiter timeout for individual retry after %v", sidecartypes.SolanaRateLimiterTimeout)
+	}
+
+	// Create timeout context for the individual request
+	retryCtx, cancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
+	defer cancel()
+
+	// Make individual RPC call with detailed error handling
+	txResult, err := o.getTransactionFn(retryCtx, sig, &solrpc.GetTransactionOpts{
+		Encoding:                       solana.EncodingBase64,
+		Commitment:                     solrpc.CommitmentConfirmed,
+		MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
+	})
+
+	if err != nil {
+		// Categorize the error for better handling
+		errStr := err.Error()
+		if strings.Contains(errStr, "not found") {
+			slog.Debug("Individual transaction retry confirmed not found", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("not found: %w", err)
+		} else if strings.Contains(errStr, "context canceled") || strings.Contains(errStr, "timeout") {
+			slog.Debug("Individual transaction retry timed out", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("timeout/canceled: %w", err)
+		} else {
+			slog.Debug("Individual transaction retry failed with RPC error", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("rpc error: %w", err)
+		}
+	}
+
+	// Handle nil result (transaction exists but no data returned)
+	if txResult == nil {
+		slog.Debug("Individual transaction retry returned nil result", "eventType", eventTypeName, "signature", sig)
+		return nil, nil
+	}
+
+	// Cache the successful result
+	o.cacheTransactionResult(sig.String(), txResult)
+	slog.Debug("Individual transaction retry successful", "eventType", eventTypeName, "signature", sig)
+
+	return txResult, nil
+}
+
 func (o *Oracle) getSolanaEvents(
 	ctx context.Context,
 	programIDStr string,
