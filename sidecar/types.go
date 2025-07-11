@@ -36,6 +36,7 @@ var (
 		ROCKUSDPrice:            math.LegacyNewDec(0),
 		BTCUSDPrice:             math.LegacyNewDec(0),
 		ETHUSDPrice:             math.LegacyNewDec(0),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 )
 

@@ -161,6 +161,15 @@ const (
 	SolRockBurn   SolanaEventType = "solRockBurn"
 )
 
+// PendingTxInfo represents a failed transaction that needs to be retried
+type PendingTxInfo struct {
+	Signature    string    `json:"signature"`
+	EventType    string    `json:"eventType"`
+	RetryCount   int       `json:"retryCount"`
+	LastAttempt  time.Time `json:"lastAttempt"`
+	FirstAttempt time.Time `json:"firstAttempt"`
+}
+
 type OracleState struct {
 	EigenDelegations        map[string]map[string]*big.Int `json:"eigenDelegations"`
 	EthBlockHeight          uint64                         `json:"ethBlockHeight"`
@@ -182,6 +191,8 @@ type OracleState struct {
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
 	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
 	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
+	// Pending transactions that failed processing and need to be retried
+	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`
 }
 
 type Config struct {

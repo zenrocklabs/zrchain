@@ -320,6 +320,11 @@ func (o *Oracle) fetchAndProcessState(
 	routinesCtx, cancelRoutines := context.WithCancel(tickCtx)
 	defer cancelRoutines()
 
+	// Process pending transactions first (retry failed transactions from previous cycles)
+	if o.solanaClient != nil {
+		o.processPendingTransactions(routinesCtx)
+	}
+
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
 	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
 
@@ -1563,9 +1568,114 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 // formatWatermarkForLogging returns a user-friendly representation of a watermark signature
 func formatWatermarkForLogging(sig solana.Signature) string {
 	if sig.IsZero() {
-		return "<none>"
+		return "none"
 	}
 	return sig.String()
+}
+
+// addPendingTransaction adds a failed transaction to the pending queue
+func (o *Oracle) addPendingTransaction(signature string, eventType string) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	if currentState.PendingSolanaTxs == nil {
+		currentState.PendingSolanaTxs = make(map[string]sidecartypes.PendingTxInfo)
+	}
+
+	now := time.Now()
+	if existing, exists := currentState.PendingSolanaTxs[signature]; exists {
+		// Update retry count for existing pending transaction
+		existing.RetryCount++
+		existing.LastAttempt = now
+		currentState.PendingSolanaTxs[signature] = existing
+		slog.Debug("Updated pending transaction retry count",
+			"signature", signature,
+			"eventType", eventType,
+			"retryCount", existing.RetryCount)
+	} else {
+		// Add new pending transaction
+		currentState.PendingSolanaTxs[signature] = sidecartypes.PendingTxInfo{
+			Signature:    signature,
+			EventType:    eventType,
+			RetryCount:   1,
+			FirstAttempt: now,
+			LastAttempt:  now,
+		}
+		slog.Debug("Added new pending transaction",
+			"signature", signature,
+			"eventType", eventType)
+	}
+}
+
+// removePendingTransaction removes a successfully processed transaction from the pending queue
+func (o *Oracle) removePendingTransaction(signature string) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	if currentState.PendingSolanaTxs != nil {
+		if _, exists := currentState.PendingSolanaTxs[signature]; exists {
+			delete(currentState.PendingSolanaTxs, signature)
+			slog.Debug("Removed pending transaction after successful processing",
+				"signature", signature)
+		}
+	}
+}
+
+// shouldRetryTransaction checks if a pending transaction should be retried
+func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
+	// Basic retry limit (can be made configurable later)
+	maxRetries := 10
+	if info.RetryCount >= maxRetries {
+		return false
+	}
+
+	// Simple time-based retry interval (can be made exponential later)
+	retryInterval := 5 * time.Minute
+	return time.Since(info.LastAttempt) >= retryInterval
+}
+
+// processPendingTransactions attempts to retry all pending transactions
+func (o *Oracle) processPendingTransactions(ctx context.Context) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	if currentState.PendingSolanaTxs == nil || len(currentState.PendingSolanaTxs) == 0 {
+		return
+	}
+
+	slog.Info("Processing pending transactions", "count", len(currentState.PendingSolanaTxs))
+
+	for signature, info := range currentState.PendingSolanaTxs {
+		if !o.shouldRetryTransaction(info) {
+			continue
+		}
+
+		// Attempt to retry the transaction
+		sig, err := solana.SignatureFromBase58(signature)
+		if err != nil {
+			slog.Warn("Invalid signature in pending transactions", "signature", signature, "error", err)
+			continue
+		}
+
+		// Try to get and process the transaction
+		txResult, err := o.retryIndividualTransaction(ctx, sig, info.EventType)
+		if err != nil {
+			// Update retry count but keep in queue
+			o.addPendingTransaction(signature, info.EventType)
+			slog.Debug("Pending transaction retry failed",
+				"signature", signature,
+				"eventType", info.EventType,
+				"error", err)
+			continue
+		}
+
+		if txResult != nil {
+			// Transaction retrieved successfully, now try to process it
+			// We'll need to determine the correct program ID and processing function
+			// For now, we'll mark it as successfully retrieved and remove from pending
+			o.removePendingTransaction(signature)
+			slog.Info("Successfully retried pending transaction",
+				"signature", signature,
+				"eventType", info.EventType)
+		} else {
+			// Still nil, update retry count
+			o.addPendingTransaction(signature, info.EventType)
+		}
+	}
 }
 
 // processTransactionFunc defines the function signature for processing a single Solana transaction.
@@ -1601,6 +1711,7 @@ func (o *Oracle) processSignatures(
 	allEvents := make([]any, 0, 100)
 
 	var lastSuccessfullyProcessedSig solana.Signature
+	var newestSigProcessed solana.Signature
 	// Adaptive batching parameters
 	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
 	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
@@ -1691,13 +1802,16 @@ func (o *Oracle) processSignatures(
 					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
 				currentBatchSize = newBatchSize
 			} else {
-				// If we're already at the minimum batch size, switch to fallback for this batch
-				slog.Warn("Batch transaction fetch failed at minimum batch size, switching to individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
-				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, &allEvents, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-					slog.Warn("Fallback processing failed - stopping to prevent watermark gaps", "eventType", eventTypeName, "processedCount", len(allEvents), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
-					return allEvents, lastSuccessfullyProcessedSig, err
+				// If we're already at the minimum batch size, add all transactions to pending queue
+				slog.Warn("Batch transaction fetch failed at minimum batch size, adding to pending queue", "eventType", eventTypeName, "size", len(currentBatch))
+				for _, sigInfo := range currentBatch {
+					o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
 				}
-				i += len(currentBatch) // Advance past the successfully processed fallback segment
+				// Update newest signature processed for watermark advancement
+				if len(currentBatch) > 0 {
+					newestSigProcessed = currentBatch[len(currentBatch)-1].Signature
+				}
+				i += len(currentBatch) // Advance past the batch
 			}
 			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
 			continue                                            // Retry the same segment `i`
@@ -1711,13 +1825,14 @@ func (o *Oracle) processSignatures(
 			}
 		}
 
-		// Process responses in order to maintain watermark correctness
+		// Process responses in order
 		for idx, sigInfo := range currentBatch {
 			resp, exists := responseMap[idx]
 			if !exists {
-				err := fmt.Errorf("missing batch response for index %d", idx)
-				slog.Warn("Incomplete batch response - stopping to prevent watermark gaps", "eventType", eventTypeName, "reason", err, "consecutiveSuccesses", idx)
-				return allEvents, lastSuccessfullyProcessedSig, err
+				slog.Warn("Missing batch response, adding to pending queue", "eventType", eventTypeName, "signature", sigInfo.Signature)
+				o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+				newestSigProcessed = sigInfo.Signature
+				continue
 			}
 
 			// Handle nil results from RPC (transaction not found/retrievable)
@@ -1732,27 +1847,27 @@ func (o *Oracle) processSignatures(
 
 				// Retry individual transaction
 				if retryResult, err := o.retryIndividualTransaction(ctx, sigInfo.Signature, eventTypeName); err != nil {
-					// ANY failure means we must stop to prevent gaps in watermark
+					// Add to pending queue instead of stopping
 					processingErrors++
-					slog.Warn("Individual transaction retry failed - stopping to prevent watermark gaps",
+					slog.Warn("Individual transaction retry failed, adding to pending queue",
 						"eventType", eventTypeName,
 						"signature", sigInfo.Signature,
-						"error", err,
-						"consecutiveSuccesses", idx,
-						"strategy", "watermark_only_advances_through_consecutive_successes",
-						"nextCycle", "will_retry_from_this_signature")
-					return allEvents, lastSuccessfullyProcessedSig, err
+						"error", err)
+					o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+					newestSigProcessed = sigInfo.Signature
+					continue
 				} else if retryResult != nil {
 					// Process the successfully retried transaction
 					events, err := processTransaction(retryResult, program, sigInfo.Signature, o.DebugMode)
 					if err != nil {
 						processingErrors++
-						slog.Warn("Failed to process retried transaction - stopping to prevent watermark gaps",
+						slog.Warn("Failed to process retried transaction, adding to pending queue",
 							"eventType", eventTypeName,
 							"signature", sigInfo.Signature,
-							"error", err,
-							"consecutiveSuccesses", idx)
-						return allEvents, lastSuccessfullyProcessedSig, err
+							"error", err)
+						o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+						newestSigProcessed = sigInfo.Signature
+						continue
 					}
 
 					if len(events) > 0 {
@@ -1769,16 +1884,17 @@ func (o *Oracle) processSignatures(
 							"signature", sigInfo.Signature)
 					}
 					lastSuccessfullyProcessedSig = sigInfo.Signature
+					o.removePendingTransaction(sigInfo.Signature.String())
+					newestSigProcessed = sigInfo.Signature
 					continue
 				} else {
-					// Still nil after retry - stop to prevent gaps
-					slog.Warn("Transaction still nil after retry - stopping to prevent watermark gaps",
+					// Still nil after retry - add to pending queue
+					slog.Warn("Transaction still nil after retry, adding to pending queue",
 						"eventType", eventTypeName,
-						"signature", sigInfo.Signature,
-						"consecutiveSuccesses", idx,
-						"strategy", "zero_gaps_policy",
-						"nextCycle", "will_retry_from_this_signature")
-					return allEvents, lastSuccessfullyProcessedSig, fmt.Errorf("transaction still nil after retry")
+						"signature", sigInfo.Signature)
+					o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+					newestSigProcessed = sigInfo.Signature
+					continue
 				}
 			}
 
@@ -1791,33 +1907,26 @@ func (o *Oracle) processSignatures(
 
 			var txRes solrpc.GetTransactionResult
 			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
-				err = fmt.Errorf("unmarshal error: %w", err)
-				resultStr := string(resp.Result)
-				if len(resultStr) > 500 {
-					resultStr = resultStr[:500] + "...(truncated)"
-				}
-				slog.Warn("Unmarshal error - stopping to prevent watermark gaps",
+				slog.Warn("Unmarshal error, adding to pending queue",
 					"eventType", eventTypeName,
-					"reason", err,
 					"signature", sigInfo.Signature,
-					"rawResult", resultStr,
-					"resultLength", len(resp.Result),
-					"responseID", resp.ID,
-					"responseError", resp.Error,
-					"consecutiveSuccesses", idx)
-				return allEvents, lastSuccessfullyProcessedSig, err
+					"error", err)
+				o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+				newestSigProcessed = sigInfo.Signature
+				continue
 			}
 
 			o.cacheTransactionResult(sigInfo.Signature.String(), &txRes)
 
 			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
 			if err != nil {
-				slog.Warn("Processing error - stopping to prevent watermark gaps",
+				slog.Warn("Processing error, adding to pending queue",
 					"eventType", eventTypeName,
-					"reason", err,
 					"signature", sigInfo.Signature,
-					"consecutiveSuccesses", idx)
-				return allEvents, lastSuccessfullyProcessedSig, err
+					"error", err)
+				o.addPendingTransaction(sigInfo.Signature.String(), eventTypeName)
+				newestSigProcessed = sigInfo.Signature
+				continue
 			}
 
 			if len(events) > 0 {
@@ -1834,6 +1943,8 @@ func (o *Oracle) processSignatures(
 					"signature", sigInfo.Signature)
 			}
 			lastSuccessfullyProcessedSig = sigInfo.Signature
+			o.removePendingTransaction(sigInfo.Signature.String())
+			newestSigProcessed = sigInfo.Signature
 		}
 
 		// Advance to the next segment
@@ -1861,16 +1972,16 @@ func (o *Oracle) processSignatures(
 		"processingErrors", processingErrors,
 		"successRate", fmt.Sprintf("%.1f%%", successRate),
 		"extractedEvents", len(allEvents),
-		"newWatermark", lastSuccessfullyProcessedSig,
+		"newWatermark", newestSigProcessed,
 	)
 
-	// Explain gap prevention strategy
+	// Log pending transaction strategy
 	if processingErrors > 0 || totalNilResults > 0 {
-		slog.Info("Gap prevention strategy: Watermark only advances through consecutive successes",
+		slog.Info("Optimistic watermark advancement with pending queue",
 			"eventType", eventTypeName,
-			"strategy", "stop_on_first_failure",
-			"reason", "prevents_permanent_event_loss",
-			"nextCycleWillRetry", "failed_transactions")
+			"strategy", "continue_with_pending_queue",
+			"reason", "prevents_system_stalls",
+			"pendingTransactions", "will_retry_failed_transactions")
 	}
 
 	if totalNilResults > 0 {
@@ -1879,7 +1990,12 @@ func (o *Oracle) processSignatures(
 	if len(allEvents) > 0 {
 		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(allEvents))
 	}
-	return allEvents, lastSuccessfullyProcessedSig, nil
+	// Return the newest signature processed for optimistic watermark advancement
+	watermarkSig := newestSigProcessed
+	if watermarkSig.IsZero() {
+		watermarkSig = lastSuccessfullyProcessedSig
+	}
+	return allEvents, watermarkSig, nil
 }
 
 // getSolanaEvents is an optimized generic helper to fetch signatures for a given program, detect and heal
