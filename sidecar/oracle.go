@@ -1674,6 +1674,16 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 
 	for signature, info := range pendingCopy {
 		if !o.shouldRetryTransaction(info) {
+			// Check if we should remove transactions that exceeded max retries
+			updateMutex.Lock()
+			if info.RetryCount >= 10 { // maxRetries from shouldRetryTransaction
+				delete(update.pendingTransactions, signature)
+				slog.Info("Removed pending transaction after max retries",
+					"signature", signature,
+					"eventType", info.EventType,
+					"retryCount", info.RetryCount)
+			}
+			updateMutex.Unlock()
 			continue
 		}
 
@@ -1687,8 +1697,14 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 		// Try to get and process the transaction
 		txResult, err := o.retryIndividualTransaction(ctx, sig, info.EventType)
 		if err != nil {
-			// Update retry count but keep in queue
-			o.addPendingTransaction(signature, info.EventType, update, updateMutex)
+			// Update retry count directly in the map
+			updateMutex.Lock()
+			if existing, exists := update.pendingTransactions[signature]; exists {
+				existing.RetryCount++
+				existing.LastAttempt = time.Now()
+				update.pendingTransactions[signature] = existing
+			}
+			updateMutex.Unlock()
 			slog.Debug("Pending transaction retry failed",
 				"signature", signature,
 				"eventType", info.EventType,
@@ -1700,8 +1716,14 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			// Transaction retrieved successfully, now try to process it
 			events, err := o.processTransactionByEventType(txResult, sig, info.EventType)
 			if err != nil {
-				// Processing failed, update retry count but keep in queue
-				o.addPendingTransaction(signature, info.EventType, update, updateMutex)
+				// Update retry count directly in the map
+				updateMutex.Lock()
+				if existing, exists := update.pendingTransactions[signature]; exists {
+					existing.RetryCount++
+					existing.LastAttempt = time.Now()
+					update.pendingTransactions[signature] = existing
+				}
+				updateMutex.Unlock()
 				slog.Debug("Pending transaction processing failed",
 					"signature", signature,
 					"eventType", info.EventType,
@@ -1721,8 +1743,14 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			// Remove from pending queue
 			o.removePendingTransaction(signature, update, updateMutex)
 		} else {
-			// Still nil, update retry count
-			o.addPendingTransaction(signature, info.EventType, update, updateMutex)
+			// Still nil, update retry count directly in the map
+			updateMutex.Lock()
+			if existing, exists := update.pendingTransactions[signature]; exists {
+				existing.RetryCount++
+				existing.LastAttempt = time.Now()
+				update.pendingTransactions[signature] = existing
+			}
+			updateMutex.Unlock()
 		}
 	}
 }
