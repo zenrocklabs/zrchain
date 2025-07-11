@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/VenimirPetkov/goem/ethereum"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/zenrocklabs/goem/ethereum"
 	zentype "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 

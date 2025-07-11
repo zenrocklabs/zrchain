@@ -3,12 +3,12 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/VenimirPetkov/goem/ethereum"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
+	"github.com/zenrocklabs/goem/ethereum"
 )
 
 var defaultECDSAKeyWithZenBTCMetadata = types.Key{

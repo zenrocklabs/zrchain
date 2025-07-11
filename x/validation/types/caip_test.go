@@ -3,8 +3,8 @@ package types
 import (
 	"testing"
 
-	"github.com/VenimirPetkov/goem/ethereum"
 	"github.com/stretchr/testify/require"
+	"github.com/zenrocklabs/goem/ethereum"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

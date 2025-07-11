@@ -280,8 +280,6 @@ github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
-github.com/VenimirPetkov/goem v1.0.1 h1:MFitmDN2kye6Q51JUh3GiGiPoy0KVgK7+BZ0wIe3p28=
-github.com/VenimirPetkov/goem v1.0.1/go.mod h1:daQpwYrmZ20iwol+pMFLH1chCKFWdowGSxVmPKXXvvw=
 github.com/VictoriaMetrics/fastcache v1.12.2 h1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=
 github.com/VictoriaMetrics/fastcache v1.12.2/go.mod h1:AmC+Nzz1+3G2eCPapF6UcsnkThDcMsQicp4xDukwJYI=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
@@ -1322,6 +1320,8 @@ github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2 h1:Tb1R2MIcL6c3A7eZbnptemT1l
 github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2 h1:mip7GbIne2Aneeoe3MsaestQoqcXVA7LSXq/6ztw97Q=
 github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
+github.com/zenrocklabs/goem v1.1.0 h1:jbnhvE5g2rJrKqBm3SvbpzJtpchf8MCKuqiy9cxvIVo=
+github.com/zenrocklabs/goem v1.1.0/go.mod h1:EWIWULRcQrvIQGOn5pj+NvhO9Lbxc131INB++6LyUZ0=
 github.com/zenrocklabs/zenbtc v1.17.17 h1:0P2MQAkjyCpSnw9GHFpogIIIPHBAVdhtJvE6HHTUl6E=
 github.com/zenrocklabs/zenbtc v1.17.17/go.mod h1:QsMLC+KgbMSfxVH2TicOd4oFq/0ExyJo5KXaXjkOwJ8=
 github.com/zenrocklabs/zenrock-avs v1.6.4 h1:x1tASFM9akwjHyJ4WOyRppNV7yKjrNN6uL0+91EeI3g=

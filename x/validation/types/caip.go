@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"cosmossdk.io/errors"
-	"github.com/VenimirPetkov/goem/ethereum"
-	"github.com/VenimirPetkov/goem/solana"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/zenrocklabs/goem/ethereum"
+	"github.com/zenrocklabs/goem/solana"
 )
 
 // IsValidCAIP2 checks if a string follows the CAIP-2 format: "<namespace>:<reference>"
