@@ -77,7 +77,7 @@ var (
 	}
 	SolRockProgramID = map[string]string{
 		NetworkDevnet:  "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
-		NetworkRegnet:  "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
+		NetworkRegnet:  "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
 		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 	}
