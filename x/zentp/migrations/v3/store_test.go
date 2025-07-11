@@ -2,11 +2,11 @@ package v3_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/module"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
@@ -174,10 +174,10 @@ func TestSendZentpFeesToMintModule(t *testing.T) {
 	zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 
-	currentBalance := sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(10000))) // 10k urock
+	currentBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000)) // 10k urock
 
-	bankKeeper.EXPECT().SpendableCoins(ctx, zentpModuleAddr).DoAndReturn(
-		func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	bankKeeper.EXPECT().GetBalance(ctx, zentpModuleAddr, appparams.BondDenom).DoAndReturn(
+		func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 			return currentBalance
 		},
 	).AnyTimes()
@@ -190,7 +190,7 @@ func TestSendZentpFeesToMintModule(t *testing.T) {
 	).DoAndReturn(
 		func(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
 			// Update the tracked balance by subtracting the sent amount
-			currentBalance = currentBalance.Sub(amt...)
+			currentBalance = currentBalance.Sub(amt[0])
 			return nil
 		},
 	).Times(1)
@@ -223,7 +223,7 @@ func TestSendZentpFeesToMintModule(t *testing.T) {
 	require.NoError(t, err)
 
 	// Final balance should be 0
-	require.True(t, currentBalance.IsZero(), "Final balance should be zero after sending all coins")
+	require.True(t, currentBalance.IsZero(), "Final balance should be empty after sending all coins")
 }
 
 func TestSendZentpFeesToMintModuleWithPendingMints(t *testing.T) {
@@ -267,10 +267,10 @@ func TestSendZentpFeesToMintModuleWithPendingMints(t *testing.T) {
 	zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 
-	currentBalance := sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(15000))) // 15k urock
+	currentBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10050)) // 10050 urock
 
-	bankKeeper.EXPECT().SpendableCoins(ctx, zentpModuleAddr).DoAndReturn(
-		func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	bankKeeper.EXPECT().GetBalance(ctx, zentpModuleAddr, appparams.BondDenom).DoAndReturn(
+		func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 			return currentBalance
 		},
 	).AnyTimes()
@@ -282,7 +282,7 @@ func TestSendZentpFeesToMintModuleWithPendingMints(t *testing.T) {
 		ubermock.Any(),
 	).DoAndReturn(
 		func(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
-			currentBalance = currentBalance.Sub(amt...)
+			currentBalance = currentBalance.Sub(amt[0])
 			return nil
 		},
 	).Times(1)
@@ -313,14 +313,9 @@ func TestSendZentpFeesToMintModuleWithPendingMints(t *testing.T) {
 	err = v3.SendZentpFeesToMintModule(ctx, getPendingMints, getBridgeFeeParams, bankKeeper, accountKeeper)
 	require.NoError(t, err)
 
-	// Verify the logic worked correctly
-	// Initial balance: 15000 urock
-	// Pending mint amount: 10000 urock
-	// Bridge fee: 0.5% = 50 urock
-	// Amount sent: 15000 - 50 = 14950 urock
-	// Final balance should be: 50 urock (just the pending fees)
-	expectedFinalBalance := sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(50)))
-	require.Equal(t, expectedFinalBalance, currentBalance, "Final balance should match expected pending fees")
+	expectedFinalBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000))
+
+	require.Equal(t, expectedFinalBalance, currentBalance, "Final balance should match expected pending mint amount")
 }
 
 func TestSendZentpFeesToMintModuleEdgeCases(t *testing.T) {
@@ -362,10 +357,10 @@ func TestSendZentpFeesToMintModuleEdgeCases(t *testing.T) {
 	zentpModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(zentpModuleAddr).AnyTimes()
 
-	currentBalance := sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(5000))) // 5k urock
+	currentBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(4030))
 
-	bankKeeper.EXPECT().SpendableCoins(ctx, zentpModuleAddr).DoAndReturn(
-		func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	bankKeeper.EXPECT().GetBalance(ctx, zentpModuleAddr, appparams.BondDenom).DoAndReturn(
+		func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 			return currentBalance
 		},
 	).AnyTimes()
@@ -377,7 +372,7 @@ func TestSendZentpFeesToMintModuleEdgeCases(t *testing.T) {
 		ubermock.Any(),
 	).DoAndReturn(
 		func(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
-			currentBalance = currentBalance.Sub(amt...)
+			currentBalance = currentBalance.Sub(amt[0])
 			return nil
 		},
 	).Times(1)
@@ -412,10 +407,8 @@ func TestSendZentpFeesToMintModuleEdgeCases(t *testing.T) {
 	// Pending mint 1: 1000 urock * 1% = 10 urock fee
 	// Pending mint 2: 2000 urock * 1% = 20 urock fee
 	// Total pending fees: 30 urock
-	// Amount sent: 5000 - 30 = 4970 urock
-	// Final balance: 30 urock
-	expectedFinalBalance := sdk.NewCoins(sdk.NewCoin("urock", math.NewIntFromUint64(30)))
-	fmt.Println("expectedFinalBalance", expectedFinalBalance.String())
-	fmt.Println("currentBalance", currentBalance.String())
-	require.Equal(t, expectedFinalBalance, currentBalance, "Final balance should match total pending fees")
+	// Amount sent: 4030 - 3000 = 1030 urock
+	// Final balance: 3000 urock
+	expectedFinalBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(3000))
+	require.Equal(t, expectedFinalBalance, currentBalance, "Final balance should match total pending amounts without fees")
 }

@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
@@ -60,27 +61,19 @@ func SendZentpFeesToMintModule(
 		return err
 	}
 
-	var pendingFees sdk.Coins
-	_, bridgeFee, err := getBridgeFeeParams(ctx)
-	if err != nil {
-		return err
-	}
+	var pendingTransferAmounts sdk.Coins
 
 	for _, mint := range pendingMints {
-		amountInt := math.NewIntFromUint64(mint.Amount)
-		bridgeFeeAmount := math.LegacyNewDecFromInt(amountInt).Mul(bridgeFee).TruncateInt()
-		if bridgeFeeAmount.IsPositive() {
-			pendingFees = pendingFees.Add(sdk.NewCoin(mint.Denom, bridgeFeeAmount))
-		}
+		pendingTransferAmounts = pendingTransferAmounts.Add(sdk.NewCoin(mint.Denom, math.NewIntFromUint64(mint.Amount)))
 	}
 
 	zentpAddr := accountKeeper.GetModuleAddress(types.ModuleName)
-	zentpBalance := bankKeeper.SpendableCoins(ctx, zentpAddr)
+	zentpBalance := bankKeeper.GetBalance(ctx, zentpAddr, appparams.BondDenom)
 
-	amountToSend := zentpBalance.Sub(pendingFees...)
+	amountToSend := zentpBalance.Sub(sdk.NewCoin(appparams.BondDenom, pendingTransferAmounts.AmountOf(appparams.BondDenom)))
 
-	if amountToSend.IsAllPositive() {
-		err = bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.ZentpCollectorName, amountToSend)
+	if !amountToSend.IsZero() {
+		err = bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.ZentpCollectorName, sdk.NewCoins(amountToSend))
 		if err != nil {
 			return err
 		}
