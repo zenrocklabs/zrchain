@@ -570,9 +570,9 @@ func (k Keeper) UnbondingToUnbonded(ctx context.Context, validator types.Validat
 // Vote extension mismatch detection configuration
 const (
 	// Number of recent blocks to check for vote extension mismatches
-	voteExtensionWindowSize = 200
+	voteExtensionWindowSize = 320
 	// Number of mismatched vote extensions required to jail a validator
-	voteExtensionJailThreshold = 100
+	voteExtensionJailThreshold = 160
 )
 
 // checkAndJailValidatorsForMismatchedVoteExtensions checks all bonded validators
