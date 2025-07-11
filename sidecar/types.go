@@ -93,6 +93,7 @@ type oracleStateUpdate struct {
 	SolanaMintEvents        []api.SolanaMintEvent
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
+	pendingTransactions     map[string]sidecartypes.PendingTxInfo
 }
 
 type PriceData struct {
