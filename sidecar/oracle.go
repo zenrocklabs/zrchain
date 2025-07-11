@@ -264,6 +264,16 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 
 	o.currentState.Store(&newState)
 
+	// Log event counts in each state field every tick
+	slog.Info("State event counts per tick",
+		"ethBurnEvents", len(newState.EthBurnEvents),
+		"cleanedEthBurnEvents", len(newState.CleanedEthBurnEvents),
+		"solanaBurnEvents", len(newState.SolanaBurnEvents),
+		"cleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
+		"solanaMintEvents", len(newState.SolanaMintEvents),
+		"cleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
+		"redemptions", len(newState.Redemptions))
+
 	// Update the oracle's high-watermark fields from the newly applied state.
 	// These are used as the starting point for the next fetch cycle.
 	o.lastSolRockMintSigStr = newState.LastSolRockMintSig
