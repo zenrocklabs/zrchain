@@ -1665,15 +1665,176 @@ func (o *Oracle) processPendingTransactions(ctx context.Context) {
 
 		if txResult != nil {
 			// Transaction retrieved successfully, now try to process it
-			// We'll need to determine the correct program ID and processing function
-			// For now, we'll mark it as successfully retrieved and remove from pending
+			events, err := o.processTransactionByEventType(txResult, sig, info.EventType)
+			if err != nil {
+				// Processing failed, update retry count but keep in queue
+				o.addPendingTransaction(signature, info.EventType)
+				slog.Debug("Pending transaction processing failed",
+					"signature", signature,
+					"eventType", info.EventType,
+					"error", err)
+				continue
+			}
+
+			// Successfully processed - add events to current state
+			if len(events) > 0 {
+				o.addEventsToCurrentState(events, info.EventType)
+				slog.Info("Successfully processed pending transaction",
+					"signature", signature,
+					"eventType", info.EventType,
+					"eventCount", len(events))
+			}
+
+			// Remove from pending queue
 			o.removePendingTransaction(signature)
-			slog.Info("Successfully retried pending transaction",
-				"signature", signature,
-				"eventType", info.EventType)
 		} else {
 			// Still nil, update retry count
 			o.addPendingTransaction(signature, info.EventType)
+		}
+	}
+}
+
+// processTransactionByEventType processes a transaction based on its event type
+func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionResult, sig solana.Signature, eventType string) ([]any, error) {
+	// Determine program ID and processor function based on event type
+	var programID string
+	var processor processTransactionFunc
+
+	switch eventType {
+	case "Solana ROCK mint":
+		programID = sidecartypes.SolRockProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			return o.processMintTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := rock_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
+					eventData, ok := data.(*rock_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
+					}
+					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
+				},
+				eventType,
+			)
+		}
+	case "Solana zenBTC mint":
+		programID = sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			return o.processMintTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
+					eventData, ok := data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
+					}
+					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
+				},
+				eventType,
+			)
+		}
+	case "Solana zenBTC burn":
+		programID = sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+			return o.processBurnTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (destAddr []byte, value uint64, ok bool) {
+					eventData, ok := data.(*zenbtc_spl_token.TokenRedemptionEventData)
+					if !ok {
+						return nil, 0, false
+					}
+					return eventData.DestAddr[:], eventData.Value, true
+				},
+				eventType, chainID, true,
+			)
+		}
+	case "Solana ROCK burn":
+		programID = sidecartypes.SolRockProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+			return o.processBurnTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := rock_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (destAddr []byte, value uint64, ok bool) {
+					eventData, ok := data.(*rock_spl_token.TokenRedemptionEventData)
+					if !ok {
+						return nil, 0, false
+					}
+					return eventData.DestAddr[:], eventData.Value, true
+				},
+				eventType, chainID, false,
+			)
+		}
+	default:
+		return nil, fmt.Errorf("unknown event type: %s", eventType)
+	}
+
+	// Parse program ID
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse program ID for %s: %w", eventType, err)
+	}
+
+	// Process the transaction
+	return processor(txResult, program, sig, o.DebugMode)
+}
+
+// addEventsToCurrentState adds processed events to the current state
+func (o *Oracle) addEventsToCurrentState(events []any, eventType string) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	switch eventType {
+	case "Solana ROCK mint", "Solana zenBTC mint":
+		// Convert to mint events and add to state
+		for _, event := range events {
+			if mintEvent, ok := event.(api.SolanaMintEvent); ok {
+				currentState.SolanaMintEvents = append(currentState.SolanaMintEvents, mintEvent)
+			}
+		}
+	case "Solana zenBTC burn", "Solana ROCK burn":
+		// Convert to burn events and add to state
+		for _, event := range events {
+			if burnEvent, ok := event.(api.BurnEvent); ok {
+				currentState.SolanaBurnEvents = append(currentState.SolanaBurnEvents, burnEvent)
+			}
 		}
 	}
 }
