@@ -688,11 +688,38 @@ func (o *Oracle) processSolanaMintEvents(
 		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
 
 		updateMutex.Lock()
-		// Since there is no backfill for mint events, there is no race condition with other goroutines
-		// modifying update.SolanaMintEvents. We can assign the final list directly.
-		// This avoids a second, confusingly-logged merge.
+
 		initialUpdateCount := len(update.SolanaMintEvents)
-		update.SolanaMintEvents = mergedMintEvents
+
+		// Check if there are any existing events from pending transactions
+		existingPendingEvents := make(map[string]api.SolanaMintEvent)
+		for _, event := range update.SolanaMintEvents {
+			existingPendingEvents[event.TxSig] = event
+		}
+
+		// Merge new events with existing pending events, avoiding duplicates
+		finalEvents := make([]api.SolanaMintEvent, 0, len(mergedMintEvents)+len(existingPendingEvents))
+
+		// First add all new events
+		for _, event := range mergedMintEvents {
+			finalEvents = append(finalEvents, event)
+		}
+
+		// Then add any pending events that weren't already included
+		for sig, event := range existingPendingEvents {
+			found := false
+			for _, newEvent := range mergedMintEvents {
+				if newEvent.TxSig == sig {
+					found = true
+					break
+				}
+			}
+			if !found {
+				finalEvents = append(finalEvents, event)
+			}
+		}
+
+		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
 
 		// Only log if there were actual changes in the final merge
@@ -700,7 +727,9 @@ func (o *Oracle) processSolanaMintEvents(
 			slog.Info("Final merge and state update completed",
 				"finalMintEvents", len(update.SolanaMintEvents),
 				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
-				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount)
+				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
+				"newEvents", len(mergedMintEvents),
+				"preservedPendingEvents", len(existingPendingEvents))
 		}
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
@@ -783,16 +812,16 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		updateMutex.Lock()
 		defer updateMutex.Unlock()
 
-		// Manually construct the base list of events to avoid confusing logs from `mergeNewBurnEvents`.
-		// The base list consists of events that were added by the backfill process (`update.solanaBurnEvents`)
-		// and events from the previous state that have not yet been reconciled (`remainingEvents`).
 		// A map is used to efficiently de-duplicate events by their transaction ID.
 		combinedEventsMap := make(map[string]api.BurnEvent)
 
-		// Add events that might have been added by the backfill process first.
+		// First, preserve any existing pending events that were already added to the state update
+		existingPendingEvents := make(map[string]api.BurnEvent)
 		for _, event := range update.solanaBurnEvents {
+			existingPendingEvents[event.TxID] = event
 			combinedEventsMap[event.TxID] = event
 		}
+
 		// Add the remaining unreconciled events from the previous state.
 		for _, event := range remainingEvents {
 			combinedEventsMap[event.TxID] = event
@@ -804,10 +833,33 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			baseEvents = append(baseEvents, event)
 		}
 
-		// Now, merge the newly fetched Solana burn events (`allNewSolanaBurnEvents`) into the
-		// de-duplicated list of existing events (`baseEvents`). The log message from this
-		// call will now correctly report only the truly new events as "added".
-		update.solanaBurnEvents = mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
+		// Merge the newly fetched Solana burn events with existing events
+		mergedEvents := mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
+
+		// CRITICAL: Ensure pending events are preserved in the final result
+		// This prevents the same event loss issue that affected mint events
+		finalEvents := make([]api.BurnEvent, 0, len(mergedEvents)+len(existingPendingEvents))
+
+		// First add all merged events
+		for _, event := range mergedEvents {
+			finalEvents = append(finalEvents, event)
+		}
+
+		// Then add any pending events that weren't already included
+		for txID, event := range existingPendingEvents {
+			found := false
+			for _, mergedEvent := range mergedEvents {
+				if mergedEvent.TxID == txID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				finalEvents = append(finalEvents, event)
+			}
+		}
+
+		update.solanaBurnEvents = finalEvents
 		update.cleanedSolanaBurnEvents = cleanedEvents
 	}()
 }
@@ -1605,14 +1657,19 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 
 	now := time.Now()
 	if existing, exists := update.pendingTransactions[signature]; exists {
-		// Update retry count for existing pending transaction
-		existing.RetryCount++
-		existing.LastAttempt = now
-		update.pendingTransactions[signature] = existing
+
+		updated := sidecartypes.PendingTxInfo{
+			Signature:    existing.Signature,
+			EventType:    existing.EventType,
+			RetryCount:   existing.RetryCount + 1,
+			FirstAttempt: existing.FirstAttempt,
+			LastAttempt:  now,
+		}
+		update.pendingTransactions[signature] = updated
 		slog.Debug("Updated pending transaction retry count",
 			"signature", signature,
 			"eventType", eventType,
-			"retryCount", existing.RetryCount)
+			"retryCount", updated.RetryCount)
 	} else {
 		// Add new pending transaction
 		update.pendingTransactions[signature] = sidecartypes.PendingTxInfo{
@@ -1691,18 +1748,26 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 		sig, err := solana.SignatureFromBase58(signature)
 		if err != nil {
 			slog.Warn("Invalid signature in pending transactions", "signature", signature, "error", err)
+
+			updateMutex.Lock()
+			delete(update.pendingTransactions, signature)
+			updateMutex.Unlock()
 			continue
 		}
 
 		// Try to get and process the transaction
 		txResult, err := o.retryIndividualTransaction(ctx, sig, info.EventType)
 		if err != nil {
-			// Update retry count directly in the map
 			updateMutex.Lock()
 			if existing, exists := update.pendingTransactions[signature]; exists {
-				existing.RetryCount++
-				existing.LastAttempt = time.Now()
-				update.pendingTransactions[signature] = existing
+				updated := sidecartypes.PendingTxInfo{
+					Signature:    existing.Signature,
+					EventType:    existing.EventType,
+					RetryCount:   existing.RetryCount + 1,
+					FirstAttempt: existing.FirstAttempt,
+					LastAttempt:  time.Now(),
+				}
+				update.pendingTransactions[signature] = updated
 			}
 			updateMutex.Unlock()
 			slog.Debug("Pending transaction retry failed",
@@ -1716,12 +1781,16 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			// Transaction retrieved successfully, now try to process it
 			events, err := o.processTransactionByEventType(txResult, sig, info.EventType)
 			if err != nil {
-				// Update retry count directly in the map
 				updateMutex.Lock()
 				if existing, exists := update.pendingTransactions[signature]; exists {
-					existing.RetryCount++
-					existing.LastAttempt = time.Now()
-					update.pendingTransactions[signature] = existing
+					updated := sidecartypes.PendingTxInfo{
+						Signature:    existing.Signature,
+						EventType:    existing.EventType,
+						RetryCount:   existing.RetryCount + 1,
+						FirstAttempt: existing.FirstAttempt,
+						LastAttempt:  time.Now(),
+					}
+					update.pendingTransactions[signature] = updated
 				}
 				updateMutex.Unlock()
 				slog.Debug("Pending transaction processing failed",
@@ -1743,12 +1812,16 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			// Remove from pending queue
 			o.removePendingTransaction(signature, update, updateMutex)
 		} else {
-			// Still nil, update retry count directly in the map
 			updateMutex.Lock()
 			if existing, exists := update.pendingTransactions[signature]; exists {
-				existing.RetryCount++
-				existing.LastAttempt = time.Now()
-				update.pendingTransactions[signature] = existing
+				updated := sidecartypes.PendingTxInfo{
+					Signature:    existing.Signature,
+					EventType:    existing.EventType,
+					RetryCount:   existing.RetryCount + 1,
+					FirstAttempt: existing.FirstAttempt,
+					LastAttempt:  time.Now(),
+				}
+				update.pendingTransactions[signature] = updated
 			}
 			updateMutex.Unlock()
 		}
