@@ -124,8 +124,8 @@ var (
 
 	// HTTP and RPC constants
 	DefaultHTTPTimeout          = 10 * time.Second
-	SolanaRPCTimeout            = 25 * time.Second // Longer timeout for Solana RPC operations
-	SolanaBatchTimeout          = 35 * time.Second // Even longer for batch operations
+	SolanaRPCTimeout            = 10 * time.Second // Longer timeout for Solana RPC operations
+	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
 	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
 	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0

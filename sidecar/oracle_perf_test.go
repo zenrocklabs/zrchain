@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// To run these tests, use the following command:
-// go test -v -run=^$ -bench=^BenchmarkSolanaEventPerformance_Integration$ -benchtime=1x ./...
+func TestSolanaEventPerformance_Manual(t *testing.T) {
+	t.Skip("Skipping performance tests in CI")
+	const numRuns = 3
 
-func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 	testCases := []struct {
 		name                         string
 		solanaEventScanTxLimit       int
@@ -29,8 +29,44 @@ func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 		solanaRPCTimeout             time.Duration
 		solanaBatchTimeout           time.Duration
 	}{
+		// {
+		// 	name:                         "LongerTimeouts",
+		// 	solanaEventScanTxLimit:       440,
+		// 	solanaEventFetchBatchSize:    10,
+		// 	solanaEventFetchMinBatchSize: 2,
+		// 	solanaMaxConcurrentRPCCalls:  20,
+		// 	solanaSleepInterval:          50 * time.Millisecond,
+		// 	solanaFallbackSleepInterval:  10 * time.Millisecond,
+		// 	solanaEventFetchRetrySleep:   100 * time.Millisecond,
+		// 	solanaRPCTimeout:             25 * time.Second,
+		// 	solanaBatchTimeout:           35 * time.Second,
+		// },
+		// {
+		// 	name:                         "StandardTimeouts",
+		// 	solanaEventScanTxLimit:       440,
+		// 	solanaEventFetchBatchSize:    10,
+		// 	solanaEventFetchMinBatchSize: 2,
+		// 	solanaMaxConcurrentRPCCalls:  20,
+		// 	solanaSleepInterval:          50 * time.Millisecond,
+		// 	solanaFallbackSleepInterval:  10 * time.Millisecond,
+		// 	solanaEventFetchRetrySleep:   100 * time.Millisecond,
+		// 	solanaRPCTimeout:             20 * time.Second,
+		// 	solanaBatchTimeout:           30 * time.Second,
+		// },
+		// {
+		// 	name:                         "ShorterTimeouts",
+		// 	solanaEventScanTxLimit:       440,
+		// 	solanaEventFetchBatchSize:    10,
+		// 	solanaEventFetchMinBatchSize: 2,
+		// 	solanaMaxConcurrentRPCCalls:  20,
+		// 	solanaSleepInterval:          50 * time.Millisecond,
+		// 	solanaFallbackSleepInterval:  10 * time.Millisecond,
+		// 	solanaEventFetchRetrySleep:   100 * time.Millisecond,
+		// 	solanaRPCTimeout:             15 * time.Second,
+		// 	solanaBatchTimeout:           25 * time.Second,
+		// },
 		{
-			name:                         "LongerTimeouts",
+			name:                         "EvenShorterTimeouts",
 			solanaEventScanTxLimit:       440,
 			solanaEventFetchBatchSize:    10,
 			solanaEventFetchMinBatchSize: 2,
@@ -38,32 +74,8 @@ func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 			solanaSleepInterval:          50 * time.Millisecond,
 			solanaFallbackSleepInterval:  10 * time.Millisecond,
 			solanaEventFetchRetrySleep:   100 * time.Millisecond,
-			solanaRPCTimeout:             25 * time.Second,
-			solanaBatchTimeout:           35 * time.Second,
-		},
-		{
-			name:                         "StandardTimeouts",
-			solanaEventScanTxLimit:       440,
-			solanaEventFetchBatchSize:    10,
-			solanaEventFetchMinBatchSize: 2,
-			solanaMaxConcurrentRPCCalls:  20,
-			solanaSleepInterval:          50 * time.Millisecond,
-			solanaFallbackSleepInterval:  10 * time.Millisecond,
-			solanaEventFetchRetrySleep:   100 * time.Millisecond,
-			solanaRPCTimeout:             20 * time.Second,
-			solanaBatchTimeout:           30 * time.Second,
-		},
-		{
-			name:                         "LowConcurrency",
-			solanaEventScanTxLimit:       440,
-			solanaEventFetchBatchSize:    25,
-			solanaEventFetchMinBatchSize: 5,
-			solanaMaxConcurrentRPCCalls:  4,
-			solanaSleepInterval:          200 * time.Millisecond,
-			solanaFallbackSleepInterval:  25 * time.Millisecond,
-			solanaEventFetchRetrySleep:   200 * time.Millisecond,
-			solanaRPCTimeout:             30 * time.Second,
-			solanaBatchTimeout:           45 * time.Second,
+			solanaRPCTimeout:             10 * time.Second,
+			solanaBatchTimeout:           20 * time.Second,
 		},
 	}
 
@@ -71,7 +83,7 @@ func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 	solanaClient := rpc.New(cfg.SolanaRPC[cfg.Network])
 
 	for _, tc := range testCases {
-		b.Run(tc.name, func(b *testing.B) {
+		t.Run(tc.name, func(t *testing.T) {
 			// Save original values
 			originalSolanaEventScanTxLimit := sidecartypes.SolanaEventScanTxLimit
 			originalSolanaEventFetchBatchSize := sidecartypes.SolanaEventFetchBatchSize
@@ -111,14 +123,14 @@ func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 
 			programID := sidecartypes.SolRockProgramID[oracle.Config.Network]
 			program, err := solana.PublicKeyFromBase58(programID)
-			require.NoError(b, err)
+			require.NoError(t, err)
 
 			limit := 440
 			signatures, err := solanaClient.GetSignaturesForAddressWithOpts(context.Background(), program, &rpc.GetSignaturesForAddressOpts{
 				Limit: &limit,
 			})
-			require.NoError(b, err)
-			require.Len(b, signatures, limit, "failed to fetch 440 signatures for performance test")
+			require.NoError(t, err)
+			require.Len(t, signatures, limit, "failed to fetch 440 signatures for performance test")
 
 			// Create the processor function
 			processor := func(txResult *rpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
@@ -145,20 +157,35 @@ func BenchmarkSolanaEventPerformance_Integration(b *testing.B) {
 				)
 			}
 
-			b.ResetTimer()
-			startTime := time.Now()
-			for i := 0; i < b.N; i++ {
+			totalStartTime := time.Now()
+			var runTimes []time.Duration
+
+			for i := 0; i < numRuns; i++ {
+				runStartTime := time.Now()
 				_, _, err := oracle.processSignatures(context.Background(), signatures, program, "SolRockMint", processor)
+				runDuration := time.Since(runStartTime)
+				runTimes = append(runTimes, runDuration)
+
+				t.Logf("--- %s | Run %d/%d: %s ---", tc.name, i+1, numRuns, runDuration.String())
+
 				if err != nil {
 					// The oracle is designed to be resilient to transient errors.
 					// We only want to fail the test on unrecoverable errors.
 					if !strings.Contains(err.Error(), "context deadline exceeded") && !strings.Contains(err.Error(), "unexpected end of JSON input") {
-						require.NoError(b, err)
+						require.NoError(t, err)
 					}
 				}
 			}
-			elapsedTime := time.Since(startTime)
-			b.Logf("--- %s | Total Time: %s ---", tc.name, elapsedTime.String())
+			totalElapsedTime := time.Since(totalStartTime)
+
+			// Calculate average
+			var totalRunTime time.Duration
+			for _, rt := range runTimes {
+				totalRunTime += rt
+			}
+			avgRunTime := totalRunTime / time.Duration(len(runTimes))
+
+			t.Logf("--- %s | Summary: Total=%s, Average=%s, Runs=%d ---", tc.name, totalElapsedTime.String(), avgRunTime.String(), numRuns)
 		})
 	}
 }
