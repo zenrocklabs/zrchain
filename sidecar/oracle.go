@@ -1702,7 +1702,7 @@ func (o *Oracle) removePendingTransaction(signature string, update *oracleStateU
 // shouldRetryTransaction checks if a pending transaction should be retried
 func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
 	// Basic retry limit (can be made configurable later)
-	maxRetries := 10
+	maxRetries := 100
 	if info.RetryCount >= maxRetries {
 		return false
 	}
