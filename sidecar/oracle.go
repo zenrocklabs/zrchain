@@ -698,26 +698,26 @@ func (o *Oracle) processSolanaMintEvents(
 		}
 
 		// Merge new events with existing pending events, avoiding duplicates
+		// Use hash map for O(1) lookup instead of O(n²) linear search
+		newEventSigs := make(map[string]bool, len(mergedMintEvents))
 		finalEvents := make([]api.SolanaMintEvent, 0, len(mergedMintEvents)+len(existingPendingEvents))
 
-		// First add all new events
+		// First add all new events and build lookup map
 		for _, event := range mergedMintEvents {
 			finalEvents = append(finalEvents, event)
+			newEventSigs[event.TxSig] = true
 		}
 
-		// Then add any pending events that weren't already included
+		// Then add any pending events that weren't already included (O(1) lookup)
 		for sig, event := range existingPendingEvents {
-			found := false
-			for _, newEvent := range mergedMintEvents {
-				if newEvent.TxSig == sig {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !newEventSigs[sig] {
 				finalEvents = append(finalEvents, event)
 			}
 		}
+
+		// Calculate deduplication statistics
+		pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
+		duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
 
 		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
@@ -729,7 +729,9 @@ func (o *Oracle) processSolanaMintEvents(
 				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
 				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
 				"newEvents", len(mergedMintEvents),
-				"preservedPendingEvents", len(existingPendingEvents))
+				"existingPendingEvents", len(existingPendingEvents),
+				"pendingEventsPreserved", pendingEventsPreserved,
+				"duplicatesRemoved", duplicatesRemoved)
 		}
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
@@ -836,31 +838,40 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Merge the newly fetched Solana burn events with existing events
 		mergedEvents := mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
 
-		// CRITICAL: Ensure pending events are preserved in the final result
-		// This prevents the same event loss issue that affected mint events
+		// Ensure pending events are preserved in the final result
+		// Use hash map for O(1) lookup instead of O(n²) linear search
+		mergedEventTxIDs := make(map[string]bool, len(mergedEvents))
 		finalEvents := make([]api.BurnEvent, 0, len(mergedEvents)+len(existingPendingEvents))
 
-		// First add all merged events
+		// First add all merged events and build lookup map
 		for _, event := range mergedEvents {
 			finalEvents = append(finalEvents, event)
+			mergedEventTxIDs[event.TxID] = true
 		}
 
-		// Then add any pending events that weren't already included
+		// Then add any pending events that weren't already included (O(1) lookup)
 		for txID, event := range existingPendingEvents {
-			found := false
-			for _, mergedEvent := range mergedEvents {
-				if mergedEvent.TxID == txID {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !mergedEventTxIDs[txID] {
 				finalEvents = append(finalEvents, event)
 			}
 		}
 
+		// Calculate deduplication statistics
+		pendingEventsPreserved := len(finalEvents) - len(mergedEvents)
+		duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+
 		update.solanaBurnEvents = finalEvents
 		update.cleanedSolanaBurnEvents = cleanedEvents
+
+		// Log deduplication results
+		if len(existingPendingEvents) > 0 || len(mergedEvents) > 0 {
+			slog.Info("Burn events merge completed",
+				"finalBurnEvents", len(update.solanaBurnEvents),
+				"mergedEvents", len(mergedEvents),
+				"existingPendingEvents", len(existingPendingEvents),
+				"pendingEventsPreserved", pendingEventsPreserved,
+				"duplicatesRemoved", duplicatesRemoved)
+		}
 	}()
 }
 
@@ -2016,6 +2027,7 @@ func (o *Oracle) processSignatures(
 
 	// Track processing results for debugging
 	totalNilResults := 0
+	individualRetryFailures := 0
 	successfulTransactions := 0
 	notFoundTransactions := 0
 	processingErrors := 0
@@ -2136,7 +2148,7 @@ func (o *Oracle) processSignatures(
 			// Handle nil results from RPC (transaction not found/retrievable)
 			if resp.Result == nil {
 				totalNilResults++
-				slog.Warn("Transaction returned nil result, attempting individual retry",
+				slog.Debug("Transaction returned nil result, attempting individual retry",
 					"eventType", eventTypeName,
 					"signature", sigInfo.Signature,
 					"responseID", resp.ID,
@@ -2146,8 +2158,9 @@ func (o *Oracle) processSignatures(
 				// Retry individual transaction
 				if retryResult, err := o.retryIndividualTransaction(ctx, sigInfo.Signature, eventTypeName); err != nil {
 					// Add to pending queue instead of stopping
+					individualRetryFailures++
 					processingErrors++
-					slog.Warn("Individual transaction retry failed, adding to failed signatures",
+					slog.Debug("Individual transaction retry failed, adding to failed signatures",
 						"eventType", eventTypeName,
 						"signature", sigInfo.Signature,
 						"error", err)
@@ -2186,6 +2199,7 @@ func (o *Oracle) processSignatures(
 					continue
 				} else {
 					// Still nil after retry - add to pending queue
+					individualRetryFailures++
 					slog.Warn("Transaction still nil after retry, adding to failed signatures",
 						"eventType", eventTypeName,
 						"signature", sigInfo.Signature)
@@ -2280,8 +2294,29 @@ func (o *Oracle) processSignatures(
 			"pendingTransactions", "will_retry_failed_transactions")
 	}
 
+	// Summary logging for warning-level issues
 	if totalNilResults > 0 {
-		slog.Warn("Encountered nil results from Solana RPC", "eventType", eventTypeName, "nilResultCount", totalNilResults, "totalProcessed", len(signatures), "successfulEvents", len(allEvents))
+		slog.Warn("Transaction processing summary - Nil results encountered",
+			"eventType", eventTypeName,
+			"nilResultCount", totalNilResults,
+			"totalProcessed", len(signatures),
+			"successfulEvents", len(allEvents))
+	}
+
+	if individualRetryFailures > 0 {
+		slog.Warn("Transaction processing summary - Individual retry failures",
+			"eventType", eventTypeName,
+			"retryFailureCount", individualRetryFailures,
+			"totalProcessed", len(signatures),
+			"addedToPendingQueue", individualRetryFailures)
+	}
+
+	if len(failedSignatures) > 0 {
+		slog.Warn("Transaction processing summary - Failed signatures added to pending queue",
+			"eventType", eventTypeName,
+			"failedSignatureCount", len(failedSignatures),
+			"totalProcessed", len(signatures),
+			"willRetryInNextCycle", true)
 	}
 	if len(allEvents) > 0 {
 		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(allEvents))
