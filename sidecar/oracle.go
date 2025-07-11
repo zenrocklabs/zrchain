@@ -715,15 +715,15 @@ func (o *Oracle) processSolanaMintEvents(
 			}
 		}
 
-		// Calculate deduplication statistics
-		pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
-		duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
-
 		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
 
 		// Only log if there were actual changes in the final merge
 		if len(update.SolanaMintEvents) != initialUpdateCount || len(mergedMintEvents) > 0 {
+			// Calculate deduplication statistics only when logging
+			pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
+			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+
 			slog.Info("Final merge and state update completed",
 				"finalMintEvents", len(update.SolanaMintEvents),
 				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
@@ -856,15 +856,15 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			}
 		}
 
-		// Calculate deduplication statistics
-		pendingEventsPreserved := len(finalEvents) - len(mergedEvents)
-		duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
-
 		update.solanaBurnEvents = finalEvents
 		update.cleanedSolanaBurnEvents = cleanedEvents
 
 		// Log deduplication results
 		if len(existingPendingEvents) > 0 || len(mergedEvents) > 0 {
+			// Calculate deduplication statistics only when logging
+			pendingEventsPreserved := len(finalEvents) - len(mergedEvents)
+			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+
 			slog.Info("Burn events merge completed",
 				"finalBurnEvents", len(update.solanaBurnEvents),
 				"mergedEvents", len(mergedEvents),
@@ -1740,20 +1740,28 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 	}
 	updateMutex.Unlock()
 
-	for signature, info := range pendingCopy {
-		if !o.shouldRetryTransaction(info) {
+	for signature := range pendingCopy {
+		// Use live data for retry decision instead of stale snapshot
+		updateMutex.Lock()
+		current, exists := update.pendingTransactions[signature]
+		if !exists {
+			updateMutex.Unlock()
+			continue
+		}
+
+		if !o.shouldRetryTransaction(current) {
 			// Check if we should remove transactions that exceeded max retries
-			updateMutex.Lock()
-			if info.RetryCount >= 10 { // maxRetries from shouldRetryTransaction
+			if current.RetryCount >= 100 {
 				delete(update.pendingTransactions, signature)
 				slog.Info("Removed pending transaction after max retries",
 					"signature", signature,
-					"eventType", info.EventType,
-					"retryCount", info.RetryCount)
+					"eventType", current.EventType,
+					"retryCount", current.RetryCount)
 			}
 			updateMutex.Unlock()
 			continue
 		}
+		updateMutex.Unlock()
 
 		// Attempt to retry the transaction
 		sig, err := solana.SignatureFromBase58(signature)
@@ -1767,7 +1775,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 		}
 
 		// Try to get and process the transaction
-		txResult, err := o.retryIndividualTransaction(ctx, sig, info.EventType)
+		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
 		if err != nil {
 			updateMutex.Lock()
 			if existing, exists := update.pendingTransactions[signature]; exists {
@@ -1783,14 +1791,14 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			updateMutex.Unlock()
 			slog.Debug("Pending transaction retry failed",
 				"signature", signature,
-				"eventType", info.EventType,
+				"eventType", current.EventType,
 				"error", err)
 			continue
 		}
 
 		if txResult != nil {
 			// Transaction retrieved successfully, now try to process it
-			events, err := o.processTransactionByEventType(txResult, sig, info.EventType)
+			events, err := o.processTransactionByEventType(txResult, sig, current.EventType)
 			if err != nil {
 				updateMutex.Lock()
 				if existing, exists := update.pendingTransactions[signature]; exists {
@@ -1806,22 +1814,43 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 				updateMutex.Unlock()
 				slog.Debug("Pending transaction processing failed",
 					"signature", signature,
-					"eventType", info.EventType,
+					"eventType", current.EventType,
 					"error", err)
 				continue
 			}
 
-			// Successfully processed - add events to the state update
+			// Successfully processed - add events to the state update and remove from pending queue atomically
+			updateMutex.Lock()
 			if len(events) > 0 {
-				o.addEventsToStateUpdate(events, info.EventType, update, updateMutex)
+				// Add events to state update
+				switch current.EventType {
+				case "Solana ROCK mint", "Solana zenBTC mint":
+					for _, event := range events {
+						if mintEvent, ok := event.(api.SolanaMintEvent); ok {
+							update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+						}
+					}
+				case "Solana zenBTC burn", "Solana ROCK burn":
+					for _, event := range events {
+						if burnEvent, ok := event.(api.BurnEvent); ok {
+							update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+						}
+					}
+				}
 				slog.Info("Successfully processed pending transaction",
 					"signature", signature,
-					"eventType", info.EventType,
+					"eventType", current.EventType,
 					"eventCount", len(events))
 			}
-
-			// Remove from pending queue
-			o.removePendingTransaction(signature, update, updateMutex)
+			// Remove from pending queue in same atomic operation
+			if update.pendingTransactions != nil {
+				if _, exists := update.pendingTransactions[signature]; exists {
+					delete(update.pendingTransactions, signature)
+					slog.Debug("Removed pending transaction after successful processing",
+						"signature", signature)
+				}
+			}
+			updateMutex.Unlock()
 		} else {
 			updateMutex.Lock()
 			if existing, exists := update.pendingTransactions[signature]; exists {
