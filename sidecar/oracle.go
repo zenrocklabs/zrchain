@@ -111,16 +111,26 @@ func NewOracle(
 
 	// Initialize the function fields with the real implementations
 	o.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
-		// Create a dummy state update for backward compatibility
+		// This function is only used for backward compatibility in places where we don't have access to state update
+		// Failed transactions will be lost here, but this is only used in non-critical paths
 		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
 		dummyMutex := &sync.Mutex{}
-		return o.getSolanaZenBTCBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		events, sig, err := o.getSolanaZenBTCBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		if len(dummyUpdate.pendingTransactions) > 0 {
+			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana zenBTC burn")
+		}
+		return events, sig, err
 	}
 	o.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
-		// Create a dummy state update for backward compatibility
+		// This function is only used for backward compatibility in places where we don't have access to state update
+		// Failed transactions will be lost here, but this is only used in non-critical paths
 		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
 		dummyMutex := &sync.Mutex{}
-		return o.getSolanaRockBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		events, sig, err := o.getSolanaRockBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		if len(dummyUpdate.pendingTransactions) > 0 {
+			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana ROCK burn")
+		}
+		return events, sig, err
 	}
 
 	// Only initialize Solana-related functions if Solana client is available
@@ -1159,12 +1169,7 @@ func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnow
 		)
 	}
 
-	untypedEvents, newWatermark, failedSignatures, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
-
-	// Handle failed signatures by adding them to pending queue
-	for _, sig := range failedSignatures {
-		o.addPendingTransaction(sig, eventTypeName, update, updateMutex)
-	}
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1207,12 +1212,7 @@ func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKn
 		)
 	}
 
-	untypedEvents, newWatermark, failedSignatures, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
-
-	// Handle failed signatures by adding them to pending queue
-	for _, sig := range failedSignatures {
-		o.addPendingTransaction(sig, eventTypeName, update, updateMutex)
-	}
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1348,12 +1348,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string
 		)
 	}
 
-	untypedEvents, newWatermark, failedSignatures, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
-
-	// Handle failed signatures by adding them to pending queue
-	for _, sig := range failedSignatures {
-		o.addPendingTransaction(sig, eventTypeName, update, updateMutex)
-	}
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -1399,12 +1394,7 @@ func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, 
 		)
 	}
 
-	untypedEvents, newWatermark, failedSignatures, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
-
-	// Handle failed signatures by adding them to pending queue
-	for _, sig := range failedSignatures {
-		o.addPendingTransaction(sig, eventTypeName, update, updateMutex)
-	}
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -2278,11 +2268,13 @@ func (o *Oracle) getSolanaEvents(
 	lastKnownSig solana.Signature,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
-) ([]any, solana.Signature, []string, error) {
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) ([]any, solana.Signature, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
 	program, err := solana.PublicKeyFromBase58(programIDStr)
 	if err != nil {
-		return nil, lastKnownSig, nil, fmt.Errorf("failed to obtain program public key for %s: %w", eventTypeName, err)
+		return nil, lastKnownSig, fmt.Errorf("failed to obtain program public key for %s: %w", eventTypeName, err)
 	}
 
 	// Rate limiting: acquire semaphore slot
@@ -2290,9 +2282,9 @@ func (o *Oracle) getSolanaEvents(
 	case o.solanaRateLimiter <- struct{}{}:
 		defer func() { <-o.solanaRateLimiter }()
 	case <-ctx.Done():
-		return nil, lastKnownSig, nil, ctx.Err()
+		return nil, lastKnownSig, ctx.Err()
 	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
-		return nil, lastKnownSig, nil, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
+		return nil, lastKnownSig, fmt.Errorf("rate limiter timeout for %s after %v", eventTypeName, sidecartypes.SolanaRateLimiterTimeout)
 	}
 
 	// Fetch initial signatures with timeout context
@@ -2304,32 +2296,38 @@ func (o *Oracle) getSolanaEvents(
 		Commitment: solrpc.CommitmentConfirmed,
 	})
 	if err != nil {
-		return nil, lastKnownSig, nil, fmt.Errorf("failed to get %s signatures: %w", eventTypeName, err)
+		return nil, lastKnownSig, fmt.Errorf("failed to get %s signatures: %w", eventTypeName, err)
 	}
 	if len(initialSignatures) == 0 {
 		slog.Info("Retrieved 0 events (no signatures found)", "eventType", eventTypeName)
-		return []any{}, lastKnownSig, nil, nil
+		return []any{}, lastKnownSig, nil
 	}
 
 	newestSigFromNode := initialSignatures[0].Signature
 
 	newSignatures, err := o.fetchAndFillSignatureGap(ctx, program, lastKnownSig, initialSignatures, limit, eventTypeName)
 	if err != nil {
-		return nil, lastKnownSig, nil, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
+		return nil, lastKnownSig, fmt.Errorf("failed to fill signature gap, aborting to retry next cycle: %w", err)
 	}
 	if len(newSignatures) == 0 {
 		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", formatWatermarkForLogging(lastKnownSig))
-		return []any{}, newestSigFromNode, nil, nil
+		return []any{}, newestSigFromNode, nil
 	}
 
 	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
 
 	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
-	if err != nil {
-		return events, lastSig, failedSignatures, err
+
+	// Handle failed signatures by adding them to pending queue
+	for _, failedSig := range failedSignatures {
+		o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex)
 	}
 
-	return events, newestSigFromNode, failedSignatures, nil
+	if err != nil {
+		return events, lastSig, err
+	}
+
+	return events, newestSigFromNode, nil
 }
 
 // cacheTransactionResult caches a transaction result with TTL
