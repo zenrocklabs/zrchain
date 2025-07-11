@@ -59,11 +59,8 @@ type Oracle struct {
 
 	// Performance optimization fields
 	solanaRateLimiter     chan struct{}              // Semaphore for Solana RPC rate limiting
-	httpClientPool        *sync.Pool                 // Reusable HTTP clients
 	transactionCache      map[string]*CachedTxResult // Cache for frequently accessed transactions
 	transactionCacheMutex sync.RWMutex               // Protects transaction cache
-	batchRequestPool      *sync.Pool                 // Reusable batch request slices
-	eventProcessorPool    *sync.Pool                 // Reusable event processor instances
 
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
@@ -109,24 +106,4 @@ type PriceData struct {
 	QuoteVolume      string `json:"quote_volume"`
 	High24h          string `json:"high_24h"`
 	Low24h           string `json:"low_24h"`
-}
-
-// EventProcessor is a reusable struct for processing Solana events
-type EventProcessor struct {
-	events []any
-}
-
-// Reset clears the event processor for reuse
-func (ep *EventProcessor) Reset() {
-	ep.events = ep.events[:0]
-}
-
-// AddEvent adds an event to the processor
-func (ep *EventProcessor) AddEvent(event any) {
-	ep.events = append(ep.events, event)
-}
-
-// GetEvents returns the processed events
-func (ep *EventProcessor) GetEvents() []any {
-	return ep.events
 }

@@ -78,30 +78,6 @@ func NewOracle(
 		// Initialize performance optimization fields
 		solanaRateLimiter: make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls), // Configurable concurrent Solana RPC calls
 		transactionCache:  make(map[string]*CachedTxResult),
-		httpClientPool: &sync.Pool{
-			New: func() interface{} {
-				return &http.Client{
-					Timeout: sidecartypes.SolanaRPCTimeout, // Use longer timeout for Solana operations
-					Transport: &http.Transport{
-						MaxIdleConns:        100,
-						MaxIdleConnsPerHost: 10,
-						IdleConnTimeout:     90 * time.Second,
-					},
-				}
-			},
-		},
-		batchRequestPool: &sync.Pool{
-			New: func() interface{} {
-				return make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
-			},
-		},
-		eventProcessorPool: &sync.Pool{
-			New: func() interface{} {
-				return &EventProcessor{
-					events: make([]any, 0, 100),
-				}
-			},
-		},
 	}
 
 	// Load initial state from cache file
@@ -1609,7 +1585,6 @@ type processTransactionFunc func(
 
 // PERFORMANCE OPTIMIZATIONS:
 // - Rate limiting with semaphore to prevent RPC overload
-// - Object pooling for batch requests and event processors
 // - Transaction caching with TTL
 // - Parallel batch processing with improved error handling
 // - Exponential backoff retry strategy
@@ -1622,12 +1597,8 @@ func (o *Oracle) processSignatures(
 	eventTypeName string,
 	processTransaction processTransactionFunc,
 ) ([]any, solana.Signature, error) {
-	// Get event processor from pool for memory efficiency
-	ep := o.eventProcessorPool.Get().(*EventProcessor)
-	defer func() {
-		ep.Reset()
-		o.eventProcessorPool.Put(ep)
-	}()
+	// Create events slice directly
+	allEvents := make([]any, 0, 100)
 
 	var lastSuccessfullyProcessedSig solana.Signature
 	// Adaptive batching parameters
@@ -1643,22 +1614,21 @@ func (o *Oracle) processSignatures(
 
 	// Pre-allocate with estimated capacity to reduce allocations
 	estimatedEvents := len(signatures) * 2 // Estimate 2 events per signature on average
-	if cap(ep.events) < estimatedEvents {
-		ep.events = make([]any, 0, estimatedEvents)
+	if cap(allEvents) < estimatedEvents {
+		allEvents = make([]any, 0, estimatedEvents)
 	}
 
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
 		if ctx.Err() != nil {
-			return ep.GetEvents(), lastSuccessfullyProcessedSig, ctx.Err()
+			return allEvents, lastSuccessfullyProcessedSig, ctx.Err()
 		}
 
 		end := min(i+currentBatchSize, len(signatures))
 		currentBatch := signatures[i:end]
 
-		// Get batch request slice from pool
-		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
-		batchRequests = (batchRequests)[:0] // Reset slice but keep capacity
+		// Create batch request slice directly
+		batchRequests := make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
 
 		// Build batch requests
 		for j, sigInfo := range currentBatch {
@@ -1723,16 +1693,14 @@ func (o *Oracle) processSignatures(
 			} else {
 				// If we're already at the minimum batch size, switch to fallback for this batch
 				slog.Warn("Batch transaction fetch failed at minimum batch size, switching to individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
-				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-					slog.Warn("Fallback processing failed - stopping to prevent watermark gaps", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
-					o.batchRequestPool.Put(batchRequests)
-					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, &allEvents, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
+					slog.Warn("Fallback processing failed - stopping to prevent watermark gaps", "eventType", eventTypeName, "processedCount", len(allEvents), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
+					return allEvents, lastSuccessfullyProcessedSig, err
 				}
 				i += len(currentBatch) // Advance past the successfully processed fallback segment
 			}
 			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
-			o.batchRequestPool.Put(batchRequests)
-			continue // Retry the same segment `i`
+			continue                                            // Retry the same segment `i`
 		}
 
 		// Success: Process the batch responses
@@ -1749,8 +1717,7 @@ func (o *Oracle) processSignatures(
 			if !exists {
 				err := fmt.Errorf("missing batch response for index %d", idx)
 				slog.Warn("Incomplete batch response - stopping to prevent watermark gaps", "eventType", eventTypeName, "reason", err, "consecutiveSuccesses", idx)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				return allEvents, lastSuccessfullyProcessedSig, err
 			}
 
 			// Handle nil results from RPC (transaction not found/retrievable)
@@ -1774,8 +1741,7 @@ func (o *Oracle) processSignatures(
 						"consecutiveSuccesses", idx,
 						"strategy", "watermark_only_advances_through_consecutive_successes",
 						"nextCycle", "will_retry_from_this_signature")
-					o.batchRequestPool.Put(batchRequests)
-					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+					return allEvents, lastSuccessfullyProcessedSig, err
 				} else if retryResult != nil {
 					// Process the successfully retried transaction
 					events, err := processTransaction(retryResult, program, sigInfo.Signature, o.DebugMode)
@@ -1786,8 +1752,7 @@ func (o *Oracle) processSignatures(
 							"signature", sigInfo.Signature,
 							"error", err,
 							"consecutiveSuccesses", idx)
-						o.batchRequestPool.Put(batchRequests)
-						return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+						return allEvents, lastSuccessfullyProcessedSig, err
 					}
 
 					if len(events) > 0 {
@@ -1796,9 +1761,7 @@ func (o *Oracle) processSignatures(
 							"eventType", eventTypeName,
 							"signature", sigInfo.Signature,
 							"eventCount", len(events))
-						for _, event := range events {
-							ep.AddEvent(event)
-						}
+						allEvents = append(allEvents, events...)
 					} else {
 						emptyTransactions++
 						slog.Debug("Retried transaction processed but contained no events",
@@ -1815,8 +1778,7 @@ func (o *Oracle) processSignatures(
 						"consecutiveSuccesses", idx,
 						"strategy", "zero_gaps_policy",
 						"nextCycle", "will_retry_from_this_signature")
-					o.batchRequestPool.Put(batchRequests)
-					return ep.GetEvents(), lastSuccessfullyProcessedSig, fmt.Errorf("transaction still nil after retry")
+					return allEvents, lastSuccessfullyProcessedSig, fmt.Errorf("transaction still nil after retry")
 				}
 			}
 
@@ -1843,8 +1805,7 @@ func (o *Oracle) processSignatures(
 					"responseID", resp.ID,
 					"responseError", resp.Error,
 					"consecutiveSuccesses", idx)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				return allEvents, lastSuccessfullyProcessedSig, err
 			}
 
 			o.cacheTransactionResult(sigInfo.Signature.String(), &txRes)
@@ -1856,8 +1817,7 @@ func (o *Oracle) processSignatures(
 					"reason", err,
 					"signature", sigInfo.Signature,
 					"consecutiveSuccesses", idx)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
+				return allEvents, lastSuccessfullyProcessedSig, err
 			}
 
 			if len(events) > 0 {
@@ -1866,9 +1826,7 @@ func (o *Oracle) processSignatures(
 					"eventType", eventTypeName,
 					"signature", sigInfo.Signature,
 					"eventCount", len(events))
-				for _, event := range events {
-					ep.AddEvent(event)
-				}
+				allEvents = append(allEvents, events...)
 			} else {
 				emptyTransactions++
 				slog.Debug("Transaction processed but contained no events",
@@ -1880,7 +1838,6 @@ func (o *Oracle) processSignatures(
 
 		// Advance to the next segment
 		i += len(currentBatch)
-		o.batchRequestPool.Put(batchRequests) // Return the batch request slice to the pool
 
 		// Optional: slowly increase batch size on success
 		if currentBatchSize < sidecartypes.SolanaEventFetchBatchSize {
@@ -1903,7 +1860,7 @@ func (o *Oracle) processSignatures(
 		"notFoundTransactions", notFoundTransactions,
 		"processingErrors", processingErrors,
 		"successRate", fmt.Sprintf("%.1f%%", successRate),
-		"extractedEvents", len(ep.GetEvents()),
+		"extractedEvents", len(allEvents),
 		"newWatermark", lastSuccessfullyProcessedSig,
 	)
 
@@ -1917,12 +1874,12 @@ func (o *Oracle) processSignatures(
 	}
 
 	if totalNilResults > 0 {
-		slog.Warn("Encountered nil results from Solana RPC", "eventType", eventTypeName, "nilResultCount", totalNilResults, "totalProcessed", len(signatures), "successfulEvents", len(ep.GetEvents()))
+		slog.Warn("Encountered nil results from Solana RPC", "eventType", eventTypeName, "nilResultCount", totalNilResults, "totalProcessed", len(signatures), "successfulEvents", len(allEvents))
 	}
-	if len(ep.GetEvents()) > 0 {
-		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(ep.GetEvents()))
+	if len(allEvents) > 0 {
+		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(allEvents))
 	}
-	return ep.GetEvents(), lastSuccessfullyProcessedSig, nil
+	return allEvents, lastSuccessfullyProcessedSig, nil
 }
 
 // getSolanaEvents is an optimized generic helper to fetch signatures for a given program, detect and heal
@@ -1933,7 +1890,6 @@ func (o *Oracle) processSignatures(
 
 // PERFORMANCE OPTIMIZATIONS:
 // - Rate limiting with semaphore to prevent RPC overload
-// - Object pooling for batch requests and event processors
 // - Transaction caching with TTL
 // - Parallel batch processing with improved error handling
 // - Exponential backoff retry strategy
@@ -2093,7 +2049,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 	ctx context.Context,
 	currentBatch []*solrpc.TransactionSignature,
 	program solana.PublicKey,
-	ep *EventProcessor,
+	allEvents *[]any,
 	lastSuccessfullyProcessedSig *solana.Signature,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
@@ -2143,9 +2099,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 		}
 
 		if len(events) > 0 {
-			for _, event := range events {
-				ep.AddEvent(event)
-			}
+			*allEvents = append(*allEvents, events...)
 		}
 		*lastSuccessfullyProcessedSig = sigInfo.Signature
 		time.Sleep(sidecartypes.SolanaFallbackSleepInterval)
