@@ -284,7 +284,7 @@ func (m *MockZentpKeeper) EXPECT() *MockZentpKeeperMockRecorder {
 }
 
 // UpdateZentpFees mocks base method.
-func (m *MockZentpKeeper) UpdateZentpFees(ctx context.Context, fees types.Coin) error {
+func (m *MockZentpKeeper) UpdateZentpFees(ctx context.Context, fees uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateZentpFees", ctx, fees)
 	ret0, _ := ret[0].(error)

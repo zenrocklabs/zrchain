@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,30 +78,6 @@ func NewOracle(
 		// Initialize performance optimization fields
 		solanaRateLimiter: make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls), // Configurable concurrent Solana RPC calls
 		transactionCache:  make(map[string]*CachedTxResult),
-		httpClientPool: &sync.Pool{
-			New: func() interface{} {
-				return &http.Client{
-					Timeout: sidecartypes.SolanaRPCTimeout, // Use longer timeout for Solana operations
-					Transport: &http.Transport{
-						MaxIdleConns:        100,
-						MaxIdleConnsPerHost: 10,
-						IdleConnTimeout:     90 * time.Second,
-					},
-				}
-			},
-		},
-		batchRequestPool: &sync.Pool{
-			New: func() interface{} {
-				return make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
-			},
-		},
-		eventProcessorPool: &sync.Pool{
-			New: func() interface{} {
-				return &EventProcessor{
-					events: make([]any, 0, 100),
-				}
-			},
-		},
 	}
 
 	// Load initial state from cache file
@@ -133,8 +110,28 @@ func NewOracle(
 	}
 
 	// Initialize the function fields with the real implementations
-	o.getSolanaZenBTCBurnEventsFn = o.getSolanaZenBTCBurnEvents
-	o.getSolanaRockBurnEventsFn = o.getSolanaRockBurnEvents
+	o.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		// This function is only used for backward compatibility in places where we don't have access to state update
+		// Failed transactions will be lost here, but this is only used in non-critical paths
+		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
+		dummyMutex := &sync.Mutex{}
+		events, sig, err := o.getSolanaZenBTCBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		if len(dummyUpdate.pendingTransactions) > 0 {
+			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana zenBTC burn")
+		}
+		return events, sig, err
+	}
+	o.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+		// This function is only used for backward compatibility in places where we don't have access to state update
+		// Failed transactions will be lost here, but this is only used in non-critical paths
+		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
+		dummyMutex := &sync.Mutex{}
+		events, sig, err := o.getSolanaRockBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
+		if len(dummyUpdate.pendingTransactions) > 0 {
+			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana ROCK burn")
+		}
+		return events, sig, err
+	}
 
 	// Only initialize Solana-related functions if Solana client is available
 	if o.solanaClient != nil {
@@ -263,6 +260,16 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 
 	o.currentState.Store(&newState)
 
+	// Log event counts in each state field every tick
+	slog.Info("State event counts per tick",
+		"ethBurnEvents", len(newState.EthBurnEvents),
+		"cleanedEthBurnEvents", len(newState.CleanedEthBurnEvents),
+		"solanaBurnEvents", len(newState.SolanaBurnEvents),
+		"cleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
+		"solanaMintEvents", len(newState.SolanaMintEvents),
+		"cleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
+		"redemptions", len(newState.Redemptions))
+
 	// Update the oracle's high-watermark fields from the newly applied state.
 	// These are used as the starting point for the next fetch cycle.
 	o.lastSolRockMintSigStr = newState.LastSolRockMintSig
@@ -332,6 +339,11 @@ func (o *Oracle) fetchAndProcessState(
 	// if the main tick context is canceled.
 	routinesCtx, cancelRoutines := context.WithCancel(tickCtx)
 	defer cancelRoutines()
+
+	// Process pending transactions first (retry failed transactions from previous cycles)
+	if o.solanaClient != nil {
+		o.processPendingTransactions(routinesCtx, update, &updateMutex)
+	}
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
 	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
@@ -628,7 +640,7 @@ func (o *Oracle) processSolanaMintEvents(
 		go func() {
 			defer mintWg.Done()
 			lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-			rockEvents, newRockSig, rockErr = o.getSolROCKMints(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig)
+			rockEvents, newRockSig, rockErr = o.getSolROCKMints(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig, update, updateMutex)
 		}()
 
 		// Fetch zenBTC mint events in parallel
@@ -636,7 +648,7 @@ func (o *Oracle) processSolanaMintEvents(
 		go func() {
 			defer mintWg.Done()
 			lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
-			zenbtcEvents, newZenBTCSig, zenbtcErr = o.getSolZenBTCMints(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig)
+			zenbtcEvents, newZenBTCSig, zenbtcErr = o.getSolZenBTCMints(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig, update, updateMutex)
 		}()
 
 		mintWg.Wait()
@@ -676,19 +688,50 @@ func (o *Oracle) processSolanaMintEvents(
 		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
 
 		updateMutex.Lock()
-		// Since there is no backfill for mint events, there is no race condition with other goroutines
-		// modifying update.SolanaMintEvents. We can assign the final list directly.
-		// This avoids a second, confusingly-logged merge.
+
 		initialUpdateCount := len(update.SolanaMintEvents)
-		update.SolanaMintEvents = mergedMintEvents
+
+		// Check if there are any existing events from pending transactions
+		existingPendingEvents := make(map[string]api.SolanaMintEvent)
+		for _, event := range update.SolanaMintEvents {
+			existingPendingEvents[event.TxSig] = event
+		}
+
+		// Merge new events with existing pending events, avoiding duplicates
+		// Use hash map for O(1) lookup instead of O(n²) linear search
+		newEventSigs := make(map[string]bool, len(mergedMintEvents))
+		finalEvents := make([]api.SolanaMintEvent, 0, len(mergedMintEvents)+len(existingPendingEvents))
+
+		// First add all new events and build lookup map
+		for _, event := range mergedMintEvents {
+			finalEvents = append(finalEvents, event)
+			newEventSigs[event.TxSig] = true
+		}
+
+		// Then add any pending events that weren't already included (O(1) lookup)
+		for sig, event := range existingPendingEvents {
+			if !newEventSigs[sig] {
+				finalEvents = append(finalEvents, event)
+			}
+		}
+
+		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
 
 		// Only log if there were actual changes in the final merge
 		if len(update.SolanaMintEvents) != initialUpdateCount || len(mergedMintEvents) > 0 {
+			// Calculate deduplication statistics only when logging
+			pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
+			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+
 			slog.Info("Final merge and state update completed",
 				"finalMintEvents", len(update.SolanaMintEvents),
 				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
-				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount)
+				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
+				"newEvents", len(mergedMintEvents),
+				"existingPendingEvents", len(existingPendingEvents),
+				"pendingEventsPreserved", pendingEventsPreserved,
+				"duplicatesRemoved", duplicatesRemoved)
 		}
 		if !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
@@ -722,7 +765,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			defer burnWg.Done()
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 			var newestSig solana.Signature
-			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEventsFn(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig)
+			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
 			if !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
@@ -736,7 +779,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			defer burnWg.Done()
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 			var newestSig solana.Signature
-			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEventsFn(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig)
+			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
 			if !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
@@ -771,16 +814,16 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		updateMutex.Lock()
 		defer updateMutex.Unlock()
 
-		// Manually construct the base list of events to avoid confusing logs from `mergeNewBurnEvents`.
-		// The base list consists of events that were added by the backfill process (`update.solanaBurnEvents`)
-		// and events from the previous state that have not yet been reconciled (`remainingEvents`).
 		// A map is used to efficiently de-duplicate events by their transaction ID.
 		combinedEventsMap := make(map[string]api.BurnEvent)
 
-		// Add events that might have been added by the backfill process first.
+		// First, preserve any existing pending events that were already added to the state update
+		existingPendingEvents := make(map[string]api.BurnEvent)
 		for _, event := range update.solanaBurnEvents {
+			existingPendingEvents[event.TxID] = event
 			combinedEventsMap[event.TxID] = event
 		}
+
 		// Add the remaining unreconciled events from the previous state.
 		for _, event := range remainingEvents {
 			combinedEventsMap[event.TxID] = event
@@ -792,11 +835,43 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			baseEvents = append(baseEvents, event)
 		}
 
-		// Now, merge the newly fetched Solana burn events (`allNewSolanaBurnEvents`) into the
-		// de-duplicated list of existing events (`baseEvents`). The log message from this
-		// call will now correctly report only the truly new events as "added".
-		update.solanaBurnEvents = mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
+		// Merge the newly fetched Solana burn events with existing events
+		mergedEvents := mergeNewBurnEvents(baseEvents, cleanedEvents, allNewSolanaBurnEvents, "Solana")
+
+		// Ensure pending events are preserved in the final result
+		// Use hash map for O(1) lookup instead of O(n²) linear search
+		mergedEventTxIDs := make(map[string]bool, len(mergedEvents))
+		finalEvents := make([]api.BurnEvent, 0, len(mergedEvents)+len(existingPendingEvents))
+
+		// First add all merged events and build lookup map
+		for _, event := range mergedEvents {
+			finalEvents = append(finalEvents, event)
+			mergedEventTxIDs[event.TxID] = true
+		}
+
+		// Then add any pending events that weren't already included (O(1) lookup)
+		for txID, event := range existingPendingEvents {
+			if !mergedEventTxIDs[txID] {
+				finalEvents = append(finalEvents, event)
+			}
+		}
+
+		update.solanaBurnEvents = finalEvents
 		update.cleanedSolanaBurnEvents = cleanedEvents
+
+		// Log deduplication results
+		if len(existingPendingEvents) > 0 || len(mergedEvents) > 0 {
+			// Calculate deduplication statistics only when logging
+			pendingEventsPreserved := len(finalEvents) - len(mergedEvents)
+			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+
+			slog.Info("Burn events merge completed",
+				"finalBurnEvents", len(update.solanaBurnEvents),
+				"mergedEvents", len(mergedEvents),
+				"existingPendingEvents", len(existingPendingEvents),
+				"pendingEventsPreserved", pendingEventsPreserved,
+				"duplicatesRemoved", duplicatesRemoved)
+		}
 	}()
 }
 
@@ -875,6 +950,7 @@ func (o *Oracle) buildFinalState(
 		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
 		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
 		LastSolRockBurnSig:      lastSolRockBurnSig,
+		PendingSolanaTxs:        update.pendingTransactions,
 	}
 
 	if o.DebugMode {
@@ -1125,7 +1201,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	return remainingEvents, updatedCleanedEvents, nil
 }
 
-func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana ROCK mint"
 	// processor defines how to extract ROCK mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1156,7 +1232,7 @@ func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnow
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1168,7 +1244,7 @@ func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnow
 	return mintEvents, newWatermark, err
 }
 
-func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana zenBTC mint"
 	// processor defines how to extract zenBTC mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1199,7 +1275,7 @@ func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKn
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
@@ -1302,7 +1378,7 @@ func (o *Oracle) processBurnTransaction(
 }
 
 // getSolanaZenBTCBurnEvents retrieves ZenBTC burn events from Solana.
-func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
 	eventTypeName := "Solana zenBTC burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1335,7 +1411,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -1348,7 +1424,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
-func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
+func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
 	eventTypeName := "Solana ROCK burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1381,7 +1457,7 @@ func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, 
 		)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor)
+	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
 
 	// Always process partial results, even if an error occurred.
 	burnEvents := make([]api.BurnEvent, len(untypedEvents))
@@ -1576,9 +1652,366 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 // formatWatermarkForLogging returns a user-friendly representation of a watermark signature
 func formatWatermarkForLogging(sig solana.Signature) string {
 	if sig.IsZero() {
-		return "<none>"
+		return "none"
 	}
 	return sig.String()
+}
+
+// addPendingTransaction adds a failed transaction to the pending queue in the state update
+func (o *Oracle) addPendingTransaction(signature string, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+
+	if update.pendingTransactions == nil {
+		update.pendingTransactions = make(map[string]sidecartypes.PendingTxInfo)
+	}
+
+	now := time.Now()
+	if existing, exists := update.pendingTransactions[signature]; exists {
+
+		updated := sidecartypes.PendingTxInfo{
+			Signature:    existing.Signature,
+			EventType:    existing.EventType,
+			RetryCount:   existing.RetryCount + 1,
+			FirstAttempt: existing.FirstAttempt,
+			LastAttempt:  now,
+		}
+		update.pendingTransactions[signature] = updated
+		slog.Debug("Updated pending transaction retry count",
+			"signature", signature,
+			"eventType", eventType,
+			"retryCount", updated.RetryCount)
+	} else {
+		// Add new pending transaction
+		update.pendingTransactions[signature] = sidecartypes.PendingTxInfo{
+			Signature:    signature,
+			EventType:    eventType,
+			RetryCount:   1,
+			FirstAttempt: now,
+			LastAttempt:  now,
+		}
+		slog.Debug("Added new pending transaction",
+			"signature", signature,
+			"eventType", eventType)
+	}
+}
+
+// removePendingTransaction removes a successfully processed transaction from the pending queue in the state update
+func (o *Oracle) removePendingTransaction(signature string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+
+	if update.pendingTransactions != nil {
+		if _, exists := update.pendingTransactions[signature]; exists {
+			delete(update.pendingTransactions, signature)
+			slog.Debug("Removed pending transaction after successful processing",
+				"signature", signature)
+		}
+	}
+}
+
+// shouldRetryTransaction checks if a pending transaction should be retried
+func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
+	// Basic retry limit (can be made configurable later)
+	maxRetries := 100
+	if info.RetryCount >= maxRetries {
+		return false
+	}
+
+	// Simple time-based retry interval (can be made exponential later)
+	retryInterval := 5 * time.Minute
+	return time.Since(info.LastAttempt) >= retryInterval
+}
+
+// processPendingTransactions attempts to retry all pending transactions
+func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	// Get current pending transactions from the update (which was copied from current state)
+	if update.pendingTransactions == nil || len(update.pendingTransactions) == 0 {
+		return
+	}
+
+	slog.Info("Processing pending transactions", "count", len(update.pendingTransactions))
+
+	// Create a copy to iterate over to avoid modifying map while iterating
+	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
+	updateMutex.Lock()
+	for k, v := range update.pendingTransactions {
+		pendingCopy[k] = v
+	}
+	updateMutex.Unlock()
+
+	for signature := range pendingCopy {
+		// Use live data for retry decision instead of stale snapshot
+		updateMutex.Lock()
+		current, exists := update.pendingTransactions[signature]
+		if !exists {
+			updateMutex.Unlock()
+			continue
+		}
+
+		if !o.shouldRetryTransaction(current) {
+			// Check if we should remove transactions that exceeded max retries
+			if current.RetryCount >= 100 {
+				delete(update.pendingTransactions, signature)
+				slog.Info("Removed pending transaction after max retries",
+					"signature", signature,
+					"eventType", current.EventType,
+					"retryCount", current.RetryCount)
+			}
+			updateMutex.Unlock()
+			continue
+		}
+		updateMutex.Unlock()
+
+		// Attempt to retry the transaction
+		sig, err := solana.SignatureFromBase58(signature)
+		if err != nil {
+			slog.Warn("Invalid signature in pending transactions", "signature", signature, "error", err)
+
+			updateMutex.Lock()
+			delete(update.pendingTransactions, signature)
+			updateMutex.Unlock()
+			continue
+		}
+
+		// Try to get and process the transaction
+		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
+		if err != nil {
+			updateMutex.Lock()
+			if existing, exists := update.pendingTransactions[signature]; exists {
+				updated := sidecartypes.PendingTxInfo{
+					Signature:    existing.Signature,
+					EventType:    existing.EventType,
+					RetryCount:   existing.RetryCount + 1,
+					FirstAttempt: existing.FirstAttempt,
+					LastAttempt:  time.Now(),
+				}
+				update.pendingTransactions[signature] = updated
+			}
+			updateMutex.Unlock()
+			slog.Debug("Pending transaction retry failed",
+				"signature", signature,
+				"eventType", current.EventType,
+				"error", err)
+			continue
+		}
+
+		if txResult != nil {
+			// Transaction retrieved successfully, now try to process it
+			events, err := o.processTransactionByEventType(txResult, sig, current.EventType)
+			if err != nil {
+				updateMutex.Lock()
+				if existing, exists := update.pendingTransactions[signature]; exists {
+					updated := sidecartypes.PendingTxInfo{
+						Signature:    existing.Signature,
+						EventType:    existing.EventType,
+						RetryCount:   existing.RetryCount + 1,
+						FirstAttempt: existing.FirstAttempt,
+						LastAttempt:  time.Now(),
+					}
+					update.pendingTransactions[signature] = updated
+				}
+				updateMutex.Unlock()
+				slog.Debug("Pending transaction processing failed",
+					"signature", signature,
+					"eventType", current.EventType,
+					"error", err)
+				continue
+			}
+
+			// Successfully processed - add events to the state update and remove from pending queue atomically
+			updateMutex.Lock()
+			if len(events) > 0 {
+				// Add events to state update
+				switch current.EventType {
+				case "Solana ROCK mint", "Solana zenBTC mint":
+					for _, event := range events {
+						if mintEvent, ok := event.(api.SolanaMintEvent); ok {
+							update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+						}
+					}
+				case "Solana zenBTC burn", "Solana ROCK burn":
+					for _, event := range events {
+						if burnEvent, ok := event.(api.BurnEvent); ok {
+							update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+						}
+					}
+				}
+				slog.Info("Successfully processed pending transaction",
+					"signature", signature,
+					"eventType", current.EventType,
+					"eventCount", len(events))
+			}
+			// Remove from pending queue in same atomic operation
+			if update.pendingTransactions != nil {
+				if _, exists := update.pendingTransactions[signature]; exists {
+					delete(update.pendingTransactions, signature)
+					slog.Debug("Removed pending transaction after successful processing",
+						"signature", signature)
+				}
+			}
+			updateMutex.Unlock()
+		} else {
+			updateMutex.Lock()
+			if existing, exists := update.pendingTransactions[signature]; exists {
+				updated := sidecartypes.PendingTxInfo{
+					Signature:    existing.Signature,
+					EventType:    existing.EventType,
+					RetryCount:   existing.RetryCount + 1,
+					FirstAttempt: existing.FirstAttempt,
+					LastAttempt:  time.Now(),
+				}
+				update.pendingTransactions[signature] = updated
+			}
+			updateMutex.Unlock()
+		}
+	}
+}
+
+// processTransactionByEventType processes a transaction based on its event type
+func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionResult, sig solana.Signature, eventType string) ([]any, error) {
+	// Determine program ID and processor function based on event type
+	var programID string
+	var processor processTransactionFunc
+
+	switch eventType {
+	case "Solana ROCK mint":
+		programID = sidecartypes.SolRockProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			return o.processMintTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := rock_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
+					eventData, ok := data.(*rock_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
+					}
+					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
+				},
+				eventType,
+			)
+		}
+	case "Solana zenBTC mint":
+		programID = sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			return o.processMintTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
+					eventData, ok := data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
+					if !ok {
+						return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
+					}
+					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
+				},
+				eventType,
+			)
+		}
+	case "Solana zenBTC burn":
+		programID = sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+			return o.processBurnTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (destAddr []byte, value uint64, ok bool) {
+					eventData, ok := data.(*zenbtc_spl_token.TokenRedemptionEventData)
+					if !ok {
+						return nil, 0, false
+					}
+					return eventData.DestAddr[:], eventData.Value, true
+				},
+				eventType, chainID, true,
+			)
+		}
+	case "Solana ROCK burn":
+		programID = sidecartypes.SolRockProgramID[o.Config.Network]
+		processor = func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
+			chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
+			return o.processBurnTransaction(txResult, program, sig, debugMode,
+				func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
+					events, err := rock_spl_token.DecodeEvents(tx, prog)
+					if err != nil {
+						return nil, err
+					}
+					var interfaceEvents []any
+					for _, event := range events {
+						interfaceEvents = append(interfaceEvents, event)
+					}
+					return interfaceEvents, nil
+				},
+				func(data any) (destAddr []byte, value uint64, ok bool) {
+					eventData, ok := data.(*rock_spl_token.TokenRedemptionEventData)
+					if !ok {
+						return nil, 0, false
+					}
+					return eventData.DestAddr[:], eventData.Value, true
+				},
+				eventType, chainID, false,
+			)
+		}
+	default:
+		return nil, fmt.Errorf("unknown event type: %s", eventType)
+	}
+
+	// Parse program ID
+	program, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse program ID for %s: %w", eventType, err)
+	}
+
+	// Process the transaction
+	return processor(txResult, program, sig, o.DebugMode)
+}
+
+// addEventsToStateUpdate adds processed events to the state update
+func (o *Oracle) addEventsToStateUpdate(events []any, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+
+	switch eventType {
+	case "Solana ROCK mint", "Solana zenBTC mint":
+		// Convert to mint events and add to state update
+		for _, event := range events {
+			if mintEvent, ok := event.(api.SolanaMintEvent); ok {
+				update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+			}
+		}
+	case "Solana zenBTC burn", "Solana ROCK burn":
+		// Convert to burn events and add to state update
+		for _, event := range events {
+			if burnEvent, ok := event.(api.BurnEvent); ok {
+				update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+			}
+		}
+	}
 }
 
 // processTransactionFunc defines the function signature for processing a single Solana transaction.
@@ -1598,17 +2031,410 @@ type processTransactionFunc func(
 
 // PERFORMANCE OPTIMIZATIONS:
 // - Rate limiting with semaphore to prevent RPC overload
-// - Object pooling for batch requests and event processors
 // - Transaction caching with TTL
 // - Parallel batch processing with improved error handling
 // - Exponential backoff retry strategy
 // - Memory-efficient slice pre-allocation
+// processSignatures takes a list of transaction signatures and processes them.
+func (o *Oracle) processSignatures(
+	ctx context.Context,
+	signatures []*solrpc.TransactionSignature,
+	program solana.PublicKey,
+	eventTypeName string,
+	processTransaction processTransactionFunc,
+) ([]any, solana.Signature, []string, error) {
+	// Create events slice directly
+	allEvents := make([]any, 0, 100)
+	// Collect failed transaction signatures
+	failedSignatures := make([]string, 0)
+
+	var lastSuccessfullyProcessedSig solana.Signature
+	var newestSigProcessed solana.Signature
+	// Adaptive batching parameters
+	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
+	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
+
+	// Track processing results for debugging
+	totalNilResults := 0
+	individualRetryFailures := 0
+	successfulTransactions := 0
+	notFoundTransactions := 0
+	processingErrors := 0
+	emptyTransactions := 0
+
+	// Pre-allocate with estimated capacity to reduce allocations
+	estimatedEvents := len(signatures) * 2 // Estimate 2 events per signature on average
+	if cap(allEvents) < estimatedEvents {
+		allEvents = make([]any, 0, estimatedEvents)
+	}
+
+	// Process signatures with adaptive batching
+	for i := 0; i < len(signatures); {
+		if ctx.Err() != nil {
+			return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
+		}
+
+		end := min(i+currentBatchSize, len(signatures))
+		currentBatch := signatures[i:end]
+
+		// Create batch request slice directly
+		batchRequests := make(jsonrpc.RPCRequests, 0, sidecartypes.SolanaEventFetchBatchSize)
+
+		// Build batch requests
+		for j, sigInfo := range currentBatch {
+			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
+				Method: "getTransaction",
+				Params: []any{
+					sigInfo.Signature.String(),
+					map[string]any{
+						"encoding":                       solana.EncodingBase64,
+						"commitment":                     solrpc.CommitmentConfirmed,
+						"maxSupportedTransactionVersion": &sidecartypes.MaxSupportedSolanaTxVersion,
+					},
+				},
+				ID:      uint64(j),
+				JSONRPC: "2.0",
+			})
+		}
+
+		// Execute batch request
+		batchCtx, batchCancel := context.WithTimeout(ctx, sidecartypes.SolanaBatchTimeout)
+		batchResponses, batchErr := o.rpcCallBatchFn(batchCtx, batchRequests)
+		batchCancel()
+
+		// Debug logging for batch response
+		slog.Debug("Batch RPC call completed",
+			"eventType", eventTypeName,
+			"batchSize", len(currentBatch),
+			"requestCount", len(batchRequests),
+			"responseCount", len(batchResponses),
+			"batchError", batchErr)
+
+		// Check for errors in the response itself
+		if batchErr == nil {
+			errorCount := 0
+			for i, resp := range batchResponses {
+				if resp.Error != nil {
+					errorCount++
+					slog.Debug("Individual response error",
+						"eventType", eventTypeName,
+						"responseIndex", i,
+						"responseID", resp.ID,
+						"error", resp.Error)
+					batchErr = fmt.Errorf("response contains errors: %v", resp.Error)
+					break
+				}
+			}
+			if errorCount > 0 {
+				slog.Debug("Batch response error summary",
+					"eventType", eventTypeName,
+					"errorCount", errorCount,
+					"totalResponses", len(batchResponses))
+			}
+		}
+
+		// If the batch failed, reduce the batch size and retry the same segment.
+		if batchErr != nil {
+			newBatchSize := max(currentBatchSize/2, minBatchSize)
+			if currentBatchSize > minBatchSize {
+				slog.Warn("Batch GetTransaction failed, reducing batch size and retrying",
+					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
+				currentBatchSize = newBatchSize
+			} else {
+				// If we're already at the minimum batch size, add all transactions to failed signatures
+				slog.Warn("Batch transaction fetch failed at minimum batch size, adding to failed signatures", "eventType", eventTypeName, "size", len(currentBatch))
+				for _, sigInfo := range currentBatch {
+					failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+				}
+				// Update newest signature processed for watermark advancement
+				if len(currentBatch) > 0 {
+					newestSigProcessed = currentBatch[len(currentBatch)-1].Signature
+				}
+				i += len(currentBatch) // Advance past the batch
+			}
+			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
+			continue                                            // Retry the same segment `i`
+		}
+
+		// Success: Process the batch responses
+		responseMap := make(map[int]*jsonrpc.RPCResponse, len(batchResponses))
+		for _, resp := range batchResponses {
+			if idx, ok := parseRPCResponseID(resp, eventTypeName); ok {
+				responseMap[idx] = resp
+			}
+		}
+
+		// Process responses in order
+		for idx, sigInfo := range currentBatch {
+			resp, exists := responseMap[idx]
+			if !exists {
+				slog.Warn("Missing batch response, adding to failed signatures", "eventType", eventTypeName, "signature", sigInfo.Signature)
+				failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+				newestSigProcessed = sigInfo.Signature
+				continue
+			}
+
+			// Handle nil results from RPC (transaction not found/retrievable)
+			if resp.Result == nil {
+				totalNilResults++
+				slog.Debug("Transaction returned nil result, attempting individual retry",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"responseID", resp.ID,
+					"responseError", resp.Error,
+					"nilResultCount", totalNilResults)
+
+				// Retry individual transaction
+				if retryResult, err := o.retryIndividualTransaction(ctx, sigInfo.Signature, eventTypeName); err != nil {
+					// Add to pending queue instead of stopping
+					individualRetryFailures++
+					processingErrors++
+					slog.Debug("Individual transaction retry failed, adding to failed signatures",
+						"eventType", eventTypeName,
+						"signature", sigInfo.Signature,
+						"error", err)
+					failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+					newestSigProcessed = sigInfo.Signature
+					continue
+				} else if retryResult != nil {
+					// Process the successfully retried transaction
+					events, err := processTransaction(retryResult, program, sigInfo.Signature, o.DebugMode)
+					if err != nil {
+						processingErrors++
+						slog.Warn("Failed to process retried transaction, adding to failed signatures",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature,
+							"error", err)
+						failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+						newestSigProcessed = sigInfo.Signature
+						continue
+					}
+
+					if len(events) > 0 {
+						successfulTransactions++
+						slog.Debug("Successfully processed retried transaction",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature,
+							"eventCount", len(events))
+						allEvents = append(allEvents, events...)
+					} else {
+						emptyTransactions++
+						slog.Debug("Retried transaction processed but contained no events",
+							"eventType", eventTypeName,
+							"signature", sigInfo.Signature)
+					}
+					lastSuccessfullyProcessedSig = sigInfo.Signature
+					newestSigProcessed = sigInfo.Signature
+					continue
+				} else {
+					// Still nil after retry - add to pending queue
+					individualRetryFailures++
+					slog.Warn("Transaction still nil after retry, adding to failed signatures",
+						"eventType", eventTypeName,
+						"signature", sigInfo.Signature)
+					failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+					newestSigProcessed = sigInfo.Signature
+					continue
+				}
+			}
+
+			// Debug logging for response inspection
+			if len(resp.Result) == 0 {
+				slog.Warn("Response result is empty", "eventType", eventTypeName, "signature", sigInfo.Signature, "responseID", resp.ID)
+			} else if len(resp.Result) < 10 {
+				slog.Warn("Response result is very short", "eventType", eventTypeName, "signature", sigInfo.Signature, "rawResult", string(resp.Result), "resultLength", len(resp.Result))
+			}
+
+			var txRes solrpc.GetTransactionResult
+			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
+				slog.Warn("Unmarshal error, adding to failed signatures",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"error", err)
+				failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+				newestSigProcessed = sigInfo.Signature
+				continue
+			}
+
+			o.cacheTransactionResult(sigInfo.Signature.String(), &txRes)
+
+			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
+			if err != nil {
+				slog.Warn("Processing error, adding to failed signatures",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"error", err)
+				failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+				newestSigProcessed = sigInfo.Signature
+				continue
+			}
+
+			if len(events) > 0 {
+				successfulTransactions++
+				slog.Debug("Successfully processed transaction",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature,
+					"eventCount", len(events))
+				allEvents = append(allEvents, events...)
+			} else {
+				emptyTransactions++
+				slog.Debug("Transaction processed but contained no events",
+					"eventType", eventTypeName,
+					"signature", sigInfo.Signature)
+			}
+			lastSuccessfullyProcessedSig = sigInfo.Signature
+			newestSigProcessed = sigInfo.Signature
+		}
+
+		// Advance to the next segment
+		i += len(currentBatch)
+
+		// Optional: slowly increase batch size on success
+		if currentBatchSize < sidecartypes.SolanaEventFetchBatchSize {
+			currentBatchSize = min(currentBatchSize+minBatchSize, sidecartypes.SolanaEventFetchBatchSize)
+		}
+		time.Sleep(sidecartypes.SolanaSleepInterval)
+	}
+
+	// Calculate processing statistics
+	totalProcessed := len(signatures)
+	successRate := float64(successfulTransactions) / float64(totalProcessed) * 100
+
+	// Summary log with comprehensive batch processing results
+	slog.Info("Batch processing summary",
+		"eventType", eventTypeName,
+		"totalSignatures", totalProcessed,
+		"successfulTransactions", successfulTransactions,
+		"emptyTransactions", emptyTransactions,
+		"nilResults", totalNilResults,
+		"notFoundTransactions", notFoundTransactions,
+		"processingErrors", processingErrors,
+		"successRate", fmt.Sprintf("%.1f%%", successRate),
+		"extractedEvents", len(allEvents),
+		"newWatermark", newestSigProcessed,
+	)
+
+	// Log pending transaction strategy
+	if processingErrors > 0 || totalNilResults > 0 {
+		slog.Info("Optimistic watermark advancement with pending queue",
+			"eventType", eventTypeName,
+			"strategy", "continue_with_pending_queue",
+			"reason", "prevents_system_stalls",
+			"pendingTransactions", "will_retry_failed_transactions")
+	}
+
+	// Summary logging for warning-level issues
+	if totalNilResults > 0 {
+		slog.Warn("Transaction processing summary - Nil results encountered",
+			"eventType", eventTypeName,
+			"nilResultCount", totalNilResults,
+			"totalProcessed", len(signatures),
+			"successfulEvents", len(allEvents))
+	}
+
+	if individualRetryFailures > 0 {
+		slog.Warn("Transaction processing summary - Individual retry failures",
+			"eventType", eventTypeName,
+			"retryFailureCount", individualRetryFailures,
+			"totalProcessed", len(signatures),
+			"addedToPendingQueue", individualRetryFailures)
+	}
+
+	if len(failedSignatures) > 0 {
+		slog.Warn("Transaction processing summary - Failed signatures added to pending queue",
+			"eventType", eventTypeName,
+			"failedSignatureCount", len(failedSignatures),
+			"totalProcessed", len(signatures),
+			"willRetryInNextCycle", true)
+	}
+	if len(allEvents) > 0 {
+		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(allEvents))
+	}
+	// Return the newest signature processed for optimistic watermark advancement
+	watermarkSig := newestSigProcessed
+	if watermarkSig.IsZero() {
+		watermarkSig = lastSuccessfullyProcessedSig
+	}
+	return allEvents, watermarkSig, failedSignatures, nil
+}
+
+// getSolanaEvents is an optimized generic helper to fetch signatures for a given program, detect and heal
+// gaps using the watermark (lastKnownSig), then download and process each transaction using the
+// provided `processTransaction` callback. If any part of the transaction processing pipeline fails,
+// it returns any partially processed events along with the watermark of the last successfully
+// processed transaction. This allows the oracle to make incremental progress.
+
+// PERFORMANCE OPTIMIZATIONS:
+// - Rate limiting with semaphore to prevent RPC overload
+// - Transaction caching with TTL
+// - Parallel batch processing with improved error handling
+// - Exponential backoff retry strategy
+// - Memory-efficient slice pre-allocation
+// retryIndividualTransaction attempts to fetch a single transaction that returned nil in batch processing
+func (o *Oracle) retryIndividualTransaction(ctx context.Context, sig solana.Signature, eventTypeName string) (*solrpc.GetTransactionResult, error) {
+	// Check cache first
+	if cached, found := o.getCachedTransactionResult(sig.String()); found {
+		slog.Debug("Individual transaction retry found in cache", "eventType", eventTypeName, "signature", sig)
+		return cached, nil
+	}
+
+	// Rate limiting: acquire semaphore slot
+	select {
+	case o.solanaRateLimiter <- struct{}{}:
+		defer func() { <-o.solanaRateLimiter }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(sidecartypes.SolanaRateLimiterTimeout):
+		return nil, fmt.Errorf("rate limiter timeout for individual retry after %v", sidecartypes.SolanaRateLimiterTimeout)
+	}
+
+	// Create timeout context for the individual request
+	retryCtx, cancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
+	defer cancel()
+
+	// Make individual RPC call with detailed error handling
+	txResult, err := o.getTransactionFn(retryCtx, sig, &solrpc.GetTransactionOpts{
+		Encoding:                       solana.EncodingBase64,
+		Commitment:                     solrpc.CommitmentConfirmed,
+		MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
+	})
+
+	if err != nil {
+		// Categorize the error for better handling
+		errStr := err.Error()
+		if strings.Contains(errStr, "not found") {
+			slog.Debug("Individual transaction retry confirmed not found", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("not found: %w", err)
+		} else if strings.Contains(errStr, "context canceled") || strings.Contains(errStr, "timeout") {
+			slog.Debug("Individual transaction retry timed out", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("timeout/canceled: %w", err)
+		} else {
+			slog.Debug("Individual transaction retry failed with RPC error", "eventType", eventTypeName, "signature", sig, "error", err)
+			return nil, fmt.Errorf("rpc error: %w", err)
+		}
+	}
+
+	// Handle nil result (transaction exists but no data returned)
+	if txResult == nil {
+		slog.Debug("Individual transaction retry returned nil result", "eventType", eventTypeName, "signature", sig)
+		return nil, nil
+	}
+
+	// Cache the successful result
+	o.cacheTransactionResult(sig.String(), txResult)
+	slog.Debug("Individual transaction retry successful", "eventType", eventTypeName, "signature", sig)
+
+	return txResult, nil
+}
+
 func (o *Oracle) getSolanaEvents(
 	ctx context.Context,
 	programIDStr string,
 	lastKnownSig solana.Signature,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
 ) ([]any, solana.Signature, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
 	program, err := solana.PublicKeyFromBase58(programIDStr)
@@ -1655,147 +2481,18 @@ func (o *Oracle) getSolanaEvents(
 
 	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
 
-	// Get event processor from pool for memory efficiency
-	ep := o.eventProcessorPool.Get().(*EventProcessor)
-	defer func() {
-		ep.Reset()
-		o.eventProcessorPool.Put(ep)
-	}()
+	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
 
-	lastSuccessfullyProcessedSig := lastKnownSig
-	// Adaptive batching parameters
-	currentBatchSize := sidecartypes.SolanaEventFetchBatchSize
-	minBatchSize := sidecartypes.SolanaEventFetchMinBatchSize
-
-	// Pre-allocate with estimated capacity to reduce allocations
-	estimatedEvents := len(newSignatures) * 2 // Estimate 2 events per signature on average
-	if cap(ep.events) < estimatedEvents {
-		ep.events = make([]any, 0, estimatedEvents)
+	// Handle failed signatures by adding them to pending queue
+	for _, failedSig := range failedSignatures {
+		o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex)
 	}
 
-	// Process signatures with adaptive batching
-	for i := 0; i < len(newSignatures); {
-		if ctx.Err() != nil {
-			return ep.GetEvents(), lastSuccessfullyProcessedSig, ctx.Err()
-		}
-
-		end := min(i+currentBatchSize, len(newSignatures))
-		currentBatch := newSignatures[i:end]
-
-		// Get batch request slice from pool
-		batchRequests := o.batchRequestPool.Get().(jsonrpc.RPCRequests)
-		batchRequests = (batchRequests)[:0] // Reset slice but keep capacity
-
-		// Build batch requests
-		for j, sigInfo := range currentBatch {
-			batchRequests = append(batchRequests, &jsonrpc.RPCRequest{
-				Method: "getTransaction",
-				Params: []any{
-					sigInfo.Signature.String(),
-					map[string]any{
-						"encoding":                       solana.EncodingBase64,
-						"commitment":                     solrpc.CommitmentConfirmed,
-						"maxSupportedTransactionVersion": &sidecartypes.MaxSupportedSolanaTxVersion,
-					},
-				},
-				ID:      uint64(j),
-				JSONRPC: "2.0",
-			})
-		}
-
-		// Execute batch request
-		batchCtx, batchCancel := context.WithTimeout(ctx, sidecartypes.SolanaBatchTimeout)
-		batchResponses, batchErr := o.rpcCallBatchFn(batchCtx, batchRequests)
-		batchCancel()
-
-		// Check for errors in the response itself
-		if batchErr == nil {
-			for _, resp := range batchResponses {
-				if resp.Error != nil {
-					batchErr = fmt.Errorf("response contains errors: %v", resp.Error)
-					break
-				}
-			}
-		}
-
-		// If the batch failed, reduce the batch size and retry the same segment.
-		if batchErr != nil {
-			newBatchSize := max(currentBatchSize/2, minBatchSize)
-			if currentBatchSize > minBatchSize {
-				slog.Warn("Batch GetTransaction failed, reducing batch size and retrying",
-					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
-				currentBatchSize = newBatchSize
-			} else {
-				// If we're already at the minimum batch size, switch to fallback for this batch
-				slog.Warn("Batch transaction fetch failed at minimum batch size, switching to individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
-				if err := o.processFallbackTransactionsWithCaching(ctx, currentBatch, program, ep, &lastSuccessfullyProcessedSig, eventTypeName, processTransaction); err != nil {
-					slog.Warn("Fallback processing failed, returning partial results", "eventType", eventTypeName, "processedCount", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig, "reason", err)
-					o.batchRequestPool.Put(batchRequests)
-					return ep.GetEvents(), lastSuccessfullyProcessedSig, err
-				}
-				i += len(currentBatch) // Advance past the successfully processed fallback segment
-			}
-			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
-			o.batchRequestPool.Put(batchRequests)
-			continue // Retry the same segment `i`
-		}
-
-		// Success: Process the batch responses
-		responseMap := make(map[int]*jsonrpc.RPCResponse, len(batchResponses))
-		for _, resp := range batchResponses {
-			if idx, ok := parseRPCResponseID(resp, eventTypeName); ok {
-				responseMap[idx] = resp
-			}
-		}
-
-		// Process responses in order to maintain watermark correctness
-		for idx, sigInfo := range currentBatch {
-			resp, exists := responseMap[idx]
-			if !exists {
-				err := fmt.Errorf("missing batch response for index %d", idx)
-				slog.Warn("Incomplete batch response, stopping processing and saving progress", "eventType", eventTypeName, "reason", err)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
-			}
-
-			var txRes solrpc.GetTransactionResult
-			if err := json.Unmarshal(resp.Result, &txRes); err != nil {
-				err = fmt.Errorf("unmarshal error: %w", err)
-				slog.Warn("Aborting batch due to unmarshal error", "eventType", eventTypeName, "reason", err)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
-			}
-
-			o.cacheTransactionResult(sigInfo.Signature.String(), &txRes)
-
-			events, err := processTransaction(&txRes, program, sigInfo.Signature, o.DebugMode)
-			if err != nil {
-				slog.Warn("Aborting batch due to processing error", "eventType", eventTypeName, "reason", err)
-				o.batchRequestPool.Put(batchRequests)
-				return ep.GetEvents(), lastSuccessfullyProcessedSig, err
-			}
-
-			if len(events) > 0 {
-				for _, event := range events {
-					ep.AddEvent(event)
-				}
-			}
-			lastSuccessfullyProcessedSig = sigInfo.Signature
-		}
-
-		// Advance to the next segment
-		i += len(currentBatch)
-		o.batchRequestPool.Put(batchRequests) // Return the batch request slice to the pool
-
-		// Optional: slowly increase batch size on success
-		if currentBatchSize < sidecartypes.SolanaEventFetchBatchSize {
-			currentBatchSize = min(currentBatchSize+minBatchSize, sidecartypes.SolanaEventFetchBatchSize)
-		}
-		time.Sleep(sidecartypes.SolanaSleepInterval)
+	if err != nil {
+		return events, lastSig, err
 	}
 
-	slog.Info("Processed new Solana transactions", "eventType", eventTypeName, "count", len(ep.GetEvents()), "newWatermark", lastSuccessfullyProcessedSig)
-	return ep.GetEvents(), lastSuccessfullyProcessedSig, nil
+	return events, newestSigFromNode, nil
 }
 
 // cacheTransactionResult caches a transaction result with TTL
@@ -1836,7 +2533,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 	ctx context.Context,
 	currentBatch []*solrpc.TransactionSignature,
 	program solana.PublicKey,
-	ep *EventProcessor,
+	allEvents *[]any,
 	lastSuccessfullyProcessedSig *solana.Signature,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
@@ -1886,9 +2583,7 @@ func (o *Oracle) processFallbackTransactionsWithCaching(
 		}
 
 		if len(events) > 0 {
-			for _, event := range events {
-				ep.AddEvent(event)
-			}
+			*allEvents = append(*allEvents, events...)
 		}
 		*lastSuccessfullyProcessedSig = sigInfo.Signature
 		time.Sleep(sidecartypes.SolanaFallbackSleepInterval)

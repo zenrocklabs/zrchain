@@ -41,5 +41,10 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 		return err
 	}
 
+	if err := v3.SendZentpFeesToMintModule(ctx, m.keeper.GetMintsWithStatusPending, m.keeper.GetBridgeFeeParams, m.keeper.bankKeeper, m.keeper.accountKeeper); err != nil {
+		ctx.Logger().With("error", err).Error("failed to migrate zentp module")
+		return err
+	}
+
 	return nil
 }

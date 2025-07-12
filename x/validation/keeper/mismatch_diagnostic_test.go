@@ -88,29 +88,29 @@ func TestMismatchDiagnostic(t *testing.T) {
 
 	// Step 1: Create a realistic vote extension
 	originalVoteExt := keeper.VoteExtension{
-		EigenDelegationsHash:       []byte("diagnostic_delegations_hash"),
-		RequestedBtcBlockHeight:    850000,
-		RequestedBtcHeaderHash:     []byte("diagnostic_btc_header"),
-		EthBlockHeight:             1000,
-		EthGasLimit:                30000000,
-		EthBaseFee:                 20000000000,
-		EthTipCap:                  2000000000,
-		RequestedStakerNonce:       10,
-		RequestedEthMinterNonce:    20,
-		RequestedUnstakerNonce:     30,
-		RequestedCompleterNonce:    40,
-		SolanaMintNoncesHash:       []byte("diagnostic_solana_mint_nonces"),
-		SolanaAccountsHash:         []byte("diagnostic_solana_accounts"),
-		EthBurnEventsHash:          []byte("diagnostic_eth_burn_events"),
-		SolanaBurnEventsHash:       []byte("diagnostic_solana_burn_events"),
-		SolanaMintEventsHash:       []byte("diagnostic_solana_mint_events"),
-		RedemptionsHash:            []byte("diagnostic_redemptions"),
-		ROCKUSDPrice:               "0.01801",
-		BTCUSDPrice:                "102855.235",
-		ETHUSDPrice:                "3000.00",
-		LatestBtcBlockHeight:       850001,
-		LatestBtcHeaderHash:        []byte("diagnostic_latest_btc_header"),
-		SidecarVersionName:         "diagnostic_sidecar_v1",
+		EigenDelegationsHash:    []byte("diagnostic_delegations_hash"),
+		RequestedBtcBlockHeight: 850000,
+		RequestedBtcHeaderHash:  []byte("diagnostic_btc_header"),
+		EthBlockHeight:          1000,
+		EthGasLimit:             30000000,
+		EthBaseFee:              20000000000,
+		EthTipCap:               2000000000,
+		RequestedStakerNonce:    10,
+		RequestedEthMinterNonce: 20,
+		RequestedUnstakerNonce:  30,
+		RequestedCompleterNonce: 40,
+		SolanaMintNoncesHash:    []byte("diagnostic_solana_mint_nonces"),
+		SolanaAccountsHash:      []byte("diagnostic_solana_accounts"),
+		EthBurnEventsHash:       []byte("diagnostic_eth_burn_events"),
+		SolanaBurnEventsHash:    []byte("diagnostic_solana_burn_events"),
+		SolanaMintEventsHash:    []byte("diagnostic_solana_mint_events"),
+		RedemptionsHash:         []byte("diagnostic_redemptions"),
+		ROCKUSDPrice:            "0.01801",
+		BTCUSDPrice:             "102855.235",
+		ETHUSDPrice:             "3000.00",
+		LatestBtcBlockHeight:    850001,
+		LatestBtcHeaderHash:     []byte("diagnostic_latest_btc_header"),
+		SidecarVersionName:      "diagnostic_sidecar_v1",
 	}
 
 	// Step 2: Serialize the vote extension (this is what the validator submits)
@@ -141,10 +141,10 @@ func TestMismatchDiagnostic(t *testing.T) {
 	t.Logf("Validator Address: %s", validatorHexAddr)
 	t.Logf("Validator Power: %d", consensusData.Votes[0].Validator.Power)
 
-	// Step 4: Process vote extension through GetSuperMajorityVEData
-	t.Log("\n=== STEP 4: Processing through GetSuperMajorityVEData ===")
+	// Step 4: Process vote extension through GetConsensusAndPluralityVEData
+	t.Log("\n=== STEP 4: Processing through GetConsensusAndPluralityVEData ===")
 
-	canonicalVE, fieldVotePowers, err := validationKeeper.GetSuperMajorityVEData(ctx, 100, consensusData)
+	canonicalVE, pluralityVE, fieldVotePowers, err := validationKeeper.GetConsensusAndPluralityVEData(ctx, 100, consensusData)
 	require.NoError(t, err)
 
 	t.Logf("Canonical VE obtained successfully")

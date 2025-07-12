@@ -259,7 +259,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return nil, nil
 	}
 
-	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, req.Height, req.LocalLastCommit)
+	consensusVE, _, fieldVotePowers, err := k.GetConsensusAndPluralityVEData(ctx, req.Height, req.LocalLastCommit)
 	if err != nil {
 		k.Logger(ctx).Error("error retrieving supermajority vote extension data", "height", req.Height, "error", err)
 		return nil, nil
@@ -270,7 +270,7 @@ func (k *Keeper) PrepareProposal(ctx sdk.Context, req *abci.RequestPreparePropos
 		return k.marshalOracleData(req, &OracleData{ConsensusData: req.LocalLastCommit, FieldVotePowers: fieldVotePowers})
 	}
 
-	oracleData, err := k.GetValidatedOracleData(ctx, voteExt, fieldVotePowers)
+	oracleData, err := k.GetValidatedOracleData(ctx, consensusVE, fieldVotePowers)
 	if err != nil {
 		k.Logger(ctx).Warn("error in getValidatedOracleData; injecting empty oracle data", "height", req.Height, "error", err)
 		oracleData = &OracleData{}
@@ -336,7 +336,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		return nil
 	}
 
-	canonicalVE, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
+	_, pluralityVE, ok := k.validateCanonicalVE(ctx, req.Height, oracleData)
 	if !ok {
 		k.Logger(ctx).Error("invalid canonical vote extension")
 		return nil
@@ -404,7 +404,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	}
 
 	k.recordNonVotingValidators(ctx, req)
-	k.recordMismatchedVoteExtensions(ctx, req.Height, canonicalVE, oracleData.ConsensusData)
+	k.recordMismatchedVoteExtensions(ctx, req.Height, pluralityVE, oracleData.ConsensusData)
 
 	// Perform final invariant checks for the block.
 	if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
@@ -437,26 +437,27 @@ func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinal
 }
 
 // validateCanonicalVE validates the canonical vote extension from oracle data.
-func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, bool) {
-	voteExt, fieldVotePowers, err := k.GetSuperMajorityVEData(ctx, height, oracleData.ConsensusData)
+// Returns both the consensus vote extension and the plurality vote extension.
+func (k *Keeper) validateCanonicalVE(ctx sdk.Context, height int64, oracleData OracleData) (VoteExtension, VoteExtension, bool) {
+	consensusVE, pluralityVE, fieldVotePowers, err := k.GetConsensusAndPluralityVEData(ctx, height, oracleData.ConsensusData)
 	if err != nil {
 		k.Logger(ctx).Error("error getting super majority VE data", "height", height, "error", err)
-		return VoteExtension{}, false
+		return VoteExtension{}, VoteExtension{}, false
 	}
 
-	if reflect.DeepEqual(voteExt, VoteExtension{}) {
+	if reflect.DeepEqual(consensusVE, VoteExtension{}) {
 		k.Logger(ctx).Warn("accepting empty vote extension", "height", height)
-		return VoteExtension{}, true
+		return VoteExtension{}, pluralityVE, true
 	}
 
-	k.validateOracleData(ctx, voteExt, &oracleData, fieldVotePowers)
+	k.validateOracleData(ctx, consensusVE, &oracleData, fieldVotePowers)
 
 	// Log final consensus summary after validation
 	k.Logger(ctx).Info("final consensus summary",
 		"fields_with_consensus", len(oracleData.FieldVotePowers),
 		"stage", "post_validation")
 
-	return voteExt, true
+	return consensusVE, pluralityVE, true
 }
 
 // getValidatedOracleData retrieves and validates oracle data based on a vote extension.

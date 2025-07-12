@@ -33,10 +33,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(err)
 		}
 	}
-	if !genState.ZentpFees.IsNil() {
-		if err := k.ZentpFees.Set(ctx, genState.ZentpFees); err != nil {
-			panic(err)
-		}
+	if err := k.ZentpFees.Set(ctx, genState.ZentpFees); err != nil {
+		panic(err)
 	}
 }
 

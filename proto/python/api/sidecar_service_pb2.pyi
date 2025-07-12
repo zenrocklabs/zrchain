@@ -94,12 +94,13 @@ class SidecarStateRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class SidecarStateResponse(_message.Message):
-    __slots__ = ("EigenDelegations", "EthBlockHeight", "EthGasLimit", "EthBaseFee", "EthTipCap", "EthBurnEvents", "Redemptions", "ROCKUSDPrice", "BTCUSDPrice", "ETHUSDPrice", "SolanaMintEvents", "SolanaBurnEvents", "SidecarVersionName")
+    __slots__ = ("EigenDelegations", "EthBlockHeight", "EthGasLimit", "EthBaseFee", "EthTipCap", "SolanaLamportsPerSignature", "EthBurnEvents", "Redemptions", "ROCKUSDPrice", "BTCUSDPrice", "ETHUSDPrice", "SolanaMintEvents", "SolanaBurnEvents", "SidecarVersionName")
     EIGENDELEGATIONS_FIELD_NUMBER: _ClassVar[int]
     ETHBLOCKHEIGHT_FIELD_NUMBER: _ClassVar[int]
     ETHGASLIMIT_FIELD_NUMBER: _ClassVar[int]
     ETHBASEFEE_FIELD_NUMBER: _ClassVar[int]
     ETHTIPCAP_FIELD_NUMBER: _ClassVar[int]
+    SOLANALAMPORTSPERSIGNATURE_FIELD_NUMBER: _ClassVar[int]
     ETHBURNEVENTS_FIELD_NUMBER: _ClassVar[int]
     REDEMPTIONS_FIELD_NUMBER: _ClassVar[int]
     ROCKUSDPRICE_FIELD_NUMBER: _ClassVar[int]
@@ -113,6 +114,7 @@ class SidecarStateResponse(_message.Message):
     EthGasLimit: int
     EthBaseFee: int
     EthTipCap: int
+    SolanaLamportsPerSignature: int
     EthBurnEvents: _containers.RepeatedCompositeFieldContainer[BurnEvent]
     Redemptions: _containers.RepeatedCompositeFieldContainer[Redemption]
     ROCKUSDPrice: str
@@ -121,7 +123,7 @@ class SidecarStateResponse(_message.Message):
     SolanaMintEvents: _containers.RepeatedCompositeFieldContainer[SolanaMintEvent]
     SolanaBurnEvents: _containers.RepeatedCompositeFieldContainer[BurnEvent]
     SidecarVersionName: str
-    def __init__(self, EigenDelegations: _Optional[bytes] = ..., EthBlockHeight: _Optional[int] = ..., EthGasLimit: _Optional[int] = ..., EthBaseFee: _Optional[int] = ..., EthTipCap: _Optional[int] = ..., EthBurnEvents: _Optional[_Iterable[_Union[BurnEvent, _Mapping]]] = ..., Redemptions: _Optional[_Iterable[_Union[Redemption, _Mapping]]] = ..., ROCKUSDPrice: _Optional[str] = ..., BTCUSDPrice: _Optional[str] = ..., ETHUSDPrice: _Optional[str] = ..., SolanaMintEvents: _Optional[_Iterable[_Union[SolanaMintEvent, _Mapping]]] = ..., SolanaBurnEvents: _Optional[_Iterable[_Union[BurnEvent, _Mapping]]] = ..., SidecarVersionName: _Optional[str] = ...) -> None: ...
+    def __init__(self, EigenDelegations: _Optional[bytes] = ..., EthBlockHeight: _Optional[int] = ..., EthGasLimit: _Optional[int] = ..., EthBaseFee: _Optional[int] = ..., EthTipCap: _Optional[int] = ..., SolanaLamportsPerSignature: _Optional[int] = ..., EthBurnEvents: _Optional[_Iterable[_Union[BurnEvent, _Mapping]]] = ..., Redemptions: _Optional[_Iterable[_Union[Redemption, _Mapping]]] = ..., ROCKUSDPrice: _Optional[str] = ..., BTCUSDPrice: _Optional[str] = ..., ETHUSDPrice: _Optional[str] = ..., SolanaMintEvents: _Optional[_Iterable[_Union[SolanaMintEvent, _Mapping]]] = ..., SolanaBurnEvents: _Optional[_Iterable[_Union[BurnEvent, _Mapping]]] = ..., SidecarVersionName: _Optional[str] = ...) -> None: ...
 
 class SidecarStateByEthHeightRequest(_message.Message):
     __slots__ = ("EthBlockHeight",)

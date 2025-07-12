@@ -83,7 +83,7 @@ func (k Keeper) Stats(goCtx context.Context, req *types.QueryStatsRequest) (*typ
 			TotalBurned: totalBurned.Uint64(),
 			MintsCount:  mintsCount,
 			BurnsCount:  burnsCount,
-			ZentpFees:   &zentpFees,
+			ZentpFees:   zentpFees,
 		}, nil
 	}
 

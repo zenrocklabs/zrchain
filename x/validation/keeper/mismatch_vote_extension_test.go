@@ -167,8 +167,8 @@ func (suite *MismatchVoteExtensionTestSuite) TestSingleValidatorNetworkConsensus
 		},
 	}
 
-	// Test GetSuperMajorityVEData
-	canonicalVE, fieldVotePowers, err := suite.validationKeeper.GetSuperMajorityVEData(suite.ctx, 1, consensusData)
+	// Test GetConsensusAndPluralityVEData
+	canonicalVE, pluralityVE, fieldVotePowers, err := suite.validationKeeper.GetConsensusAndPluralityVEData(suite.ctx, 1, consensusData)
 	require.NoError(err)
 
 	// In a single validator network, the canonical VE should match the validator's VE
@@ -507,7 +507,7 @@ func (suite *MismatchVoteExtensionTestSuite) TestRealWorldSingleValidatorScenari
 	}
 
 	// Step 1: Get canonical vote extension (should be the validator's VE)
-	canonicalVE, fieldVotePowers, err := suite.validationKeeper.GetSuperMajorityVEData(suite.ctx, 100, consensusData)
+	canonicalVE, pluralityVE, fieldVotePowers, err := suite.validationKeeper.GetConsensusAndPluralityVEData(suite.ctx, 100, consensusData)
 	require.NoError(err)
 
 	// Verify the canonical VE is the same as the validator's VE
@@ -581,7 +581,7 @@ func (suite *MismatchVoteExtensionTestSuite) TestJSONSerializationMismatchBug() 
 	originalJSON, err := json.Marshal(voteExt)
 	require.NoError(err)
 
-	// Step 2: Deserialize it (simulating what GetSuperMajorityVEData does)
+	// Step 2: Deserialize it (simulating what GetConsensusAndPluralityVEData does)
 	var deserializedVoteExt keeper.VoteExtension
 	err = json.Unmarshal(originalJSON, &deserializedVoteExt)
 	require.NoError(err)

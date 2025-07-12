@@ -37,5 +37,5 @@ type BankKeeper interface {
 
 // ZentpKeeper defines the contract required for zentp keeper APIs.
 type ZentpKeeper interface {
-	UpdateZentpFees(ctx context.Context, fees sdk.Coin) error
+	UpdateZentpFees(ctx context.Context, fees uint64) error
 }

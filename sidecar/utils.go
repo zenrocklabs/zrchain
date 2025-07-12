@@ -366,6 +366,15 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 }
 
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
+	// Copy pending transactions from current state to preserve them across ticks
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	pendingTransactions := make(map[string]sidecartypes.PendingTxInfo)
+	if currentState.PendingSolanaTxs != nil {
+		for k, v := range currentState.PendingSolanaTxs {
+			pendingTransactions[k] = v
+		}
+	}
+
 	return &oracleStateUpdate{
 		eigenDelegations:        make(map[string]map[string]*big.Int),
 		suggestedTip:            big.NewInt(0),
@@ -381,6 +390,7 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 		SolanaMintEvents:        make([]api.SolanaMintEvent, 0),
 		cleanedSolanaMintEvents: make(map[string]bool),
 		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
+		pendingTransactions:     pendingTransactions,
 	}
 }
 
