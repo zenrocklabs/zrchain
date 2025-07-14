@@ -133,7 +133,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "dummySolAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_SOLANA,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -223,7 +223,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "anotherETHAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -252,7 +252,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							ZenbtcMetadata: &types.ZenBTCMetadata{
 								RecipientAddr: "anotherETHAddress",
 								ChainType:     types.WalletType_WALLET_TYPE_EVM,
-								Caip2ChainId:  "eip155:17000",
+								Caip2ChainId:  ethereum.HoodiCAIP2,
 								ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 							},
 						},
@@ -281,7 +281,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "anotherETHAddress",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "tb1qypwjx7yj5jz0gw0vh76348ypa2ns7tfwsnhlh9",
 						},
 					},
@@ -356,7 +356,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 					},
 				},
 				req: &types.QueryZenbtcWalletsRequest{
-					MintChainId: "eip155:17000",
+					MintChainId: ethereum.HoodiCAIP2,
 					ChainType:   types.WalletType_WALLET_TYPE_EVM,
 				},
 			},
@@ -380,7 +380,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "recipient2",
 							ChainType:     types.WalletType_WALLET_TYPE_BTC_REGNET,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "return2",
 						},
 					},
@@ -409,7 +409,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "differentRecipient",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "return3",
 						},
 					},
@@ -438,7 +438,7 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 						ZenbtcMetadata: &types.ZenBTCMetadata{
 							RecipientAddr: "recipient4",
 							ChainType:     types.WalletType_WALLET_TYPE_EVM,
-							Caip2ChainId:  "eip155:17000",
+							Caip2ChainId:  ethereum.HoodiCAIP2,
 							ReturnAddress: "differentReturn",
 						},
 					},
