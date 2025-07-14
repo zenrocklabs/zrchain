@@ -1,11 +1,11 @@
-package v6rev17
+package v6rev19
 
 import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades"
 )
 
-const UpgradeName = "v6rev17"
+const UpgradeName = "v6rev19"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
