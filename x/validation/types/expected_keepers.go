@@ -10,6 +10,7 @@ import (
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -144,4 +145,9 @@ type TreasuryKeeper interface {
 	GetAddressByWalletType(ctx sdk.Context, id uint64, walletType treasurytypes.WalletType, prefixes []string) (string, error)
 	HandleSignTransactionRequest(ctx sdk.Context, msg *treasurytypes.MsgNewSignTransactionRequest, data []byte) (*treasurytypes.MsgNewSignTransactionRequestResponse, error)
 	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
+}
+
+type SlashingKeeper interface {
+	GetValidatorSigningInfo(ctx context.Context, address sdk.ConsAddress) (slashingtypes.ValidatorSigningInfo, error)
+	SetValidatorSigningInfo(ctx context.Context, address sdk.ConsAddress, info slashingtypes.ValidatorSigningInfo) error
 }

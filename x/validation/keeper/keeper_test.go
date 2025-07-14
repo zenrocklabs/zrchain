@@ -152,6 +152,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	zentpKeeper.EXPECT().GetBridgeFeeAmount(ubermock.Any(), ubermock.Any(), ubermock.Any()).Return(sdk.NewCoins(), nil).AnyTimes()
 	zentpKeeper.EXPECT().AddBurn(ubermock.Any(), ubermock.Any()).Return(nil).AnyTimes()
 	treasuryKeeper := validationtestutil.NewMockTreasuryKeeper(ctrl)
+	slashingKeeper := validationtestutil.NewMockSlashingKeeper(ctrl)
 
 	newctrl := ubermock.NewController(s.T())
 	zenBTCKeeper := validationtestutil.NewMockZenBTCKeeper(newctrl)
@@ -212,6 +213,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		treasuryKeeper,
 		zenBTCKeeper,
 		zentpKeeper,
+		slashingKeeper,
 		address.NewBech32Codec("zenvaloper"),
 		address.NewBech32Codec("zenvalcons"),
 	)
