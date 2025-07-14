@@ -50,20 +50,19 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 	}
 
 	return &api.SidecarStateResponse{
-		EigenDelegations:           contractState,
-		EthBlockHeight:             currentState.EthBlockHeight,
-		EthGasLimit:                currentState.EthGasLimit,
-		EthBaseFee:                 currentState.EthBaseFee,
-		EthTipCap:                  currentState.EthTipCap,
-		SolanaLamportsPerSignature: currentState.SolanaLamportsPerSignature,
-		EthBurnEvents:              currentState.EthBurnEvents,
-		Redemptions:                currentState.Redemptions,
-		ROCKUSDPrice:               currentState.ROCKUSDPrice.String(),
-		BTCUSDPrice:                currentState.BTCUSDPrice.String(),
-		ETHUSDPrice:                currentState.ETHUSDPrice.String(),
-		SolanaBurnEvents:           currentState.SolanaBurnEvents,
-		SolanaMintEvents:           currentState.SolanaMintEvents,
-		SidecarVersionName:         sidecartypes.SidecarVersionName,
+		EigenDelegations:   contractState,
+		EthBlockHeight:     currentState.EthBlockHeight,
+		EthGasLimit:        currentState.EthGasLimit,
+		EthBaseFee:         currentState.EthBaseFee,
+		EthTipCap:          currentState.EthTipCap,
+		EthBurnEvents:      currentState.EthBurnEvents,
+		Redemptions:        currentState.Redemptions,
+		ROCKUSDPrice:       currentState.ROCKUSDPrice.String(),
+		BTCUSDPrice:        currentState.BTCUSDPrice.String(),
+		ETHUSDPrice:        currentState.ETHUSDPrice.String(),
+		SolanaBurnEvents:   currentState.SolanaBurnEvents,
+		SolanaMintEvents:   currentState.SolanaMintEvents,
+		SidecarVersionName: sidecartypes.SidecarVersionName,
 	}, nil
 }
 
@@ -79,20 +78,19 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 	}
 
 	return &api.SidecarStateResponse{
-		EigenDelegations:           contractState,
-		EthBlockHeight:             state.EthBlockHeight,
-		EthGasLimit:                state.EthGasLimit,
-		EthBaseFee:                 state.EthBaseFee,
-		EthTipCap:                  state.EthTipCap,
-		SolanaLamportsPerSignature: state.SolanaLamportsPerSignature,
-		EthBurnEvents:              state.EthBurnEvents,
-		Redemptions:                state.Redemptions,
-		ROCKUSDPrice:               state.ROCKUSDPrice.String(),
-		BTCUSDPrice:                state.BTCUSDPrice.String(),
-		ETHUSDPrice:                state.ETHUSDPrice.String(),
-		SolanaMintEvents:           state.SolanaMintEvents,
-		SolanaBurnEvents:           state.SolanaBurnEvents,
-		SidecarVersionName:         sidecartypes.SidecarVersionName,
+		EigenDelegations:   contractState,
+		EthBlockHeight:     state.EthBlockHeight,
+		EthGasLimit:        state.EthGasLimit,
+		EthBaseFee:         state.EthBaseFee,
+		EthTipCap:          state.EthTipCap,
+		EthBurnEvents:      state.EthBurnEvents,
+		Redemptions:        state.Redemptions,
+		ROCKUSDPrice:       state.ROCKUSDPrice.String(),
+		BTCUSDPrice:        state.BTCUSDPrice.String(),
+		ETHUSDPrice:        state.ETHUSDPrice.String(),
+		SolanaMintEvents:   state.SolanaMintEvents,
+		SolanaBurnEvents:   state.SolanaBurnEvents,
+		SidecarVersionName: sidecartypes.SidecarVersionName,
 	}, nil
 }
 

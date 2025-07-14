@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math/big"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solana "github.com/gagliardetto/solana-go"
+	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
@@ -121,8 +123,8 @@ func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, 
 	return nil, fmt.Errorf("state with Ethereum block height %d not found", height)
 }
 
-func LoadConfig() sidecartypes.Config {
-	configFile := getConfigFile()
+func LoadConfig(configFileFlag, configDirFlag string) sidecartypes.Config {
+	configFile := getConfigFile(configFileFlag, configDirFlag)
 	cfg, err := readConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to read config: %v", err)
@@ -130,15 +132,57 @@ func LoadConfig() sidecartypes.Config {
 	return cfg
 }
 
-func getConfigFile() string {
-	configFile := os.Getenv("SIDECAR_CONFIG_FILE")
-	if configFile == "" {
-		configFile = "config.yaml"
+func getConfigFile(configFileFlag, configDirFlag string) string {
+	// 1. Command-line flag has the highest precedence.
+	if configFileFlag != "" {
+		slog.Info("Using config file specified by flag", "path", configFileFlag)
+		return configFileFlag
 	}
-	return configFile
+
+	// 2. Environment variable is next.
+	if envConfigFile := os.Getenv("SIDECAR_CONFIG_FILE"); envConfigFile != "" {
+		slog.Info("Using config file specified by SIDECAR_CONFIG_FILE environment variable", "path", envConfigFile)
+		return envConfigFile
+	}
+
+	// 3. --config-dir flag.
+	if configDirFlag != "" {
+		configPath := filepath.Join(configDirFlag, "config.yaml")
+		slog.Info("Using config file from directory specified by --config-dir flag", "path", configPath)
+		return configPath
+	}
+
+	// 4. Autodetection based on executable path.
+	exePath, err := os.Executable()
+	if err != nil {
+		slog.Warn("Could not determine executable path; falling back to relative path for config", "error", err)
+		return "config.yaml" // Fallback
+	}
+
+	exeDir := filepath.Dir(exePath)
+
+	// Check for config.yaml in the same directory as the executable (local setup).
+	localConfigPath := filepath.Join(exeDir, "config.yaml")
+	if _, err := os.Stat(localConfigPath); err == nil {
+		slog.Info("Found config file in the executable's directory", "path", localConfigPath)
+		return localConfigPath
+	}
+
+	// Check for config.yaml in the parent directory (container setup).
+	parentDir := filepath.Dir(exeDir)
+	parentConfigPath := filepath.Join(parentDir, "config.yaml")
+	if _, err := os.Stat(parentConfigPath); err == nil {
+		slog.Info("Found config file in the parent of the executable's directory", "path", parentConfigPath)
+		return parentConfigPath
+	}
+
+	// 5. Fallback if not found in any of the preferred locations.
+	slog.Warn("Could not find config.yaml automatically; falling back to default relative path", "path", "config.yaml")
+	return "config.yaml"
 }
 
 func readConfig(configFile string) (sidecartypes.Config, error) {
+	slog.Info("Reading configuration file", "path", configFile)
 	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
 		return sidecartypes.Config{}, fmt.Errorf("unable to read config from %s: %v", configFile, err)
@@ -240,14 +284,27 @@ func mergeNewBurnEvents(existingEvents []api.BurnEvent, cleanedEvents map[string
 	copy(mergedEvents, existingEvents)
 
 	// Add new events if they don't already exist
+	addedCount := 0
+	skippedCount := 0
 	for _, event := range newEvents {
 		key := generateBurnEventKey(event)
 		if !existingEventKeys[key] {
 			mergedEvents = append(mergedEvents, event)
-			slog.Info("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
+			addedCount++
+			slog.Debug("Added burn event to state", "type", eventTypeName, "txID", event.TxID)
 		} else {
+			skippedCount++
 			slog.Debug("Skipping already present burn event", "type", eventTypeName, "txID", event.TxID)
 		}
+	}
+
+	// Only log if there were actual changes
+	if addedCount > 0 || skippedCount > 0 {
+		slog.Info("Burn event merge summary",
+			"type", eventTypeName,
+			"added", addedCount,
+			"skipped", skippedCount,
+			"totalAfterMerge", len(mergedEvents))
 	}
 
 	return mergedEvents
@@ -262,43 +319,78 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 		existingEventKeys[key] = true
 	}
 
+	// Also check against already cleaned events
+	for key := range cleanedEvents {
+		existingEventKeys[key] = true
+	}
+
 	// Start with existing events
 	mergedEvents := make([]api.SolanaMintEvent, len(existingEvents))
 	copy(mergedEvents, existingEvents)
 
 	// Add new events if they don't already exist
+	addedCount := 0
+	skippedCount := 0
 	for _, event := range newEvents {
 		key := generateMintEventKey(event)
 		if !existingEventKeys[key] {
-			if cleaned, exists := cleanedEvents[key]; !exists || !cleaned {
-				mergedEvents = append(mergedEvents, event)
-				slog.Info("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig)
-			} else {
-				slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig)
-			}
+			mergedEvents = append(mergedEvents, event)
+			addedCount++
+			slog.Debug("Added mint event to state", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
+		} else {
+			skippedCount++
+			slog.Debug("Skipping already present mint event", "type", eventTypeName, "txSig", event.TxSig, "key", key[:16]+"...")
 		}
+	}
+
+	// Only log if there were actual changes or new events to process
+	if addedCount > 0 || skippedCount > 0 || len(newEvents) > 0 {
+		// Add detailed logging for debugging - but only when there's activity
+		if addedCount > 0 || len(newEvents) > 0 {
+			slog.Info("Mint event merge debug info",
+				"type", eventTypeName,
+				"existingCount", len(existingEvents),
+				"cleanedCount", len(cleanedEvents),
+				"newCount", len(newEvents),
+				"existingKeys", len(existingEventKeys))
+		}
+
+		slog.Info("Mint event merge summary",
+			"type", eventTypeName,
+			"added", addedCount,
+			"skipped", skippedCount,
+			"totalAfterMerge", len(mergedEvents))
 	}
 
 	return mergedEvents
 }
 
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
+	// Copy pending transactions from current state to preserve them across ticks
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	pendingTransactions := make(map[string]sidecartypes.PendingTxInfo)
+	if currentState.PendingSolanaTxs != nil {
+		for k, v := range currentState.PendingSolanaTxs {
+			pendingTransactions[k] = v
+		}
+	}
+
 	return &oracleStateUpdate{
-		eigenDelegations:           make(map[string]map[string]*big.Int),
-		suggestedTip:               big.NewInt(0),
-		solanaLamportsPerSignature: 0,
-		estimatedGas:               0,
-		ROCKUSDPrice:               math.LegacyZeroDec(),
-		BTCUSDPrice:                math.LegacyZeroDec(),
-		ETHUSDPrice:                math.LegacyZeroDec(),
-		ethBurnEvents:              make([]api.BurnEvent, 0),
-		cleanedEthBurnEvents:       make(map[string]bool),
-		solanaBurnEvents:           make([]api.BurnEvent, 0),
-		cleanedSolanaBurnEvents:    make(map[string]bool),
-		redemptions:                make([]api.Redemption, 0),
-		SolanaMintEvents:           make([]api.SolanaMintEvent, 0),
-		cleanedSolanaMintEvents:    make(map[string]bool),
-		latestSolanaSigs:           make(map[sidecartypes.SolanaEventType]solana.Signature),
+		eigenDelegations:        make(map[string]map[string]*big.Int),
+		suggestedTip:            big.NewInt(0),
+		estimatedGas:            0,
+		ROCKUSDPrice:            math.LegacyZeroDec(),
+		BTCUSDPrice:             math.LegacyZeroDec(),
+		ETHUSDPrice:             math.LegacyZeroDec(),
+		ethBurnEvents:           make([]api.BurnEvent, 0),
+		cleanedEthBurnEvents:    make(map[string]bool),
+		solanaBurnEvents:        make([]api.BurnEvent, 0),
+		cleanedSolanaBurnEvents: make(map[string]bool),
+		redemptions:             make([]api.Redemption, 0),
+		SolanaMintEvents:        make([]api.SolanaMintEvent, 0),
+		cleanedSolanaMintEvents: make(map[string]bool),
+		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
+		pendingTransactions:     pendingTransactions,
 	}
 }
 
@@ -456,28 +548,94 @@ func initLogger(debug bool) {
 	})))
 }
 
-func connectWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
-	var client *ethclient.Client
+func connectWithRetry[T any](
+	serviceName string,
+	rpcAddress string,
+	maxRetries int,
+	delay time.Duration,
+	createClient func(string) (T, error),
+	healthCheck func(T, context.Context) error,
+) (T, error) {
+	var client T
 	var err error
 
 	for i := 0; i < maxRetries || maxRetries == 0; i++ {
-		client, err = ethclient.Dial(rpcAddress)
+		client, err = createClient(rpcAddress)
 		if err == nil {
-			// Check if client can respond to eth_blockNumber
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			_, err = client.BlockNumber(ctx)
-			if err == nil {
-				slog.Info("Successfully connected to Ethereum client", "rpc", rpcAddress)
-				return client, err
+			if err = healthCheck(client, ctx); err == nil {
+				slog.Info("Successfully connected to client", "service", serviceName, "rpc", rpcAddress)
+				return client, nil
 			}
-			client.Close()
 		}
 
-		slog.Warn("Retrying connection to Ethereum client", "attempt", i+1, "error", err)
+		slog.Warn("Retrying connection to client", "service", serviceName, "attempt", i+1, "error", err)
 		time.Sleep(delay)
 	}
 
-	return nil, err
+	return client, err
 }
+
+func connectEthereumWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*ethclient.Client, error) {
+	return connectWithRetry(
+		"Ethereum",
+		rpcAddress,
+		maxRetries,
+		delay,
+		func(addr string) (*ethclient.Client, error) {
+			return ethclient.Dial(addr)
+		},
+		func(client *ethclient.Client, ctx context.Context) error {
+			_, err := client.BlockNumber(ctx)
+			if err != nil {
+				client.Close()
+			}
+			return err
+		},
+	)
+}
+
+func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*solanarpc.Client, error) {
+	return connectWithRetry(
+		"Solana",
+		rpcAddress,
+		maxRetries,
+		delay,
+		func(addr string) (*solanarpc.Client, error) {
+			client := solanarpc.New(addr)
+			if client == nil {
+				return nil, fmt.Errorf("failed to create Solana client")
+			}
+			return client, nil
+		},
+		func(client *solanarpc.Client, ctx context.Context) error {
+			_, err := client.GetHealth(ctx)
+			return err
+		},
+	)
+}
+
+// func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
+// 	return connectWithRetry(
+// 		"zrChain",
+// 		rpcAddress,
+// 		maxRetries,
+// 		delay,
+// 		func(addr string) (*client.QueryClient, error) {
+// 			client, err := client.NewQueryClient(addr, true)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			if client == nil {
+// 				return nil, fmt.Errorf("zrChain query client is nil after creation")
+// 			}
+// 			return client, nil
+// 		},
+// 		func(client *client.QueryClient, ctx context.Context) error {
+// 			_, err := client.BondedValidators(ctx, nil)
+// 			return err
+// 		},
+// 	)
+// }

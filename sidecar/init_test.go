@@ -23,7 +23,7 @@ import (
 )
 
 func initTestOracle() *sidecar.Oracle {
-	cfg := sidecar.LoadConfig()
+	cfg := sidecar.LoadConfig("", "")
 
 	var rpcAddress string
 	if endpoint, ok := cfg.EthRPC[cfg.Network]; ok {
@@ -196,7 +196,7 @@ func TestGetSolanaAccountInfo(t *testing.T) {
 				log.Printf("\nTest %s: Received account info: %v\n", tt.recipient, resp.Account)
 				// If the account is not found, resp.Account will be nil or empty
 				// The original function returns an empty response if rpc.ErrNotFound, so resp itself is not nil
-				if resp.Account == nil || len(resp.Account) == 0 {
+				if len(resp.Account) == 0 {
 					log.Printf("Test %s: Account not found or has no data.\n", tt.recipient)
 				}
 			}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -17,7 +18,7 @@ func TestHandleBackfillRequests(t *testing.T) {
 	t.Skip("Skipping test on CI as it makes a real network call to Solana")
 
 	// 1. Setup a real Solana client
-	cfg := LoadConfig()
+	cfg := LoadConfig("", "")
 	solanaClient := solanarpc.New(cfg.SolanaRPC[cfg.Network])
 
 	// 2. Setup a minimal Oracle with the real client
@@ -48,7 +49,7 @@ func TestHandleBackfillRequests(t *testing.T) {
 	}
 	var updateMutex sync.Mutex
 
-	oracle.handleBackfillRequests(requests, update, &updateMutex)
+	oracle.handleBackfillRequests(context.Background(), requests, update, &updateMutex)
 
 	// 5. Assertions
 	require.Len(t, update.solanaBurnEvents, 1, "should have one burn event")

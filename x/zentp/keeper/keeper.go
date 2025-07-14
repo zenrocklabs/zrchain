@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -35,14 +36,15 @@ type (
 		identityKeeper   types.IdentityKeeper
 		validationKeeper types.ValidationKeeper
 		mintKeeper       types.MintKeeper
-		mintStore        collections.Map[uint64, types.Bridge] // old mint store, required for migrating
+		mintStore        collections.Map[uint64, types.Bridge] // DEPRECATED
 		MintStore        collections.Map[uint64, types.Bridge]
 		MintCount        collections.Item[uint64]
-		burnStore        collections.Map[uint64, types.Bridge] // old burn store, required for migrating
+		burnStore        collections.Map[uint64, types.Bridge] // DEPRECATED
 		BurnStore        collections.Map[uint64, types.Bridge]
 		BurnCount        collections.Item[uint64]
 		ParamStore       collections.Item[types.Params]
 		SolanaROCKSupply collections.Item[math.Int]
+		ZentpFees        collections.Item[uint64]
 	}
 )
 
@@ -78,6 +80,8 @@ func NewKeeper(
 		memStoreService:  memStoreService,
 		MintStore:        collections.NewMap(sb, types.MintsKey, types.MintsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		BurnStore:        collections.NewMap(sb, types.BurnsKey, types.BurnsIndex, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		mintStore:        collections.NewMap(sb, types.MintsKeyDeprecated, types.MintsIndexDeprecated, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
+		burnStore:        collections.NewMap(sb, types.BurnsKeyDeprecated, types.BurnsIndexDeprecated, collections.Uint64Key, codec.CollValue[types.Bridge](cdc)),
 		MintCount:        collections.NewItem(sb, types.MintCountKey, types.MintCountIndex, collections.Uint64Value),
 		BurnCount:        collections.NewItem(sb, types.BurnCountKey, types.BurnCountIndex, collections.Uint64Value),
 		ParamStore:       collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
@@ -90,6 +94,7 @@ func NewKeeper(
 		identityKeeper:   identityKeeper,
 		validationKeeper: validationKeeper,
 		mintKeeper:       mintKeeper,
+		ZentpFees:        collections.NewItem(sb, types.ZentpFeesKey, types.ZentpFeesIndex, collections.Uint64Value),
 	}
 
 	return k
@@ -194,6 +199,39 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 	return mints, nil
 }
 
+func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridge, error) {
+	lastCompletedZentpMint, err := k.validationKeeper.GetLastCompletedZentpMintID(goCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	startKey := lastCompletedZentpMint + 1
+
+	// Encode the startKey as a proper uint64 byte representation
+	keyBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(keyBytes, startKey)
+
+	pendingMints, _, err := query.CollectionFilteredPaginate(
+		goCtx,
+		k.MintStore,
+		&query.PageRequest{
+			Key: keyBytes,
+		},
+		func(key uint64, value types.Bridge) (bool, error) {
+			// Only include mints with pending status
+			return value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING, nil
+		},
+		func(key uint64, value types.Bridge) (*types.Bridge, error) {
+			return &value, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return pendingMints, nil
+}
+
 func (k Keeper) UpdateMint(ctx context.Context, id uint64, mint *types.Bridge) error {
 	return k.MintStore.Set(ctx, id, *mint)
 }
@@ -215,6 +253,15 @@ func (k Keeper) GetSolanaROCKSupply(ctx context.Context) (math.Int, error) {
 
 func (k Keeper) SetSolanaROCKSupply(ctx context.Context, supply math.Int) error {
 	return k.SolanaROCKSupply.Set(ctx, supply)
+}
+
+func (k Keeper) GetTotalROCKSupply(ctx sdk.Context) (math.Int, error) {
+	solanaSupply, err := k.GetSolanaROCKSupply(ctx)
+	if err != nil {
+		return math.Int{}, fmt.Errorf("failed to get solana rock supply: %w", err)
+	}
+	zrchainSupply := k.bankKeeper.GetSupply(ctx, params.BondDenom).Amount
+	return zrchainSupply.Add(solanaSupply), nil
 }
 
 func (k Keeper) AddBurn(ctx context.Context, burn *types.Bridge) error {
@@ -276,4 +323,13 @@ func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64
 	}
 
 	return totalAmount.Uint64(), nil
+}
+
+func (k Keeper) UpdateZentpFees(ctx context.Context, fees uint64) error {
+	zentpFees, err := k.ZentpFees.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	return k.ZentpFees.Set(ctx, zentpFees+fees)
 }

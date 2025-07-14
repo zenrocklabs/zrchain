@@ -10,9 +10,9 @@ eth_rpc:
   mainnet: "https://mainnet.gateway.tenderly.co/"
 # Contract addresses + more are now defined in shared/types.go
 solana_rpc:
-  devnet: "https://api.devnet.solana.com/"
-  testnet: "https://api.devnet.solana.com/"
-  mainnet: "https://api.mainnet-beta.solana.com/"
+  devnet: ""
+  testnet: ""
+  mainnet: ""
 neutrino:
   path: "./neutrino"
 

@@ -73,6 +73,10 @@ type Keeper struct {
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 	// BackfillRequests - key: tx hash | value: bool (is requested)
 	BackfillRequests collections.Item[types.BackfillRequests]
+	// ValidatorMismatchCounts - key: validator hex address | value: mismatch count data
+	ValidatorMismatchCounts collections.Map[string, types.ValidatorMismatchCount]
+	// LastCompletedZentpMintID - value: id of last completed zentp mint
+	LastCompletedZentpMintID collections.Item[uint64]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -158,6 +162,8 @@ func NewKeeper(
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
+		ValidatorMismatchCounts:           collections.NewMap(sb, types.ValidatorMismatchCounts, types.ValidatorMismatchCountsIndex, collections.StringKey, codec.CollValue[types.ValidatorMismatchCount](cdc)),
+		LastCompletedZentpMintID:          collections.NewItem(sb, types.LastCompletedZentpMintIDKey, types.LastCompletedZentpMintIDIndex, collections.Uint64Value),
 	}
 }
 
@@ -317,6 +323,18 @@ func (k Keeper) GetLastValidVeHeight(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return lastValidVeHeight, nil
+}
+
+func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error) {
+	lastCompletedZentpMintID, err := k.LastCompletedZentpMintID.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Return 0 when the collection is empty
+			return 0, nil
+		}
+		return 0, err
+	}
+	return lastCompletedZentpMintID, nil
 }
 
 func (k Keeper) GetSlashEvents(ctx context.Context) ([]types.SlashEvent, uint64, error) {
@@ -537,4 +555,18 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, 
 	}
 
 	return solanaZenTPAccountsRequested, nil
+}
+
+func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) ([]types.ValidatorMismatchCount, error) {
+	validatorMismatchCounts := []types.ValidatorMismatchCount{}
+
+	err := k.ValidatorMismatchCounts.Walk(ctx, nil, func(key string, value types.ValidatorMismatchCount) (stop bool, err error) {
+		validatorMismatchCounts = append(validatorMismatchCounts, value)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return validatorMismatchCounts, nil
 }

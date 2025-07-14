@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -20,22 +21,22 @@ import (
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
-		EigenDelegations:           make(map[string]map[string]*big.Int),
-		EthBlockHeight:             0,
-		EthGasLimit:                0,
-		EthBaseFee:                 0,
-		EthTipCap:                  0,
-		SolanaLamportsPerSignature: 0,
-		EthBurnEvents:              []api.BurnEvent{},
-		CleanedEthBurnEvents:       make(map[string]bool),
-		SolanaBurnEvents:           []api.BurnEvent{},
-		CleanedSolanaBurnEvents:    make(map[string]bool),
-		Redemptions:                []api.Redemption{},
-		SolanaMintEvents:           []api.SolanaMintEvent{},
-		CleanedSolanaMintEvents:    make(map[string]bool),
-		ROCKUSDPrice:               math.LegacyNewDec(0),
-		BTCUSDPrice:                math.LegacyNewDec(0),
-		ETHUSDPrice:                math.LegacyNewDec(0),
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		EthBlockHeight:          0,
+		EthGasLimit:             0,
+		EthBaseFee:              0,
+		EthTipCap:               0,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		Redemptions:             []api.Redemption{},
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(0),
+		BTCUSDPrice:             math.LegacyNewDec(0),
+		ETHUSDPrice:             math.LegacyNewDec(0),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 )
 
@@ -57,31 +58,42 @@ type Oracle struct {
 	lastSolZenBTCBurnSigStr string
 	lastSolRockBurnSigStr   string
 
+	// Performance optimization fields
+	solanaRateLimiter     chan struct{}              // Semaphore for Solana RPC rate limiting
+	transactionCache      map[string]*CachedTxResult // Cache for frequently accessed transactions
+	transactionCacheMutex sync.RWMutex               // Protects transaction cache
+
 	// Function fields for mocking
-	getSolanaZenBTCBurnEventsFn func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
-	getSolanaRockBurnEventsFn   func(programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaZenBTCBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaRockBurnEventsFn   func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
 	getSignaturesForAddressFn   func(ctx context.Context, account sol.PublicKey, opts *solana.GetSignaturesForAddressOpts) ([]*solana.TransactionSignature, error)
 	reconcileBurnEventsFn       func(ctx context.Context, eventsToClean []api.BurnEvent, cleanedEvents map[string]bool, chainTypeName string) ([]api.BurnEvent, map[string]bool)
 }
 
+// CachedTxResult represents a cached transaction result with TTL
+type CachedTxResult struct {
+	Result    *solana.GetTransactionResult
+	ExpiresAt time.Time
+}
+
 type oracleStateUpdate struct {
-	eigenDelegations           map[string]map[string]*big.Int
-	redemptions                []api.Redemption
-	suggestedTip               *big.Int
-	estimatedGas               uint64
-	ethBurnEvents              []api.BurnEvent
-	cleanedEthBurnEvents       map[string]bool
-	solanaBurnEvents           []api.BurnEvent
-	cleanedSolanaBurnEvents    map[string]bool
-	ROCKUSDPrice               math.LegacyDec
-	BTCUSDPrice                math.LegacyDec
-	ETHUSDPrice                math.LegacyDec
-	solanaLamportsPerSignature uint64
-	SolanaMintEvents           []api.SolanaMintEvent
-	cleanedSolanaMintEvents    map[string]bool
-	latestSolanaSigs           map[sidecartypes.SolanaEventType]sol.Signature
+	eigenDelegations        map[string]map[string]*big.Int
+	redemptions             []api.Redemption
+	suggestedTip            *big.Int
+	estimatedGas            uint64
+	ethBurnEvents           []api.BurnEvent
+	cleanedEthBurnEvents    map[string]bool
+	solanaBurnEvents        []api.BurnEvent
+	cleanedSolanaBurnEvents map[string]bool
+	ROCKUSDPrice            math.LegacyDec
+	BTCUSDPrice             math.LegacyDec
+	ETHUSDPrice             math.LegacyDec
+	SolanaMintEvents        []api.SolanaMintEvent
+	cleanedSolanaMintEvents map[string]bool
+	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
+	pendingTransactions     map[string]sidecartypes.PendingTxInfo
 }
 
 type PriceData struct {

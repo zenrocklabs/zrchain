@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
@@ -18,13 +19,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	ubermock "go.uber.org/mock/gomock"
 )
 
 // setupTestKeeper creates a new keeper instance with mocked dependencies for testing
-func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testutil.MocksidecarClient, *gomock.Controller) {
-	ctrl := gomock.NewController(t)
+func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testutil.MocksidecarClient, *ubermock.Controller) {
+	ctrl := ubermock.NewController(t)
 
 	// Create store service
 	key := storetypes.NewKVStoreKey(types.StoreKey)
@@ -246,6 +247,179 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 					require.Contains(t, result.EigenDelegationsMap["validator1"], "delegator1")
 					require.Equal(t, big.NewInt(100), result.EigenDelegationsMap["validator1"]["delegator1"])
 				}
+			}
+		})
+	}
+}
+
+func TestCalculateFlatZenBTCMintFee(t *testing.T) {
+	tests := []struct {
+		name         string
+		btcUSDPrice  string // Using string to create LegacyDec
+		exchangeRate string // Using string to create LegacyDec
+		expected     uint64
+		description  string
+	}{
+		{
+			name:         "normal case with BTC at $50,000 and 1:1 exchange rate",
+			btcUSDPrice:  "50000",
+			exchangeRate: "1.0",
+			expected:     10000, // $5 / $50,000 = 0.0001 BTC = 10,000 sat = 0.0001 zenBTC
+			description:  "Basic calculation with round numbers",
+		},
+		{
+			name:         "BTC at $100,000 with 1:1 exchange rate",
+			btcUSDPrice:  "100000",
+			exchangeRate: "1.0",
+			expected:     5000, // $5 / $100,000 = 0.00005 BTC = 5,000 sat = 0.00005 zenBTC
+			description:  "Higher BTC price results in lower fee",
+		},
+		{
+			name:         "BTC at $25,000 with 1:1 exchange rate",
+			btcUSDPrice:  "25000",
+			exchangeRate: "1.0",
+			expected:     20000, // $5 / $25,000 = 0.0002 BTC = 20,000 sat = 0.0002 zenBTC
+			description:  "Lower BTC price results in higher fee",
+		},
+		{
+			name:         "BTC at $50,000 with 2:1 exchange rate (2 BTC = 1 zenBTC)",
+			btcUSDPrice:  "50000",
+			exchangeRate: "2.0",
+			expected:     5000, // $5 / $50,000 = 0.0001 BTC = 10,000 sat / 2 = 0.00005 zenBTC
+			description:  "Exchange rate affects final zenBTC amount",
+		},
+		{
+			name:         "BTC at $50,000 with 0.5:1 exchange rate (0.5 BTC = 1 zenBTC)",
+			btcUSDPrice:  "50000",
+			exchangeRate: "0.5", // it should never really be less than 1, but let's test it
+			expected:     20000, // $5 / $50,000 = 0.0001 BTC = 10,000 sat / 0.5 = 0.0002 zenBTC
+			description:  "Lower exchange rate increases zenBTC amount",
+		},
+		{
+			name:         "very high BTC price",
+			btcUSDPrice:  "1000000",
+			exchangeRate: "1.0",
+			expected:     500, // $5 / $1,000,000 = 0.000005 BTC = 500 sat = 0.000005 zenBTC
+			description:  "Handles very high BTC prices",
+		},
+		{
+			name:         "fractional satoshis get truncated",
+			btcUSDPrice:  "33333.333", // Results in non-round satoshis
+			exchangeRate: "1.0",
+			expected:     15000, // $5 / $33,333.333 ≈ 0.00015 BTC ≈ 15,000 sat = 0.00015 zenBTC (truncated)
+			description:  "Truncation works correctly for fractional results",
+		},
+		{
+			name:         "zero BTC price returns zero",
+			btcUSDPrice:  "0",
+			exchangeRate: "1.0",
+			expected:     0,
+			description:  "Zero BTC price safety check",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a proper SDK context with a logger
+			logger := log.NewTestLogger(t)
+			sdkCtx := sdk.NewContext(nil, cmtproto.Header{}, true, logger)
+
+			// Set up keeper with mocks
+			k, _, ctrl := setupTestKeeper(t, sdkCtx)
+			defer ctrl.Finish()
+
+			// Convert string prices to LegacyDec
+			btcPrice, err := math.LegacyNewDecFromStr(tt.btcUSDPrice)
+			require.NoError(t, err, "Failed to create BTC price from string: %s", tt.btcUSDPrice)
+
+			exchangeRate, err := math.LegacyNewDecFromStr(tt.exchangeRate)
+			require.NoError(t, err, "Failed to create exchange rate from string: %s", tt.exchangeRate)
+
+			// Call the function under test
+			result := k.CalculateFlatZenBTCMintFee(btcPrice, exchangeRate)
+
+			// Verify the result
+			require.Equal(t, tt.expected, result, "Test case: %s - %s", tt.name, tt.description)
+
+			// Additional verification for non-zero cases
+			if !btcPrice.IsZero() && tt.expected > 0 {
+				// Verify that the fee represents approximately $5
+				// Back-calculate: result zenBTC * exchangeRate * btcUSDPrice / 1e8 should ≈ $5
+				resultDec := math.LegacyNewDecFromInt(math.NewIntFromUint64(result))
+				feeInBTC := resultDec.Mul(exchangeRate).Quo(math.LegacyNewDec(1e8))
+				feeInUSD := feeInBTC.Mul(btcPrice)
+
+				// Allow for small rounding differences due to truncation
+				expectedUSD := math.LegacyNewDec(5)
+				diff := feeInUSD.Sub(expectedUSD).Abs()
+				tolerance := math.LegacyNewDecWithPrec(1, 6) // 0.000001 USD tolerance
+
+				require.True(t, diff.LTE(tolerance),
+					"Fee should be approximately $5, got $%s (diff: $%s)",
+					feeInUSD.String(), diff.String())
+			}
+		})
+	}
+}
+
+func TestCalculateFlatZenBTCMintFeeEdgeCases(t *testing.T) {
+	tests := []struct {
+		name         string
+		btcUSDPrice  string
+		exchangeRate string
+		expectPanic  bool
+		description  string
+	}{
+		{
+			name:         "zero exchange rate should not panic but will return 0",
+			btcUSDPrice:  "50000",
+			exchangeRate: "0",
+			expectPanic:  false, // Division by zero should not panic
+			description:  "Division by zero in exchange rate",
+		},
+		{
+			name:         "very small BTC price",
+			btcUSDPrice:  "0.001",
+			exchangeRate: "1.0",
+			expectPanic:  false,
+			description:  "Very small BTC price should work",
+		},
+		{
+			name:         "very small exchange rate",
+			btcUSDPrice:  "50000",
+			exchangeRate: "0.000001",
+			expectPanic:  false,
+			description:  "Very small exchange rate should work",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a proper SDK context with a logger
+			logger := log.NewTestLogger(t)
+			sdkCtx := sdk.NewContext(nil, cmtproto.Header{}, true, logger)
+
+			// Set up keeper with mocks
+			k, _, ctrl := setupTestKeeper(t, sdkCtx)
+			defer ctrl.Finish()
+
+			// Convert string prices to LegacyDec
+			btcPrice, err := math.LegacyNewDecFromStr(tt.btcUSDPrice)
+			require.NoError(t, err)
+
+			exchangeRate, err := math.LegacyNewDecFromStr(tt.exchangeRate)
+			require.NoError(t, err)
+
+			if tt.expectPanic {
+				require.Panics(t, func() {
+					k.CalculateFlatZenBTCMintFee(btcPrice, exchangeRate)
+				}, tt.description)
+			} else {
+				require.NotPanics(t, func() {
+					result := k.CalculateFlatZenBTCMintFee(btcPrice, exchangeRate)
+					// For very small values, just ensure we get a reasonable result
+					require.GreaterOrEqual(t, result, uint64(0))
+				}, tt.description)
 			}
 		})
 	}

@@ -1628,29 +1628,29 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_requests", "keyring_addr", "status", "workspace_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_KeyRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_requests", "keyring_addr", "status", "workspace_addr"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "key_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_KeyRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "key_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Keys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "keys", "workspace_addr", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Keys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "keys", "workspace_addr", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_by_id", "id", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_KeyByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_by_id", "id", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignatureRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "signature_requests", "keyring_addr", "status"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SignatureRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "signature_requests", "keyring_addr", "status"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignatureRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "signature_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SignatureRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "signature_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignTransactionRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "sign_transaction_request", "wallet_type", "key_id", "status"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SignTransactionRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "sign_transaction_request", "wallet_type", "key_id", "status"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignTransactionRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "sign_transaction_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SignTransactionRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "sign_transaction_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ZrSignKeys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "zr_sign_keys", "address", "walletType"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ZrSignKeys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "zr_sign_keys", "address", "walletType"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"zrchain", "v4", "treasury", "key_by_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"zrchain", "v4", "treasury", "key_by_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v6", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v6", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

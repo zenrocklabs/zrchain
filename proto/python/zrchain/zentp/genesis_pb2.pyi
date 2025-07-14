@@ -10,13 +10,15 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("params", "mints", "burns", "solana_rock_supply")
+    __slots__ = ("params", "mints", "burns", "solana_rock_supply", "zentp_fees")
     PARAMS_FIELD_NUMBER: _ClassVar[int]
     MINTS_FIELD_NUMBER: _ClassVar[int]
     BURNS_FIELD_NUMBER: _ClassVar[int]
     SOLANA_ROCK_SUPPLY_FIELD_NUMBER: _ClassVar[int]
+    ZENTP_FEES_FIELD_NUMBER: _ClassVar[int]
     params: _params_pb2.Params
     mints: _containers.RepeatedCompositeFieldContainer[_bridge_pb2.Bridge]
     burns: _containers.RepeatedCompositeFieldContainer[_bridge_pb2.Bridge]
     solana_rock_supply: int
-    def __init__(self, params: _Optional[_Union[_params_pb2.Params, _Mapping]] = ..., mints: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., burns: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., solana_rock_supply: _Optional[int] = ...) -> None: ...
+    zentp_fees: int
+    def __init__(self, params: _Optional[_Union[_params_pb2.Params, _Mapping]] = ..., mints: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., burns: _Optional[_Iterable[_Union[_bridge_pb2.Bridge, _Mapping]]] = ..., solana_rock_supply: _Optional[int] = ..., zentp_fees: _Optional[int] = ...) -> None: ...

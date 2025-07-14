@@ -28,7 +28,7 @@ from zrchain.zentp import params_pb2 as zrchain_dot_zentp_dot_params__pb2
 from zrchain.zentp import bridge_pb2 as zrchain_dot_zentp_dot_bridge__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zentp/genesis.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zentp/params.proto\x1a\x1azrchain/zentp/bridge.proto\"\xdc\x01\n\x0cGenesisState\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x31\n\x05mints\x18\x02 \x03(\x0b\x32\x15.zrchain.zentp.BridgeB\x04\xc8\xde\x1f\x00R\x05mints\x12\x31\n\x05\x62urns\x18\x03 \x03(\x0b\x32\x15.zrchain.zentp.BridgeB\x04\xc8\xde\x1f\x00R\x05\x62urns\x12,\n\x12solana_rock_supply\x18\x04 \x01(\x04R\x10solanaRockSupplyB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zentp/genesis.proto\x12\rzrchain.zentp\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zentp/params.proto\x1a\x1azrchain/zentp/bridge.proto\"\xfb\x01\n\x0cGenesisState\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zentp.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x31\n\x05mints\x18\x02 \x03(\x0b\x32\x15.zrchain.zentp.BridgeB\x04\xc8\xde\x1f\x00R\x05mints\x12\x31\n\x05\x62urns\x18\x03 \x03(\x0b\x32\x15.zrchain.zentp.BridgeB\x04\xc8\xde\x1f\x00R\x05\x62urns\x12,\n\x12solana_rock_supply\x18\x04 \x01(\x04R\x10solanaRockSupply\x12\x1d\n\nzentp_fees\x18\x05 \x01(\x04R\tzentpFeesB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,5 +43,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['burns']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['burns']._serialized_options = b'\310\336\037\000'
   _globals['_GENESISSTATE']._serialized_start=144
-  _globals['_GENESISSTATE']._serialized_end=364
+  _globals['_GENESISSTATE']._serialized_end=395
 # @@protoc_insertion_point(module_scope)

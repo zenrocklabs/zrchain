@@ -17,6 +17,7 @@ type TxClient struct {
 	*RawTxClient      // Handles low-level transaction construction and signing
 	*TreasuryTxClient // Handles treasury-specific transactions
 	*ZenBTCTxClient   // Handles ZenBTC-specific transactions
+	*ZenTPTxClient    // Handles ZenTP-specific transactions
 }
 
 // NewTxClient creates a new transaction client instance with all necessary sub-clients initialized.
@@ -48,5 +49,6 @@ func NewTxClient(id Identity, chainID string, c *grpc.ClientConn, accountFetcher
 		RawTxClient:      raw,
 		TreasuryTxClient: NewTreasuryTxClient(raw),
 		ZenBTCTxClient:   NewZenBTCTxClient(raw),
+		ZenTPTxClient:    NewZenTPTxClient(raw),
 	}, nil
 }

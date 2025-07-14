@@ -69,7 +69,7 @@ message SidecarStateResponse {
   uint64 EthGasLimit = 3;
   uint64 EthBaseFee = 4;
   uint64 EthTipCap = 5;
-  uint64 SolanaLamportsPerSignature = 6;
+  uint64 SolanaLamportsPerSignature = 6 [deprecated = true];
   repeated BurnEvent EthBurnEvents = 7 [ (gogoproto.nullable) = false ];
   repeated Redemption Redemptions = 8 [ (gogoproto.nullable) = false ];
   string ROCKUSDPrice = 9;

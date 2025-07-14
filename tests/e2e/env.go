@@ -1,7 +1,8 @@
-package integration_test
+package e2e
 
 import (
 	"context"
+	"time"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	ginkgo "github.com/onsi/ginkgo/v2"
@@ -20,7 +21,6 @@ func setupTestEnv(t ginkgo.FullGinkgoTInterface) *TestEnv {
 
 	identity, err := client.NewIdentityFromSeed(
 		"m/44'/118'/0'/0/0",
-		// "deal liberty toilet artefact during key home calm vanish shock paddle sustain still rotate tonight spoon insane isolate pistol prosper critic kidney diesel crack",
 		"strategy social surge orange pioneer tiger skill endless lend slide one jazz pipe expose detect soup fork cube trigger frown stick wreck ring tissue",
 	)
 	if err != nil {
@@ -44,8 +44,13 @@ func setupTestEnv(t ginkgo.FullGinkgoTInterface) *TestEnv {
 
 	docker := &Docker{}
 
+	// Create a context with timeout to prevent tests from hanging indefinitely
+	testCtx, _ := context.WithTimeout(context.Background(), 15*time.Minute)
+	// Note: We don't call cancel() here because the context needs to live for the duration of the test
+	// The test framework will handle cleanup when the test completes
+
 	return &TestEnv{
-		Ctx:    context.Background(),
+		Ctx:    testCtx,
 		Ident:  identity,
 		Query:  queryClient,
 		Tx:     txClient,

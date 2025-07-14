@@ -26,12 +26,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23.2'
+          go-version: '1.24.3'
           cache-dependency-path: "**/*.sum"
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/e2e')
 
   unit-test-self-hosted:
     if: github.repository == 'zenrocklabs/zrchain'
@@ -42,18 +42,16 @@ jobs:
         working-directory: ./
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.2'
-          cache-dependency-path: "**/*.sum"
+      - name: Add Go binary to PATH
+        run: echo "/usr/local/go/bin" >> $GITHUB_PATH
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/integration')
+        run: go test -race -v -skip "Test_ProxyFunctions" $(go list ./... | grep -v '/tests/e2e')
 
-  integration-test:
+  e2e-tests:
     if: github.repository == 'zenrocklabs/zrchain'
-    name: integration-test
+    name: e2e-tests
     runs-on: zrchain
     defaults:
       run:
@@ -67,10 +65,8 @@ jobs:
         id: ecr
         with:
           registries: ${{ secrets.ECR_REGISTRY }}
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.3'
-          cache-dependency-path: "**/*.sum"
+      - name: Add Go binary to PATH
+        run: echo "/usr/local/go/bin" >> $GITHUB_PATH
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -89,12 +85,14 @@ jobs:
           cd zenrock-stack
           ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
+          docker compose logs -f sidecar zrchain > /tmp/logs &
       - name: Wait for 90 seconds
         run: sleep 90
-      - name: Run integration tests
-        run: ginkgo -v tests/integration
+      - name: Run e2e tests
+        run: ginkgo -v tests/e2e
       - name: Stop Docker Compose stack
         if: always()
         run: |
+          cat /tmp/logs
           cd zenrock-stack
           docker compose -f docker-compose.yaml down --remove-orphans -v

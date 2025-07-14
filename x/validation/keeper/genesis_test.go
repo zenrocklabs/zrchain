@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
@@ -20,5 +19,4 @@ func TestExportGenesis(t *testing.T) {
 
 	genesisState := keeper.ExportGenesis(ctx)
 	require.NotNil(t, genesisState)
-	fmt.Println(genesisState)
 }

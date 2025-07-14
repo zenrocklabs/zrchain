@@ -25,6 +25,7 @@ type BankKeeper interface {
 	BurnCoins(ctx context.Context, moduleAccount string, amounts sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.
@@ -45,6 +46,7 @@ type IdentityKeeper interface {
 type ValidationKeeper interface {
 	SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error
 	SetSolanaZenTPRequestedAccount(ctx context.Context, address string, state bool) error
+	GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 }
 
 type MintKeeper interface {

@@ -13,6 +13,7 @@ func DefaultGenesis() *GenesisState {
 		Mints:            []Bridge{},
 		Burns:            []Bridge{},
 		SolanaRockSupply: 0,
+		ZentpFees:        0,
 	}
 }
 
