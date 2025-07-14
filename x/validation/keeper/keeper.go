@@ -38,6 +38,7 @@ type Keeper struct {
 	zrConfig              *params.ZRConfig
 	sidecarClient         sidecarClient
 	zentpKeeper           types.ZentpKeeper
+	slashingKeeper        types.SlashingKeeper
 	// AVSDelegations - keys: validator addr + delegator addr (operator) | value: delegation amount
 	AVSDelegations collections.Map[collections.Pair[string, string], math.Int]
 	// ValidatorDelegations - key: validator addr | value: total amount delegated to validator
@@ -91,6 +92,7 @@ func NewKeeper(
 	treasuryKeeper types.TreasuryKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 	zentpKeeper types.ZentpKeeper,
+	slashingKeeper types.SlashingKeeper,
 	validatorAddressCodec addresscodec.Codec,
 	consensusAddressCodec addresscodec.Codec,
 ) *Keeper {
@@ -141,6 +143,7 @@ func NewKeeper(
 		treasuryKeeper:                    treasuryKeeper,
 		zenBTCKeeper:                      zenBTCKeeper,
 		zentpKeeper:                       zentpKeeper,
+		slashingKeeper:                    slashingKeeper,
 		validatorAddressCodec:             validatorAddressCodec,
 		consensusAddressCodec:             consensusAddressCodec,
 		AVSDelegations:                    collections.NewMap(sb, types.AVSDelegationsKey, types.AVSDelegationsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), sdk.IntValue),

@@ -9,6 +9,7 @@ import (
 	m "math"
 	"math/big"
 	"sort"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
@@ -630,6 +631,37 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 			if err := k.jailValidator(ctx, validator); err != nil {
 				k.Logger(ctx).Error(
 					"Failed to jail validator for mismatched vote extensions",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Get and update signing info to add an hour to jail duration
+			signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+			if err != nil {
+				k.Logger(ctx).Error(
+					"Failed to get validator signing info",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(time.Hour)
+			if err := k.slashingKeeper.SetValidatorSigningInfo(ctx, consAddr, signInfo); err != nil {
+				k.Logger(ctx).Error(
+					"Failed to set validator signing info",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Clear the mismatch store for this validator
+			if err := k.ValidatorMismatchCounts.Remove(ctx, validatorHexAddr); err != nil {
+				k.Logger(ctx).Error(
+					"Failed to remove mismatch count record for jailed validator",
 					"validator", validator.OperatorAddress,
 					"error", err,
 				)
