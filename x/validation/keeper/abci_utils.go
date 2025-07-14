@@ -1028,6 +1028,20 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, p
 
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
 			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
+
+			// Skip recording mismatches for jailed or unbonded validators
+			consAddr := sdk.ConsAddress(v.Validator.Address)
+			validator, err := k.GetValidatorByConsAddr(ctx, consAddr)
+			if err != nil {
+				k.Logger(ctx).Error("Failed to get validator by consensus address", "consAddr", consAddr.String(), "error", err)
+				continue
+			}
+
+			// Check if validator should be skipped
+			if validator.Jailed || validator.Status == types.Unbonded {
+				continue
+			}
+
 			mismatchedValidators[validatorHexAddr] = struct{}{}
 
 			// Still record in ValidationInfo for backward compatibility
