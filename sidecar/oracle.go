@@ -112,7 +112,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+	zenBTCController, err := zenbtc.NewZenBTController(
 		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
@@ -144,7 +144,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		}
 	} else {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
-		go o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now(), mainLoopTickerIntervalDuration)
+		go o.processOracleTick(serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now(), mainLoopTickerIntervalDuration)
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -157,21 +157,21 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
-			o.processOracleTick(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime, mainLoopTickerIntervalDuration)
+			o.processOracleTick(serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime, mainLoopTickerIntervalDuration)
 		}
 	}
 }
 
 func (o *Oracle) processOracleTick(
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	mainnetEthClient *ethclient.Client,
 	tickTime time.Time,
 	mainLoopTickerIntervalDuration time.Duration,
 ) {
-	newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		slog.Error("Error fetching and processing state - applying partial update with fallbacks", "error", err)
 		// Continue to apply the partial state rather than aborting entirely
@@ -241,7 +241,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 
 func (o *Oracle) fetchAndProcessState(
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -267,7 +267,7 @@ func (o *Oracle) fetchAndProcessState(
 	errChan := make(chan error, 16)
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(&wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	o.fetchEthereumContractData(&wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(&wg, ctx, update, &updateMutex, errChan)
@@ -317,7 +317,7 @@ func (o *Oracle) fetchAndProcessState(
 func (o *Oracle) fetchEthereumContractData(
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
@@ -341,7 +341,7 @@ func (o *Oracle) fetchEthereumContractData(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		redemptions, err := o.getRedemptions(zenBTCControllerHolesky, targetBlockNumber)
+		redemptions, err := o.getRedemptions(zenBTCController, targetBlockNumber)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to get zenBTC contract state: %w", err)
 			return
