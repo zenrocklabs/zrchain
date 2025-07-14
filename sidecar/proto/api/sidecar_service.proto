@@ -69,15 +69,16 @@ message SidecarStateResponse {
   uint64 EthGasLimit = 3;
   uint64 EthBaseFee = 4;
   uint64 EthTipCap = 5;
-  repeated BurnEvent EthBurnEvents = 6 [ (gogoproto.nullable) = false ];
-  repeated Redemption Redemptions = 7 [ (gogoproto.nullable) = false ];
-  string ROCKUSDPrice = 8;
-  string BTCUSDPrice = 9;
-  string ETHUSDPrice = 10;
-  repeated SolanaMintEvent SolanaMintEvents = 11
+  uint64 SolanaLamportsPerSignature = 6 [deprecated = true];
+  repeated BurnEvent EthBurnEvents = 7 [ (gogoproto.nullable) = false ];
+  repeated Redemption Redemptions = 8 [ (gogoproto.nullable) = false ];
+  string ROCKUSDPrice = 9;
+  string BTCUSDPrice = 10;
+  string ETHUSDPrice = 11;
+  repeated SolanaMintEvent SolanaMintEvents = 12
       [ (gogoproto.nullable) = false ];
-  repeated BurnEvent SolanaBurnEvents = 12 [ (gogoproto.nullable) = false ];
-  string SidecarVersionName = 13;
+  repeated BurnEvent SolanaBurnEvents = 13 [ (gogoproto.nullable) = false ];
+  string SidecarVersionName = 14;
 }
 
 message SidecarStateByEthHeightRequest { uint64 EthBlockHeight = 1; }

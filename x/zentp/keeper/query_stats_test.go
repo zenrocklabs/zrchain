@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -74,7 +72,7 @@ func TestStatsQuery(t *testing.T) {
 		desc      string
 		mints     []types.Bridge
 		burns     []types.Bridge
-		zentpFees sdk.Coin
+		zentpFees uint64
 		request   *types.QueryStatsRequest
 		response  *types.QueryStatsResponse
 		err       error
@@ -130,14 +128,14 @@ func TestStatsQuery(t *testing.T) {
 			desc:      "Show Fees",
 			mints:     testutil.DefaultMints,
 			burns:     testutil.DefaultBurns,
-			zentpFees: sdk.Coin{Denom: "urock", Amount: math.NewInt(1000000)},
+			zentpFees: 1000000,
 			request:   &types.QueryStatsRequest{ShowFees: true},
 			response: &types.QueryStatsResponse{
 				TotalMinted: 4000100,
 				MintsCount:  2,
 				TotalBurned: 3000050,
 				BurnsCount:  6,
-				ZentpFees:   &sdk.Coin{Denom: "urock", Amount: math.NewInt(1000000)},
+				ZentpFees:   1000000,
 			},
 		},
 	}
