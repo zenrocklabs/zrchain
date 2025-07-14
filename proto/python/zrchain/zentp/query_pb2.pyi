@@ -95,8 +95,8 @@ class QueryStatsResponse(_message.Message):
     total_burned: int
     mints_count: int
     burns_count: int
-    zentp_fees: _coin_pb2.Coin
-    def __init__(self, total_minted: _Optional[int] = ..., total_burned: _Optional[int] = ..., mints_count: _Optional[int] = ..., burns_count: _Optional[int] = ..., zentp_fees: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ...) -> None: ...
+    zentp_fees: int
+    def __init__(self, total_minted: _Optional[int] = ..., total_burned: _Optional[int] = ..., mints_count: _Optional[int] = ..., burns_count: _Optional[int] = ..., zentp_fees: _Optional[int] = ...) -> None: ...
 
 class QuerySolanaROCKSupplyRequest(_message.Message):
     __slots__ = ()

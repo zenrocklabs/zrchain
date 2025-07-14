@@ -114,14 +114,15 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 	return validatorDelegations, nil
 }
 
-// GetSuperMajorityVEData tallies votes for individual fields of the VoteExtension instead of requiring
+// GetConsensusAndPluralityVEData tallies votes for individual fields of the VoteExtension instead of requiring
 // consensus on the entire object. This makes the system more resilient by allowing fields
 // that have supermajority consensus to be accepted even if other fields don't reach consensus.
-// When multiple values for the same field have the same maximum vote power, a deterministic
-// tie-breaking mechanism is used based on the lexicographic ordering of the string representation
+// It returns both a consensus vote extension (fields with supermajority/simple majority) and
+// a plurality vote extension (fields with the most votes regardless of threshold).
+// A deterministic tie-breaking mechanism is used based on the lexicographic ordering of the string representation
 // of the values. This ensures all validators will select the same consensus value regardless
 // of iteration order.
-func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, map[VoteExtensionField]int64, error) {
+func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, VoteExtension, map[VoteExtensionField]int64, error) {
 	// Use a generic map to store votes for all fields
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
@@ -173,9 +174,12 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 
 	// Create consensus VoteExtension with fields that have supermajority
 	var consensusVE VoteExtension
+	// Create plurality VoteExtension with fields that have the most votes (regardless of threshold)
+	var pluralityVE VoteExtension
 
 	// Set informational fields that don't require consensus
 	consensusVE.SidecarVersionName = firstSidecarVersionName
+	pluralityVE.SidecarVersionName = firstSidecarVersionName
 
 	superMajorityThreshold := superMajorityVotePower(totalVotePower)
 	simpleMajorityThreshold := simpleMajorityVotePower(totalVotePower)
@@ -195,49 +199,51 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 			}
 		}
 
+		// Collect all values that have the maximum vote power (for both consensus and plurality)
+		var tiedValues []struct {
+			key   string
+			value any
+		}
+
+		for key, vote := range votes {
+			if vote.votePower == maxVotePower {
+				tiedValues = append(tiedValues, struct {
+					key   string
+					value any
+				}{key, vote.value})
+			}
+		}
+
+		// If there are multiple values with the same vote power, use deterministic tie-breaking
+		if len(tiedValues) > 1 {
+			// Log the tie-breaking event with field information
+			k.Logger(ctx).Info("performing deterministic tie-breaking",
+				"field", handler.Field.String(),
+				"tied_values_count", len(tiedValues),
+				"max_vote_power", maxVotePower)
+
+			// Sort by the hash of their serialized representation for deterministic selection
+			slices.SortFunc(tiedValues, func(a, b struct {
+				key   string
+				value any
+			}) int {
+				// Use the key, which is already a deterministic string representation
+				return strings.Compare(a.key, b.key)
+			})
+		}
+
+		// Always select the first value after deterministic sorting for plurality
+		mostVotedValue := tiedValues[0].value
+		handler.SetValue(mostVotedValue, &pluralityVE)
+
 		// Use simple majority for gas-related fields, supermajority for others
 		requiredPower := superMajorityThreshold
 		if isGasField(handler.Field) {
 			requiredPower = simpleMajorityThreshold
 		}
 
-		// Check if any value has sufficient votes
+		// Check if any value has sufficient votes for consensus
 		if maxVotePower >= requiredPower {
-			// Collect all values that have the maximum vote power
-			var tiedValues []struct {
-				key   string
-				value any
-			}
-
-			for key, vote := range votes {
-				if vote.votePower == maxVotePower {
-					tiedValues = append(tiedValues, struct {
-						key   string
-						value any
-					}{key, vote.value})
-				}
-			}
-
-			// If there are multiple values with the same vote power, use deterministic tie-breaking
-			if len(tiedValues) > 1 {
-				// Log the tie-breaking event with field information
-				k.Logger(ctx).Info("performing deterministic tie-breaking",
-					"field", handler.Field.String(),
-					"tied_values_count", len(tiedValues),
-					"max_vote_power", maxVotePower)
-
-				// Sort by the hash of their serialized representation for deterministic selection
-				slices.SortFunc(tiedValues, func(a, b struct {
-					key   string
-					value any
-				}) int {
-					// Use the key, which is already a deterministic string representation
-					return strings.Compare(a.key, b.key)
-				})
-			}
-
-			// Always select the first value after deterministic sorting
-			mostVotedValue := tiedValues[0].value
 			handler.SetValue(mostVotedValue, &consensusVE)
 			fieldVotePowers[handler.Field] = maxVotePower
 		}
@@ -246,7 +252,7 @@ func (k Keeper) GetSuperMajorityVEData(ctx context.Context, currentHeight int64,
 	// Log consensus results
 	k.logConsensusResults(ctx, fieldVotePowers)
 
-	return consensusVE, fieldVotePowers, nil
+	return consensusVE, pluralityVE, fieldVotePowers, nil
 }
 
 // logConsensusResults logs information about which fields reached consensus
@@ -998,12 +1004,14 @@ func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 	return results, err
 }
 
-func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, canonicalVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
-	// If the canonical VE is empty, it means no consensus was reached.
+func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, pluralityVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
+	// Compare against the plurality vote extension (most voted values) rather than consensus.
+	// This prevents jailing the entire validator set during prolonged periods without supermajority consensus.
+	// If the plurality VE is empty, it means no votes were cast.
 	// In this case, a validator that submitted an empty vote extension should not be penalized.
-	isCanonicalEmpty := reflect.DeepEqual(canonicalVoteExt, VoteExtension{})
+	isCanonicalEmpty := reflect.DeepEqual(pluralityVoteExt, VoteExtension{})
 
-	canonicalVoteExtBz, err := json.Marshal(canonicalVoteExt)
+	canonicalVoteExtBz, err := json.Marshal(pluralityVoteExt)
 	if err != nil {
 		k.Logger(ctx).Error("error marshalling canonical vote extension", "height", height, "error", err)
 		return

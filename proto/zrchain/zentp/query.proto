@@ -101,7 +101,7 @@ message QueryStatsResponse {
   uint64 total_burned = 2;
   uint64 mints_count = 3;
   uint64 burns_count = 4;
-  cosmos.base.v1beta1.Coin zentp_fees = 5; // Optional
+  uint64 zentp_fees = 5; // Optional
 }
 
 // QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply
