@@ -45,7 +45,7 @@ func ValidateEVMChainID(ctx context.Context, caip2 string) (uint64, error) {
 		return 0, fmt.Errorf("CAIP-2 is not of EVM type (%s): %s", ethereum.CAIP2Namespace, caip2)
 	}
 
-	allowedEVMChainIDs := []string{ethereum.HoleskyChainId.String(), ethereum.HoodiChainId.String()}
+	allowedEVMChainIDs := []string{ethereum.HoodiChainId.String()}
 	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
 		allowedEVMChainIDs = append(allowedEVMChainIDs, "1")
 	}
