@@ -84,7 +84,7 @@ jobs:
           git clone git@github.com:zenrocklabs/zenrock-stack.git
           cd zenrock-stack
           # Try to checkout the same branch as the caller repo
-          TARGET_BRANCH="${GITHUB_REF#refs/heads/}"
+          TARGET_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           echo "Trying to switch zenrock-stack to branch $TARGET_BRANCH"
           git checkout "$TARGET_BRANCH" || :
           ./set_compose_path.py ${CURRENT_PATH}
