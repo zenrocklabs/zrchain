@@ -328,6 +328,9 @@ func (k Keeper) AddFeeToBridgeAmount(ctx context.Context, amount uint64) (uint64
 func (k Keeper) UpdateZentpFees(ctx context.Context, fees uint64) error {
 	zentpFees, err := k.ZentpFees.Get(ctx)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return k.ZentpFees.Set(ctx, fees)
+		}
 		return err
 	}
 
