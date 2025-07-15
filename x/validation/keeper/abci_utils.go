@@ -37,6 +37,7 @@ import (
 	ata "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
+	"github.com/zenrocklabs/goem/ethereum"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -1119,7 +1120,7 @@ func (k *Keeper) recordNonVotingValidators(ctx sdk.Context, req *abci.RequestFin
 }
 
 func getChainIDForEigen(ctx sdk.Context) uint64 {
-	var chainID uint64 = 17000
+	var chainID uint64 = ethereum.HoodiChainId.Uint64()
 	if strings.HasPrefix(ctx.ChainID(), "diamond") {
 		chainID = 1
 	}

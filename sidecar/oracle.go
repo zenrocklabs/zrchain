@@ -162,7 +162,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+	zenBTCController, err := zenbtc.NewZenBTController(
 		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
@@ -194,7 +194,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
 		var initialTickCtx context.Context
 		initialTickCtx, tickCancel = context.WithCancel(ctx)
-		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
+		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -216,7 +216,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			tickCtx, tickCancel = context.WithCancel(ctx)
 
 			// Start the new tick's processing in a goroutine.
-			go o.processOracleTick(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
+			go o.processOracleTick(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
 }
@@ -224,13 +224,13 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 func (o *Oracle) processOracleTick(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	mainnetEthClient *ethclient.Client,
 	tickTime time.Time,
 ) {
-	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format("15:04:05.00"))
@@ -311,7 +311,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -346,7 +346,7 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
@@ -425,7 +425,7 @@ func (o *Oracle) fetchEthereumContractData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
@@ -449,7 +449,7 @@ func (o *Oracle) fetchEthereumContractData(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		redemptions, err := o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
+		redemptions, err := o.getRedemptions(ctx, zenBTCController, targetBlockNumber)
 		if err != nil {
 			sendError(ctx, errChan, fmt.Errorf("failed to get zenBTC contract state: %w", err))
 			return

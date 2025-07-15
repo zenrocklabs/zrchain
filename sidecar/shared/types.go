@@ -63,9 +63,9 @@ var (
 
 	// NetworkNames maps network identifiers to their human-readable names
 	NetworkNames = map[string]string{
-		NetworkDevnet:  "Holešky Ethereum Testnet",
-		NetworkRegnet:  "Holešky Ethereum Testnet",
-		NetworkTestnet: "Holešky Ethereum Testnet",
+		NetworkDevnet:  "Hoodi Ethereum Testnet",
+		NetworkRegnet:  "Hoodi Ethereum Testnet",
+		NetworkTestnet: "Hoodi Ethereum Testnet",
 		NetworkMainnet: "Ethereum Mainnet",
 	}
 
