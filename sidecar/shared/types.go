@@ -132,11 +132,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r1"
+	SidecarVersionName = "salmon_moon_r2"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r1"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r2"}
 )
 
 // PriceFeed struct with fields for different price feeds
