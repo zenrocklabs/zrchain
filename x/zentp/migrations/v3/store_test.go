@@ -14,6 +14,8 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
+	"errors"
+
 	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/migrations/v3"
 	zentptestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
@@ -411,4 +413,31 @@ func TestSendZentpFeesToMintModuleEdgeCases(t *testing.T) {
 	// Final balance: 3000 urock
 	expectedFinalBalance := sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(3000))
 	require.Equal(t, expectedFinalBalance, currentBalance, "Final balance should match total pending amounts without fees")
+}
+
+func TestZentpFees(t *testing.T) {
+
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey("transient_test")
+	ctx := testutil.DefaultContext(storeKey, tKey)
+
+	kvStoreService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(kvStoreService)
+	zentpFees := collections.NewItem(sb, types.ZentpFeesKey, types.ZentpFeesIndex, collections.Uint64Value)
+
+	sampledFees := uint64(0)
+
+	fees, err := zentpFees.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			err = zentpFees.Set(ctx, sampledFees)
+			require.NoError(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+	}
+
+	fees, err = zentpFees.Get(ctx)
+	require.NoError(t, err)
+	require.Equal(t, sampledFees, fees)
 }
