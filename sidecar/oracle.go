@@ -231,6 +231,7 @@ func (o *Oracle) processOracleTick(
 	tickTime time.Time,
 ) {
 	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format("15:04:05.00"))
@@ -341,9 +342,10 @@ func (o *Oracle) fetchAndProcessState(
 	routinesCtx, cancelRoutines := context.WithCancel(tickCtx)
 	defer cancelRoutines()
 
-	// Process pending transactions first (retry failed transactions from previous cycles)
+	// Process pending transactions concurrently (retry failed transactions from previous cycles)
 	if o.solanaClient != nil {
-		o.processPendingTransactions(routinesCtx, update, &updateMutex)
+		wg.Add(1)
+		go o.processPendingTransactions(routinesCtx, &wg, update, &updateMutex)
 	}
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
@@ -1724,22 +1726,105 @@ func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
 	return time.Since(info.LastAttempt) >= retryInterval
 }
 
-// processPendingTransactions attempts to retry all pending transactions
-func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) {
-	// Get current pending transactions from the update (which was copied from current state)
-	if len(update.pendingTransactions) == 0 {
-		return
+// processPendingTransactions continuously retries all pending transactions until context cancellation
+func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGroup, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+	defer wg.Done()
+
+	slog.Info("Starting continuous pending transaction processing goroutine")
+
+	// Track processing statistics for monitoring
+	var totalRounds, totalProcessed, totalSuccessful int
+	lastStatusLog := time.Now()
+
+	// Retry loop - continue until context cancellation
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("Pending transaction processing cancelled")
+			return
+		default:
+			// Check if there are any pending transactions to process
+			updateMutex.Lock()
+			pendingCount := len(update.pendingTransactions)
+			updateMutex.Unlock()
+
+			if pendingCount == 0 {
+				// No pending transactions, sleep briefly and check again
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(5 * time.Second):
+					continue
+				}
+			}
+
+			slog.Debug("Processing pending transactions round", "count", pendingCount, "round", totalRounds+1)
+
+			// Process one round of pending transactions
+			processedCount, successCount := o.processPendingTransactionsRound(ctx, update, updateMutex)
+			totalRounds++
+			totalProcessed += processedCount
+			totalSuccessful += successCount
+
+			// Periodic status logging (every 15 seconds)
+			if time.Since(lastStatusLog) >= 15*time.Second {
+				updateMutex.Lock()
+				currentPending := len(update.pendingTransactions)
+				updateMutex.Unlock()
+
+				successRate := 0.0
+				if totalProcessed > 0 {
+					successRate = float64(totalSuccessful) / float64(totalProcessed) * 100
+				}
+
+				slog.Info("Pending transaction processing status",
+					"totalRounds", totalRounds,
+					"totalProcessed", totalProcessed,
+					"totalSuccessful", totalSuccessful,
+					"currentPending", currentPending,
+					"successRate", fmt.Sprintf("%.1f%%", successRate))
+				lastStatusLog = time.Now()
+			}
+
+			// Adaptive sleep based on activity - sleep longer if no progress made
+			sleepDuration := 2 * time.Second
+			if processedCount == 0 {
+				sleepDuration = 5 * time.Second // Sleep longer if no transactions were processed
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(sleepDuration):
+				// Continue to next round
+			}
+		}
 	}
+}
 
-	slog.Info("Processing pending transactions", "count", len(update.pendingTransactions))
-
+// processPendingTransactionsRound processes one round of pending transactions
+// Returns (processedCount, successCount) where processedCount is attempts and successCount is completed
+func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) (int, int) {
 	// Create a copy to iterate over to avoid modifying map while iterating
 	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
 	updateMutex.Lock()
 	maps.Copy(pendingCopy, update.pendingTransactions)
 	updateMutex.Unlock()
 
+	processedCount := 0
+	successCount := 0
+
 	for signature := range pendingCopy {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			slog.Debug("Pending transaction processing round cancelled",
+				"processedInRound", processedCount,
+				"successfulInRound", successCount)
+			return processedCount, successCount
+		default:
+		}
+
 		// Use live data for retry decision instead of stale snapshot
 		updateMutex.Lock()
 		current, exists := update.pendingTransactions[signature]
@@ -1775,6 +1860,8 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 
 		// Try to get and process the transaction
 		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
+		processedCount++ // Count this as a processing attempt
+
 		if err != nil {
 			updateMutex.Lock()
 			if existing, exists := update.pendingTransactions[signature]; exists {
@@ -1845,6 +1932,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			if update.pendingTransactions != nil {
 				if _, exists := update.pendingTransactions[signature]; exists {
 					delete(update.pendingTransactions, signature)
+					successCount++
 					slog.Debug("Removed pending transaction after successful processing",
 						"signature", signature)
 				}
@@ -1865,6 +1953,22 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 			updateMutex.Unlock()
 		}
 	}
+
+	// Log processing statistics if any transactions were processed
+	if processedCount > 0 {
+		roundSuccessRate := 0.0
+		if processedCount > 0 {
+			roundSuccessRate = float64(successCount) / float64(processedCount) * 100
+		}
+
+		slog.Debug("Pending transaction processing round completed",
+			"totalProcessed", processedCount,
+			"successfullyCompleted", successCount,
+			"stillPending", len(pendingCopy)-successCount,
+			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
+	}
+
+	return processedCount, successCount
 }
 
 // processTransactionByEventType processes a transaction based on its event type
@@ -2070,6 +2174,12 @@ func (o *Oracle) processSignatures(
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
 		if ctx.Err() != nil {
+			// Return early with current watermark position when context canceled
+			// Remaining signatures will be processed in next cycle starting from lastSuccessfullyProcessedSig
+			slog.Warn("Context canceled during signature processing, returning early without advancing watermark",
+				"eventType", eventTypeName,
+				"processedSignatures", i,
+				"totalSignatures", len(signatures))
 			return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
 		}
 
@@ -2145,11 +2255,11 @@ func (o *Oracle) processSignatures(
 				for _, sigInfo := range currentBatch {
 					failedSignatures = append(failedSignatures, sigInfo.Signature.String())
 				}
-				// Update newest signature processed for watermark advancement
-				if len(currentBatch) > 0 {
-					newestSigProcessed = currentBatch[len(currentBatch)-1].Signature
-				}
-				i += len(currentBatch) // Advance past the batch
+				// Do NOT advance past failed batch - return immediately to prevent watermark advancement
+				// This prevents watermark from jumping past all failed transactions
+				slog.Error("Batch processing failed completely, preventing watermark advancement to avoid transaction loss",
+					"eventType", eventTypeName, "failedBatchSize", len(currentBatch))
+				return allEvents, lastSuccessfullyProcessedSig, failedSignatures, fmt.Errorf("batch processing failed at minimum size")
 			}
 			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
 			continue                                            // Retry the same segment `i`
@@ -2205,7 +2315,7 @@ func (o *Oracle) processSignatures(
 							"signature", sigInfo.Signature,
 							"error", err)
 						failedSignatures = append(failedSignatures, sigInfo.Signature.String())
-						newestSigProcessed = sigInfo.Signature
+						// Do NOT update newestSigProcessed for failed transactions
 						continue
 					}
 
@@ -2349,11 +2459,12 @@ func (o *Oracle) processSignatures(
 	if len(allEvents) > 0 {
 		slog.Debug("Successfully extracted events from Solana transactions", "eventType", eventTypeName, "extractedEvents", len(allEvents))
 	}
-	// Return the newest signature processed for optimistic watermark advancement
+	// Return the newest signature processed for watermark advancement
 	watermarkSig := newestSigProcessed
 	if watermarkSig.IsZero() {
 		watermarkSig = lastSuccessfullyProcessedSig
 	}
+
 	return allEvents, watermarkSig, failedSignatures, nil
 }
 
@@ -2475,7 +2586,7 @@ func (o *Oracle) getSolanaEvents(
 	}
 	if len(newSignatures) == 0 {
 		slog.Info("No new signatures found", "eventType", eventTypeName, "watermark", formatWatermarkForLogging(lastKnownSig))
-		return []any{}, newestSigFromNode, nil
+		return []any{}, lastKnownSig, nil
 	}
 
 	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
@@ -2491,7 +2602,7 @@ func (o *Oracle) getSolanaEvents(
 		return events, lastSig, err
 	}
 
-	return events, newestSigFromNode, nil
+	return events, lastSig, nil
 }
 
 // cacheTransactionResult caches a transaction result with TTL
