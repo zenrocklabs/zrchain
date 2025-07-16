@@ -797,10 +797,11 @@ func (o *Oracle) processSolanaMintEvents(
 				"pendingEventsPreserved", pendingEventsPreserved,
 				"duplicatesRemoved", duplicatesRemoved)
 		}
-		if !newRockSig.IsZero() {
+		// Only update watermarks if there were no errors in processing
+		if rockErr == nil && !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
 		}
-		if !newZenBTCSig.IsZero() {
+		if zenbtcErr == nil && !newZenBTCSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
 		}
 		updateMutex.Unlock()
@@ -830,7 +831,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 			var newestSig solana.Signature
 			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
-			if !newestSig.IsZero() {
+			if zenBtcErr == nil && !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
 				updateMutex.Unlock()
@@ -844,7 +845,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 			var newestSig solana.Signature
 			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
-			if !newestSig.IsZero() {
+			if rockErr == nil && !newestSig.IsZero() {
 				updateMutex.Lock()
 				update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
 				updateMutex.Unlock()
@@ -1733,7 +1734,7 @@ func formatWatermarkForLogging(sig solana.Signature) string {
 }
 
 // addPendingTransaction adds a failed transaction to the pending queue in the state update
-func (o *Oracle) addPendingTransaction(signature string, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+func (o *Oracle) addPendingTransaction(signature string, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) error {
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 
@@ -1752,23 +1753,38 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 			LastAttempt:  now,
 		}
 		update.pendingTransactions[signature] = updated
+
+		// Verify the update succeeded
+		if stored, exists := update.pendingTransactions[signature]; !exists || stored.RetryCount != updated.RetryCount {
+			return fmt.Errorf("failed to update pending transaction: %s", signature)
+		}
+
 		slog.Debug("Updated pending transaction retry count",
 			"signature", signature,
 			"eventType", eventType,
 			"retryCount", updated.RetryCount)
 	} else {
 		// Add new pending transaction
-		update.pendingTransactions[signature] = sidecartypes.PendingTxInfo{
+		newTx := sidecartypes.PendingTxInfo{
 			Signature:    signature,
 			EventType:    eventType,
 			RetryCount:   1,
 			FirstAttempt: now,
 			LastAttempt:  now,
 		}
+		update.pendingTransactions[signature] = newTx
+
+		// Verify the addition succeeded
+		if _, exists := update.pendingTransactions[signature]; !exists {
+			return fmt.Errorf("failed to add pending transaction: %s", signature)
+		}
+
 		slog.Debug("Added new pending transaction",
 			"signature", signature,
 			"eventType", eventType)
 	}
+
+	return nil
 }
 
 // shouldRetryTransaction checks if a pending transaction should be retried
@@ -2440,7 +2456,7 @@ func (o *Oracle) processSignatures(
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
 		if ctx.Err() != nil {
-			// Add remaining unprocessed signatures to pending queue for optimistic watermark advancement
+			// Add ALL remaining unprocessed signatures to pending queue for optimistic watermark advancement
 			for j := i; j < len(signatures); j++ {
 				failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 				newestSigProcessed = signatures[j].Signature
@@ -2473,12 +2489,13 @@ func (o *Oracle) processSignatures(
 				for idx, sigInfo := range currentBatch {
 					// Check for context cancellation before each individual request
 					if ctx.Err() != nil {
-						// Add only remaining unprocessed transactions to failed signatures and return
+						// Add ALL remaining unprocessed transactions to failed signatures and return
 						for j := idx; j < len(currentBatch); j++ {
 							failedSignatures = append(failedSignatures, currentBatch[j].Signature.String())
 							newestSigProcessed = currentBatch[j].Signature
 						}
-						return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
+						// Return newestSigProcessed to advance watermark to cover failed transactions
+						return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 					}
 
 					// Attempt individual retry
@@ -2571,6 +2588,24 @@ func (o *Oracle) processSignatures(
 	// Calculate processing statistics
 	totalProcessed := len(signatures)
 	successRate := float64(stats.successfulTransactions) / float64(totalProcessed) * 100
+
+	// Transaction accounting verification - ensure no transactions are lost
+	accountedTransactions := stats.successfulTransactions + stats.emptyTransactions + len(failedSignatures)
+	if accountedTransactions != totalProcessed {
+		slog.Error("Transaction accounting mismatch - blocking watermark advancement",
+			"eventType", eventTypeName,
+			"totalSignatures", totalProcessed,
+			"successful", stats.successfulTransactions,
+			"empty", stats.emptyTransactions,
+			"failed", len(failedSignatures),
+			"accounted", accountedTransactions,
+			"missing", totalProcessed-accountedTransactions)
+
+		// Don't advance watermark - return last known good watermark
+		return allEvents, lastSuccessfullyProcessedSig, failedSignatures,
+			fmt.Errorf("transaction accounting mismatch: %d processed, %d accounted",
+				totalProcessed, accountedTransactions)
+	}
 
 	// Summary log with comprehensive batch processing results
 	slog.Info("Batch processing summary",
@@ -2757,8 +2792,25 @@ func (o *Oracle) getSolanaEvents(
 	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
 
 	// Handle failed signatures by adding them to pending queue
+	// Only advance watermark if ALL pending store operations succeed
+	var pendingStoreErrors []error
 	for _, failedSig := range failedSignatures {
-		o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex)
+		if pendingErr := o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex); pendingErr != nil {
+			pendingStoreErrors = append(pendingStoreErrors, pendingErr)
+			slog.Error("Failed to add transaction to pending store",
+				"signature", failedSig,
+				"eventType", eventTypeName,
+				"error", pendingErr)
+		}
+	}
+
+	// If any pending store operations failed, don't advance watermark
+	if len(pendingStoreErrors) > 0 {
+		slog.Error("Pending store operations failed - blocking watermark advancement",
+			"eventType", eventTypeName,
+			"failedOperations", len(pendingStoreErrors),
+			"totalFailed", len(failedSignatures))
+		return events, lastKnownSig, fmt.Errorf("pending store operations failed: %d errors", len(pendingStoreErrors))
 	}
 
 	if err != nil {
