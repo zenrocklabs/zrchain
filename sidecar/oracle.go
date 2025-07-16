@@ -2476,16 +2476,70 @@ func (o *Oracle) processSignatures(
 					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
 				currentBatchSize = newBatchSize
 			} else {
-				// If we're already at the minimum batch size, add all transactions to failed signatures
-				slog.Warn("Batch transaction fetch failed at minimum batch size, adding to failed signatures", "eventType", eventTypeName, "size", len(currentBatch))
+				// If we're already at the minimum batch size, try individual requests as fallback
+				slog.Warn("Batch transaction fetch failed at minimum batch size, attempting individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
+
+				// Try individual requests for each transaction in the failed batch
 				for _, sigInfo := range currentBatch {
-					failedSignatures = append(failedSignatures, sigInfo.Signature.String())
+					// Check for context cancellation before each individual request
+					if ctx.Err() != nil {
+						// Add remaining transactions to failed signatures and return
+						for _, remainingSig := range currentBatch {
+							failedSignatures = append(failedSignatures, remainingSig.Signature.String())
+							newestSigProcessed = remainingSig.Signature
+						}
+						return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
+					}
+
+					// Attempt individual retry
+					retryResult, err := o.retryIndividualTransaction(ctx, sigInfo.Signature, eventTypeName)
+					if err != nil {
+						// Individual retry failed - add to pending queue
+						stats.individualRetryFailures++
+						stats.processingErrors++
+						failedSignatures, newestSigProcessed = o.handleTransactionFailure(
+							failedSignatures, sigInfo.Signature, newestSigProcessed, eventTypeName,
+							"Individual fallback retry failed", err)
+						continue
+					} else if retryResult != nil {
+						// Individual retry succeeded - process the transaction
+						events, err := processTransaction(retryResult, program, sigInfo.Signature, o.DebugMode)
+						if err != nil {
+							stats.processingErrors++
+							failedSignatures, newestSigProcessed = o.handleTransactionFailure(
+								failedSignatures, sigInfo.Signature, newestSigProcessed, eventTypeName,
+								"Failed to process individually retried transaction", err)
+							continue
+						}
+
+						if len(events) > 0 {
+							stats.successfulTransactions++
+							slog.Debug("Successfully processed individual fallback transaction",
+								"eventType", eventTypeName,
+								"signature", sigInfo.Signature,
+								"eventCount", len(events))
+							allEvents = append(allEvents, events...)
+						} else {
+							stats.emptyTransactions++
+							slog.Debug("Individual fallback transaction processed but contained no events",
+								"eventType", eventTypeName,
+								"signature", sigInfo.Signature)
+						}
+						lastSuccessfullyProcessedSig = sigInfo.Signature
+						newestSigProcessed = sigInfo.Signature
+					} else {
+						// Individual retry returned nil - add to pending queue
+						stats.individualRetryFailures++
+						failedSignatures, newestSigProcessed = o.handleTransactionFailure(
+							failedSignatures, sigInfo.Signature, newestSigProcessed, eventTypeName,
+							"Individual fallback returned nil", nil)
+					}
 				}
-				// Do NOT advance past failed batch - return immediately to prevent watermark advancement
-				// This prevents watermark from jumping past all failed transactions
-				slog.Error("Batch processing failed completely, preventing watermark advancement to avoid transaction loss",
-					"eventType", eventTypeName, "failedBatchSize", len(currentBatch))
-				return allEvents, lastSuccessfullyProcessedSig, failedSignatures, fmt.Errorf("batch processing failed at minimum size")
+
+				// Advance to the next segment since this batch is handled
+				i += len(currentBatch)
+				// Reset batch size for next attempt
+				currentBatchSize = sidecartypes.SolanaEventFetchBatchSize
 			}
 			time.Sleep(sidecartypes.SolanaEventFetchRetrySleep) // Pause before retrying
 			continue                                            // Retry the same segment `i`
