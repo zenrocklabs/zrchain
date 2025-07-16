@@ -192,6 +192,11 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	o.mainLoopTicker = mainLoopTicker
 	slog.Info("Ticker synced, awaiting initial oracle data fetch", "interval", mainLoopTickerIntervalDuration)
 
+	// Start persistent pending transaction processor that runs across all ticks
+	if o.solanaClient != nil {
+		go o.processPendingTransactionsPersistent(ctx)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -236,6 +241,7 @@ func (o *Oracle) processOracleTick(
 	slog.Info("Applying state update for tick", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
 	slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
 	slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+
 	o.applyStateUpdate(newState)
 }
 
@@ -252,7 +258,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 	o.currentState.Store(&newState)
 
 	// Log event counts in each state field every tick
-	slog.Info("State event counts per tick",
+	slog.Info("STATE EVENT COUNTS FOR THIS TICK",
 		"ethBurnEvents", len(newState.EthBurnEvents),
 		"cleanedEthBurnEvents", len(newState.CleanedEthBurnEvents),
 		"solanaBurnEvents", len(newState.SolanaBurnEvents),
@@ -332,11 +338,8 @@ func (o *Oracle) fetchAndProcessState(
 	routinesCtx, cancelRoutines := context.WithCancel(tickCtx)
 	defer cancelRoutines()
 
-	// Process pending transactions concurrently (retry failed transactions from previous cycles)
-	if o.solanaClient != nil {
-		wg.Add(1)
-		go o.processPendingTransactions(routinesCtx, &wg, update, &updateMutex)
-	}
+	// Pending transactions are now processed by a persistent background goroutine
+	// Started in runOracleMainLoop, not per-tick
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
 	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
@@ -1830,15 +1833,58 @@ func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
 	return time.Since(info.LastAttempt) >= retryInterval
 }
 
+// processPendingTransactionsPersistent continuously retries all pending transactions until context cancellation
+// This runs as a persistent background goroutine across all oracle ticks
+func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
+	slog.Info("Starting persistent pending transaction processing goroutine")
+
+	// Retry loop - continue until context cancellation
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("Persistent pending transaction processing cancelled")
+			return
+		default:
+			// Check if there are any pending transactions to process
+			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			pendingCount := len(currentState.PendingSolanaTxs)
+
+			if pendingCount == 0 {
+				// No pending transactions, sleep briefly and check again
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(sidecartypes.PendingTransactionCheckInterval):
+					continue
+				}
+			}
+
+			slog.Debug("Processing pending transactions round", "count", pendingCount)
+
+			// Process one round of pending transactions
+			o.processPendingTransactionsRoundPersistent(ctx)
+
+			// Adaptive sleep based on activity
+			sleepDuration := 2 * time.Second
+			if pendingCount == 0 {
+				sleepDuration = sidecartypes.PendingTransactionCheckInterval // Sleep longer if no transactions were processed
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(sleepDuration):
+				// Continue to next round
+			}
+		}
+	}
+}
+
 // processPendingTransactions continuously retries all pending transactions until context cancellation
 func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGroup, update *oracleStateUpdate, updateMutex *sync.Mutex) {
 	defer wg.Done()
 
 	slog.Info("Starting continuous pending transaction processing goroutine")
-
-	// Track processing statistics for monitoring
-	var totalRounds, totalProcessed, totalSuccessful int
-	lastStatusLog := time.Now()
 
 	// Retry loop - continue until context cancellation
 	for {
@@ -1862,37 +1908,21 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 				}
 			}
 
-			slog.Debug("Processing pending transactions round", "count", pendingCount, "round", totalRounds+1)
+			slog.Debug("Processing pending transactions round", "count", pendingCount)
 
 			// Process one round of pending transactions
-			processedCount, successCount := o.processPendingTransactionsRound(ctx, update, updateMutex)
-			totalRounds++
-			totalProcessed += processedCount
-			totalSuccessful += successCount
+			successfulTransactions := o.processPendingTransactionsRound(ctx, update, updateMutex)
 
-			// Periodic status logging (every 15 seconds)
-			if time.Since(lastStatusLog) >= sidecartypes.PendingTransactionStatusLogInterval {
-				updateMutex.Lock()
-				currentPending := len(update.pendingTransactions)
-				updateMutex.Unlock()
-
-				successRate := 0.0
-				if totalProcessed > 0 {
-					successRate = float64(totalSuccessful) / float64(totalProcessed) * 100
-				}
-
-				slog.Info("Pending transaction processing status",
-					"totalRounds", totalRounds,
-					"totalProcessed", totalProcessed,
-					"totalSuccessful", totalSuccessful,
-					"currentPending", currentPending,
-					"successRate", fmt.Sprintf("%.1f%%", successRate))
-				lastStatusLog = time.Now()
+			// Log summary if any transactions were successfully processed
+			if len(successfulTransactions) > 0 {
+				slog.Info("Pending transactions processed successfully",
+					"successfulCount", len(successfulTransactions),
+					"signatures", successfulTransactions)
 			}
 
-			// Adaptive sleep based on activity - sleep longer if no progress made
+			// Adaptive sleep based on activity
 			sleepDuration := 2 * time.Second
-			if processedCount == 0 {
+			if pendingCount == 0 {
 				sleepDuration = sidecartypes.PendingTransactionCheckInterval // Sleep longer if no transactions were processed
 			}
 
@@ -1908,7 +1938,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 
 // processPendingTransactionsRound processes one round of pending transactions
 // Returns (processedCount, successCount) where processedCount is attempts and successCount is completed
-func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) (int, int) {
+func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) []string {
 	// Create a copy to iterate over to avoid modifying map while iterating
 	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
 	updateMutex.Lock()
@@ -1917,6 +1947,7 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 
 	processedCount := 0
 	successCount := 0
+	var successfulTransactions []string
 
 	for signature := range pendingCopy {
 		// Check for context cancellation
@@ -1925,7 +1956,7 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 			slog.Debug("Pending transaction processing round cancelled",
 				"processedInRound", processedCount,
 				"successfulInRound", successCount)
-			return processedCount, successCount
+			return successfulTransactions
 		default:
 		}
 
@@ -2027,10 +2058,7 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 						}
 					}
 				}
-				slog.Info("Successfully processed pending transaction",
-					"signature", signature,
-					"eventType", current.EventType,
-					"eventCount", len(events))
+				successfulTransactions = append(successfulTransactions, signature)
 			}
 			// Remove from pending queue in same atomic operation
 			if update.pendingTransactions != nil {
@@ -2072,7 +2100,206 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
 	}
 
-	return processedCount, successCount
+	return successfulTransactions
+}
+
+// processPendingTransactionsRoundPersistent processes one round of pending transactions from the current state
+// This version works with the persistent background processor and modifies the live oracle state
+func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+
+	// Create a copy to iterate over to avoid modifying map while iterating
+	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
+	for k, v := range currentState.PendingSolanaTxs {
+		pendingCopy[k] = v
+	}
+
+	processedCount := 0
+	successCount := 0
+	var successfulTransactions []string
+
+	for signature := range pendingCopy {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			slog.Debug("Pending transaction processing round cancelled",
+				"processedInRound", processedCount,
+				"successfulInRound", successCount)
+			return
+		default:
+		}
+
+		// Get current transaction info (may have been updated by other goroutines)
+		currentState = o.currentState.Load().(*sidecartypes.OracleState)
+		current, exists := currentState.PendingSolanaTxs[signature]
+		if !exists {
+			continue
+		}
+
+		if !o.shouldRetryTransaction(current) {
+			// Check if we should remove transactions that exceeded max retries
+			if current.RetryCount >= sidecartypes.PendingTransactionMaxRetries {
+				o.removePendingTransactionFromState(signature)
+				slog.Info("Removed pending transaction after max retries",
+					"signature", signature,
+					"eventType", current.EventType,
+					"retryCount", current.RetryCount)
+			}
+			continue
+		}
+
+		// Attempt to retry the transaction
+		sig, err := solana.SignatureFromBase58(signature)
+		if err != nil {
+			slog.Warn("Invalid signature in pending transactions", "signature", signature, "error", err)
+			o.removePendingTransactionFromState(signature)
+			continue
+		}
+
+		// Try to get and process the transaction
+		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
+		processedCount++ // Count this as a processing attempt
+
+		if err != nil {
+			o.updatePendingTransactionInState(signature, current)
+			slog.Debug("Pending transaction retry failed",
+				"signature", signature,
+				"eventType", current.EventType,
+				"error", err)
+			continue
+		}
+
+		if txResult != nil {
+			// Transaction retrieved successfully, now try to process it
+			events, err := o.processTransactionByEventType(txResult, sig, current.EventType)
+			if err != nil {
+				o.updatePendingTransactionInState(signature, current)
+				slog.Debug("Pending transaction processing failed",
+					"signature", signature,
+					"eventType", current.EventType,
+					"error", err)
+				continue
+			}
+
+			// Successfully processed - add events to the current state and remove from pending queue
+			if len(events) > 0 {
+				o.addEventsToCurrentState(events, current.EventType)
+				successfulTransactions = append(successfulTransactions, signature)
+			}
+
+			// Remove from pending queue
+			o.removePendingTransactionFromState(signature)
+			successCount++
+			slog.Debug("Removed pending transaction after successful processing",
+				"signature", signature)
+		} else {
+			o.updatePendingTransactionInState(signature, current)
+		}
+	}
+
+	// Log processing statistics if any transactions were processed
+	if processedCount > 0 {
+		roundSuccessRate := 0.0
+		if processedCount > 0 {
+			roundSuccessRate = float64(successCount) / float64(processedCount) * 100
+		}
+
+		slog.Debug("Pending transaction processing round completed",
+			"totalProcessed", processedCount,
+			"successfullyCompleted", successCount,
+			"stillPending", len(pendingCopy)-successCount,
+			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
+	}
+
+	// Log summary if any transactions were successfully processed
+	if len(successfulTransactions) > 0 {
+		slog.Info("Pending transactions processed successfully (persistent)",
+			"successfulCount", len(successfulTransactions),
+			"signatures", successfulTransactions)
+	}
+}
+
+// Helper functions for managing pending transactions in the current state
+func (o *Oracle) removePendingTransactionFromState(signature string) {
+	for {
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
+		for k, v := range currentState.PendingSolanaTxs {
+			if k != signature {
+				newPendingTxs[k] = v
+			}
+		}
+
+		newState := *currentState
+		newState.PendingSolanaTxs = newPendingTxs
+
+		if o.currentState.CompareAndSwap(currentState, &newState) {
+			break
+		}
+		// Retry if CAS failed due to concurrent modification
+	}
+}
+
+func (o *Oracle) updatePendingTransactionInState(signature string, txInfo sidecartypes.PendingTxInfo) {
+	for {
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
+		for k, v := range currentState.PendingSolanaTxs {
+			newPendingTxs[k] = v
+		}
+
+		// Update the transaction with incremented retry count
+		updated := sidecartypes.PendingTxInfo{
+			Signature:    txInfo.Signature,
+			EventType:    txInfo.EventType,
+			RetryCount:   txInfo.RetryCount + 1,
+			FirstAttempt: txInfo.FirstAttempt,
+			LastAttempt:  time.Now(),
+		}
+		newPendingTxs[signature] = updated
+
+		newState := *currentState
+		newState.PendingSolanaTxs = newPendingTxs
+
+		if o.currentState.CompareAndSwap(currentState, &newState) {
+			break
+		}
+		// Retry if CAS failed due to concurrent modification
+	}
+}
+
+func (o *Oracle) addEventsToCurrentState(events []any, eventType string) {
+	for {
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		newState := *currentState
+
+		// Add events based on event type
+		switch eventType {
+		case "Solana ROCK mint", "Solana zenBTC mint":
+			newMintEvents := make([]api.SolanaMintEvent, len(currentState.SolanaMintEvents))
+			copy(newMintEvents, currentState.SolanaMintEvents)
+			for _, event := range events {
+				if mintEvent, ok := event.(api.SolanaMintEvent); ok {
+					newMintEvents = append(newMintEvents, mintEvent)
+				}
+			}
+			newState.SolanaMintEvents = newMintEvents
+		case "Solana zenBTC burn", "Solana ROCK burn":
+			newBurnEvents := make([]api.BurnEvent, len(currentState.SolanaBurnEvents))
+			copy(newBurnEvents, currentState.SolanaBurnEvents)
+			for _, event := range events {
+				if burnEvent, ok := event.(api.BurnEvent); ok {
+					newBurnEvents = append(newBurnEvents, burnEvent)
+				}
+			}
+			newState.SolanaBurnEvents = newBurnEvents
+		}
+
+		if o.currentState.CompareAndSwap(currentState, &newState) {
+			break
+		}
+		// Retry if CAS failed due to concurrent modification
+	}
 }
 
 // processTransactionByEventType processes a transaction based on its event type
