@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 	"testing"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
@@ -43,17 +41,13 @@ func TestHandleBackfillRequests(t *testing.T) {
 		},
 	}
 
-	// 4. Call handleBackfillRequests
-	update := &oracleStateUpdate{
-		solanaBurnEvents: make([]api.BurnEvent, 0),
-	}
-	var updateMutex sync.Mutex
-
-	oracle.handleBackfillRequests(context.Background(), requests, update, &updateMutex)
+	// 4. Call processBackfillRequestsList
+	burnEvents, err := oracle.processBackfillRequestsList(context.Background(), requests)
 
 	// 5. Assertions
-	require.Len(t, update.solanaBurnEvents, 1, "should have one burn event")
-	event := update.solanaBurnEvents[0]
+	require.NoError(t, err)
+	require.Len(t, burnEvents, 1, "should have one burn event")
+	event := burnEvents[0]
 
 	assert.Equal(t, txHash, event.TxID)
 	assert.Equal(t, "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", event.ChainID)
