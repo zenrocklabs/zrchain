@@ -2279,9 +2279,8 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 
 	// Log summary if any transactions were successfully processed
 	if len(successfulTransactions) > 0 {
-		slog.Info("Pending transactions processed successfully (persistent)",
-			"successfulCount", len(successfulTransactions),
-			"signatures", successfulTransactions)
+		slog.Info("Pending transactions processed successfully",
+			"successfulCount", len(successfulTransactions))
 	}
 }
 
