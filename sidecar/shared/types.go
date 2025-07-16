@@ -104,19 +104,21 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
-	MainLoopTickerInterval       = 60 * time.Second
-	OracleCacheSize              = 10
-	EthBurnEventsBlockRange      = 1000
-	EthBlocksBeforeFinality      = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit       = 440
-	SolanaMaxBackfillPages       = 10 // Max pages to fetch when filling a signature gap.
-	SolanaEventFetchBatchSize    = 10
-	SolanaEventFetchMinBatchSize = 2
-	SolanaSleepInterval          = 50 * time.Millisecond
-	SolanaFallbackSleepInterval  = 10 * time.Millisecond // Sleep between individual fallback requests
-	SolanaEventFetchMaxRetries   = 10
-	SolanaFallbackMaxRetries     = 3 // Retries for individual fallback requests
-	SolanaEventFetchRetrySleep   = 100 * time.Millisecond
+	MainLoopTickerInterval         = 60 * time.Second
+	OracleCacheSize                = 10
+	EthBurnEventsBlockRange        = 1000
+	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
+	SolanaEventScanTxLimit         = 440
+	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
+	SolanaEventFetchBatchSize      = 10
+	SolanaEventFetchMinBatchSize   = 2
+	SolanaSleepInterval            = 50 * time.Millisecond
+	SolanaFallbackSleepInterval    = 10 * time.Millisecond // Sleep between individual fallback requests
+	SolanaEventFetchMaxRetries     = 10
+	SolanaFallbackMaxRetries       = 3 // Retries for individual fallback requests
+	SolanaEventFetchRetrySleep     = 100 * time.Millisecond
+	SolanaPendingTxMaxRetries      = 100
+	SolanaPendingTxAllowRetryAfter = 5 * time.Second
 
 	// RPC connection retry parameters
 	RPCConnectionMaxRetries = 20
@@ -132,11 +134,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r2"
+	SidecarVersionName = "salmon_moon_r3"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r2"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r3"}
 )
 
 // PriceFeed struct with fields for different price feeds

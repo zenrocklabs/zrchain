@@ -268,7 +268,8 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 		"cleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
 		"solanaMintEvents", len(newState.SolanaMintEvents),
 		"cleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
-		"redemptions", len(newState.Redemptions))
+		"redemptions", len(newState.Redemptions),
+		"pendingSolanaTxs", len(newState.PendingSolanaTxs))
 
 	// Update the oracle's high-watermark fields from the newly applied state.
 	// These are used as the starting point for the next fetch cycle.
@@ -1713,20 +1714,20 @@ func (o *Oracle) removePendingTransaction(signature string, update *oracleStateU
 // shouldRetryTransaction checks if a pending transaction should be retried
 func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
 	// Basic retry limit (can be made configurable later)
-	maxRetries := 100
+	maxRetries := sidecartypes.SolanaPendingTxMaxRetries
 	if info.RetryCount >= maxRetries {
 		return false
 	}
 
 	// Simple time-based retry interval (can be made exponential later)
-	retryInterval := 5 * time.Minute
+	retryInterval := sidecartypes.SolanaPendingTxAllowRetryAfter
 	return time.Since(info.LastAttempt) >= retryInterval
 }
 
 // processPendingTransactions attempts to retry all pending transactions
 func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) {
 	// Get current pending transactions from the update (which was copied from current state)
-	if update.pendingTransactions == nil || len(update.pendingTransactions) == 0 {
+	if len(update.pendingTransactions) == 0 {
 		return
 	}
 
@@ -1735,9 +1736,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, update *oracleS
 	// Create a copy to iterate over to avoid modifying map while iterating
 	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
 	updateMutex.Lock()
-	for k, v := range update.pendingTransactions {
-		pendingCopy[k] = v
-	}
+	maps.Copy(pendingCopy, update.pendingTransactions)
 	updateMutex.Unlock()
 
 	for signature := range pendingCopy {
