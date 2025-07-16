@@ -316,6 +316,15 @@ func (o *Oracle) fetchAndProcessState(
 ) (sidecartypes.OracleState, error) {
 	var wg sync.WaitGroup
 
+	// Log initial state at beginning of tick
+	initialState := o.currentState.Load().(*sidecartypes.OracleState)
+	slog.Info("TICK START STATE SNAPSHOT",
+		"solanaMintEvents", len(initialState.SolanaMintEvents),
+		"cleanedSolanaMintEvents", len(initialState.CleanedSolanaMintEvents),
+		"solanaBurnEvents", len(initialState.SolanaBurnEvents),
+		"cleanedSolanaBurnEvents", len(initialState.CleanedSolanaBurnEvents),
+		"pendingSolanaTxs", len(initialState.PendingSolanaTxs))
+
 	slog.Info("Retrieving latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "time", time.Now().Format(sidecartypes.TimeFormatPrecise))
 	latestHeader, err := o.EthClient.HeaderByNumber(tickCtx, nil)
 	if err != nil {
@@ -428,7 +437,10 @@ func (o *Oracle) fetchAndProcessState(
 func sendError(ctx context.Context, errChan chan<- error, err error) {
 	select {
 	case <-ctx.Done():
-		slog.Debug("Context canceled, dropping error", "err", err)
+		// Only log context cancellation errors that aren't actually about context cancellation
+		if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) && !strings.Contains(err.Error(), "context canceled") {
+			slog.Debug("Context canceled, dropping error", "err", err)
+		}
 	case errChan <- err:
 	}
 }
@@ -751,7 +763,8 @@ func (o *Oracle) processSolanaMintEvents(
 		// Reconcile and merge
 		slog.Info("Before reconciliation",
 			"pendingMintEvents", len(currentState.SolanaMintEvents),
-			"cleanedMintEventsMap", len(currentState.CleanedSolanaMintEvents))
+			"cleanedMintEventsMap", len(currentState.CleanedSolanaMintEvents),
+			"newlyFetchedEvents", len(allNewEvents))
 		remainingEvents, cleanedEvents, reconcileErr := o.reconcileMintEventsWithZRChain(ctx, currentState.SolanaMintEvents, currentState.CleanedSolanaMintEvents)
 
 		// Only log reconciliation results if there was activity or errors
@@ -770,7 +783,14 @@ func (o *Oracle) processSolanaMintEvents(
 		// `remainingEvents` now contains all events that are still pending (either all of them if reconcile failed, or a subset if it succeeded).
 		// Merge the newly fetched events (`allNewEvents`) into this list.
 		// This call will produce a non-confusing log because `remainingEvents` is passed as the existing set.
+		slog.Info("MINT EVENT MERGE INPUT",
+			"remainingEventsFromReconcile", len(remainingEvents),
+			"cleanedEventsFromReconcile", len(cleanedEvents),
+			"newEventsToMerge", len(allNewEvents),
+			"reconciliationSucceeded", reconcileErr == nil)
 		mergedMintEvents := mergeNewMintEvents(remainingEvents, cleanedEvents, allNewEvents, "Solana mint")
+		slog.Info("MINT EVENT MERGE OUTPUT",
+			"mergedMintEventsCount", len(mergedMintEvents))
 
 		updateMutex.Lock()
 
@@ -800,24 +820,28 @@ func (o *Oracle) processSolanaMintEvents(
 			}
 		}
 
+		slog.Info("FINAL UPDATE COMPOSITION",
+			"mergedMintEventsCount", len(mergedMintEvents),
+			"existingPendingEventsCount", len(existingPendingEvents),
+			"finalEventsCount", len(finalEvents),
+			"initialUpdateCount", initialUpdateCount)
+
 		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
 
-		// Only log if there were actual changes in the final merge
-		if len(update.SolanaMintEvents) != initialUpdateCount || len(mergedMintEvents) > 0 {
-			// Calculate deduplication statistics only when logging
-			pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
-			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
+		// Calculate deduplication statistics
+		pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
+		duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
 
-			slog.Info("Final merge and state update completed",
-				"finalMintEvents", len(update.SolanaMintEvents),
-				"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
-				"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
-				"newEvents", len(mergedMintEvents),
-				"existingPendingEvents", len(existingPendingEvents),
-				"pendingEventsPreserved", pendingEventsPreserved,
-				"duplicatesRemoved", duplicatesRemoved)
-		}
+		slog.Info("Final merge and state update completed",
+			"finalMintEvents", len(update.SolanaMintEvents),
+			"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
+			"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
+			"newEvents", len(mergedMintEvents),
+			"existingPendingEvents", len(existingPendingEvents),
+			"pendingEventsPreserved", pendingEventsPreserved,
+			"duplicatesRemoved", duplicatesRemoved,
+			"reconcileErr", reconcileErr != nil)
 		// Only update watermarks if there were no errors in processing
 		if rockErr == nil && !newRockSig.IsZero() {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
@@ -1051,6 +1075,13 @@ func (o *Oracle) buildFinalState(
 		PendingSolanaTxs:        update.pendingTransactions,
 	}
 
+	slog.Info("FINAL STATE CONSTRUCTED",
+		"finalSolanaMintEvents", len(newState.SolanaMintEvents),
+		"finalCleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
+		"finalSolanaBurnEvents", len(newState.SolanaBurnEvents),
+		"finalCleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
+		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs))
+
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
 		if err != nil {
@@ -1228,12 +1259,17 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	eventsToClean []api.SolanaMintEvent,
 	cleanedEvents map[string]bool,
 ) ([]api.SolanaMintEvent, map[string]bool, error) {
-	remainingEvents := make([]api.SolanaMintEvent, 0)
+	remaining := make([]api.SolanaMintEvent, 0)
 	updatedCleanedEvents := make(map[string]bool)
 	maps.Copy(updatedCleanedEvents, cleanedEvents)
 
+	slog.Info("MINT RECONCILIATION START",
+		"inputEventsCount", len(eventsToClean),
+		"inputCleanedEventsCount", len(cleanedEvents))
+
 	var zenbtcQueryErrors, zentpQueryErrors int
 	var lastZenbtcError, lastZentpError error
+	var eventsKeptDueToQuery, eventsRemovedFromChain int
 
 	for _, event := range eventsToClean {
 		key := base64.StdEncoding.EncodeToString(event.SigHash)
@@ -1250,7 +1286,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			lastZenbtcError = err
 			// If we fail to query zrChain for this specific event, we keep it in the cache
 			// to retry later, but continue processing other events
-			remainingEvents = append(remainingEvents, event)
+			remaining = append(remaining, event)
+			eventsKeptDueToQuery++
 			continue
 		}
 
@@ -1266,7 +1303,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 				zentpQueryErrors++
 				lastZentpError = err
 				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
-				remainingEvents = append(remainingEvents, event)
+				remaining = append(remaining, event)
 				continue
 			}
 			if zentpResp != nil && len(zentpResp.Mints) > 0 {
@@ -1275,28 +1312,52 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		}
 
 		if !foundOnChain {
-			remainingEvents = append(remainingEvents, event)
+			remaining = append(remaining, event)
 		} else {
 			updatedCleanedEvents[key] = true
+			eventsRemovedFromChain++
 			slog.Info("Removing Solana mint event from cache as it's now on chain", "txSig", event.TxSig, "sigHash", key)
 		}
 	}
 
-	// Log summary of any query errors
+	// Log reconciliation summary
+	slog.Info("MINT RECONCILIATION SUMMARY",
+		"inputEventsCount", len(eventsToClean),
+		"remainingEventsCount", len(remaining),
+		"cleanedEventsCount", len(updatedCleanedEvents),
+		"eventsRemovedFromChain", eventsRemovedFromChain,
+		"eventsKeptDueToQueryFailure", eventsKeptDueToQuery,
+		"zenbtcQueryErrors", zenbtcQueryErrors,
+		"zentpQueryErrors", zentpQueryErrors,
+		"hasErrors", zenbtcQueryErrors > 0 || zentpQueryErrors > 0)
+
+	// Log summary of any query errors (but not for context cancellation)
 	if zenbtcQueryErrors > 0 {
-		slog.Warn("Failed to query zrChain ZenBTC for mint events, keeping in cache",
-			"failedCount", zenbtcQueryErrors,
-			"totalEvents", len(eventsToClean),
-			"lastError", lastZenbtcError)
+		if !errors.Is(lastZenbtcError, context.Canceled) && !errors.Is(lastZenbtcError, context.DeadlineExceeded) && !strings.Contains(lastZenbtcError.Error(), "context canceled") {
+			slog.Warn("Failed to query zrChain ZenBTC for mint events, keeping in cache",
+				"failedCount", zenbtcQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"lastError", lastZenbtcError)
+		} else {
+			slog.Debug("ZrChain ZenBTC query canceled due to context, keeping mint events in cache",
+				"failedCount", zenbtcQueryErrors,
+				"totalEvents", len(eventsToClean))
+		}
 	}
 	if zentpQueryErrors > 0 {
-		slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
-			"failedCount", zentpQueryErrors,
-			"totalEvents", len(eventsToClean),
-			"lastError", lastZentpError)
+		if !errors.Is(lastZentpError, context.Canceled) && !errors.Is(lastZentpError, context.DeadlineExceeded) && !strings.Contains(lastZentpError.Error(), "context canceled") {
+			slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
+				"failedCount", zentpQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"lastError", lastZentpError)
+		} else {
+			slog.Debug("ZrChain ZenTP query canceled due to context, keeping mint events in cache",
+				"failedCount", zentpQueryErrors,
+				"totalEvents", len(eventsToClean))
+		}
 	}
 
-	return remainingEvents, updatedCleanedEvents, nil
+	return remaining, updatedCleanedEvents, nil
 }
 
 func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
@@ -1654,7 +1715,12 @@ func (o *Oracle) processBackfillRequests(
 		newBurnEvents, err := o.fetchAndProcessBackfillRequests(ctx)
 		if err != nil {
 			// Don't fail the whole operation, just log the error
-			slog.Error("Failed to process backfill requests", "error", err)
+			// But don't log context cancellation errors as they are expected
+			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) && !strings.Contains(err.Error(), "context canceled") {
+				slog.Error("Failed to process backfill requests", "error", err)
+			} else {
+				slog.Debug("Backfill request processing canceled due to context", "error", err)
+			}
 			return
 		}
 
@@ -2718,7 +2784,7 @@ func (o *Oracle) processSignatures(
 				failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 				newestSigProcessed = signatures[j].Signature
 			}
-			slog.Warn("Context canceled during signature processing, added remaining signatures to pending queue",
+			slog.Debug("Context canceled during signature processing, added remaining signatures to pending queue",
 				"eventType", eventTypeName,
 				"processedSignatures", i,
 				"totalSignatures", len(signatures),
@@ -2734,6 +2800,16 @@ func (o *Oracle) processSignatures(
 
 		// If the batch failed, handle retry logic
 		if batchErr != nil {
+			// Check for context cancellation first - if cancelled, stop immediately
+			if errors.Is(batchErr, context.Canceled) || errors.Is(batchErr, context.DeadlineExceeded) || strings.Contains(batchErr.Error(), "context canceled") {
+				// Context cancelled - add remaining signatures to pending queue and return
+				for j := i; j < len(signatures); j++ {
+					failedSignatures = append(failedSignatures, signatures[j].Signature.String())
+					newestSigProcessed = signatures[j].Signature
+				}
+				return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
+			}
+
 			if currentBatchSize > minBatchSize {
 				slog.Warn("Batch GetTransaction failed, reducing batch size and retrying",
 					"eventType", eventTypeName, "error", batchErr, "oldSize", currentBatchSize, "newSize", newBatchSize)
@@ -3300,19 +3376,32 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 
 	// Log summary of any query errors
 	if zenbtcQueryErrors > 0 {
-		slog.Error("Failed to query zrChain for zenBTC burn events",
-			"failedCount", zenbtcQueryErrors,
-			"totalEvents", len(eventsToClean),
-			"chainType", chainTypeName,
-			"lastError", lastZenbtcError)
+		if !errors.Is(lastZenbtcError, context.Canceled) && !errors.Is(lastZenbtcError, context.DeadlineExceeded) && !strings.Contains(lastZenbtcError.Error(), "context canceled") {
+			slog.Error("Failed to query zrChain for zenBTC burn events",
+				"failedCount", zenbtcQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"chainType", chainTypeName,
+				"lastError", lastZenbtcError)
+		} else {
+			slog.Debug("ZrChain zenBTC burn query canceled due to context",
+				"failedCount", zenbtcQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"chainType", chainTypeName)
+		}
 	}
-
 	if zentpQueryErrors > 0 {
-		slog.Error("Failed to query zrChain for ZenTP burn events",
-			"failedCount", zentpQueryErrors,
-			"totalEvents", len(eventsToClean),
-			"chainType", chainTypeName,
-			"lastError", lastZentpError)
+		if !errors.Is(lastZentpError, context.Canceled) && !errors.Is(lastZentpError, context.DeadlineExceeded) && !strings.Contains(lastZentpError.Error(), "context canceled") {
+			slog.Error("Failed to query zrChain for ZenTP burn events",
+				"failedCount", zentpQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"chainType", chainTypeName,
+				"lastError", lastZentpError)
+		} else {
+			slog.Debug("ZrChain ZenTP burn query canceled due to context",
+				"failedCount", zentpQueryErrors,
+				"totalEvents", len(eventsToClean),
+				"chainType", chainTypeName)
+		}
 	}
 
 	if bech32EncodingErrors > 0 {
