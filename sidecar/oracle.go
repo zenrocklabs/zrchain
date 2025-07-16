@@ -817,14 +817,10 @@ func (o *Oracle) processSolanaMintEvents(
 		}
 		// Only update watermarks if there were no errors in processing
 		if rockErr == nil && !newRockSig.IsZero() {
-			// updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
-			// updateMutex.Unlock()
 		}
 		if zenbtcErr == nil && !newZenBTCSig.IsZero() {
-			// updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
-			// updateMutex.Unlock()
 		}
 		updateMutex.Unlock()
 	}()
