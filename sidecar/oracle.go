@@ -1771,20 +1771,6 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 	}
 }
 
-// removePendingTransaction removes a successfully processed transaction from the pending queue in the state update
-func (o *Oracle) removePendingTransaction(signature string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
-	updateMutex.Lock()
-	defer updateMutex.Unlock()
-
-	if update.pendingTransactions != nil {
-		if _, exists := update.pendingTransactions[signature]; exists {
-			delete(update.pendingTransactions, signature)
-			slog.Debug("Removed pending transaction after successful processing",
-				"signature", signature)
-		}
-	}
-}
-
 // shouldRetryTransaction checks if a pending transaction should be retried
 func (o *Oracle) shouldRetryTransaction(info sidecartypes.PendingTxInfo) bool {
 	// Basic retry limit (can be made configurable later)
@@ -2454,13 +2440,17 @@ func (o *Oracle) processSignatures(
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
 		if ctx.Err() != nil {
-			// Return early with current watermark position when context canceled
-			// Remaining signatures will be processed in next cycle starting from lastSuccessfullyProcessedSig
-			slog.Warn("Context canceled during signature processing, returning early without advancing watermark",
+			// Add remaining unprocessed signatures to pending queue for optimistic watermark advancement
+			for j := i; j < len(signatures); j++ {
+				failedSignatures = append(failedSignatures, signatures[j].Signature.String())
+				newestSigProcessed = signatures[j].Signature
+			}
+			slog.Warn("Context canceled during signature processing, added remaining signatures to pending queue",
 				"eventType", eventTypeName,
 				"processedSignatures", i,
-				"totalSignatures", len(signatures))
-			return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
+				"totalSignatures", len(signatures),
+				"addedToPending", len(signatures)-i)
+			return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 		}
 
 		end := min(i+currentBatchSize, len(signatures))
@@ -2480,13 +2470,13 @@ func (o *Oracle) processSignatures(
 				slog.Warn("Batch transaction fetch failed at minimum batch size, attempting individual fallback", "eventType", eventTypeName, "size", len(currentBatch))
 
 				// Try individual requests for each transaction in the failed batch
-				for _, sigInfo := range currentBatch {
+				for idx, sigInfo := range currentBatch {
 					// Check for context cancellation before each individual request
 					if ctx.Err() != nil {
-						// Add remaining transactions to failed signatures and return
-						for _, remainingSig := range currentBatch {
-							failedSignatures = append(failedSignatures, remainingSig.Signature.String())
-							newestSigProcessed = remainingSig.Signature
+						// Add only remaining unprocessed transactions to failed signatures and return
+						for j := idx; j < len(currentBatch); j++ {
+							failedSignatures = append(failedSignatures, currentBatch[j].Signature.String())
+							newestSigProcessed = currentBatch[j].Signature
 						}
 						return allEvents, lastSuccessfullyProcessedSig, failedSignatures, ctx.Err()
 					}
@@ -2809,69 +2799,6 @@ func (o *Oracle) getCachedTransactionResult(sigStr string) (*solrpc.GetTransacti
 	}
 
 	return cached.Result, true
-}
-
-// processFallbackTransactionsWithCaching handles individual transaction fetching with caching when batch processing fails
-func (o *Oracle) processFallbackTransactionsWithCaching(
-	ctx context.Context,
-	currentBatch []*solrpc.TransactionSignature,
-	program solana.PublicKey,
-	allEvents *[]any,
-	lastSuccessfullyProcessedSig *solana.Signature,
-	eventTypeName string,
-	processTransaction processTransactionFunc,
-) error {
-	for _, sigInfo := range currentBatch {
-		sigStr := sigInfo.Signature.String()
-
-		// Check cache first
-		var txRes *solrpc.GetTransactionResult
-		if cached, found := o.getCachedTransactionResult(sigStr); found {
-			txRes = cached
-		} else {
-			// Fetch from network with retry
-			var txErr error
-			retryDelay := sidecartypes.SolanaEventFetchRetrySleep
-
-			for retry := 0; retry < sidecartypes.SolanaFallbackMaxRetries; retry++ {
-				fallbackCtx, fallbackCancel := context.WithTimeout(ctx, sidecartypes.SolanaRPCTimeout)
-				txRes, txErr = o.getTransactionFn(fallbackCtx, sigInfo.Signature, &solrpc.GetTransactionOpts{
-					Encoding:                       solana.EncodingBase64,
-					Commitment:                     solrpc.CommitmentConfirmed,
-					MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
-				})
-				fallbackCancel()
-
-				if txErr == nil && txRes != nil {
-					// Cache the successful result
-					o.cacheTransactionResult(sigStr, txRes)
-					break
-				}
-				if retry < sidecartypes.SolanaFallbackMaxRetries-1 {
-					time.Sleep(retryDelay)
-					retryDelay = min(retryDelay*2, time.Second) // Exponential backoff for fallback
-				}
-			}
-			if txErr != nil || txRes == nil {
-				err := fmt.Errorf("unrecoverable tx fetch error: %w", txErr)
-				slog.Error("Failed to fetch transaction after exhausting all retry attempts", "eventType", eventTypeName, "tx", sigInfo.Signature, "reason", err)
-				return err
-			}
-		}
-
-		events, err := processTransaction(txRes, program, sigInfo.Signature, o.DebugMode)
-		if err != nil {
-			slog.Error("Unrecoverable processing error in fallback", "eventType", eventTypeName, "tx", sigInfo.Signature, "error", err)
-			return err
-		}
-
-		if len(events) > 0 {
-			*allEvents = append(*allEvents, events...)
-		}
-		*lastSuccessfullyProcessedSig = sigInfo.Signature
-		time.Sleep(sidecartypes.SolanaFallbackSleepInterval)
-	}
-	return nil
 }
 
 // fetchAndFillSignatureGap back-pages the Solana signature list until the provided watermark is
