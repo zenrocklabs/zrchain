@@ -9,7 +9,6 @@ import (
 	m "math"
 	"math/big"
 	"sort"
-	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
@@ -618,66 +617,69 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 			continue
 		}
 
-		// If the validator has reached the jail threshold or more mismatches, jail them
+		// If the validator has reached the jail threshold or more mismatches, log desync info
 		if mismatchCount.TotalCount >= voteExtensionJailThreshold {
 			k.Logger(ctx).Info(
-				"Jailing validator for excessive mismatched vote extensions",
+				"validator sidecar desynced (jailing logic temporarily disabled)",
 				"validator", validator.OperatorAddress,
 				"consensus_addr", sdk.ConsAddress(consAddr).String(),
 				"mismatch_count", mismatchCount.TotalCount,
 				"blocks_checked", voteExtensionWindowSize,
 			)
 
-			if err := k.jailValidator(ctx, validator); err != nil {
-				k.Logger(ctx).Error(
-					"Failed to jail validator for mismatched vote extensions",
-					"validator", validator.OperatorAddress,
-					"error", err,
-				)
-				continue
-			}
+			// TODO: Uncomment jailing logic when sidecar sync issues are resolved
+			/*
+				if err := k.jailValidator(ctx, validator); err != nil {
+					k.Logger(ctx).Error(
+						"Failed to jail validator for mismatched vote extensions",
+						"validator", validator.OperatorAddress,
+						"error", err,
+					)
+					continue
+				}
 
-			// Get and update signing info to add an hour to jail duration
-			signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if err != nil {
-				k.Logger(ctx).Error(
-					"Failed to get validator signing info",
-					"validator", validator.OperatorAddress,
-					"error", err,
-				)
-				continue
-			}
+				// Get and update signing info to add an hour to jail duration
+				signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+				if err != nil {
+					k.Logger(ctx).Error(
+						"Failed to get validator signing info",
+						"validator", validator.OperatorAddress,
+						"error", err,
+					)
+					continue
+				}
 
-			signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(time.Hour)
-			if err := k.slashingKeeper.SetValidatorSigningInfo(ctx, consAddr, signInfo); err != nil {
-				k.Logger(ctx).Error(
-					"Failed to set validator signing info",
-					"validator", validator.OperatorAddress,
-					"error", err,
-				)
-				continue
-			}
+				signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(time.Hour)
+				if err := k.slashingKeeper.SetValidatorSigningInfo(ctx, consAddr, signInfo); err != nil {
+					k.Logger(ctx).Error(
+						"Failed to set validator signing info",
+						"validator", validator.OperatorAddress,
+						"error", err,
+					)
+					continue
+				}
 
-			// Clear the mismatch store for this validator
-			if err := k.ValidatorMismatchCounts.Remove(ctx, validatorHexAddr); err != nil {
-				k.Logger(ctx).Error(
-					"Failed to remove mismatch count record for jailed validator",
-					"validator", validator.OperatorAddress,
-					"error", err,
-				)
-				continue
-			}
+				// Clear the mismatch store for this validator
+				if err := k.ValidatorMismatchCounts.Remove(ctx, validatorHexAddr); err != nil {
+					k.Logger(ctx).Error(
+						"Failed to remove mismatch count record for jailed validator",
+						"validator", validator.OperatorAddress,
+						"error", err,
+					)
+					continue
+				}
 
-			// Emit an event for the jailing
-			sdkCtx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					"validator_jailed_vote_extension_mismatch",
-					sdk.NewAttribute("validator", validator.OperatorAddress),
-					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
-					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
-					sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", voteExtensionWindowSize)),
-				),
-			)
+				// Emit an event for the jailing
+				sdkCtx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						"validator_jailed_vote_extension_mismatch",
+						sdk.NewAttribute("validator", validator.OperatorAddress),
+						sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
+						sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
+						sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", voteExtensionWindowSize)),
+					),
+				)
+			*/
 		}
 	}
 
