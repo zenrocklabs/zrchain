@@ -1386,7 +1386,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	// Log summary of any query errors (but not for context cancellation)
 	if zenbtcQueryErrors > 0 {
 		if !errors.Is(lastZenbtcError, context.Canceled) && !errors.Is(lastZenbtcError, context.DeadlineExceeded) && !strings.Contains(lastZenbtcError.Error(), "context canceled") {
-			slog.Warn("Failed to query zrChain ZenBTC for mint events, keeping in cache",
+			slog.Warn("Failed to query zrChain for zenBTC mint events, keeping in cache",
 				"failedCount", zenbtcQueryErrors,
 				"totalEvents", len(eventsToClean),
 				"lastError", lastZenbtcError)
@@ -3468,7 +3468,7 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 	}
 	if zentpQueryErrors > 0 {
 		if !errors.Is(lastZentpError, context.Canceled) && !errors.Is(lastZentpError, context.DeadlineExceeded) && !strings.Contains(lastZentpError.Error(), "context canceled") {
-			slog.Error("Failed to query zrChain for ZenTP burn events",
+			slog.Error("Failed to query zrChain for zenTP burn events",
 				"failedCount", zentpQueryErrors,
 				"totalEvents", len(eventsToClean),
 				"chainType", chainTypeName,
