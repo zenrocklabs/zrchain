@@ -522,7 +522,7 @@ var colorMap = map[string]func(string) string{
 	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
 
 	// Special message highlighting
-	"STATE EVENT COUNTS FOR THIS TICK": func(s string) string { return color.HEX("FFD700").Sprint(s) }, // Bright saturated yellow
+	"State event counts for this tick": func(s string) string { return color.HEX("FFD700").Sprint(s) }, // Bright saturated yellow
 }
 
 // initLogger sets up coloured structured logging

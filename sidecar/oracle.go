@@ -428,7 +428,7 @@ func (o *Oracle) fetchAndProcessState(
 func sendError(ctx context.Context, errChan chan<- error, err error) {
 	select {
 	case <-ctx.Done():
-		slog.Warn("Context canceled, dropping error", "err", err)
+		slog.Debug("Context canceled, dropping error", "err", err)
 	case errChan <- err:
 	}
 }
