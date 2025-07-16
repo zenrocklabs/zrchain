@@ -23,7 +23,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
-const consensusVersion = 4
+const consensusVersion = 3
 
 var (
 	_ module.AppModuleBasic      = (*AppModule)(nil)
@@ -123,8 +123,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	// if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
 	// 	panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
 	// }
-	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to4); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 4: %v", types.ModuleName, err))
+	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
 	}
 }
 
