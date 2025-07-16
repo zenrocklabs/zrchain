@@ -842,12 +842,38 @@ func (o *Oracle) processSolanaMintEvents(
 			"pendingEventsPreserved", pendingEventsPreserved,
 			"duplicatesRemoved", duplicatesRemoved,
 			"reconcileErr", reconcileErr != nil)
-		// Only update watermarks if there were no errors in processing
-		if rockErr == nil && !newRockSig.IsZero() {
+
+		// Get current watermarks for comparison
+		lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
+		lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
+
+		// Update watermarks if we have valid new signatures and they represent progress
+		// Allow advancement even on timeout errors as long as failed transactions are in pending queue
+		// Fatal errors (like pending store failures) are indicated by unchanged watermark signatures
+		if !newRockSig.IsZero() && (!newRockSig.Equals(lastKnownRockSig) || rockErr == nil) {
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+			if rockErr != nil {
+				slog.Info("Advancing ROCK mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
+					"newWatermark", newRockSig,
+					"partialError", rockErr)
+			}
+		} else if rockErr != nil && !newRockSig.IsZero() && newRockSig.Equals(lastKnownRockSig) {
+			slog.Warn("Blocking ROCK mint watermark advancement due to fatal error",
+				"unchangedWatermark", newRockSig,
+				"fatalError", rockErr)
 		}
-		if zenbtcErr == nil && !newZenBTCSig.IsZero() {
+
+		if !newZenBTCSig.IsZero() && (!newZenBTCSig.Equals(lastKnownZenBTCSig) || zenbtcErr == nil) {
 			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
+			if zenbtcErr != nil {
+				slog.Info("Advancing zenBTC mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
+					"newWatermark", newZenBTCSig,
+					"partialError", zenbtcErr)
+			}
+		} else if zenbtcErr != nil && !newZenBTCSig.IsZero() && newZenBTCSig.Equals(lastKnownZenBTCSig) {
+			slog.Warn("Blocking zenBTC mint watermark advancement due to fatal error",
+				"unchangedWatermark", newZenBTCSig,
+				"fatalError", zenbtcErr)
 		}
 		updateMutex.Unlock()
 	}()
@@ -882,10 +908,23 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 			var newestSig solana.Signature
 			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
-			if zenBtcErr == nil && !newestSig.IsZero() {
-				updateMutex.Lock()
-				update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
-				updateMutex.Unlock()
+			if !newestSig.IsZero() {
+				lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
+				// Allow watermark advancement if we have progress or no errors
+				if !newestSig.Equals(lastKnownSig) || zenBtcErr == nil {
+					updateMutex.Lock()
+					update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
+					updateMutex.Unlock()
+					if zenBtcErr != nil {
+						slog.Info("Advancing zenBTC burn watermark despite partial processing error (failed transactions safely stored in pending queue)",
+							"newWatermark", newestSig,
+							"partialError", zenBtcErr)
+					}
+				} else if zenBtcErr != nil && newestSig.Equals(lastKnownSig) {
+					slog.Warn("Blocking zenBTC burn watermark advancement due to fatal error",
+						"unchangedWatermark", newestSig,
+						"fatalError", zenBtcErr)
+				}
 			}
 		}()
 
@@ -902,10 +941,23 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 			var newestSig solana.Signature
 			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
-			if rockErr == nil && !newestSig.IsZero() {
-				updateMutex.Lock()
-				update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
-				updateMutex.Unlock()
+			if !newestSig.IsZero() {
+				lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
+				// Allow watermark advancement if we have progress or no errors
+				if !newestSig.Equals(lastKnownSig) || rockErr == nil {
+					updateMutex.Lock()
+					update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
+					updateMutex.Unlock()
+					if rockErr != nil {
+						slog.Info("Advancing ROCK burn watermark despite partial processing error (failed transactions safely stored in pending queue)",
+							"newWatermark", newestSig,
+							"partialError", rockErr)
+					}
+				} else if rockErr != nil && newestSig.Equals(lastKnownSig) {
+					slog.Warn("Blocking ROCK burn watermark advancement due to fatal error",
+						"unchangedWatermark", newestSig,
+						"fatalError", rockErr)
+				}
 			}
 		}()
 
