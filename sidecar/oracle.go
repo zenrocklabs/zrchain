@@ -177,7 +177,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	if !o.SkipInitialWait {
-		ntpTime, err := ntp.Time("time.google.com")
+		ntpTime, err := ntp.Time(sidecartypes.NTPServer)
 		if err != nil {
 			slog.Error("Failed to fetch NTP time at startup. Cannot proceed.", "error", err)
 			panic(fmt.Sprintf("FATAL: Failed to fetch NTP time at startup: %v. Cannot proceed.", err))
@@ -187,7 +187,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		if initialSleep > 0 {
 			slog.Info("Initial alignment: Sleeping until start ticker.",
 				"sleepDuration", initialSleep.Round(time.Millisecond),
-				"alignedStart", alignedStart.Format("15:04:05.00"))
+				"alignedStart", alignedStart.Format(sidecartypes.TimeFormatPrecise))
 			time.Sleep(initialSleep)
 		}
 	} else {
@@ -234,7 +234,7 @@ func (o *Oracle) processOracleTick(
 
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format("15:04:05.00"))
+			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
 		} else {
 			slog.Error("Error fetching and processing state, applying partial update with fallbacks", "error", err)
 		}
@@ -243,7 +243,7 @@ func (o *Oracle) processOracleTick(
 
 	// Always apply the state update (even if partial) - the individual event fetching functions
 	// have their own watermark protection to prevent event loss
-	slog.Info("Applying state update for tick", "tickTime", tickTime.Format("15:04:05.00"))
+	slog.Info("Applying state update for tick", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
 	slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
 	slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
 	o.applyStateUpdate(newState)
@@ -320,12 +320,12 @@ func (o *Oracle) fetchAndProcessState(
 ) (sidecartypes.OracleState, error) {
 	var wg sync.WaitGroup
 
-	slog.Info("Retrieving latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "time", time.Now().Format("15:04:05.00"))
+	slog.Info("Retrieving latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "time", time.Now().Format(sidecartypes.TimeFormatPrecise))
 	latestHeader, err := o.EthClient.HeaderByNumber(tickCtx, nil)
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to fetch latest block: %w", err)
 	}
-	slog.Info("Retrieved latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "block", latestHeader.Number.Uint64(), "time", time.Now().Format("15:04:05.00"))
+	slog.Info("Retrieved latest header", "network", sidecartypes.NetworkNames[o.Config.Network], "block", latestHeader.Number.Uint64(), "time", time.Now().Format(sidecartypes.TimeFormatPrecise))
 	targetBlockNumber := new(big.Int).Sub(latestHeader.Number, big.NewInt(sidecartypes.EthBlocksBeforeFinality))
 
 	// Check base fee availability
@@ -335,7 +335,7 @@ func (o *Oracle) fetchAndProcessState(
 
 	update := o.initializeStateUpdate()
 	var updateMutex sync.Mutex
-	errChan := make(chan error, 16)
+	errChan := make(chan error, sidecartypes.ErrorChannelBufferSize)
 
 	// Use a separate context for the goroutines that can be canceled
 	// if the main tick context is canceled.
@@ -488,7 +488,7 @@ func (o *Oracle) fetchNetworkData(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(1000000000))
+		stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(sidecartypes.StakeCallDataAmount))
 		if err != nil {
 			sendError(ctx, errChan, fmt.Errorf("failed to encode stake call data: %w", err))
 			return
@@ -1753,7 +1753,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(5 * time.Second):
+				case <-time.After(sidecartypes.PendingTransactionCheckInterval):
 					continue
 				}
 			}
@@ -1767,7 +1767,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 			totalSuccessful += successCount
 
 			// Periodic status logging (every 15 seconds)
-			if time.Since(lastStatusLog) >= 15*time.Second {
+			if time.Since(lastStatusLog) >= sidecartypes.PendingTransactionStatusLogInterval {
 				updateMutex.Lock()
 				currentPending := len(update.pendingTransactions)
 				updateMutex.Unlock()
@@ -1789,7 +1789,7 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 			// Adaptive sleep based on activity - sleep longer if no progress made
 			sleepDuration := 2 * time.Second
 			if processedCount == 0 {
-				sleepDuration = 5 * time.Second // Sleep longer if no transactions were processed
+				sleepDuration = sidecartypes.PendingTransactionCheckInterval // Sleep longer if no transactions were processed
 			}
 
 			select {
@@ -1835,7 +1835,7 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 
 		if !o.shouldRetryTransaction(current) {
 			// Check if we should remove transactions that exceeded max retries
-			if current.RetryCount >= 100 {
+			if current.RetryCount >= sidecartypes.PendingTransactionMaxRetries {
 				delete(update.pendingTransactions, signature)
 				slog.Info("Removed pending transaction after max retries",
 					"signature", signature,
@@ -2147,7 +2147,7 @@ func (o *Oracle) processSignatures(
 	processTransaction processTransactionFunc,
 ) ([]any, solana.Signature, []string, error) {
 	// Create events slice directly
-	allEvents := make([]any, 0, 100)
+	allEvents := make([]any, 0, sidecartypes.InitialEventsSliceCapacity)
 	// Collect failed transaction signatures
 	failedSignatures := make([]string, 0)
 
@@ -2315,7 +2315,7 @@ func (o *Oracle) processSignatures(
 							"signature", sigInfo.Signature,
 							"error", err)
 						failedSignatures = append(failedSignatures, sigInfo.Signature.String())
-						// Do NOT update newestSigProcessed for failed transactions
+						newestSigProcessed = sigInfo.Signature
 						continue
 					}
 
@@ -2621,7 +2621,7 @@ func (o *Oracle) cacheTransactionResult(sigStr string, txRes *solrpc.GetTransact
 	// Cache the new result with 5-minute TTL
 	o.transactionCache[sigStr] = &CachedTxResult{
 		Result:    txRes,
-		ExpiresAt: now.Add(5 * time.Minute),
+		ExpiresAt: now.Add(sidecartypes.TransactionCacheTTL),
 	}
 }
 

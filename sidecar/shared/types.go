@@ -139,6 +139,17 @@ var (
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
 	VersionsRequiringCacheReset = []string{"salmon_moon_r3"}
+
+	// Oracle processing constants
+	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines
+	InitialEventsSliceCapacity          = 100               // Initial capacity for events slice to reduce allocations
+	StakeCallDataAmount                 = int64(1000000000) // Amount used for zenBTC stake call gas estimation
+	PendingTransactionCheckInterval     = 5 * time.Second   // How often to check for pending transactions when queue is empty
+	PendingTransactionStatusLogInterval = 15 * time.Second  // How often to log pending transaction processing status
+	PendingTransactionMaxRetries        = 100               // Maximum retry attempts before removing from pending queue
+	TransactionCacheTTL                 = 5 * time.Minute   // Time-to-live for cached transaction results
+	NTPServer                           = "time.google.com" // NTP server for time synchronization
+	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 )
 
 // PriceFeed struct with fields for different price feeds
