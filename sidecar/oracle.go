@@ -366,6 +366,12 @@ func (o *Oracle) fetchAndProcessState(
 	// Wait for all goroutines to complete, or for the tick to be canceled.
 	waitChan := make(chan struct{})
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("Panic recovered in waitgroup goroutine", "panic", r)
+				close(waitChan)
+			}
+		}()
 		wg.Wait()
 		close(waitChan)
 	}()
@@ -702,7 +708,13 @@ func (o *Oracle) processSolanaMintEvents(
 		// Fetch ROCK mint events in parallel
 		mintWg.Add(1)
 		go func() {
-			defer mintWg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("Panic recovered in ROCK mint goroutine", "panic", r)
+					rockErr = fmt.Errorf("panic in ROCK mint processing: %v", r)
+				}
+				mintWg.Done()
+			}()
 			lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
 			rockEvents, newRockSig, rockErr = o.getSolROCKMints(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig, update, updateMutex)
 		}()
@@ -710,7 +722,13 @@ func (o *Oracle) processSolanaMintEvents(
 		// Fetch zenBTC mint events in parallel
 		mintWg.Add(1)
 		go func() {
-			defer mintWg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("Panic recovered in zenBTC mint goroutine", "panic", r)
+					zenbtcErr = fmt.Errorf("panic in zenBTC mint processing: %v", r)
+				}
+				mintWg.Done()
+			}()
 			lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
 			zenbtcEvents, newZenBTCSig, zenbtcErr = o.getSolZenBTCMints(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig, update, updateMutex)
 		}()
@@ -799,10 +817,14 @@ func (o *Oracle) processSolanaMintEvents(
 		}
 		// Only update watermarks if there were no errors in processing
 		if rockErr == nil && !newRockSig.IsZero() {
+			updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+			updateMutex.Unlock()
 		}
 		if zenbtcErr == nil && !newZenBTCSig.IsZero() {
+			updateMutex.Lock()
 			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
+			updateMutex.Unlock()
 		}
 		updateMutex.Unlock()
 	}()
@@ -827,7 +849,13 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Fetches new zenBTC burn events from Solana in parallel
 		burnWg.Add(1)
 		go func() {
-			defer burnWg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("Panic recovered in zenBTC burn goroutine", "panic", r)
+					zenBtcErr = fmt.Errorf("panic in zenBTC burn processing: %v", r)
+				}
+				burnWg.Done()
+			}()
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCBurn)
 			var newestSig solana.Signature
 			zenBtcEvents, newestSig, zenBtcErr = o.getSolanaZenBTCBurnEvents(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
@@ -841,7 +869,13 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Fetches new ROCK burn events from Solana in parallel
 		burnWg.Add(1)
 		go func() {
-			defer burnWg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("Panic recovered in ROCK burn goroutine", "panic", r)
+					rockErr = fmt.Errorf("panic in ROCK burn processing: %v", r)
+				}
+				burnWg.Done()
+			}()
 			lastKnownSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockBurn)
 			var newestSig solana.Signature
 			rockEvents, newestSig, rockErr = o.getSolanaRockBurnEvents(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownSig, update, updateMutex)
