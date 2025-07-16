@@ -258,7 +258,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 	o.currentState.Store(&newState)
 
 	// Log event counts in each state field every tick
-	slog.Info("STATE EVENT COUNTS FOR THIS TICK",
+	slog.Info("State event counts for this tick",
 		"ethBurnEvents", len(newState.EthBurnEvents),
 		"cleanedEthBurnEvents", len(newState.CleanedEthBurnEvents),
 		"solanaBurnEvents", len(newState.SolanaBurnEvents),
@@ -1977,13 +1977,15 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 			slog.Debug("Processing pending transactions round", "count", pendingCount)
 
 			// Process one round of pending transactions
-			successfulTransactions := o.processPendingTransactionsRound(ctx, update, updateMutex)
+			pendingStats := o.processPendingTransactionsRound(ctx, update, updateMutex)
 
-			// Log summary if any transactions were successfully processed
-			if len(successfulTransactions) > 0 {
+			// Log summary if any transactions were processed
+			if pendingStats.totalProcessed > 0 {
 				slog.Info("Pending transactions processed successfully",
-					"successfulCount", len(successfulTransactions),
-					"signatures", successfulTransactions)
+					"successfulCount", len(pendingStats.successfulTxs),
+					"totalProcessed", pendingStats.totalProcessed,
+					"stillPending", pendingStats.totalProcessed-pendingStats.successCount,
+					"successRate", fmt.Sprintf("%.1f%%", float64(pendingStats.successCount)/float64(pendingStats.totalProcessed)*100))
 			}
 
 			// Adaptive sleep based on activity
@@ -2004,25 +2006,25 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 
 // processPendingTransactionsRound processes one round of pending transactions
 // Returns (processedCount, successCount) where processedCount is attempts and successCount is completed
-func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) []string {
+func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) pendingTransactionStats {
 	// Create a copy to iterate over to avoid modifying map while iterating
 	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
 	updateMutex.Lock()
 	maps.Copy(pendingCopy, update.pendingTransactions)
 	updateMutex.Unlock()
 
-	processedCount := 0
-	successCount := 0
-	var successfulTransactions []string
+	stats := pendingTransactionStats{
+		successfulTxs: make([]string, 0),
+	}
 
 	for signature := range pendingCopy {
 		// Check for context cancellation
 		select {
 		case <-ctx.Done():
 			slog.Debug("Pending transaction processing round cancelled",
-				"processedInRound", processedCount,
-				"successfulInRound", successCount)
-			return successfulTransactions
+				"processedInRound", stats.totalProcessed,
+				"successfulInRound", stats.successCount)
+			return stats
 		default:
 		}
 
@@ -2061,7 +2063,7 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 
 		// Try to get and process the transaction
 		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
-		processedCount++ // Count this as a processing attempt
+		stats.totalProcessed++ // Count this as a processing attempt
 
 		if err != nil {
 			updateMutex.Lock()
@@ -2124,13 +2126,13 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 						}
 					}
 				}
-				successfulTransactions = append(successfulTransactions, signature)
+				stats.successfulTxs = append(stats.successfulTxs, signature)
 			}
 			// Remove from pending queue in same atomic operation
 			if update.pendingTransactions != nil {
 				if _, exists := update.pendingTransactions[signature]; exists {
 					delete(update.pendingTransactions, signature)
-					successCount++
+					stats.successCount++
 					slog.Debug("Removed pending transaction after successful processing",
 						"signature", signature)
 				}
@@ -2153,20 +2155,20 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 	}
 
 	// Log processing statistics if any transactions were processed
-	if processedCount > 0 {
+	if stats.totalProcessed > 0 {
 		roundSuccessRate := 0.0
-		if processedCount > 0 {
-			roundSuccessRate = float64(successCount) / float64(processedCount) * 100
+		if stats.totalProcessed > 0 {
+			roundSuccessRate = float64(stats.successCount) / float64(stats.totalProcessed) * 100
 		}
 
 		slog.Debug("Pending transaction processing round completed",
-			"totalProcessed", processedCount,
-			"successfullyCompleted", successCount,
-			"stillPending", len(pendingCopy)-successCount,
+			"totalProcessed", stats.totalProcessed,
+			"successfullyCompleted", stats.successCount,
+			"stillPending", len(pendingCopy)-stats.successCount,
 			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
 	}
 
-	return successfulTransactions
+	return stats
 }
 
 // processPendingTransactionsRoundPersistent processes one round of pending transactions from the current state
@@ -2279,8 +2281,11 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 
 	// Log summary if any transactions were successfully processed
 	if len(successfulTransactions) > 0 {
-		slog.Info("Pending transactions processed successfully",
-			"successfulCount", len(successfulTransactions))
+		slog.Info("Pending transactions processed successfully (persistent)",
+			"successfulCount", len(successfulTransactions),
+			"totalProcessed", processedCount,
+			"stillPending", len(pendingCopy)-successCount,
+			"successRate", fmt.Sprintf("%.1f%%", float64(successCount)/float64(processedCount)*100))
 	}
 }
 
@@ -2659,13 +2664,17 @@ func (o *Oracle) processIndividualTransaction(
 
 			if len(events) > 0 {
 				stats.successfulTransactions++
-				slog.Debug("Successfully processed retried transaction",
+				stats.successfulWithEvents++
+				stats.newTransactionsProcessed++
+				slog.Debug("Retried transaction processed with events",
 					"eventType", eventTypeName,
 					"signature", sigInfo.Signature,
 					"eventCount", len(events))
 				allEvents = append(allEvents, events...)
 			} else {
 				stats.emptyTransactions++
+				stats.successfulWithoutEvents++
+				stats.newTransactionsProcessed++
 				slog.Debug("Retried transaction processed but contained no events",
 					"eventType", eventTypeName,
 					"signature", sigInfo.Signature)
@@ -2710,6 +2719,8 @@ func (o *Oracle) processIndividualTransaction(
 
 	if len(events) > 0 {
 		stats.successfulTransactions++
+		stats.successfulWithEvents++
+		stats.newTransactionsProcessed++
 		slog.Debug("Successfully processed transaction",
 			"eventType", eventTypeName,
 			"signature", sigInfo.Signature,
@@ -2717,6 +2728,8 @@ func (o *Oracle) processIndividualTransaction(
 		allEvents = append(allEvents, events...)
 	} else {
 		stats.emptyTransactions++
+		stats.successfulWithoutEvents++
+		stats.newTransactionsProcessed++
 		slog.Debug("Transaction processed but contained no events",
 			"eventType", eventTypeName,
 			"signature", sigInfo.Signature)
@@ -2728,12 +2741,23 @@ func (o *Oracle) processIndividualTransaction(
 
 // transactionProcessingStats holds statistics for transaction processing
 type transactionProcessingStats struct {
-	totalNilResults         int
-	individualRetryFailures int
-	successfulTransactions  int
-	notFoundTransactions    int
-	processingErrors        int
-	emptyTransactions       int
+	totalNilResults              int
+	individualRetryFailures      int
+	successfulTransactions       int
+	notFoundTransactions         int
+	processingErrors             int
+	emptyTransactions            int
+	successfulWithEvents         int
+	successfulWithoutEvents      int
+	pendingTransactionsProcessed int
+	newTransactionsProcessed     int
+}
+
+// pendingTransactionStats holds statistics for pending transaction processing
+type pendingTransactionStats struct {
+	totalProcessed int
+	successCount   int
+	successfulTxs  []string
 }
 
 // cryptoPrices holds both BTC and ETH price data
@@ -2944,10 +2968,12 @@ func (o *Oracle) processSignatures(
 		"eventType", eventTypeName,
 		"totalSignatures", totalProcessed,
 		"successfulTransactions", stats.successfulTransactions,
-		"emptyTransactions", stats.emptyTransactions,
+		"successfulWithEvents", stats.successfulWithEvents,
+		"successfulWithoutEvents", stats.successfulWithoutEvents,
 		"nilResults", stats.totalNilResults,
 		"notFoundTransactions", stats.notFoundTransactions,
 		"processingErrors", stats.processingErrors,
+		"individualRetryFailures", stats.individualRetryFailures,
 		"successRate", fmt.Sprintf("%.1f%%", successRate),
 		"extractedEvents", len(allEvents),
 		"newWatermark", newestSigProcessed,
