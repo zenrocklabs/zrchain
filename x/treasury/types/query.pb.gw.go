@@ -52,55 +52,12 @@ func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 var (
-	filter_Query_KeyRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{"keyring_addr": 0, "status": 1, "workspace_addr": 2}, Base: []int{1, 1, 2, 3, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 3, 4}}
+	filter_Query_KeyRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_KeyRequests_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryKeyRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["keyring_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "keyring_addr")
-	}
-
-	protoReq.KeyringAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "keyring_addr", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, KeyRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = KeyRequestStatus(e)
-
-	val, ok = pathParams["workspace_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "workspace_addr")
-	}
-
-	protoReq.WorkspaceAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "workspace_addr", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -117,49 +74,6 @@ func request_Query_KeyRequests_0(ctx context.Context, marshaler runtime.Marshale
 func local_request_Query_KeyRequests_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryKeyRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["keyring_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "keyring_addr")
-	}
-
-	protoReq.KeyringAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "keyring_addr", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, KeyRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = KeyRequestStatus(e)
-
-	val, ok = pathParams["workspace_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "workspace_addr")
-	}
-
-	protoReq.WorkspaceAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "workspace_addr", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -228,55 +142,12 @@ func local_request_Query_KeyRequestByID_0(ctx context.Context, marshaler runtime
 }
 
 var (
-	filter_Query_Keys_0 = &utilities.DoubleArray{Encoding: map[string]int{"workspace_addr": 0, "wallet_type": 1, "prefixes": 2}, Base: []int{1, 1, 2, 3, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 3, 4}}
+	filter_Query_Keys_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_Keys_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryKeysRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["workspace_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "workspace_addr")
-	}
-
-	protoReq.WorkspaceAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "workspace_addr", err)
-	}
-
-	val, ok = pathParams["wallet_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wallet_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wallet_type", err)
-	}
-
-	protoReq.WalletType = WalletType(e)
-
-	val, ok = pathParams["prefixes"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "prefixes")
-	}
-
-	protoReq.Prefixes, err = runtime.StringSlice(val, ",")
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "prefixes", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -293,49 +164,6 @@ func request_Query_Keys_0(ctx context.Context, marshaler runtime.Marshaler, clie
 func local_request_Query_Keys_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryKeysRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["workspace_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "workspace_addr")
-	}
-
-	protoReq.WorkspaceAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "workspace_addr", err)
-	}
-
-	val, ok = pathParams["wallet_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wallet_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wallet_type", err)
-	}
-
-	protoReq.WalletType = WalletType(e)
-
-	val, ok = pathParams["prefixes"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "prefixes")
-	}
-
-	protoReq.Prefixes, err = runtime.StringSlice(val, ",")
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "prefixes", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -454,44 +282,12 @@ func local_request_Query_KeyByID_0(ctx context.Context, marshaler runtime.Marsha
 }
 
 var (
-	filter_Query_SignatureRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{"keyring_addr": 0, "status": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_Query_SignatureRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_SignatureRequests_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QuerySignatureRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["keyring_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "keyring_addr")
-	}
-
-	protoReq.KeyringAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "keyring_addr", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, SignRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = SignRequestStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -508,38 +304,6 @@ func request_Query_SignatureRequests_0(ctx context.Context, marshaler runtime.Ma
 func local_request_Query_SignatureRequests_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QuerySignatureRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["keyring_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "keyring_addr")
-	}
-
-	protoReq.KeyringAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "keyring_addr", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, SignRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = SignRequestStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -608,57 +372,12 @@ func local_request_Query_SignatureRequestByID_0(ctx context.Context, marshaler r
 }
 
 var (
-	filter_Query_SignTransactionRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{"wallet_type": 0, "key_id": 1, "status": 2}, Base: []int{1, 1, 2, 3, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 3, 4}}
+	filter_Query_SignTransactionRequests_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_SignTransactionRequests_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QuerySignTransactionRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["wallet_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wallet_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wallet_type", err)
-	}
-
-	protoReq.WalletType = WalletType(e)
-
-	val, ok = pathParams["key_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "key_id")
-	}
-
-	protoReq.KeyId, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "key_id", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, SignRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = SignRequestStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -675,51 +394,6 @@ func request_Query_SignTransactionRequests_0(ctx context.Context, marshaler runt
 func local_request_Query_SignTransactionRequests_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QuerySignTransactionRequestsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["wallet_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wallet_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wallet_type", err)
-	}
-
-	protoReq.WalletType = WalletType(e)
-
-	val, ok = pathParams["key_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "key_id")
-	}
-
-	protoReq.KeyId, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "key_id", err)
-	}
-
-	val, ok = pathParams["status"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
-	}
-
-	e, err = runtime.Enum(val, SignRequestStatus_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
-	}
-
-	protoReq.Status = SignRequestStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -788,41 +462,12 @@ func local_request_Query_SignTransactionRequestByID_0(ctx context.Context, marsh
 }
 
 var (
-	filter_Query_ZrSignKeys_0 = &utilities.DoubleArray{Encoding: map[string]int{"address": 0, "walletType": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_Query_ZrSignKeys_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_ZrSignKeys_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryZrSignKeysRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["address"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "address")
-	}
-
-	protoReq.Address, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
-	}
-
-	val, ok = pathParams["walletType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletType")
-	}
-
-	protoReq.WalletType, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletType", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -840,6 +485,26 @@ func local_request_Query_ZrSignKeys_0(ctx context.Context, marshaler runtime.Mar
 	var protoReq QueryZrSignKeysRequest
 	var metadata runtime.ServerMetadata
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ZrSignKeys_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ZrSignKeys(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_Query_KeyByAddress_0 = &utilities.DoubleArray{Encoding: map[string]int{"address": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
+
+func request_Query_KeyByAddress_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryKeyByAddressRequest
+	var metadata runtime.ServerMetadata
+
 	var (
 		val string
 		ok  bool
@@ -858,37 +523,6 @@ func local_request_Query_ZrSignKeys_0(ctx context.Context, marshaler runtime.Mar
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
 
-	val, ok = pathParams["walletType"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "walletType")
-	}
-
-	protoReq.WalletType, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "walletType", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ZrSignKeys_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.ZrSignKeys(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
-var (
-	filter_Query_KeyByAddress_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
-func request_Query_KeyByAddress_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryKeyByAddressRequest
-	var metadata runtime.ServerMetadata
-
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -905,6 +539,24 @@ func local_request_Query_KeyByAddress_0(ctx context.Context, marshaler runtime.M
 	var protoReq QueryKeyByAddressRequest
 	var metadata runtime.ServerMetadata
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["address"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "address")
+	}
+
+	protoReq.Address, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
+	}
+
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -918,66 +570,12 @@ func local_request_Query_KeyByAddress_0(ctx context.Context, marshaler runtime.M
 }
 
 var (
-	filter_Query_ZenbtcWallets_0 = &utilities.DoubleArray{Encoding: map[string]int{"recipient_addr": 0, "chain_type": 1, "mint_chain_id": 2, "return_addr": 3}, Base: []int{1, 1, 2, 3, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 2, 3, 4, 5}}
+	filter_Query_ZenbtcWallets_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryZenbtcWalletsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["recipient_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipient_addr")
-	}
-
-	protoReq.RecipientAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipient_addr", err)
-	}
-
-	val, ok = pathParams["chain_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_type", err)
-	}
-
-	protoReq.ChainType = WalletType(e)
-
-	val, ok = pathParams["mint_chain_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "mint_chain_id")
-	}
-
-	protoReq.MintChainId, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "mint_chain_id", err)
-	}
-
-	val, ok = pathParams["return_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "return_addr")
-	}
-
-	protoReq.ReturnAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "return_addr", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -994,60 +592,6 @@ func request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marsha
 func local_request_Query_ZenbtcWallets_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryZenbtcWalletsRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["recipient_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "recipient_addr")
-	}
-
-	protoReq.RecipientAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "recipient_addr", err)
-	}
-
-	val, ok = pathParams["chain_type"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_type")
-	}
-
-	e, err = runtime.Enum(val, WalletType_value)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_type", err)
-	}
-
-	protoReq.ChainType = WalletType(e)
-
-	val, ok = pathParams["mint_chain_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "mint_chain_id")
-	}
-
-	protoReq.MintChainId, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "mint_chain_id", err)
-	}
-
-	val, ok = pathParams["return_addr"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "return_addr")
-	}
-
-	protoReq.ReturnAddr, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "return_addr", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -1630,27 +1174,27 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_requests", "keyring_addr", "status", "workspace_addr"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_KeyRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "key_requests"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_KeyRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "key_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Keys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "keys", "workspace_addr", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Keys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "keys"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_KeyByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "key_by_id", "id", "wallet_type", "prefixes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignatureRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "signature_requests", "keyring_addr", "status"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_SignatureRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "signature_requests"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_SignatureRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "signature_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_SignTransactionRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"zrchain", "treasury", "sign_transaction_request", "wallet_type", "key_id", "status"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_SignTransactionRequests_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "sign_transaction_request"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_SignTransactionRequestByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "sign_transaction_request_by_id", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ZrSignKeys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"zrchain", "treasury", "zr_sign_keys", "address", "walletType"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ZrSignKeys_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "zr_sign_keys"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"zrchain", "v4", "treasury", "key_by_address"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_KeyByAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"zrchain", "treasury", "key_by_address", "address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"zrchain", "v6", "treasury", "zenbtc_wallets", "recipient_addr", "chain_type", "mint_chain_id", "return_addr"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ZenbtcWallets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"zrchain", "treasury", "zenbtc_wallets"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

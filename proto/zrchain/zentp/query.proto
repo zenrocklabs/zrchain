@@ -6,7 +6,6 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "cosmos/base/v1beta1/coin.proto";
 import "zrchain/zentp/params.proto";
 import "zrchain/zentp/bridge.proto";
 
@@ -22,18 +21,17 @@ service Query {
 
   // Queries a list of Mints.
   rpc Mints(QueryMintsRequest) returns (QueryMintsResponse) {
-    option (google.api.http).get =
-        "/zrchain/zentp/mints/{id}/{creator}/{status}/{denom}";
+    option (google.api.http).get = "/zrchain/zentp/mints";
   }
 
   // Queries a list of Burns items.
   rpc Burns(QueryBurnsRequest) returns (QueryBurnsResponse) {
-    option (google.api.http).get = "/zrchain/v6/zentp/burns/{id}/{denom}";
+    option (google.api.http).get = "/zrchain/zentp/burns";
   }
 
   // Stats queries the total amounts of mints and burns for an address
   rpc Stats(QueryStatsRequest) returns (QueryStatsResponse) {
-    option (google.api.http).get = "/zrchain/zentp/stats/{address}";
+    option (google.api.http).get = "/zrchain/zentp/stats";
   }
 
   // QuerySolanaROCKSupply queries the amount of ROCK on Solana.
@@ -56,13 +54,13 @@ message QueryParamsResponse {
 
 // QueryMintsRequest is request type for the Query/Mints RPC method.
 message QueryMintsRequest {
-  uint64 id = 1;
-  string creator = 2;
-  BridgeStatus status = 3;
-  string denom = 4;
-  cosmos.base.query.v1beta1.PageRequest pagination = 5;
-  uint64 tx_id = 6;
-  string source_tx_hash = 7;
+  uint64 id = 1; // Optional
+  string creator = 2; // Optional
+  BridgeStatus status = 3; // Optional
+  string denom = 4; // Optional
+  uint64 tx_id = 5; // Optional
+  string source_tx_hash = 6; // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 7;
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.

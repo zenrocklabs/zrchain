@@ -23,8 +23,7 @@ service Query {
 
   // Queries a list of KeyRequests items.
   rpc KeyRequests(QueryKeyRequestsRequest) returns (QueryKeyRequestsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/key_requests/"
-                                   "{keyring_addr}/{status}/{workspace_addr}";
+    option (google.api.http).get = "/zrchain/treasury/key_requests";
   }
 
   // Queries a list of KeyRequestByID items.
@@ -36,7 +35,7 @@ service Query {
   // Queries a list of Keys items.
   rpc Keys(QueryKeysRequest) returns (QueryKeysResponse) {
     option (google.api.http).get =
-        "/zrchain/treasury/keys/{workspace_addr}/{wallet_type}/{prefixes}";
+        "/zrchain/treasury/keys";
   }
 
   // Queries a list of KeyByID items.
@@ -49,7 +48,7 @@ service Query {
   rpc SignatureRequests(QuerySignatureRequestsRequest)
       returns (QuerySignatureRequestsResponse) {
     option (google.api.http).get =
-        "/zrchain/treasury/signature_requests/{keyring_addr}/{status}";
+        "/zrchain/treasury/signature_requests";
   }
 
   // Queries a list of SignatureRequestByID items.
@@ -62,8 +61,7 @@ service Query {
   // Queries a list of SignTransactionRequests items.
   rpc SignTransactionRequests(QuerySignTransactionRequestsRequest)
       returns (QuerySignTransactionRequestsResponse) {
-    option (google.api.http).get = "/zrchain/treasury/sign_transaction_request/"
-                                   "{wallet_type}/{key_id}/{status}";
+    option (google.api.http).get = "/zrchain/treasury/sign_transaction_request";
   }
 
   // Queries a list of SignTransactionRequestByID items.
@@ -76,21 +74,20 @@ service Query {
   // Queries a list of ZrSignKeys items.
   rpc ZrSignKeys(QueryZrSignKeysRequest) returns (QueryZrSignKeysResponse) {
     option (google.api.http).get =
-        "/zrchain/treasury/zr_sign_keys/{address}/{walletType}";
+        "/zrchain/treasury/zr_sign_keys";
   }
 
   // Queries a list of KeyByAddress items.
   rpc KeyByAddress(QueryKeyByAddressRequest)
       returns (QueryKeyByAddressResponse) {
-    option (google.api.http).get = "/zrchain/v4/treasury/key_by_address";
+    option (google.api.http).get = "/zrchain/treasury/key_by_address/{address}";
   }
 
   // Queries a list of ZenbtcWallets items.
   rpc ZenbtcWallets(QueryZenbtcWalletsRequest)
       returns (QueryZenbtcWalletsResponse) {
     option (google.api.http).get =
-        "/zrchain/v6/treasury/zenbtc_wallets/{recipient_addr}/{chain_type}/"
-        "{mint_chain_id}/{return_addr}";
+        "/zrchain/treasury/zenbtc_wallets";
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
