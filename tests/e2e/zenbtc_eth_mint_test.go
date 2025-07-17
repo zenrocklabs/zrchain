@@ -99,14 +99,14 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 		var lastCount int
 		var err error
 		// Initial count of pending mint transactions
-		initialResp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 1)
+		initialResp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
 		Expect(err).ToNot(HaveOccurred())
 		lastCount = len(initialResp.PendingMintTransactions)
 
 		var newTx zentype.PendingMintTransaction
 
 		Eventually(func() (int, error) {
-			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 1)
+			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
 			if err != nil {
 				return 0, err
 			}
@@ -124,7 +124,7 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 
 	It("mint gets staked", func() {
 		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 1)
+			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
 			if err != nil {
 				return 0, err
 			}
@@ -140,7 +140,7 @@ var _ = Describe("ZenBTC ETH mint:", func() {
 
 	It("mint gets minted", func() {
 		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 1)
+			resp, err := env.Query.PendingMintTransactions(env.Ctx, 1)
 			if err != nil {
 				return 0, err
 			}
