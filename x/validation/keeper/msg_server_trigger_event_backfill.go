@@ -13,7 +13,7 @@ import (
 
 func (k msgServer) TriggerEventBackfill(ctx context.Context, msg *types.MsgTriggerEventBackfill) (*types.MsgTriggerEventBackfillResponse, error) {
 	if msg.Authority != shared.AdminAuthAddr && msg.Authority != k.authority {
-		return nil, fmt.Errorf("invalid authority; expected %s, got %s", shared.AdminAuthAddr, msg.Authority)
+		return nil, fmt.Errorf("invalid authority; expected %s or %s, got %s", shared.AdminAuthAddr, k.authority, msg.Authority)
 	}
 
 	// Validate the request based on its event type to ensure it's actionable.

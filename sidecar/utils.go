@@ -520,6 +520,9 @@ var colorMap = map[string]func(string) string{
 	"zenBTCMintSig": func(s string) string { return color.HEX("95E6CB").Sprint(s) }, // Green
 	"rockBurnSig":   func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
 	"zenBTCBurnSig": func(s string) string { return color.HEX("E6B450").Sprint(s) }, // Yellow
+
+	// Special message highlighting
+	"State event counts for this tick": func(s string) string { return color.HEX("FFD700").Sprint(s) }, // Bright saturated yellow
 }
 
 // initLogger sets up coloured structured logging
@@ -536,7 +539,14 @@ func initLogger(debug bool) {
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			// Handle timestamp coloring
 			if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(color.HEX("FFFACD").Sprint(a.Value.String()))
+				a.Value = slog.StringValue(color.HEX("808080").Sprint(a.Value.String()))
+				return a
+			}
+			// Handle message-based coloring
+			if a.Key == slog.MessageKey {
+				if f, ok := colorMap[a.Value.String()]; ok {
+					a.Value = slog.StringValue(f(a.Value.String()))
+				}
 				return a
 			}
 			// Handle other custom fields

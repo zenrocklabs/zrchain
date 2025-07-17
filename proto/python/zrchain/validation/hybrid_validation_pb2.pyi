@@ -68,16 +68,20 @@ class SlashEvent(_message.Message):
     def __init__(self, blockHeight: _Optional[int] = ..., validatorAddr: _Optional[str] = ..., percentageSlashed: _Optional[str] = ..., tokensSlashedNative: _Optional[str] = ..., tokensSlashedAVS: _Optional[str] = ...) -> None: ...
 
 class HVParams(_message.Message):
-    __slots__ = ("AVSRewardsRate", "BlockTime", "stakeableAssets", "priceRetentionBlockRange")
+    __slots__ = ("AVSRewardsRate", "BlockTime", "stakeableAssets", "priceRetentionBlockRange", "VEJailingEnabled", "VEJailDurationMinutes")
     AVSREWARDSRATE_FIELD_NUMBER: _ClassVar[int]
     BLOCKTIME_FIELD_NUMBER: _ClassVar[int]
     STAKEABLEASSETS_FIELD_NUMBER: _ClassVar[int]
     PRICERETENTIONBLOCKRANGE_FIELD_NUMBER: _ClassVar[int]
+    VEJAILINGENABLED_FIELD_NUMBER: _ClassVar[int]
+    VEJAILDURATIONMINUTES_FIELD_NUMBER: _ClassVar[int]
     AVSRewardsRate: str
     BlockTime: int
     stakeableAssets: _containers.RepeatedCompositeFieldContainer[_asset_data_pb2.AssetData]
     priceRetentionBlockRange: int
-    def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., priceRetentionBlockRange: _Optional[int] = ...) -> None: ...
+    VEJailingEnabled: bool
+    VEJailDurationMinutes: int
+    def __init__(self, AVSRewardsRate: _Optional[str] = ..., BlockTime: _Optional[int] = ..., stakeableAssets: _Optional[_Iterable[_Union[_asset_data_pb2.AssetData, _Mapping]]] = ..., priceRetentionBlockRange: _Optional[int] = ..., VEJailingEnabled: bool = ..., VEJailDurationMinutes: _Optional[int] = ...) -> None: ...
 
 class ValidationInfo(_message.Message):
     __slots__ = ("non_voting_validators", "mismatched_vote_extensions", "block_height")
