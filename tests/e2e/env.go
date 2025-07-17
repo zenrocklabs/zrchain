@@ -45,7 +45,8 @@ func setupTestEnv(t ginkgo.FullGinkgoTInterface) *TestEnv {
 	docker := &Docker{}
 
 	// Create a context with timeout to prevent tests from hanging indefinitely
-	testCtx, _ := context.WithTimeout(context.Background(), 15*time.Minute)
+	testCtx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	_ = cancel // Suppress LSP/unused warning
 	// Note: We don't call cancel() here because the context needs to live for the duration of the test
 	// The test framework will handle cleanup when the test completes
 
