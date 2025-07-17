@@ -43,3 +43,21 @@ func (k Keeper) GetPriceRetentionBlockRange(ctx context.Context) int64 {
 	}
 	return params.PriceRetentionBlockRange
 }
+
+// GetVEJailingEnabled returns whether VE jailing is enabled
+func (k Keeper) GetVEJailingEnabled(ctx context.Context) bool {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil {
+		return types.DefaultVEJailingEnabled
+	}
+	return params.VEJailingEnabled
+}
+
+// GetVEJailDurationMinutes returns the VE jail duration in minutes
+func (k Keeper) GetVEJailDurationMinutes(ctx context.Context) int64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil || params.VEJailDurationMinutes <= 0 {
+		return types.DefaultVEJailDurationMinutes
+	}
+	return params.VEJailDurationMinutes
+}

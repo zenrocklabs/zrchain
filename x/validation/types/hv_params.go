@@ -12,6 +12,8 @@ var (
 	DefaultAVSRewardsRate, _              = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                int64 = 5                                // seconds
 	DefaultPriceRetentionBlockRange int64 = 100                              // blocks
+	DefaultVEJailingEnabled         bool  = true                             // enable VE jailing by default
+	DefaultVEJailDurationMinutes    int64 = 60                               // 60 minutes jail duration
 
 	DefaultTestnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
@@ -23,12 +25,14 @@ var (
 )
 
 // NewParams creates a new Params instance
-func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64) *HVParams {
+func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64, veJailingEnabled bool, veJailDurationMinutes int64) *HVParams {
 	return &HVParams{
 		AVSRewardsRate:           avsRewardsRate,
 		BlockTime:                blockTime,
 		StakeableAssets:          stakeableAssets,
 		PriceRetentionBlockRange: priceRetentionBlockRange,
+		VEJailingEnabled:         veJailingEnabled,
+		VEJailDurationMinutes:    veJailDurationMinutes,
 	}
 }
 
@@ -39,6 +43,8 @@ func DefaultHVParams(ctx context.Context) *HVParams {
 		DefaultBlockTime,
 		GetDefaultStakeableAssets(ctx),
 		DefaultPriceRetentionBlockRange,
+		DefaultVEJailingEnabled,
+		DefaultVEJailDurationMinutes,
 	)
 }
 

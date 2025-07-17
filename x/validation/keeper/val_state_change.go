@@ -618,10 +618,22 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 			continue
 		}
 
-		// If the validator has reached the jail threshold or more mismatches, jail them
+		// If the validator has reached the jail threshold or more mismatches, check if jailing is enabled
 		if mismatchCount.TotalCount >= voteExtensionJailThreshold {
+			// Check if VE jailing is enabled
+			if !k.GetVEJailingEnabled(ctx) {
+				k.Logger(ctx).Info(
+					"validator sidecar desynced (jailing disabled)",
+					"validator", validator.OperatorAddress,
+					"consensus_addr", sdk.ConsAddress(consAddr).String(),
+					"mismatch_count", mismatchCount.TotalCount,
+					"blocks_checked", voteExtensionWindowSize,
+				)
+				continue
+			}
+
 			k.Logger(ctx).Info(
-				"Jailing validator for excessive mismatched vote extensions",
+				"validator sidecar desynced - jailing validator",
 				"validator", validator.OperatorAddress,
 				"consensus_addr", sdk.ConsAddress(consAddr).String(),
 				"mismatch_count", mismatchCount.TotalCount,
@@ -637,7 +649,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 				continue
 			}
 
-			// Get and update signing info to add an hour to jail duration
+			// Get and update signing info to set jail duration based on parameter
 			signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 			if err != nil {
 				k.Logger(ctx).Error(
@@ -648,7 +660,23 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 				continue
 			}
 
-			signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(time.Hour)
+			// Calculate jail duration from parameter (convert minutes to duration)
+			jailDurationMinutes := k.GetVEJailDurationMinutes(ctx)
+			jailDuration := time.Duration(jailDurationMinutes) * time.Minute
+			signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(jailDuration)
+
+			// Debug logging for JailedUntil troubleshooting
+			k.Logger(ctx).Info(
+				"Setting JailedUntil for validator",
+				"validator", validator.OperatorAddress,
+				"consensus_addr", sdk.ConsAddress(consAddr).String(),
+				"current_time", sdkCtx.BlockHeader().Time.String(),
+				"jail_duration_minutes", jailDurationMinutes,
+				"jail_duration", jailDuration.String(),
+				"jailed_until", signInfo.JailedUntil.String(),
+				"start_height", signInfo.StartHeight,
+			)
+
 			if err := k.slashingKeeper.SetValidatorSigningInfo(ctx, consAddr, signInfo); err != nil {
 				k.Logger(ctx).Error(
 					"Failed to set validator signing info",
@@ -676,6 +704,8 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
 					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
 					sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", voteExtensionWindowSize)),
+					sdk.NewAttribute("jail_duration_minutes", fmt.Sprintf("%d", jailDurationMinutes)),
+					sdk.NewAttribute("jailed_until", signInfo.JailedUntil.String()),
 				),
 			)
 		}
@@ -932,4 +962,33 @@ func sortNoLongerBonded(last validatorsByAddr, ac address.Codec) ([][]byte, erro
 	})
 
 	return noLongerBonded, nil
+}
+
+// DebugValidatorSigningInfo logs the current signing info for a validator for debugging purposes
+func (k Keeper) DebugValidatorSigningInfo(ctx context.Context, consAddr sdk.ConsAddress) {
+	signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+	if err != nil {
+		k.Logger(ctx).Error(
+			"Failed to get signing info for debugging",
+			"consensus_addr", consAddr.String(),
+			"error", err,
+		)
+		return
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentTime := sdkCtx.BlockHeader().Time
+
+	k.Logger(ctx).Info(
+		"DEBUG: Validator signing info",
+		"consensus_addr", consAddr.String(),
+		"current_time", currentTime.String(),
+		"jailed_until", signInfo.JailedUntil.String(),
+		"is_jailed_until_past", currentTime.After(signInfo.JailedUntil),
+		"time_remaining", signInfo.JailedUntil.Sub(currentTime).String(),
+		"start_height", signInfo.StartHeight,
+		"index_offset", signInfo.IndexOffset,
+		"missed_blocks_counter", signInfo.MissedBlocksCounter,
+		"tombstoned", signInfo.Tombstoned,
+	)
 }
