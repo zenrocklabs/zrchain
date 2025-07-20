@@ -1322,6 +1322,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	var zenbtcQueryErrors, zentpQueryErrors int
 	var lastZenbtcError, lastZentpError error
 	var eventsKeptDueToQuery, eventsRemovedFromChain int
+	var failedZenBTCSignatures []string
+	var failedZenTPSignatures []string
 
 	for _, event := range eventsToClean {
 		key := base64.StdEncoding.EncodeToString(event.SigHash)
@@ -1336,6 +1338,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if err != nil {
 			zenbtcQueryErrors++
 			lastZenbtcError = err
+			failedZenBTCSignatures = append(failedZenBTCSignatures, event.TxSig)
 			// If we fail to query zrChain for this specific event, we keep it in the cache
 			// to retry later, but continue processing other events
 			remaining = append(remaining, event)
@@ -1354,6 +1357,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			if err != nil {
 				zentpQueryErrors++
 				lastZentpError = err
+				failedZenTPSignatures = append(failedZenTPSignatures, event.TxSig)
 				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
 				remaining = append(remaining, event)
 				continue
@@ -1389,7 +1393,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain for zenBTC mint events, keeping in cache",
 				"failedCount", zenbtcQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZenbtcError)
+				"lastError", lastZenbtcError,
+				"failedSignatures", failedZenBTCSignatures)
 		} else {
 			slog.Debug("ZrChain ZenBTC query canceled due to context, keeping mint events in cache",
 				"failedCount", zenbtcQueryErrors,
@@ -1401,7 +1406,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
 				"failedCount", zentpQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZentpError)
+				"lastError", lastZentpError,
+				"failedSignatures", failedZenTPSignatures)
 		} else {
 			slog.Debug("ZrChain ZenTP query canceled due to context, keeping mint events in cache",
 				"failedCount", zentpQueryErrors,
