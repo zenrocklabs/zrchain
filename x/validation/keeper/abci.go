@@ -1365,7 +1365,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				signerKey:         solParams.SignerKeyId,
 				zenbtc:            true,
 			}
-			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "fee", feeZenBTC)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
