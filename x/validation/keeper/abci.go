@@ -1188,6 +1188,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				btcUSDPrice,
 				exchangeRate,
 			)
+			feeZenBTC = min(feeZenBTC, tx.Amount)
 
 			chainID, err := types.ValidateEVMChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
@@ -1316,6 +1317,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				btcUSDPrice,
 				exchangeRate,
 			)
+			feeZenBTC = min(feeZenBTC, tx.Amount)
 
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 
@@ -1365,7 +1367,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				signerKey:         solParams.SignerKeyId,
 				zenbtc:            true,
 			}
-			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
+			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "fee", feeZenBTC)
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -1503,7 +1505,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
 				amount:       tx.Amount,
-				fee:          solParams.Fee,
+				fee:          min(solParams.Fee, tx.Amount),
 				recipient:    tx.RecipientAddress,
 				nonce:        nonce,
 				fundReceiver: fundReceiver,
@@ -1844,6 +1846,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 
 	foundNewBurn := false
 	processedInThisRun := make(map[string]bool)
+	processedTxHashes := make(map[string]bool)
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
 		eventKey := fmt.Sprintf("%s-%d-%s", burn.TxID, burn.LogIndex, burn.ChainID)
@@ -1895,6 +1898,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			}
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Successfully created new burn event in store.", "source", source, "new_burn_id", createdID, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 			foundNewBurn = true
+			processedTxHashes[burn.TxID] = true
 		} else {
 			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping pre-existing event.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 		}
@@ -1911,6 +1915,9 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	} else {
 		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: No new burn events found to store.", "source", source)
 	}
+
+	// Clear any corresponding backfill requests for successfully processed events.
+	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)
 }
 
 // processZenBTCBurnEvents processes pending burn events by constructing unstake transactions.

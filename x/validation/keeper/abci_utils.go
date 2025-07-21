@@ -1080,11 +1080,11 @@ func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr 
 		return
 	}
 
-	// Remove blocks that are outside the sliding window (older than 100 blocks)
-	windowStart := blockHeight - voteExtensionWindowSize + 1
+	// Remove blocks that are outside the sliding window (older than configured window size)
+	windowStart := blockHeight - k.GetVEWindowSize(ctx) + 1
 	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
 
-	// Keep only blocks within the window - O(W) where W is window size (100)
+	// Keep only blocks within the window - O(W) where W is configurable window size
 	for _, block := range mismatchCount.MismatchBlocks {
 		if block >= windowStart {
 			newMismatchBlocks = append(newMismatchBlocks, block)

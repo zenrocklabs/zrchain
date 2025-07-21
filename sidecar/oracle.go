@@ -1322,6 +1322,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	var zenbtcQueryErrors, zentpQueryErrors int
 	var lastZenbtcError, lastZentpError error
 	var eventsKeptDueToQuery, eventsRemovedFromChain int
+	var failedZenBTCSignatures []string
+	var failedZenTPSignatures []string
 
 	for _, event := range eventsToClean {
 		key := base64.StdEncoding.EncodeToString(event.SigHash)
@@ -1336,6 +1338,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if err != nil {
 			zenbtcQueryErrors++
 			lastZenbtcError = err
+			failedZenBTCSignatures = append(failedZenBTCSignatures, event.TxSig)
 			// If we fail to query zrChain for this specific event, we keep it in the cache
 			// to retry later, but continue processing other events
 			remaining = append(remaining, event)
@@ -1354,6 +1357,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			if err != nil {
 				zentpQueryErrors++
 				lastZentpError = err
+				failedZenTPSignatures = append(failedZenTPSignatures, event.TxSig)
 				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
 				remaining = append(remaining, event)
 				continue
@@ -1389,7 +1393,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain for zenBTC mint events, keeping in cache",
 				"failedCount", zenbtcQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZenbtcError)
+				"lastError", lastZenbtcError,
+				"failedSignatures", failedZenBTCSignatures)
 		} else {
 			slog.Debug("ZrChain ZenBTC query canceled due to context, keeping mint events in cache",
 				"failedCount", zenbtcQueryErrors,
@@ -1401,7 +1406,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
 				"failedCount", zentpQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZentpError)
+				"lastError", lastZentpError,
+				"failedSignatures", failedZenTPSignatures)
 		} else {
 			slog.Debug("ZrChain ZenTP query canceled due to context, keeping mint events in cache",
 				"failedCount", zentpQueryErrors,
@@ -1815,7 +1821,7 @@ func (o *Oracle) processBackfillRequestsList(ctx context.Context, requests []*va
 	var newBurnEvents []api.BurnEvent
 
 	for i, req := range requests {
-		// For now, only handle ZenTP burn events.
+		// Handle ZenTP and ZenBTC burn events.
 		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
 			slog.Info("Processing zentp burn backfill request", "txHash", req.TxHash)
 			programID := sidecartypes.SolRockProgramID[o.Config.Network]
@@ -1826,6 +1832,37 @@ func (o *Oracle) processBackfillRequestsList(ctx context.Context, requests []*va
 			}
 			if event != nil {
 				newBurnEvents = append(newBurnEvents, *event)
+			}
+
+			// Pause between requests to avoid rate-limiting, but not after the final one.
+			if i < len(requests)-1 {
+				timer := time.NewTimer(sidecartypes.SolanaFallbackSleepInterval)
+				select {
+				case <-timer.C:
+				case <-ctx.Done():
+					timer.Stop()
+					return newBurnEvents, ctx.Err()
+				}
+			}
+		} else if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENBTC_BURN {
+			slog.Info("Processing zenBTC burn backfill request", "txHash", req.TxHash, "chainId", req.Caip2ChainId)
+
+			// ZenBTC burns can be on both Ethereum and Solana, but for now we only support Solana backfill
+			if validationtypes.IsSolanaCAIP2(context.Background(), req.Caip2ChainId) {
+				programID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+				event, err := o.getSolanaBurnEventFromSig(ctx, req.TxHash, programID)
+				if err != nil {
+					slog.Error("Error processing zenBTC burn backfill request", "txHash", req.TxHash, "error", err)
+					continue
+				}
+				if event != nil {
+					// Mark this as a ZenBTC event
+					event.IsZenBTC = true
+					newBurnEvents = append(newBurnEvents, *event)
+				}
+			} else {
+				slog.Warn("ZenBTC burn backfill for non-Solana chains not yet supported", "txHash", req.TxHash, "chainId", req.Caip2ChainId)
+				continue
 			}
 
 			// Pause between requests to avoid rate-limiting, but not after the final one.

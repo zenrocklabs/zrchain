@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/collections"
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	"golang.org/x/exp/slices"
 )
 
@@ -18,6 +19,40 @@ func (k msgServer) TriggerEventBackfill(ctx context.Context, msg *types.MsgTrigg
 
 	// Validate the request based on its event type to ensure it's actionable.
 	switch msg.EventType {
+	case types.EventType_EVENT_TYPE_ZENBTC_BURN:
+		// First, check if a burn event with this transaction hash already exists in zenbtc.
+		burnExists := false
+		err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, burnEvent zenbtctypes.BurnEvent) (stop bool, err error) {
+			if burnEvent.TxID == msg.TxHash {
+				burnExists = true
+				return true, nil // stop walking
+			}
+			return false, nil // continue walking
+		})
+		if err != nil {
+			return nil, err
+		}
+		if burnExists {
+			return nil, fmt.Errorf("burn event with tx hash '%s' already exists", msg.TxHash)
+		}
+
+		// ZenBTC burns can be on both Ethereum and Solana. Validate the chain ID accordingly.
+		if types.IsSolanaCAIP2(ctx, msg.Caip2ChainId) {
+			if _, err := types.ValidateSolanaChainID(ctx, msg.Caip2ChainId); err != nil {
+				return nil, err
+			}
+		} else if types.IsEthereumCAIP2(ctx, msg.Caip2ChainId) {
+			if _, err := types.ValidateEVMChainID(ctx, msg.Caip2ChainId); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, fmt.Errorf("unsupported chain ID for zenBTC burn backfill: %s", msg.Caip2ChainId)
+		}
+
+		// Basic validation for TxHash - ensure it's not empty.
+		if msg.TxHash == "" {
+			return nil, fmt.Errorf("transaction hash cannot be empty for zenBTC burn backfill")
+		}
 	case types.EventType_EVENT_TYPE_ZENTP_BURN:
 		// First, check if a burn event with this transaction hash already exists in zentp.
 		existingBurns, err := k.zentpKeeper.GetBurns(ctx, "", "", msg.TxHash)
