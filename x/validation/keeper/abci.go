@@ -1188,6 +1188,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				btcUSDPrice,
 				exchangeRate,
 			)
+			feeZenBTC = min(feeZenBTC, tx.Amount)
 
 			chainID, err := types.ValidateEVMChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
@@ -1316,6 +1317,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				btcUSDPrice,
 				exchangeRate,
 			)
+			feeZenBTC = min(feeZenBTC, tx.Amount)
 
 			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 
@@ -1503,7 +1505,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
 				amount:       tx.Amount,
-				fee:          solParams.Fee,
+				fee:          min(solParams.Fee, tx.Amount),
 				recipient:    tx.RecipientAddress,
 				nonce:        nonce,
 				fundReceiver: fundReceiver,

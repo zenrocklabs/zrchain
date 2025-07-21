@@ -11,9 +11,11 @@ import (
 var (
 	DefaultAVSRewardsRate, _              = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                int64 = 5                                // seconds
-	DefaultPriceRetentionBlockRange int64 = 100                              // blocks
-	DefaultVEJailingEnabled         bool  = true                             // enable VE jailing by default
+	DefaultPriceRetentionBlockRange int64 = 320                              // blocks
+	DefaultVEJailingEnabled         bool  = false                            // enable VE jailing by default
 	DefaultVEJailDurationMinutes    int64 = 60                               // 60 minutes jail duration
+	DefaultVEWindowSize             int64 = 320                              // 320 blocks window for VE mismatch tracking
+	DefaultVEJailThreshold          int64 = 160                              // 160 mismatches before jailing
 
 	DefaultTestnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
@@ -25,7 +27,7 @@ var (
 )
 
 // NewParams creates a new Params instance
-func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64, veJailingEnabled bool, veJailDurationMinutes int64) *HVParams {
+func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64, veJailingEnabled bool, veJailDurationMinutes int64, veWindowSize int64, veJailThreshold int64) *HVParams {
 	return &HVParams{
 		AVSRewardsRate:           avsRewardsRate,
 		BlockTime:                blockTime,
@@ -33,6 +35,8 @@ func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets
 		PriceRetentionBlockRange: priceRetentionBlockRange,
 		VEJailingEnabled:         veJailingEnabled,
 		VEJailDurationMinutes:    veJailDurationMinutes,
+		VEWindowSize:             veWindowSize,
+		VEJailThreshold:          veJailThreshold,
 	}
 }
 
@@ -45,6 +49,8 @@ func DefaultHVParams(ctx context.Context) *HVParams {
 		DefaultPriceRetentionBlockRange,
 		DefaultVEJailingEnabled,
 		DefaultVEJailDurationMinutes,
+		DefaultVEWindowSize,
+		DefaultVEJailThreshold,
 	)
 }
 
