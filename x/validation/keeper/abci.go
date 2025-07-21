@@ -1846,6 +1846,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 
 	foundNewBurn := false
 	processedInThisRun := make(map[string]bool)
+	processedTxHashes := make(map[string]bool)
 	// Loop over each burn event from oracle to check for new ones.
 	for _, burn := range burnEvents {
 		eventKey := fmt.Sprintf("%s-%d-%s", burn.TxID, burn.LogIndex, burn.ChainID)
@@ -1897,6 +1898,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			}
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Successfully created new burn event in store.", "source", source, "new_burn_id", createdID, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 			foundNewBurn = true
+			processedTxHashes[burn.TxID] = true
 		} else {
 			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping pre-existing event.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 		}
@@ -1913,6 +1915,9 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 	} else {
 		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: No new burn events found to store.", "source", source)
 	}
+
+	// Clear any corresponding backfill requests for successfully processed events.
+	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)
 }
 
 // processZenBTCBurnEvents processes pending burn events by constructing unstake transactions.
