@@ -1990,7 +1990,7 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 	// Summary log for pending transaction accounting
 	finalPendingCount := len(update.pendingTransactions)
 	if finalPendingCount != initialPendingCount {
-		slog.Info("ACCOUNTING_DEBUG: Pending transaction added",
+		slog.Debug("ACCOUNTING_DEBUG: Pending transaction added",
 			"eventType", eventType,
 			"beforeCount", initialPendingCount,
 			"afterCount", finalPendingCount,
@@ -2040,7 +2040,7 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 			}
 
 			if pendingCount > 0 {
-				slog.Info("RACE_DEBUG: Persistent processor active", "pendingCount", pendingCount)
+				slog.Debug("RACE_DEBUG: Persistent processor active", "pendingCount", pendingCount)
 			}
 
 			// Process one round of pending transactions
@@ -2430,7 +2430,7 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 		actualPendingCount := len(currentState.PendingSolanaTxs)
 
-		slog.Info("ACCOUNTING_DEBUG: Persistent processor round detailed stats",
+		slog.Debug("ACCOUNTING_DEBUG: Persistent processor round detailed stats",
 			"startedWithPending", len(pendingCopy),
 			"totalProcessed", processedCount,
 			"successfullyCompleted", successCount,
