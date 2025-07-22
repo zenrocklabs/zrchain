@@ -2137,6 +2137,17 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 	maps.Copy(pendingCopy, update.pendingTransactions)
 	updateMutex.Unlock()
 
+	// Log which processor is handling which transactions
+	if len(pendingCopy) > 0 {
+		signatures := make([]string, 0, len(pendingCopy))
+		for sig := range pendingCopy {
+			signatures = append(signatures, sig[:8]+"...")
+		}
+		slog.Info("ACCOUNTING_DEBUG: Per-tick processor starting work",
+			"processingSignatures", len(signatures),
+			"processor", "per-tick")
+	}
+
 	stats := pendingTransactionStats{
 		successfulTxs: make([]string, 0),
 	}
@@ -2257,6 +2268,10 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 				if _, exists := update.pendingTransactions[signature]; exists {
 					delete(update.pendingTransactions, signature)
 					stats.successCount++
+					slog.Info("ACCOUNTING_DEBUG: Per-tick processor removed transaction",
+						"signature", signature[:8]+"...",
+						"processor", "per-tick",
+						"eventsAdded", len(events))
 				}
 			}
 			updateMutex.Unlock()
