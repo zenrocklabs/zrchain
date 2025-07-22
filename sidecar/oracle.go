@@ -2973,17 +2973,20 @@ func (o *Oracle) processSignatures(
 
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
+		// Check for context cancellation at the start of each batch
 		if ctx.Err() != nil {
-			// Add ALL remaining unprocessed signatures to pending queue for optimistic watermark advancement
+			// Context cancelled - add ALL remaining signatures to failed list for pending queue
+			remainingCount := len(signatures) - i
 			for j := i; j < len(signatures); j++ {
 				failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 				newestSigProcessed = signatures[j].Signature
 			}
-			slog.Debug("Context canceled during signature processing, added remaining signatures to pending queue",
+			slog.Warn("ACCOUNTING_DEBUG: Context canceled during signature processing - added ALL remaining signatures to pending",
 				"eventType", eventTypeName,
 				"processedSignatures", i,
 				"totalSignatures", len(signatures),
-				"addedToPending", len(signatures)-i)
+				"remainingAddedToPending", remainingCount,
+				"totalFailedForPending", len(failedSignatures))
 			return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 		}
 
@@ -2997,11 +3000,19 @@ func (o *Oracle) processSignatures(
 		if batchErr != nil {
 			// Check for context cancellation first - if cancelled, stop immediately
 			if errors.Is(batchErr, context.Canceled) || errors.Is(batchErr, context.DeadlineExceeded) || strings.Contains(batchErr.Error(), "context canceled") {
-				// Context cancelled - add remaining signatures to pending queue and return
+				// Context cancelled - add ALL remaining signatures to failed list for pending queue
+				remainingCount := len(signatures) - i
 				for j := i; j < len(signatures); j++ {
 					failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 					newestSigProcessed = signatures[j].Signature
 				}
+				slog.Warn("ACCOUNTING_DEBUG: Context canceled during batch processing - added ALL remaining signatures to pending",
+					"eventType", eventTypeName,
+					"batchError", batchErr,
+					"processedSignatures", i,
+					"totalSignatures", len(signatures),
+					"remainingAddedToPending", remainingCount,
+					"totalFailedForPending", len(failedSignatures))
 				return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 			}
 
@@ -3017,12 +3028,28 @@ func (o *Oracle) processSignatures(
 				for idx, sigInfo := range currentBatch {
 					// Check for context cancellation before each individual request
 					if ctx.Err() != nil {
-						// Add ALL remaining unprocessed transactions to failed signatures and return
-						for j := idx; j < len(currentBatch); j++ {
-							failedSignatures = append(failedSignatures, currentBatch[j].Signature.String())
-							newestSigProcessed = currentBatch[j].Signature
+						// Add ALL remaining unprocessed transactions (including current) to failed signatures and return
+						remainingInBatch := len(currentBatch) - idx
+						remainingAfterBatch := len(signatures) - i - len(currentBatch)
+						totalRemaining := remainingInBatch + remainingAfterBatch
+
+						// Add current transaction and rest of current batch to failed
+						for k := idx; k < len(currentBatch); k++ {
+							failedSignatures = append(failedSignatures, currentBatch[k].Signature.String())
+							newestSigProcessed = currentBatch[k].Signature
 						}
-						// Return newestSigProcessed to advance watermark to cover failed transactions
+						// Add all signatures after current batch to failed
+						for j := i + len(currentBatch); j < len(signatures); j++ {
+							failedSignatures = append(failedSignatures, signatures[j].Signature.String())
+							newestSigProcessed = signatures[j].Signature
+						}
+
+						slog.Warn("ACCOUNTING_DEBUG: Context canceled during individual fallback processing - added ALL remaining signatures to pending",
+							"eventType", eventTypeName,
+							"remainingInCurrentBatch", remainingInBatch,
+							"remainingAfterBatch", remainingAfterBatch,
+							"totalRemainingAddedToPending", totalRemaining,
+							"totalFailedForPending", len(failedSignatures))
 						return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 					}
 
@@ -3117,23 +3144,32 @@ func (o *Oracle) processSignatures(
 	totalProcessed := len(signatures)
 	successRate := float64(stats.successfulTransactions) / float64(totalProcessed) * 100
 
-	// Transaction accounting verification - ensure no transactions are lost
+	// CRITICAL: Transaction accounting verification - ensure no transactions are lost
 	accountedTransactions := stats.successfulTransactions + stats.emptyTransactions + len(failedSignatures)
 	if accountedTransactions != totalProcessed {
-		slog.Error("Transaction accounting mismatch - blocking watermark advancement",
+		slog.Error("CRITICAL: Transaction accounting mismatch detected - this causes non-deterministic behavior!",
 			"eventType", eventTypeName,
 			"totalSignatures", totalProcessed,
 			"successful", stats.successfulTransactions,
 			"empty", stats.emptyTransactions,
 			"failed", len(failedSignatures),
 			"accounted", accountedTransactions,
-			"missing", totalProcessed-accountedTransactions)
+			"missing", totalProcessed-accountedTransactions,
+			"contextCanceled", ctx.Err() != nil)
 
-		// Don't advance watermark - return last known good watermark
+		// Don't advance watermark - return last known good watermark to prevent data loss
 		return allEvents, lastSuccessfullyProcessedSig, failedSignatures,
-			fmt.Errorf("transaction accounting mismatch: %d processed, %d accounted",
-				totalProcessed, accountedTransactions)
+			fmt.Errorf("CRITICAL: transaction accounting mismatch - %d transactions lost: %d processed, %d accounted",
+				totalProcessed-accountedTransactions, totalProcessed, accountedTransactions)
 	}
+
+	// Verify accounting is correct
+	slog.Info("ACCOUNTING_DEBUG: Transaction processing verification passed",
+		"eventType", eventTypeName,
+		"totalProcessed", totalProcessed,
+		"accounted", accountedTransactions,
+		"successfulEvents", len(allEvents),
+		"failedForPending", len(failedSignatures))
 
 	// Summary log with comprehensive batch processing results
 	slog.Info("Batch processing summary",
