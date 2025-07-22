@@ -249,6 +249,7 @@ func (o *Oracle) processOracleTick(
 // updates the high-watermark fields on the oracle object itself, and persists the new state to disk.
 // This is the single, atomic point of truth for state transitions.
 func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
+	oldState := o.currentState.Load().(*sidecartypes.OracleState)
 	// Log watermark changes for debugging
 	oldRockMint := o.lastSolRockMintSigStr
 	oldZenBTCMint := o.lastSolZenBTCMintSigStr
@@ -256,6 +257,14 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 	oldRockBurn := o.lastSolRockBurnSigStr
 
 	o.currentState.Store(&newState)
+
+	// Summary of state changes
+	if len(oldState.PendingSolanaTxs) != len(newState.PendingSolanaTxs) {
+		slog.Info("RACE_DEBUG: State transition summary",
+			"oldPendingTxs", len(oldState.PendingSolanaTxs),
+			"newPendingTxs", len(newState.PendingSolanaTxs),
+			"pendingTxsChange", len(newState.PendingSolanaTxs)-len(oldState.PendingSolanaTxs))
+	}
 
 	// Log event counts in each state field every tick
 	slog.Info("State event counts for this tick",
@@ -1054,6 +1063,11 @@ func (o *Oracle) buildFinalState(
 	latestHeader *ethtypes.Header,
 	targetBlockNumber *big.Int,
 ) (sidecartypes.OracleState, error) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	slog.Info("RACE_DEBUG: Building final state summary",
+		"updatePendingTxs", len(update.pendingTransactions),
+		"currentStatePendingTxs", len(currentState.PendingSolanaTxs))
+
 	// Start with the current watermarks and update them if new signatures were found.
 	lastSolRockMintSig := o.lastSolRockMintSigStr
 	lastSolZenBTCMintSig := o.lastSolZenBTCMintSigStr
@@ -1072,8 +1086,6 @@ func (o *Oracle) buildFinalState(
 	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
 		lastSolRockBurnSig = sig.String()
 	}
-
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
@@ -1393,8 +1405,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain for zenBTC mint events, keeping in cache",
 				"failedCount", zenbtcQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZenbtcError,
-				"failedSignatures", failedZenBTCSignatures)
+				"lastError", lastZenbtcError)
+			slog.Debug("Failed zenBTC signatures", "failedSignatures", failedZenBTCSignatures)
 		} else {
 			slog.Debug("ZrChain ZenBTC query canceled due to context, keeping mint events in cache",
 				"failedCount", zenbtcQueryErrors,
@@ -1406,8 +1418,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			slog.Warn("Failed to query zrChain ZenTP for mint events, keeping in cache",
 				"failedCount", zentpQueryErrors,
 				"totalEvents", len(eventsToClean),
-				"lastError", lastZentpError,
-				"failedSignatures", failedZenTPSignatures)
+				"lastError", lastZentpError)
+			slog.Debug("Failed ZenTP signatures", "failedSignatures", failedZenTPSignatures)
 		} else {
 			slog.Debug("ZrChain ZenTP query canceled due to context, keeping mint events in cache",
 				"failedCount", zentpQueryErrors,
@@ -2014,7 +2026,9 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 				}
 			}
 
-			slog.Debug("Processing pending transactions round", "count", pendingCount)
+			if pendingCount > 0 {
+				slog.Info("RACE_DEBUG: Persistent processor active", "pendingCount", pendingCount)
+			}
 
 			// Process one round of pending transactions
 			o.processPendingTransactionsRoundPersistent(ctx)
@@ -2039,7 +2053,7 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGroup, update *oracleStateUpdate, updateMutex *sync.Mutex) {
 	defer wg.Done()
 
-	slog.Info("Starting continuous pending transaction processing goroutine")
+	slog.Info("RACE_DEBUG: Starting per-tick pending transaction processor")
 
 	// Retry loop - continue until context cancellation
 	for {
@@ -2063,7 +2077,9 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 				}
 			}
 
-			slog.Debug("Processing pending transactions round", "count", pendingCount)
+			if pendingCount > 0 {
+				slog.Info("RACE_DEBUG: Per-tick processor active", "pendingCount", pendingCount)
+			}
 
 			// Process one round of pending transactions
 			pendingStats := o.processPendingTransactionsRound(ctx, update, updateMutex)
@@ -2222,8 +2238,6 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 				if _, exists := update.pendingTransactions[signature]; exists {
 					delete(update.pendingTransactions, signature)
 					stats.successCount++
-					slog.Debug("Removed pending transaction after successful processing",
-						"signature", signature)
 				}
 			}
 			updateMutex.Unlock()
@@ -3239,12 +3253,11 @@ func (o *Oracle) getSolanaEvents(
 	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
 
 	// Handle failed signatures by adding them to pending queue
-	// Only advance watermark if ALL pending store operations succeed
 	var pendingStoreErrors []error
 	for _, failedSig := range failedSignatures {
 		if pendingErr := o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex); pendingErr != nil {
 			pendingStoreErrors = append(pendingStoreErrors, pendingErr)
-			slog.Error("Failed to add transaction to pending store",
+			slog.Debug("Failed to add transaction to pending store",
 				"signature", failedSig,
 				"eventType", eventTypeName,
 				"error", pendingErr)
@@ -3253,7 +3266,7 @@ func (o *Oracle) getSolanaEvents(
 
 	// If any pending store operations failed, don't advance watermark
 	if len(pendingStoreErrors) > 0 {
-		slog.Error("Pending store operations failed - blocking watermark advancement",
+		slog.Debug("Pending store operations failed - blocking watermark advancement",
 			"eventType", eventTypeName,
 			"failedOperations", len(pendingStoreErrors),
 			"totalFailed", len(failedSignatures))
