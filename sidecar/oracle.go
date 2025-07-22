@@ -499,7 +499,7 @@ func (o *Oracle) fetchEthereumContractData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
@@ -522,7 +522,7 @@ func (o *Oracle) fetchEthereumContractData(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) ([]api.Redemption, error) {
-			return o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
+			return o.getRedemptions(ctx, zenBTCController, targetBlockNumber)
 		},
 		func(result []api.Redemption, update *oracleStateUpdate) {
 			update.redemptions = result
