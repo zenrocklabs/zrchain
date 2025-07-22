@@ -57,7 +57,7 @@ func (c *ZenBTCQueryClient) Params(ctx context.Context) (*types.QueryParamsRespo
 }
 
 func (c *ZenBTCQueryClient) BurnEvents(ctx context.Context, startIndex uint64, txID string, logIndex uint64, chainID string) (*types.QueryBurnEventsResponse, error) {
-	return c.client.QueryBurnEvents(ctx, &types.QueryBurnEventsRequest{StartIndex: startIndex, TxID: txID, LogIndex: logIndex, ChainID: chainID})
+	return c.client.QueryBurnEvents(ctx, &types.QueryBurnEventsRequest{StartIndex: startIndex, TxID: txID, LogIndex: logIndex, Caip2ChainID: chainID})
 }
 
 func (c *ZenBTCQueryClient) PendingMintTransactions(ctx context.Context, startIndex uint64) (*types.QueryPendingMintTransactionsResponse, error) {

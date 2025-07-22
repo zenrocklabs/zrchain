@@ -1029,6 +1029,20 @@ func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, p
 
 		if !bytes.Equal(v.VoteExtension, canonicalVoteExtBz) {
 			validatorHexAddr := hex.EncodeToString(v.Validator.Address)
+
+			// Skip recording mismatches for jailed or unbonded validators
+			consAddr := sdk.ConsAddress(v.Validator.Address)
+			validator, err := k.GetValidatorByConsAddr(ctx, consAddr)
+			if err != nil {
+				k.Logger(ctx).Error("Failed to get validator by consensus address", "consAddr", consAddr.String(), "error", err)
+				continue
+			}
+
+			// Check if validator should be skipped
+			if validator.Jailed || validator.Status == types.Unbonded {
+				continue
+			}
+
 			mismatchedValidators[validatorHexAddr] = struct{}{}
 
 			// Still record in ValidationInfo for backward compatibility
@@ -1067,11 +1081,11 @@ func (k *Keeper) updateValidatorMismatchCount(ctx sdk.Context, validatorHexAddr 
 		return
 	}
 
-	// Remove blocks that are outside the sliding window (older than 100 blocks)
-	windowStart := blockHeight - voteExtensionWindowSize + 1
+	// Remove blocks that are outside the sliding window (older than configured window size)
+	windowStart := blockHeight - k.GetVEWindowSize(ctx) + 1
 	newMismatchBlocks := make([]int64, 0, len(mismatchCount.MismatchBlocks)+1)
 
-	// Keep only blocks within the window - O(W) where W is window size (100)
+	// Keep only blocks within the window - O(W) where W is configurable window size
 	for _, block := range mismatchCount.MismatchBlocks {
 		if block >= windowStart {
 			newMismatchBlocks = append(newMismatchBlocks, block)

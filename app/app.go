@@ -466,6 +466,7 @@ func NewZenrockApp(
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
 		&app.ZentpKeeper,
+		&app.SlashingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)

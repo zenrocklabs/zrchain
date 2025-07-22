@@ -12,40 +12,36 @@ import (
 )
 
 func UpdateMintStore(ctx sdk.Context, oldMintsCol collections.Map[uint64, types.Bridge], newMintsCol collections.Map[uint64, types.Bridge]) error {
-	mintStore, err := oldMintsCol.Iterate(ctx, nil)
-	if err != nil {
-		return err
-	}
-	mints, err := mintStore.Values()
-	if err != nil {
-		return err
-	}
+	ctx.Logger().With("module", types.ModuleName).Info("starting mint store migration")
 
-	for _, mint := range mints {
-		if err := newMintsCol.Set(ctx, mint.Id, mint); err != nil {
-			return err
+	if err := oldMintsCol.Walk(ctx, nil, func(key uint64, mint types.Bridge) (bool, error) {
+		if err := newMintsCol.Set(ctx, key, mint); err != nil {
+			return true, err
 		}
+		return false, nil
+	}); err != nil {
+		ctx.Logger().With("module", types.ModuleName, "error", err).Error("failed to migrate mint store")
+		return err
 	}
 
+	ctx.Logger().With("module", types.ModuleName).Info("completed mint store migration")
 	return nil
 }
 
 func UpdateBurnStore(ctx sdk.Context, oldBurnsCol collections.Map[uint64, types.Bridge], newBurnsCol collections.Map[uint64, types.Bridge]) error {
-	burnStore, err := oldBurnsCol.Iterate(ctx, nil)
-	if err != nil {
-		return err
-	}
-	burns, err := burnStore.Values()
-	if err != nil {
-		return err
-	}
+	ctx.Logger().With("module", types.ModuleName).Info("starting burn store migration")
 
-	for _, burn := range burns {
-		if err := newBurnsCol.Set(ctx, burn.Id, burn); err != nil {
-			return err
+	if err := oldBurnsCol.Walk(ctx, nil, func(key uint64, burn types.Bridge) (bool, error) {
+		if err := newBurnsCol.Set(ctx, key, burn); err != nil {
+			return true, err
 		}
+		return false, nil
+	}); err != nil {
+		ctx.Logger().With("module", types.ModuleName, "error", err).Error("failed to migrate burn store")
+		return err
 	}
 
+	ctx.Logger().With("module", types.ModuleName).Info("completed burn store migration")
 	return nil
 }
 

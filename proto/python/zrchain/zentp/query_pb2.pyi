@@ -2,7 +2,6 @@ from amino import amino_pb2 as _amino_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
-from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from zrchain.zentp import params_pb2 as _params_pb2
 from zrchain.zentp import bridge_pb2 as _bridge_pb2
 from google.protobuf.internal import containers as _containers
@@ -23,22 +22,22 @@ class QueryParamsResponse(_message.Message):
     def __init__(self, params: _Optional[_Union[_params_pb2.Params, _Mapping]] = ...) -> None: ...
 
 class QueryMintsRequest(_message.Message):
-    __slots__ = ("id", "creator", "status", "denom", "pagination", "tx_id", "source_tx_hash")
+    __slots__ = ("id", "creator", "status", "denom", "tx_id", "source_tx_hash", "pagination")
     ID_FIELD_NUMBER: _ClassVar[int]
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     DENOM_FIELD_NUMBER: _ClassVar[int]
-    PAGINATION_FIELD_NUMBER: _ClassVar[int]
     TX_ID_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
     id: int
     creator: str
     status: _bridge_pb2.BridgeStatus
     denom: str
-    pagination: _pagination_pb2.PageRequest
     tx_id: int
     source_tx_hash: str
-    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., denom: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ..., tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ...) -> None: ...
+    pagination: _pagination_pb2.PageRequest
+    def __init__(self, id: _Optional[int] = ..., creator: _Optional[str] = ..., status: _Optional[_Union[_bridge_pb2.BridgeStatus, str]] = ..., denom: _Optional[str] = ..., tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
 
 class QueryMintsResponse(_message.Message):
     __slots__ = ("mints", "pagination")

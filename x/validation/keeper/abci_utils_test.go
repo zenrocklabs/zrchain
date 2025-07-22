@@ -36,6 +36,7 @@ func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testuti
 	mockBankKeeper := testutil.NewMockBankKeeper(ctrl)
 	mockTreasuryKeeper := testutil.NewMockTreasuryKeeper(ctrl)
 	mockZentpKeeper := testutil.NewMockZentpKeeper(ctrl)
+	mockSlashingKeeper := testutil.NewMockSlashingKeeper(ctrl)
 	mockSidecarClient := testutil.NewMocksidecarClient(ctrl)
 
 	// Set up mock expectations
@@ -60,6 +61,7 @@ func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testuti
 		mockTreasuryKeeper,                   // treasuryKeeper
 		nil,                                  // zenBTCKeeper
 		mockZentpKeeper,                      // zentpKeeper
+		mockSlashingKeeper,                   // slashingKeeper
 		address.NewBech32Codec("zenvaloper"), // validatorAddressCodec
 		address.NewBech32Codec("zenvalcons"), // consensusAddressCodec
 	)

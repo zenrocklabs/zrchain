@@ -18,6 +18,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
@@ -601,8 +602,8 @@ func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams)
 }
 
 func (k msgServer) UpdateHVParams(ctx context.Context, msg *types.MsgUpdateHVParams) (*types.MsgUpdateHVParamsResponse, error) {
-	if k.GetHVParamsAuthority(ctx) != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.GetHVParamsAuthority(ctx), msg.Authority)
+	if msg.Authority != shared.AdminAuthAddr && msg.Authority != k.GetHVParamsAuthority(ctx) {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s or %s, got %s", shared.AdminAuthAddr, k.GetHVParamsAuthority(ctx), msg.Authority)
 	}
 
 	if err := k.HVParams.Set(ctx, msg.HVParams); err != nil {

@@ -2678,6 +2678,10 @@ var (
 	fd_HVParams_BlockTime                protoreflect.FieldDescriptor
 	fd_HVParams_stakeableAssets          protoreflect.FieldDescriptor
 	fd_HVParams_priceRetentionBlockRange protoreflect.FieldDescriptor
+	fd_HVParams_VEJailingEnabled         protoreflect.FieldDescriptor
+	fd_HVParams_VEJailDurationMinutes    protoreflect.FieldDescriptor
+	fd_HVParams_VEWindowSize             protoreflect.FieldDescriptor
+	fd_HVParams_VEJailThreshold          protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -2687,6 +2691,10 @@ func init() {
 	fd_HVParams_BlockTime = md_HVParams.Fields().ByName("BlockTime")
 	fd_HVParams_stakeableAssets = md_HVParams.Fields().ByName("stakeableAssets")
 	fd_HVParams_priceRetentionBlockRange = md_HVParams.Fields().ByName("priceRetentionBlockRange")
+	fd_HVParams_VEJailingEnabled = md_HVParams.Fields().ByName("VEJailingEnabled")
+	fd_HVParams_VEJailDurationMinutes = md_HVParams.Fields().ByName("VEJailDurationMinutes")
+	fd_HVParams_VEWindowSize = md_HVParams.Fields().ByName("VEWindowSize")
+	fd_HVParams_VEJailThreshold = md_HVParams.Fields().ByName("VEJailThreshold")
 }
 
 var _ protoreflect.Message = (*fastReflection_HVParams)(nil)
@@ -2778,6 +2786,30 @@ func (x *fastReflection_HVParams) Range(f func(protoreflect.FieldDescriptor, pro
 			return
 		}
 	}
+	if x.VEJailingEnabled != false {
+		value := protoreflect.ValueOfBool(x.VEJailingEnabled)
+		if !f(fd_HVParams_VEJailingEnabled, value) {
+			return
+		}
+	}
+	if x.VEJailDurationMinutes != int64(0) {
+		value := protoreflect.ValueOfInt64(x.VEJailDurationMinutes)
+		if !f(fd_HVParams_VEJailDurationMinutes, value) {
+			return
+		}
+	}
+	if x.VEWindowSize != int64(0) {
+		value := protoreflect.ValueOfInt64(x.VEWindowSize)
+		if !f(fd_HVParams_VEWindowSize, value) {
+			return
+		}
+	}
+	if x.VEJailThreshold != int64(0) {
+		value := protoreflect.ValueOfInt64(x.VEJailThreshold)
+		if !f(fd_HVParams_VEJailThreshold, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -2801,6 +2833,14 @@ func (x *fastReflection_HVParams) Has(fd protoreflect.FieldDescriptor) bool {
 		return len(x.StakeableAssets) != 0
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
 		return x.PriceRetentionBlockRange != int64(0)
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		return x.VEJailingEnabled != false
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		return x.VEJailDurationMinutes != int64(0)
+	case "zrchain.validation.HVParams.VEWindowSize":
+		return x.VEWindowSize != int64(0)
+	case "zrchain.validation.HVParams.VEJailThreshold":
+		return x.VEJailThreshold != int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2825,6 +2865,14 @@ func (x *fastReflection_HVParams) Clear(fd protoreflect.FieldDescriptor) {
 		x.StakeableAssets = nil
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
 		x.PriceRetentionBlockRange = int64(0)
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		x.VEJailingEnabled = false
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		x.VEJailDurationMinutes = int64(0)
+	case "zrchain.validation.HVParams.VEWindowSize":
+		x.VEWindowSize = int64(0)
+	case "zrchain.validation.HVParams.VEJailThreshold":
+		x.VEJailThreshold = int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2856,6 +2904,18 @@ func (x *fastReflection_HVParams) Get(descriptor protoreflect.FieldDescriptor) p
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
 		value := x.PriceRetentionBlockRange
 		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		value := x.VEJailingEnabled
+		return protoreflect.ValueOfBool(value)
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		value := x.VEJailDurationMinutes
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.HVParams.VEWindowSize":
+		value := x.VEWindowSize
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.HVParams.VEJailThreshold":
+		value := x.VEJailThreshold
+		return protoreflect.ValueOfInt64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2886,6 +2946,14 @@ func (x *fastReflection_HVParams) Set(fd protoreflect.FieldDescriptor, value pro
 		x.StakeableAssets = *clv.list
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
 		x.PriceRetentionBlockRange = value.Int()
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		x.VEJailingEnabled = value.Bool()
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		x.VEJailDurationMinutes = value.Int()
+	case "zrchain.validation.HVParams.VEWindowSize":
+		x.VEWindowSize = value.Int()
+	case "zrchain.validation.HVParams.VEJailThreshold":
+		x.VEJailThreshold = value.Int()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2918,6 +2986,14 @@ func (x *fastReflection_HVParams) Mutable(fd protoreflect.FieldDescriptor) proto
 		panic(fmt.Errorf("field BlockTime of message zrchain.validation.HVParams is not mutable"))
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
 		panic(fmt.Errorf("field priceRetentionBlockRange of message zrchain.validation.HVParams is not mutable"))
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		panic(fmt.Errorf("field VEJailingEnabled of message zrchain.validation.HVParams is not mutable"))
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		panic(fmt.Errorf("field VEJailDurationMinutes of message zrchain.validation.HVParams is not mutable"))
+	case "zrchain.validation.HVParams.VEWindowSize":
+		panic(fmt.Errorf("field VEWindowSize of message zrchain.validation.HVParams is not mutable"))
+	case "zrchain.validation.HVParams.VEJailThreshold":
+		panic(fmt.Errorf("field VEJailThreshold of message zrchain.validation.HVParams is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2939,6 +3015,14 @@ func (x *fastReflection_HVParams) NewField(fd protoreflect.FieldDescriptor) prot
 		list := []*AssetData{}
 		return protoreflect.ValueOfList(&_HVParams_3_list{list: &list})
 	case "zrchain.validation.HVParams.priceRetentionBlockRange":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.HVParams.VEJailingEnabled":
+		return protoreflect.ValueOfBool(false)
+	case "zrchain.validation.HVParams.VEJailDurationMinutes":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.HVParams.VEWindowSize":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.HVParams.VEJailThreshold":
 		return protoreflect.ValueOfInt64(int64(0))
 	default:
 		if fd.IsExtension() {
@@ -3025,6 +3109,18 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 		if x.PriceRetentionBlockRange != 0 {
 			n += 1 + runtime.Sov(uint64(x.PriceRetentionBlockRange))
 		}
+		if x.VEJailingEnabled {
+			n += 2
+		}
+		if x.VEJailDurationMinutes != 0 {
+			n += 1 + runtime.Sov(uint64(x.VEJailDurationMinutes))
+		}
+		if x.VEWindowSize != 0 {
+			n += 1 + runtime.Sov(uint64(x.VEWindowSize))
+		}
+		if x.VEJailThreshold != 0 {
+			n += 1 + runtime.Sov(uint64(x.VEJailThreshold))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -3053,6 +3149,31 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.VEJailThreshold != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.VEJailThreshold))
+			i--
+			dAtA[i] = 0x40
+		}
+		if x.VEWindowSize != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.VEWindowSize))
+			i--
+			dAtA[i] = 0x38
+		}
+		if x.VEJailDurationMinutes != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.VEJailDurationMinutes))
+			i--
+			dAtA[i] = 0x30
+		}
+		if x.VEJailingEnabled {
+			i--
+			if x.VEJailingEnabled {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
+			}
+			i--
+			dAtA[i] = 0x28
 		}
 		if x.PriceRetentionBlockRange != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.PriceRetentionBlockRange))
@@ -3236,6 +3357,83 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 					b := dAtA[iNdEx]
 					iNdEx++
 					x.PriceRetentionBlockRange |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 5:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VEJailingEnabled", wireType)
+				}
+				var v int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				x.VEJailingEnabled = bool(v != 0)
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VEJailDurationMinutes", wireType)
+				}
+				x.VEJailDurationMinutes = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.VEJailDurationMinutes |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 7:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VEWindowSize", wireType)
+				}
+				x.VEWindowSize = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.VEWindowSize |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 8:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VEJailThreshold", wireType)
+				}
+				x.VEJailThreshold = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.VEJailThreshold |= int64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -4882,6 +5080,10 @@ type HVParams struct {
 	BlockTime                int64        `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`          // seconds
 	StakeableAssets          []*AssetData `protobuf:"bytes,3,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
 	PriceRetentionBlockRange int64        `protobuf:"varint,4,opt,name=priceRetentionBlockRange,proto3" json:"priceRetentionBlockRange,omitempty"`
+	VEJailingEnabled         bool         `protobuf:"varint,5,opt,name=VEJailingEnabled,proto3" json:"VEJailingEnabled,omitempty"`           // whether to jail validators for VE mismatches
+	VEJailDurationMinutes    int64        `protobuf:"varint,6,opt,name=VEJailDurationMinutes,proto3" json:"VEJailDurationMinutes,omitempty"` // jail duration in minutes for VE mismatches
+	VEWindowSize             int64        `protobuf:"varint,7,opt,name=VEWindowSize,proto3" json:"VEWindowSize,omitempty"`                   // block window size for VE mismatch tracking
+	VEJailThreshold          int64        `protobuf:"varint,8,opt,name=VEJailThreshold,proto3" json:"VEJailThreshold,omitempty"`             // number of VE mismatches before jailing
 }
 
 func (x *HVParams) Reset() {
@@ -4928,6 +5130,34 @@ func (x *HVParams) GetStakeableAssets() []*AssetData {
 func (x *HVParams) GetPriceRetentionBlockRange() int64 {
 	if x != nil {
 		return x.PriceRetentionBlockRange
+	}
+	return 0
+}
+
+func (x *HVParams) GetVEJailingEnabled() bool {
+	if x != nil {
+		return x.VEJailingEnabled
+	}
+	return false
+}
+
+func (x *HVParams) GetVEJailDurationMinutes() int64 {
+	if x != nil {
+		return x.VEJailDurationMinutes
+	}
+	return 0
+}
+
+func (x *HVParams) GetVEWindowSize() int64 {
+	if x != nil {
+		return x.VEWindowSize
+	}
+	return 0
+}
+
+func (x *HVParams) GetVEJailThreshold() int64 {
+	if x != nil {
+		return x.VEJailThreshold
 	}
 	return 0
 }
@@ -5151,7 +5381,7 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74,
 	0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
 	0x49, 0x6e, 0x74, 0x52, 0x10, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68,
-	0x65, 0x64, 0x41, 0x56, 0x53, 0x22, 0x88, 0x02, 0x0a, 0x08, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61,
+	0x65, 0x64, 0x41, 0x56, 0x53, 0x22, 0xb8, 0x03, 0x0a, 0x08, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61,
 	0x6d, 0x73, 0x12, 0x59, 0x0a, 0x0e, 0x41, 0x56, 0x53, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73,
 	0x52, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x31, 0xc8, 0xde, 0x1f, 0x00,
 	0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
@@ -5168,6 +5398,17 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65,
 	0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x18, 0x70, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x74,
 	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65,
+	0x12, 0x2a, 0x0a, 0x10, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x61,
+	0x62, 0x6c, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x10, 0x56, 0x45, 0x4a, 0x61,
+	0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x34, 0x0a, 0x15,
+	0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69,
+	0x6e, 0x75, 0x74, 0x65, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x15, 0x56, 0x45, 0x4a,
+	0x61, 0x69, 0x6c, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69, 0x6e, 0x75, 0x74,
+	0x65, 0x73, 0x12, 0x22, 0x0a, 0x0c, 0x56, 0x45, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x53, 0x69,
+	0x7a, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x56, 0x45, 0x57, 0x69, 0x6e, 0x64,
+	0x6f, 0x77, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x28, 0x0a, 0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c,
+	0x54, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x54, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64,
 	0x22, 0xa5, 0x01, 0x0a, 0x0e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49,
 	0x6e, 0x66, 0x6f, 0x12, 0x32, 0x0a, 0x15, 0x6e, 0x6f, 0x6e, 0x5f, 0x76, 0x6f, 0x74, 0x69, 0x6e,
 	0x67, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03,

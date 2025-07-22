@@ -9,6 +9,7 @@ import (
 	m "math"
 	"math/big"
 	"sort"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
@@ -247,7 +248,8 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 
 	// Cleanup old mismatch count records every window size blocks to prevent storage bloat
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if sdkCtx.BlockHeight()%voteExtensionWindowSize == 0 {
+	windowSize := k.GetVEWindowSize(ctx)
+	if sdkCtx.BlockHeight()%windowSize == 0 {
 		if err := k.cleanupOldMismatchCounts(ctx, sdkCtx.BlockHeight()); err != nil {
 			k.Logger(ctx).Error("Failed to cleanup old mismatch counts", "error", err)
 			// Don't return error here as it's not critical for validator set updates
@@ -568,12 +570,6 @@ func (k Keeper) UnbondingToUnbonded(ctx context.Context, validator types.Validat
 }
 
 // Vote extension mismatch detection configuration
-const (
-	// Number of recent blocks to check for vote extension mismatches
-	voteExtensionWindowSize = 320
-	// Number of mismatched vote extensions required to jail a validator
-	voteExtensionJailThreshold = 160
-)
 
 // checkAndJailValidatorsForMismatchedVoteExtensions checks all bonded validators
 // and jails those who have submitted mismatched vote extensions for at least 100
@@ -584,7 +580,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 	currentHeight := sdkCtx.BlockHeight()
 
 	// Only check if we have at least the full window size of blocks of data
-	if currentHeight < voteExtensionWindowSize {
+	if currentHeight < k.GetVEWindowSize(ctx) {
 		return nil
 	}
 
@@ -617,19 +613,79 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 			continue
 		}
 
-		// If the validator has reached the jail threshold or more mismatches, jail them
-		if mismatchCount.TotalCount >= voteExtensionJailThreshold {
+		// If the validator has reached the jail threshold or more mismatches, check if jailing is enabled
+		jailThreshold := k.GetVEJailThreshold(ctx)
+		if mismatchCount.TotalCount >= uint32(jailThreshold) {
+			// Check if VE jailing is enabled
+			if !k.GetVEJailingEnabled(ctx) {
+				k.Logger(ctx).Info(
+					"validator sidecar desynced (jailing disabled)",
+					"validator", validator.OperatorAddress,
+					"consensus_addr", sdk.ConsAddress(consAddr).String(),
+					"mismatch_count", mismatchCount.TotalCount,
+					"blocks_checked", k.GetVEWindowSize(ctx),
+				)
+				continue
+			}
+
 			k.Logger(ctx).Info(
-				"Jailing validator for excessive mismatched vote extensions",
+				"validator sidecar desynced - jailing validator",
 				"validator", validator.OperatorAddress,
 				"consensus_addr", sdk.ConsAddress(consAddr).String(),
 				"mismatch_count", mismatchCount.TotalCount,
-				"blocks_checked", voteExtensionWindowSize,
+				"blocks_checked", k.GetVEWindowSize(ctx),
 			)
 
 			if err := k.jailValidator(ctx, validator); err != nil {
 				k.Logger(ctx).Error(
 					"Failed to jail validator for mismatched vote extensions",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Get and update signing info to set jail duration based on parameter
+			signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+			if err != nil {
+				k.Logger(ctx).Error(
+					"Failed to get validator signing info",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Calculate jail duration from parameter (convert minutes to duration)
+			jailDurationMinutes := k.GetVEJailDurationMinutes(ctx)
+			jailDuration := time.Duration(jailDurationMinutes) * time.Minute
+			signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(jailDuration)
+
+			// Debug logging for JailedUntil troubleshooting
+			k.Logger(ctx).Info(
+				"Setting JailedUntil for validator",
+				"validator", validator.OperatorAddress,
+				"consensus_addr", sdk.ConsAddress(consAddr).String(),
+				"current_time", sdkCtx.BlockHeader().Time.String(),
+				"jail_duration_minutes", jailDurationMinutes,
+				"jail_duration", jailDuration.String(),
+				"jailed_until", signInfo.JailedUntil.String(),
+				"start_height", signInfo.StartHeight,
+			)
+
+			if err := k.slashingKeeper.SetValidatorSigningInfo(ctx, consAddr, signInfo); err != nil {
+				k.Logger(ctx).Error(
+					"Failed to set validator signing info",
+					"validator", validator.OperatorAddress,
+					"error", err,
+				)
+				continue
+			}
+
+			// Clear the mismatch store for this validator
+			if err := k.ValidatorMismatchCounts.Remove(ctx, validatorHexAddr); err != nil {
+				k.Logger(ctx).Error(
+					"Failed to remove mismatch count record for jailed validator",
 					"validator", validator.OperatorAddress,
 					"error", err,
 				)
@@ -643,7 +699,9 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 					sdk.NewAttribute("validator", validator.OperatorAddress),
 					sdk.NewAttribute("consensus_address", sdk.ConsAddress(consAddr).String()),
 					sdk.NewAttribute("mismatch_count", fmt.Sprintf("%d", mismatchCount.TotalCount)),
-					sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", voteExtensionWindowSize)),
+					sdk.NewAttribute("blocks_checked", fmt.Sprintf("%d", k.GetVEWindowSize(ctx))),
+					sdk.NewAttribute("jail_duration_minutes", fmt.Sprintf("%d", jailDurationMinutes)),
+					sdk.NewAttribute("jailed_until", signInfo.JailedUntil.String()),
 				),
 			)
 		}
@@ -656,7 +714,7 @@ func (k Keeper) checkAndJailValidatorsForMismatchedVoteExtensions(ctx context.Co
 // no mismatches in the current window. This should be called periodically to prevent
 // storage bloat.
 func (k Keeper) cleanupOldMismatchCounts(ctx context.Context, currentHeight int64) error {
-	windowStart := currentHeight - voteExtensionWindowSize + 1
+	windowStart := currentHeight - k.GetVEWindowSize(ctx) + 1
 
 	// Iterate through all mismatch count records
 	var toDelete []string
@@ -900,4 +958,33 @@ func sortNoLongerBonded(last validatorsByAddr, ac address.Codec) ([][]byte, erro
 	})
 
 	return noLongerBonded, nil
+}
+
+// DebugValidatorSigningInfo logs the current signing info for a validator for debugging purposes
+func (k Keeper) DebugValidatorSigningInfo(ctx context.Context, consAddr sdk.ConsAddress) {
+	signInfo, err := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+	if err != nil {
+		k.Logger(ctx).Error(
+			"Failed to get signing info for debugging",
+			"consensus_addr", consAddr.String(),
+			"error", err,
+		)
+		return
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentTime := sdkCtx.BlockHeader().Time
+
+	k.Logger(ctx).Info(
+		"DEBUG: Validator signing info",
+		"consensus_addr", consAddr.String(),
+		"current_time", currentTime.String(),
+		"jailed_until", signInfo.JailedUntil.String(),
+		"is_jailed_until_past", currentTime.After(signInfo.JailedUntil),
+		"time_remaining", signInfo.JailedUntil.Sub(currentTime).String(),
+		"start_height", signInfo.StartHeight,
+		"index_offset", signInfo.IndexOffset,
+		"missed_blocks_counter", signInfo.MissedBlocksCounter,
+		"tombstoned", signInfo.Tombstoned,
+	)
 }
