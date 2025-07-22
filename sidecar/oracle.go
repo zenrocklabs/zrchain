@@ -474,11 +474,6 @@ func (o *Oracle) handleTransactionFailure(
 func fetchAndUpdateState[T any](
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
-	targetBlockNumber *big.Int,
-	update *oracleStateUpdate,
-	updateMutex *sync.Mutex,
 	errChan chan<- error,
 	updateMutex *sync.Mutex,
 	fetchFunc func(ctx context.Context) (T, error),
@@ -524,18 +519,17 @@ func (o *Oracle) fetchEthereumContractData(
 	)
 
 	// Fetches pending zenBTC redemptions from the zenBTC controller contract.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		redemptions, err := o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
-		if err != nil {
-			sendError(ctx, errChan, fmt.Errorf("failed to get zenBTC contract state: %w", err))
-			return
-		}
-		updateMutex.Lock()
-		update.redemptions = redemptions
-		updateMutex.Unlock()
-	}()
+	fetchAndUpdateState(
+		ctx, wg, errChan, updateMutex,
+		func(ctx context.Context) ([]api.Redemption, error) {
+			return o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
+		},
+		func(result []api.Redemption, update *oracleStateUpdate) {
+			update.redemptions = result
+		},
+		update,
+		"failed to get zenBTC contract state",
+	)
 }
 
 func (o *Oracle) fetchNetworkData(
