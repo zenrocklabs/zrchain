@@ -5,8 +5,8 @@ zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
 network: "mainnet"
 eth_rpc:
-  devnet: "https://holesky.gateway.tenderly.co/"
-  testnet: "https://holesky.gateway.tenderly.co/"
+  devnet: "https://hoodi.gateway.tenderly.co/"
+  testnet: "https://hoodi.gateway.tenderly.co/"
   mainnet: "https://mainnet.gateway.tenderly.co/"
 # Contract addresses + more are now defined in shared/types.go
 solana_rpc:
