@@ -829,11 +829,12 @@ func (o *Oracle) processSolanaMintEvents(
 			}
 		}
 
-		slog.Info("FINAL UPDATE COMPOSITION",
-			"mergedMintEventsCount", len(mergedMintEvents),
-			"existingPendingEventsCount", len(existingPendingEvents),
-			"finalEventsCount", len(finalEvents),
-			"initialUpdateCount", initialUpdateCount)
+		slog.Info("ACCOUNTING_DEBUG: Mint events final composition",
+			"newlyMergedEvents", len(mergedMintEvents),
+			"existingPendingEvents", len(existingPendingEvents),
+			"finalEventsInUpdate", len(finalEvents),
+			"initialUpdateCount", initialUpdateCount,
+			"netEventsAdded", len(finalEvents)-initialUpdateCount)
 
 		update.SolanaMintEvents = finalEvents
 		update.cleanedSolanaMintEvents = cleanedEvents
@@ -1139,12 +1140,13 @@ func (o *Oracle) buildFinalState(
 		PendingSolanaTxs:        update.pendingTransactions,
 	}
 
-	slog.Info("FINAL STATE CONSTRUCTED",
+	slog.Info("ACCOUNTING_DEBUG: Final state constructed",
 		"finalSolanaMintEvents", len(newState.SolanaMintEvents),
-		"finalCleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
 		"finalSolanaBurnEvents", len(newState.SolanaBurnEvents),
-		"finalCleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
-		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs))
+		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs),
+		"updatePendingTxs", len(update.pendingTransactions),
+		"currentStatePendingTxs", len(currentState.PendingSolanaTxs),
+		"pendingTxsTransition", fmt.Sprintf("current:%d -> update:%d -> final:%d", len(currentState.PendingSolanaTxs), len(update.pendingTransactions), len(newState.PendingSolanaTxs)))
 
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
@@ -1938,11 +1940,12 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 
+	now := time.Now()
 	if update.pendingTransactions == nil {
 		update.pendingTransactions = make(map[string]sidecartypes.PendingTxInfo)
 	}
 
-	now := time.Now()
+	initialPendingCount := len(update.pendingTransactions)
 	if existing, exists := update.pendingTransactions[signature]; exists {
 
 		updated := sidecartypes.PendingTxInfo{
@@ -1982,6 +1985,16 @@ func (o *Oracle) addPendingTransaction(signature string, eventType string, updat
 		slog.Debug("Added new pending transaction",
 			"signature", signature,
 			"eventType", eventType)
+	}
+
+	// Summary log for pending transaction accounting
+	finalPendingCount := len(update.pendingTransactions)
+	if finalPendingCount != initialPendingCount {
+		slog.Info("ACCOUNTING_DEBUG: Pending transaction added",
+			"eventType", eventType,
+			"beforeCount", initialPendingCount,
+			"afterCount", finalPendingCount,
+			"change", finalPendingCount-initialPendingCount)
 	}
 
 	return nil
@@ -2086,11 +2099,17 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 
 			// Log summary if any transactions were processed
 			if pendingStats.totalProcessed > 0 {
-				slog.Info("Pending transactions processed successfully",
+				updateMutex.Lock()
+				currentPendingCount := len(update.pendingTransactions)
+				updateMutex.Unlock()
+
+				slog.Info("ACCOUNTING_DEBUG: Per-tick pending transactions summary",
 					"successfulCount", len(pendingStats.successfulTxs),
 					"totalProcessed", pendingStats.totalProcessed,
-					"stillPending", pendingStats.totalProcessed-pendingStats.successCount,
-					"successRate", fmt.Sprintf("%.1f%%", float64(pendingStats.successCount)/float64(pendingStats.totalProcessed)*100))
+					"successCount", pendingStats.successCount,
+					"remainingPending", currentPendingCount,
+					"successRate", fmt.Sprintf("%.1f%%", float64(pendingStats.successCount)/float64(pendingStats.totalProcessed)*100),
+					"mathCheck", fmt.Sprintf("processed:%d - successful:%d = failed:%d", pendingStats.totalProcessed, pendingStats.successCount, pendingStats.totalProcessed-pendingStats.successCount))
 			}
 
 			// Adaptive sleep based on activity
@@ -2264,11 +2283,18 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 			roundSuccessRate = float64(stats.successCount) / float64(stats.totalProcessed) * 100
 		}
 
-		slog.Debug("Pending transaction processing round completed",
+		// Summary log with accounting validation
+		updateMutex.Lock()
+		currentPendingCount := len(update.pendingTransactions)
+		updateMutex.Unlock()
+
+		slog.Info("ACCOUNTING_DEBUG: Per-tick pending processor round completed",
+			"startedWithPending", len(pendingCopy),
 			"totalProcessed", stats.totalProcessed,
 			"successfullyCompleted", stats.successCount,
-			"stillPending", len(pendingCopy)-stats.successCount,
-			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
+			"remainingPending", currentPendingCount,
+			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate),
+			"accountingCheck", fmt.Sprintf("started:%d - processed:%d + remaining:%d = %d", len(pendingCopy), stats.successCount, currentPendingCount, len(pendingCopy)-stats.successCount+currentPendingCount))
 	}
 
 	return stats
