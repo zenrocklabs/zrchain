@@ -3169,24 +3169,10 @@ func (o *Oracle) processSignatures(
 		addedMissing := 0
 		for _, sigInfo := range signatures {
 			sigStr := sigInfo.Signature.String()
-			// If signature isn't in failed queue and wasn't successful, it's missing - add it
-			if !failedSignatureSet[sigStr] {
-				// Quick check if it was successful (this is expensive but necessary for correctness)
-				wasSuccessful := false
-				for _, event := range allEvents {
-					// This is a heuristic - if we have events, some were successful
-					// The exact matching would require event-to-signature mapping which is complex
-					// For fail-safe purposes, we assume if we have fewer successful events than successful count,
-					// the remaining signatures should be failed
-					break
-				}
-				if !wasSuccessful || addedMissing < missingCount {
-					failedSignatures = append(failedSignatures, sigStr)
-					addedMissing++
-					if addedMissing >= missingCount {
-						break
-					}
-				}
+			// If signature isn't in failed queue, it's missing - add it to failed queue
+			if !failedSignatureSet[sigStr] && addedMissing < missingCount {
+				failedSignatures = append(failedSignatures, sigStr)
+				addedMissing++
 			}
 		}
 
