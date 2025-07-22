@@ -2175,10 +2175,11 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 			// Check if we should remove transactions that exceeded max retries
 			if current.RetryCount >= sidecartypes.PendingTransactionMaxRetries {
 				delete(update.pendingTransactions, signature)
-				slog.Info("Removed pending transaction after max retries",
+				slog.Error("CRITICAL: Removing pending transaction after hitting max retries - this should be rare!",
 					"signature", signature,
 					"eventType", current.EventType,
-					"retryCount", current.RetryCount)
+					"retryCount", current.RetryCount,
+					"maxRetries", sidecartypes.PendingTransactionMaxRetries)
 			}
 			updateMutex.Unlock()
 			continue
@@ -2397,13 +2398,22 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 			if len(events) > 0 {
 				o.addEventsToCurrentState(events, current.EventType)
 				successfulTransactions = append(successfulTransactions, signature)
+				// Remove from pending queue
+				o.removePendingTransactionFromState(signature)
+				successCount++
+				slog.Debug("ACCOUNTING_DEBUG: Persistent processor removed transaction with events",
+					"signature", signature[:8]+"...",
+					"eventType", current.EventType,
+					"eventsCount", len(events))
+			} else {
+				// Transaction was retrieved but produced 0 events - keep it in pending queue for retry
+				slog.Info("ACCOUNTING_DEBUG: Persistent processor keeping transaction with 0 events (will retry)",
+					"signature", signature[:8]+"...",
+					"eventType", current.EventType,
+					"eventsCount", len(events))
+				o.updatePendingTransactionInState(signature, current)
+				// Do NOT remove from pending queue or increment success count
 			}
-
-			// Remove from pending queue
-			o.removePendingTransactionFromState(signature)
-			successCount++
-			slog.Debug("Removed pending transaction after successful processing",
-				"signature", signature)
 		} else {
 			o.updatePendingTransactionInState(signature, current)
 		}
@@ -2416,20 +2426,38 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 			roundSuccessRate = float64(successCount) / float64(processedCount) * 100
 		}
 
-		slog.Debug("Pending transaction processing round completed",
+		// Get actual current pending count for accurate reporting
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		actualPendingCount := len(currentState.PendingSolanaTxs)
+
+		slog.Info("ACCOUNTING_DEBUG: Persistent processor round detailed stats",
+			"startedWithPending", len(pendingCopy),
 			"totalProcessed", processedCount,
 			"successfullyCompleted", successCount,
-			"stillPending", len(pendingCopy)-successCount,
-			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
+			"actualStillPending", actualPendingCount,
+			"expectedRemaining", len(pendingCopy)-successCount,
+			"accountingMismatch", actualPendingCount-(len(pendingCopy)-successCount),
+			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate),
+			"processingRate", fmt.Sprintf("%.1f%%", float64(processedCount)/float64(len(pendingCopy))*100))
 	}
 
 	// Log summary if any transactions were successfully processed
 	if len(successfulTransactions) > 0 {
-		slog.Info("Pending transactions processed successfully",
-			"successfulCount", len(successfulTransactions),
-			"totalProcessed", processedCount,
-			"stillPending", len(pendingCopy)-successCount,
-			"successRate", fmt.Sprintf("%.1f%%", float64(successCount)/float64(processedCount)*100))
+		if processedCount > 0 {
+			// Get actual current pending count instead of wrong math
+			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			actualPendingCount := len(currentState.PendingSolanaTxs)
+
+			slog.Info("ACCOUNTING_DEBUG: Persistent processor completed",
+				"successfulCount", len(successfulTransactions),
+				"totalProcessed", processedCount,
+				"successCount", successCount,
+				"startedWithPending", len(pendingCopy),
+				"actualStillPending", actualPendingCount,
+				"wrongMathWouldBe", len(pendingCopy)-successCount,
+				"successRate", fmt.Sprintf("%.1f%%", float64(successCount)/float64(processedCount)*100),
+				"accountingCheck", fmt.Sprintf("started:%d - successful:%d = should_remain:%d, actual:%d", len(pendingCopy), successCount, len(pendingCopy)-successCount, actualPendingCount))
+		}
 	}
 }
 
