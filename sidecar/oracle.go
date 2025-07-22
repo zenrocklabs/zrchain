@@ -3319,10 +3319,22 @@ func (o *Oracle) getSolanaEvents(
 
 	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
 
+	slog.Info("ACCOUNTING_DEBUG: Starting signature processing",
+		"eventType", eventTypeName,
+		"totalSignaturesToProcess", len(newSignatures),
+		"startingWatermark", lastKnownSig.String()[:8]+"...")
+
 	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
 
 	// Handle failed signatures by adding them to pending queue
 	var pendingStoreErrors []error
+	initialPendingCount := 0
+	updateMutex.Lock()
+	if update.pendingTransactions != nil {
+		initialPendingCount = len(update.pendingTransactions)
+	}
+	updateMutex.Unlock()
+
 	for _, failedSig := range failedSignatures {
 		if pendingErr := o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex); pendingErr != nil {
 			pendingStoreErrors = append(pendingStoreErrors, pendingErr)
@@ -3332,6 +3344,23 @@ func (o *Oracle) getSolanaEvents(
 				"error", pendingErr)
 		}
 	}
+
+	updateMutex.Lock()
+	finalPendingCount := 0
+	if update.pendingTransactions != nil {
+		finalPendingCount = len(update.pendingTransactions)
+	}
+	updateMutex.Unlock()
+
+	slog.Info("ACCOUNTING_DEBUG: Signature processing completed",
+		"eventType", eventTypeName,
+		"totalAttempted", len(newSignatures),
+		"successfulEvents", len(events),
+		"failedSignatures", len(failedSignatures),
+		"pendingBefore", initialPendingCount,
+		"pendingAfter", finalPendingCount,
+		"pendingAdded", finalPendingCount-initialPendingCount,
+		"pendingStoreErrors", len(pendingStoreErrors))
 
 	// If any pending store operations failed, don't advance watermark
 	if len(pendingStoreErrors) > 0 {
