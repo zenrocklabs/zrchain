@@ -2407,7 +2407,7 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 					"eventsCount", len(events))
 			} else {
 				// Transaction was retrieved but produced 0 events - keep it in pending queue for retry
-				slog.Info("ACCOUNTING_DEBUG: Persistent processor keeping transaction with 0 events (will retry)",
+				slog.Debug("ACCOUNTING_DEBUG: Persistent processor keeping transaction with 0 events (will retry)",
 					"signature", signature[:8]+"...",
 					"eventType", current.EventType,
 					"eventsCount", len(events))
