@@ -58,9 +58,9 @@ message QueryMintsRequest {
   string creator = 2; // Optional
   BridgeStatus status = 3; // Optional
   string denom = 4; // Optional
-  uint64 tx_id = 5; // Optional
-  string source_tx_hash = 6; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination = 7;
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+  uint64 tx_id = 6; // Optional
+  string source_tx_hash = 7; // Optional
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.
