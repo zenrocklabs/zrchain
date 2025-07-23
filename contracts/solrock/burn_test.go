@@ -17,7 +17,7 @@ package solrock
 // 	t.SkipNow()
 // 	signer, err := solana.PublicKeyFromBase58("5pVWFKJtfA52zJZ9zeHVSn1CzSZJAMGG82iS8VYwfyV5")
 // 	require.NoError(t, err)
-// 	feeWallet, err := solana.PublicKeyFromBase58("FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd")
+// 	feeWallet, err := solana.PublicKeyFromBase58("5aLz81F9uugwKBmvUY3DcXB1B7G2Yf7tB9zacdJBhZbh")
 // 	require.NoError(t, err)
 // 	value := uint64(50)
 // 	alice := "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"
