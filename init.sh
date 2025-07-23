@@ -184,11 +184,11 @@ if [ "$START_ONLY" = false ]; then
         "bridge_fee": "0.01000000000000000",
         "solana": {
           "signer_key_id": 10,
-          "program_id": "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+          "program_id": "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
           "nonce_authority_key": 11,
           "nonce_account_key": 12,
-          "mint_address": "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-          "fee_wallet": "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+          "mint_address": "4oUDGAy46CmemmozTt6kWT5E3rqkLp2rCvAumpMWqR5T",
+          "fee_wallet": "5aLz81F9uugwKBmvUY3DcXB1B7G2Yf7tB9zacdJBhZbh",
           "fee": 0,
           "btl": 20
         }
