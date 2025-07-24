@@ -128,6 +128,7 @@ func (k *Keeper) gatherOracleDataForVoteExtension(ctx context.Context, height in
 	oracleData.RequestedCompleterNonce = nonces[k.zenBTCKeeper.GetCompleterKeyID(ctx)]
 
 	solNonce, err := k.retrieveSolanaNonces(ctx)
+	k.Logger(ctx).Info("retrieved solana nonces", "solNonce", fmt.Sprintf("%v", solNonce), "error", err)
 	if err != nil {
 		return nil, err
 	}
@@ -906,6 +907,7 @@ func processTransaction[T any](
 	}
 
 	isRequested, err := isNonceRequested(ctx, nonceReqStore, keyID)
+	k.Logger(ctx).Info("checking nonce request state", "keyID", keyID, "isRequested", isRequested, "error", err)
 	if err != nil {
 		k.Logger(ctx).Error("error checking nonce request state", "keyID", keyID, "error", err)
 		return
@@ -1453,11 +1455,13 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
 		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			mints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
+			k.Logger(ctx).Info("pending solROCK mints", "count", len(mints))
 			return mints, err
 		},
 		// txDispatchCallback: Constructs and dispatches a Solana transaction to mint ROCK tokens.
 		// This function is idempotent and handles the preparation of the Solana transaction.
 		func(tx *zentptypes.Bridge) error {
+			k.Logger(ctx).Info("dispatching solROCK mint tx", "id", tx.Id)
 			// Check whether this tx has already been processed, if it has been - we wait for it to complete (or timeout)
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zentp solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
@@ -1541,7 +1545,11 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if err = k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce); err != nil {
 				return fmt.Errorf("LastUsedSolanaNonce.Set: %w", err)
 			}
-			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+
+			k.Logger(ctx).Info("Solana ROCK mint submitted", "id", tx.Id)
+			err = k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
+			k.Logger(ctx).Info("Solana ROCK mint updated", "id", tx.Id, "err", err)
+			return err
 		},
 		// txContinuationCallback: For Solana, this function acts as a status and timeout checker for in-flight transactions.
 		// It is called on every block to check if a pending transaction has been confirmed, has timed out (BTL),
@@ -1553,14 +1561,14 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			// and over again without a reliable confirmation signal.
 
 			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
-				k.Logger(ctx).Debug("Skipping Solana ROCK mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
+				k.Logger(ctx).Info("Skipping Solana ROCK mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
 				return nil
 			}
 
 			// If BlockHeight is 0, this transaction was either just dispatched in the current block
 			// by the txDispatchCallback, or it has been reset for a full retry by prior logic in this callback.
 			if tx.BlockHeight == 0 {
-				k.Logger(ctx).Debug("Solana ROCK Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
+				k.Logger(ctx).Info("Solana ROCK Mint Nonce Update: tx.BlockHeight is 0. No BTL/event check in this invocation.", "tx_id", tx.Id)
 				return nil
 			}
 

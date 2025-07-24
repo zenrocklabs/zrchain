@@ -1638,6 +1638,7 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 	//if len(pendingSolROCKMints) == 0 {
 	solParams := k.zentpKeeper.GetSolanaParams(goCtx)
 	solNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, solParams.NonceAccountKey)
+	k.Logger(goCtx).Info("retrieveSolanaNonces", "solNonceRequested", solNonceRequested, "error", err)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return nil, err

@@ -95,6 +95,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	if err = k.validationKeeper.SetSolanaRequestedNonce(goCtx, k.GetSolanaParams(ctx).NonceAccountKey, true); err != nil {
 		return nil, err
 	}
+	k.Logger().Info("Solana requested nonce set")
 
 	if err = k.validationKeeper.SetSolanaZenTPRequestedAccount(goCtx, req.RecipientAddress, true); err != nil {
 		return nil, err
