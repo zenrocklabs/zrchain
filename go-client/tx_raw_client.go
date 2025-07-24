@@ -71,7 +71,6 @@ func NewRawTxClient(id Identity, chainID string, c *grpc.ClientConn, accountFetc
 		nil,
 		false,
 		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		nil,
 		zrConfig,
 	)
 	client.app = app

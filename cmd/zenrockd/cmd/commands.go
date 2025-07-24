@@ -12,7 +12,6 @@ import (
 
 	cmtcfg "github.com/cometbft/cometbft/config"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,11 +38,6 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"github.com/Zenrock-Foundation/zrchain/v6/app"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	genutilcli "github.com/Zenrock-Foundation/zrchain/v6/x/genutil/client/cli"
@@ -68,8 +62,6 @@ func initAppConfig() (string, interface{}) {
 
 	type CustomAppConfig struct {
 		serverconfig.Config
-
-		Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -92,11 +84,9 @@ func initAppConfig() (string, interface{}) {
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
-		Wasm:   wasmtypes.DefaultWasmConfig(),
 	}
 
-	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		wasmtypes.DefaultConfigTemplate()
+	customAppTemplate := serverconfig.DefaultConfigTemplate
 
 	return customAppTemplate, customAppConfig
 }
@@ -129,8 +119,6 @@ func initRootCmd(
 		},
 		appExport, addModuleInitFlags)
 
-	wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
-
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
@@ -143,7 +131,6 @@ func initRootCmd(
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	wasm.AddModuleInitFlags(startCmd)
 }
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
@@ -212,11 +199,6 @@ func newAppWithConfig(zrConfig *params.ZRConfig) servertypes.AppCreator {
 	) servertypes.Application {
 		baseappOptions := server.DefaultBaseappOptions(appOpts)
 
-		var wasmOpts []wasmkeeper.Option
-		if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-			wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-		}
-
 		skipUpgradeHeights := make(map[int64]bool)
 		for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
 			skipUpgradeHeights[int64(h)] = true
@@ -228,7 +210,6 @@ func newAppWithConfig(zrConfig *params.ZRConfig) servertypes.AppCreator {
 			traceStore,
 			true,
 			appOpts,
-			wasmOpts,
 			zrConfig,
 			baseappOptions...,
 		)
@@ -268,14 +249,12 @@ func appExport(
 		skipUpgradeHeights[int64(h)] = true
 	}
 
-	var emptyWasmOpts []wasmkeeper.Option
 	ZenrockApp = app.NewZenrockApp(
 		logger,
 		db,
 		traceStore,
 		height == -1,
 		appOpts,
-		emptyWasmOpts,
 		nil,
 	)
 

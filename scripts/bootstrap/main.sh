@@ -231,14 +231,6 @@ jq '.app_state.validation.params = {
     }
 }' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
-# Add wasm parameters
-jq '.app_state.wasm.params = {
-    "code_upload_access": {
-        "permission": "Nobody",
-        "addresses": []
-    },
-    "instantiate_default_permission": "Nobody"
-}' "$GENESIS" > "$tmpfile" && mv "$tmpfile" "$GENESIS"
 
 # Collect generated txs
 $NODE_BIN genesis collect-gentxs --home "$ARTIFACTS_DIR" 1>/dev/null 2>&1

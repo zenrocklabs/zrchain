@@ -20,8 +20,6 @@ import (
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-
 	"github.com/Zenrock-Foundation/zrchain/v6/app"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 )
@@ -48,7 +46,6 @@ func NewRootCmd() *cobra.Command {
 		nil,
 		false,
 		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		[]wasmkeeper.Option{},
 		zrConfig,
 	)
 	encodingConfig := EncodingConfig{
