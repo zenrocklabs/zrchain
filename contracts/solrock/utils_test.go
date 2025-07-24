@@ -18,7 +18,7 @@ package solrock
 
 // // var authority, _ = LoadLocalWallet()
 // var authority = solana.NewWallet().PrivateKey
-// var programID = solana.MustPublicKeyFromBase58("DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA")
+// var programID = solana.MustPublicKeyFromBase58("AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg")
 
 // var client = rpc.New(endpoint)
 

@@ -627,25 +627,25 @@ func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Durati
 	)
 }
 
-func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
-	return connectWithRetry(
-		"zrChain",
-		rpcAddress,
-		maxRetries,
-		delay,
-		func(addr string) (*client.QueryClient, error) {
-			client, err := client.NewQueryClient(addr, true)
-			if err != nil {
-				return nil, err
-			}
-			if client == nil {
-				return nil, fmt.Errorf("zrChain query client is nil after creation")
-			}
-			return client, nil
-		},
-		func(client *client.QueryClient, ctx context.Context) error {
-			_, err := client.BondedValidators(ctx, nil)
-			return err
-		},
-	)
-}
+// func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
+// 	return connectWithRetry(
+// 		"zrChain",
+// 		rpcAddress,
+// 		maxRetries,
+// 		delay,
+// 		func(addr string) (*client.QueryClient, error) {
+// 			client, err := client.NewQueryClient(addr, true)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			if client == nil {
+// 				return nil, fmt.Errorf("zrChain query client is nil after creation")
+// 			}
+// 			return client, nil
+// 		},
+// 		func(client *client.QueryClient, ctx context.Context) error {
+// 			_, err := client.BondedValidators(ctx, nil)
+// 			return err
+// 		},
+// 	)
+// }

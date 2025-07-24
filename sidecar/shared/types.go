@@ -108,7 +108,7 @@ var (
 	OracleCacheSize                = 10
 	EthBurnEventsBlockRange        = 1000
 	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit         = 1000
+	SolanaEventScanTxLimit         = 200
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
@@ -134,11 +134,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r4"
+	SidecarVersionName = "salmon_moon_r6"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r3", "salmon_moon_r4"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r3", "salmon_moon_r4", "salmon_moon_r5", "salmon_moon_r6"}
 
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines

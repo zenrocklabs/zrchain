@@ -9,11 +9,11 @@ import (
 
 var DefaultSolanaParams = &Solana{
 	SignerKeyId:       10,
-	ProgramId:         "DXREJumiQhNejXa1b5EFPUxtSYdyJXBdiHeu6uX1ribA",
+	ProgramId:         "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 	NonceAuthorityKey: 11,
 	NonceAccountKey:   12,
-	MintAddress:       "StVNdHNSFK3uVTL5apWHysgze4M8zrsqwjEAH1JM87i",
-	FeeWallet:         "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+	MintAddress:       "4oUDGAy46CmemmozTt6kWT5E3rqkLp2rCvAumpMWqR5T",
+	FeeWallet:         "5aLz81F9uugwKBmvUY3DcXB1B7G2Yf7tB9zacdJBhZbh",
 	Fee:               0,
 	Btl:               20,
 	// MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
