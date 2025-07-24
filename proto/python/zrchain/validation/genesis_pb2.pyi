@@ -2,7 +2,6 @@ from gogoproto import gogo_pb2 as _gogo_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
 from zrchain.validation import solana_pb2 as _solana_pb2
 from zrchain.validation import tx_pb2 as _tx_pb2
-from zrchain.validation import asset_data_pb2 as _asset_data_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from amino import amino_pb2 as _amino_pb2

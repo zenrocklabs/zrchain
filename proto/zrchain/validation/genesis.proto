@@ -7,7 +7,6 @@ import "gogoproto/gogo.proto";
 import "zrchain/validation/staking.proto";
 import "zrchain/validation/solana.proto";
 import "zrchain/validation/tx.proto";
-import "zrchain/validation/asset_data.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";

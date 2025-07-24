@@ -290,24 +290,14 @@ func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.Backfil
 }
 
 func (k Keeper) GetAssetPrices(ctx context.Context) (map[types.Asset]math.LegacyDec, error) {
-	storeIterator, err := k.AssetPrices.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
 	assetPrices := make(map[types.Asset]math.LegacyDec)
-	for _, key := range keys {
-		value, err := k.AssetPrices.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+
+	err := k.AssetPrices.Walk(ctx, nil, func(key types.Asset, value math.LegacyDec) (stop bool, err error) {
 		assetPrices[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return assetPrices, nil
@@ -338,95 +328,58 @@ func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 }
 
 func (k Keeper) GetSlashEvents(ctx context.Context) (map[uint64]types.SlashEvent, error) {
-	storeIterator, err := k.SlashEvents.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
+	slashEvents := make(map[uint64]types.SlashEvent)
 
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var slashEvents map[uint64]types.SlashEvent
-	for _, key := range keys {
-		value, err := k.SlashEvents.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+	err := k.SlashEvents.Walk(ctx, nil, func(key uint64, value types.SlashEvent) (stop bool, err error) {
 		slashEvents[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return slashEvents, nil
 }
 
 func (k Keeper) GetValidationInfos(ctx context.Context) (map[int64]types.ValidationInfo, error) {
-	storeIterator, err := k.ValidationInfos.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
 	validationInfos := make(map[int64]types.ValidationInfo)
-	for _, key := range keys {
-		value, err := k.ValidationInfos.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+
+	err := k.ValidationInfos.Walk(ctx, nil, func(key int64, value types.ValidationInfo) (stop bool, err error) {
 		validationInfos[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return validationInfos, nil
 }
 
 func (k Keeper) GetBtcBlockHeaders(ctx context.Context) (map[int64]sidecar.BTCBlockHeader, error) {
-	storeIterator, err := k.BtcBlockHeaders.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
 	btcBlockHeaders := make(map[int64]sidecar.BTCBlockHeader)
-	for _, key := range keys {
-		value, err := k.BtcBlockHeaders.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+
+	err := k.BtcBlockHeaders.Walk(ctx, nil, func(key int64, value sidecar.BTCBlockHeader) (stop bool, err error) {
 		btcBlockHeaders[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return btcBlockHeaders, nil
 }
 
 func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) (map[uint64]types.SolanaNonce, error) {
-	storeIterator, err := k.LastUsedSolanaNonce.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
 	lastUsedSolanaNonce := make(map[uint64]types.SolanaNonce)
-	for _, key := range keys {
-		value, err := k.LastUsedSolanaNonce.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+
+	err := k.LastUsedSolanaNonce.Walk(ctx, nil, func(key uint64, value types.SolanaNonce) (stop bool, err error) {
 		lastUsedSolanaNonce[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return lastUsedSolanaNonce, nil
 }
 
@@ -444,25 +397,16 @@ func (k Keeper) GetBackfillRequests(ctx context.Context) (types.BackfillRequests
 }
 
 func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) (map[uint64]zenbtctypes.NonceData, error) {
-	storeIterator, err := k.LastUsedEthereumNonce.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
 	lastUsedEthereumNonce := make(map[uint64]zenbtctypes.NonceData)
-	for _, key := range keys {
-		value, err := k.LastUsedEthereumNonce.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+
+	err := k.LastUsedEthereumNonce.Walk(ctx, nil, func(key uint64, value zenbtctypes.NonceData) (stop bool, err error) {
 		lastUsedEthereumNonce[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return lastUsedEthereumNonce, nil
 }
 
@@ -481,22 +425,12 @@ func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) (zenbt
 func (k Keeper) GetAvsRewardsPool(ctx context.Context) (map[string]math.Int, error) {
 	avsRewardsPool := make(map[string]math.Int)
 
-	storeIterator, err := k.AVSRewardsPool.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range keys {
-		value, err := k.AVSRewardsPool.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
+	err := k.AVSRewardsPool.Walk(ctx, nil, func(key string, value math.Int) (stop bool, err error) {
 		avsRewardsPool[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return avsRewardsPool, nil
