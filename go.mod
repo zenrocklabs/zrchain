@@ -30,11 +30,8 @@ require (
 	cosmossdk.io/x/circuit v0.1.1
 	cosmossdk.io/x/evidence v0.1.1
 	cosmossdk.io/x/feegrant v0.1.1
-	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/tx v0.13.7
 	cosmossdk.io/x/upgrade v0.1.4
-	github.com/CosmWasm/wasmd v0.53.2
-	github.com/CosmWasm/wasmvm/v2 v2.1.5
 	github.com/Layr-Labs/eigensdk-go v0.1.12
 	github.com/beevik/ntp v1.4.3
 	github.com/btcsuite/btcd v0.24.2
@@ -63,7 +60,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/hashicorp/go-metrics v0.5.3
 	github.com/lightninglabs/neutrino v0.16.0
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/smartcontractkit/chainlink/v2 v2.17.0
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
@@ -213,7 +210,6 @@ require (
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.19.1 // indirect
-	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
@@ -296,7 +292,6 @@ require (
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
-	github.com/shamaton/msgpack/v2 v2.2.2 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
