@@ -55,31 +55,38 @@ message GenesisState {
   bool exported = 8;
 
   // HVParams defines the hybrid validation parameters at genesis.
-  HVParams HVParams = 9;
+  HVParams HVParams = 9
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // asset_prices defines the asset prices at genesis.
-  repeated AssetData asset_prices = 10;
+  map<int32, bytes> asset_prices = 10
+      [ (cosmos_proto.scalar) = "cosmos.Dec",
+        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+        (gogoproto.nullable) = false,
+        (amino.dont_omitempty) = true ];
 
   // last_valid_ve_height defines the last valid ve height at genesis.
-  int64 last_valid_ve_height = 11;
+  int64 last_valid_ve_height = 11
+      [ (amino.dont_omitempty) = true ];
 
   // slash_events defines the slash events at genesis.
-  repeated SlashEvent slash_events = 12
+  map<uint64, SlashEvent> slash_events = 12
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // slash_event_count defines the slash event count at genesis.
-  uint64 slash_event_count = 13;
+  uint64 slash_event_count = 13
+      [ (amino.dont_omitempty) = true ];
 
   // validation_infos defines the validation infos at genesis.
-  repeated ValidationInfo validation_infos = 14
+  map<int64, ValidationInfo> validation_infos = 14
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // btc_block_headers defines the Bitcoin block headers at genesis.
-  repeated api.BTCBlockHeader btc_block_headers = 15
+  map<int64, api.BTCBlockHeader> btc_block_headers = 15
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // last_used_solana_nonce defines the last used Solana nonce at genesis.
-  repeated SolanaNonce last_used_solana_nonce = 16
+  map<uint64, SolanaNonce> last_used_solana_nonce = 16
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // backfill_requests defines the backfill requests at genesis.
@@ -87,40 +94,61 @@ message GenesisState {
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // last_used_ethereum_nonce defines the last used Ethereum nonce at genesis.
-  repeated zenbtc.NonceData last_used_ethereum_nonce = 18
+  map<uint64, zenbtc.NonceData> last_used_ethereum_nonce = 18
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // requested_historical_bitcoin_headers defines the requested historical Bitcoin headers at genesis.
-  repeated zenbtc.RequestedBitcoinHeaders requested_historical_bitcoin_headers = 19
+   zenbtc.RequestedBitcoinHeaders requested_historical_bitcoin_headers = 19
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // avs_rewards_pool defines the AVS rewards pool at genesis.
-  repeated string avs_rewards_pool = 20
-      [ (amino.dont_omitempty) = true ];
+  map<string, bytes> avs_rewards_pool = 20
+      [  (cosmos_proto.scalar) = "cosmos.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
+      (gogoproto.nullable) = false,
+      (amino.dont_omitempty) = true ];
   
   // ethereum_nonce_requested defines the Ethereum nonce requested at genesis.
-  repeated uint64 ethereum_nonce_requested = 21
+  map<uint64, bool> ethereum_nonce_requested = 21
       [ (amino.dont_omitempty) = true ];
 
   // solana_nonce_requested defines the Solana nonce requested at genesis.
-  repeated uint64 solana_nonce_requested = 22
+  map<uint64, bool> solana_nonce_requested = 22
       [ (amino.dont_omitempty) = true ];
 
   // solana_zentp_accounts_requested defines the Solana Zentp accounts requested at genesis.
-  repeated string solana_zentp_accounts_requested = 23
+  map<string, bool> solana_zentp_accounts_requested = 23
       [ (amino.dont_omitempty) = true ];
 
   // solana_accounts_requested defines the Solana accounts requested at genesis.
-  repeated string solana_accounts_requested = 24
+  map<string, bool> solana_accounts_requested = 24
       [ (amino.dont_omitempty) = true ];
 
   // validator_mismatch_counts defines the validator mismatch counts at genesis.
-  repeated ValidatorMismatchCount validator_mismatch_counts = 25
+  map<string, ValidatorMismatchCount> validator_mismatch_counts = 25
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 
   // last_completed_zentp_mint_id defines the last completed Zentp mint id at genesis.
   uint64 last_completed_zentp_mint_id = 26
       [ (amino.dont_omitempty) = true ];
+
+  // avs_delegations defines the AVS delegations at genesis.
+  map<string, bytes> avs_delegations = 27
+    [ (cosmos_proto.scalar) = "cosmos.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
+      (gogoproto.nullable) = false,
+      (amino.dont_omitempty) = true ];
+
+  // validator_delegations defines the validator delegations at genesis.
+  map<string, bytes> validator_delegations = 28
+      [ (cosmos_proto.scalar) = "cosmos.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
+      (gogoproto.nullable) = false,
+      (amino.dont_omitempty) = true ];
+
+  // latest_btc_header_height defines the latest Bitcoin header height at genesis.
+  int64 latest_btc_header_height = 29
+      [ (amino.dont_omitempty) = true ];    
 }
 
 // LastValidatorPower required for validator set update logic.

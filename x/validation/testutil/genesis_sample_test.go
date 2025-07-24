@@ -39,5 +39,6 @@ func TestTestGenesis(t *testing.T) {
 	require.Len(t, genesis.AssetPrices, 3)
 	require.Len(t, genesis.AvsRewardsPool, 1)
 	require.Len(t, genesis.SolanaNonceRequested, 2)
-	require.Equal(t, uint64(12), genesis.SolanaNonceRequested[0])
+	require.True(t, genesis.SolanaNonceRequested[123])
+	require.False(t, genesis.SolanaNonceRequested[1234])
 }
