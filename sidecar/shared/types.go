@@ -108,7 +108,7 @@ var (
 	OracleCacheSize                = 10
 	EthBurnEventsBlockRange        = 1000
 	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit         = 440
+	SolanaEventScanTxLimit         = 200
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
