@@ -49,10 +49,11 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 
 	// 3. Execute the function
 	var wg sync.WaitGroup
-	update := &sidecartypes.OracleState{
-		SolanaBurnEvents:        make([]api.BurnEvent, 0),
-		CleanedSolanaBurnEvents: make(map[string]bool),
-		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	update := &oracleStateUpdate{
+		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
+		solanaBurnEvents:        make([]api.BurnEvent, 0),
+		cleanedSolanaBurnEvents: make(map[string]bool),
+		pendingTransactions:     make(map[string]sidecartypes.PendingTxInfo),
 	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
@@ -66,11 +67,11 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	}
 
 	// 4. Assert the results
-	require.NotNil(t, update.SolanaBurnEvents)
-	require.GreaterOrEqual(t, len(update.SolanaBurnEvents), 1, "Should contain at least the pre-existing event")
+	require.NotNil(t, update.solanaBurnEvents)
+	require.GreaterOrEqual(t, len(update.solanaBurnEvents), 1, "Should contain at least the pre-existing event")
 
 	foundPreExisting := false
-	for _, event := range update.SolanaBurnEvents {
+	for _, event := range update.solanaBurnEvents {
 		if event.TxID == "pre-existing-tx-for-test-123" {
 			foundPreExisting = true
 			break
@@ -148,10 +149,11 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 
 	// 5. Execute the function under test
 	var wg sync.WaitGroup
-	update := &sidecartypes.OracleState{
-		SolanaBurnEvents:        make([]api.BurnEvent, 0),
-		CleanedSolanaBurnEvents: make(map[string]bool),
-		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	update := &oracleStateUpdate{
+		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
+		solanaBurnEvents:        make([]api.BurnEvent, 0),
+		cleanedSolanaBurnEvents: make(map[string]bool),
+		pendingTransactions:     make(map[string]sidecartypes.PendingTxInfo),
 	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
@@ -165,12 +167,12 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 	}
 
 	// 6. Assert the results
-	require.NotNil(t, update.SolanaBurnEvents)
-	require.Len(t, update.SolanaBurnEvents, 2, "Should contain both the pre-existing and the new event")
+	require.NotNil(t, update.solanaBurnEvents)
+	require.Len(t, update.solanaBurnEvents, 2, "Should contain both the pre-existing and the new event")
 
 	foundPreExisting := false
 	foundNew := false
-	for _, event := range update.SolanaBurnEvents {
+	for _, event := range update.solanaBurnEvents {
 		if event.TxID == "pre-existing-tx-unit-test" {
 			foundPreExisting = true
 		}
@@ -187,12 +189,6 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	oracle := &Oracle{}
 	oracle.Config.Network = sidecartypes.NetworkTestnet
 	oracle.DebugMode = false
-
-	// Initialize the oracle's current state
-	initialState := &sidecartypes.OracleState{
-		PendingSolanaTxs: make(map[string]sidecartypes.PendingTxInfo),
-	}
-	oracle.currentState.Store(initialState)
 
 	// Initialize the solanaRateLimiter channel to prevent blocking
 	oracle.solanaRateLimiter = make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls)
@@ -241,8 +237,8 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	}
 
 	// Run the test
-	update := &sidecartypes.OracleState{
-		PendingSolanaTxs: make(map[string]sidecartypes.PendingTxInfo),
+	update := &oracleStateUpdate{
+		pendingTransactions: make(map[string]sidecartypes.PendingTxInfo),
 	}
 	var updateMutex sync.Mutex
 	events, _, err := oracle.getSolanaEvents(context.Background(), "11111111111111111111111111111111", solana.Signature{}, "test event", processTransaction, update, &updateMutex)
@@ -251,12 +247,11 @@ func TestGetSolanaEvents_Fallback(t *testing.T) {
 	require.NoError(t, err)
 	// Since both batch and individual requests fail, no events should be processed
 	require.Len(t, events, 0, "Expected no events since both batch and individual requests failed")
-	// But the failed transaction should be added to pending queue for retry in oracle's state
-	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
-	require.Len(t, currentState.PendingSolanaTxs, 1, "Failed transaction should be added to pending queue")
+	// But the failed transaction should be added to pending queue for retry
+	require.Len(t, update.pendingTransactions, 1, "Failed transaction should be added to pending queue")
 
 	// Check the pending transaction details
-	for sig, info := range currentState.PendingSolanaTxs {
+	for sig, info := range update.pendingTransactions {
 		require.Equal(t, "test event", info.EventType)
 		require.Equal(t, 1, info.RetryCount)
 		require.NotEmpty(t, sig)
