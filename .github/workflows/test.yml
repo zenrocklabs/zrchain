@@ -86,10 +86,23 @@ jobs:
           ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
           docker compose logs -f sidecar zrchain > /tmp/logs &
-      - name: Wait for 90 seconds
-        run: sleep 90
+      - name: Wait for 10 seconds
+        run: sleep 10
       - name: Run e2e tests
         run: ginkgo -v tests/e2e
+      - name: Zrchain report
+        run: |
+          echo "ZenBTC mints:"
+          docker exec zrchain /zenrockd q zenbtc pending-mint-transactions || :
+          echo "ZenBTC burn-events:"
+          docker exec zrchain /zenrockd q zenbtc burn-events || :
+          echo "ZenBTC redemptions:"
+          docker exec zrchain /zenrockd q zenbtc redemptions || :
+          echo "ZenTP mints":"
+          docker exec zrchain /zenrockd q zentp mints || :
+          echo "ZenTP burns":"
+          docker exec zrchain /zenrockd q zentp burns || :
+
       - name: Stop Docker Compose stack
         if: always()
         run: |
