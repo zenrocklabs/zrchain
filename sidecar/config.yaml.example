@@ -4,6 +4,7 @@ state_file: "cache.json"
 zrchain_rpc: "localhost:9090"
 operator_config: "eigen_operator_config.yaml"
 network: "mainnet"
+e2e_tests_ticker_interval: 60
 eth_rpc:
   devnet: "https://holesky.gateway.tenderly.co/"
   testnet: "https://holesky.gateway.tenderly.co/"

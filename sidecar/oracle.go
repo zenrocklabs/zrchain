@@ -161,7 +161,15 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
-	mainLoopTickerIntervalDuration := sidecartypes.MainLoopTickerInterval
+	// Allow customization of ticker interval in regnet network
+	mainLoopTickerIntervalDuration := func() time.Duration {
+		configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
+		if o.Config.Network == "regnet" {
+			return configValue
+		}
+		return sidecartypes.MainLoopTickerInterval
+	}()
+
 	var tickCancel context.CancelFunc = func() {}
 	defer tickCancel()
 
