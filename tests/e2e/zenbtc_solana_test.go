@@ -400,7 +400,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 	// Mine 100 blocks so the balance moves to spendable
 	It("mine bitcoin blocks", func() {
-		time.Sleep(3 * time.Second)
+		time.Sleep(10 * time.Second)
 		_, err := env.Docker.Exec(
 			"bitcoin",
 			[]string{"/app/mine.sh", "100", "bcrt1qa8fk4zz3j8revg0frgvtt6dkrnw9snhan49cx8"},
