@@ -26,7 +26,6 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.validation import staking_pb2 as zrchain_dot_validation_dot_staking__pb2
 from zrchain.validation import solana_pb2 as zrchain_dot_validation_dot_solana__pb2
 from zrchain.validation import tx_pb2 as zrchain_dot_validation_dot_tx__pb2
-from zrchain.validation import asset_data_pb2 as zrchain_dot_validation_dot_asset__data__pb2
 from zrchain.validation import hybrid_validation_pb2 as zrchain_dot_validation_dot_hybrid__validation__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 from amino import amino_pb2 as amino_dot_amino__pb2
@@ -34,7 +33,7 @@ from api import sidecar_service_pb2 as api_dot_sidecar__service__pb2
 from zrchain.zenbtc import mint_pb2 as zrchain_dot_zenbtc_dot_mint__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n zrchain/validation/genesis.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a zrchain/validation/staking.proto\x1a\x1fzrchain/validation/solana.proto\x1a\x1bzrchain/validation/tx.proto\x1a#zrchain/validation/asset_data.proto\x1a*zrchain/validation/hybrid_validation.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\x1a\x19\x61pi/sidecar_service.proto\x1a\x19zrchain/zenbtc/mint.proto\"\xea\x0f\n\x0cGenesisState\x12=\n\x06params\x18\x01 \x01(\x0b\x32\x1a.zrchain.validation.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12Z\n\x10last_total_power\x18\x02 \x01(\x0c\x42\x30\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0elastTotalPower\x12\x65\n\x15last_validator_powers\x18\x03 \x03(\x0b\x32&.zrchain.validation.LastValidatorPowerB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastValidatorPowers\x12J\n\nvalidators\x18\x04 \x03(\x0b\x32\x1f.zrchain.validation.ValidatorHVB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nvalidators\x12K\n\x0b\x64\x65legations\x18\x05 \x03(\x0b\x32\x1e.zrchain.validation.DelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0b\x64\x65legations\x12g\n\x15unbonding_delegations\x18\x06 \x03(\x0b\x32\'.zrchain.validation.UnbondingDelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x14unbondingDelegations\x12Q\n\rredelegations\x18\x07 \x03(\x0b\x32 .zrchain.validation.RedelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\rredelegations\x12\x1a\n\x08\x65xported\x18\x08 \x01(\x08R\x08\x65xported\x12\x38\n\x08HVParams\x18\t \x01(\x0b\x32\x1c.zrchain.validation.HVParamsR\x08HVParams\x12@\n\x0c\x61sset_prices\x18\n \x03(\x0b\x32\x1d.zrchain.validation.AssetDataR\x0b\x61ssetPrices\x12/\n\x14last_valid_ve_height\x18\x0b \x01(\x03R\x11lastValidVeHeight\x12L\n\x0cslash_events\x18\x0c \x03(\x0b\x32\x1e.zrchain.validation.SlashEventB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0bslashEvents\x12*\n\x11slash_event_count\x18\r \x01(\x04R\x0fslashEventCount\x12X\n\x10validation_infos\x18\x0e \x03(\x0b\x32\".zrchain.validation.ValidationInfoB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0fvalidationInfos\x12J\n\x11\x62tc_block_headers\x18\x0f \x03(\x0b\x32\x13.api.BTCBlockHeaderB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62tcBlockHeaders\x12_\n\x16last_used_solana_nonce\x18\x10 \x03(\x0b\x32\x1f.zrchain.validation.SolanaNonceB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastUsedSolanaNonce\x12Z\n\x10\x62\x61\x63kfill_request\x18\x11 \x01(\x0b\x32$.zrchain.validation.BackfillRequestsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62\x61\x63kfillRequest\x12]\n\x18last_used_ethereum_nonce\x18\x12 \x03(\x0b\x32\x19.zrchain.zenbtc.NonceDataB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x15lastUsedEthereumNonce\x12\x83\x01\n$requested_historical_bitcoin_headers\x18\x13 \x03(\x0b\x32\'.zrchain.zenbtc.RequestedBitcoinHeadersB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R!requestedHistoricalBitcoinHeaders\x12/\n\x10\x61vs_rewards_pool\x18\x14 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x0e\x61vsRewardsPool\x12?\n\x18\x65thereum_nonce_requested\x18\x15 \x03(\x04\x42\x05\xa8\xe7\xb0*\x01R\x16\x65thereumNonceRequested\x12;\n\x16solana_nonce_requested\x18\x16 \x03(\x04\x42\x05\xa8\xe7\xb0*\x01R\x14solanaNonceRequested\x12L\n\x1fsolana_zentp_accounts_requested\x18\x17 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x1csolanaZentpAccountsRequested\x12\x41\n\x19solana_accounts_requested\x18\x18 \x03(\tB\x05\xa8\xe7\xb0*\x01R\x17solanaAccountsRequested\x12q\n\x19validator_mismatch_counts\x18\x19 \x03(\x0b\x32*.zrchain.validation.ValidatorMismatchCountB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x17validatorMismatchCounts\x12\x45\n\x1clast_completed_zentp_mint_id\x18\x1a \x01(\x04\x42\x05\xa8\xe7\xb0*\x01R\x18lastCompletedZentpMintId\"h\n\x12LastValidatorPower\x12\x32\n\x07\x61\x64\x64ress\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x07\x61\x64\x64ress\x12\x14\n\x05power\x18\x02 \x01(\x03R\x05power:\x08\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x42=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n zrchain/validation/genesis.proto\x12\x12zrchain.validation\x1a\x14gogoproto/gogo.proto\x1a zrchain/validation/staking.proto\x1a\x1fzrchain/validation/solana.proto\x1a\x1bzrchain/validation/tx.proto\x1a*zrchain/validation/hybrid_validation.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\x1a\x19\x61pi/sidecar_service.proto\x1a\x19zrchain/zenbtc/mint.proto\"\xe6 \n\x0cGenesisState\x12=\n\x06params\x18\x01 \x01(\x0b\x32\x1a.zrchain.validation.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12Z\n\x10last_total_power\x18\x02 \x01(\x0c\x42\x30\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0elastTotalPower\x12\x65\n\x15last_validator_powers\x18\x03 \x03(\x0b\x32&.zrchain.validation.LastValidatorPowerB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastValidatorPowers\x12J\n\nvalidators\x18\x04 \x03(\x0b\x32\x1f.zrchain.validation.ValidatorHVB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nvalidators\x12K\n\x0b\x64\x65legations\x18\x05 \x03(\x0b\x32\x1e.zrchain.validation.DelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0b\x64\x65legations\x12g\n\x15unbonding_delegations\x18\x06 \x03(\x0b\x32\'.zrchain.validation.UnbondingDelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x14unbondingDelegations\x12Q\n\rredelegations\x18\x07 \x03(\x0b\x32 .zrchain.validation.RedelegationB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\rredelegations\x12\x1a\n\x08\x65xported\x18\x08 \x01(\x08R\x08\x65xported\x12\x43\n\x08HVParams\x18\t \x01(\x0b\x32\x1c.zrchain.validation.HVParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x08HVParams\x12\x8c\x01\n\x0c\x61sset_prices\x18\n \x03(\x0b\x32\x31.zrchain.validation.GenesisState.AssetPricesEntryB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x0b\x61ssetPrices\x12\x36\n\x14last_valid_ve_height\x18\x0b \x01(\x03\x42\x05\xa8\xe7\xb0*\x01R\x11lastValidVeHeight\x12_\n\x0cslash_events\x18\x0c \x03(\x0b\x32\x31.zrchain.validation.GenesisState.SlashEventsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0bslashEvents\x12\x31\n\x11slash_event_count\x18\r \x01(\x04\x42\x05\xa8\xe7\xb0*\x01R\x0fslashEventCount\x12k\n\x10validation_infos\x18\x0e \x03(\x0b\x32\x35.zrchain.validation.GenesisState.ValidationInfosEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0fvalidationInfos\x12l\n\x11\x62tc_block_headers\x18\x0f \x03(\x0b\x32\x35.zrchain.validation.GenesisState.BtcBlockHeadersEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62tcBlockHeaders\x12y\n\x16last_used_solana_nonce\x18\x10 \x03(\x0b\x32\x39.zrchain.validation.GenesisState.LastUsedSolanaNonceEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x13lastUsedSolanaNonce\x12Z\n\x10\x62\x61\x63kfill_request\x18\x11 \x01(\x0b\x32$.zrchain.validation.BackfillRequestsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0f\x62\x61\x63kfillRequest\x12\x7f\n\x18last_used_ethereum_nonce\x18\x12 \x03(\x0b\x32;.zrchain.validation.GenesisState.LastUsedEthereumNonceEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x15lastUsedEthereumNonce\x12\x83\x01\n$requested_historical_bitcoin_headers\x18\x13 \x01(\x0b\x32\'.zrchain.zenbtc.RequestedBitcoinHeadersB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R!requestedHistoricalBitcoinHeaders\x12\x90\x01\n\x10\x61vs_rewards_pool\x18\x14 \x03(\x0b\x32\x34.zrchain.validation.GenesisState.AvsRewardsPoolEntryB0\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0e\x61vsRewardsPool\x12}\n\x18\x65thereum_nonce_requested\x18\x15 \x03(\x0b\x32<.zrchain.validation.GenesisState.EthereumNonceRequestedEntryB\x05\xa8\xe7\xb0*\x01R\x16\x65thereumNonceRequested\x12w\n\x16solana_nonce_requested\x18\x16 \x03(\x0b\x32:.zrchain.validation.GenesisState.SolanaNonceRequestedEntryB\x05\xa8\xe7\xb0*\x01R\x14solanaNonceRequested\x12\x90\x01\n\x1fsolana_zentp_accounts_requested\x18\x17 \x03(\x0b\x32\x42.zrchain.validation.GenesisState.SolanaZentpAccountsRequestedEntryB\x05\xa8\xe7\xb0*\x01R\x1csolanaZentpAccountsRequested\x12\x80\x01\n\x19solana_accounts_requested\x18\x18 \x03(\x0b\x32=.zrchain.validation.GenesisState.SolanaAccountsRequestedEntryB\x05\xa8\xe7\xb0*\x01R\x17solanaAccountsRequested\x12\x84\x01\n\x19validator_mismatch_counts\x18\x19 \x03(\x0b\x32=.zrchain.validation.GenesisState.ValidatorMismatchCountsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x17validatorMismatchCounts\x12\x45\n\x1clast_completed_zentp_mint_id\x18\x1a \x01(\x04\x42\x05\xa8\xe7\xb0*\x01R\x18lastCompletedZentpMintId\x12\x8f\x01\n\x0f\x61vs_delegations\x18\x1b \x03(\x0b\x32\x34.zrchain.validation.GenesisState.AvsDelegationsEntryB0\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x0e\x61vsDelegations\x12\xa1\x01\n\x15validator_delegations\x18\x1c \x03(\x0b\x32:.zrchain.validation.GenesisState.ValidatorDelegationsEntryB0\xc8\xde\x1f\x00\xda\xde\x1f\x15\x63osmossdk.io/math.Int\xd2\xb4-\ncosmos.Int\xa8\xe7\xb0*\x01R\x14validatorDelegations\x12>\n\x18latest_btc_header_height\x18\x1d \x01(\x03\x42\x05\xa8\xe7\xb0*\x01R\x15latestBtcHeaderHeight\x1a>\n\x10\x41ssetPricesEntry\x12\x10\n\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value:\x02\x38\x01\x1a^\n\x10SlashEventsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x34\n\x05value\x18\x02 \x01(\x0b\x32\x1e.zrchain.validation.SlashEventR\x05value:\x02\x38\x01\x1a\x66\n\x14ValidationInfosEntry\x12\x10\n\x03key\x18\x01 \x01(\x03R\x03key\x12\x38\n\x05value\x18\x02 \x01(\x0b\x32\".zrchain.validation.ValidationInfoR\x05value:\x02\x38\x01\x1aW\n\x14\x42tcBlockHeadersEntry\x12\x10\n\x03key\x18\x01 \x01(\x03R\x03key\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x13.api.BTCBlockHeaderR\x05value:\x02\x38\x01\x1ag\n\x18LastUsedSolanaNonceEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x35\n\x05value\x18\x02 \x01(\x0b\x32\x1f.zrchain.validation.SolanaNonceR\x05value:\x02\x38\x01\x1a\x63\n\x1aLastUsedEthereumNonceEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12/\n\x05value\x18\x02 \x01(\x0b\x32\x19.zrchain.zenbtc.NonceDataR\x05value:\x02\x38\x01\x1a\x41\n\x13\x41vsRewardsPoolEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value:\x02\x38\x01\x1aI\n\x1b\x45thereumNonceRequestedEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x14\n\x05value\x18\x02 \x01(\x08R\x05value:\x02\x38\x01\x1aG\n\x19SolanaNonceRequestedEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x14\n\x05value\x18\x02 \x01(\x08R\x05value:\x02\x38\x01\x1aO\n!SolanaZentpAccountsRequestedEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x08R\x05value:\x02\x38\x01\x1aJ\n\x1cSolanaAccountsRequestedEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x08R\x05value:\x02\x38\x01\x1av\n\x1cValidatorMismatchCountsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12@\n\x05value\x18\x02 \x01(\x0b\x32*.zrchain.validation.ValidatorMismatchCountR\x05value:\x02\x38\x01\x1a\x41\n\x13\x41vsDelegationsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value:\x02\x38\x01\x1aG\n\x19ValidatorDelegationsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value:\x02\x38\x01\"h\n\x12LastValidatorPower\x12\x32\n\x07\x61\x64\x64ress\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\x07\x61\x64\x64ress\x12\x14\n\x05power\x18\x02 \x01(\x03R\x05power:\x08\x88\xa0\x1f\x00\xe8\xa0\x1f\x00\x42=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -42,6 +41,34 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.validation.genesis_
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/types'
+  _globals['_GENESISSTATE_ASSETPRICESENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_ASSETPRICESENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_SLASHEVENTSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_SLASHEVENTSENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_VALIDATIONINFOSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_VALIDATIONINFOSENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_BTCBLOCKHEADERSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_BTCBLOCKHEADERSENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_LASTUSEDSOLANANONCEENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_LASTUSEDSOLANANONCEENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_LASTUSEDETHEREUMNONCEENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_LASTUSEDETHEREUMNONCEENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_AVSREWARDSPOOLENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_AVSREWARDSPOOLENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_ETHEREUMNONCEREQUESTEDENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_ETHEREUMNONCEREQUESTEDENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_SOLANANONCEREQUESTEDENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_SOLANANONCEREQUESTEDENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_SOLANAZENTPACCOUNTSREQUESTEDENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_SOLANAZENTPACCOUNTSREQUESTEDENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_SOLANAACCOUNTSREQUESTEDENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_SOLANAACCOUNTSREQUESTEDENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_VALIDATORMISMATCHCOUNTSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_VALIDATORMISMATCHCOUNTSENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_AVSDELEGATIONSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_AVSDELEGATIONSENTRY']._serialized_options = b'8\001'
+  _globals['_GENESISSTATE_VALIDATORDELEGATIONSENTRY']._loaded_options = None
+  _globals['_GENESISSTATE_VALIDATORDELEGATIONSENTRY']._serialized_options = b'8\001'
   _globals['_GENESISSTATE'].fields_by_name['params']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['last_total_power']._loaded_options = None
@@ -56,8 +83,16 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['unbonding_delegations']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['redelegations']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['redelegations']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['HVParams']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['HVParams']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['asset_prices']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['asset_prices']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['last_valid_ve_height']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['last_valid_ve_height']._serialized_options = b'\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['slash_events']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['slash_events']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['slash_event_count']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['slash_event_count']._serialized_options = b'\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['validation_infos']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['validation_infos']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['btc_block_headers']._loaded_options = None
@@ -71,7 +106,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['requested_historical_bitcoin_headers']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['requested_historical_bitcoin_headers']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['avs_rewards_pool']._loaded_options = None
-  _globals['_GENESISSTATE'].fields_by_name['avs_rewards_pool']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['avs_rewards_pool']._serialized_options = b'\310\336\037\000\332\336\037\025cosmossdk.io/math.Int\322\264-\ncosmos.Int\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['ethereum_nonce_requested']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['ethereum_nonce_requested']._serialized_options = b'\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['solana_nonce_requested']._loaded_options = None
@@ -84,12 +119,46 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GENESISSTATE'].fields_by_name['validator_mismatch_counts']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_GENESISSTATE'].fields_by_name['last_completed_zentp_mint_id']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['last_completed_zentp_mint_id']._serialized_options = b'\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['avs_delegations']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['avs_delegations']._serialized_options = b'\310\336\037\000\332\336\037\025cosmossdk.io/math.Int\322\264-\ncosmos.Int\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['validator_delegations']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['validator_delegations']._serialized_options = b'\310\336\037\000\332\336\037\025cosmossdk.io/math.Int\322\264-\ncosmos.Int\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['latest_btc_header_height']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['latest_btc_header_height']._serialized_options = b'\250\347\260*\001'
   _globals['_LASTVALIDATORPOWER'].fields_by_name['address']._loaded_options = None
   _globals['_LASTVALIDATORPOWER'].fields_by_name['address']._serialized_options = b'\322\264-\024cosmos.AddressString'
   _globals['_LASTVALIDATORPOWER']._loaded_options = None
   _globals['_LASTVALIDATORPOWER']._serialized_options = b'\210\240\037\000\350\240\037\000'
-  _globals['_GENESISSTATE']._serialized_start=356
-  _globals['_GENESISSTATE']._serialized_end=2382
-  _globals['_LASTVALIDATORPOWER']._serialized_start=2384
-  _globals['_LASTVALIDATORPOWER']._serialized_end=2488
+  _globals['_GENESISSTATE']._serialized_start=319
+  _globals['_GENESISSTATE']._serialized_end=4517
+  _globals['_GENESISSTATE_ASSETPRICESENTRY']._serialized_start=3328
+  _globals['_GENESISSTATE_ASSETPRICESENTRY']._serialized_end=3390
+  _globals['_GENESISSTATE_SLASHEVENTSENTRY']._serialized_start=3392
+  _globals['_GENESISSTATE_SLASHEVENTSENTRY']._serialized_end=3486
+  _globals['_GENESISSTATE_VALIDATIONINFOSENTRY']._serialized_start=3488
+  _globals['_GENESISSTATE_VALIDATIONINFOSENTRY']._serialized_end=3590
+  _globals['_GENESISSTATE_BTCBLOCKHEADERSENTRY']._serialized_start=3592
+  _globals['_GENESISSTATE_BTCBLOCKHEADERSENTRY']._serialized_end=3679
+  _globals['_GENESISSTATE_LASTUSEDSOLANANONCEENTRY']._serialized_start=3681
+  _globals['_GENESISSTATE_LASTUSEDSOLANANONCEENTRY']._serialized_end=3784
+  _globals['_GENESISSTATE_LASTUSEDETHEREUMNONCEENTRY']._serialized_start=3786
+  _globals['_GENESISSTATE_LASTUSEDETHEREUMNONCEENTRY']._serialized_end=3885
+  _globals['_GENESISSTATE_AVSREWARDSPOOLENTRY']._serialized_start=3887
+  _globals['_GENESISSTATE_AVSREWARDSPOOLENTRY']._serialized_end=3952
+  _globals['_GENESISSTATE_ETHEREUMNONCEREQUESTEDENTRY']._serialized_start=3954
+  _globals['_GENESISSTATE_ETHEREUMNONCEREQUESTEDENTRY']._serialized_end=4027
+  _globals['_GENESISSTATE_SOLANANONCEREQUESTEDENTRY']._serialized_start=4029
+  _globals['_GENESISSTATE_SOLANANONCEREQUESTEDENTRY']._serialized_end=4100
+  _globals['_GENESISSTATE_SOLANAZENTPACCOUNTSREQUESTEDENTRY']._serialized_start=4102
+  _globals['_GENESISSTATE_SOLANAZENTPACCOUNTSREQUESTEDENTRY']._serialized_end=4181
+  _globals['_GENESISSTATE_SOLANAACCOUNTSREQUESTEDENTRY']._serialized_start=4183
+  _globals['_GENESISSTATE_SOLANAACCOUNTSREQUESTEDENTRY']._serialized_end=4257
+  _globals['_GENESISSTATE_VALIDATORMISMATCHCOUNTSENTRY']._serialized_start=4259
+  _globals['_GENESISSTATE_VALIDATORMISMATCHCOUNTSENTRY']._serialized_end=4377
+  _globals['_GENESISSTATE_AVSDELEGATIONSENTRY']._serialized_start=4379
+  _globals['_GENESISSTATE_AVSDELEGATIONSENTRY']._serialized_end=4444
+  _globals['_GENESISSTATE_VALIDATORDELEGATIONSENTRY']._serialized_start=4446
+  _globals['_GENESISSTATE_VALIDATORDELEGATIONSENTRY']._serialized_end=4517
+  _globals['_LASTVALIDATORPOWER']._serialized_start=4519
+  _globals['_LASTVALIDATORPOWER']._serialized_end=4623
 # @@protoc_insertion_point(module_scope)

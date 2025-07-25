@@ -84,34 +84,35 @@ func TestGenesis() *validationtypes.GenesisState {
 	}
 
 	// Create asset prices with actual data
-	assetPrices := []*validationtypes.AssetData{
-		{
-			Asset:     validationtypes.Asset_ROCK,
-			PriceUSD:  math.LegacyZeroDec(),
-			Precision: 0,
-		},
-		{
-			Asset:     validationtypes.Asset_BTC,
-			PriceUSD:  math.LegacyZeroDec(),
-			Precision: 0,
-		},
-		{
-			Asset:     validationtypes.Asset_ETH,
-			PriceUSD:  math.LegacyZeroDec(),
-			Precision: 0,
-		},
+	assetPrices := map[int32]math.LegacyDec{
+		int32(validationtypes.Asset_ROCK): math.LegacyNewDec(1),
+		int32(validationtypes.Asset_BTC):  math.LegacyNewDec(50000),
+		int32(validationtypes.Asset_ETH):  math.LegacyNewDec(3000),
 	}
 
 	// Create validation infos with actual data
-	validationInfos := make([]validationtypes.ValidationInfo, 3)
-	for i := 0; i < 3; i++ {
-		validationInfos[i] = validationtypes.ValidationInfo{
+	validationInfos := map[int64]validationtypes.ValidationInfo{
+		1: {
 			NonVotingValidators: nil,
 			MismatchedVoteExtensions: []string{
 				"c4848a0c008c40400d5fe4f0d546fa61f97f7d05",
 			},
-			BlockHeight: uint64(i),
-		}
+			BlockHeight: 1,
+		},
+		2: {
+			NonVotingValidators: nil,
+			MismatchedVoteExtensions: []string{
+				"c4848a0c008c40400d5fe4f0d546fa61f97f7d05",
+			},
+			BlockHeight: 2,
+		},
+		3: {
+			NonVotingValidators: nil,
+			MismatchedVoteExtensions: []string{
+				"c4848a0c008c40400d5fe4f0d546fa61f97f7d05",
+			},
+			BlockHeight: 3,
+		},
 	}
 
 	// Create backfill requests with actual data
@@ -120,19 +121,34 @@ func TestGenesis() *validationtypes.GenesisState {
 	}
 
 	// Create requested historical bitcoin headers with actual data
-	requestedHistoricalBitcoinHeaders := []zenbtc.RequestedBitcoinHeaders{
-		{
-			Heights: nil,
-		},
-	}
+	var requestedHistoricalBitcoinHeaders zenbtc.RequestedBitcoinHeaders
 
 	// Create AVS rewards pool with actual data
-	avsRewardsPool := []string{
-		"zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6",
+	avsRewardsPool := map[string]math.Int{
+		"zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6": math.NewInt(1000000000000000000),
 	}
 
 	// Create Solana nonce requested with actual data
-	solanaNonceRequested := []uint64{12, 123}
+	solanaNonceRequested := map[uint64]bool{
+		123:  true,
+		1234: false,
+	}
+
+	// Create Solana Zentp accounts requested with actual data
+	solanaZentpAccountsRequested := map[string]bool{
+		"4ReFHGQo53Uaf6XyFho9xt4yGG5pZ8FRNFXsqA5ftzE7": true,
+	}
+
+	// Create Solana accounts requested with actual data
+	solanaAccountsRequested := map[string]bool{
+		"zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq": true,
+	}
+
+	// Create Ethereum nonce requested with actual data
+	ethereumNonceRequested := map[uint64]bool{
+		12:  true,
+		123: true,
+	}
 
 	return &validationtypes.GenesisState{
 		Params:         validationtypes.DefaultParams(),
@@ -149,7 +165,7 @@ func TestGenesis() *validationtypes.GenesisState {
 		UnbondingDelegations:              nil,
 		Redelegations:                     nil,
 		Exported:                          true,
-		HVParams:                          &hvParams,
+		HVParams:                          hvParams,
 		AssetPrices:                       assetPrices,
 		LastValidVeHeight:                 0,
 		SlashEvents:                       nil,
@@ -161,10 +177,10 @@ func TestGenesis() *validationtypes.GenesisState {
 		LastUsedEthereumNonce:             nil,
 		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
 		AvsRewardsPool:                    avsRewardsPool,
-		EthereumNonceRequested:            []uint64{},
+		EthereumNonceRequested:            ethereumNonceRequested,
 		SolanaNonceRequested:              solanaNonceRequested,
-		SolanaZentpAccountsRequested:      []string{},
-		SolanaAccountsRequested:           []string{},
+		SolanaZentpAccountsRequested:      solanaZentpAccountsRequested,
+		SolanaAccountsRequested:           solanaAccountsRequested,
 		LastCompletedZentpMintId:          0,
 	}
 }

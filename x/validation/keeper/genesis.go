@@ -36,10 +36,7 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	}
 
 	hvParams := data.HVParams
-	if hvParams == nil {
-		hvParams = types.DefaultHVParams(ctx)
-	}
-	if err := k.HVParams.Set(ctx, *hvParams); err != nil {
+	if err := k.HVParams.Set(ctx, hvParams); err != nil {
 		panic(err)
 	}
 
@@ -183,8 +180,8 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", notBondedBalance, notBondedCoins))
 	}
 
-	for _, assetPrice := range data.AssetPrices {
-		if err := k.AssetPrices.Set(ctx, assetPrice.Asset, assetPrice.PriceUSD); err != nil {
+	for asset, price := range data.AssetPrices {
+		if err := k.AssetPrices.Set(ctx, types.Asset(asset), price); err != nil {
 			panic(err)
 		}
 	}
@@ -198,12 +195,12 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	// TODO: check if this is correct
 	k.SetSolanaRequestedNonce(ctx, k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey, true)
 
-	for _, solanaZenTPAccount := range data.SolanaZentpAccountsRequested {
-		k.SetSolanaZenTPRequestedAccount(ctx, solanaZenTPAccount, true)
+	for account, requested := range data.SolanaZentpAccountsRequested {
+		k.SetSolanaZenTPRequestedAccount(ctx, account, requested)
 	}
 
-	for _, solanaAccount := range data.SolanaAccountsRequested {
-		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
+	for account, requested := range data.SolanaAccountsRequested {
+		k.SolanaAccountsRequested.Set(ctx, account, requested)
 	}
 
 	k.BackfillRequests.Set(ctx, data.BackfillRequest)
@@ -212,54 +209,44 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		k.EthereumNonceRequested.Set(ctx, ethereumNonce.Nonce, true)
 	}
 
-	for _, requestedHistoricalBitcoinHeader := range data.RequestedHistoricalBitcoinHeaders {
-		k.RequestedHistoricalBitcoinHeaders.Set(ctx, requestedHistoricalBitcoinHeader)
+	k.RequestedHistoricalBitcoinHeaders.Set(ctx, data.RequestedHistoricalBitcoinHeaders)
+
+	for address, amount := range data.AvsRewardsPool {
+		k.AVSRewardsPool.Set(ctx, address, amount)
 	}
 
-	// TODO: check if this is correct
-	for _, avsRewardPool := range data.AvsRewardsPool {
-		amount, err := k.getCurrentRewards(sdk.UnwrapSDKContext(ctx), avsRewardPool)
-		if err != nil {
-			panic(err)
-		}
-		k.AVSRewardsPool.Set(ctx, avsRewardPool, amount)
+	for solanaNonce, requested := range data.SolanaNonceRequested {
+		k.SolanaNonceRequested.Set(ctx, solanaNonce, requested)
 	}
 
-	for _, solanaNonce := range data.SolanaNonceRequested {
-		k.SolanaNonceRequested.Set(ctx, solanaNonce, true)
+	for ethereumNonce, requested := range data.EthereumNonceRequested {
+		k.EthereumNonceRequested.Set(ctx, ethereumNonce, requested)
 	}
 
-	for _, ethereumNonce := range data.EthereumNonceRequested {
-		k.EthereumNonceRequested.Set(ctx, ethereumNonce, true)
+	for account, requested := range data.SolanaZentpAccountsRequested {
+		k.SetSolanaZenTPRequestedAccount(ctx, account, requested)
 	}
 
-	for _, solanaZenTPAccount := range data.SolanaZentpAccountsRequested {
-		k.SetSolanaZenTPRequestedAccount(ctx, solanaZenTPAccount, true)
-	}
-
-	for _, solanaAccount := range data.SolanaAccountsRequested {
-		k.SolanaAccountsRequested.Set(ctx, solanaAccount, true)
+	for solanaAccount, requested := range data.SolanaAccountsRequested {
+		k.SolanaAccountsRequested.Set(ctx, solanaAccount, requested)
 	}
 
 	for _, validatorMismatchCount := range data.ValidatorMismatchCounts {
 		k.ValidatorMismatchCounts.Set(ctx, validatorMismatchCount.ValidatorAddress, validatorMismatchCount)
 	}
 
-	// TODO: check if this is correct
-	var slashEventCount uint64
-	for _, slashEvent := range data.SlashEvents {
-		k.SlashEvents.Set(ctx, uint64(slashEvent.BlockHeight), slashEvent)
-		slashEventCount++
+	for blockHeight, slashEvent := range data.SlashEvents {
+		k.SlashEvents.Set(ctx, blockHeight, slashEvent)
 	}
 
-	err := k.SlashEventCount.Set(ctx, slashEventCount)
+	err := k.SlashEventCount.Set(ctx, uint64(len(data.SlashEvents)))
 	if err != nil {
 		panic(err)
 	}
 
 	// TODO: check if this is correct
-	for _, validationInfo := range data.ValidationInfos {
-		k.ValidationInfos.Set(ctx, int64(validationInfo.BlockHeight), validationInfo)
+	for blockHeight, validationInfo := range data.ValidationInfos {
+		k.ValidationInfos.Set(ctx, blockHeight, validationInfo)
 	}
 
 	if data.LastValidVeHeight > 0 {
@@ -377,9 +364,15 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
-	assetPrices, err := k.GetAssetPrices(ctx)
+	assetPricesMap, err := k.GetAssetPrices(ctx)
 	if err != nil {
 		panic(err)
+	}
+
+	// Convert Asset enum keys to int32 for proto compatibility
+	assetPrices := make(map[int32]math.LegacyDec)
+	for asset, price := range assetPricesMap {
+		assetPrices[int32(asset)] = price
 	}
 
 	lastValidVeHeight, err := k.GetLastValidVeHeight(ctx)
@@ -387,10 +380,12 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
-	slashEvents, slashEventCount, err := k.GetSlashEvents(ctx)
+	slashEvents, err := k.GetSlashEvents(ctx)
 	if err != nil {
 		panic(err)
 	}
+
+	slashEventCount := uint64(len(slashEvents))
 
 	validationInfos, err := k.GetValidationInfos(ctx)
 	if err != nil {
@@ -466,7 +461,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		UnbondingDelegations:              unbondingDelegations,
 		Redelegations:                     redelegations,
 		Exported:                          true,
-		HVParams:                          &hvParams,
+		HVParams:                          hvParams,
 		AssetPrices:                       assetPrices,
 		LastValidVeHeight:                 lastValidVeHeight,
 		SlashEvents:                       slashEvents,
