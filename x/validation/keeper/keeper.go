@@ -330,6 +330,7 @@ func (k Keeper) GetLastValidVeHeight(ctx context.Context) (int64, error) {
 
 func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error) {
 	lastCompletedZentpMintID, err := k.LastCompletedZentpMintID.Get(ctx)
+	k.Logger(ctx).Info("GetLastCompletedZentpMintID", "lastCompletedZentpMintID", lastCompletedZentpMintID, "err", err)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			// Return 0 when the collection is empty
