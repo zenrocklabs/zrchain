@@ -78,24 +78,6 @@ type CachedTxResult struct {
 	ExpiresAt time.Time
 }
 
-type oracleStateUpdate struct {
-	eigenDelegations        map[string]map[string]*big.Int
-	redemptions             []api.Redemption
-	suggestedTip            *big.Int
-	estimatedGas            uint64
-	ethBurnEvents           []api.BurnEvent
-	cleanedEthBurnEvents    map[string]bool
-	solanaBurnEvents        []api.BurnEvent
-	cleanedSolanaBurnEvents map[string]bool
-	ROCKUSDPrice            math.LegacyDec
-	BTCUSDPrice             math.LegacyDec
-	ETHUSDPrice             math.LegacyDec
-	SolanaMintEvents        []api.SolanaMintEvent
-	cleanedSolanaMintEvents map[string]bool
-	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
-	pendingTransactions     map[string]sidecartypes.PendingTxInfo
-}
-
 type PriceData struct {
 	CurrencyPair     string `json:"currency_pair"`
 	Last             string `json:"last"`

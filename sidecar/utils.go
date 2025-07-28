@@ -7,18 +7,15 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"math/big"
 	"os"
 	"path/filepath"
 	"slices"
 	"time"
 
-	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/ethereum/go-ethereum/ethclient"
-	solana "github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/gookit/color"
@@ -365,35 +362,6 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 	return mergedEvents
 }
 
-func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
-	// Copy pending transactions from current state to preserve them across ticks
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
-	pendingTransactions := make(map[string]sidecartypes.PendingTxInfo)
-	if currentState.PendingSolanaTxs != nil {
-		for k, v := range currentState.PendingSolanaTxs {
-			pendingTransactions[k] = v
-		}
-	}
-
-	return &oracleStateUpdate{
-		eigenDelegations:        make(map[string]map[string]*big.Int),
-		suggestedTip:            big.NewInt(0),
-		estimatedGas:            0,
-		ROCKUSDPrice:            math.LegacyZeroDec(),
-		BTCUSDPrice:             math.LegacyZeroDec(),
-		ETHUSDPrice:             math.LegacyZeroDec(),
-		ethBurnEvents:           make([]api.BurnEvent, 0),
-		cleanedEthBurnEvents:    make(map[string]bool),
-		solanaBurnEvents:        make([]api.BurnEvent, 0),
-		cleanedSolanaBurnEvents: make(map[string]bool),
-		redemptions:             make([]api.Redemption, 0),
-		SolanaMintEvents:        make([]api.SolanaMintEvent, 0),
-		cleanedSolanaMintEvents: make(map[string]bool),
-		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
-		pendingTransactions:     pendingTransactions,
-	}
-}
-
 // resetStateForVersion ensures the state cache is wiped exactly once after upgrading to a
 // brand-new SidecarVersionName. It keeps a companion meta file (stateFile + ".meta") that
 // stores the last version the cache was written with. If the meta file is missing or the
@@ -627,25 +595,25 @@ func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Durati
 	)
 }
 
-// func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
-// 	return connectWithRetry(
-// 		"zrChain",
-// 		rpcAddress,
-// 		maxRetries,
-// 		delay,
-// 		func(addr string) (*client.QueryClient, error) {
-// 			client, err := client.NewQueryClient(addr, true)
-// 			if err != nil {
-// 				return nil, err
-// 			}
-// 			if client == nil {
-// 				return nil, fmt.Errorf("zrChain query client is nil after creation")
-// 			}
-// 			return client, nil
-// 		},
-// 		func(client *client.QueryClient, ctx context.Context) error {
-// 			_, err := client.BondedValidators(ctx, nil)
-// 			return err
-// 		},
-// 	)
-// }
+func connectZrChainWithRetry(rpcAddress string, maxRetries int, delay time.Duration) (*client.QueryClient, error) {
+	return connectWithRetry(
+		"zrChain",
+		rpcAddress,
+		maxRetries,
+		delay,
+		func(addr string) (*client.QueryClient, error) {
+			client, err := client.NewQueryClient(addr, true)
+			if err != nil {
+				return nil, err
+			}
+			if client == nil {
+				return nil, fmt.Errorf("zrChain query client is nil after creation")
+			}
+			return client, nil
+		},
+		func(client *client.QueryClient, ctx context.Context) error {
+			_, err := client.BondedValidators(ctx, nil)
+			return err
+		},
+	)
+}

@@ -134,17 +134,6 @@ func createMockHeader(blockNumber uint64, baseFee *big.Int) *ethtypes.Header {
 	}
 }
 
-func TestInitializeStateUpdate(t *testing.T) {
-	oracle := createTestOracle()
-	update := oracle.initializeStateUpdate()
-	assert.NotNil(t, update)
-	assert.NotNil(t, update.latestSolanaSigs)
-	assert.NotNil(t, update.SolanaMintEvents)
-	assert.NotNil(t, update.solanaBurnEvents)
-	assert.NotNil(t, update.eigenDelegations)
-	assert.NotNil(t, update.redemptions)
-	assert.NotNil(t, update.ethBurnEvents)
-}
 
 func TestApplyFallbacks(t *testing.T) {
 	oracle := createTestOracle()
@@ -152,20 +141,22 @@ func TestApplyFallbacks(t *testing.T) {
 		ROCKUSDPrice: math.LegacyNewDec(1),
 		BTCUSDPrice:  math.LegacyNewDec(40000),
 		ETHUSDPrice:  math.LegacyNewDec(2000),
+		EthGasLimit:  50000,
 	}
 	oracle.currentState.Store(&currentState)
-	update := &oracleStateUpdate{
-		suggestedTip: nil,
+	update := &sidecartypes.OracleState{
+		EthTipCap:    0,
 		ROCKUSDPrice: math.LegacyDec{},
 		BTCUSDPrice:  math.LegacyDec{},
 		ETHUSDPrice:  math.LegacyDec{},
+		EthGasLimit:  0,
 	}
 	oracle.applyFallbacks(update, &currentState)
-	assert.NotNil(t, update.suggestedTip)
-	assert.Equal(t, big.NewInt(0), update.suggestedTip)
+	assert.Equal(t, uint64(0), update.EthTipCap)
 	assert.True(t, update.ROCKUSDPrice.Equal(currentState.ROCKUSDPrice))
 	assert.True(t, update.BTCUSDPrice.Equal(currentState.BTCUSDPrice))
 	assert.True(t, update.ETHUSDPrice.Equal(currentState.ETHUSDPrice))
+	assert.Equal(t, uint64(50000), update.EthGasLimit)
 }
 
 func TestBuildFinalState(t *testing.T) {
@@ -179,18 +170,21 @@ func TestBuildFinalState(t *testing.T) {
 		CleanedSolanaMintEvents: make(map[string]bool),
 	}
 	oracle.currentState.Store(&currentState)
-	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		suggestedTip:     big.NewInt(1500000000),
-		estimatedGas:     231000,
-		ethBurnEvents:    []api.BurnEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		ROCKUSDPrice:     math.LegacyNewDec(1),
-		BTCUSDPrice:      math.LegacyNewDec(50000),
-		ETHUSDPrice:      math.LegacyNewDec(3000),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
+	update := &sidecartypes.OracleState{
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		Redemptions:             []api.Redemption{},
+		EthTipCap:               1500000000,
+		EthGasLimit:             231000,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(1),
+		BTCUSDPrice:             math.LegacyNewDec(50000),
+		ETHUSDPrice:             math.LegacyNewDec(3000),
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	targetBlockNumber := big.NewInt(995)
@@ -384,28 +378,25 @@ func BenchmarkCreateMockHeader(b *testing.B) {
 	}
 }
 
-func BenchmarkInitializeStateUpdate(b *testing.B) {
-	oracle := createTestOracle()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		oracle.initializeStateUpdate()
-	}
-}
+// BenchmarkInitializeStateUpdate removed - function no longer exists after atomic state refactoring
 
 func TestBuildFinalState_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
-	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		suggestedTip:     big.NewInt(1500000000),
-		estimatedGas:     231000,
-		ethBurnEvents:    []api.BurnEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		ROCKUSDPrice:     math.LegacyNewDec(1),
-		BTCUSDPrice:      math.LegacyNewDec(50000),
-		ETHUSDPrice:      math.LegacyNewDec(3000),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
+	update := &sidecartypes.OracleState{
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		Redemptions:             []api.Redemption{},
+		EthTipCap:               1500000000,
+		EthGasLimit:             231000,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(1),
+		BTCUSDPrice:             math.LegacyNewDec(50000),
+		ETHUSDPrice:             math.LegacyNewDec(3000),
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	targetBlockNumber := big.NewInt(995)
@@ -416,18 +407,21 @@ func TestBuildFinalState_NilCurrentState(t *testing.T) {
 
 func TestBuildFinalState_NilHeader(t *testing.T) {
 	oracle := createTestOracle()
-	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		suggestedTip:     big.NewInt(1500000000),
-		estimatedGas:     231000,
-		ethBurnEvents:    []api.BurnEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		ROCKUSDPrice:     math.LegacyNewDec(1),
-		BTCUSDPrice:      math.LegacyNewDec(50000),
-		ETHUSDPrice:      math.LegacyNewDec(3000),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
+	update := &sidecartypes.OracleState{
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		Redemptions:             []api.Redemption{},
+		EthTipCap:               1500000000,
+		EthGasLimit:             231000,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(1),
+		BTCUSDPrice:             math.LegacyNewDec(50000),
+		ETHUSDPrice:             math.LegacyNewDec(3000),
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 	targetBlockNumber := big.NewInt(995)
 	assert.Panics(t, func() {
@@ -446,18 +440,21 @@ func TestBuildFinalState_NilUpdate(t *testing.T) {
 
 func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 	oracle := createTestOracle()
-	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
-		redemptions:      []api.Redemption{},
-		suggestedTip:     big.NewInt(1500000000),
-		estimatedGas:     231000,
-		ethBurnEvents:    []api.BurnEvent{},
-		solanaBurnEvents: []api.BurnEvent{},
-		ROCKUSDPrice:     math.LegacyNewDec(1),
-		BTCUSDPrice:      math.LegacyNewDec(50000),
-		ETHUSDPrice:      math.LegacyNewDec(3000),
-		SolanaMintEvents: []api.SolanaMintEvent{},
-		latestSolanaSigs: make(map[sidecartypes.SolanaEventType]sol.Signature),
+	update := &sidecartypes.OracleState{
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		Redemptions:             []api.Redemption{},
+		EthTipCap:               1500000000,
+		EthGasLimit:             231000,
+		EthBurnEvents:           []api.BurnEvent{},
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        []api.BurnEvent{},
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		ROCKUSDPrice:            math.LegacyNewDec(1),
+		BTCUSDPrice:             math.LegacyNewDec(50000),
+		ETHUSDPrice:             math.LegacyNewDec(3000),
+		SolanaMintEvents:        []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 	header := createMockHeader(1000, big.NewInt(20000000000))
 	assert.Panics(t, func() {
@@ -467,11 +464,12 @@ func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 
 func TestApplyFallbacks_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
-	update := &oracleStateUpdate{
-		suggestedTip: nil,
+	update := &sidecartypes.OracleState{
+		EthTipCap:    0,
 		ROCKUSDPrice: math.LegacyDec{},
 		BTCUSDPrice:  math.LegacyDec{},
 		ETHUSDPrice:  math.LegacyDec{},
+		EthGasLimit:  0,
 	}
 	assert.Panics(t, func() {
 		oracle.applyFallbacks(update, nil)
@@ -484,6 +482,7 @@ func TestApplyFallbacks_NilUpdate(t *testing.T) {
 		ROCKUSDPrice: math.LegacyNewDec(1),
 		BTCUSDPrice:  math.LegacyNewDec(40000),
 		ETHUSDPrice:  math.LegacyNewDec(2000),
+		EthGasLimit:  50000,
 	}
 	oracle.currentState.Store(&currentState)
 	assert.Panics(t, func() {
@@ -1173,7 +1172,11 @@ func TestFetchSolanaBurnEventsComprehensive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			oracle := tt.setupOracle()
 
-			update := oracle.initializeStateUpdate()
+			update := &sidecartypes.OracleState{
+				SolanaBurnEvents:        make([]api.BurnEvent, 0),
+				CleanedSolanaBurnEvents: make(map[string]bool),
+				PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+			}
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2) // Buffer for both goroutines
 			var wg sync.WaitGroup
@@ -1212,7 +1215,11 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 		go func(index int) {
 			defer wg.Done()
 
-			update := oracle.initializeStateUpdate()
+			update := &sidecartypes.OracleState{
+				SolanaBurnEvents:        make([]api.BurnEvent, 0),
+				CleanedSolanaBurnEvents: make(map[string]bool),
+				PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+			}
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
@@ -1247,7 +1254,11 @@ func TestFetchSolanaBurnEventsWatermarkConsistency(t *testing.T) {
 	t.Skip("Skipping slow watermark consistency test with 10+ second timeouts")
 	oracle := createTestOracle()
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1301,7 +1312,11 @@ func TestFetchSolanaBurnEventsErrorHandling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			oracle := tt.setupOracle()
 
-			update := oracle.initializeStateUpdate()
+			update := &sidecartypes.OracleState{
+				SolanaBurnEvents:        make([]api.BurnEvent, 0),
+				CleanedSolanaBurnEvents: make(map[string]bool),
+				PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+			}
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup
@@ -1341,7 +1356,11 @@ func TestFetchSolanaBurnEventsEventDeduplication(t *testing.T) {
 		},
 	})
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1376,7 +1395,11 @@ func TestFetchSolanaBurnEventsCleanedEventHandling(t *testing.T) {
 		},
 	})
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1399,7 +1422,11 @@ func TestFetchSolanaBurnEventsBatchProcessing(t *testing.T) {
 	t.Skip("Skipping slow batch processing test with 10+ second timeouts")
 	oracle := createTestOracle()
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1422,7 +1449,11 @@ func TestFetchSolanaBurnEventsSignatureOrdering(t *testing.T) {
 	t.Skip("Skipping slow signature ordering test with 10+ second timeouts")
 	oracle := createTestOracle()
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1455,7 +1486,11 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 		go func(index int) {
 			defer wg.Done()
 
-			update := oracle.initializeStateUpdate()
+			update := &sidecartypes.OracleState{
+				SolanaBurnEvents:        make([]api.BurnEvent, 0),
+				CleanedSolanaBurnEvents: make(map[string]bool),
+				PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+			}
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
 			var innerWg sync.WaitGroup
@@ -1489,7 +1524,11 @@ func TestFetchSolanaBurnEventsMemoryLeaks(t *testing.T) {
 	totalErrors := 0
 
 	for i := 0; i < numIterations; i++ {
-		update := oracle.initializeStateUpdate()
+		update := &sidecartypes.OracleState{
+			SolanaBurnEvents:        make([]api.BurnEvent, 0),
+			CleanedSolanaBurnEvents: make(map[string]bool),
+			PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+		}
 		var updateMutex sync.Mutex
 		errChan := make(chan error, 2)
 		var wg sync.WaitGroup
@@ -1519,7 +1558,11 @@ func TestFetchSolanaBurnEventsTimeoutHandling(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	update := oracle.initializeStateUpdate()
+	update := &sidecartypes.OracleState{
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
 	var updateMutex sync.Mutex
 	errChan := make(chan error, 2)
 	var wg sync.WaitGroup
@@ -1584,7 +1627,11 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			oracle := tt.setupOracle()
 
-			update := oracle.initializeStateUpdate()
+			update := &sidecartypes.OracleState{
+				SolanaBurnEvents:        make([]api.BurnEvent, 0),
+				CleanedSolanaBurnEvents: make(map[string]bool),
+				PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+			}
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
 			var wg sync.WaitGroup

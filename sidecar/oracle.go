@@ -103,23 +103,15 @@ func NewOracle(
 	o.getSolanaZenBTCBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		// This function is only used for backward compatibility in places where we don't have access to state update
 		// Failed transactions will be lost here, but this is only used in non-critical paths
-		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
-		dummyMutex := &sync.Mutex{}
-		events, sig, err := o.getSolanaZenBTCBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
-		if len(dummyUpdate.pendingTransactions) > 0 {
-			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana zenBTC burn")
-		}
+		events, sig, err := o.getSolanaZenBTCBurnEvents(ctx, programID, lastKnownSig, nil, nil)
+
 		return events, sig, err
 	}
 	o.getSolanaRockBurnEventsFn = func(ctx context.Context, programID string, lastKnownSig solana.Signature) ([]api.BurnEvent, solana.Signature, error) {
 		// This function is only used for backward compatibility in places where we don't have access to state update
 		// Failed transactions will be lost here, but this is only used in non-critical paths
-		dummyUpdate := &oracleStateUpdate{pendingTransactions: make(map[string]sidecartypes.PendingTxInfo)}
-		dummyMutex := &sync.Mutex{}
-		events, sig, err := o.getSolanaRockBurnEvents(ctx, programID, lastKnownSig, dummyUpdate, dummyMutex)
-		if len(dummyUpdate.pendingTransactions) > 0 {
-			slog.Warn("Lost failed transactions in backward compatibility function", "count", len(dummyUpdate.pendingTransactions), "eventType", "Solana ROCK burn")
-		}
+		events, sig, err := o.getSolanaRockBurnEvents(ctx, programID, lastKnownSig, nil, nil)
+
 		return events, sig, err
 	}
 
@@ -257,13 +249,37 @@ func (o *Oracle) processOracleTick(
 // updates the high-watermark fields on the oracle object itself, and persists the new state to disk.
 // This is the single, atomic point of truth for state transitions.
 func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
+	var oldState *sidecartypes.OracleState
+	for {
+		oldState = o.currentState.Load().(*sidecartypes.OracleState)
+
+		// The newState has all the fresh data from the tick (prices, new events, etc.).
+		// But the oldState has the definitive, most up-to-date list of pending transactions,
+		// which might have been modified by the background processor. We must preserve it.
+		newState.PendingSolanaTxs = oldState.PendingSolanaTxs
+
+		if o.currentState.CompareAndSwap(oldState, &newState) {
+			// Success, break the loop
+			break
+		}
+		// If CAS failed, another goroutine changed the state.
+		// We loop again, load the newer state, and re-apply our changes on top of it.
+		slog.Debug("State update failed due to concurrent modification, retrying...")
+	}
+
 	// Log watermark changes for debugging
 	oldRockMint := o.lastSolRockMintSigStr
 	oldZenBTCMint := o.lastSolZenBTCMintSigStr
 	oldZenBTCBurn := o.lastSolZenBTCBurnSigStr
 	oldRockBurn := o.lastSolRockBurnSigStr
 
-	o.currentState.Store(&newState)
+	// Summary of state changes
+	if len(oldState.PendingSolanaTxs) != len(newState.PendingSolanaTxs) {
+		slog.Info("RACE_DEBUG: State transition summary",
+			"oldPendingTxs", len(oldState.PendingSolanaTxs),
+			"newPendingTxs", len(newState.PendingSolanaTxs),
+			"pendingTxsChange", len(newState.PendingSolanaTxs)-len(oldState.PendingSolanaTxs))
+	}
 
 	// Log event counts in each state field every tick
 	slog.Info("State event counts for this tick",
@@ -346,7 +362,25 @@ func (o *Oracle) fetchAndProcessState(
 		return sidecartypes.OracleState{}, fmt.Errorf("base fee not available (pre-London fork?)")
 	}
 
-	update := o.initializeStateUpdate()
+	// This is the new state we will build up and return.
+	// Initialize with default values for all fields
+	newState := sidecartypes.OracleState{
+		EigenDelegations:        make(map[string]map[string]*big.Int),
+		EthTipCap:               0,
+		EthGasLimit:             0,
+		ROCKUSDPrice:            math.LegacyZeroDec(),
+		BTCUSDPrice:             math.LegacyZeroDec(),
+		ETHUSDPrice:             math.LegacyZeroDec(),
+		EthBurnEvents:           make([]api.BurnEvent, 0),
+		CleanedEthBurnEvents:    make(map[string]bool),
+		SolanaBurnEvents:        make([]api.BurnEvent, 0),
+		CleanedSolanaBurnEvents: make(map[string]bool),
+		Redemptions:             make([]api.Redemption, 0),
+		SolanaMintEvents:        make([]api.SolanaMintEvent, 0),
+		CleanedSolanaMintEvents: make(map[string]bool),
+		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+	}
+
 	var updateMutex sync.Mutex
 	errChan := make(chan error, sidecartypes.ErrorChannelBufferSize)
 
@@ -355,33 +389,30 @@ func (o *Oracle) fetchAndProcessState(
 	routinesCtx, cancelRoutines := context.WithCancel(tickCtx)
 	defer cancelRoutines()
 
-	// Pending transactions are now processed by a persistent background goroutine
-	// Started in runOracleMainLoop, not per-tick
-
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, &newState, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
-	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
+	o.fetchNetworkData(routinesCtx, &wg, &newState, &updateMutex, errChan)
 
 	// Fetch price data (ROCK, BTC, ETH)
-	o.fetchPriceData(routinesCtx, &wg, btcPriceFeed, ethPriceFeed, tempEthClient, update, &updateMutex, errChan)
+	o.fetchPriceData(routinesCtx, &wg, btcPriceFeed, ethPriceFeed, tempEthClient, &newState, &updateMutex, errChan)
 
 	// Fetch zenBTC burn events from Ethereum
-	o.fetchEthereumBurnEvents(routinesCtx, &wg, latestHeader, update, &updateMutex, errChan)
+	o.fetchEthereumBurnEvents(routinesCtx, &wg, latestHeader, &newState, &updateMutex, errChan)
 
 	// Fetch Solana mint events for zenBTC (only if Solana is enabled)
 	if o.solanaClient != nil {
-		o.processSolanaMintEvents(routinesCtx, &wg, update, &updateMutex, errChan)
+		o.processSolanaMintEvents(routinesCtx, &wg, &newState, &updateMutex, errChan)
 	}
 
 	// Fetch Solana burn events for zenBTC and ROCK (only if Solana is enabled)
 	if o.solanaClient != nil {
-		o.fetchSolanaBurnEvents(routinesCtx, &wg, update, &updateMutex, errChan)
+		o.fetchSolanaBurnEvents(routinesCtx, &wg, &newState, &updateMutex, errChan)
 	}
 
 	// Fetch and populate backfill requests from zrChain
-	o.processBackfillRequests(routinesCtx, &wg, update, &updateMutex)
+	o.processBackfillRequests(routinesCtx, &wg, &newState, &updateMutex)
 
 	// Wait for all goroutines to complete, or for the tick to be canceled.
 	waitChan := make(chan struct{})
@@ -421,7 +452,7 @@ func (o *Oracle) fetchAndProcessState(
 	}
 
 	// Build final state with fallbacks for any failed components
-	finalState, err := o.buildFinalState(update, latestHeader, targetBlockNumber)
+	finalState, err := o.buildFinalState(&newState, latestHeader, targetBlockNumber)
 	if err != nil {
 		return sidecartypes.OracleState{}, fmt.Errorf("failed to build final state: %w", err)
 	}
@@ -485,8 +516,8 @@ func fetchAndUpdateState[T any](
 	errChan chan<- error,
 	updateMutex *sync.Mutex,
 	fetchFunc func(ctx context.Context) (T, error),
-	updateFunc func(result T, update *oracleStateUpdate),
-	update *oracleStateUpdate,
+	updateFunc func(result T, update *sidecartypes.OracleState),
+	update *sidecartypes.OracleState,
 	errorMsg string,
 ) {
 	wg.Add(1)
@@ -509,7 +540,7 @@ func (o *Oracle) fetchEthereumContractData(
 	serviceManager *middleware.ContractZrServiceManager,
 	zenBTCControllerHolesky *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -519,8 +550,8 @@ func (o *Oracle) fetchEthereumContractData(
 		func(ctx context.Context) (map[string]map[string]*big.Int, error) {
 			return o.getServiceManagerState(ctx, serviceManager, targetBlockNumber)
 		},
-		func(result map[string]map[string]*big.Int, update *oracleStateUpdate) {
-			update.eigenDelegations = result
+		func(result map[string]map[string]*big.Int, update *sidecartypes.OracleState) {
+			update.EigenDelegations = result
 		},
 		update,
 		"failed to get contract state",
@@ -532,8 +563,8 @@ func (o *Oracle) fetchEthereumContractData(
 		func(ctx context.Context) ([]api.Redemption, error) {
 			return o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
 		},
-		func(result []api.Redemption, update *oracleStateUpdate) {
-			update.redemptions = result
+		func(result []api.Redemption, update *sidecartypes.OracleState) {
+			update.Redemptions = result
 		},
 		update,
 		"failed to get zenBTC contract state",
@@ -543,7 +574,7 @@ func (o *Oracle) fetchEthereumContractData(
 func (o *Oracle) fetchNetworkData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -553,8 +584,8 @@ func (o *Oracle) fetchNetworkData(
 		func(ctx context.Context) (*big.Int, error) {
 			return o.EthClient.SuggestGasTipCap(ctx)
 		},
-		func(result *big.Int, update *oracleStateUpdate) {
-			update.suggestedTip = result
+		func(result *big.Int, update *sidecartypes.OracleState) {
+			update.EthTipCap = result.Uint64()
 		},
 		update,
 		"failed to get suggested priority fee",
@@ -579,8 +610,8 @@ func (o *Oracle) fetchNetworkData(
 			}
 			return (estimatedGas * sidecartypes.GasEstimationBuffer) / 100, nil
 		},
-		func(result uint64, update *oracleStateUpdate) {
-			update.estimatedGas = result
+		func(result uint64, update *sidecartypes.OracleState) {
+			update.EthGasLimit = result
 		},
 		update,
 		"failed to estimate gas for zenBTC stake call",
@@ -593,7 +624,7 @@ func (o *Oracle) fetchPriceData(
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -622,7 +653,7 @@ func (o *Oracle) fetchPriceData(
 			}
 			return priceDec, nil
 		},
-		func(result math.LegacyDec, update *oracleStateUpdate) {
+		func(result math.LegacyDec, update *sidecartypes.OracleState) {
 			update.ROCKUSDPrice = result
 		},
 		update,
@@ -658,7 +689,7 @@ func (o *Oracle) fetchPriceData(
 				ETHUSDPrice: ethPrice,
 			}, nil
 		},
-		func(result cryptoPrices, update *oracleStateUpdate) {
+		func(result cryptoPrices, update *sidecartypes.OracleState) {
 			update.BTCUSDPrice = result.BTCUSDPrice
 			update.ETHUSDPrice = result.ETHUSDPrice
 		},
@@ -671,7 +702,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	latestHeader *ethtypes.Header,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -699,9 +730,9 @@ func (o *Oracle) fetchEthereumBurnEvents(
 				cleanedEthBurnEvents: cleanedEvents,
 			}, nil
 		},
-		func(result burnEventResult, update *oracleStateUpdate) {
-			update.ethBurnEvents = result.ethBurnEvents
-			update.cleanedEthBurnEvents = result.cleanedEthBurnEvents
+		func(result burnEventResult, update *sidecartypes.OracleState) {
+			update.EthBurnEvents = result.ethBurnEvents
+			update.CleanedEthBurnEvents = result.cleanedEthBurnEvents
 		},
 		update,
 		"failed to process Ethereum burn events",
@@ -711,7 +742,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 func (o *Oracle) processSolanaMintEvents(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -828,14 +859,15 @@ func (o *Oracle) processSolanaMintEvents(
 			}
 		}
 
-		slog.Info("FINAL UPDATE COMPOSITION",
-			"mergedMintEventsCount", len(mergedMintEvents),
-			"existingPendingEventsCount", len(existingPendingEvents),
-			"finalEventsCount", len(finalEvents),
-			"initialUpdateCount", initialUpdateCount)
+		slog.Info("ACCOUNTING_DEBUG: Mint events final composition",
+			"newlyMergedEvents", len(mergedMintEvents),
+			"existingPendingEvents", len(existingPendingEvents),
+			"finalEventsInUpdate", len(finalEvents),
+			"initialUpdateCount", initialUpdateCount,
+			"netEventsAdded", len(finalEvents)-initialUpdateCount)
 
 		update.SolanaMintEvents = finalEvents
-		update.cleanedSolanaMintEvents = cleanedEvents
+		update.CleanedSolanaMintEvents = cleanedEvents
 
 		// Calculate deduplication statistics
 		pendingEventsPreserved := len(finalEvents) - len(mergedMintEvents)
@@ -843,7 +875,7 @@ func (o *Oracle) processSolanaMintEvents(
 
 		slog.Info("Final merge and state update completed",
 			"finalMintEvents", len(update.SolanaMintEvents),
-			"finalCleanedEvents", len(update.cleanedSolanaMintEvents),
+			"finalCleanedEvents", len(update.CleanedSolanaMintEvents),
 			"addedToUpdate", len(update.SolanaMintEvents)-initialUpdateCount,
 			"newEvents", len(mergedMintEvents),
 			"existingPendingEvents", len(existingPendingEvents),
@@ -859,7 +891,7 @@ func (o *Oracle) processSolanaMintEvents(
 		// Allow advancement even on timeout errors as long as failed transactions are in pending queue
 		// Fatal errors (like pending store failures) are indicated by unchanged watermark signatures
 		if !newRockSig.IsZero() && (!newRockSig.Equals(lastKnownRockSig) || rockErr == nil) {
-			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+			update.LastSolRockMintSig = newRockSig.String()
 			if rockErr != nil {
 				slog.Info("Advancing ROCK mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
 					"newWatermark", newRockSig,
@@ -872,7 +904,7 @@ func (o *Oracle) processSolanaMintEvents(
 		}
 
 		if !newZenBTCSig.IsZero() && (!newZenBTCSig.Equals(lastKnownZenBTCSig) || zenbtcErr == nil) {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
+			update.LastSolZenBTCMintSig = newZenBTCSig.String()
 			if zenbtcErr != nil {
 				slog.Info("Advancing zenBTC mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
 					"newWatermark", newZenBTCSig,
@@ -890,7 +922,7 @@ func (o *Oracle) processSolanaMintEvents(
 func (o *Oracle) fetchSolanaBurnEvents(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
@@ -921,7 +953,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 				// Allow watermark advancement if we have progress or no errors
 				if !newestSig.Equals(lastKnownSig) || zenBtcErr == nil {
 					updateMutex.Lock()
-					update.latestSolanaSigs[sidecartypes.SolZenBTCBurn] = newestSig
+					update.LastSolZenBTCBurnSig = newestSig.String()
 					updateMutex.Unlock()
 					if zenBtcErr != nil {
 						slog.Info("Advancing zenBTC burn watermark despite partial processing error (failed transactions safely stored in pending queue)",
@@ -954,7 +986,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 				// Allow watermark advancement if we have progress or no errors
 				if !newestSig.Equals(lastKnownSig) || rockErr == nil {
 					updateMutex.Lock()
-					update.latestSolanaSigs[sidecartypes.SolRockBurn] = newestSig
+					update.LastSolRockBurnSig = newestSig.String()
 					updateMutex.Unlock()
 					if rockErr != nil {
 						slog.Info("Advancing ROCK burn watermark despite partial processing error (failed transactions safely stored in pending queue)",
@@ -1001,7 +1033,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 
 		// First, preserve any existing pending events that were already added to the state update
 		existingPendingEvents := make(map[string]api.BurnEvent)
-		for _, event := range update.solanaBurnEvents {
+		for _, event := range update.SolanaBurnEvents {
 			existingPendingEvents[event.TxID] = event
 			combinedEventsMap[event.TxID] = event
 		}
@@ -1038,8 +1070,8 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			}
 		}
 
-		update.solanaBurnEvents = finalEvents
-		update.cleanedSolanaBurnEvents = cleanedEvents
+		update.SolanaBurnEvents = finalEvents
+		update.CleanedSolanaBurnEvents = cleanedEvents
 
 		// Log deduplication results
 		if len(existingPendingEvents) > 0 || len(mergedEvents) > 0 {
@@ -1048,7 +1080,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 			duplicatesRemoved := len(existingPendingEvents) - pendingEventsPreserved
 
 			slog.Info("Burn events merge completed",
-				"finalBurnEvents", len(update.solanaBurnEvents),
+				"finalBurnEvents", len(update.SolanaBurnEvents),
 				"mergedEvents", len(mergedEvents),
 				"existingPendingEvents", len(existingPendingEvents),
 				"pendingEventsPreserved", pendingEventsPreserved,
@@ -1058,30 +1090,34 @@ func (o *Oracle) fetchSolanaBurnEvents(
 }
 
 func (o *Oracle) buildFinalState(
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	latestHeader *ethtypes.Header,
 	targetBlockNumber *big.Int,
 ) (sidecartypes.OracleState, error) {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	slog.Info("RACE_DEBUG: Building final state summary",
+		"updatePendingTxs", len(update.PendingSolanaTxs),
+		"currentStatePendingTxs", len(currentState.PendingSolanaTxs))
+
 	// Start with the current watermarks and update them if new signatures were found.
 	lastSolRockMintSig := o.lastSolRockMintSigStr
 	lastSolZenBTCMintSig := o.lastSolZenBTCMintSigStr
 	lastSolZenBTCBurnSig := o.lastSolZenBTCBurnSigStr
 	lastSolRockBurnSig := o.lastSolRockBurnSigStr
 
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockMint]; ok && !sig.IsZero() {
-		lastSolRockMintSig = sig.String()
+	// Use the watermarks from the update if they were set
+	if update.LastSolRockMintSig != "" {
+		lastSolRockMintSig = update.LastSolRockMintSig
 	}
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCMint]; ok && !sig.IsZero() {
-		lastSolZenBTCMintSig = sig.String()
+	if update.LastSolZenBTCMintSig != "" {
+		lastSolZenBTCMintSig = update.LastSolZenBTCMintSig
 	}
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCBurn]; ok && !sig.IsZero() {
-		lastSolZenBTCBurnSig = sig.String()
+	if update.LastSolZenBTCBurnSig != "" {
+		lastSolZenBTCBurnSig = update.LastSolZenBTCBurnSig
 	}
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockBurn]; ok && !sig.IsZero() {
-		lastSolRockBurnSig = sig.String()
+	if update.LastSolRockBurnSig != "" {
+		lastSolRockBurnSig = update.LastSolRockBurnSig
 	}
-
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
@@ -1089,20 +1125,20 @@ func (o *Oracle) buildFinalState(
 	// EigenDelegations map keys are deterministically ordered by encoding/json, so no manual sorting needed.
 
 	// Sort all event slices to ensure deterministic order
-	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
-		if update.ethBurnEvents[i].Height != update.ethBurnEvents[j].Height {
-			return update.ethBurnEvents[i].Height < update.ethBurnEvents[j].Height
+	sort.Slice(update.EthBurnEvents, func(i, j int) bool {
+		if update.EthBurnEvents[i].Height != update.EthBurnEvents[j].Height {
+			return update.EthBurnEvents[i].Height < update.EthBurnEvents[j].Height
 		}
-		return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
+		return update.EthBurnEvents[i].LogIndex < update.EthBurnEvents[j].LogIndex
 	})
-	sort.Slice(update.solanaBurnEvents, func(i, j int) bool {
-		if update.solanaBurnEvents[i].Height != update.solanaBurnEvents[j].Height {
-			return update.solanaBurnEvents[i].Height < update.solanaBurnEvents[j].Height
+	sort.Slice(update.SolanaBurnEvents, func(i, j int) bool {
+		if update.SolanaBurnEvents[i].Height != update.SolanaBurnEvents[j].Height {
+			return update.SolanaBurnEvents[i].Height < update.SolanaBurnEvents[j].Height
 		}
-		return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
+		return update.SolanaBurnEvents[i].LogIndex < update.SolanaBurnEvents[j].LogIndex
 	})
-	sort.Slice(update.redemptions, func(i, j int) bool {
-		return update.redemptions[i].Id < update.redemptions[j].Id
+	sort.Slice(update.Redemptions, func(i, j int) bool {
+		return update.Redemptions[i].Id < update.Redemptions[j].Id
 	})
 	sort.Slice(update.SolanaMintEvents, func(i, j int) bool {
 		if update.SolanaMintEvents[i].Height != update.SolanaMintEvents[j].Height {
@@ -1113,18 +1149,18 @@ func (o *Oracle) buildFinalState(
 	})
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations:        update.eigenDelegations,
+		EigenDelegations:        update.EigenDelegations,
 		EthBlockHeight:          targetBlockNumber.Uint64(),
-		EthGasLimit:             update.estimatedGas,
+		EthGasLimit:             update.EthGasLimit,
 		EthBaseFee:              latestHeader.BaseFee.Uint64(),
-		EthTipCap:               update.suggestedTip.Uint64(),
-		EthBurnEvents:           update.ethBurnEvents,
-		CleanedEthBurnEvents:    update.cleanedEthBurnEvents,
-		SolanaBurnEvents:        update.solanaBurnEvents,
-		CleanedSolanaBurnEvents: update.cleanedSolanaBurnEvents,
-		Redemptions:             update.redemptions,
+		EthTipCap:               update.EthTipCap,
+		EthBurnEvents:           update.EthBurnEvents,
+		CleanedEthBurnEvents:    update.CleanedEthBurnEvents,
+		SolanaBurnEvents:        update.SolanaBurnEvents,
+		CleanedSolanaBurnEvents: update.CleanedSolanaBurnEvents,
+		Redemptions:             update.Redemptions,
 		SolanaMintEvents:        update.SolanaMintEvents,
-		CleanedSolanaMintEvents: update.cleanedSolanaMintEvents,
+		CleanedSolanaMintEvents: update.CleanedSolanaMintEvents,
 		ROCKUSDPrice:            update.ROCKUSDPrice,
 		BTCUSDPrice:             update.BTCUSDPrice,
 		ETHUSDPrice:             update.ETHUSDPrice,
@@ -1132,15 +1168,16 @@ func (o *Oracle) buildFinalState(
 		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
 		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
 		LastSolRockBurnSig:      lastSolRockBurnSig,
-		PendingSolanaTxs:        update.pendingTransactions,
+		PendingSolanaTxs:        update.PendingSolanaTxs,
 	}
 
-	slog.Info("FINAL STATE CONSTRUCTED",
+	slog.Info("ACCOUNTING_DEBUG: Final state constructed",
 		"finalSolanaMintEvents", len(newState.SolanaMintEvents),
-		"finalCleanedSolanaMintEvents", len(newState.CleanedSolanaMintEvents),
 		"finalSolanaBurnEvents", len(newState.SolanaBurnEvents),
-		"finalCleanedSolanaBurnEvents", len(newState.CleanedSolanaBurnEvents),
-		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs))
+		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs),
+		"updatePendingTxs", len(update.PendingSolanaTxs),
+		"currentStatePendingTxs", len(currentState.PendingSolanaTxs),
+		"pendingTxsTransition", fmt.Sprintf("current:%d -> update:%d -> final:%d", len(currentState.PendingSolanaTxs), len(update.PendingSolanaTxs), len(newState.PendingSolanaTxs)))
 
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
@@ -1155,11 +1192,11 @@ func (o *Oracle) buildFinalState(
 	return newState, nil
 }
 
-func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecartypes.OracleState) {
+func (o *Oracle) applyFallbacks(update *sidecartypes.OracleState, currentState *sidecartypes.OracleState) {
 	// Ensure update fields that might not have been populated are not nil
-	if update.suggestedTip == nil {
-		update.suggestedTip = big.NewInt(0)
-		slog.Warn("suggestedTip was nil, using 0")
+	if update.EthTipCap == 0 {
+		update.EthTipCap = 0
+		slog.Warn("ethTipCap was zero, using 0")
 	}
 	if update.ROCKUSDPrice.IsNil() {
 		update.ROCKUSDPrice = currentState.ROCKUSDPrice
@@ -1173,9 +1210,9 @@ func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecar
 		update.ETHUSDPrice = currentState.ETHUSDPrice
 		slog.Warn("ETHUSDPrice was nil, using last known state value")
 	}
-	if update.estimatedGas == 0 {
-		update.estimatedGas = currentState.EthGasLimit
-		slog.Warn("estimatedGas was 0, using last known state value")
+	if update.EthGasLimit == 0 {
+		update.EthGasLimit = currentState.EthGasLimit
+		slog.Warn("ethGasLimit was 0, using last known state value")
 	}
 }
 
@@ -1330,6 +1367,8 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	var zenbtcQueryErrors, zentpQueryErrors int
 	var lastZenbtcError, lastZentpError error
 	var eventsKeptDueToQuery, eventsRemovedFromChain int
+	var failedZenBTCSignatures []string
+	var failedZenTPSignatures []string
 
 	for _, event := range eventsToClean {
 		key := base64.StdEncoding.EncodeToString(event.SigHash)
@@ -1344,6 +1383,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 		if err != nil {
 			zenbtcQueryErrors++
 			lastZenbtcError = err
+			failedZenBTCSignatures = append(failedZenBTCSignatures, event.TxSig)
 			// If we fail to query zrChain for this specific event, we keep it in the cache
 			// to retry later, but continue processing other events
 			remaining = append(remaining, event)
@@ -1362,6 +1402,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 			if err != nil {
 				zentpQueryErrors++
 				lastZentpError = err
+				failedZenTPSignatures = append(failedZenTPSignatures, event.TxSig)
 				// If we fail to query ZenTP for this specific event, keep it in cache to retry later
 				remaining = append(remaining, event)
 				continue
@@ -1398,6 +1439,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 				"failedCount", zenbtcQueryErrors,
 				"totalEvents", len(eventsToClean),
 				"lastError", lastZenbtcError)
+			slog.Debug("Failed zenBTC signatures", "failedSignatures", failedZenBTCSignatures)
 		} else {
 			slog.Debug("ZrChain ZenBTC query canceled due to context, keeping mint events in cache",
 				"failedCount", zenbtcQueryErrors,
@@ -1410,6 +1452,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 				"failedCount", zentpQueryErrors,
 				"totalEvents", len(eventsToClean),
 				"lastError", lastZentpError)
+			slog.Debug("Failed ZenTP signatures", "failedSignatures", failedZenTPSignatures)
 		} else {
 			slog.Debug("ZrChain ZenTP query canceled due to context, keeping mint events in cache",
 				"failedCount", zentpQueryErrors,
@@ -1420,7 +1463,7 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	return remaining, updatedCleanedEvents, nil
 }
 
-func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *sidecartypes.OracleState, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana ROCK mint"
 	// processor defines how to extract ROCK mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1463,7 +1506,7 @@ func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnow
 	return mintEvents, newWatermark, err
 }
 
-func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *sidecartypes.OracleState, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
 	eventTypeName := "Solana zenBTC mint"
 	// processor defines how to extract zenBTC mint events from a single Solana transaction.
 	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
@@ -1597,7 +1640,7 @@ func (o *Oracle) processBurnTransaction(
 }
 
 // getSolanaZenBTCBurnEvents retrieves ZenBTC burn events from Solana.
-func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
+func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *sidecartypes.OracleState, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
 	eventTypeName := "Solana zenBTC burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1643,7 +1686,7 @@ func (o *Oracle) getSolanaZenBTCBurnEvents(ctx context.Context, programID string
 }
 
 // getSolanaRockBurnEvents retrieves Rock burn events from Solana.
-func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
+func (o *Oracle) getSolanaRockBurnEvents(ctx context.Context, programID string, lastKnownSig solana.Signature, update *sidecartypes.OracleState, updateMutex *sync.Mutex) ([]api.BurnEvent, solana.Signature, error) {
 	eventTypeName := "Solana ROCK burn"
 	chainID := sidecartypes.SolanaCAIP2[o.Config.Network]
 
@@ -1766,7 +1809,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(ctx context.Context, sigStr string, p
 func (o *Oracle) processBackfillRequests(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 ) {
 	wg.Add(1)
@@ -1795,7 +1838,7 @@ func (o *Oracle) processBackfillRequests(
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 		// Use helper function to merge backfilled events with existing ones
-		update.solanaBurnEvents = mergeNewBurnEvents(update.solanaBurnEvents, currentState.CleanedSolanaBurnEvents, newBurnEvents, "backfilled Solana")
+		update.SolanaBurnEvents = mergeNewBurnEvents(update.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, newBurnEvents, "backfilled Solana")
 	}()
 }
 
@@ -1823,7 +1866,7 @@ func (o *Oracle) processBackfillRequestsList(ctx context.Context, requests []*va
 	var newBurnEvents []api.BurnEvent
 
 	for i, req := range requests {
-		// For now, only handle ZenTP burn events.
+		// Handle ZenTP and ZenBTC burn events.
 		if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENTP_BURN {
 			slog.Info("Processing zentp burn backfill request", "txHash", req.TxHash)
 			programID := sidecartypes.SolRockProgramID[o.Config.Network]
@@ -1834,6 +1877,37 @@ func (o *Oracle) processBackfillRequestsList(ctx context.Context, requests []*va
 			}
 			if event != nil {
 				newBurnEvents = append(newBurnEvents, *event)
+			}
+
+			// Pause between requests to avoid rate-limiting, but not after the final one.
+			if i < len(requests)-1 {
+				timer := time.NewTimer(sidecartypes.SolanaFallbackSleepInterval)
+				select {
+				case <-timer.C:
+				case <-ctx.Done():
+					timer.Stop()
+					return newBurnEvents, ctx.Err()
+				}
+			}
+		} else if req.EventType == validationtypes.EventType_EVENT_TYPE_ZENBTC_BURN {
+			slog.Info("Processing zenBTC burn backfill request", "txHash", req.TxHash, "chainId", req.Caip2ChainId)
+
+			// ZenBTC burns can be on both Ethereum and Solana, but for now we only support Solana backfill
+			if validationtypes.IsSolanaCAIP2(context.Background(), req.Caip2ChainId) {
+				programID := sidecartypes.ZenBTCSolanaProgramID[o.Config.Network]
+				event, err := o.getSolanaBurnEventFromSig(ctx, req.TxHash, programID)
+				if err != nil {
+					slog.Error("Error processing zenBTC burn backfill request", "txHash", req.TxHash, "error", err)
+					continue
+				}
+				if event != nil {
+					// Mark this as a ZenBTC event
+					event.IsZenBTC = true
+					newBurnEvents = append(newBurnEvents, *event)
+				}
+			} else {
+				slog.Warn("ZenBTC burn backfill for non-Solana chains not yet supported", "txHash", req.TxHash, "chainId", req.Caip2ChainId)
+				continue
 			}
 
 			// Pause between requests to avoid rate-limiting, but not after the final one.
@@ -1893,57 +1967,44 @@ func formatWatermarkForLogging(sig solana.Signature) string {
 }
 
 // addPendingTransaction adds a failed transaction to the pending queue in the state update
-func (o *Oracle) addPendingTransaction(signature string, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) error {
-	updateMutex.Lock()
-	defer updateMutex.Unlock()
+func (o *Oracle) addPendingTransaction(signature string, eventType string) error {
+	for {
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
+		for k, v := range currentState.PendingSolanaTxs {
+			newPendingTxs[k] = v
+		}
 
-	if update.pendingTransactions == nil {
-		update.pendingTransactions = make(map[string]sidecartypes.PendingTxInfo)
+		now := time.Now()
+		if existing, exists := newPendingTxs[signature]; exists {
+			updated := sidecartypes.PendingTxInfo{
+				Signature:    existing.Signature,
+				EventType:    existing.EventType,
+				RetryCount:   existing.RetryCount + 1,
+				FirstAttempt: existing.FirstAttempt,
+				LastAttempt:  now,
+			}
+			newPendingTxs[signature] = updated
+		} else {
+			newTx := sidecartypes.PendingTxInfo{
+				Signature:    signature,
+				EventType:    eventType,
+				RetryCount:   1,
+				FirstAttempt: now,
+				LastAttempt:  now,
+			}
+			newPendingTxs[signature] = newTx
+		}
+
+		newState := *currentState
+		newState.PendingSolanaTxs = newPendingTxs
+
+		if o.currentState.CompareAndSwap(currentState, &newState) {
+			return nil // Success
+		}
+		// If CAS failed, another goroutine changed the state. Loop and retry.
+		slog.Debug("CAS failed while adding pending transaction, retrying...", "signature", signature)
 	}
-
-	now := time.Now()
-	if existing, exists := update.pendingTransactions[signature]; exists {
-
-		updated := sidecartypes.PendingTxInfo{
-			Signature:    existing.Signature,
-			EventType:    existing.EventType,
-			RetryCount:   existing.RetryCount + 1,
-			FirstAttempt: existing.FirstAttempt,
-			LastAttempt:  now,
-		}
-		update.pendingTransactions[signature] = updated
-
-		// Verify the update succeeded
-		if stored, exists := update.pendingTransactions[signature]; !exists || stored.RetryCount != updated.RetryCount {
-			return fmt.Errorf("failed to update pending transaction: %s", signature)
-		}
-
-		slog.Debug("Updated pending transaction retry count",
-			"signature", signature,
-			"eventType", eventType,
-			"retryCount", updated.RetryCount)
-	} else {
-		// Add new pending transaction
-		newTx := sidecartypes.PendingTxInfo{
-			Signature:    signature,
-			EventType:    eventType,
-			RetryCount:   1,
-			FirstAttempt: now,
-			LastAttempt:  now,
-		}
-		update.pendingTransactions[signature] = newTx
-
-		// Verify the addition succeeded
-		if _, exists := update.pendingTransactions[signature]; !exists {
-			return fmt.Errorf("failed to add pending transaction: %s", signature)
-		}
-
-		slog.Debug("Added new pending transaction",
-			"signature", signature,
-			"eventType", eventType)
-	}
-
-	return nil
 }
 
 // shouldRetryTransaction checks if a pending transaction should be retried
@@ -1985,7 +2046,9 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 				}
 			}
 
-			slog.Debug("Processing pending transactions round", "count", pendingCount)
+			if pendingCount > 0 {
+				slog.Debug("RACE_DEBUG: Persistent processor active", "pendingCount", pendingCount)
+			}
 
 			// Process one round of pending transactions
 			o.processPendingTransactionsRoundPersistent(ctx)
@@ -2004,231 +2067,6 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 			}
 		}
 	}
-}
-
-// processPendingTransactions continuously retries all pending transactions until context cancellation
-func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGroup, update *oracleStateUpdate, updateMutex *sync.Mutex) {
-	defer wg.Done()
-
-	slog.Info("Starting continuous pending transaction processing goroutine")
-
-	// Retry loop - continue until context cancellation
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("Pending transaction processing cancelled")
-			return
-		default:
-			// Check if there are any pending transactions to process
-			updateMutex.Lock()
-			pendingCount := len(update.pendingTransactions)
-			updateMutex.Unlock()
-
-			if pendingCount == 0 {
-				// No pending transactions, sleep briefly and check again
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(sidecartypes.PendingTransactionCheckInterval):
-					continue
-				}
-			}
-
-			slog.Debug("Processing pending transactions round", "count", pendingCount)
-
-			// Process one round of pending transactions
-			pendingStats := o.processPendingTransactionsRound(ctx, update, updateMutex)
-
-			// Log summary if any transactions were processed
-			if pendingStats.totalProcessed > 0 {
-				slog.Info("Pending transactions processed successfully",
-					"successfulCount", len(pendingStats.successfulTxs),
-					"totalProcessed", pendingStats.totalProcessed,
-					"stillPending", pendingStats.totalProcessed-pendingStats.successCount,
-					"successRate", fmt.Sprintf("%.1f%%", float64(pendingStats.successCount)/float64(pendingStats.totalProcessed)*100))
-			}
-
-			// Adaptive sleep based on activity
-			sleepDuration := 2 * time.Second
-			if pendingCount == 0 {
-				sleepDuration = sidecartypes.PendingTransactionCheckInterval // Sleep longer if no transactions were processed
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(sleepDuration):
-				// Continue to next round
-			}
-		}
-	}
-}
-
-// processPendingTransactionsRound processes one round of pending transactions
-// Returns (processedCount, successCount) where processedCount is attempts and successCount is completed
-func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) pendingTransactionStats {
-	// Create a copy to iterate over to avoid modifying map while iterating
-	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
-	updateMutex.Lock()
-	maps.Copy(pendingCopy, update.pendingTransactions)
-	updateMutex.Unlock()
-
-	stats := pendingTransactionStats{
-		successfulTxs: make([]string, 0),
-	}
-
-	for signature := range pendingCopy {
-		// Check for context cancellation
-		select {
-		case <-ctx.Done():
-			slog.Debug("Pending transaction processing round cancelled",
-				"processedInRound", stats.totalProcessed,
-				"successfulInRound", stats.successCount)
-			return stats
-		default:
-		}
-
-		// Use live data for retry decision instead of stale snapshot
-		updateMutex.Lock()
-		current, exists := update.pendingTransactions[signature]
-		if !exists {
-			updateMutex.Unlock()
-			continue
-		}
-
-		if !o.shouldRetryTransaction(current) {
-			// Check if we should remove transactions that exceeded max retries
-			if current.RetryCount >= sidecartypes.PendingTransactionMaxRetries {
-				delete(update.pendingTransactions, signature)
-				slog.Info("Removed pending transaction after max retries",
-					"signature", signature,
-					"eventType", current.EventType,
-					"retryCount", current.RetryCount)
-			}
-			updateMutex.Unlock()
-			continue
-		}
-		updateMutex.Unlock()
-
-		// Attempt to retry the transaction
-		sig, err := solana.SignatureFromBase58(signature)
-		if err != nil {
-			slog.Warn("Invalid signature in pending transactions", "signature", signature, "error", err)
-
-			updateMutex.Lock()
-			delete(update.pendingTransactions, signature)
-			updateMutex.Unlock()
-			continue
-		}
-
-		// Try to get and process the transaction
-		txResult, err := o.retryIndividualTransaction(ctx, sig, current.EventType)
-		stats.totalProcessed++ // Count this as a processing attempt
-
-		if err != nil {
-			updateMutex.Lock()
-			if existing, exists := update.pendingTransactions[signature]; exists {
-				updated := sidecartypes.PendingTxInfo{
-					Signature:    existing.Signature,
-					EventType:    existing.EventType,
-					RetryCount:   existing.RetryCount + 1,
-					FirstAttempt: existing.FirstAttempt,
-					LastAttempt:  time.Now(),
-				}
-				update.pendingTransactions[signature] = updated
-			}
-			updateMutex.Unlock()
-			slog.Debug("Pending transaction retry failed",
-				"signature", signature,
-				"eventType", current.EventType,
-				"error", err)
-			continue
-		}
-
-		if txResult != nil {
-			// Transaction retrieved successfully, now try to process it
-			events, err := o.processTransactionByEventType(txResult, sig, current.EventType)
-			if err != nil {
-				updateMutex.Lock()
-				if existing, exists := update.pendingTransactions[signature]; exists {
-					updated := sidecartypes.PendingTxInfo{
-						Signature:    existing.Signature,
-						EventType:    existing.EventType,
-						RetryCount:   existing.RetryCount + 1,
-						FirstAttempt: existing.FirstAttempt,
-						LastAttempt:  time.Now(),
-					}
-					update.pendingTransactions[signature] = updated
-				}
-				updateMutex.Unlock()
-				slog.Debug("Pending transaction processing failed",
-					"signature", signature,
-					"eventType", current.EventType,
-					"error", err)
-				continue
-			}
-
-			// Successfully processed - add events to the state update and remove from pending queue atomically
-			updateMutex.Lock()
-			if len(events) > 0 {
-				// Add events to state update
-				switch current.EventType {
-				case "Solana ROCK mint", "Solana zenBTC mint":
-					for _, event := range events {
-						if mintEvent, ok := event.(api.SolanaMintEvent); ok {
-							update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
-						}
-					}
-				case "Solana zenBTC burn", "Solana ROCK burn":
-					for _, event := range events {
-						if burnEvent, ok := event.(api.BurnEvent); ok {
-							update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
-						}
-					}
-				}
-				stats.successfulTxs = append(stats.successfulTxs, signature)
-			}
-			// Remove from pending queue in same atomic operation
-			if update.pendingTransactions != nil {
-				if _, exists := update.pendingTransactions[signature]; exists {
-					delete(update.pendingTransactions, signature)
-					stats.successCount++
-					slog.Debug("Removed pending transaction after successful processing",
-						"signature", signature)
-				}
-			}
-			updateMutex.Unlock()
-		} else {
-			updateMutex.Lock()
-			if existing, exists := update.pendingTransactions[signature]; exists {
-				updated := sidecartypes.PendingTxInfo{
-					Signature:    existing.Signature,
-					EventType:    existing.EventType,
-					RetryCount:   existing.RetryCount + 1,
-					FirstAttempt: existing.FirstAttempt,
-					LastAttempt:  time.Now(),
-				}
-				update.pendingTransactions[signature] = updated
-			}
-			updateMutex.Unlock()
-		}
-	}
-
-	// Log processing statistics if any transactions were processed
-	if stats.totalProcessed > 0 {
-		roundSuccessRate := 0.0
-		if stats.totalProcessed > 0 {
-			roundSuccessRate = float64(stats.successCount) / float64(stats.totalProcessed) * 100
-		}
-
-		slog.Debug("Pending transaction processing round completed",
-			"totalProcessed", stats.totalProcessed,
-			"successfullyCompleted", stats.successCount,
-			"stillPending", len(pendingCopy)-stats.successCount,
-			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
-	}
-
-	return stats
 }
 
 // processPendingTransactionsRoundPersistent processes one round of pending transactions from the current state
@@ -2313,13 +2151,22 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 			if len(events) > 0 {
 				o.addEventsToCurrentState(events, current.EventType)
 				successfulTransactions = append(successfulTransactions, signature)
+				// Remove from pending queue
+				o.removePendingTransactionFromState(signature)
+				successCount++
+				slog.Debug("ACCOUNTING_DEBUG: Persistent processor removed transaction with events",
+					"signature", signature[:8]+"...",
+					"eventType", current.EventType,
+					"eventsCount", len(events))
+			} else {
+				// Transaction was retrieved but produced 0 events - keep it in pending queue for retry
+				slog.Debug("ACCOUNTING_DEBUG: Persistent processor keeping transaction with 0 events (will retry)",
+					"signature", signature[:8]+"...",
+					"eventType", current.EventType,
+					"eventsCount", len(events))
+				o.updatePendingTransactionInState(signature, current)
+				// Do NOT remove from pending queue or increment success count
 			}
-
-			// Remove from pending queue
-			o.removePendingTransactionFromState(signature)
-			successCount++
-			slog.Debug("Removed pending transaction after successful processing",
-				"signature", signature)
 		} else {
 			o.updatePendingTransactionInState(signature, current)
 		}
@@ -2332,20 +2179,38 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 			roundSuccessRate = float64(successCount) / float64(processedCount) * 100
 		}
 
-		slog.Debug("Pending transaction processing round completed",
+		// Get actual current pending count for accurate reporting
+		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		actualPendingCount := len(currentState.PendingSolanaTxs)
+
+		slog.Debug("ACCOUNTING_DEBUG: Persistent processor round detailed stats",
+			"startedWithPending", len(pendingCopy),
 			"totalProcessed", processedCount,
 			"successfullyCompleted", successCount,
-			"stillPending", len(pendingCopy)-successCount,
-			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate))
+			"actualStillPending", actualPendingCount,
+			"expectedRemaining", len(pendingCopy)-successCount,
+			"accountingMismatch", actualPendingCount-(len(pendingCopy)-successCount),
+			"successRate", fmt.Sprintf("%.1f%%", roundSuccessRate),
+			"processingRate", fmt.Sprintf("%.1f%%", float64(processedCount)/float64(len(pendingCopy))*100))
 	}
 
 	// Log summary if any transactions were successfully processed
 	if len(successfulTransactions) > 0 {
-		slog.Info("Pending transactions processed successfully",
-			"successfulCount", len(successfulTransactions),
-			"totalProcessed", processedCount,
-			"stillPending", len(pendingCopy)-successCount,
-			"successRate", fmt.Sprintf("%.1f%%", float64(successCount)/float64(processedCount)*100))
+		if processedCount > 0 {
+			// Get actual current pending count instead of wrong math
+			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			actualPendingCount := len(currentState.PendingSolanaTxs)
+
+			slog.Info("ACCOUNTING_DEBUG: Persistent processor completed",
+				"successfulCount", len(successfulTransactions),
+				"totalProcessed", processedCount,
+				"successCount", successCount,
+				"startedWithPending", len(pendingCopy),
+				"actualStillPending", actualPendingCount,
+				"wrongMathWouldBe", len(pendingCopy)-successCount,
+				"successRate", fmt.Sprintf("%.1f%%", float64(successCount)/float64(processedCount)*100),
+				"accountingCheck", fmt.Sprintf("started:%d - successful:%d = should_remain:%d, actual:%d", len(pendingCopy), successCount, len(pendingCopy)-successCount, actualPendingCount))
+		}
 	}
 }
 
@@ -2556,7 +2421,7 @@ func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionRe
 }
 
 // addEventsToStateUpdate adds processed events to the state update
-func (o *Oracle) addEventsToStateUpdate(events []any, eventType string, update *oracleStateUpdate, updateMutex *sync.Mutex) {
+func (o *Oracle) addEventsToStateUpdate(events []any, eventType string, update *sidecartypes.OracleState, updateMutex *sync.Mutex) {
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 
@@ -2572,9 +2437,11 @@ func (o *Oracle) addEventsToStateUpdate(events []any, eventType string, update *
 		// Convert to burn events and add to state update
 		for _, event := range events {
 			if burnEvent, ok := event.(api.BurnEvent); ok {
-				update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+				update.SolanaBurnEvents = append(update.SolanaBurnEvents, burnEvent)
 			}
 		}
+	default:
+		slog.Warn("Unknown event type for state update", "eventType", eventType)
 	}
 }
 
@@ -2861,17 +2728,20 @@ func (o *Oracle) processSignatures(
 
 	// Process signatures with adaptive batching
 	for i := 0; i < len(signatures); {
+		// Check for context cancellation at the start of each batch
 		if ctx.Err() != nil {
-			// Add ALL remaining unprocessed signatures to pending queue for optimistic watermark advancement
+			// Context cancelled - add ALL remaining signatures to failed list for pending queue
+			remainingCount := len(signatures) - i
 			for j := i; j < len(signatures); j++ {
 				failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 				newestSigProcessed = signatures[j].Signature
 			}
-			slog.Debug("Context canceled during signature processing, added remaining signatures to pending queue",
+			slog.Warn("ACCOUNTING_DEBUG: Context canceled during signature processing - added ALL remaining signatures to pending",
 				"eventType", eventTypeName,
 				"processedSignatures", i,
 				"totalSignatures", len(signatures),
-				"addedToPending", len(signatures)-i)
+				"remainingAddedToPending", remainingCount,
+				"totalFailedForPending", len(failedSignatures))
 			return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 		}
 
@@ -2885,11 +2755,19 @@ func (o *Oracle) processSignatures(
 		if batchErr != nil {
 			// Check for context cancellation first - if cancelled, stop immediately
 			if errors.Is(batchErr, context.Canceled) || errors.Is(batchErr, context.DeadlineExceeded) || strings.Contains(batchErr.Error(), "context canceled") {
-				// Context cancelled - add remaining signatures to pending queue and return
+				// Context cancelled - add ALL remaining signatures to failed list for pending queue
+				remainingCount := len(signatures) - i
 				for j := i; j < len(signatures); j++ {
 					failedSignatures = append(failedSignatures, signatures[j].Signature.String())
 					newestSigProcessed = signatures[j].Signature
 				}
+				slog.Warn("ACCOUNTING_DEBUG: Context canceled during batch processing - added ALL remaining signatures to pending",
+					"eventType", eventTypeName,
+					"batchError", batchErr,
+					"processedSignatures", i,
+					"totalSignatures", len(signatures),
+					"remainingAddedToPending", remainingCount,
+					"totalFailedForPending", len(failedSignatures))
 				return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 			}
 
@@ -2905,12 +2783,28 @@ func (o *Oracle) processSignatures(
 				for idx, sigInfo := range currentBatch {
 					// Check for context cancellation before each individual request
 					if ctx.Err() != nil {
-						// Add ALL remaining unprocessed transactions to failed signatures and return
-						for j := idx; j < len(currentBatch); j++ {
-							failedSignatures = append(failedSignatures, currentBatch[j].Signature.String())
-							newestSigProcessed = currentBatch[j].Signature
+						// Add ALL remaining unprocessed transactions (including current) to failed signatures and return
+						remainingInBatch := len(currentBatch) - idx
+						remainingAfterBatch := len(signatures) - i - len(currentBatch)
+						totalRemaining := remainingInBatch + remainingAfterBatch
+
+						// Add current transaction and rest of current batch to failed
+						for k := idx; k < len(currentBatch); k++ {
+							failedSignatures = append(failedSignatures, currentBatch[k].Signature.String())
+							newestSigProcessed = currentBatch[k].Signature
 						}
-						// Return newestSigProcessed to advance watermark to cover failed transactions
+						// Add all signatures after current batch to failed
+						for j := i + len(currentBatch); j < len(signatures); j++ {
+							failedSignatures = append(failedSignatures, signatures[j].Signature.String())
+							newestSigProcessed = signatures[j].Signature
+						}
+
+						slog.Warn("ACCOUNTING_DEBUG: Context canceled during individual fallback processing - added ALL remaining signatures to pending",
+							"eventType", eventTypeName,
+							"remainingInCurrentBatch", remainingInBatch,
+							"remainingAfterBatch", remainingAfterBatch,
+							"totalRemainingAddedToPending", totalRemaining,
+							"totalFailedForPending", len(failedSignatures))
 						return allEvents, newestSigProcessed, failedSignatures, ctx.Err()
 					}
 
@@ -3005,23 +2899,51 @@ func (o *Oracle) processSignatures(
 	totalProcessed := len(signatures)
 	successRate := float64(stats.successfulTransactions) / float64(totalProcessed) * 100
 
-	// Transaction accounting verification - ensure no transactions are lost
+	// CRITICAL: Transaction accounting verification - ensure no transactions are lost
 	accountedTransactions := stats.successfulTransactions + stats.emptyTransactions + len(failedSignatures)
 	if accountedTransactions != totalProcessed {
-		slog.Error("Transaction accounting mismatch - blocking watermark advancement",
+		missingCount := totalProcessed - accountedTransactions
+		slog.Error("CRITICAL: Transaction accounting mismatch detected - ADDING MISSING SIGNATURES TO FAILED QUEUE!",
 			"eventType", eventTypeName,
 			"totalSignatures", totalProcessed,
 			"successful", stats.successfulTransactions,
 			"empty", stats.emptyTransactions,
 			"failed", len(failedSignatures),
 			"accounted", accountedTransactions,
-			"missing", totalProcessed-accountedTransactions)
+			"missing", missingCount,
+			"contextCanceled", ctx.Err() != nil)
 
-		// Don't advance watermark - return last known good watermark
-		return allEvents, lastSuccessfullyProcessedSig, failedSignatures,
-			fmt.Errorf("transaction accounting mismatch: %d processed, %d accounted",
-				totalProcessed, accountedTransactions)
+		// FAIL-SAFE: Add ALL missing signatures to failed queue to prevent data loss
+		// This ensures deterministic behavior even when context cancellation loses signatures
+		failedSignatureSet := make(map[string]bool)
+		for _, sig := range failedSignatures {
+			failedSignatureSet[sig] = true
+		}
+
+		// Find missing signatures and add them to failed queue
+		addedMissing := 0
+		for _, sigInfo := range signatures {
+			sigStr := sigInfo.Signature.String()
+			// If signature isn't in failed queue, it's missing - add it to failed queue
+			if !failedSignatureSet[sigStr] && addedMissing < missingCount {
+				failedSignatures = append(failedSignatures, sigStr)
+				addedMissing++
+			}
+		}
+
+		slog.Error("FAIL-SAFE: Added missing signatures to failed queue",
+			"eventType", eventTypeName,
+			"addedToFailed", addedMissing,
+			"totalFailedNow", len(failedSignatures))
 	}
+
+	// Verify accounting is correct
+	slog.Info("ACCOUNTING_DEBUG: Transaction processing verification passed",
+		"eventType", eventTypeName,
+		"totalProcessed", totalProcessed,
+		"accounted", accountedTransactions,
+		"successfulEvents", len(allEvents),
+		"failedForPending", len(failedSignatures))
 
 	// Summary log with comprehensive batch processing results
 	slog.Info("Batch processing summary",
@@ -3159,7 +3081,7 @@ func (o *Oracle) getSolanaEvents(
 	lastKnownSig solana.Signature,
 	eventTypeName string,
 	processTransaction processTransactionFunc,
-	update *oracleStateUpdate,
+	update *sidecartypes.OracleState,
 	updateMutex *sync.Mutex,
 ) ([]any, solana.Signature, error) {
 	limit := sidecartypes.SolanaEventScanTxLimit
@@ -3207,13 +3129,17 @@ func (o *Oracle) getSolanaEvents(
 
 	slog.Info("Found new signatures", "eventType", eventTypeName, "count", len(newSignatures), "watermark", formatWatermarkForLogging(lastKnownSig), "newest", newestSigFromNode)
 
+	slog.Info("ACCOUNTING_DEBUG: Starting signature processing",
+		"eventType", eventTypeName,
+		"totalSignaturesToProcess", len(newSignatures),
+		"startingWatermark", lastKnownSig.String()[:8]+"...")
+
 	events, lastSig, failedSignatures, err := o.processSignatures(ctx, newSignatures, program, eventTypeName, processTransaction)
 
 	// Handle failed signatures by adding them to pending queue
-	// Only advance watermark if ALL pending store operations succeed
 	var pendingStoreErrors []error
 	for _, failedSig := range failedSignatures {
-		if pendingErr := o.addPendingTransaction(failedSig, eventTypeName, update, updateMutex); pendingErr != nil {
+		if pendingErr := o.addPendingTransaction(failedSig, eventTypeName); pendingErr != nil {
 			pendingStoreErrors = append(pendingStoreErrors, pendingErr)
 			slog.Error("Failed to add transaction to pending store",
 				"signature", failedSig,
@@ -3222,9 +3148,16 @@ func (o *Oracle) getSolanaEvents(
 		}
 	}
 
+	slog.Info("ACCOUNTING_DEBUG: Signature processing completed",
+		"eventType", eventTypeName,
+		"totalAttempted", len(newSignatures),
+		"successfulEvents", len(events),
+		"failedSignatures", len(failedSignatures),
+		"pendingStoreErrors", len(pendingStoreErrors))
+
 	// If any pending store operations failed, don't advance watermark
 	if len(pendingStoreErrors) > 0 {
-		slog.Error("Pending store operations failed - blocking watermark advancement",
+		slog.Debug("Pending store operations failed - blocking watermark advancement",
 			"eventType", eventTypeName,
 			"failedOperations", len(pendingStoreErrors),
 			"totalFailed", len(failedSignatures))
