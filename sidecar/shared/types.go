@@ -209,16 +209,17 @@ type OracleState struct {
 }
 
 type Config struct {
-	Enabled        bool              `yaml:"enabled"`
-	GRPCPort       int               `yaml:"grpc_port"`
-	StateFile      string            `yaml:"state_file"`
-	ZRChainRPC     string            `yaml:"zrchain_rpc"`
-	OperatorConfig string            `yaml:"operator_config"`
-	Network        string            `yaml:"network"`
-	EthRPC         map[string]string `yaml:"eth_rpc"`
-	SolanaRPC      map[string]string `yaml:"solana_rpc"`
-	ProxyRPC       ProxyRPCConfig    `yaml:"proxy_rpc"`
-	Neutrino       NeutrinoConfig    `yaml:"neutrino"`
+	Enabled                bool              `yaml:"enabled"`
+	GRPCPort               int               `yaml:"grpc_port"`
+	StateFile              string            `yaml:"state_file"`
+	ZRChainRPC             string            `yaml:"zrchain_rpc"`
+	OperatorConfig         string            `yaml:"operator_config"`
+	Network                string            `yaml:"network"`
+	EthRPC                 map[string]string `yaml:"eth_rpc"`
+	SolanaRPC              map[string]string `yaml:"solana_rpc"`
+	ProxyRPC               ProxyRPCConfig    `yaml:"proxy_rpc"`
+	Neutrino               NeutrinoConfig    `yaml:"neutrino"`
+	E2ETestsTickerInterval int               `yaml:"e2e_tests_ticker_interval"`
 }
 
 type ProxyRPCConfig struct {
