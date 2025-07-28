@@ -201,6 +201,7 @@ func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeSta
 
 func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridge, error) {
 	lastCompletedZentpMint, err := k.validationKeeper.GetLastCompletedZentpMintID(goCtx)
+	k.Logger().Info("GetLastCompletedZentpMintID", "lastCompletedZentpMint", lastCompletedZentpMint, "err", err)
 	if err != nil {
 		return nil, err
 	}
@@ -219,12 +220,14 @@ func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridg
 		},
 		func(key uint64, value types.Bridge) (bool, error) {
 			// Only include mints with pending status
+			k.Logger().Info("GetMintsWithStatusPending", "key", key, "value", fmt.Sprintf("%+v", value))
 			return value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING, nil
 		},
 		func(key uint64, value types.Bridge) (*types.Bridge, error) {
 			return &value, nil
 		},
 	)
+	k.Logger().Info("GetMintsWithStatusPending", "pendingMints", fmt.Sprintf("%+v", pendingMints), "err", err)
 	if err != nil {
 		return nil, err
 	}
