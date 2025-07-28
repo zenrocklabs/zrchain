@@ -209,12 +209,14 @@ func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridg
 	queryRange := &collections.Range[uint64]{}
 	pendingMints := []*types.Bridge{}
 
-	k.MintStore.Walk(goCtx, queryRange.StartExclusive(startKey), func(key uint64, value types.Bridge) (bool, error) {
+	if err := k.MintStore.Walk(goCtx, queryRange.StartExclusive(startKey), func(key uint64, value types.Bridge) (bool, error) {
 		if value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING {
 			pendingMints = append(pendingMints, &value)
 		}
 		return true, nil
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	return pendingMints, nil
 }

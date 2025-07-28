@@ -319,7 +319,9 @@ func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 	lastCompletedZentpMintID, err := k.LastCompletedZentpMintID.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			k.LastCompletedZentpMintID.Set(ctx, 0)
+			if err := k.LastCompletedZentpMintID.Set(ctx, 0); err != nil {
+				return 0, err
+			}
 			return 0, nil
 		}
 		return 0, err
