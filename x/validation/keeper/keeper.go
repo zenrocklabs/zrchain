@@ -289,28 +289,15 @@ func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.Backfil
 	return k.BackfillRequests.Set(ctx, requests)
 }
 
-func (k Keeper) GetAssetPrices(ctx context.Context) ([]*types.AssetData, error) {
-	storeIterator, err := k.AssetPrices.Iterate(ctx, nil)
+func (k Keeper) GetAssetPrices(ctx context.Context) (map[types.Asset]math.LegacyDec, error) {
+	assetPrices := make(map[types.Asset]math.LegacyDec)
+
+	err := k.AssetPrices.Walk(ctx, nil, func(key types.Asset, value math.LegacyDec) (stop bool, err error) {
+		assetPrices[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var assetPrices []*types.AssetData
-	for _, key := range keys {
-		value, err := k.AssetPrices.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		assetPrices = append(assetPrices, &types.AssetData{
-			Asset:    key,
-			PriceUSD: value,
-		})
 	}
 
 	return assetPrices, nil
@@ -332,7 +319,9 @@ func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 	lastCompletedZentpMintID, err := k.LastCompletedZentpMintID.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			// Return 0 when the collection is empty
+			if err := k.LastCompletedZentpMintID.Set(ctx, 0); err != nil {
+				return 0, err
+			}
 			return 0, nil
 		}
 		return 0, err
@@ -340,98 +329,59 @@ func (k Keeper) GetLastCompletedZentpMintID(ctx context.Context) (uint64, error)
 	return lastCompletedZentpMintID, nil
 }
 
-func (k Keeper) GetSlashEvents(ctx context.Context) ([]types.SlashEvent, uint64, error) {
-	storeIterator, err := k.SlashEvents.Iterate(ctx, nil)
+func (k Keeper) GetSlashEvents(ctx context.Context) (map[uint64]types.SlashEvent, error) {
+	slashEvents := make(map[uint64]types.SlashEvent)
+
+	err := k.SlashEvents.Walk(ctx, nil, func(key uint64, value types.SlashEvent) (stop bool, err error) {
+		slashEvents[key] = value
+		return false, nil
+	})
 	if err != nil {
-		return nil, 0, err
-	}
-	defer storeIterator.Close()
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	var slashEvents []types.SlashEvent
-	var slashEventCount uint64
-	for _, key := range keys {
-		value, err := k.SlashEvents.Get(ctx, key)
-		if err != nil {
-			return nil, 0, err
-		}
-		slashEvents = append(slashEvents, value)
-		slashEventCount++
-	}
-
-	return slashEvents, slashEventCount, nil
+	return slashEvents, nil
 }
 
-func (k Keeper) GetValidationInfos(ctx context.Context) ([]types.ValidationInfo, error) {
-	storeIterator, err := k.ValidationInfos.Iterate(ctx, nil)
+func (k Keeper) GetValidationInfos(ctx context.Context) (map[int64]types.ValidationInfo, error) {
+	validationInfos := make(map[int64]types.ValidationInfo)
+
+	err := k.ValidationInfos.Walk(ctx, nil, func(key int64, value types.ValidationInfo) (stop bool, err error) {
+		validationInfos[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer storeIterator.Close()
 
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var validationInfos []types.ValidationInfo
-	for _, key := range keys {
-		value, err := k.ValidationInfos.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		validationInfos = append(validationInfos, value)
-	}
 	return validationInfos, nil
 }
 
-func (k Keeper) GetBtcBlockHeaders(ctx context.Context) ([]sidecar.BTCBlockHeader, error) {
-	storeIterator, err := k.BtcBlockHeaders.Iterate(ctx, nil)
+func (k Keeper) GetBtcBlockHeaders(ctx context.Context) (map[int64]sidecar.BTCBlockHeader, error) {
+	btcBlockHeaders := make(map[int64]sidecar.BTCBlockHeader)
+
+	err := k.BtcBlockHeaders.Walk(ctx, nil, func(key int64, value sidecar.BTCBlockHeader) (stop bool, err error) {
+		btcBlockHeaders[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer storeIterator.Close()
 
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var btcBlockHeaders []sidecar.BTCBlockHeader
-	for _, key := range keys {
-		value, err := k.BtcBlockHeaders.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		btcBlockHeaders = append(btcBlockHeaders, value)
-	}
 	return btcBlockHeaders, nil
 }
 
-func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) ([]types.SolanaNonce, error) {
-	storeIterator, err := k.LastUsedSolanaNonce.Iterate(ctx, nil)
+func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) (map[uint64]types.SolanaNonce, error) {
+	lastUsedSolanaNonce := make(map[uint64]types.SolanaNonce)
+
+	err := k.LastUsedSolanaNonce.Walk(ctx, nil, func(key uint64, value types.SolanaNonce) (stop bool, err error) {
+		lastUsedSolanaNonce[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer storeIterator.Close()
 
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var lastUsedSolanaNonce []types.SolanaNonce
-	for _, key := range keys {
-		value, err := k.LastUsedSolanaNonce.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		lastUsedSolanaNonce = append(lastUsedSolanaNonce, value)
-	}
 	return lastUsedSolanaNonce, nil
 }
 
@@ -448,67 +398,51 @@ func (k Keeper) GetBackfillRequests(ctx context.Context) (types.BackfillRequests
 	return backfillRequest, nil
 }
 
-func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) ([]zenbtctypes.NonceData, error) {
-	storeIterator, err := k.LastUsedEthereumNonce.Iterate(ctx, nil)
+func (k Keeper) GetLastUsedEthereumNonce(ctx context.Context) (map[uint64]zenbtctypes.NonceData, error) {
+	lastUsedEthereumNonce := make(map[uint64]zenbtctypes.NonceData)
+
+	err := k.LastUsedEthereumNonce.Walk(ctx, nil, func(key uint64, value zenbtctypes.NonceData) (stop bool, err error) {
+		lastUsedEthereumNonce[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer storeIterator.Close()
 
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	var lastUsedEthereumNonce []zenbtctypes.NonceData
-	for _, key := range keys {
-		value, err := k.LastUsedEthereumNonce.Get(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		lastUsedEthereumNonce = append(lastUsedEthereumNonce, value)
-	}
 	return lastUsedEthereumNonce, nil
 }
 
-func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) ([]zenbtctypes.RequestedBitcoinHeaders, error) {
+func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) (zenbtctypes.RequestedBitcoinHeaders, error) {
 	requestedHistoricalBitcoinHeaders, err := k.RequestedHistoricalBitcoinHeaders.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			// Return empty RequestedBitcoinHeaders when the collection is empty
-			return []zenbtctypes.RequestedBitcoinHeaders{{}}, nil
+			return zenbtctypes.RequestedBitcoinHeaders{}, nil
 		}
-		return nil, err
+		return zenbtctypes.RequestedBitcoinHeaders{}, err
 	}
 
-	return []zenbtctypes.RequestedBitcoinHeaders{requestedHistoricalBitcoinHeaders}, nil
+	return requestedHistoricalBitcoinHeaders, nil
 }
 
-func (k Keeper) GetAvsRewardsPool(ctx context.Context) ([]string, error) {
-	avsRewardsPool := []string{}
+func (k Keeper) GetAvsRewardsPool(ctx context.Context) (map[string]math.Int, error) {
+	avsRewardsPool := make(map[string]math.Int)
 
-	storeIterator, err := k.AVSRewardsPool.Iterate(ctx, nil)
+	err := k.AVSRewardsPool.Walk(ctx, nil, func(key string, value math.Int) (stop bool, err error) {
+		avsRewardsPool[key] = value
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	keys, err := storeIterator.Keys()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range keys {
-		avsRewardsPool = append(avsRewardsPool, key)
 	}
 
 	return avsRewardsPool, nil
 }
 
-func (k Keeper) GetEthereumNonceRequested(ctx context.Context) ([]uint64, error) {
-	ethereumNonceRequested := []uint64{}
+func (k Keeper) GetEthereumNonceRequested(ctx context.Context) (map[uint64]bool, error) {
+	ethereumNonceRequested := make(map[uint64]bool)
 
 	err := k.EthereumNonceRequested.Walk(ctx, nil, func(key uint64, value bool) (stop bool, err error) {
-		ethereumNonceRequested = append(ethereumNonceRequested, key)
+		ethereumNonceRequested[key] = value
 		return false, nil
 	})
 	if err != nil {
@@ -518,11 +452,11 @@ func (k Keeper) GetEthereumNonceRequested(ctx context.Context) ([]uint64, error)
 	return ethereumNonceRequested, nil
 }
 
-func (k Keeper) GetSolanaNonceRequested(ctx context.Context) ([]uint64, error) {
-	solanaNonceRequested := []uint64{}
+func (k Keeper) GetSolanaNonceRequested(ctx context.Context) (map[uint64]bool, error) {
+	solanaNonceRequested := make(map[uint64]bool)
 
 	err := k.SolanaNonceRequested.Walk(ctx, nil, func(key uint64, value bool) (stop bool, err error) {
-		solanaNonceRequested = append(solanaNonceRequested, key)
+		solanaNonceRequested[key] = value
 		return false, nil
 	})
 	if err != nil {
@@ -532,11 +466,11 @@ func (k Keeper) GetSolanaNonceRequested(ctx context.Context) ([]uint64, error) {
 	return solanaNonceRequested, nil
 }
 
-func (k Keeper) GetSolanaAccountsRequested(ctx context.Context) ([]string, error) {
-	solanaAccountsRequested := []string{}
+func (k Keeper) GetSolanaAccountsRequested(ctx context.Context) (map[string]bool, error) {
+	solanaAccountsRequested := make(map[string]bool)
 
 	err := k.SolanaAccountsRequested.Walk(ctx, nil, func(key string, value bool) (stop bool, err error) {
-		solanaAccountsRequested = append(solanaAccountsRequested, key)
+		solanaAccountsRequested[key] = value
 		return false, nil
 	})
 	if err != nil {
@@ -546,11 +480,11 @@ func (k Keeper) GetSolanaAccountsRequested(ctx context.Context) ([]string, error
 	return solanaAccountsRequested, nil
 }
 
-func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, error) {
-	solanaZenTPAccountsRequested := []string{}
+func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) (map[string]bool, error) {
+	solanaZenTPAccountsRequested := make(map[string]bool)
 
 	err := k.SolanaZenTPAccountsRequested.Walk(ctx, nil, func(key string, value bool) (stop bool, err error) {
-		solanaZenTPAccountsRequested = append(solanaZenTPAccountsRequested, key)
+		solanaZenTPAccountsRequested[key] = value
 		return false, nil
 	})
 	if err != nil {
@@ -560,11 +494,11 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) ([]string, 
 	return solanaZenTPAccountsRequested, nil
 }
 
-func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) ([]types.ValidatorMismatchCount, error) {
-	validatorMismatchCounts := []types.ValidatorMismatchCount{}
+func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) (map[string]types.ValidatorMismatchCount, error) {
+	validatorMismatchCounts := make(map[string]types.ValidatorMismatchCount)
 
 	err := k.ValidatorMismatchCounts.Walk(ctx, nil, func(key string, value types.ValidatorMismatchCount) (stop bool, err error) {
-		validatorMismatchCounts = append(validatorMismatchCounts, value)
+		validatorMismatchCounts[key] = value
 		return false, nil
 	})
 	if err != nil {
