@@ -73,12 +73,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "Bridge",
-					Use:       `bridge [amount] [denom] [src-address] [dst-chain] [recipient-address]`,
+					Use:       `bridge [amount] [denom] [destination-chain] [recipient-address]`,
 					Short:     "Bridge tokens from zrchain to a destination chain",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "amount"},
 						{ProtoField: "denom"},
-						{ProtoField: "source_address"},
 						{ProtoField: "destination_chain"},
 						{ProtoField: "recipient_address"},
 					},
