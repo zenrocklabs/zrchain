@@ -205,18 +205,23 @@ func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridg
 		return nil, err
 	}
 
+	k.Logger().Info("GetLastCompletedZentpMintID", "lastCompletedZentpMint", lastCompletedZentpMint, "err", err)
+
 	startKey := lastCompletedZentpMint
 	queryRange := &collections.Range[uint64]{}
 	pendingMints := []*types.Bridge{}
 
 	if err := k.MintStore.Walk(goCtx, queryRange.StartExclusive(startKey), func(key uint64, value types.Bridge) (bool, error) {
 		if value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING {
+			k.Logger().Info("GetMintsWithStatusPending", "key", key, "value", fmt.Sprintf("%+v", value))
 			pendingMints = append(pendingMints, &value)
 		}
 		return true, nil
 	}); err != nil {
 		return nil, err
 	}
+
+	k.Logger().Info("GetMintsWithStatusPending", "pendingMints", fmt.Sprintf("%+v", pendingMints), "err", err)
 
 	return pendingMints, nil
 }
