@@ -1497,7 +1497,6 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				// or collectSolanaAccounts failed to fetch it. This is a state mismatch if a transaction is being prepared for it.
 				// For robustness, one might assume it needs funding, but it could also indicate an issue.
 				k.Logger(ctx).Warn("ATA not found in oracleData.SolanaAccounts for ZenTP, tx will proceed assuming it needs funding or creation", "ata", expectedATA.String(), "recipient", tx.RecipientAddress)
-				k.Logger(ctx).Info("Setting fundReceiver to true because ATA was not found in oracleData.SolanaAccounts")
 				fundReceiver = true
 			} else if ata.State == solToken.Uninitialized {
 				k.Logger(ctx).Info("Setting fundReceiver to true because ATA state is uninitialized")

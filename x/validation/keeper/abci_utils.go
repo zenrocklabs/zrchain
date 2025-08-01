@@ -1716,6 +1716,11 @@ func (k Keeper) populateAccountsForSolanaMints(
 	if err != nil {
 		return fmt.Errorf("failed to get keys from %s Solana account request store: %w", flowDescription, err)
 	}
+	values, err := storeIterator.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get values from Solana account request store", "error", err)
+	}
+	k.Logger(ctx).Info("Populating accounts for Solana mints", "ownerKeys", fmt.Sprintf("%v", ownerKeys), "values", fmt.Sprintf("%v", values))
 
 	for _, ownerAddressStr := range ownerKeys {
 		requested, err := requestStore.Get(ctx, ownerAddressStr)
@@ -1788,7 +1793,6 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 	if zenTPMintAddress == "" {
 		k.Logger(ctx).Warn("ZenTP Solana mint address is not configured. Skipping ZenTP account collection.")
 	} else {
-		k.Logger(ctx).Info("k.SolanaZenTPAccountsRequested", "k.SolanaZenTPAccountsRequested", k.SolanaZenTPAccountsRequested)
 		if err := k.populateAccountsForSolanaMints(ctx, k.SolanaZenTPAccountsRequested, zenTPMintAddress, "ZenTP", solAccs); err != nil {
 			return nil, fmt.Errorf("error processing ZenTP Solana account requests: %w", err)
 		}
