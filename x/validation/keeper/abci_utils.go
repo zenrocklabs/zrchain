@@ -1461,23 +1461,28 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	})
 	if err != nil {
 		if err.Error() == "rpc error: code = Unknown desc = not found" {
+			k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: account not found, will be created.", "ata", receiverAta.String())
 			return token.Account{}, nil
 		}
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Error("GetSolanaTokenAccount: sidecar returned an error", "ata", receiverAta.String(), "error", err)
 		return token.Account{}, err
 	}
 
 	tokenAccount := new(token.Account)
 
 	if resp.Account == nil {
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: account data is nil, account will be created.", "ata", receiverAta.String())
 		return *tokenAccount, nil
 	}
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	err = tokenAccount.UnmarshalWithDecoder(decoder)
 	if err != nil {
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Error("GetSolanaTokenAccount: FAILED TO DECODE. This is the likely cause of the 'OwnerMismatch' error. The account at this ATA address is NOT a token account.", "ata", receiverAta.String(), "data_len", len(resp.Account), "error", err)
 		return token.Account{}, err
 	}
 
+	k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: successfully decoded token account", "ata", receiverAta.String(), "owner", tokenAccount.Owner.String())
 	return *tokenAccount, nil
 }
 
@@ -1500,6 +1505,9 @@ type solanaMintTxRequest struct {
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Info("Preparing Solana mint transaction", "recipient", req.recipient, "amount", req.amount, "fundReceiver", req.fundReceiver, "programID", req.programID, "mintAddress", req.mintAddress)
+
 	programID, err := solana.PublicKeyFromBase58(req.programID)
 	if err != nil {
 		return nil, err
@@ -1566,7 +1574,17 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 
+	k.Logger(ctx).Info("Derived Solana transaction keys",
+		"signer", signerPubKey.String(),
+		"recipient", recipientPubKey.String(),
+		"recipientATA", receiverAta.String(),
+		"feeWallet", feeKey.String(),
+		"feeWalletATA", feeWalletAta.String(),
+		"mint", mintKey.String(),
+	)
+
 	if req.fundReceiver {
+		k.Logger(ctx).Info("`fundReceiver` is true, adding CreateInstruction.", "recipient", req.recipient)
 		instructions = append(
 			instructions,
 			ata.NewCreateInstruction(
