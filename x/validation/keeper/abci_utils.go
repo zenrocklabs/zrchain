@@ -1780,12 +1780,15 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 	// 2. Process ZenTP related accounts
 	zenTPMintAddress := ""
 	if k.zentpKeeper != nil && k.zentpKeeper.GetSolanaParams(ctx) != nil { // Assuming zentpKeeper has GetSolanaParams
+		k.Logger(ctx).Info("k.zentpKeeper.GetSolanaParams(ctx).MintAddress", "k.zentpKeeper.GetSolanaParams(ctx).MintAddress", k.zentpKeeper.GetSolanaParams(ctx).MintAddress)
 		zenTPMintAddress = k.zentpKeeper.GetSolanaParams(ctx).MintAddress
+		k.Logger(ctx).Info("zenTPMintAddress", "zenTPMintAddress", zenTPMintAddress)
 	}
 
 	if zenTPMintAddress == "" {
 		k.Logger(ctx).Warn("ZenTP Solana mint address is not configured. Skipping ZenTP account collection.")
 	} else {
+		k.Logger(ctx).Info("k.SolanaZenTPAccountsRequested", "k.SolanaZenTPAccountsRequested", k.SolanaZenTPAccountsRequested)
 		if err := k.populateAccountsForSolanaMints(ctx, k.SolanaZenTPAccountsRequested, zenTPMintAddress, "ZenTP", solAccs); err != nil {
 			return nil, fmt.Errorf("error processing ZenTP Solana account requests: %w", err)
 		}

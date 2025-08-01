@@ -491,6 +491,8 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) (map[string
 		return nil, err
 	}
 
+	k.Logger(ctx).Info("solanaZenTPAccountsRequested", "solanaZenTPAccountsRequested", solanaZenTPAccountsRequested)
+
 	return solanaZenTPAccountsRequested, nil
 }
 
