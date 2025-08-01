@@ -1716,11 +1716,13 @@ func (k Keeper) populateAccountsForSolanaMints(
 	if err != nil {
 		return fmt.Errorf("failed to get keys from %s Solana account request store: %w", flowDescription, err)
 	}
-	values, err := storeIterator.Values()
-	if err != nil {
-		k.Logger(ctx).Error("failed to get values from Solana account request store", "error", err)
+	if flowDescription == "ZenTP" {
+		values, err := storeIterator.Values()
+		if err != nil {
+			k.Logger(ctx).Error("failed to get values from Solana account request store", "error", err)
+		}
+		k.Logger(ctx).Info("Populating accounts for Solana mints", "ownerKeys", fmt.Sprintf("%v", ownerKeys), "values", fmt.Sprintf("%v", values))
 	}
-	k.Logger(ctx).Info("Populating accounts for Solana mints", "ownerKeys", fmt.Sprintf("%v", ownerKeys), "values", fmt.Sprintf("%v", values))
 
 	for _, ownerAddressStr := range ownerKeys {
 		requested, err := requestStore.Get(ctx, ownerAddressStr)
@@ -1803,6 +1805,7 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 
 func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
+	k.Logger(ctx).Info("clearSolanaAccounts", "pending_rock_mints", fmt.Sprintf("%v", pendingsROCK), "error", err)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 	}
@@ -1821,6 +1824,7 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 
 	// Clear ZenTP related requests if no pending ROCK Solana mints (assuming pendingsROCK is for ZenTP)
 	if len(pendingsROCK) == 0 {
+		k.Logger(ctx).Info("No pending ROCK Solana mints found; clearing zenTP related requests")
 		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
 			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
 		}
