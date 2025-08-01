@@ -1461,23 +1461,28 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	})
 	if err != nil {
 		if err.Error() == "rpc error: code = Unknown desc = not found" {
+			k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: account not found, will be created.", "ata", receiverAta.String())
 			return token.Account{}, nil
 		}
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Error("GetSolanaTokenAccount: sidecar returned an error", "ata", receiverAta.String(), "error", err)
 		return token.Account{}, err
 	}
 
 	tokenAccount := new(token.Account)
 
 	if resp.Account == nil {
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: account data is nil, account will be created.", "ata", receiverAta.String())
 		return *tokenAccount, nil
 	}
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	err = tokenAccount.UnmarshalWithDecoder(decoder)
 	if err != nil {
+		k.Logger(sdk.UnwrapSDKContext(goCtx)).Error("GetSolanaTokenAccount: FAILED TO DECODE. This is the likely cause of the 'OwnerMismatch' error. The account at this ATA address is NOT a token account.", "ata", receiverAta.String(), "data_len", len(resp.Account), "error", err)
 		return token.Account{}, err
 	}
 
+	k.Logger(sdk.UnwrapSDKContext(goCtx)).Info("GetSolanaTokenAccount: successfully decoded token account", "ata", receiverAta.String(), "owner", tokenAccount.Owner.String())
 	return *tokenAccount, nil
 }
 
@@ -1500,6 +1505,9 @@ type solanaMintTxRequest struct {
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Info("Preparing Solana mint transaction", "recipient", req.recipient, "amount", req.amount, "fundReceiver", req.fundReceiver, "programID", req.programID, "mintAddress", req.mintAddress)
+
 	programID, err := solana.PublicKeyFromBase58(req.programID)
 	if err != nil {
 		return nil, err
@@ -1566,7 +1574,17 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 
+	k.Logger(ctx).Info("Derived Solana transaction keys",
+		"signer", signerPubKey.String(),
+		"recipient", recipientPubKey.String(),
+		"recipientATA", receiverAta.String(),
+		"feeWallet", feeKey.String(),
+		"feeWalletATA", feeWalletAta.String(),
+		"mint", mintKey.String(),
+	)
+
 	if req.fundReceiver {
+		k.Logger(ctx).Info("`fundReceiver` is true, adding CreateInstruction.", "recipient", req.recipient)
 		instructions = append(
 			instructions,
 			ata.NewCreateInstruction(
@@ -1698,6 +1716,13 @@ func (k Keeper) populateAccountsForSolanaMints(
 	if err != nil {
 		return fmt.Errorf("failed to get keys from %s Solana account request store: %w", flowDescription, err)
 	}
+	if flowDescription == "ZenTP" {
+		values, err := storeIterator.Values()
+		if err != nil {
+			k.Logger(ctx).Error("failed to get values from Solana account request store", "error", err)
+		}
+		k.Logger(ctx).Info("Populating accounts for Solana mints", "ownerKeys", fmt.Sprintf("%v", ownerKeys), "values", fmt.Sprintf("%v", values))
+	}
 
 	for _, ownerAddressStr := range ownerKeys {
 		requested, err := requestStore.Get(ctx, ownerAddressStr)
@@ -1762,7 +1787,9 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 	// 2. Process ZenTP related accounts
 	zenTPMintAddress := ""
 	if k.zentpKeeper != nil && k.zentpKeeper.GetSolanaParams(ctx) != nil { // Assuming zentpKeeper has GetSolanaParams
+		k.Logger(ctx).Info("k.zentpKeeper.GetSolanaParams(ctx).MintAddress", "k.zentpKeeper.GetSolanaParams(ctx).MintAddress", k.zentpKeeper.GetSolanaParams(ctx).MintAddress)
 		zenTPMintAddress = k.zentpKeeper.GetSolanaParams(ctx).MintAddress
+		k.Logger(ctx).Info("zenTPMintAddress", "zenTPMintAddress", zenTPMintAddress)
 	}
 
 	if zenTPMintAddress == "" {
@@ -1778,6 +1805,7 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 
 func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 	pendingsROCK, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
+	k.Logger(ctx).Info("clearSolanaAccounts", "pending_rock_mints", fmt.Sprintf("%v", pendingsROCK), "error", err)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 	}
@@ -1796,6 +1824,7 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 
 	// Clear ZenTP related requests if no pending ROCK Solana mints (assuming pendingsROCK is for ZenTP)
 	if len(pendingsROCK) == 0 {
+		k.Logger(ctx).Info("No pending ROCK Solana mints found; clearing zenTP related requests")
 		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
 			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
 		}
