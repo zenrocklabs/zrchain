@@ -1486,15 +1486,21 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return fmt.Errorf("failed to derive ATA for ZenTP recipient %s, mint %s: %w", tx.RecipientAddress, solParams.MintAddress, err)
 			}
 
+			k.Logger(ctx).Info("zentp params: ", "nonce_account_key", solParams.NonceAccountKey, "nonce_authority_key", solParams.NonceAuthorityKey, "signer_key_id", solParams.SignerKeyId, "fee_wallet", solParams.FeeWallet, "program_id", solParams.ProgramId, "mint_address", solParams.MintAddress)
+			k.Logger(ctx).Info("OracleData: ", "solana_accounts", oracleData.SolanaAccounts, "solana_mint_nonces", oracleData.SolanaMintNonces)
+
 			fundReceiver := false
 			ata, ok := oracleData.SolanaAccounts[expectedATA.String()]
+			k.Logger(ctx).Info("ATA: ", "ata", ata, "ok", ok)
 			if !ok {
 				// If the ATA is not in oracleData.SolanaAccounts, it means it wasn't requested via SetSolanaZenTPRequestedAccount
 				// or collectSolanaAccounts failed to fetch it. This is a state mismatch if a transaction is being prepared for it.
 				// For robustness, one might assume it needs funding, but it could also indicate an issue.
 				k.Logger(ctx).Warn("ATA not found in oracleData.SolanaAccounts for ZenTP, tx will proceed assuming it needs funding or creation", "ata", expectedATA.String(), "recipient", tx.RecipientAddress)
+				k.Logger(ctx).Info("Setting fundReceiver to true because ATA was not found in oracleData.SolanaAccounts")
 				fundReceiver = true
 			} else if ata.State == solToken.Uninitialized {
+				k.Logger(ctx).Info("Setting fundReceiver to true because ATA state is uninitialized")
 				fundReceiver = true
 			}
 
