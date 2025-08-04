@@ -66,7 +66,7 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 			"bitcoin",
 			ethereumAddress.String(),
 			types.WalletType_WALLET_TYPE_EVM,
-			"eip155:17000",
+			"eip155:560048",
 			"",
 		)
 		Expect(err).ToNot(HaveOccurred())
