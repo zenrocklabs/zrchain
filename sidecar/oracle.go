@@ -163,8 +163,9 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 
 	// Allow customization of ticker interval in regnet network
 	mainLoopTickerIntervalDuration := func() time.Duration {
-		configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
 		if o.Config.Network == "regnet" {
+			configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
+			configValue = max(configValue, 15*time.Second)
 			return configValue
 		}
 		return sidecartypes.MainLoopTickerInterval
