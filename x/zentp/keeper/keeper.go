@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -181,6 +180,7 @@ func (k Keeper) GetNonceAuthorityKey(ctx context.Context) uint64 {
 }
 
 func (k Keeper) GetMintsWithStatus(goCtx context.Context, status types.BridgeStatus) ([]*types.Bridge, error) {
+
 	mints, _, err := query.CollectionFilteredPaginate(
 		goCtx,
 		k.MintStore,
@@ -205,27 +205,19 @@ func (k Keeper) GetMintsWithStatusPending(goCtx context.Context) ([]*types.Bridg
 		return nil, err
 	}
 
-	startKey := lastCompletedZentpMint + 1
+	startKey := lastCompletedZentpMint
+	queryRange := &collections.Range[uint64]{}
+	pendingMints := []*types.Bridge{}
 
-	// Encode the startKey as a proper uint64 byte representation
-	keyBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(keyBytes, startKey)
-
-	pendingMints, _, err := query.CollectionFilteredPaginate(
-		goCtx,
-		k.MintStore,
-		&query.PageRequest{
-			Key: keyBytes,
-		},
-		func(key uint64, value types.Bridge) (bool, error) {
-			// Only include mints with pending status
-			return value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING, nil
-		},
-		func(key uint64, value types.Bridge) (*types.Bridge, error) {
-			return &value, nil
-		},
-	)
-	if err != nil {
+	if err = k.MintStore.Walk(goCtx, queryRange.StartExclusive(startKey), func(key uint64, value types.Bridge) (bool, error) {
+		if value.State == types.BridgeStatus_BRIDGE_STATUS_PENDING {
+			pendingMints = append(pendingMints, &value)
+			if len(pendingMints) >= 2 {
+				return true, nil
+			}
+		}
+		return false, nil
+	}); err != nil {
 		return nil, err
 	}
 

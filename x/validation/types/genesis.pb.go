@@ -50,41 +50,47 @@ type GenesisState struct {
 	// or initialized genesis.
 	Exported bool `protobuf:"varint,8,opt,name=exported,proto3" json:"exported,omitempty"`
 	// HVParams defines the hybrid validation parameters at genesis.
-	HVParams *HVParams `protobuf:"bytes,9,opt,name=HVParams,proto3" json:"HVParams,omitempty"`
+	HVParams HVParams `protobuf:"bytes,9,opt,name=HVParams,proto3" json:"HVParams"`
 	// asset_prices defines the asset prices at genesis.
-	AssetPrices []*AssetData `protobuf:"bytes,10,rep,name=asset_prices,json=assetPrices,proto3" json:"asset_prices,omitempty"`
+	AssetPrices map[int32]cosmossdk_io_math.LegacyDec `protobuf:"bytes,10,rep,name=asset_prices,json=assetPrices,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"asset_prices" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// last_valid_ve_height defines the last valid ve height at genesis.
 	LastValidVeHeight int64 `protobuf:"varint,11,opt,name=last_valid_ve_height,json=lastValidVeHeight,proto3" json:"last_valid_ve_height,omitempty"`
 	// slash_events defines the slash events at genesis.
-	SlashEvents []SlashEvent `protobuf:"bytes,12,rep,name=slash_events,json=slashEvents,proto3" json:"slash_events"`
+	SlashEvents map[uint64]SlashEvent `protobuf:"bytes,12,rep,name=slash_events,json=slashEvents,proto3" json:"slash_events" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// slash_event_count defines the slash event count at genesis.
 	SlashEventCount uint64 `protobuf:"varint,13,opt,name=slash_event_count,json=slashEventCount,proto3" json:"slash_event_count,omitempty"`
 	// validation_infos defines the validation infos at genesis.
-	ValidationInfos []ValidationInfo `protobuf:"bytes,14,rep,name=validation_infos,json=validationInfos,proto3" json:"validation_infos"`
+	ValidationInfos map[int64]ValidationInfo `protobuf:"bytes,14,rep,name=validation_infos,json=validationInfos,proto3" json:"validation_infos" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// btc_block_headers defines the Bitcoin block headers at genesis.
-	BtcBlockHeaders []api.BTCBlockHeader `protobuf:"bytes,15,rep,name=btc_block_headers,json=btcBlockHeaders,proto3" json:"btc_block_headers"`
+	BtcBlockHeaders map[int64]api.BTCBlockHeader `protobuf:"bytes,15,rep,name=btc_block_headers,json=btcBlockHeaders,proto3" json:"btc_block_headers" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// last_used_solana_nonce defines the last used Solana nonce at genesis.
-	LastUsedSolanaNonce []SolanaNonce `protobuf:"bytes,16,rep,name=last_used_solana_nonce,json=lastUsedSolanaNonce,proto3" json:"last_used_solana_nonce"`
+	LastUsedSolanaNonce map[uint64]SolanaNonce `protobuf:"bytes,16,rep,name=last_used_solana_nonce,json=lastUsedSolanaNonce,proto3" json:"last_used_solana_nonce" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// backfill_requests defines the backfill requests at genesis.
 	BackfillRequest BackfillRequests `protobuf:"bytes,17,opt,name=backfill_request,json=backfillRequest,proto3" json:"backfill_request"`
 	// last_used_ethereum_nonce defines the last used Ethereum nonce at genesis.
-	LastUsedEthereumNonce []types.NonceData `protobuf:"bytes,18,rep,name=last_used_ethereum_nonce,json=lastUsedEthereumNonce,proto3" json:"last_used_ethereum_nonce"`
+	LastUsedEthereumNonce map[uint64]types.NonceData `protobuf:"bytes,18,rep,name=last_used_ethereum_nonce,json=lastUsedEthereumNonce,proto3" json:"last_used_ethereum_nonce" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// requested_historical_bitcoin_headers defines the requested historical Bitcoin headers at genesis.
-	RequestedHistoricalBitcoinHeaders []types.RequestedBitcoinHeaders `protobuf:"bytes,19,rep,name=requested_historical_bitcoin_headers,json=requestedHistoricalBitcoinHeaders,proto3" json:"requested_historical_bitcoin_headers"`
+	RequestedHistoricalBitcoinHeaders types.RequestedBitcoinHeaders `protobuf:"bytes,19,opt,name=requested_historical_bitcoin_headers,json=requestedHistoricalBitcoinHeaders,proto3" json:"requested_historical_bitcoin_headers"`
 	// avs_rewards_pool defines the AVS rewards pool at genesis.
-	AvsRewardsPool []string `protobuf:"bytes,20,rep,name=avs_rewards_pool,json=avsRewardsPool,proto3" json:"avs_rewards_pool,omitempty"`
+	AvsRewardsPool map[string]cosmossdk_io_math.Int `protobuf:"bytes,20,rep,name=avs_rewards_pool,json=avsRewardsPool,proto3,customtype=cosmossdk.io/math.Int" json:"avs_rewards_pool" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// ethereum_nonce_requested defines the Ethereum nonce requested at genesis.
-	EthereumNonceRequested []uint64 `protobuf:"varint,21,rep,packed,name=ethereum_nonce_requested,json=ethereumNonceRequested,proto3" json:"ethereum_nonce_requested,omitempty"`
+	EthereumNonceRequested map[uint64]bool `protobuf:"bytes,21,rep,name=ethereum_nonce_requested,json=ethereumNonceRequested,proto3" json:"ethereum_nonce_requested,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// solana_nonce_requested defines the Solana nonce requested at genesis.
-	SolanaNonceRequested []uint64 `protobuf:"varint,22,rep,packed,name=solana_nonce_requested,json=solanaNonceRequested,proto3" json:"solana_nonce_requested,omitempty"`
+	SolanaNonceRequested map[uint64]bool `protobuf:"bytes,22,rep,name=solana_nonce_requested,json=solanaNonceRequested,proto3" json:"solana_nonce_requested,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// solana_zentp_accounts_requested defines the Solana Zentp accounts requested at genesis.
-	SolanaZentpAccountsRequested []string `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty"`
+	SolanaZentpAccountsRequested map[string]bool `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// solana_accounts_requested defines the Solana accounts requested at genesis.
-	SolanaAccountsRequested []string `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty"`
+	SolanaAccountsRequested map[string]bool `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// validator_mismatch_counts defines the validator mismatch counts at genesis.
-	ValidatorMismatchCounts []ValidatorMismatchCount `protobuf:"bytes,25,rep,name=validator_mismatch_counts,json=validatorMismatchCounts,proto3" json:"validator_mismatch_counts"`
+	ValidatorMismatchCounts map[string]ValidatorMismatchCount `protobuf:"bytes,25,rep,name=validator_mismatch_counts,json=validatorMismatchCounts,proto3" json:"validator_mismatch_counts" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// last_completed_zentp_mint_id defines the last completed Zentp mint id at genesis.
 	LastCompletedZentpMintId uint64 `protobuf:"varint,26,opt,name=last_completed_zentp_mint_id,json=lastCompletedZentpMintId,proto3" json:"last_completed_zentp_mint_id,omitempty"`
+	// avs_delegations defines the AVS delegations at genesis.
+	AvsDelegations map[string]cosmossdk_io_math.Int `protobuf:"bytes,27,rep,name=avs_delegations,json=avsDelegations,proto3,customtype=cosmossdk.io/math.Int" json:"avs_delegations" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// validator_delegations defines the validator delegations at genesis.
+	ValidatorDelegations map[string]cosmossdk_io_math.Int `protobuf:"bytes,28,rep,name=validator_delegations,json=validatorDelegations,proto3,customtype=cosmossdk.io/math.Int" json:"validator_delegations" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// latest_btc_header_height defines the latest Bitcoin header height at genesis.
+	LatestBtcHeaderHeight int64 `protobuf:"varint,29,opt,name=latest_btc_header_height,json=latestBtcHeaderHeight,proto3" json:"latest_btc_header_height,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -169,18 +175,11 @@ func (m *GenesisState) GetExported() bool {
 	return false
 }
 
-func (m *GenesisState) GetHVParams() *HVParams {
+func (m *GenesisState) GetHVParams() HVParams {
 	if m != nil {
 		return m.HVParams
 	}
-	return nil
-}
-
-func (m *GenesisState) GetAssetPrices() []*AssetData {
-	if m != nil {
-		return m.AssetPrices
-	}
-	return nil
+	return HVParams{}
 }
 
 func (m *GenesisState) GetLastValidVeHeight() int64 {
@@ -190,7 +189,7 @@ func (m *GenesisState) GetLastValidVeHeight() int64 {
 	return 0
 }
 
-func (m *GenesisState) GetSlashEvents() []SlashEvent {
+func (m *GenesisState) GetSlashEvents() map[uint64]SlashEvent {
 	if m != nil {
 		return m.SlashEvents
 	}
@@ -204,21 +203,21 @@ func (m *GenesisState) GetSlashEventCount() uint64 {
 	return 0
 }
 
-func (m *GenesisState) GetValidationInfos() []ValidationInfo {
+func (m *GenesisState) GetValidationInfos() map[int64]ValidationInfo {
 	if m != nil {
 		return m.ValidationInfos
 	}
 	return nil
 }
 
-func (m *GenesisState) GetBtcBlockHeaders() []api.BTCBlockHeader {
+func (m *GenesisState) GetBtcBlockHeaders() map[int64]api.BTCBlockHeader {
 	if m != nil {
 		return m.BtcBlockHeaders
 	}
 	return nil
 }
 
-func (m *GenesisState) GetLastUsedSolanaNonce() []SolanaNonce {
+func (m *GenesisState) GetLastUsedSolanaNonce() map[uint64]SolanaNonce {
 	if m != nil {
 		return m.LastUsedSolanaNonce
 	}
@@ -232,56 +231,49 @@ func (m *GenesisState) GetBackfillRequest() BackfillRequests {
 	return BackfillRequests{}
 }
 
-func (m *GenesisState) GetLastUsedEthereumNonce() []types.NonceData {
+func (m *GenesisState) GetLastUsedEthereumNonce() map[uint64]types.NonceData {
 	if m != nil {
 		return m.LastUsedEthereumNonce
 	}
 	return nil
 }
 
-func (m *GenesisState) GetRequestedHistoricalBitcoinHeaders() []types.RequestedBitcoinHeaders {
+func (m *GenesisState) GetRequestedHistoricalBitcoinHeaders() types.RequestedBitcoinHeaders {
 	if m != nil {
 		return m.RequestedHistoricalBitcoinHeaders
 	}
-	return nil
+	return types.RequestedBitcoinHeaders{}
 }
 
-func (m *GenesisState) GetAvsRewardsPool() []string {
-	if m != nil {
-		return m.AvsRewardsPool
-	}
-	return nil
-}
-
-func (m *GenesisState) GetEthereumNonceRequested() []uint64 {
+func (m *GenesisState) GetEthereumNonceRequested() map[uint64]bool {
 	if m != nil {
 		return m.EthereumNonceRequested
 	}
 	return nil
 }
 
-func (m *GenesisState) GetSolanaNonceRequested() []uint64 {
+func (m *GenesisState) GetSolanaNonceRequested() map[uint64]bool {
 	if m != nil {
 		return m.SolanaNonceRequested
 	}
 	return nil
 }
 
-func (m *GenesisState) GetSolanaZentpAccountsRequested() []string {
+func (m *GenesisState) GetSolanaZentpAccountsRequested() map[string]bool {
 	if m != nil {
 		return m.SolanaZentpAccountsRequested
 	}
 	return nil
 }
 
-func (m *GenesisState) GetSolanaAccountsRequested() []string {
+func (m *GenesisState) GetSolanaAccountsRequested() map[string]bool {
 	if m != nil {
 		return m.SolanaAccountsRequested
 	}
 	return nil
 }
 
-func (m *GenesisState) GetValidatorMismatchCounts() []ValidatorMismatchCount {
+func (m *GenesisState) GetValidatorMismatchCounts() map[string]ValidatorMismatchCount {
 	if m != nil {
 		return m.ValidatorMismatchCounts
 	}
@@ -291,6 +283,13 @@ func (m *GenesisState) GetValidatorMismatchCounts() []ValidatorMismatchCount {
 func (m *GenesisState) GetLastCompletedZentpMintId() uint64 {
 	if m != nil {
 		return m.LastCompletedZentpMintId
+	}
+	return 0
+}
+
+func (m *GenesisState) GetLatestBtcHeaderHeight() int64 {
+	if m != nil {
+		return m.LatestBtcHeaderHeight
 	}
 	return 0
 }
@@ -338,83 +337,119 @@ var xxx_messageInfo_LastValidatorPower proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "zrchain.validation.GenesisState")
+	proto.RegisterMapType((map[int32]cosmossdk_io_math.LegacyDec)(nil), "zrchain.validation.GenesisState.AssetPricesEntry")
+	proto.RegisterMapType((map[string]cosmossdk_io_math.Int)(nil), "zrchain.validation.GenesisState.AvsDelegationsEntry")
+	proto.RegisterMapType((map[string]cosmossdk_io_math.Int)(nil), "zrchain.validation.GenesisState.AvsRewardsPoolEntry")
+	proto.RegisterMapType((map[int64]api.BTCBlockHeader)(nil), "zrchain.validation.GenesisState.BtcBlockHeadersEntry")
+	proto.RegisterMapType((map[uint64]bool)(nil), "zrchain.validation.GenesisState.EthereumNonceRequestedEntry")
+	proto.RegisterMapType((map[uint64]types.NonceData)(nil), "zrchain.validation.GenesisState.LastUsedEthereumNonceEntry")
+	proto.RegisterMapType((map[uint64]SolanaNonce)(nil), "zrchain.validation.GenesisState.LastUsedSolanaNonceEntry")
+	proto.RegisterMapType((map[uint64]SlashEvent)(nil), "zrchain.validation.GenesisState.SlashEventsEntry")
+	proto.RegisterMapType((map[string]bool)(nil), "zrchain.validation.GenesisState.SolanaAccountsRequestedEntry")
+	proto.RegisterMapType((map[uint64]bool)(nil), "zrchain.validation.GenesisState.SolanaNonceRequestedEntry")
+	proto.RegisterMapType((map[string]bool)(nil), "zrchain.validation.GenesisState.SolanaZentpAccountsRequestedEntry")
+	proto.RegisterMapType((map[int64]ValidationInfo)(nil), "zrchain.validation.GenesisState.ValidationInfosEntry")
+	proto.RegisterMapType((map[string]cosmossdk_io_math.Int)(nil), "zrchain.validation.GenesisState.ValidatorDelegationsEntry")
+	proto.RegisterMapType((map[string]ValidatorMismatchCount)(nil), "zrchain.validation.GenesisState.ValidatorMismatchCountsEntry")
 	proto.RegisterType((*LastValidatorPower)(nil), "zrchain.validation.LastValidatorPower")
 }
 
 func init() { proto.RegisterFile("zrchain/validation/genesis.proto", fileDescriptor_c682c41018a13c0f) }
 
 var fileDescriptor_c682c41018a13c0f = []byte{
-	// 1111 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x96, 0x4f, 0x4f, 0x1b, 0x47,
-	0x18, 0xc6, 0xed, 0x3a, 0x10, 0x18, 0x48, 0x80, 0xc1, 0xc0, 0x40, 0xa9, 0xed, 0xd2, 0xa8, 0xb5,
-	0x90, 0xb0, 0x2b, 0x2a, 0x55, 0x55, 0xa3, 0xaa, 0xc5, 0x84, 0x16, 0x5a, 0x52, 0xd1, 0x25, 0xa0,
-	0x0a, 0xa9, 0x1a, 0x8d, 0x77, 0x07, 0xef, 0x88, 0xf5, 0x8c, 0xb3, 0x33, 0x76, 0x08, 0xd7, 0x5e,
-	0x7a, 0xec, 0x47, 0xc8, 0xb1, 0xc7, 0x1e, 0xf2, 0x21, 0x72, 0x8c, 0x72, 0xaa, 0x7a, 0x88, 0x2a,
-	0x38, 0xb4, 0xea, 0xa7, 0xa8, 0x76, 0x66, 0x76, 0x3d, 0xae, 0x37, 0xb9, 0x58, 0xde, 0x7d, 0x9e,
-	0xf7, 0xf7, 0xbe, 0x3b, 0xf3, 0xce, 0x1f, 0x50, 0xbb, 0x8a, 0xfd, 0x90, 0x30, 0xde, 0x1c, 0x90,
-	0x88, 0x05, 0x44, 0x31, 0xc1, 0x9b, 0x1d, 0xca, 0xa9, 0x64, 0xb2, 0xd1, 0x8b, 0x85, 0x12, 0x10,
-	0x5a, 0x47, 0x63, 0xe8, 0x58, 0x2b, 0x77, 0x44, 0x47, 0x68, 0xb9, 0x99, 0xfc, 0x33, 0xce, 0xb5,
-	0x3c, 0x96, 0x54, 0xe4, 0x82, 0xf1, 0x8e, 0x75, 0x54, 0xf3, 0x1c, 0x22, 0x22, 0x9c, 0x58, 0xc3,
-	0xbb, 0x39, 0x06, 0x75, 0x69, 0xc5, 0x0f, 0x72, 0x44, 0x22, 0x25, 0x55, 0x38, 0x20, 0x2a, 0x25,
-	0x6c, 0xe6, 0x98, 0xc2, 0xa7, 0xed, 0x98, 0x05, 0x78, 0xf8, 0xc6, 0x7a, 0x57, 0x7d, 0x21, 0xbb,
-	0x42, 0x62, 0xf3, 0x25, 0xe6, 0xc1, 0x4a, 0x0b, 0xa4, 0xcb, 0xb8, 0x68, 0xea, 0xdf, 0xd4, 0x4d,
-	0x7a, 0xac, 0x29, 0x59, 0x40, 0x7d, 0x12, 0x63, 0x49, 0xe3, 0x01, 0xf3, 0x69, 0x2a, 0xa5, 0x49,
-	0xaf, 0x28, 0x6f, 0x2b, 0xbf, 0xd9, 0x65, 0x5c, 0x19, 0x69, 0xe3, 0xdf, 0x39, 0x30, 0xfb, 0x8d,
-	0x19, 0xd0, 0x63, 0x45, 0x14, 0x85, 0x5f, 0x80, 0xc9, 0x1e, 0x89, 0x49, 0x57, 0xa2, 0x62, 0xad,
-	0x58, 0x9f, 0xd9, 0x5e, 0x6b, 0x8c, 0x0f, 0x70, 0xe3, 0x48, 0x3b, 0x5a, 0xd3, 0x2f, 0x5e, 0x57,
-	0x0b, 0xbf, 0xfd, 0xfd, 0xfb, 0x66, 0xd1, 0xb3, 0x41, 0xf0, 0x0c, 0xcc, 0x47, 0x44, 0x2a, 0xac,
-	0x84, 0x22, 0x11, 0xee, 0x89, 0x27, 0x34, 0x46, 0xef, 0xd4, 0x8a, 0xf5, 0xd9, 0xd6, 0xc7, 0x89,
-	0xf9, 0xcf, 0xd7, 0xd5, 0x25, 0xf3, 0x21, 0x32, 0xb8, 0x68, 0x30, 0xd1, 0xec, 0x12, 0x15, 0x36,
-	0x0e, 0xb8, 0x7a, 0xf5, 0x7c, 0x0b, 0xd8, 0x2f, 0x3c, 0xe0, 0xca, 0x30, 0xef, 0x26, 0xa4, 0x47,
-	0x09, 0xe8, 0x28, 0xe1, 0x40, 0x0a, 0x96, 0x34, 0xdb, 0x16, 0x22, 0x62, 0xc3, 0x97, 0xa8, 0x54,
-	0x2b, 0xd5, 0x67, 0xb6, 0x3f, 0xcc, 0xab, 0xf4, 0x90, 0x48, 0x75, 0x9a, 0xfa, 0x35, 0xc6, 0xad,
-	0x7a, 0x31, 0x1a, 0x93, 0x25, 0xfc, 0x16, 0x80, 0x2c, 0x83, 0x44, 0xb7, 0x34, 0xbb, 0x9a, 0xc7,
-	0xce, 0x02, 0xf7, 0x4f, 0x5d, 0xa8, 0x13, 0x0d, 0xbf, 0x03, 0x33, 0x01, 0x8d, 0x68, 0x47, 0x07,
-	0x48, 0x34, 0xa1, 0x61, 0x95, 0x3c, 0xd8, 0x83, 0xcc, 0xe6, 0xb2, 0xdc, 0x68, 0xd8, 0x01, 0x4b,
-	0x7d, 0xde, 0x16, 0x3c, 0x60, 0xbc, 0x83, 0x5d, 0xec, 0xa4, 0xc6, 0x7e, 0x94, 0x87, 0x3d, 0x49,
-	0x03, 0xf2, 0xf9, 0xe5, 0xfe, 0xb8, 0x2e, 0xe1, 0x0f, 0xe0, 0x4e, 0x4c, 0xdd, 0x04, 0xb7, 0x75,
-	0x82, 0x5a, 0x5e, 0x02, 0xcf, 0x31, 0xba, 0xe4, 0x51, 0x02, 0x5c, 0x03, 0x53, 0xf4, 0xb2, 0x27,
-	0x62, 0x45, 0x03, 0x34, 0x55, 0x2b, 0xd6, 0xa7, 0xbc, 0xec, 0x19, 0x7e, 0x06, 0xa6, 0xf6, 0x4f,
-	0x4d, 0x4b, 0xa1, 0x69, 0xdd, 0x74, 0xeb, 0x79, 0x99, 0x52, 0x8f, 0x97, 0xb9, 0xe1, 0x57, 0x60,
-	0xd6, 0xac, 0xb0, 0x5e, 0xcc, 0x7c, 0x2a, 0x11, 0xd0, 0x75, 0xbe, 0x97, 0x17, 0xbd, 0x93, 0xf8,
-	0x1e, 0x10, 0x45, 0xbc, 0x19, 0x1d, 0x72, 0xa4, 0x23, 0x60, 0x13, 0x94, 0x87, 0x3d, 0x85, 0x07,
-	0x14, 0x87, 0x94, 0x75, 0x42, 0x85, 0x66, 0x6a, 0xc5, 0x7a, 0xc9, 0x5b, 0xc8, 0xfa, 0xe3, 0x94,
-	0xee, 0x6b, 0x01, 0x1e, 0x82, 0x59, 0x19, 0x11, 0x19, 0x62, 0x3a, 0xa0, 0x5c, 0x49, 0x34, 0xfb,
-	0xe6, 0x29, 0x3d, 0x4e, 0x7c, 0x7b, 0x89, 0x6d, 0x64, 0x4a, 0x65, 0xf6, 0x5a, 0xc2, 0x4d, 0xb0,
-	0xe0, 0xd0, 0xb0, 0x2f, 0xfa, 0x5c, 0xa1, 0x3b, 0xb5, 0x62, 0xfd, 0x96, 0x37, 0x37, 0xf4, 0xed,
-	0x26, 0xaf, 0xe1, 0x8f, 0x60, 0x7e, 0x08, 0xc7, 0x8c, 0x9f, 0x0b, 0x89, 0xee, 0xea, 0xec, 0x1b,
-	0x6f, 0xe9, 0x4e, 0x26, 0xf8, 0x01, 0x3f, 0x17, 0x6e, 0x05, 0x73, 0x83, 0x11, 0x29, 0xe9, 0xf8,
-	0x85, 0xb6, 0xf2, 0x71, 0x3b, 0x12, 0xfe, 0x05, 0x0e, 0x29, 0x09, 0x92, 0x45, 0x35, 0xa7, 0xd1,
-	0x8b, 0x0d, 0xd2, 0x63, 0x8d, 0xd6, 0xa3, 0xdd, 0x56, 0x22, 0xee, 0x6b, 0x6d, 0x84, 0xd5, 0x56,
-	0xbe, 0x23, 0x49, 0x88, 0xc1, 0xb2, 0x1e, 0xd0, 0xbe, 0xa4, 0x01, 0x36, 0x9b, 0x27, 0xe6, 0x82,
-	0xfb, 0x14, 0xcd, 0xbf, 0x79, 0x25, 0x1d, 0x6b, 0xdf, 0xf7, 0x89, 0x6d, 0x6c, 0x79, 0x9e, 0x48,
-	0x1a, 0x38, 0x7a, 0xb2, 0xc3, 0xb4, 0x89, 0x7f, 0x71, 0xce, 0xa2, 0x08, 0xc7, 0xf4, 0x71, 0x9f,
-	0x4a, 0x85, 0x16, 0x74, 0xd7, 0xdc, 0xcb, 0x43, 0xb7, 0xac, 0xd7, 0x33, 0x56, 0x39, 0x5a, 0xfc,
-	0xa8, 0x08, 0x7f, 0x02, 0x68, 0x58, 0x3c, 0x55, 0x21, 0x8d, 0x69, 0xbf, 0x6b, 0xcb, 0x87, 0xba,
-	0xfc, 0xd5, 0x2c, 0x87, 0xd9, 0x4b, 0x1b, 0xba, 0xa8, 0xa4, 0xaf, 0x5c, 0xf0, 0x52, 0x5a, 0xf8,
-	0x9e, 0x65, 0x98, 0xd2, 0x7f, 0x2e, 0x82, 0x7b, 0xb6, 0x64, 0x1a, 0xe0, 0x90, 0x49, 0x25, 0x62,
-	0xe6, 0x93, 0x08, 0xb7, 0x99, 0xf2, 0x05, 0xe3, 0xd9, 0xd8, 0x2f, 0xfe, 0x6f, 0x41, 0xdb, 0x5c,
-	0x5e, 0x1a, 0xdb, 0x32, 0x7e, 0x3b, 0xe6, 0x6e, 0xe6, 0xf7, 0x33, 0xfe, 0x7e, 0x86, 0x1f, 0x75,
-	0xc3, 0x26, 0x98, 0x27, 0x03, 0x89, 0x63, 0xfa, 0x84, 0xc4, 0x81, 0xc4, 0x3d, 0x21, 0x22, 0x54,
-	0xae, 0x95, 0xea, 0xd3, 0xad, 0x09, 0xbb, 0xef, 0x92, 0x81, 0xf4, 0x8c, 0x7a, 0x24, 0x44, 0x04,
-	0xbf, 0x04, 0x68, 0x74, 0x2c, 0x70, 0x96, 0x04, 0x2d, 0xd5, 0x4a, 0xf5, 0x5b, 0x69, 0xe0, 0x32,
-	0x75, 0x3f, 0x37, 0xab, 0x16, 0xde, 0x07, 0xcb, 0x6e, 0x27, 0x38, 0xe1, 0xcb, 0x6e, 0x78, 0x59,
-	0x0e, 0xa7, 0x79, 0x18, 0x7c, 0x08, 0xaa, 0x36, 0xf8, 0x8a, 0x72, 0xd5, 0xc3, 0xc4, 0xd7, 0xab,
-	0x44, 0x3a, 0x94, 0x15, 0xb7, 0xfa, 0x75, 0xe3, 0x3e, 0x4b, 0xcc, 0x3b, 0xd6, 0x3b, 0xa4, 0xed,
-	0x80, 0x55, 0x4b, 0xcb, 0xe1, 0x20, 0x97, 0xb3, 0x62, 0x7c, 0xe3, 0x88, 0xc7, 0x60, 0x75, 0x78,
-	0x02, 0x75, 0x99, 0xec, 0x12, 0xe5, 0x87, 0x66, 0xe9, 0x4a, 0xb4, 0xaa, 0x67, 0x6e, 0xf3, 0xad,
-	0xc7, 0xc5, 0x43, 0x1b, 0xa3, 0x97, 0xb5, 0x3b, 0x79, 0x2b, 0x83, 0x5c, 0x8b, 0x84, 0x7b, 0x60,
-	0x5d, 0xf7, 0xa5, 0x2f, 0xba, 0xbd, 0x88, 0x26, 0xcd, 0x63, 0xc6, 0x22, 0x39, 0xc8, 0x31, 0x0b,
-	0xd0, 0x5a, 0xb2, 0x63, 0xa4, 0x85, 0xeb, 0x16, 0xde, 0x4d, 0x9d, 0x7a, 0x1c, 0x1e, 0x32, 0xae,
-	0x0e, 0x82, 0x8d, 0x10, 0xc0, 0xf1, 0xf3, 0x10, 0x6e, 0x83, 0xdb, 0x24, 0x08, 0x62, 0x2a, 0xcd,
-	0x91, 0x3f, 0xdd, 0x42, 0xaf, 0x9e, 0x6f, 0x95, 0xed, 0x61, 0xbc, 0x63, 0x94, 0x63, 0x15, 0x33,
-	0xde, 0xf1, 0x52, 0x23, 0x2c, 0x83, 0x89, 0xe1, 0xd9, 0x5e, 0xf2, 0xcc, 0xc3, 0xe7, 0x53, 0xbf,
-	0x3c, 0xab, 0x16, 0xfe, 0x79, 0x56, 0x2d, 0xb4, 0x4e, 0x5e, 0x5c, 0x57, 0x8a, 0x2f, 0xaf, 0x2b,
-	0xc5, 0xbf, 0xae, 0x2b, 0xc5, 0x5f, 0x6f, 0x2a, 0x85, 0x97, 0x37, 0x95, 0xc2, 0x1f, 0x37, 0x95,
-	0xc2, 0xd9, 0xfd, 0x0e, 0x53, 0x61, 0xbf, 0xdd, 0xf0, 0x45, 0xb7, 0x79, 0x46, 0x79, 0x2c, 0xfc,
-	0x8b, 0xad, 0xaf, 0x45, 0x9f, 0xdb, 0xbb, 0x50, 0x76, 0x3d, 0xfa, 0xb4, 0x79, 0x39, 0x72, 0xcb,
-	0x7a, 0xda, 0xa3, 0xb2, 0x3d, 0xa9, 0x2f, 0x2d, 0x9f, 0xfc, 0x17, 0x00, 0x00, 0xff, 0xff, 0x61,
-	0xd9, 0x85, 0x0f, 0x17, 0x0a, 0x00, 0x00,
+	// 1467 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x58, 0x41, 0x6f, 0x13, 0x47,
+	0x14, 0xce, 0x12, 0x02, 0xc9, 0x24, 0x10, 0x67, 0x62, 0x87, 0xb5, 0x93, 0xda, 0x06, 0xa1, 0x36,
+	0x45, 0xc2, 0x2e, 0x14, 0x10, 0x85, 0x82, 0x1a, 0x27, 0x29, 0x09, 0x85, 0x36, 0x75, 0x20, 0x95,
+	0x72, 0xe8, 0x6a, 0xbc, 0x3b, 0xd8, 0x23, 0xaf, 0x77, 0xdc, 0x9d, 0xb1, 0x21, 0x48, 0x55, 0x2b,
+	0xb5, 0x87, 0x1e, 0x2a, 0x95, 0x9f, 0x40, 0x6f, 0x3d, 0xf6, 0xc0, 0x8f, 0xe0, 0x88, 0x38, 0x55,
+	0x3d, 0xa0, 0x0a, 0xa4, 0xb6, 0x3f, 0xa3, 0xda, 0x99, 0xf5, 0xee, 0x6c, 0x3c, 0xb1, 0x9d, 0xb6,
+	0x97, 0x28, 0xeb, 0xf7, 0xbd, 0xef, 0x7b, 0x6f, 0xe6, 0xed, 0x9b, 0xb7, 0x03, 0x8a, 0x8f, 0x7d,
+	0xbb, 0x81, 0x88, 0x57, 0xee, 0x22, 0x97, 0x38, 0x88, 0x13, 0xea, 0x95, 0xeb, 0xd8, 0xc3, 0x8c,
+	0xb0, 0x52, 0xdb, 0xa7, 0x9c, 0x42, 0x18, 0x22, 0x4a, 0x31, 0x22, 0x97, 0xae, 0xd3, 0x3a, 0x15,
+	0xe6, 0x72, 0xf0, 0x9f, 0x44, 0xe6, 0x74, 0x5c, 0x8c, 0xa3, 0x26, 0xf1, 0xea, 0x21, 0xa2, 0xa0,
+	0x43, 0x50, 0x17, 0x79, 0x28, 0x04, 0x2c, 0x6a, 0x00, 0xfc, 0x51, 0x68, 0x3c, 0xa7, 0x31, 0x36,
+	0xf6, 0x6a, 0x3e, 0x71, 0xac, 0xf8, 0x97, 0x10, 0x9b, 0xb5, 0x29, 0x6b, 0x51, 0x66, 0xc9, 0x20,
+	0xe5, 0x43, 0x68, 0x9a, 0x43, 0x2d, 0xe2, 0xd1, 0xb2, 0xf8, 0xdb, 0x43, 0xa3, 0x36, 0x29, 0x33,
+	0xe2, 0x60, 0x1b, 0xf9, 0x16, 0xc3, 0x7e, 0x97, 0xd8, 0xb8, 0x67, 0xea, 0x89, 0x3e, 0xc6, 0x5e,
+	0x8d, 0xdb, 0xe5, 0x16, 0xf1, 0xb8, 0x34, 0x9d, 0xf9, 0xb3, 0x08, 0x66, 0x6e, 0xc9, 0xb5, 0xda,
+	0xe6, 0x88, 0x63, 0x78, 0x03, 0x1c, 0x6b, 0x23, 0x1f, 0xb5, 0x98, 0x69, 0x14, 0x8d, 0xe5, 0xe9,
+	0x8b, 0xb9, 0x52, 0xff, 0xda, 0x95, 0xb6, 0x04, 0xa2, 0x32, 0xf5, 0xfc, 0x55, 0x61, 0xec, 0x97,
+	0xbf, 0x7e, 0x3d, 0x67, 0x54, 0x43, 0x27, 0xb8, 0x0b, 0x52, 0x2e, 0x62, 0xdc, 0xe2, 0x94, 0x23,
+	0xd7, 0x6a, 0xd3, 0x87, 0xd8, 0x37, 0x8f, 0x14, 0x8d, 0xe5, 0x99, 0xca, 0x7b, 0x01, 0xf8, 0xf7,
+	0x57, 0x85, 0x8c, 0x4c, 0x84, 0x39, 0xcd, 0x12, 0xa1, 0xe5, 0x16, 0xe2, 0x8d, 0xd2, 0xa6, 0xc7,
+	0x5f, 0x3e, 0x3b, 0x0f, 0xc2, 0x0c, 0x37, 0x3d, 0x2e, 0x39, 0x4f, 0x06, 0x4c, 0xf7, 0x02, 0xa2,
+	0xad, 0x80, 0x07, 0x62, 0x90, 0x11, 0xdc, 0x61, 0x20, 0xd4, 0x97, 0xfc, 0xcc, 0x1c, 0x2f, 0x8e,
+	0x2f, 0x4f, 0x5f, 0x7c, 0x5b, 0x17, 0xe9, 0x1d, 0xc4, 0xf8, 0x4e, 0x0f, 0x2f, 0x68, 0xd4, 0xa8,
+	0xe7, 0xdd, 0x3e, 0x33, 0x83, 0xb7, 0x01, 0x88, 0x14, 0x98, 0x79, 0x54, 0x70, 0x17, 0x74, 0xdc,
+	0x91, 0xe3, 0xc6, 0x8e, 0x4a, 0xaa, 0x78, 0xc3, 0x4f, 0xc0, 0xb4, 0x83, 0x5d, 0x5c, 0x17, 0x0e,
+	0xcc, 0x9c, 0x10, 0x64, 0x79, 0x1d, 0xd9, 0x5a, 0x04, 0x53, 0xb9, 0x54, 0x6f, 0x58, 0x07, 0x99,
+	0x8e, 0x57, 0xa3, 0x9e, 0x43, 0xbc, 0xba, 0xa5, 0xd2, 0x1e, 0x13, 0xb4, 0xef, 0xe8, 0x68, 0xef,
+	0xf7, 0x1c, 0xf4, 0xfc, 0xe9, 0x4e, 0xbf, 0x9d, 0xc1, 0xcf, 0xc1, 0x09, 0x1f, 0xab, 0x02, 0xc7,
+	0x85, 0x40, 0x51, 0x27, 0x50, 0x55, 0x80, 0x2a, 0x73, 0x92, 0x01, 0xe6, 0xc0, 0x24, 0x7e, 0xd4,
+	0xa6, 0x3e, 0xc7, 0x8e, 0x39, 0x59, 0x34, 0x96, 0x27, 0xab, 0xd1, 0x33, 0x5c, 0x05, 0x93, 0x1b,
+	0x3b, 0xb2, 0xa4, 0xcc, 0x29, 0x51, 0x74, 0x4b, 0x3a, 0xa5, 0x1e, 0x46, 0x55, 0x89, 0x1c, 0xe1,
+	0x8f, 0x06, 0x98, 0x41, 0x8c, 0x61, 0x6e, 0xb5, 0x7d, 0x62, 0x63, 0x66, 0x02, 0x11, 0xf3, 0x05,
+	0x1d, 0x93, 0x5a, 0xf0, 0xa5, 0x95, 0xc0, 0x69, 0x4b, 0xf8, 0xac, 0x7b, 0xdc, 0xdf, 0xab, 0x5c,
+	0x09, 0x0b, 0x75, 0xb1, 0xbf, 0x50, 0xef, 0xe0, 0x3a, 0xb2, 0xf7, 0xd6, 0xb0, 0xad, 0x94, 0xeb,
+	0x1a, 0xb6, 0xc3, 0xbd, 0x42, 0x31, 0x13, 0xbc, 0x02, 0xd2, 0x71, 0xad, 0x5a, 0x5d, 0x6c, 0x35,
+	0x30, 0xa9, 0x37, 0xb8, 0x39, 0x5d, 0x34, 0x96, 0xc7, 0x2b, 0x13, 0xd2, 0x63, 0x2e, 0x2a, 0xbf,
+	0x1d, 0xbc, 0x21, 0xec, 0xd0, 0x02, 0x33, 0xcc, 0x45, 0xac, 0x61, 0xe1, 0x2e, 0xf6, 0x38, 0x33,
+	0x67, 0x46, 0xcc, 0x62, 0x3b, 0x70, 0x5a, 0x17, 0x3e, 0x32, 0x0b, 0xb5, 0x88, 0x58, 0x6c, 0x84,
+	0x17, 0xc0, 0x9c, 0x22, 0x60, 0xd9, 0xb4, 0xe3, 0x71, 0xf3, 0x44, 0xd1, 0x58, 0x3e, 0xda, 0x8b,
+	0x6a, 0x36, 0x86, 0xaf, 0x06, 0x56, 0xd8, 0x04, 0xa9, 0x58, 0xd6, 0x22, 0xde, 0x03, 0xca, 0xcc,
+	0x93, 0x22, 0xae, 0xcb, 0x43, 0xe3, 0xda, 0x89, 0x7e, 0xdf, 0x0c, 0xfc, 0xfa, 0x62, 0x9b, 0xed,
+	0x26, 0x01, 0xd0, 0x05, 0x73, 0x35, 0x6e, 0x5b, 0x35, 0x97, 0xda, 0x4d, 0xab, 0x81, 0x91, 0x13,
+	0xbc, 0xe0, 0xb3, 0x23, 0xaa, 0x55, 0xb8, 0x5d, 0x09, 0x1c, 0x37, 0xa4, 0x5f, 0xbf, 0x5a, 0x2d,
+	0x09, 0x80, 0x7b, 0x60, 0x41, 0x6c, 0x53, 0x87, 0x61, 0xc7, 0x92, 0x5d, 0xdc, 0xf2, 0xa8, 0x67,
+	0x63, 0x33, 0x25, 0x24, 0x3f, 0x18, 0x2a, 0x19, 0x34, 0x98, 0xfb, 0x0c, 0x3b, 0xdb, 0xc2, 0xf9,
+	0xd3, 0xc0, 0xb7, 0x4f, 0x56, 0xb4, 0x99, 0x7d, 0xa0, 0xa0, 0x53, 0xd6, 0x90, 0xdd, 0x7c, 0x40,
+	0x5c, 0xd7, 0xf2, 0xf1, 0x57, 0x1d, 0xcc, 0xb8, 0x39, 0x27, 0xaa, 0xff, 0xac, 0x4e, 0xb4, 0x12,
+	0x62, 0xab, 0x12, 0xca, 0x92, 0x69, 0x25, 0x8d, 0xf0, 0x1b, 0x60, 0xc6, 0x69, 0x61, 0xde, 0xc0,
+	0x3e, 0xee, 0xb4, 0xc2, 0xc4, 0xa0, 0x48, 0xec, 0xfa, 0xc8, 0x89, 0xad, 0x87, 0xee, 0xfa, 0xd4,
+	0x32, 0xae, 0x0e, 0x06, 0xbf, 0x33, 0xc0, 0xd9, 0x30, 0x29, 0xec, 0x58, 0x0d, 0xc2, 0x38, 0xf5,
+	0x89, 0x8d, 0x5c, 0xab, 0x46, 0xb8, 0x4d, 0x89, 0x17, 0xed, 0xec, 0xbc, 0xc8, 0x38, 0x6e, 0x5d,
+	0xf2, 0x84, 0x2a, 0x55, 0x7b, 0xbe, 0x15, 0x89, 0x0f, 0xf7, 0x4b, 0x55, 0x3e, 0x1d, 0xf1, 0x6f,
+	0x44, 0xf4, 0x49, 0x34, 0x7c, 0x62, 0x80, 0x14, 0xea, 0x32, 0xcb, 0xc7, 0x0f, 0x91, 0xef, 0x30,
+	0xab, 0x4d, 0xa9, 0x6b, 0xa6, 0x45, 0xfe, 0x97, 0x86, 0xf7, 0x85, 0x2e, 0xab, 0x4a, 0xbf, 0x2d,
+	0x4a, 0x5d, 0x99, 0xf8, 0xbf, 0x38, 0xc3, 0x50, 0x82, 0x06, 0x7e, 0x0d, 0xcc, 0xe4, 0x7e, 0x58,
+	0x51, 0x1a, 0x66, 0x46, 0x44, 0xf6, 0xe1, 0xd0, 0xc8, 0x12, 0x4b, 0x1d, 0xad, 0x94, 0x8c, 0x30,
+	0x7c, 0x87, 0x17, 0xb0, 0x16, 0x03, 0x1f, 0x82, 0x05, 0xb5, 0xca, 0x15, 0xf1, 0x05, 0x21, 0x7e,
+	0x6d, 0x78, 0xa3, 0x89, 0x4b, 0x58, 0x2f, 0x9d, 0x66, 0x1a, 0x44, 0xb0, 0x15, 0x85, 0x50, 0xf9,
+	0x31, 0xf6, 0x78, 0xdb, 0x42, 0xb6, 0x68, 0x3d, 0x4c, 0x09, 0xe1, 0x94, 0x08, 0xa1, 0x32, 0x62,
+	0x08, 0xbb, 0x01, 0xcd, 0x4a, 0xc8, 0xa2, 0x0f, 0x65, 0x89, 0x0d, 0x40, 0xc2, 0x6f, 0x0d, 0x90,
+	0x0d, 0x43, 0xd2, 0x04, 0x63, 0x8a, 0x60, 0x6e, 0x8c, 0x18, 0xcc, 0xe0, 0x38, 0x4e, 0x31, 0x3d,
+	0x08, 0x7e, 0x6f, 0x80, 0x6c, 0x3c, 0xcd, 0xb4, 0x08, 0x6b, 0x21, 0x6e, 0x37, 0x64, 0x53, 0x66,
+	0x66, 0x76, 0xc4, 0x10, 0xa2, 0x39, 0xe4, 0x6e, 0x48, 0x20, 0xda, 0x76, 0x7f, 0xf7, 0x3b, 0xd5,
+	0xd5, 0x03, 0xe1, 0x3a, 0x58, 0x12, 0xed, 0xc2, 0xa6, 0xad, 0xb6, 0x8b, 0x83, 0x37, 0x56, 0xee,
+	0x51, 0x30, 0x27, 0x5a, 0xc4, 0x31, 0x73, 0xea, 0xf1, 0x20, 0x3a, 0xcb, 0x6a, 0x0f, 0x29, 0xd6,
+	0xf6, 0x2e, 0xf1, 0xf8, 0xa6, 0x03, 0x7f, 0x32, 0xc0, 0x6c, 0xf0, 0xba, 0xa9, 0x93, 0xc3, 0xe2,
+	0xe8, 0x6f, 0x9b, 0x32, 0x81, 0xfc, 0x97, 0xb7, 0x4d, 0x1d, 0x64, 0x7e, 0x36, 0x40, 0x26, 0x5e,
+	0x5f, 0x35, 0xae, 0xa5, 0x11, 0xcb, 0x3d, 0x5a, 0xdb, 0xff, 0x21, 0xba, 0x74, 0x57, 0x43, 0x06,
+	0x6f, 0x06, 0xbd, 0x9a, 0x63, 0xc6, 0xad, 0xe0, 0xdc, 0x93, 0x7d, 0xb1, 0x37, 0x2d, 0xbc, 0xa5,
+	0x4e, 0x0b, 0x19, 0x09, 0xab, 0x70, 0x5b, 0xf6, 0x37, 0x39, 0x31, 0xe4, 0x6e, 0x82, 0xd4, 0xfe,
+	0x11, 0x06, 0xa6, 0xc0, 0x78, 0x13, 0xef, 0x89, 0x09, 0x7e, 0xa2, 0x1a, 0xfc, 0x0b, 0xd3, 0x60,
+	0xa2, 0x8b, 0xdc, 0x0e, 0x96, 0xc3, 0x78, 0x55, 0x3e, 0x5c, 0x3b, 0x72, 0xd5, 0xc8, 0x7d, 0x09,
+	0x52, 0xfb, 0x87, 0x07, 0xd5, 0xff, 0xa8, 0xf4, 0xbf, 0xa4, 0xfa, 0x1f, 0x30, 0xc2, 0xc6, 0x34,
+	0x2a, 0xff, 0x03, 0x90, 0xd6, 0x0d, 0x01, 0xaa, 0xc6, 0xb8, 0xd4, 0xb8, 0x9a, 0xd4, 0x38, 0x33,
+	0x60, 0xe6, 0x0e, 0xa9, 0x54, 0x9d, 0x2f, 0x40, 0x5a, 0x77, 0xfc, 0x6b, 0x74, 0xde, 0x4d, 0xea,
+	0xcc, 0x97, 0x50, 0x9b, 0x94, 0x2a, 0xf7, 0x56, 0x15, 0x5f, 0x95, 0xb8, 0x0e, 0xcc, 0x83, 0x0e,
+	0x79, 0xcd, 0x42, 0x5d, 0x4e, 0x92, 0x6b, 0x3f, 0x1c, 0xd4, 0x1e, 0xaa, 0x08, 0xd9, 0x20, 0x77,
+	0xf0, 0xa1, 0xab, 0x91, 0x2a, 0x27, 0xa5, 0xb2, 0xfb, 0x0f, 0x51, 0xe1, 0xbc, 0x86, 0x38, 0x52,
+	0x45, 0x56, 0xc0, 0xbc, 0xe6, 0x64, 0x53, 0xd9, 0xa7, 0x86, 0x55, 0xcc, 0x26, 0x58, 0x1c, 0x70,
+	0x04, 0x69, 0x02, 0x4d, 0x50, 0x4d, 0xaa, 0x54, 0xb7, 0x40, 0xf6, 0xc0, 0x03, 0xe5, 0x50, 0x44,
+	0x9f, 0x81, 0xd3, 0x43, 0x8f, 0x85, 0x61, 0x49, 0x26, 0x08, 0x6f, 0x83, 0xa5, 0x41, 0xad, 0xfd,
+	0x50, 0x5c, 0x5d, 0xb0, 0x34, 0xa8, 0x47, 0x6b, 0xb8, 0x3e, 0x4a, 0x6e, 0xed, 0xb9, 0x81, 0x9f,
+	0x9f, 0x09, 0xca, 0xfe, 0xbd, 0xde, 0xdf, 0xb9, 0x0e, 0xb5, 0xd7, 0xb7, 0x40, 0xf6, 0xc0, 0x16,
+	0x78, 0x18, 0xa2, 0x33, 0x0d, 0x00, 0xfb, 0xbf, 0xc5, 0xe1, 0x45, 0x70, 0x1c, 0x39, 0x8e, 0x8f,
+	0x99, 0xbc, 0x6e, 0x98, 0xaa, 0x98, 0x2f, 0x9f, 0x9d, 0x4f, 0x87, 0x8d, 0x73, 0x45, 0x5a, 0xb6,
+	0xb9, 0x4f, 0xbc, 0x7a, 0xb5, 0x07, 0x0c, 0x34, 0xe2, 0x7b, 0x85, 0xf1, 0xaa, 0x7c, 0xb8, 0x36,
+	0xf9, 0xc3, 0xd3, 0xc2, 0xd8, 0xdf, 0x4f, 0x0b, 0x63, 0x95, 0xfb, 0xcf, 0x5f, 0xe7, 0x8d, 0x17,
+	0xaf, 0xf3, 0xc6, 0x1f, 0xaf, 0xf3, 0xc6, 0x93, 0x37, 0xf9, 0xb1, 0x17, 0x6f, 0xf2, 0x63, 0xbf,
+	0xbd, 0xc9, 0x8f, 0xed, 0x5e, 0xaf, 0x13, 0xde, 0xe8, 0xd4, 0x4a, 0x36, 0x6d, 0x95, 0x77, 0xb1,
+	0xe7, 0x53, 0xbb, 0x79, 0xfe, 0x63, 0xda, 0xf1, 0xc2, 0x7b, 0x98, 0xe8, 0x6a, 0xe6, 0x4a, 0xf9,
+	0x51, 0xe2, 0xf2, 0x66, 0xaf, 0x8d, 0x59, 0xed, 0x98, 0xb8, 0x30, 0x79, 0xff, 0x9f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x32, 0xc7, 0x08, 0x30, 0x6e, 0x12, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -437,6 +472,65 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.LatestBtcHeaderHeight != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.LatestBtcHeaderHeight))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xe8
+	}
+	if len(m.ValidatorDelegations) > 0 {
+		for k := range m.ValidatorDelegations {
+			v := m.ValidatorDelegations[k]
+			baseI := i
+			{
+				size := v.Size()
+				i -= size
+				if _, err := v.MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xe2
+		}
+	}
+	if len(m.AvsDelegations) > 0 {
+		for k := range m.AvsDelegations {
+			v := m.AvsDelegations[k]
+			baseI := i
+			{
+				size := v.Size()
+				i -= size
+				if _, err := v.MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xda
+		}
+	}
 	if m.LastCompletedZentpMintId != 0 {
 		i = encodeVarintGenesis(dAtA, i, uint64(m.LastCompletedZentpMintId))
 		i--
@@ -445,15 +539,25 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0xd0
 	}
 	if len(m.ValidatorMismatchCounts) > 0 {
-		for iNdEx := len(m.ValidatorMismatchCounts) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.ValidatorMismatchCounts {
+			v := m.ValidatorMismatchCounts[k]
+			baseI := i
 			{
-				size, err := m.ValidatorMismatchCounts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
@@ -461,10 +565,23 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.SolanaAccountsRequested) > 0 {
-		for iNdEx := len(m.SolanaAccountsRequested) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.SolanaAccountsRequested[iNdEx])
-			copy(dAtA[i:], m.SolanaAccountsRequested[iNdEx])
-			i = encodeVarintGenesis(dAtA, i, uint64(len(m.SolanaAccountsRequested[iNdEx])))
+		for k := range m.SolanaAccountsRequested {
+			v := m.SolanaAccountsRequested[k]
+			baseI := i
+			i--
+			if v {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
+			}
+			i--
+			dAtA[i] = 0x10
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
@@ -472,10 +589,23 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.SolanaZentpAccountsRequested) > 0 {
-		for iNdEx := len(m.SolanaZentpAccountsRequested) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.SolanaZentpAccountsRequested[iNdEx])
-			copy(dAtA[i:], m.SolanaZentpAccountsRequested[iNdEx])
-			i = encodeVarintGenesis(dAtA, i, uint64(len(m.SolanaZentpAccountsRequested[iNdEx])))
+		for k := range m.SolanaZentpAccountsRequested {
+			v := m.SolanaZentpAccountsRequested[k]
+			baseI := i
+			i--
+			if v {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
+			}
+			i--
+			dAtA[i] = 0x10
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
@@ -483,82 +613,105 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.SolanaNonceRequested) > 0 {
-		dAtA2 := make([]byte, len(m.SolanaNonceRequested)*10)
-		var j1 int
-		for _, num := range m.SolanaNonceRequested {
-			for num >= 1<<7 {
-				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j1++
+		for k := range m.SolanaNonceRequested {
+			v := m.SolanaNonceRequested[k]
+			baseI := i
+			i--
+			if v {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
 			}
-			dAtA2[j1] = uint8(num)
-			j1++
+			i--
+			dAtA[i] = 0x10
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xb2
 		}
-		i -= j1
-		copy(dAtA[i:], dAtA2[:j1])
-		i = encodeVarintGenesis(dAtA, i, uint64(j1))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0xb2
 	}
 	if len(m.EthereumNonceRequested) > 0 {
-		dAtA4 := make([]byte, len(m.EthereumNonceRequested)*10)
-		var j3 int
-		for _, num := range m.EthereumNonceRequested {
-			for num >= 1<<7 {
-				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j3++
+		for k := range m.EthereumNonceRequested {
+			v := m.EthereumNonceRequested[k]
+			baseI := i
+			i--
+			if v {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
 			}
-			dAtA4[j3] = uint8(num)
-			j3++
+			i--
+			dAtA[i] = 0x10
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xaa
 		}
-		i -= j3
-		copy(dAtA[i:], dAtA4[:j3])
-		i = encodeVarintGenesis(dAtA, i, uint64(j3))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0xaa
 	}
 	if len(m.AvsRewardsPool) > 0 {
-		for iNdEx := len(m.AvsRewardsPool) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.AvsRewardsPool[iNdEx])
-			copy(dAtA[i:], m.AvsRewardsPool[iNdEx])
-			i = encodeVarintGenesis(dAtA, i, uint64(len(m.AvsRewardsPool[iNdEx])))
+		for k := range m.AvsRewardsPool {
+			v := m.AvsRewardsPool[k]
+			baseI := i
+			{
+				size := v.Size()
+				i -= size
+				if _, err := v.MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintGenesis(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
 			dAtA[i] = 0xa2
 		}
 	}
-	if len(m.RequestedHistoricalBitcoinHeaders) > 0 {
-		for iNdEx := len(m.RequestedHistoricalBitcoinHeaders) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.RequestedHistoricalBitcoinHeaders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintGenesis(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x1
-			i--
-			dAtA[i] = 0x9a
+	{
+		size, err := m.RequestedHistoricalBitcoinHeaders.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0x9a
 	if len(m.LastUsedEthereumNonce) > 0 {
-		for iNdEx := len(m.LastUsedEthereumNonce) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.LastUsedEthereumNonce {
+			v := m.LastUsedEthereumNonce[k]
+			baseI := i
 			{
-				size, err := m.LastUsedEthereumNonce[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
@@ -578,15 +731,23 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x8a
 	if len(m.LastUsedSolanaNonce) > 0 {
-		for iNdEx := len(m.LastUsedSolanaNonce) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.LastUsedSolanaNonce {
+			v := m.LastUsedSolanaNonce[k]
+			baseI := i
 			{
-				size, err := m.LastUsedSolanaNonce[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x1
 			i--
@@ -594,9 +755,11 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.BtcBlockHeaders) > 0 {
-		for iNdEx := len(m.BtcBlockHeaders) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.BtcBlockHeaders {
+			v := m.BtcBlockHeaders[k]
+			baseI := i
 			{
-				size, err := m.BtcBlockHeaders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -604,19 +767,33 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
+			i--
 			dAtA[i] = 0x7a
 		}
 	}
 	if len(m.ValidationInfos) > 0 {
-		for iNdEx := len(m.ValidationInfos) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.ValidationInfos {
+			v := m.ValidationInfos[k]
+			baseI := i
 			{
-				size, err := m.ValidationInfos[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x72
 		}
@@ -627,15 +804,23 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x68
 	}
 	if len(m.SlashEvents) > 0 {
-		for iNdEx := len(m.SlashEvents) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.SlashEvents {
+			v := m.SlashEvents[k]
+			baseI := i
 			{
-				size, err := m.SlashEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := (&v).MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x62
 		}
@@ -646,31 +831,37 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x58
 	}
 	if len(m.AssetPrices) > 0 {
-		for iNdEx := len(m.AssetPrices) - 1; iNdEx >= 0; iNdEx-- {
+		for k := range m.AssetPrices {
+			v := m.AssetPrices[k]
+			baseI := i
 			{
-				size, err := m.AssetPrices[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
+				size := v.Size()
+				i -= size
+				if _, err := v.MarshalTo(dAtA[i:]); err != nil {
 					return 0, err
 				}
-				i -= size
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x12
+			i = encodeVarintGenesis(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintGenesis(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x52
 		}
 	}
-	if m.HVParams != nil {
-		{
-			size, err := m.HVParams.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintGenesis(dAtA, i, uint64(size))
+	{
+		size, err := m.HVParams.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
-		i--
-		dAtA[i] = 0x4a
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x4a
 	if m.Exported {
 		i--
 		if m.Exported {
@@ -863,100 +1054,153 @@ func (m *GenesisState) Size() (n int) {
 	if m.Exported {
 		n += 2
 	}
-	if m.HVParams != nil {
-		l = m.HVParams.Size()
-		n += 1 + l + sovGenesis(uint64(l))
-	}
+	l = m.HVParams.Size()
+	n += 1 + l + sovGenesis(uint64(l))
 	if len(m.AssetPrices) > 0 {
-		for _, e := range m.AssetPrices {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
+		for k, v := range m.AssetPrices {
+			_ = k
+			_ = v
+			l = 0
+			l = v.Size()
+			l += 1 + sovGenesis(uint64(l))
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + l
+			n += mapEntrySize + 1 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if m.LastValidVeHeight != 0 {
 		n += 1 + sovGenesis(uint64(m.LastValidVeHeight))
 	}
 	if len(m.SlashEvents) > 0 {
-		for _, e := range m.SlashEvents {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
+		for k, v := range m.SlashEvents {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 1 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if m.SlashEventCount != 0 {
 		n += 1 + sovGenesis(uint64(m.SlashEventCount))
 	}
 	if len(m.ValidationInfos) > 0 {
-		for _, e := range m.ValidationInfos {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
+		for k, v := range m.ValidationInfos {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 1 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if len(m.BtcBlockHeaders) > 0 {
-		for _, e := range m.BtcBlockHeaders {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
+		for k, v := range m.BtcBlockHeaders {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 1 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if len(m.LastUsedSolanaNonce) > 0 {
-		for _, e := range m.LastUsedSolanaNonce {
-			l = e.Size()
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.LastUsedSolanaNonce {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	l = m.BackfillRequest.Size()
 	n += 2 + l + sovGenesis(uint64(l))
 	if len(m.LastUsedEthereumNonce) > 0 {
-		for _, e := range m.LastUsedEthereumNonce {
-			l = e.Size()
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.LastUsedEthereumNonce {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
-	if len(m.RequestedHistoricalBitcoinHeaders) > 0 {
-		for _, e := range m.RequestedHistoricalBitcoinHeaders {
-			l = e.Size()
-			n += 2 + l + sovGenesis(uint64(l))
-		}
-	}
+	l = m.RequestedHistoricalBitcoinHeaders.Size()
+	n += 2 + l + sovGenesis(uint64(l))
 	if len(m.AvsRewardsPool) > 0 {
-		for _, s := range m.AvsRewardsPool {
-			l = len(s)
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.AvsRewardsPool {
+			_ = k
+			_ = v
+			l = 0
+			l = v.Size()
+			l += 1 + sovGenesis(uint64(l))
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + l
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if len(m.EthereumNonceRequested) > 0 {
-		l = 0
-		for _, e := range m.EthereumNonceRequested {
-			l += sovGenesis(uint64(e))
+		for k, v := range m.EthereumNonceRequested {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + 1
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
-		n += 2 + sovGenesis(uint64(l)) + l
 	}
 	if len(m.SolanaNonceRequested) > 0 {
-		l = 0
-		for _, e := range m.SolanaNonceRequested {
-			l += sovGenesis(uint64(e))
+		for k, v := range m.SolanaNonceRequested {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + sovGenesis(uint64(k)) + 1 + 1
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
-		n += 2 + sovGenesis(uint64(l)) + l
 	}
 	if len(m.SolanaZentpAccountsRequested) > 0 {
-		for _, s := range m.SolanaZentpAccountsRequested {
-			l = len(s)
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.SolanaZentpAccountsRequested {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + 1 + 1
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if len(m.SolanaAccountsRequested) > 0 {
-		for _, s := range m.SolanaAccountsRequested {
-			l = len(s)
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.SolanaAccountsRequested {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + 1 + 1
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if len(m.ValidatorMismatchCounts) > 0 {
-		for _, e := range m.ValidatorMismatchCounts {
-			l = e.Size()
-			n += 2 + l + sovGenesis(uint64(l))
+		for k, v := range m.ValidatorMismatchCounts {
+			_ = k
+			_ = v
+			l = v.Size()
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + 1 + l + sovGenesis(uint64(l))
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
 		}
 	}
 	if m.LastCompletedZentpMintId != 0 {
 		n += 2 + sovGenesis(uint64(m.LastCompletedZentpMintId))
+	}
+	if len(m.AvsDelegations) > 0 {
+		for k, v := range m.AvsDelegations {
+			_ = k
+			_ = v
+			l = 0
+			l = v.Size()
+			l += 1 + sovGenesis(uint64(l))
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + l
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
+		}
+	}
+	if len(m.ValidatorDelegations) > 0 {
+		for k, v := range m.ValidatorDelegations {
+			_ = k
+			_ = v
+			l = 0
+			l = v.Size()
+			l += 1 + sovGenesis(uint64(l))
+			mapEntrySize := 1 + len(k) + sovGenesis(uint64(len(k))) + l
+			n += mapEntrySize + 2 + sovGenesis(uint64(mapEntrySize))
+		}
+	}
+	if m.LatestBtcHeaderHeight != 0 {
+		n += 2 + sovGenesis(uint64(m.LatestBtcHeaderHeight))
 	}
 	return n
 }
@@ -1297,9 +1541,6 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.HVParams == nil {
-				m.HVParams = &HVParams{}
-			}
 			if err := m.HVParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1333,10 +1574,92 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AssetPrices = append(m.AssetPrices, &AssetData{})
-			if err := m.AssetPrices[len(m.AssetPrices)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.AssetPrices == nil {
+				m.AssetPrices = make(map[int32]cosmossdk_io_math.LegacyDec)
 			}
+			var mapkey int32
+			var mapvalue1 cosmossdk_io_math.LegacyDec
+			var mapvalue = &mapvalue1
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= int32(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postbytesIndex]); err != nil {
+						return err
+					}
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.AssetPrices[mapkey] = ((cosmossdk_io_math.LegacyDec)(*mapvalue))
 			iNdEx = postIndex
 		case 11:
 			if wireType != 0 {
@@ -1386,10 +1709,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SlashEvents = append(m.SlashEvents, SlashEvent{})
-			if err := m.SlashEvents[len(m.SlashEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.SlashEvents == nil {
+				m.SlashEvents = make(map[uint64]SlashEvent)
 			}
+			var mapkey uint64
+			mapvalue := &SlashEvent{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &SlashEvent{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.SlashEvents[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 13:
 			if wireType != 0 {
@@ -1439,10 +1843,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationInfos = append(m.ValidationInfos, ValidationInfo{})
-			if err := m.ValidationInfos[len(m.ValidationInfos)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.ValidationInfos == nil {
+				m.ValidationInfos = make(map[int64]ValidationInfo)
 			}
+			var mapkey int64
+			mapvalue := &ValidationInfo{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &ValidationInfo{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.ValidationInfos[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 15:
 			if wireType != 2 {
@@ -1473,10 +1958,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BtcBlockHeaders = append(m.BtcBlockHeaders, api.BTCBlockHeader{})
-			if err := m.BtcBlockHeaders[len(m.BtcBlockHeaders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.BtcBlockHeaders == nil {
+				m.BtcBlockHeaders = make(map[int64]api.BTCBlockHeader)
 			}
+			var mapkey int64
+			mapvalue := &api.BTCBlockHeader{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &api.BTCBlockHeader{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.BtcBlockHeaders[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 16:
 			if wireType != 2 {
@@ -1507,10 +2073,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LastUsedSolanaNonce = append(m.LastUsedSolanaNonce, SolanaNonce{})
-			if err := m.LastUsedSolanaNonce[len(m.LastUsedSolanaNonce)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.LastUsedSolanaNonce == nil {
+				m.LastUsedSolanaNonce = make(map[uint64]SolanaNonce)
 			}
+			var mapkey uint64
+			mapvalue := &SolanaNonce{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &SolanaNonce{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.LastUsedSolanaNonce[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 17:
 			if wireType != 2 {
@@ -1574,10 +2221,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LastUsedEthereumNonce = append(m.LastUsedEthereumNonce, types.NonceData{})
-			if err := m.LastUsedEthereumNonce[len(m.LastUsedEthereumNonce)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.LastUsedEthereumNonce == nil {
+				m.LastUsedEthereumNonce = make(map[uint64]types.NonceData)
 			}
+			var mapkey uint64
+			mapvalue := &types.NonceData{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &types.NonceData{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.LastUsedEthereumNonce[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 19:
 			if wireType != 2 {
@@ -1608,8 +2336,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RequestedHistoricalBitcoinHeaders = append(m.RequestedHistoricalBitcoinHeaders, types.RequestedBitcoinHeaders{})
-			if err := m.RequestedHistoricalBitcoinHeaders[len(m.RequestedHistoricalBitcoinHeaders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.RequestedHistoricalBitcoinHeaders.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1617,7 +2344,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AvsRewardsPool", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -1627,157 +2354,175 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthGenesis
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AvsRewardsPool = append(m.AvsRewardsPool, string(dAtA[iNdEx:postIndex]))
+			if m.AvsRewardsPool == nil {
+				m.AvsRewardsPool = make(map[string]cosmossdk_io_math.Int)
+			}
+			var mapkey string
+			var mapvalue1 cosmossdk_io_math.Int
+			var mapvalue = &mapvalue1
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postbytesIndex]); err != nil {
+						return err
+					}
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.AvsRewardsPool[mapkey] = ((cosmossdk_io_math.Int)(*mapvalue))
 			iNdEx = postIndex
 		case 21:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowGenesis
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				m.EthereumNonceRequested = append(m.EthereumNonceRequested, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowGenesis
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthGenesis
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthGenesis
-				}
-				if postIndex > l {
-					return io.ErrUnexpectedEOF
-				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
-				}
-				elementCount = count
-				if elementCount != 0 && len(m.EthereumNonceRequested) == 0 {
-					m.EthereumNonceRequested = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowGenesis
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					m.EthereumNonceRequested = append(m.EthereumNonceRequested, v)
-				}
-			} else {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EthereumNonceRequested", wireType)
 			}
-		case 22:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowGenesis
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
 				}
-				m.SolanaNonceRequested = append(m.SolanaNonceRequested, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowGenesis
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthGenesis
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthGenesis
-				}
-				if postIndex > l {
+				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.EthereumNonceRequested == nil {
+				m.EthereumNonceRequested = make(map[uint64]bool)
+			}
+			var mapkey uint64
+			var mapvalue bool
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
 					}
 				}
-				elementCount = count
-				if elementCount != 0 && len(m.SolanaNonceRequested) == 0 {
-					m.SolanaNonceRequested = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return ErrIntOverflowGenesis
@@ -1787,21 +2532,151 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						v |= uint64(b&0x7F) << shift
+						mapkey |= uint64(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
 					}
-					m.SolanaNonceRequested = append(m.SolanaNonceRequested, v)
+				} else if fieldNum == 2 {
+					var mapvaluetemp int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvaluetemp |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					mapvalue = bool(mapvaluetemp != 0)
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
 				}
-			} else {
+			}
+			m.EthereumNonceRequested[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 22:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SolanaNonceRequested", wireType)
 			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SolanaNonceRequested == nil {
+				m.SolanaNonceRequested = make(map[uint64]bool)
+			}
+			var mapkey uint64
+			var mapvalue bool
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapvaluetemp int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvaluetemp |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					mapvalue = bool(mapvaluetemp != 0)
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.SolanaNonceRequested[mapkey] = mapvalue
+			iNdEx = postIndex
 		case 23:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SolanaZentpAccountsRequested", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -1811,29 +2686,112 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthGenesis
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SolanaZentpAccountsRequested = append(m.SolanaZentpAccountsRequested, string(dAtA[iNdEx:postIndex]))
+			if m.SolanaZentpAccountsRequested == nil {
+				m.SolanaZentpAccountsRequested = make(map[string]bool)
+			}
+			var mapkey string
+			var mapvalue bool
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapvaluetemp int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvaluetemp |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					mapvalue = bool(mapvaluetemp != 0)
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.SolanaZentpAccountsRequested[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 24:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SolanaAccountsRequested", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -1843,23 +2801,106 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthGenesis
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SolanaAccountsRequested = append(m.SolanaAccountsRequested, string(dAtA[iNdEx:postIndex]))
+			if m.SolanaAccountsRequested == nil {
+				m.SolanaAccountsRequested = make(map[string]bool)
+			}
+			var mapkey string
+			var mapvalue bool
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapvaluetemp int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvaluetemp |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					mapvalue = bool(mapvaluetemp != 0)
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.SolanaAccountsRequested[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 25:
 			if wireType != 2 {
@@ -1890,10 +2931,105 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidatorMismatchCounts = append(m.ValidatorMismatchCounts, ValidatorMismatchCount{})
-			if err := m.ValidatorMismatchCounts[len(m.ValidatorMismatchCounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.ValidatorMismatchCounts == nil {
+				m.ValidatorMismatchCounts = make(map[string]ValidatorMismatchCount)
 			}
+			var mapkey string
+			mapvalue := &ValidatorMismatchCount{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &ValidatorMismatchCount{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.ValidatorMismatchCounts[mapkey] = *mapvalue
 			iNdEx = postIndex
 		case 26:
 			if wireType != 0 {
@@ -1910,6 +3046,285 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.LastCompletedZentpMintId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 27:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AvsDelegations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.AvsDelegations == nil {
+				m.AvsDelegations = make(map[string]cosmossdk_io_math.Int)
+			}
+			var mapkey string
+			var mapvalue1 cosmossdk_io_math.Int
+			var mapvalue = &mapvalue1
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postbytesIndex]); err != nil {
+						return err
+					}
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.AvsDelegations[mapkey] = ((cosmossdk_io_math.Int)(*mapvalue))
+			iNdEx = postIndex
+		case 28:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorDelegations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ValidatorDelegations == nil {
+				m.ValidatorDelegations = make(map[string]cosmossdk_io_math.Int)
+			}
+			var mapkey string
+			var mapvalue1 cosmossdk_io_math.Int
+			var mapvalue = &mapvalue1
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowGenesis
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowGenesis
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postbytesIndex]); err != nil {
+						return err
+					}
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipGenesis(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthGenesis
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.ValidatorDelegations[mapkey] = ((cosmossdk_io_math.Int)(*mapvalue))
+			iNdEx = postIndex
+		case 29:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LatestBtcHeaderHeight", wireType)
+			}
+			m.LatestBtcHeaderHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LatestBtcHeaderHeight |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

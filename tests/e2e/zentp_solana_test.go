@@ -114,7 +114,7 @@ var _ = Describe("ZenTP Solana:", func() {
 		Expect(err).ToNot(HaveOccurred())
 		feeWallet, err := solana.PublicKeyFromBase58(SOLANA_FEE_WALLET)
 		Expect(err).ToNot(HaveOccurred())
-		mintAddress, err := solana.PublicKeyFromBase58(SOLANA_TOKEN_ADDRESS)
+		mintAddress, err := solana.PublicKeyFromBase58(SOLANA_ROCK_TOKEN_ADDRESS)
 		Expect(err).ToNot(HaveOccurred())
 
 		latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
