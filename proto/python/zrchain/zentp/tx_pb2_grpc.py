@@ -35,6 +35,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupply.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupplyResponse.FromString,
                 )
+        self.InitDct = channel.unary_unary(
+                '/zrchain.zentp.Msg/InitDct',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -65,7 +70,15 @@ class MsgServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def SetSolanaROCKSupply(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def InitDct(self, request, context):
+        """InitDct defines an operation for initializing a DCT in the Zentp module
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -92,6 +105,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.SetSolanaROCKSupply,
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupply.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupplyResponse.SerializeToString,
+            ),
+            'InitDct': grpc.unary_unary_rpc_method_handler(
+                    servicer.InitDct,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -169,5 +187,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/SetSolanaROCKSupply',
             zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupply.SerializeToString,
             zrchain_dot_zentp_dot_tx__pb2.MsgSetSolanaROCKSupplyResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def InitDct(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/InitDct',
+            zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

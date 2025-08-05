@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from zrchain.zentp import params_pb2 as zrchain_dot_zentp_dot_params__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17zrchain/zentp/dct.proto\x12\rzrchain.zentp\x1a\x1azrchain/zentp/params.proto\"J\n\x03\x44\x63t\x12\x14\n\x05\x64\x65nom\x18\x01 \x01(\tR\x05\x64\x65nom\x12-\n\x06solana\x18\x02 \x01(\x0b\x32\x15.zrchain.zentp.SolanaR\x06solanaB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17zrchain/zentp/dct.proto\x12\rzrchain.zentp\x1a\x1azrchain/zentp/params.proto\"|\n\x03\x44\x63t\x12\x14\n\x05\x64\x65nom\x18\x01 \x01(\tR\x05\x64\x65nom\x12-\n\x06solana\x18\x02 \x01(\x0b\x32\x15.zrchain.zentp.SolanaR\x06solana\x12\x30\n\x06status\x18\x03 \x01(\x0e\x32\x18.zrchain.zentp.DctStatusR\x06status*\x94\x01\n\tDctStatus\x12\x1a\n\x16\x44\x43T_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n\x19\x44\x43T_STATUS_KEYS_REQUESTED\x10\x01\x12\x1b\n\x17\x44\x43T_STATUS_KEYS_CREATED\x10\x02\x12\x18\n\x14\x44\x43T_STATUS_COMPLETED\x10\x03\x12\x15\n\x11\x44\x43T_STATUS_FAILED\x10\x04\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,6 +33,8 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.zentp.dct_pb2', _gl
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types'
+  _globals['_DCTSTATUS']._serialized_start=197
+  _globals['_DCTSTATUS']._serialized_end=345
   _globals['_DCT']._serialized_start=70
-  _globals['_DCT']._serialized_end=144
+  _globals['_DCT']._serialized_end=194
 # @@protoc_insertion_point(module_scope)

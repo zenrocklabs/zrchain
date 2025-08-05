@@ -30,6 +30,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 )
 
 type Keeper struct {
@@ -801,4 +802,45 @@ func (k Keeper) IsReservedKey(ctx sdk.Context, keyID uint64) bool {
 		return false
 	}
 	return isReserved
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	return k.ParamStore.Get(ctx)
+}
+
+func (k Keeper) IsZentpKeyRequest(ctx sdk.Context, creator string) bool {
+	if creator != zentptypes.ModuleName {
+		return true
+	}
+	return false
+}
+
+func (k Keeper) InitSolanaKeys(ctx sdk.Context) ([]uint64, error) {
+	keyIds := make([]uint64, 3)
+
+	params, err := k.ParamStore.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range 3 {
+		msg := types.NewMsgNewKeyRequest(
+			zentptypes.ModuleName,
+			"",
+			params.MpcKeyring,
+			types.KeyType_KEY_TYPE_EDDSA_ED25519.String(),
+			params.DefaultBtl,
+			0,
+			100,
+		)
+
+		response, err := k.newKeyRequest(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
+
+		keyIds[i] = response.KeyReqId
+	}
+
+	return keyIds, nil
 }

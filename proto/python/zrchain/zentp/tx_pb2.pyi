@@ -3,6 +3,8 @@ from cosmos.msg.v1 import msg_pb2 as _msg_pb2
 from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from zrchain.zentp import params_pb2 as _params_pb2
+from zrchain.zentp import dct_pb2 as _dct_pb2
+from cosmos.base.v1beta1 import coin_pb2 as _coin_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
@@ -70,3 +72,19 @@ class MsgSetSolanaROCKSupply(_message.Message):
 class MsgSetSolanaROCKSupplyResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgInitDct(_message.Message):
+    __slots__ = ("creator", "asset", "destination_chain")
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    DESTINATION_CHAIN_FIELD_NUMBER: _ClassVar[int]
+    creator: str
+    asset: _coin_pb2.Coin
+    destination_chain: str
+    def __init__(self, creator: _Optional[str] = ..., asset: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ..., destination_chain: _Optional[str] = ...) -> None: ...
+
+class MsgInitDctResponse(_message.Message):
+    __slots__ = ("dct",)
+    DCT_FIELD_NUMBER: _ClassVar[int]
+    dct: _dct_pb2.Dct
+    def __init__(self, dct: _Optional[_Union[_dct_pb2.Dct, _Mapping]] = ...) -> None: ...

@@ -9,4 +9,23 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 message Dct {
     string denom = 1;
     Solana solana = 2;
+    DctStatus status = 3;
 }
+
+// DctStatus represents the different possible states of a DCT.
+enum DctStatus {
+    // Undefined: The status of the operation is not specified.
+    DCT_STATUS_UNSPECIFIED = 0;
+  
+    // KeysRequested: Key requests have been sent to the keyring.
+    DCT_STATUS_KEYS_REQUESTED = 1;
+
+    // KeysCreated: Keys have been created.
+    DCT_STATUS_KEYS_CREATED = 2;
+  
+    // Completed: The operation has been successfully finalized.
+    DCT_STATUS_COMPLETED = 3;
+  
+    // Failed: The operation has failed. Please start over.
+    DCT_STATUS_FAILED = 4;
+  }

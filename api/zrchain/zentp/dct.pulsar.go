@@ -16,6 +16,7 @@ var (
 	md_Dct        protoreflect.MessageDescriptor
 	fd_Dct_denom  protoreflect.FieldDescriptor
 	fd_Dct_solana protoreflect.FieldDescriptor
+	fd_Dct_status protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -23,6 +24,7 @@ func init() {
 	md_Dct = File_zrchain_zentp_dct_proto.Messages().ByName("Dct")
 	fd_Dct_denom = md_Dct.Fields().ByName("denom")
 	fd_Dct_solana = md_Dct.Fields().ByName("solana")
+	fd_Dct_status = md_Dct.Fields().ByName("status")
 }
 
 var _ protoreflect.Message = (*fastReflection_Dct)(nil)
@@ -102,6 +104,12 @@ func (x *fastReflection_Dct) Range(f func(protoreflect.FieldDescriptor, protoref
 			return
 		}
 	}
+	if x.Status != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Status))
+		if !f(fd_Dct_status, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -121,6 +129,8 @@ func (x *fastReflection_Dct) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.Denom != ""
 	case "zrchain.zentp.Dct.solana":
 		return x.Solana != nil
+	case "zrchain.zentp.Dct.status":
+		return x.Status != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -141,6 +151,8 @@ func (x *fastReflection_Dct) Clear(fd protoreflect.FieldDescriptor) {
 		x.Denom = ""
 	case "zrchain.zentp.Dct.solana":
 		x.Solana = nil
+	case "zrchain.zentp.Dct.status":
+		x.Status = 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -163,6 +175,9 @@ func (x *fastReflection_Dct) Get(descriptor protoreflect.FieldDescriptor) protor
 	case "zrchain.zentp.Dct.solana":
 		value := x.Solana
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "zrchain.zentp.Dct.status":
+		value := x.Status
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -187,6 +202,8 @@ func (x *fastReflection_Dct) Set(fd protoreflect.FieldDescriptor, value protoref
 		x.Denom = value.Interface().(string)
 	case "zrchain.zentp.Dct.solana":
 		x.Solana = value.Message().Interface().(*Solana)
+	case "zrchain.zentp.Dct.status":
+		x.Status = (DctStatus)(value.Enum())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -214,6 +231,8 @@ func (x *fastReflection_Dct) Mutable(fd protoreflect.FieldDescriptor) protorefle
 		return protoreflect.ValueOfMessage(x.Solana.ProtoReflect())
 	case "zrchain.zentp.Dct.denom":
 		panic(fmt.Errorf("field denom of message zrchain.zentp.Dct is not mutable"))
+	case "zrchain.zentp.Dct.status":
+		panic(fmt.Errorf("field status of message zrchain.zentp.Dct is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -232,6 +251,8 @@ func (x *fastReflection_Dct) NewField(fd protoreflect.FieldDescriptor) protorefl
 	case "zrchain.zentp.Dct.solana":
 		m := new(Solana)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "zrchain.zentp.Dct.status":
+		return protoreflect.ValueOfEnum(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zentp.Dct"))
@@ -309,6 +330,9 @@ func (x *fastReflection_Dct) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.Solana)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.Status != 0 {
+			n += 1 + runtime.Sov(uint64(x.Status))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -337,6 +361,11 @@ func (x *fastReflection_Dct) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.Status != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Status))
+			i--
+			dAtA[i] = 0x18
 		}
 		if x.Solana != nil {
 			encoded, err := options.Marshal(x.Solana)
@@ -476,6 +505,25 @@ func (x *fastReflection_Dct) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+				}
+				x.Status = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Status |= DctStatus(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -524,14 +572,76 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// DctStatus represents the different possible states of a DCT.
+type DctStatus int32
+
+const (
+	// Undefined: The status of the operation is not specified.
+	DctStatus_DCT_STATUS_UNSPECIFIED DctStatus = 0
+	// KeysRequested: Key requests have been sent to the keyring.
+	DctStatus_DCT_STATUS_KEYS_REQUESTED DctStatus = 1
+	// KeysCreated: Keys have been created.
+	DctStatus_DCT_STATUS_KEYS_CREATED DctStatus = 2
+	// Completed: The operation has been successfully finalized.
+	DctStatus_DCT_STATUS_COMPLETED DctStatus = 3
+	// Failed: The operation has failed. Please start over.
+	DctStatus_DCT_STATUS_FAILED DctStatus = 4
+)
+
+// Enum value maps for DctStatus.
+var (
+	DctStatus_name = map[int32]string{
+		0: "DCT_STATUS_UNSPECIFIED",
+		1: "DCT_STATUS_KEYS_REQUESTED",
+		2: "DCT_STATUS_KEYS_CREATED",
+		3: "DCT_STATUS_COMPLETED",
+		4: "DCT_STATUS_FAILED",
+	}
+	DctStatus_value = map[string]int32{
+		"DCT_STATUS_UNSPECIFIED":    0,
+		"DCT_STATUS_KEYS_REQUESTED": 1,
+		"DCT_STATUS_KEYS_CREATED":   2,
+		"DCT_STATUS_COMPLETED":      3,
+		"DCT_STATUS_FAILED":         4,
+	}
+)
+
+func (x DctStatus) Enum() *DctStatus {
+	p := new(DctStatus)
+	*p = x
+	return p
+}
+
+func (x DctStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DctStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_zrchain_zentp_dct_proto_enumTypes[0].Descriptor()
+}
+
+func (DctStatus) Type() protoreflect.EnumType {
+	return &file_zrchain_zentp_dct_proto_enumTypes[0]
+}
+
+func (x DctStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DctStatus.Descriptor instead.
+func (DctStatus) EnumDescriptor() ([]byte, []int) {
+	return file_zrchain_zentp_dct_proto_rawDescGZIP(), []int{0}
+}
+
 // Dct represents the parameters for a DCT.
 type Dct struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Denom  string  `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Solana *Solana `protobuf:"bytes,2,opt,name=solana,proto3" json:"solana,omitempty"`
+	Denom  string    `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Solana *Solana   `protobuf:"bytes,2,opt,name=solana,proto3" json:"solana,omitempty"`
+	Status DctStatus `protobuf:"varint,3,opt,name=status,proto3,enum=zrchain.zentp.DctStatus" json:"status,omitempty"`
 }
 
 func (x *Dct) Reset() {
@@ -568,6 +678,13 @@ func (x *Dct) GetSolana() *Solana {
 	return nil
 }
 
+func (x *Dct) GetStatus() DctStatus {
+	if x != nil {
+		return x.Status
+	}
+	return DctStatus_DCT_STATUS_UNSPECIFIED
+}
+
 var File_zrchain_zentp_dct_proto protoreflect.FileDescriptor
 
 var file_zrchain_zentp_dct_proto_rawDesc = []byte{
@@ -575,21 +692,34 @@ var file_zrchain_zentp_dct_proto_rawDesc = []byte{
 	0x64, 0x63, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0d, 0x7a, 0x72, 0x63, 0x68, 0x61,
 	0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x1a, 0x1a, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
 	0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x4a, 0x0a, 0x03, 0x44, 0x63, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x64,
+	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x7c, 0x0a, 0x03, 0x44, 0x63, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x64,
 	0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x64, 0x65, 0x6e, 0x6f,
 	0x6d, 0x12, 0x2d, 0x0a, 0x06, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74,
 	0x70, 0x2e, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x52, 0x06, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61,
-	0x42, 0x92, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42, 0x08, 0x44, 0x63, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f,
-	0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
-	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e,
-	0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xca, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0xe2, 0x02, 0x19, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
-	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a,
-	0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x30, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x18, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70,
+	0x2e, 0x44, 0x63, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x2a, 0x94, 0x01, 0x0a, 0x09, 0x44, 0x63, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x1a, 0x0a, 0x16, 0x44, 0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55,
+	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1d, 0x0a, 0x19,
+	0x44, 0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x4b, 0x45, 0x59, 0x53, 0x5f,
+	0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x1b, 0x0a, 0x17, 0x44,
+	0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x4b, 0x45, 0x59, 0x53, 0x5f, 0x43,
+	0x52, 0x45, 0x41, 0x54, 0x45, 0x44, 0x10, 0x02, 0x12, 0x18, 0x0a, 0x14, 0x44, 0x43, 0x54, 0x5f,
+	0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x43, 0x4f, 0x4d, 0x50, 0x4c, 0x45, 0x54, 0x45, 0x44,
+	0x10, 0x03, 0x12, 0x15, 0x0a, 0x11, 0x44, 0x43, 0x54, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53,
+	0x5f, 0x46, 0x41, 0x49, 0x4c, 0x45, 0x44, 0x10, 0x04, 0x42, 0x92, 0x01, 0x0a, 0x11, 0x63, 0x6f,
+	0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x42,
+	0x08, 0x44, 0x63, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x1e, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0xa2, 0x02, 0x03, 0x5a, 0x5a,
+	0x58, 0xaa, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x74,
+	0x70, 0xca, 0x02, 0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74,
+	0x70, 0xe2, 0x02, 0x19, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x74,
+	0x70, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e,
+	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -604,18 +734,21 @@ func file_zrchain_zentp_dct_proto_rawDescGZIP() []byte {
 	return file_zrchain_zentp_dct_proto_rawDescData
 }
 
+var file_zrchain_zentp_dct_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_zrchain_zentp_dct_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_zrchain_zentp_dct_proto_goTypes = []interface{}{
-	(*Dct)(nil),    // 0: zrchain.zentp.Dct
-	(*Solana)(nil), // 1: zrchain.zentp.Solana
+	(DctStatus)(0), // 0: zrchain.zentp.DctStatus
+	(*Dct)(nil),    // 1: zrchain.zentp.Dct
+	(*Solana)(nil), // 2: zrchain.zentp.Solana
 }
 var file_zrchain_zentp_dct_proto_depIdxs = []int32{
-	1, // 0: zrchain.zentp.Dct.solana:type_name -> zrchain.zentp.Solana
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: zrchain.zentp.Dct.solana:type_name -> zrchain.zentp.Solana
+	0, // 1: zrchain.zentp.Dct.status:type_name -> zrchain.zentp.DctStatus
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_zentp_dct_proto_init() }
@@ -643,13 +776,14 @@ func file_zrchain_zentp_dct_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_zentp_dct_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_zrchain_zentp_dct_proto_goTypes,
 		DependencyIndexes: file_zrchain_zentp_dct_proto_depIdxs,
+		EnumInfos:         file_zrchain_zentp_dct_proto_enumTypes,
 		MessageInfos:      file_zrchain_zentp_dct_proto_msgTypes,
 	}.Build()
 	File_zrchain_zentp_dct_proto = out.File

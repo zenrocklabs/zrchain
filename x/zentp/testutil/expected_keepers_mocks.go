@@ -295,6 +295,21 @@ func (mr *MockTreasuryKeeperMockRecorder) GetKey(ctx, keyID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKey", reflect.TypeOf((*MockTreasuryKeeper)(nil).GetKey), ctx, keyID)
 }
 
+// InitSolanaKeys mocks base method.
+func (m *MockTreasuryKeeper) InitSolanaKeys(ctx types2.Context) ([]uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitSolanaKeys", ctx)
+	ret0, _ := ret[0].([]uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitSolanaKeys indicates an expected call of InitSolanaKeys.
+func (mr *MockTreasuryKeeperMockRecorder) InitSolanaKeys(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitSolanaKeys", reflect.TypeOf((*MockTreasuryKeeper)(nil).InitSolanaKeys), ctx)
+}
+
 // MockIdentityKeeper is a mock of IdentityKeeper interface.
 type MockIdentityKeeper struct {
 	ctrl     *gomock.Controller

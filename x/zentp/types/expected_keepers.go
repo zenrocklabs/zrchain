@@ -37,6 +37,7 @@ type ParamSubspace interface {
 // TreasuryKeeper defines the expected interface for the Treasury module.
 type TreasuryKeeper interface {
 	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
+	InitSolanaKeys(ctx sdk.Context) ([]uint64, error)
 }
 
 type IdentityKeeper interface {

@@ -7,41 +7,45 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zentp/params.proto";
+import "zrchain/zentp/dct.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // Msg defines the Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-
+  
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-
+  rpc UpdateParams (MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  
   // MintRock defines an operation for creating a mint request of Rock
   // on a destination chain
-  rpc Bridge(MsgBridge) returns (MsgBridgeResponse);
-
+  rpc Bridge (MsgBridge) returns (MsgBridgeResponse);
+  
   // Burn defines an operation for burning Rock for a module account
-  rpc Burn(MsgBurn) returns (MsgBurnResponse);
+  rpc Burn                (MsgBurn               ) returns (MsgBurnResponse               );
 
-  rpc SetSolanaROCKSupply(MsgSetSolanaROCKSupply)
-      returns (MsgSetSolanaROCKSupplyResponse);
+  // SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
+  rpc SetSolanaROCKSupply (MsgSetSolanaROCKSupply) returns (MsgSetSolanaROCKSupplyResponse);
+
+  // InitDct defines an operation for initializing a DCT in the Zentp module
+  rpc InitDct             (MsgInitDct            ) returns (MsgInitDctResponse            );
 }
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
-  option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "zrchain/x/zentp/MsgUpdateParams";
-
+  option (cosmos.msg.v1.signer) =                       "authority";
+  option           (amino.name) = "zrchain/x/zentp/MsgUpdateParams";
+  
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // params defines the module parameters to update.
-
+  
   // NOTE: All parameters must be supplied.
-  Params params = 2
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
@@ -52,40 +56,42 @@ message MsgUpdateParamsResponse {}
 message MsgBridge {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1;
-
+  
   // source_address is the address on the source chain where the tokens are
   // coming from.
-  string source_address = 2 [ deprecated = true ]; // Deprecated
-
+  string source_address = 2 [deprecated = true]; // Deprecated
+  
   // amount is the amount to mint on the destination chain
   uint64 amount = 3;
-
+  
   // denom is the denomination of the token being minted on the destination
   // chain.
   string denom = 4;
-
+  
   // destination is the caip identifier for the destination chain
   string destination_chain = 5;
-
+  
   // recipient is the keyID for the destination chain
   string recipient_address = 6;
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
-message MsgBridgeResponse { uint64 id = 1; }
+message MsgBridgeResponse {
+  uint64 id = 1;
+}
 
 // MsgBurn is the Msg/Burn request type and gated through governance
 message MsgBurn {
-  option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "zrchain/x/zentp/MsgBurn";
-
+  option (cosmos.msg.v1.signer) =               "authority";
+  option           (amino.name) = "zrchain/x/zentp/MsgBurn";
+  
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string authority      = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string module_account = 2;
-  string denom = 3;
-  uint64 amount = 4;
+  string denom          = 3;
+  uint64 amount         = 4;
 }
 
 // MsgBurnResponse defines the response structure for executing a
@@ -96,9 +102,24 @@ message MsgBurnResponse {}
 message MsgSetSolanaROCKSupply {
   option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
-  uint64 amount = 2;
+  uint64 amount    = 2;
 }
 
 // MsgSetSolanaROCKSupplyResponse defines the response structure for executing a
 // MsgSetSolanaROCKSupply message.
 message MsgSetSolanaROCKSupplyResponse {}
+
+// MsgInitDct is the Msg/InitDct request type
+message MsgInitDct {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  cosmos.base.v1beta1.Coin asset = 2;
+  string destination_chain = 3;
+}
+
+// MsgInitDctResponse defines the response structure for executing a
+// MsgInitDct message.
+message MsgInitDctResponse {
+  Dct dct = 1;
+}
+

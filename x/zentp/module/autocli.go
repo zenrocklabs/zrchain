@@ -100,6 +100,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "amount"},
 					},
 				},
+				{
+					RpcMethod: "InitDct",
+					Use:       "init-dct [asset] [amount] [destination-chain]",
+					Short:     "Send a initDct tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "asset"},
+						{ProtoField: "amount"},
+						{ProtoField: "destination_chain"},
+					},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},
