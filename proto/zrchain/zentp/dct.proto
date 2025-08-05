@@ -1,0 +1,12 @@
+syntax = "proto3";
+package zrchain.zentp;
+
+import "zrchain/zentp/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
+
+// Dct represents the parameters for a DCT.
+message Dct {
+    string denom = 1;
+    Solana solana = 2;
+}

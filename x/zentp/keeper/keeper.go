@@ -44,6 +44,11 @@ type (
 		ParamStore       collections.Item[types.Params]
 		SolanaROCKSupply collections.Item[math.Int]
 		ZentpFees        collections.Item[uint64]
+		DctStore         collections.Map[string, types.Dct]
+		DctMintStore     collections.Map[collections.Pair[string, uint64], types.Bridge]
+		DctBurnStore     collections.Map[collections.Pair[string, uint64], types.Bridge]
+		DctMintCount     collections.Map[string, uint64]
+		DctBurnCount     collections.Map[string, uint64]
 	}
 )
 
@@ -94,6 +99,11 @@ func NewKeeper(
 		validationKeeper: validationKeeper,
 		mintKeeper:       mintKeeper,
 		ZentpFees:        collections.NewItem(sb, types.ZentpFeesKey, types.ZentpFeesIndex, collections.Uint64Value),
+		DctStore:         collections.NewMap(sb, types.DctStoreKey, types.DctStoreIndex, collections.StringKey, codec.CollValue[types.Dct](cdc)),
+		DctMintStore:     collections.NewMap(sb, types.DctMintStoreKey, types.DctMintStoreIndex, collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), codec.CollValue[types.Bridge](cdc)),
+		DctBurnStore:     collections.NewMap(sb, types.DctBurnStoreKey, types.DctBurnStoreIndex, collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), codec.CollValue[types.Bridge](cdc)),
+		DctMintCount:     collections.NewMap(sb, types.DctMintCountKey, types.DctMintCountIndex, collections.StringKey, collections.Uint64Value),
+		DctBurnCount:     collections.NewMap(sb, types.DctBurnCountKey, types.DctBurnCountIndex, collections.StringKey, collections.Uint64Value),
 	}
 
 	return k
@@ -327,4 +337,120 @@ func (k Keeper) UpdateZentpFees(ctx context.Context, fees uint64) error {
 	}
 
 	return k.ZentpFees.Set(ctx, zentpFees+fees)
+}
+
+func (k Keeper) AddDctMint(ctx context.Context, denom string, bridge *types.Bridge) error {
+	count, err := k.DctMintCount.Get(ctx, denom)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			count = 0
+		} else {
+			return err
+		}
+	}
+
+	newCount := count + 1
+	if err := k.DctMintCount.Set(ctx, denom, newCount); err != nil {
+		return err
+	}
+
+	bridge.Id = newCount
+
+	key := collections.Join(denom, newCount)
+	return k.DctMintStore.Set(ctx, key, *bridge)
+}
+
+func (k Keeper) GetDctMintsByDenom(ctx context.Context, denom string) ([]*types.Bridge, error) {
+	var bridges []*types.Bridge
+
+	err := k.DctMintStore.Walk(ctx, nil, func(key collections.Pair[string, uint64], bridge types.Bridge) (stop bool, err error) {
+		if key.K1() == denom {
+			bridges = append(bridges, &bridge)
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridges, nil
+}
+
+func (k Keeper) GetDctMintByID(ctx context.Context, denom string, id uint64) (*types.Bridge, error) {
+	key := collections.Join(denom, id)
+	bridge, err := k.DctMintStore.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	return &bridge, nil
+}
+
+func (k Keeper) GetDctMintCount(ctx context.Context, denom string) (uint64, error) {
+	count, err := k.DctMintCount.Get(ctx, denom)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return count, nil
+}
+
+func (k Keeper) AddDctBurn(ctx context.Context, denom string, bridge *types.Bridge) error {
+	count, err := k.DctBurnCount.Get(ctx, denom)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			count = 0
+		} else {
+			return err
+		}
+	}
+
+	newCount := count + 1
+	if err := k.DctBurnCount.Set(ctx, denom, newCount); err != nil {
+		return err
+	}
+
+	bridge.Id = newCount
+
+	key := collections.Join(denom, newCount)
+	return k.DctBurnStore.Set(ctx, key, *bridge)
+}
+
+func (k Keeper) GetDctBurnsByDenom(ctx context.Context, denom string) ([]*types.Bridge, error) {
+	var bridges []*types.Bridge
+
+	err := k.DctBurnStore.Walk(ctx, nil, func(key collections.Pair[string, uint64], bridge types.Bridge) (stop bool, err error) {
+		if key.K1() == denom {
+			bridges = append(bridges, &bridge)
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridges, nil
+}
+
+func (k Keeper) GetDctBurnByID(ctx context.Context, denom string, id uint64) (*types.Bridge, error) {
+	key := collections.Join(denom, id)
+	bridge, err := k.DctBurnStore.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	return &bridge, nil
+}
+
+func (k Keeper) GetDctBurnCount(ctx context.Context, denom string) (uint64, error) {
+	count, err := k.DctBurnCount.Get(ctx, denom)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return count, nil
 }

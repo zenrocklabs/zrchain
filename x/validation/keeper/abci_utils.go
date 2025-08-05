@@ -1495,6 +1495,7 @@ type solanaMintTxRequest struct {
 	signerKey         uint64
 	rock              bool
 	zenbtc            bool
+	dct               map[string]zentptypes.Dct
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
