@@ -29,7 +29,7 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 		return k.zrSignKeyRequest(goCtx, msg)
 	}
 
-	if !k.IsZentpKeyRequest(ctx, msg.Creator) {
+	if !k.IsZentpRequest(ctx, msg.Creator) {
 		workspaceBytes, err := sdk.GetFromBech32(msg.WorkspaceAddr, identitytypes.PrefixWorkspaceAddress)
 		if err != nil {
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid workspace address (%s)", err)

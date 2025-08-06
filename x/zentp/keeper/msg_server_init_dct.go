@@ -20,6 +20,7 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 		return nil, err
 	}
 
+	// TODO: Make it generic for all chains. Currently this is for cosmos coins
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
@@ -29,6 +30,8 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 		return nil, err
 	}
 
+	// makes three key requests for the signer, nonce account and nonce authority keys
+	// requires additional spam protection for non-cosmos assets
 	keyIds, err := k.treasuryKeeper.CreateSolanaKeys(ctx)
 	if err != nil {
 		return nil, err

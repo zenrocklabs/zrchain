@@ -808,7 +808,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	return k.ParamStore.Get(ctx)
 }
 
-func (k Keeper) IsZentpKeyRequest(ctx sdk.Context, creator string) bool {
+func (k Keeper) IsZentpRequest(ctx sdk.Context, creator string) bool {
 	if creator != zentptypes.ModuleName {
 		return true
 	}
@@ -858,6 +858,8 @@ func (k Keeper) InitDctNonceAccount(ctx sdk.Context, keyIds []uint64, unsignedTx
 	if msg == nil {
 		return 0, fmt.Errorf("failed to create nonce authority sign transaction request")
 	}
+
+	// TODO: Validate msg
 
 	resp, err := k.HandleSignTransactionRequest(ctx, msg, unsignedTx)
 	if err != nil {

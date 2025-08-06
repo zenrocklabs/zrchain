@@ -33,6 +33,7 @@ func (k msgServer) InitDctKeys(goCtx context.Context, msg *types.MsgInitDctKeys)
 		return nil, err
 	}
 
+	// TODO: Verify that the params signer key should be creating the asset SPL
 	paramsSigner := params.Solana.SignerKeyId
 
 	// takes second unsigned tx for the asset SPL creation
