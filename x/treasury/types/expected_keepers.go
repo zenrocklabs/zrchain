@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/policy"
+	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
 
-	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,4 +57,5 @@ type ZentpKeeper interface {
 	GetSignerKeyID(ctx context.Context) uint64
 	GetNonceAccountKey(ctx context.Context) uint64
 	GetNonceAuthorityKey(ctx context.Context) uint64
+	UpdateDctStatusToKeysCreated(ctx context.Context, keyRequestId uint64) error
 }

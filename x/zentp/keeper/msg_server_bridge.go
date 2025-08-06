@@ -21,6 +21,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, err
 	}
 
+	// TODO: Make it only for urock. Other Dcts will be escrowed
 	if err := k.Keeper.CheckROCKSupplyCap(ctx, math.NewIntFromUint64(req.Amount)); err != nil {
 		return nil, err
 	}
@@ -33,6 +34,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.New("invalid recipient address: " + req.RecipientAddress)
 	}
 
+	// TODO: Make it generic for all assets. Currently this is for urock
 	if req.Denom != params.BondDenom {
 		return nil, errors.New("invalid denomination")
 	}

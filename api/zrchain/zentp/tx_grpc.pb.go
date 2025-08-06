@@ -23,6 +23,8 @@ const (
 	Msg_Bridge_FullMethodName              = "/zrchain.zentp.Msg/Bridge"
 	Msg_Burn_FullMethodName                = "/zrchain.zentp.Msg/Burn"
 	Msg_SetSolanaROCKSupply_FullMethodName = "/zrchain.zentp.Msg/SetSolanaROCKSupply"
+	Msg_InitDct_FullMethodName             = "/zrchain.zentp.Msg/InitDct"
+	Msg_InitDctKeys_FullMethodName         = "/zrchain.zentp.Msg/InitDctKeys"
 )
 
 // MsgClient is the client API for Msg service.
@@ -39,7 +41,11 @@ type MsgClient interface {
 	Bridge(ctx context.Context, in *MsgBridge, opts ...grpc.CallOption) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(ctx context.Context, in *MsgSetSolanaROCKSupply, opts ...grpc.CallOption) (*MsgSetSolanaROCKSupplyResponse, error)
+	// InitDct defines an operation for initializing a DCT in the Zentp module
+	InitDct(ctx context.Context, in *MsgInitDct, opts ...grpc.CallOption) (*MsgInitDctResponse, error)
+	InitDctKeys(ctx context.Context, in *MsgInitDctKeys, opts ...grpc.CallOption) (*MsgInitDctKeysResponse, error)
 }
 
 type msgClient struct {
@@ -90,6 +96,26 @@ func (c *msgClient) SetSolanaROCKSupply(ctx context.Context, in *MsgSetSolanaROC
 	return out, nil
 }
 
+func (c *msgClient) InitDct(ctx context.Context, in *MsgInitDct, opts ...grpc.CallOption) (*MsgInitDctResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgInitDctResponse)
+	err := c.cc.Invoke(ctx, Msg_InitDct_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) InitDctKeys(ctx context.Context, in *MsgInitDctKeys, opts ...grpc.CallOption) (*MsgInitDctKeysResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgInitDctKeysResponse)
+	err := c.cc.Invoke(ctx, Msg_InitDctKeys_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -104,7 +130,11 @@ type MsgServer interface {
 	Bridge(context.Context, *MsgBridge) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(context.Context, *MsgSetSolanaROCKSupply) (*MsgSetSolanaROCKSupplyResponse, error)
+	// InitDct defines an operation for initializing a DCT in the Zentp module
+	InitDct(context.Context, *MsgInitDct) (*MsgInitDctResponse, error)
+	InitDctKeys(context.Context, *MsgInitDctKeys) (*MsgInitDctKeysResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -126,6 +156,12 @@ func (UnimplementedMsgServer) Burn(context.Context, *MsgBurn) (*MsgBurnResponse,
 }
 func (UnimplementedMsgServer) SetSolanaROCKSupply(context.Context, *MsgSetSolanaROCKSupply) (*MsgSetSolanaROCKSupplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetSolanaROCKSupply not implemented")
+}
+func (UnimplementedMsgServer) InitDct(context.Context, *MsgInitDct) (*MsgInitDctResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitDct not implemented")
+}
+func (UnimplementedMsgServer) InitDctKeys(context.Context, *MsgInitDctKeys) (*MsgInitDctKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitDctKeys not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -220,6 +256,42 @@ func _Msg_SetSolanaROCKSupply_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_InitDct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInitDct)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).InitDct(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_InitDct_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).InitDct(ctx, req.(*MsgInitDct))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_InitDctKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInitDctKeys)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).InitDctKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_InitDctKeys_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).InitDctKeys(ctx, req.(*MsgInitDctKeys))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +314,14 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetSolanaROCKSupply",
 			Handler:    _Msg_SetSolanaROCKSupply_Handler,
+		},
+		{
+			MethodName: "InitDct",
+			Handler:    _Msg_InitDct_Handler,
+		},
+		{
+			MethodName: "InitDctKeys",
+			Handler:    _Msg_InitDctKeys_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
