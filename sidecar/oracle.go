@@ -1347,6 +1347,7 @@ func (o *Oracle) getRedemptions(ctx context.Context, contractInstance *zenbtc.Ze
 		"contractAddress", contractAddr,
 		"blockHeight", height.String(),
 		"network", o.Config.Network,
+		"networkName", sidecartypes.NetworkNames[o.Config.Network],
 	)
 
 	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
