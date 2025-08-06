@@ -280,6 +280,36 @@ func (m *MockTreasuryKeeper) EXPECT() *MockTreasuryKeeperMockRecorder {
 	return m.recorder
 }
 
+// CreateAssetSpl mocks base method.
+func (m *MockTreasuryKeeper) CreateAssetSpl(ctx types2.Context, paramsSigner uint64, unsignedTx []byte) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAssetSpl", ctx, paramsSigner, unsignedTx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAssetSpl indicates an expected call of CreateAssetSpl.
+func (mr *MockTreasuryKeeperMockRecorder) CreateAssetSpl(ctx, paramsSigner, unsignedTx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAssetSpl", reflect.TypeOf((*MockTreasuryKeeper)(nil).CreateAssetSpl), ctx, paramsSigner, unsignedTx)
+}
+
+// CreateSolanaKeys mocks base method.
+func (m *MockTreasuryKeeper) CreateSolanaKeys(ctx types2.Context) ([]uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSolanaKeys", ctx)
+	ret0, _ := ret[0].([]uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSolanaKeys indicates an expected call of CreateSolanaKeys.
+func (mr *MockTreasuryKeeperMockRecorder) CreateSolanaKeys(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSolanaKeys", reflect.TypeOf((*MockTreasuryKeeper)(nil).CreateSolanaKeys), ctx)
+}
+
 // GetKey mocks base method.
 func (m *MockTreasuryKeeper) GetKey(ctx types2.Context, keyID uint64) (*types1.Key, error) {
 	m.ctrl.T.Helper()
@@ -295,19 +325,19 @@ func (mr *MockTreasuryKeeperMockRecorder) GetKey(ctx, keyID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKey", reflect.TypeOf((*MockTreasuryKeeper)(nil).GetKey), ctx, keyID)
 }
 
-// InitSolanaKeys mocks base method.
-func (m *MockTreasuryKeeper) InitSolanaKeys(ctx types2.Context) ([]uint64, error) {
+// InitDctNonceAccount mocks base method.
+func (m *MockTreasuryKeeper) InitDctNonceAccount(ctx types2.Context, keyIds []uint64, unsignedTx []byte) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitSolanaKeys", ctx)
-	ret0, _ := ret[0].([]uint64)
+	ret := m.ctrl.Call(m, "InitDctNonceAccount", ctx, keyIds, unsignedTx)
+	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// InitSolanaKeys indicates an expected call of InitSolanaKeys.
-func (mr *MockTreasuryKeeperMockRecorder) InitSolanaKeys(ctx any) *gomock.Call {
+// InitDctNonceAccount indicates an expected call of InitDctNonceAccount.
+func (mr *MockTreasuryKeeperMockRecorder) InitDctNonceAccount(ctx, keyIds, unsignedTx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitSolanaKeys", reflect.TypeOf((*MockTreasuryKeeper)(nil).InitSolanaKeys), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDctNonceAccount", reflect.TypeOf((*MockTreasuryKeeper)(nil).InitDctNonceAccount), ctx, keyIds, unsignedTx)
 }
 
 // MockIdentityKeeper is a mock of IdentityKeeper interface.

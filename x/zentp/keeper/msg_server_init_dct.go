@@ -29,7 +29,7 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 		return nil, err
 	}
 
-	keyIds, err := k.treasuryKeeper.InitSolanaKeys(ctx)
+	keyIds, err := k.treasuryKeeper.CreateSolanaKeys(ctx)
 	if err != nil {
 		return nil, err
 	}

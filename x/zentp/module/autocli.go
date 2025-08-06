@@ -110,7 +110,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "destination_chain"},
 					},
 				},
-				// this line is used by ignite scaffolding # autocli/tx
+				{
+			RpcMethod: "InitDctKeys",
+			Use: "init-dct-keys [denom]",
+			Short: "Send a initDctKeys tx",
+			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "denom"},},
+		},
+		// this line is used by ignite scaffolding # autocli/tx
 			},
 		},
 	}

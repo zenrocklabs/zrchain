@@ -11,11 +11,13 @@ class DctStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     DCT_STATUS_UNSPECIFIED: _ClassVar[DctStatus]
     DCT_STATUS_KEYS_REQUESTED: _ClassVar[DctStatus]
     DCT_STATUS_KEYS_CREATED: _ClassVar[DctStatus]
+    DCT_STATUS_SPL_REQUESTED: _ClassVar[DctStatus]
     DCT_STATUS_COMPLETED: _ClassVar[DctStatus]
     DCT_STATUS_FAILED: _ClassVar[DctStatus]
 DCT_STATUS_UNSPECIFIED: DctStatus
 DCT_STATUS_KEYS_REQUESTED: DctStatus
 DCT_STATUS_KEYS_CREATED: DctStatus
+DCT_STATUS_SPL_REQUESTED: DctStatus
 DCT_STATUS_COMPLETED: DctStatus
 DCT_STATUS_FAILED: DctStatus
 

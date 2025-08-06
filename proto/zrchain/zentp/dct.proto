@@ -22,10 +22,13 @@ enum DctStatus {
 
     // KeysCreated: Keys have been created.
     DCT_STATUS_KEYS_CREATED = 2;
-  
+
+    // SplRequested: SPL creation request has been sent to the keyring.
+    DCT_STATUS_SPL_REQUESTED = 3;
+
     // Completed: The operation has been successfully finalized.
-    DCT_STATUS_COMPLETED = 3;
+    DCT_STATUS_COMPLETED = 4;
   
     // Failed: The operation has failed. Please start over.
-    DCT_STATUS_FAILED = 4;
+    DCT_STATUS_FAILED = 5;
   }

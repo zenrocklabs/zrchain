@@ -815,7 +815,7 @@ func (k Keeper) IsZentpKeyRequest(ctx sdk.Context, creator string) bool {
 	return false
 }
 
-func (k Keeper) InitSolanaKeys(ctx sdk.Context) ([]uint64, error) {
+func (k Keeper) CreateSolanaKeys(ctx sdk.Context) ([]uint64, error) {
 	keyIds := make([]uint64, 3)
 
 	params, err := k.ParamStore.Get(ctx)
@@ -843,4 +843,50 @@ func (k Keeper) InitSolanaKeys(ctx sdk.Context) ([]uint64, error) {
 	}
 
 	return keyIds, nil
+}
+
+func (k Keeper) InitDctNonceAccount(ctx sdk.Context, keyIds []uint64, unsignedTx []byte) (uint64, error) {
+
+	msg := types.NewMsgNewSignTransactionRequest(
+		zentptypes.ModuleName,
+		keyIds,
+		types.WalletType_WALLET_TYPE_SOLANA,
+		unsignedTx,
+		nil,
+		20,
+	)
+	if msg == nil {
+		return 0, fmt.Errorf("failed to create nonce authority sign transaction request")
+	}
+
+	resp, err := k.HandleSignTransactionRequest(ctx, msg, unsignedTx)
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.Id, nil
+}
+
+func (k Keeper) CreateAssetSpl(ctx sdk.Context, paramsSigner uint64, unsignedTx []byte) (uint64, error) {
+
+	msg := types.NewMsgNewSignTransactionRequest(
+		zentptypes.ModuleName,
+		[]uint64{paramsSigner},
+		types.WalletType_WALLET_TYPE_SOLANA,
+		unsignedTx,
+		nil,
+		20,
+	)
+	if msg == nil {
+		return 0, fmt.Errorf("failed to create asset SPL sign transaction request")
+	}
+
+	// TODO: Validate msg
+
+	resp, err := k.HandleSignTransactionRequest(ctx, msg, unsignedTx)
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.Id, nil
 }

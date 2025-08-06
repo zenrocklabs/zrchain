@@ -25,13 +25,14 @@ service Msg {
   rpc Bridge (MsgBridge) returns (MsgBridgeResponse);
   
   // Burn defines an operation for burning Rock for a module account
-  rpc Burn                (MsgBurn               ) returns (MsgBurnResponse               );
-
+  rpc Burn (MsgBurn) returns (MsgBurnResponse);
+  
   // SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
   rpc SetSolanaROCKSupply (MsgSetSolanaROCKSupply) returns (MsgSetSolanaROCKSupplyResponse);
-
+  
   // InitDct defines an operation for initializing a DCT in the Zentp module
-  rpc InitDct             (MsgInitDct            ) returns (MsgInitDctResponse            );
+  rpc InitDct     (MsgInitDct    ) returns (MsgInitDctResponse    );
+  rpc InitDctKeys (MsgInitDctKeys) returns (MsgInitDctKeysResponse);
 }
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
@@ -112,14 +113,28 @@ message MsgSetSolanaROCKSupplyResponse {}
 // MsgInitDct is the Msg/InitDct request type
 message MsgInitDct {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator = 1;
-  cosmos.base.v1beta1.Coin asset = 2;
-  string destination_chain = 3;
+  string                   creator           = 1;
+  cosmos.base.v1beta1.Coin asset             = 2;
+  string                   destination_chain = 3;
 }
 
 // MsgInitDctResponse defines the response structure for executing a
 // MsgInitDct message.
 message MsgInitDctResponse {
   Dct dct = 1;
+}
+
+// MsgInitDctKeys is the Msg/InitDctKeys request type
+message MsgInitDctKeys {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  string denom   = 2;
+  repeated bytes unsigned_tx = 3;
+}
+
+// MsgInitDctKeysResponse defines the response structure for executing a
+// MsgInitDctKeys message.
+message MsgInitDctKeysResponse {
+  repeated uint64 sign_req_ids = 1;
 }
 

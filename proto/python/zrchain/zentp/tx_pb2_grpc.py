@@ -40,6 +40,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.FromString,
                 )
+        self.InitDctKeys = channel.unary_unary(
+                '/zrchain.zentp.Msg/InitDctKeys',
+                request_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeys.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeysResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -83,6 +88,12 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def InitDctKeys(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -110,6 +121,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.InitDct,
                     request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.FromString,
                     response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.SerializeToString,
+            ),
+            'InitDctKeys': grpc.unary_unary_rpc_method_handler(
+                    servicer.InitDctKeys,
+                    request_deserializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeys.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeysResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -204,5 +220,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/InitDct',
             zrchain_dot_zentp_dot_tx__pb2.MsgInitDct.SerializeToString,
             zrchain_dot_zentp_dot_tx__pb2.MsgInitDctResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def InitDctKeys(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Msg/InitDctKeys',
+            zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeys.SerializeToString,
+            zrchain_dot_zentp_dot_tx__pb2.MsgInitDctKeysResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
