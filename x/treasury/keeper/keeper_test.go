@@ -6,8 +6,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	ubermock "go.uber.org/mock/gomock"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
@@ -30,7 +30,7 @@ type IntegrationTestSuite struct {
 	identityKeeper *treasurytestutil.MockIdentityKeeper
 	policyKeeper   *treasurytestutil.MockPolicyKeeper
 	zentpKeeper    *treasurytestutil.MockZentpKeeper
-	ctrl           *gomock.Controller
+	ctrl           *ubermock.Controller
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
 	s.ctx = testCtx.Ctx
 
-	ctrl := gomock.NewController(s.T())
+	ctrl := ubermock.NewController(s.T())
 	bankKeeper := treasurytestutil.NewMockBankKeeper(ctrl)
 	identityKeeper := treasurytestutil.NewMockIdentityKeeper(ctrl)
 	policyKeeper := treasurytestutil.NewMockPolicyKeeper(ctrl)
@@ -58,10 +58,10 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.ctrl = ctrl
 
 	// Set up mock expectations before creating the keeper
-	s.policyKeeper.EXPECT().ActionHandler(gomock.Any()).Return(nil, false).AnyTimes()
-	s.policyKeeper.EXPECT().RegisterActionHandler(gomock.Any(), gomock.Any()).AnyTimes()
-	s.policyKeeper.EXPECT().GeneratorHandler(gomock.Any()).Return(nil, false).AnyTimes()
-	s.policyKeeper.EXPECT().RegisterPolicyGeneratorHandler(gomock.Any(), gomock.Any()).AnyTimes()
+	s.policyKeeper.EXPECT().ActionHandler(ubermock.Any()).Return(nil, false).AnyTimes()
+	s.policyKeeper.EXPECT().RegisterActionHandler(ubermock.Any(), ubermock.Any()).AnyTimes()
+	s.policyKeeper.EXPECT().GeneratorHandler(ubermock.Any()).Return(nil, false).AnyTimes()
+	s.policyKeeper.EXPECT().RegisterPolicyGeneratorHandler(ubermock.Any(), ubermock.Any()).AnyTimes()
 
 	s.treasuryKeeper = keeper.NewKeeper(
 		encCfg.Codec,
@@ -164,7 +164,7 @@ func (s *IntegrationTestSuite) Test_TreasuryKeeper_splitKeyringFee() {
 					s.ctx,
 					sdk.MustAccAddressFromBech32(addrFrom),
 					types.KeyringCollectorName,
-					gomock.Any(), // coin
+					ubermock.Any(), // coin
 				).Return(nil)
 			}
 
@@ -173,14 +173,14 @@ func (s *IntegrationTestSuite) Test_TreasuryKeeper_splitKeyringFee() {
 					s.ctx,
 					sdk.MustAccAddressFromBech32(addrFrom),
 					types.KeyringCollectorName,
-					gomock.Any(), // coin
+					ubermock.Any(), // coin
 				).Return(nil)
 			} else {
 				s.bankKeeper.EXPECT().SendCoins(
 					s.ctx,
 					sdk.MustAccAddressFromBech32(addrFrom),
 					sdk.MustAccAddressFromBech32(feeAddr),
-					gomock.Any(), // coin
+					ubermock.Any(), // coin
 				).Return(nil)
 			}
 

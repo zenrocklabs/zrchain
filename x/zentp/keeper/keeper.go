@@ -454,3 +454,32 @@ func (k Keeper) GetDctBurnCount(ctx context.Context, denom string) (uint64, erro
 	}
 	return count, nil
 }
+
+func (k Keeper) UpdateDctStatusToKeysCreated(ctx context.Context, keyRequestId uint64) error {
+	var foundDct *types.Dct
+	err := k.DctStore.Walk(ctx, nil, func(key string, dct types.Dct) (stop bool, err error) {
+		if dct.Solana.SignerKeyId == keyRequestId || dct.Solana.NonceAccountKey == keyRequestId || dct.Solana.NonceAuthorityKey == keyRequestId {
+			foundDct = &dct
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if foundDct != nil {
+		return k.SetDctStatus(ctx, foundDct.Denom, types.DctStatus_DCT_STATUS_KEYS_CREATED)
+	}
+
+	return nil
+}
+
+func (k Keeper) SetDctStatus(ctx context.Context, denom string, status types.DctStatus) error {
+	dct, err := k.DctStore.Get(ctx, denom)
+	if err != nil {
+		return err
+	}
+	dct.Status = status
+	return k.DctStore.Set(ctx, denom, dct)
+}

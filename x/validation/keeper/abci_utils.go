@@ -1395,7 +1395,8 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 // Helper function to submit Ethereum transactions
 func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
-		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+		Network: zentptypes.Caip2ToSolananNetwork(chainID),
+	})
 	if err != nil {
 		return 0, err
 	}
