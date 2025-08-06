@@ -1341,8 +1341,20 @@ func (o *Oracle) getRedemptions(ctx context.Context, contractInstance *zenbtc.Ze
 		Context:     ctx,
 	}
 
+	// Debug: Log the contract address being used
+	contractAddr := sidecartypes.ZenBTCControllerAddresses[o.Config.Network]
+	slog.Info("DEBUG: Attempting to get redemptions from contract",
+		"contractAddress", contractAddr,
+		"blockHeight", height.String(),
+		"network", o.Config.Network,
+	)
+
 	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
 	if err != nil {
+		slog.Error("DEBUG: Failed to get redemptions from contract",
+			"contractAddress", contractAddr,
+			"error", err,
+		)
 		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
 	}
 
