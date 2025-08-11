@@ -90,7 +90,7 @@ fi
 echo "Unwrapping $unwrap_amount tokens from mint address: $mint_address"
 
 # Capture the output and exit code
-output=$(go run ../helper/create-unwrap.go \
+output=$(go run ./create-zentp-unwrap.go \
     --signer "$keypair_path" \
     --mint "$mint_address" \
     --program "$program_id" \
