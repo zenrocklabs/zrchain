@@ -358,6 +358,9 @@ if [ "$START_ONLY" = false ]; then
 
         # Set minimum gas prices
         jq '.minimum-gas-prices = "0.0001urock"' $HOME_DIR/config/app.toml > tmp_app.toml && mv tmp_app.toml $HOME_DIR/config/app.toml
+        
+        # Set snapshot interval
+        ssed -i 's/^snapshot-interval = .*/snapshot-interval = 50/' $HOME_DIR/config/app.toml
     fi
 
     # Wait for the genesis.json file to be finalized
