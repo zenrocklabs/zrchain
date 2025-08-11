@@ -8,6 +8,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	rock_spl_token "github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 )
@@ -68,19 +69,22 @@ func SubmitUnwrapTx(solanaRPC, signerPath, destAddr string, programID, mintAddre
 		return fmt.Errorf("failed to load signer: %v", err)
 	}
 
-	// Convert destination address string to PublicKey and then to bytes
-	destPubkey, err := solana.PublicKeyFromBase58(destAddr)
+	// Decode the bech32 Cosmos address with "zen" prefix
+	accAddr, err := types.AccAddressFromBech32(destAddr)
 	if err != nil {
-		return fmt.Errorf("invalid destination address: %v", err)
+		return fmt.Errorf("failed to decode bech32 address: %v", err)
 	}
-	destAddrBytes := destPubkey.Bytes()
 
-	// Convert []byte to [25]uint8 - truncate if longer, pad with zeros if shorter
+	// Convert the Cosmos account address to bytes
+	decodedBytes := accAddr.Bytes()
+	fmt.Printf("Decoded bech32 address - Length: %d bytes\n", len(decodedBytes))
+
+	// Convert decoded bytes to [25]uint8 - truncate if longer, pad with zeros if shorter
 	var destAddrArray [25]uint8
-	if len(destAddrBytes) >= 25 {
-		copy(destAddrArray[:], destAddrBytes[:25])
+	if len(decodedBytes) >= 25 {
+		copy(destAddrArray[:], decodedBytes[:25])
 	} else {
-		copy(destAddrArray[:], destAddrBytes)
+		copy(destAddrArray[:], decodedBytes)
 	}
 
 	args := rock_spl_token.UnwrapArgs{

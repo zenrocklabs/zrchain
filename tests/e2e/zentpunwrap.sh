@@ -39,6 +39,7 @@ case $environment in
             rpc_url="http://localhost:26657"
             mint_address=$(zenrockd q zentp params --node $rpc_url | grep "mint_address:" | awk -F': ' '{print $2}' | tr -d ' ')
             program_id=$(zenrockd q zentp params --node $rpc_url | grep "program_id:" | awk -F': ' '{print $2}' | tr -d ' ')
+            fee_wallet=$(zenrockd q zentp params --node $rpc_url | grep "fee_wallet:" | awk -F': ' '{print $2}' | tr -d ' ')
         elif [ "$environment" = "devnet" ]; then
             rpc_url="https://rpc.dev.zenrock.tech"
             mint_address=$(zenrockd q zentp params --node $rpc_url | grep "mint_address:" | awk -F': ' '{print $2}' | tr -d ' ')
@@ -73,6 +74,9 @@ echo "urock balance: $(spl-token balance "$mint_address" --owner "$SIGNER_PUBKEY
 
 echo "making unwrap transaction"
 
+echo "enter destination address on zrchain:"
+read -r dest_address
+
 # Prompt for unwrap amount
 echo "Please enter the amount of urock to unwrap:"
 read -r unwrap_amount
@@ -92,8 +96,9 @@ output=$(go run ../helper/create-unwrap.go \
     --program "$program_id" \
     --rpc "$solana_rpc" \
     --amount "$unwrap_amount" \
-    --dest "$SIGNER_PUBKEY" \
-    --fee-wallet "$fee_wallet" 2>&1)
+    --dest "$dest_address" \
+    --fee-wallet "$fee_wallet" \
+)
 exit_code=$?
 
 echo "Go program exit code: $exit_code"
