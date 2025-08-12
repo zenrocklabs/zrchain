@@ -30,8 +30,8 @@ const SOLANA_ZENBTC_MULTISIG = "6eKCiGUhCbi8KgHUEeoTXgSDBZEV1LipBQJVL2EqsABu"
 const SOLANA_FEE_WALLET = "6Uz2z3pfQgn5SpGp9THV6uWqAQdDVxF3df8XCiTgf8Qq"
 
 // Ethereum ZENBTC constants
-const ETHEREUM_ZENBTC_CONTRACT = "0xfA32a2D7546f8C7c229F94E693422A786DaE5E18"
-const ETHEREUM_CHAIN_ID = 17000
+const ETHEREUM_ZENBTC_CONTRACT = "0x745Aa06072bf149117C457C68b0531cF7567C4e1"
+const ETHEREUM_CHAIN_ID = 560048
 
 func extractSolanaPubkey(output string) (string, error) {
 	re := regexp.MustCompile(`pubkey:\s+([A-Za-z0-9]+)`)

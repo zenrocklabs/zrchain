@@ -28,21 +28,20 @@ import (
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
-
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	// Added for bin.Marshal
 )
 
@@ -152,7 +151,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+	zenBTCController, err := zenbtc.NewZenBTController(
 		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
@@ -163,8 +162,9 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 
 	// Allow customization of ticker interval in regnet network
 	mainLoopTickerIntervalDuration := func() time.Duration {
-		configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
 		if o.Config.Network == "regnet" {
+			configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
+			configValue = max(configValue, 15*time.Second)
 			return configValue
 		}
 		return sidecartypes.MainLoopTickerInterval
@@ -192,7 +192,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
 		var initialTickCtx context.Context
 		initialTickCtx, tickCancel = context.WithCancel(ctx)
-		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
+		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -219,7 +219,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			tickCtx, tickCancel = context.WithCancel(ctx)
 
 			// Start the new tick's processing in a goroutine.
-			go o.processOracleTick(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
+			go o.processOracleTick(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
 }
@@ -227,13 +227,13 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 func (o *Oracle) processOracleTick(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	mainnetEthClient *ethclient.Client,
 	tickTime time.Time,
 ) {
-	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
@@ -317,7 +317,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -359,7 +359,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Started in runOracleMainLoop, not per-tick
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
@@ -507,7 +507,7 @@ func (o *Oracle) fetchEthereumContractData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
@@ -530,7 +530,7 @@ func (o *Oracle) fetchEthereumContractData(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) ([]api.Redemption, error) {
-			return o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
+			return o.getRedemptions(ctx, zenBTCController, targetBlockNumber)
 		},
 		func(result []api.Redemption, update *oracleStateUpdate) {
 			update.redemptions = result
@@ -564,20 +564,64 @@ func (o *Oracle) fetchNetworkData(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (uint64, error) {
+			network := o.Config.Network
+			whitelistedRoleAddr := sidecartypes.WhitelistedRoleAddresses[network]
+			controllerAddr := sidecartypes.ZenBTCControllerAddresses[network]
+
+			slog.Info("DEBUG: Gas estimation parameters",
+				"network", network,
+				"whitelistedRoleAddress", whitelistedRoleAddr,
+				"controllerAddress", controllerAddr,
+				"stakeCallDataAmount", sidecartypes.StakeCallDataAmount,
+			)
+
 			stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(sidecartypes.StakeCallDataAmount))
 			if err != nil {
-				return 0, fmt.Errorf("failed to encode stake call data: %w", err)
+				slog.Error("DEBUG: Failed to encode stake call data", "error", err)
+				const estimatedGasForStake = uint64(1000000) // 1M gas units
+				estimatedGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
+				slog.Info("DEBUG: Using hardcoded gas estimate", "gas", estimatedGas)
+				return estimatedGas, nil
 			}
-			addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
+
+			slog.Info("DEBUG: Encoded stake call data",
+				"dataLength", len(stakeCallData),
+				"dataHex", fmt.Sprintf("0x%x", stakeCallData),
+			)
+
+			slog.Info("DEBUG: stakeRockBTC function details",
+				"functionName", "stakeRockBTC",
+				"parameters", fmt.Sprintf("value: %d, approverSignatureAndExpiry: {Signature: [], Expiry: 0}, approverSalt: [32]byte{}", sidecartypes.StakeCallDataAmount),
+				"note", "This function requires valid signature data which we're providing as empty for gas estimation",
+			)
+
+			addr := common.HexToAddress(controllerAddr)
+			slog.Info("DEBUG: Attempting gas estimation",
+				"from", whitelistedRoleAddr,
+				"to", controllerAddr,
+				"dataLength", len(stakeCallData),
+			)
+
 			estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-				From: common.HexToAddress(sidecartypes.WhitelistedRoleAddresses[o.Config.Network]),
+				From: common.HexToAddress(whitelistedRoleAddr),
 				To:   &addr,
 				Data: stakeCallData,
 			})
 			if err != nil {
-				return 0, fmt.Errorf("failed to estimate gas: %w", err)
+				slog.Error("DEBUG: Gas estimation failed", "error", err)
+				const estimatedGasForStake = uint64(1000000) // 1M gas units
+				fallbackGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
+				slog.Info("DEBUG: Using fallback gas estimate", "gas", fallbackGas)
+				return fallbackGas, nil
 			}
-			return (estimatedGas * sidecartypes.GasEstimationBuffer) / 100, nil
+
+			finalGas := (estimatedGas * sidecartypes.GasEstimationBuffer) / 100
+			slog.Info("DEBUG: Gas estimation successful",
+				"rawEstimatedGas", estimatedGas,
+				"finalGasWithBuffer", finalGas,
+				"bufferPercentage", sidecartypes.GasEstimationBuffer,
+			)
+			return finalGas, nil
 		},
 		func(result uint64, update *oracleStateUpdate) {
 			update.estimatedGas = result
@@ -1297,8 +1341,21 @@ func (o *Oracle) getRedemptions(ctx context.Context, contractInstance *zenbtc.Ze
 		Context:     ctx,
 	}
 
+	// Debug: Log the contract address being used
+	contractAddr := sidecartypes.ZenBTCControllerAddresses[o.Config.Network]
+	slog.Info("DEBUG: Attempting to get redemptions from contract",
+		"contractAddress", contractAddr,
+		"blockHeight", height.String(),
+		"network", o.Config.Network,
+		"networkName", sidecartypes.NetworkNames[o.Config.Network],
+	)
+
 	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
 	if err != nil {
+		slog.Error("DEBUG: Failed to get redemptions from contract",
+			"contractAddress", contractAddr,
+			"error", err,
+		)
 		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
 	}
 
