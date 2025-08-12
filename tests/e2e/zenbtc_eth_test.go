@@ -128,39 +128,6 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 		GinkgoWriter.Printf("Bitcoin REGNET address: %s\n", bitcoinAddress)
 	})
 
-	// TODO: REMOVE this block once the problem with the first mint is solved
-	It("Creates the first dummy mint", func() {
-		resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-		Expect(err).ToNot(HaveOccurred())
-		initialMints := len(resp.PendingMintTransactions)
-		_, err = env.Docker.Exec("bitcoin", []string{"/app/send.sh", "1.0", bitcoinAddress})
-		Expect(err).ToNot(HaveOccurred())
-
-		// mint is created
-		Eventually(func() (int, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-			if err != nil {
-				return 0, err
-			}
-
-			return len(resp.PendingMintTransactions), nil
-		}, "60s", "5s").Should(BeNumerically(">", initialMints))
-
-		// mint gets minted status
-		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-			if err != nil {
-				return 0, err
-			}
-			if len(resp.PendingMintTransactions) <= initialMints {
-				return 0, nil // Return 0 status if no new transactions
-			}
-			lastTx := *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
-
-			return lastTx.Status, nil
-		}, "150s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED))
-	})
-
 	It("deposits on Bitcoin", func() {
 		r, err := env.Docker.Exec("bitcoin", []string{"/app/send.sh", "1.0", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
@@ -228,7 +195,6 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 
 	It("creates a burn", func() {
 		var burnTx zentype.BurnEvent
-		var numTxs int
 		client, err := ethclient.Dial("http://localhost:8545")
 		Expect(err).ToNot(HaveOccurred())
 		// Create random BTC address
@@ -250,31 +216,20 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 		amount := big.NewInt(1e6) // 1 token (6 decimals)
 		dest := []byte(randomBTCAddress)
 
-		// TODO remove once first burn is fixed
 		chainID := "eip155:" + strconv.FormatUint(ETHEREUM_CHAIN_ID, 10)
-		resp, err := env.Query.BurnEvents(env.Ctx, 0, "", 0, chainID)
+		tx, err := zenbtc.Unwrap(auth, amount, dest)
 		Expect(err).ToNot(HaveOccurred())
-		if len(resp.BurnEvents) == 0 {
-			numTxs = 2
-		} else {
-			numTxs = 1
-		}
-		for i := 0; i < numTxs; i++ {
-			tx, err := zenbtc.Unwrap(auth, amount, dest)
-			Expect(err).ToNot(HaveOccurred())
-			receipt, err := bind.WaitMined(env.Ctx, client, tx)
-			Expect(err).ToNot(HaveOccurred())
-			burnTxHash = receipt.TxHash.String()
-			GinkgoWriter.Printf("Broadcasted TX - hash: %v block: %d\n", burnTxHash, receipt.BlockNumber)
-			// Test fast-forward anvil here to speed up
-			_, err = env.Docker.Exec("anvil", []string{
-				"cast", "rpc", "anvil_mine", "50",
-			})
-			Expect(err).ToNot(HaveOccurred())
-		}
+		receipt, err := bind.WaitMined(env.Ctx, client, tx)
+		Expect(err).ToNot(HaveOccurred())
+		burnTxHash = receipt.TxHash.String()
+		GinkgoWriter.Printf("Broadcasted TX - hash: %v block: %d\n", burnTxHash, receipt.BlockNumber)
+		// fast-forward anvil here to speed up the confirmations needed for EL
+		_, err = env.Docker.Exec("anvil", []string{
+			"cast", "rpc", "anvil_mine", "50",
+		})
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(func() bool {
-			// chainID := "eip155:" + strconv.FormatUint(ETHEREUM_CHAIN_ID, 10)
 			resp, err := env.Query.BurnEvents(env.Ctx, 0, burnTxHash, 0, chainID)
 			Expect(err).ToNot(HaveOccurred())
 
