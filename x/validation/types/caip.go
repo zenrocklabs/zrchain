@@ -11,6 +11,8 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/zenrocklabs/goem/ethereum"
+	"github.com/zenrocklabs/goem/solana"
 )
 
 // IsValidCAIP2 checks if a string follows the CAIP-2 format: "<namespace>:<reference>"
@@ -39,11 +41,11 @@ func ValidateEVMChainID(ctx context.Context, caip2 string) (uint64, error) {
 		return 0, err
 	}
 
-	if namespace != "eip155" {
-		return 0, fmt.Errorf("CAIP-2 is not of EVM type (eip155): %s", caip2)
+	if namespace != ethereum.CAIP2Namespace {
+		return 0, fmt.Errorf("CAIP-2 is not of EVM type (%s): %s", ethereum.CAIP2Namespace, caip2)
 	}
 
-	allowedEVMChainIDs := []string{"17000"}
+	allowedEVMChainIDs := []string{ethereum.HoodiChainId.String()}
 	if strings.HasPrefix(sdk.UnwrapSDKContext(ctx).ChainID(), "diamond") {
 		allowedEVMChainIDs = append(allowedEVMChainIDs, "1")
 	}
@@ -68,7 +70,7 @@ func ValidateSolanaChainID(ctx context.Context, caip2 string) (string, error) {
 		return "", err
 	}
 
-	if namespace != "solana" {
+	if namespace != solana.CAIP2Namespace {
 		return "", fmt.Errorf("CAIP-2 is not of Solana type: %s", caip2)
 	}
 
@@ -100,16 +102,16 @@ func ValidateChainID(ctx context.Context, caip2 string) (string, error) {
 	}
 
 	switch namespace {
-	case "eip155":
+	case ethereum.CAIP2Namespace:
 		_, err := ValidateEVMChainID(ctx, caip2)
 		if err != nil {
 			return "", err
 		}
 		return reference, nil
-	case "solana":
+	case solana.CAIP2Namespace:
 		return ValidateSolanaChainID(ctx, caip2)
 	default:
-		return "", fmt.Errorf("unsupported CAIP-2 namespace: %s (supported: eip155, solana)", namespace)
+		return "", fmt.Errorf("unsupported CAIP-2 namespace: %s (supported: %s, %s)", namespace, ethereum.CAIP2Namespace, solana.CAIP2Namespace)
 	}
 }
 
