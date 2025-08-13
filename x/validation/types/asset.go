@@ -18,9 +18,22 @@ func (k AssetKey) Encode(buffer []byte, value Asset) (int, error) {
 }
 
 func (k AssetKey) Decode(buffer []byte) (int, Asset, error) {
+	if len(buffer) < 3 {
+		return 0, Asset_UNSPECIFIED, fmt.Errorf("invalid buffer length for AssetKey: expected at least 3, got %d", len(buffer))
+	}
+
+	// Handle 3-byte keys by padding them to 4 bytes
+	if len(buffer) == 3 {
+		// Create a 4-byte buffer with the 3 bytes followed by a zero byte
+		paddedBuffer := make([]byte, 4)
+		copy(paddedBuffer, buffer)
+		return 4, Asset(binary.BigEndian.Uint32(paddedBuffer)), nil
+	}
+
 	if len(buffer) < 4 {
 		return 0, Asset_UNSPECIFIED, fmt.Errorf("invalid buffer length for AssetKey: expected at least 4, got %d", len(buffer))
 	}
+
 	return 4, Asset(binary.BigEndian.Uint32(buffer)), nil
 }
 
