@@ -42,7 +42,7 @@ RUN go mod download
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    make build
+    make build-linux
 
 
 ############################################################################################################

@@ -92,7 +92,12 @@ ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -w -s
 endif
 ifeq ($(LINK_STATICALLY),true)
-	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+	ifeq ($(GOOS),linux)
+		# For Linux builds, use static linking without external linking
+		ldflags += -extldflags "-static"
+	else
+		ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+	endif
 endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
@@ -111,10 +116,10 @@ BUILD_TARGETS := build install
 
 build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
-	GOOS=linux GOARCH=amd64 LEDGER_ENABLED=false $(MAKE) build
+	GOOS=linux GOARCH=amd64 GOAMD64=v1 LEDGER_ENABLED=false BUILD_TAGS=netgo $(MAKE) build
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
-	go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+	go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/zenrockd
 
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
@@ -135,7 +140,7 @@ all: build
 
 build-all: tools build lint test
 
-.PHONY: distclean clean build-all
+.PHONY: distclean clean build-all build build-linux
 
 ###############################################################################
 ###                                Protobuf                                 ###
