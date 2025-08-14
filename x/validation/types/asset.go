@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -22,19 +23,34 @@ func (k AssetKey) Decode(buffer []byte) (int, Asset, error) {
 		return 0, Asset_UNSPECIFIED, fmt.Errorf("invalid buffer length for AssetKey: expected at least 3, got %d", len(buffer))
 	}
 
-	// Handle 3-byte keys by padding them to 4 bytes
+	// Handle 3-byte keys by checking if they represent valid asset names first
 	if len(buffer) == 3 {
-		// Create a 4-byte buffer with the 3 bytes followed by a zero byte
-		paddedBuffer := make([]byte, 4)
-		copy(paddedBuffer, buffer)
-		return 4, Asset(binary.BigEndian.Uint32(paddedBuffer)), nil
+		keyStr := string(buffer)
+		// Try lowercase first (legacy keys)
+		if val, ok := Asset_value[keyStr]; ok {
+			return 3, Asset(val), nil
+		}
+		// Try uppercase (canonical names)
+		upperKeyStr := string(bytes.ToUpper(buffer))
+		if val, ok := Asset_value[upperKeyStr]; ok {
+			return 3, Asset(val), nil
+		}
+
+		return 0, 0, fmt.Errorf("invalid 3-byte asset key: %s", keyStr)
 	}
 
-	if len(buffer) < 4 {
-		return 0, Asset_UNSPECIFIED, fmt.Errorf("invalid buffer length for AssetKey: expected at least 4, got %d", len(buffer))
+	value := binary.BigEndian.Uint32(buffer)
+
+	switch value {
+	case 657468:
+		return 4, Asset_ETH, nil
+	case 627463:
+		return 4, Asset_BTC, nil
+	case 1919251563:
+		return 4, Asset_ROCK, nil
 	}
 
-	return 4, Asset(binary.BigEndian.Uint32(buffer)), nil
+	return 4, Asset(value), nil
 }
 
 func (k AssetKey) Size(_ Asset) int {
