@@ -134,11 +134,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r6"
+	SidecarVersionName = "sturgeon_moon"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r3", "salmon_moon_r4", "salmon_moon_r5", "salmon_moon_r6"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon"}
 
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines

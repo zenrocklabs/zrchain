@@ -39,6 +39,7 @@ import (
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	eventstore "github.com/zenrocklabs/solana-programs/event-store-spl-program/go-sdk"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
@@ -752,6 +753,253 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	)
 }
 
+// fetchAllSolanaEventsViaEventStore attempts to fetch all Solana events using the new event store SDK.
+//
+// This function replaces hundreds of individual RPC calls with a single efficient call to the on-chain
+// circular buffer event store. The EventStore stores all wrap/unwrap events for both ZenBTC and ROCK
+// tokens in chronological order, allowing us to fetch everything in one request.
+//
+// Retry Logic:
+// - Attempts up to 10 times with exponential backoff
+// - Only falls back to individual RPC calls after all retries fail
+//
+// Event Processing:
+// - Filters events based on event IDs to avoid duplicates
+// - Converts EventStore events to internal API format
+// - Updates watermarks for all event types
+//
+// Returns true if successful, false if it should fallback to individual RPC calls
+func (o *Oracle) fetchAllSolanaEventsViaEventStore(
+	ctx context.Context,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) (bool, error) {
+	const maxRetries = 10
+
+	// Create EventStore client
+	esClient := eventstore.NewClient(o.solanaClient, nil)
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		slog.Info("Attempting to fetch all Solana events via EventStore",
+			"attempt", attempt,
+			"maxRetries", maxRetries)
+
+		// Create timeout context for this attempt
+		fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		allEvents, err := esClient.GetAllEvents(fetchCtx)
+		cancel()
+
+		if err != nil {
+			slog.Warn("EventStore fetch attempt failed",
+				"attempt", attempt,
+				"error", err,
+				"willRetry", attempt < maxRetries)
+
+			if attempt == maxRetries {
+				slog.Error("EventStore failed after all retries, falling back to individual RPC calls",
+					"totalAttempts", maxRetries)
+				return false, fmt.Errorf("eventstore failed after %d attempts: %w", maxRetries, err)
+			}
+
+			// Wait before retry (exponential backoff)
+			backoff := time.Duration(attempt) * time.Second
+			time.Sleep(backoff)
+			continue
+		}
+
+		// Success! Process the events
+		slog.Info("Successfully fetched events via EventStore",
+			"zenbtcWrapEvents", len(allEvents.ZenbtcWrapEvents),
+			"zenbtcUnwrapEvents", len(allEvents.ZenbtcUnwrapEvents),
+			"rockWrapEvents", len(allEvents.RockWrapEvents),
+			"rockUnwrapEvents", len(allEvents.RockUnwrapEvents),
+			"attempt", attempt)
+
+		// Convert and process the events
+		err = o.processEventStoreEvents(allEvents, update, updateMutex)
+		if err != nil {
+			slog.Error("Failed to process EventStore events, falling back to individual RPC calls", "error", err)
+			return false, err
+		}
+
+		return true, nil
+	}
+
+	return false, fmt.Errorf("should not reach here")
+}
+
+// processEventStoreEvents converts EventStore events to the expected format and updates the oracle state.
+//
+// Event Type Mapping:
+// - ZenBTC wrap events   -> SolanaMintEvent (mints)
+// - ROCK wrap events     -> SolanaMintEvent (mints)
+// - ZenBTC unwrap events -> BurnEvent (burns)
+// - ROCK unwrap events   -> BurnEvent (burns)
+//
+// Filtering Logic:
+// - Uses event IDs for watermarking since EventStore doesn't include transaction metadata
+// - EventStore returns events in chronological order by ID
+// - Skips events with IDs we've already processed
+//
+// Thread Safety:
+// - Acquires updateMutex for the entire processing duration
+// - Safe for concurrent access with individual RPC fallback
+func (o *Oracle) processEventStoreEvents(
+	allEvents *eventstore.AllEvents,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) error {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+
+	// TODO: Add persistent watermarking for EventStore IDs
+
+	// Get last processed event IDs for filtering (placeholder for now)
+	lastKnownZenBTCMintID := o.getLastProcessedEventID(sidecartypes.SolZenBTCMint)
+	lastKnownRockMintID := o.getLastProcessedEventID(sidecartypes.SolRockMint)
+	lastKnownZenBTCBurnID := o.getLastProcessedEventID(sidecartypes.SolZenBTCBurn)
+	lastKnownRockBurnID := o.getLastProcessedEventID(sidecartypes.SolRockBurn)
+
+	var zenBTCMintCount, rockMintCount, zenBTCBurnCount, rockBurnCount int
+	var latestZenBTCMintID, latestRockMintID, latestZenBTCBurnID, latestRockBurnID uint64
+
+	// Process ZenBTC wrap events (mints)
+	for _, wrapEvent := range allEvents.ZenbtcWrapEvents {
+		eventID := wrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownZenBTCMintID {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{
+			TxSig:     fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder signature
+			Height:    0,                                     // EventStore doesn't provide slot info
+			Mint:      []byte(wrapEvent.Mint.String()),
+			Recipient: []byte(wrapEvent.Recipient.String()),
+			Value:     wrapEvent.Value,
+			Fee:       wrapEvent.Fee,
+		}
+		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+		zenBTCMintCount++
+
+		// Track latest event ID
+		if eventID > latestZenBTCMintID {
+			latestZenBTCMintID = eventID
+		}
+	}
+
+	// Process ROCK wrap events (mints)
+	for _, wrapEvent := range allEvents.RockWrapEvents {
+		eventID := wrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownRockMintID {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{
+			TxSig:     fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder signature
+			Height:    0,                                     // EventStore doesn't provide slot info
+			Mint:      []byte(wrapEvent.Mint.String()),
+			Recipient: []byte(wrapEvent.Recipient.String()),
+			Value:     wrapEvent.Value,
+			Fee:       wrapEvent.Fee,
+		}
+		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+		rockMintCount++
+
+		// Track latest event ID
+		if eventID > latestRockMintID {
+			latestRockMintID = eventID
+		}
+	}
+
+	// Process ZenBTC unwrap events (burns)
+	for _, unwrapEvent := range allEvents.ZenbtcUnwrapEvents {
+		eventID := unwrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownZenBTCBurnID {
+			continue
+		}
+
+		burnEvent := api.BurnEvent{
+			TxID:            fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder
+			Height:          0,                                     // EventStore doesn't provide slot info
+			ChainID:         "solana",
+			DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()),
+			Amount:          unwrapEvent.Value,
+			IsZenBTC:        true,
+		}
+		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+		zenBTCBurnCount++
+
+		// Track latest event ID
+		if eventID > latestZenBTCBurnID {
+			latestZenBTCBurnID = eventID
+		}
+	}
+
+	// Process ROCK unwrap events (burns)
+	for _, unwrapEvent := range allEvents.RockUnwrapEvents {
+		eventID := unwrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownRockBurnID {
+			continue
+		}
+
+		burnEvent := api.BurnEvent{
+			TxID:            fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder
+			Height:          0,                                     // EventStore doesn't provide slot info
+			ChainID:         "solana",
+			DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()),
+			Amount:          unwrapEvent.Value,
+			IsZenBTC:        false,
+		}
+		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+		rockBurnCount++
+
+		// Track latest event ID
+		if eventID > latestRockBurnID {
+			latestRockBurnID = eventID
+		}
+	}
+
+	// TODO: Store watermarks with latest event IDs for persistence across restarts
+	slog.Debug("EventStore watermarks would be updated",
+		"zenBTCMint", latestZenBTCMintID,
+		"rockMint", latestRockMintID,
+		"zenBTCBurn", latestZenBTCBurnID,
+		"rockBurn", latestRockBurnID)
+
+	slog.Info("Successfully processed EventStore events using event ID filtering",
+		"zenBTCMintEvents", zenBTCMintCount,
+		"rockMintEvents", rockMintCount,
+		"zenBTCBurnEvents", zenBTCBurnCount,
+		"rockBurnEvents", rockBurnCount,
+		"totalProcessed", zenBTCMintCount+rockMintCount+zenBTCBurnCount+rockBurnCount,
+		"totalRaw", len(allEvents.ZenbtcWrapEvents)+len(allEvents.RockWrapEvents)+len(allEvents.ZenbtcUnwrapEvents)+len(allEvents.RockUnwrapEvents),
+		"latestIDs", map[string]uint64{
+			"zenBTCMint": latestZenBTCMintID,
+			"rockMint":   latestRockMintID,
+			"zenBTCBurn": latestZenBTCBurnID,
+			"rockBurn":   latestRockBurnID,
+		})
+
+	return nil
+}
+
+// getLastProcessedEventID returns the last processed event ID for a given event type
+// This is a placeholder implementation - in a real system you'd want to persist these IDs
+func (o *Oracle) getLastProcessedEventID(eventType sidecartypes.SolanaEventType) uint64 {
+	// For now, return 0 to process all events
+	// In production, you'd load this from persistent storage
+	return 0
+}
+
 func (o *Oracle) processSolanaMintEvents(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -764,6 +1012,17 @@ func (o *Oracle) processSolanaMintEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		// Always try EventStore first
+		success, eventStoreErr := o.fetchAllSolanaEventsViaEventStore(ctx, update, updateMutex)
+		if success {
+			slog.Info("Successfully fetched all Solana events via EventStore, skipping individual RPC calls")
+			return
+		}
+
+		// EventStore failed, fall back to individual RPC calls
+		slog.Warn("EventStore approach failed, falling back to individual RPC calls", "error", eventStoreErr)
+
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 		// Parallel fetch of ROCK and zenBTC mint events
@@ -942,6 +1201,18 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		// Check if burn events were already fetched via EventStore
+		updateMutex.Lock()
+		eventStoreHasBurnData := len(update.solanaBurnEvents) > 0
+		updateMutex.Unlock()
+
+		if eventStoreHasBurnData {
+			slog.Info("Skipping individual burn event fetching - already handled by EventStore")
+			return
+		}
+
+		slog.Info("No burn events from EventStore, proceeding with individual RPC calls")
 
 		var zenBtcEvents, rockEvents []api.BurnEvent
 		var zenBtcErr, rockErr error

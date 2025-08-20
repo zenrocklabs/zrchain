@@ -14,6 +14,8 @@ replace (
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	// local EventStore SDK for efficient Solana event fetching
+	github.com/zenrocklabs/solana-programs/event-store-spl-program/go-sdk => /home/shulgin/repos/solana-programs/event-store-spl-program/go-sdk
 )
 
 require (
@@ -94,6 +96,7 @@ require (
 	github.com/onsi/gomega v1.37.0
 	github.com/pkg/errors v0.9.1
 	github.com/zenrocklabs/goem v1.1.0
+	github.com/zenrocklabs/solana-programs/event-store-spl-program/go-sdk v0.0.0-00010101000000-000000000000
 	go.uber.org/mock v0.4.0
 )
 
@@ -275,6 +278,7 @@ require (
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/near/borsh-go v0.3.1 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
