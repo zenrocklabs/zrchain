@@ -292,12 +292,21 @@ func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.Backfil
 func (k Keeper) GetAssetPrices(ctx context.Context) (map[types.Asset]math.LegacyDec, error) {
 	assetPrices := make(map[types.Asset]math.LegacyDec)
 
-	err := k.AssetPrices.Walk(ctx, nil, func(key types.Asset, value math.LegacyDec) (stop bool, err error) {
-		assetPrices[key] = value
-		return false, nil
-	})
-	if err != nil {
-		return nil, err
+	// Fetch only known assets to avoid decoding legacy/corrupt entries that may be stored under the same prefix.
+	// TODO: Gracefully handle the case where the asset is not found.
+	knownAssets := []types.Asset{types.Asset_ROCK, types.Asset_BTC, types.Asset_ETH}
+	for _, asset := range knownAssets {
+		price, err := k.AssetPrices.Get(ctx, asset)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Info("Asset not found", "key", asset.String())
+				continue
+			}
+			k.Logger(ctx).Error("Failed to read asset price", "asset", asset.String(), "error", err)
+			continue
+		}
+
+		assetPrices[asset] = price
 	}
 
 	return assetPrices, nil
@@ -346,7 +355,17 @@ func (k Keeper) GetSlashEvents(ctx context.Context) (map[uint64]types.SlashEvent
 func (k Keeper) GetValidationInfos(ctx context.Context) (map[int64]types.ValidationInfo, error) {
 	validationInfos := make(map[int64]types.ValidationInfo)
 
-	err := k.ValidationInfos.Walk(ctx, nil, func(key int64, value types.ValidationInfo) (stop bool, err error) {
+	// Limit iteration window to avoid OOM: walk from a recent height only.
+	// TODO: only used for module exports, remove this once we have a better way to export the data
+	const maxHeightsToScan = int64(10)
+	currentHeight := sdk.UnwrapSDKContext(ctx).BlockHeight()
+	startHeight := currentHeight - maxHeightsToScan
+	if startHeight < 0 {
+		startHeight = 0
+	}
+	queryRange := &collections.Range[int64]{}
+
+	err := k.ValidationInfos.Walk(ctx, queryRange.StartInclusive(startHeight), func(key int64, value types.ValidationInfo) (stop bool, err error) {
 		validationInfos[key] = value
 		return false, nil
 	})
