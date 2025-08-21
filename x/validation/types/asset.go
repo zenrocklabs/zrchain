@@ -21,7 +21,6 @@ func (k AssetKey) Decode(buffer []byte) (int, Asset, error) {
 	if len(buffer) < 4 {
 		return 0, Asset_UNSPECIFIED, fmt.Errorf("invalid buffer length for AssetKey: expected at least 4, got %d", len(buffer))
 	}
-
 	return 4, Asset(binary.BigEndian.Uint32(buffer)), nil
 }
 
