@@ -5,7 +5,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/upgrades"
 )
 
-const UpgradeName = "v6rev26"
+const UpgradeName = "v6rev27"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
