@@ -232,6 +232,11 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 					mintAddress,
 					multisigAddress,
 					feeWallet,
+					// Added EventStore-related arguments (placeholders for test environment)
+					solana.PublicKey{}, // eventStoreProgram (TODO: set real EventStore program ID if available)
+					solana.PublicKey{}, // eventStoreGlobalConfig PDA
+					programId,          // callingProgram (zenbtc program itself)
+					solana.PublicKey{}, // zenbtcUnwrapShard PDA
 				),
 			},
 			latest.Value.Blockhash,

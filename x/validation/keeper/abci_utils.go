@@ -1610,6 +1610,11 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			feeWalletAta,
 			recipientPubKey,
 			receiverAta,
+			// TODO: Provide real EventStore program + PDAs. Placeholder zero pubkeys used for now.
+			solana.PublicKey{}, // eventStoreProgram
+			solana.PublicKey{}, // eventStoreGlobalConfig
+			programID,          // callingProgram (zenbtc program itself)
+			solana.PublicKey{}, // zenbtcWrapShard
 		))
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")

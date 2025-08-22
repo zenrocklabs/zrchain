@@ -28,6 +28,7 @@ import (
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
+	ethzenbtc "github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc"
 	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -720,22 +721,65 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetches and processes recent zenBTC burn events from Ethereum within a defined block range.
+	// Optimized Ethereum burn event fetching.
+	// 1. First attempt a single call to the contract's getAllBurns (sidecar helper style) which returns
+	//    all historical burns kept in the on-chain circular/event storage.
+	// 2. If that fails (e.g. older contract version or RPC error), fall back to the legacy
+	//    block-range log scan (getEthBurnEvents) over the recent window.
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (burnEventResult, error) {
 			currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
-			fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
-			toBlock := latestHeader.Number
-			newEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
-			if err != nil {
-				// Don't return error, just log it and continue with empty events
-				slog.Warn("Failed to get Ethereum burn events, proceeding with reconciliation only", "error", err)
-				newEvents = []api.BurnEvent{} // Ensure slice is not nil
+			var newEvents []api.BurnEvent
+			usedAllBurns := false
+
+			// Attempt optimized path
+			if tokenAddrStr, ok := sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network]; ok && tokenAddrStr != "" {
+				contract, err := ethzenbtc.NewZenbtc(common.HexToAddress(tokenAddrStr), o.EthClient)
+				if err == nil {
+					allBurns, err := contract.GetAllBurns(&bind.CallOpts{Context: ctx})
+					if err != nil {
+						slog.Warn("getAllBurns call failed; falling back to range scan", "error", err)
+					} else {
+						slog.Info("Fetched Ethereum burns via getAllBurns", "count", len(allBurns))
+						for idx, b := range allBurns {
+							amount := uint64(0)
+							if b.NetValue != nil {
+								amount = b.NetValue.Uint64()
+							}
+							dest := []byte(b.Receiver)
+							newEvents = append(newEvents, api.BurnEvent{
+								TxID:            fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, idx),
+								Height:          b.BlockNumber,
+								ChainID:         "ethereum",
+								DestinationAddr: dest,
+								Amount:          amount,
+								IsZenBTC:        true,
+							})
+						}
+						usedAllBurns = true
+					}
+				} else {
+					slog.Warn("Failed to bind ZenBTC contract; falling back to range scan", "error", err)
+				}
+			} else {
+				slog.Warn("No ZenBTC token address configured for network; falling back to range scan", "network", o.Config.Network)
 			}
 
-			// Reconcile and merge
+			// Legacy fallback: recent window log scan (only if optimized path not used)
+			if !usedAllBurns {
+				fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
+				toBlock := latestHeader.Number
+				rangeEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
+				if err != nil {
+					slog.Warn("Failed to get Ethereum burn events via range scan, proceeding with reconciliation only", "error", err)
+					rangeEvents = []api.BurnEvent{}
+				}
+				newEvents = rangeEvents
+			}
+
+			// Reconcile and merge with existing state (dedup & cleaning)
 			remainingEvents, cleanedEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, "Ethereum")
 			mergedEvents := mergeNewBurnEvents(remainingEvents, cleanedEvents, newEvents, "Ethereum")
 

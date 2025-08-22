@@ -6,6 +6,7 @@ replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.3
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc => ./contracts/ethzenbtc
 	// TODO: remove below when pushed
 	github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk => ./contracts/sol-event-store/go-sdk
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.3.4
@@ -38,6 +39,7 @@ require (
 	github.com/CosmWasm/wasmd v0.53.2
 	github.com/CosmWasm/wasmvm/v2 v2.1.5
 	github.com/Layr-Labs/eigensdk-go v0.1.12
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc v0.0.0-00010101000000-000000000000
 	github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk v0.0.0-00010101000000-000000000000
 	github.com/beevik/ntp v1.4.3
 	github.com/btcsuite/btcd v0.24.2
