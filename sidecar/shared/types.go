@@ -70,7 +70,7 @@ var (
 	}
 
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkDevnet:  "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
+		NetworkDevnet:  "C2NkvFjqw6chyF2wHcRwyhQybK7ivQYvr3L1awb3ihJ2",
 		NetworkTestnet: "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkRegnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
@@ -80,6 +80,14 @@ var (
 		NetworkRegnet:  "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
 		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
+	}
+	// EventStore program IDs (Solana) - RISK OF SLASHING IF CHANGED
+	// These program IDs point to the on-chain unified event store used for wrap/unwrap events.
+	EventStoreProgramID = map[string]string{
+		NetworkDevnet:  "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkRegnet:  "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkTestnet: "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkMainnet: "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
 	}
 
 	// Solana RPC endpoints

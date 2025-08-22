@@ -28,6 +28,7 @@ import (
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
@@ -39,7 +40,6 @@ import (
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
-	eventstore "github.com/zenrocklabs/solana-programs/event-store-spl-program/go-sdk"
 	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
@@ -777,7 +777,20 @@ func (o *Oracle) fetchAllSolanaEventsViaEventStore(
 	const maxRetries = 10
 
 	// Create EventStore client
-	esClient := eventstore.NewClient(o.solanaClient, nil)
+	esClient := func() *eventstore.Client {
+		pidStr := sidecartypes.EventStoreProgramID[o.Config.Network]
+		if pidStr == "" {
+			slog.Warn("No EventStore program ID configured for network; using default", "network", o.Config.Network)
+			return eventstore.NewClient(o.solanaClient, nil)
+		}
+		pk, err := solana.PublicKeyFromBase58(pidStr)
+		if err != nil {
+			slog.Error("Invalid EventStore program ID, using default", "network", o.Config.Network, "pid", pidStr, "error", err)
+			return eventstore.NewClient(o.solanaClient, nil)
+		}
+		slog.Info("Using network-specific EventStore program ID", "network", o.Config.Network, "programID", pidStr)
+		return eventstore.NewClient(o.solanaClient, &pk)
+	}()
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		slog.Info("Attempting to fetch all Solana events via EventStore",
