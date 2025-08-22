@@ -26,7 +26,7 @@ import (
     "context"
     "fmt"
     "log"
-    
+
     "github.com/gagliardetto/solana-go/rpc"
     eventstore "github.com/yourorg/eventstore-sdk"
 )
@@ -34,23 +34,23 @@ import (
 func main() {
     // Create RPC client
     client := rpc.New(rpc.DevNet_RPC)
-    
+
     // Create EventStore client
     esClient := eventstore.NewClient(client, nil)
-    
+
     ctx := context.Background()
-    
+
     // Get all events in a single call
     allEvents, err := esClient.GetAllEvents(ctx)
     if err != nil {
         log.Fatal(err)
     }
-    
+
     fmt.Printf("ZenBTC Wrap Events: %d\n", len(allEvents.ZenbtcWrapEvents))
     fmt.Printf("ZenBTC Unwrap Events: %d\n", len(allEvents.ZenbtcUnwrapEvents))
     fmt.Printf("Rock Wrap Events: %d\n", len(allEvents.RockWrapEvents))
     fmt.Printf("Rock Unwrap Events: %d\n", len(allEvents.RockUnwrapEvents))
-    
+
     // Analyze Bitcoin addresses
     for _, event := range allEvents.ZenbtcUnwrapEvents {
         addr := event.GetBitcoinAddress()
@@ -149,7 +149,7 @@ addrType := eventstore.GetBitcoinAddressType("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kk
 
 // Supported address types:
 // - P2PKH (Legacy)           - starts with 1
-// - P2SH                     - starts with 3  
+// - P2SH                     - starts with 3
 // - P2WPKH (Bech32)          - bc1q, 42 chars
 // - P2WSH (Bech32)           - bc1q, 62 chars
 // - P2TR (Taproot/Bech32m)   - bc1p, 62 chars
@@ -161,7 +161,7 @@ addrType := eventstore.GetBitcoinAddressType("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kk
 The EventStore program uses deterministic sharding to store up to 1000+ events per type:
 
 - **ZenBTC Wrap**: 10 shards × 100 events = 1000 events
-- **ZenBTC Unwrap**: 17 shards × 60 events = 1020 events  
+- **ZenBTC Unwrap**: 17 shards × 60 events = 1020 events
 - **Rock Wrap**: 10 shards × 100 events = 1000 events
 - **Rock Unwrap**: 17 shards × 60 events = 1020 events
 
@@ -174,7 +174,7 @@ The SDK automatically:
 ## Performance
 
 - **Single RPC Call**: All ~4000 events fetched in one request
-- **Efficient Deserialization**: Borsh binary format with zero-copy where possible  
+- **Efficient Deserialization**: Borsh binary format with zero-copy where possible
 - **Minimal Memory**: Events processed incrementally during deserialization
 - **Parallel Safe**: Client is safe for concurrent use
 
@@ -190,7 +190,7 @@ The SDK gracefully handles:
 
 See the `example/` directory for complete usage examples including:
 - Basic event fetching
-- Bitcoin address analysis  
+- Bitcoin address analysis
 - Real-time monitoring
 - JSON export
 - Event filtering and statistics
@@ -202,10 +202,6 @@ See the `example/` directory for complete usage examples including:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Support
 
