@@ -839,7 +839,7 @@ func (o *Oracle) fetchAllSolanaEventsViaEventStore(
 		return true, nil
 	}
 
-	return false, fmt.Errorf("should not reach here")
+	panic("unreachable: fetchAllSolanaEventsViaEventStore should not reach this point")
 }
 
 // processEventStoreEvents converts EventStore events to the expected format and updates the oracle state.
