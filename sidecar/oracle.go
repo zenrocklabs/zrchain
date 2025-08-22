@@ -812,7 +812,7 @@ func (o *Oracle) fetchAllSolanaEventsViaEventStore(
 			if attempt == maxRetries {
 				slog.Error("EventStore failed after all retries, falling back to individual RPC calls",
 					"totalAttempts", maxRetries)
-				return false, fmt.Errorf("eventstore failed after %d attempts: %w", maxRetries, err)
+				return false, nil
 			}
 
 			// Wait before retry (exponential backoff)
