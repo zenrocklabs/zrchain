@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"bytes"
 	"log/slog"
 	"maps"
 	"math/big"
@@ -751,7 +751,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 								amount = b.NetValue.Uint64()
 							}
 							dest := []byte(b.Receiver)
-							seq := uint64(idx) // position in returned slice as sequence proxy
+							seq := uint64(idx)  // position in returned slice as sequence proxy
 							if seq <= lastSeq { // already processed
 								continue
 							}
@@ -1501,31 +1501,36 @@ func (o *Oracle) buildFinalState(
 	})
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations:        update.eigenDelegations,
-		EthBlockHeight:          targetBlockNumber.Uint64(),
-		EthGasLimit:             update.estimatedGas,
-		EthBaseFee:              latestHeader.BaseFee.Uint64(),
-		EthTipCap:               update.suggestedTip.Uint64(),
-		EthBurnEvents:           update.ethBurnEvents,
-		CleanedEthBurnEvents:    update.cleanedEthBurnEvents,
-		SolanaBurnEvents:        update.solanaBurnEvents,
-		CleanedSolanaBurnEvents: update.cleanedSolanaBurnEvents,
-		Redemptions:             update.redemptions,
-		SolanaMintEvents:        update.SolanaMintEvents,
-		CleanedSolanaMintEvents: update.cleanedSolanaMintEvents,
-		ROCKUSDPrice:            update.ROCKUSDPrice,
-		BTCUSDPrice:             update.BTCUSDPrice,
-		ETHUSDPrice:             update.ETHUSDPrice,
-		LastSolRockMintSig:      lastSolRockMintSig,
-		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
-		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
-		LastSolRockBurnSig:      lastSolRockBurnSig,
-		PendingSolanaTxs:        update.pendingTransactions,
+		EigenDelegations:         update.eigenDelegations,
+		EthBlockHeight:           targetBlockNumber.Uint64(),
+		EthGasLimit:              update.estimatedGas,
+		EthBaseFee:               latestHeader.BaseFee.Uint64(),
+		EthTipCap:                update.suggestedTip.Uint64(),
+		EthBurnEvents:            update.ethBurnEvents,
+		CleanedEthBurnEvents:     update.cleanedEthBurnEvents,
+		SolanaBurnEvents:         update.solanaBurnEvents,
+		CleanedSolanaBurnEvents:  update.cleanedSolanaBurnEvents,
+		Redemptions:              update.redemptions,
+		SolanaMintEvents:         update.SolanaMintEvents,
+		CleanedSolanaMintEvents:  update.cleanedSolanaMintEvents,
+		ROCKUSDPrice:             update.ROCKUSDPrice,
+		BTCUSDPrice:              update.BTCUSDPrice,
+		ETHUSDPrice:              update.ETHUSDPrice,
+		LastSolRockMintSig:       lastSolRockMintSig,
+		LastSolZenBTCMintSig:     lastSolZenBTCMintSig,
+		LastSolZenBTCBurnSig:     lastSolZenBTCBurnSig,
+		LastSolRockBurnSig:       lastSolRockBurnSig,
+		PendingSolanaTxs:         update.pendingTransactions,
 		LastSolZenBTCMintEventID: lastZenBTCMintEventID,
 		LastSolRockMintEventID:   lastRockMintEventID,
 		LastSolZenBTCBurnEventID: lastZenBTCBurnEventID,
 		LastSolRockBurnEventID:   lastRockBurnEventID,
-		LastEthBurnEventSeq:      func() uint64 { if update.latestEthBurnSeq > 0 { return update.latestEthBurnSeq } ; return currentState.LastEthBurnEventSeq }(),
+		LastEthBurnEventSeq: func() uint64 {
+			if update.latestEthBurnSeq > 0 {
+				return update.latestEthBurnSeq
+			}
+			return currentState.LastEthBurnEventSeq
+		}(),
 	}
 
 	slog.Info("FINAL STATE CONSTRUCTED",
