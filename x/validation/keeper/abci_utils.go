@@ -20,6 +20,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -1597,12 +1598,38 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		if err != nil {
 			return nil, err
 		}
+		// Derive real EventStore PDAs now that zenbtc params include EventStoreProgramId.
+		var (
+			eventStoreProgram     solana.PublicKey
+			eventStoreGlobalConfig solana.PublicKey
+			zenbtcWrapShardPDA     solana.PublicKey
+		)
+		if sp := k.zenBTCKeeper.GetSolanaParams(ctx); sp != nil && sp.EventStoreProgramId != "" {
+			// Parse program ID
+			parsed, err := solana.PublicKeyFromBase58(sp.EventStoreProgramId)
+			if err == nil {
+				eventStoreProgram = parsed
+				// Derive global config PDA: seed [GLOBAL_CONFIG_SEED]
+				gc, _, gcErr := solana.FindProgramAddress([][]byte{[]byte(eventstore.GLOBAL_CONFIG_SEED)}, eventStoreProgram)
+				if gcErr == nil {
+					eventStoreGlobalConfig = gc
+				}
+				// Minimal sharding: pick shard index 0 (deterministic). Could hash recipient for distribution later.
+				idxBytes := []byte{0x00, 0x00} // uint16(0) little endian
+				shard, _, shErr := solana.FindProgramAddress([][]byte{[]byte(eventstore.ZENBTC_WRAP_SHARD_SEED), idxBytes}, eventStoreProgram)
+				if shErr == nil {
+					zenbtcWrapShardPDA = shard
+				}
+			} else {
+				k.Logger(ctx).Warn("invalid EventStoreProgramId in zenbtc params; continuing with zero pubkeys", "value", sp.EventStoreProgramId, "error", err)
+			}
+		} else {
+			k.Logger(ctx).Debug("EventStoreProgramId not set in zenbtc params; using zero pubkeys for Wrap instruction")
+		}
+
 		instructions = append(instructions, solzenbtc.Wrap(
 			programID,
-			zenbtc_spl_token.WrapArgs{
-				Value: req.amount,
-				Fee:   req.fee,
-			},
+			zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
 			*signerPubKey,
 			mintKey,
 			multiSigKey,
@@ -1610,11 +1637,10 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			feeWalletAta,
 			recipientPubKey,
 			receiverAta,
-			// TODO: Provide real EventStore program + PDAs. Placeholder zero pubkeys used for now.
-			solana.PublicKey{}, // eventStoreProgram
-			solana.PublicKey{}, // eventStoreGlobalConfig
-			programID,          // callingProgram (zenbtc program itself)
-			solana.PublicKey{}, // zenbtcWrapShard
+			eventStoreProgram,
+			eventStoreGlobalConfig,
+			programID, // calling program (zenbtc)
+			zenbtcWrapShardPDA,
 		))
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")

@@ -1034,8 +1034,7 @@ func (o *Oracle) processEventStoreEvents(
 	return nil
 }
 
-// getLastProcessedEventID returns the last processed event ID for a given event type
-// This is a placeholder implementation - in a real system you'd want to persist these IDs
+// getLastProcessedEventID returns the last processed persisted EventStore ID for a given Solana event type.
 func (o *Oracle) getLastProcessedEventID(eventType sidecartypes.SolanaEventType) uint64 {
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 	switch eventType {
