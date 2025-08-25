@@ -102,10 +102,10 @@ message SolanaMintEvent {
   Coin Coint = 1;
   bytes SigHash = 2;
   bytes Recipient = 3;
-  uint64 Value = 4; // shifted down after removing Height
-  uint64 Fee = 5;
-  bytes Mint = 6;
-  string TxSig = 7;
   // Height removed (was field 4)
-  reserved 8; // keep old highest number reserved to avoid reuse confusion
+  reserved 4;
+  uint64 Value = 5;
+  uint64 Fee = 6;
+  bytes Mint = 7;
+  string TxSig = 8;
 }

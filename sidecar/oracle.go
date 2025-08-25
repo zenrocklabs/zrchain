@@ -754,14 +754,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 							if seq <= lastSeq { // already processed
 								continue
 							}
-							newEvents = append(newEvents, api.BurnEvent{
-								TxID:            fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, idx),
-								Height:          b.BlockNumber,
-								ChainID:         "ethereum",
-								DestinationAddr: dest,
-								Amount:          amount,
-								IsZenBTC:        true,
-							})
+							newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, idx), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
 							if seq > update.latestEthBurnSeq {
 								update.latestEthBurnSeq = seq
 							}
@@ -936,14 +929,7 @@ func (o *Oracle) processEventStoreEvents(
 			continue
 		}
 
-		mintEvent := api.SolanaMintEvent{
-			TxSig:     fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder signature
-			Height:    0,                                     // EventStore doesn't provide slot info
-			Mint:      []byte(wrapEvent.Mint.String()),
-			Recipient: []byte(wrapEvent.Recipient.String()),
-			Value:     wrapEvent.Value,
-			Fee:       wrapEvent.Fee,
-		}
+		mintEvent := api.SolanaMintEvent{TxSig: fmt.Sprintf("eventstore-%d", eventID), Mint: []byte(wrapEvent.Mint.String()), Recipient: []byte(wrapEvent.Recipient.String()), Value: wrapEvent.Value, Fee: wrapEvent.Fee}
 		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
 		zenBTCMintCount++
 
@@ -962,14 +948,7 @@ func (o *Oracle) processEventStoreEvents(
 			continue
 		}
 
-		mintEvent := api.SolanaMintEvent{
-			TxSig:     fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder signature
-			Height:    0,                                     // EventStore doesn't provide slot info
-			Mint:      []byte(wrapEvent.Mint.String()),
-			Recipient: []byte(wrapEvent.Recipient.String()),
-			Value:     wrapEvent.Value,
-			Fee:       wrapEvent.Fee,
-		}
+		mintEvent := api.SolanaMintEvent{TxSig: fmt.Sprintf("eventstore-%d", eventID), Mint: []byte(wrapEvent.Mint.String()), Recipient: []byte(wrapEvent.Recipient.String()), Value: wrapEvent.Value, Fee: wrapEvent.Fee}
 		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
 		rockMintCount++
 
@@ -988,14 +967,7 @@ func (o *Oracle) processEventStoreEvents(
 			continue
 		}
 
-		burnEvent := api.BurnEvent{
-			TxID:            fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder
-			Height:          0,                                     // EventStore doesn't provide slot info
-			ChainID:         "solana",
-			DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()),
-			Amount:          unwrapEvent.Value,
-			IsZenBTC:        true,
-		}
+		burnEvent := api.BurnEvent{TxID: fmt.Sprintf("eventstore-%d", eventID), ChainID: "solana", DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()), Amount: unwrapEvent.Value, IsZenBTC: true}
 		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
 		zenBTCBurnCount++
 
@@ -1014,14 +986,7 @@ func (o *Oracle) processEventStoreEvents(
 			continue
 		}
 
-		burnEvent := api.BurnEvent{
-			TxID:            fmt.Sprintf("eventstore-%d", eventID), // Use event ID as placeholder
-			Height:          0,                                     // EventStore doesn't provide slot info
-			ChainID:         "solana",
-			DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()),
-			Amount:          unwrapEvent.Value,
-			IsZenBTC:        false,
-		}
+		burnEvent := api.BurnEvent{TxID: fmt.Sprintf("eventstore-%d", eventID), ChainID: "solana", DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()), Amount: unwrapEvent.Value, IsZenBTC: false}
 		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
 		rockBurnCount++
 
@@ -1382,10 +1347,10 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Merge and sort all new events (which will be empty if fetches failed)
 		allNewSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
 		sort.Slice(allNewSolanaBurnEvents, func(i, j int) bool {
-			if allNewSolanaBurnEvents[i].Height != allNewSolanaBurnEvents[j].Height {
-				return allNewSolanaBurnEvents[i].Height < allNewSolanaBurnEvents[j].Height
+			if allNewSolanaBurnEvents[i].LogIndex != allNewSolanaBurnEvents[j].LogIndex {
+				return allNewSolanaBurnEvents[i].LogIndex < allNewSolanaBurnEvents[j].LogIndex
 			}
-			return allNewSolanaBurnEvents[i].LogIndex < allNewSolanaBurnEvents[j].LogIndex
+			return allNewSolanaBurnEvents[i].TxID < allNewSolanaBurnEvents[j].TxID
 		})
 
 		// Get current state to merge with new burn events
@@ -1694,10 +1659,6 @@ func (o *Oracle) getEthBurnEvents(ctx context.Context, fromBlock, toBlock *big.I
 		if event == nil {
 			continue
 		}
-
-		// Use block number as deterministic ordering key
-		height := uint64(event.Raw.BlockNumber)
-
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
 			LogIndex:        uint64(event.Raw.Index),
@@ -1705,7 +1666,6 @@ func (o *Oracle) getEthBurnEvents(ctx context.Context, fromBlock, toBlock *big.I
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 			IsZenBTC:        true,
-			Height:          height,
 		})
 	}
 
@@ -2017,7 +1977,6 @@ func (o *Oracle) processBurnTransaction(
 				DestinationAddr: destAddr,
 				Amount:          value,
 				IsZenBTC:        isZenBTC,
-				Height:          uint64(txResult.Slot),
 			}
 			burnEvents = append(burnEvents, burnEvent)
 			if debugMode {
@@ -2181,7 +2140,6 @@ func (o *Oracle) getSolanaBurnEventFromSig(ctx context.Context, sigStr string, p
 				DestinationAddr: eventData.DestAddr[:],
 				Amount:          eventData.Value,
 				IsZenBTC:        false, // This is a ROCK burn
-				Height:          uint64(txResult.Slot),
 			}
 			if o.DebugMode {
 				slog.Info("Backfilled Solana ROCK Burn Event",
@@ -3823,15 +3781,7 @@ func (o *Oracle) processMintTransaction(
 		if !ok {
 			continue
 		}
-		out = append(out, api.SolanaMintEvent{
-			SigHash:   sigHash[:],
-			Height:    uint64(txResult.Slot),
-			Recipient: recipient.Bytes(),
-			Value:     value,
-			Fee:       fee,
-			Mint:      mint.Bytes(),
-			TxSig:     sig.String(),
-		})
+		out = append(out, api.SolanaMintEvent{SigHash: sigHash[:], Recipient: recipient.Bytes(), Value: value, Fee: fee, Mint: mint.Bytes(), TxSig: sig.String()})
 		if debugMode {
 			slog.Info("Mint event", "eventType", eventTypeName, "tx", sig)
 		}
