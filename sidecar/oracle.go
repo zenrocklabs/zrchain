@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"bytes"
 	"log/slog"
 	"maps"
 	"math/big"
@@ -1473,27 +1474,29 @@ func (o *Oracle) buildFinalState(
 
 	// EigenDelegations map keys are deterministically ordered by encoding/json, so no manual sorting needed.
 
-	// Sort all event slices to ensure deterministic order
+	// Sort all event slices to ensure deterministic order (no per-event chain height retained)
 	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
-		if update.ethBurnEvents[i].Height != update.ethBurnEvents[j].Height {
-			return update.ethBurnEvents[i].Height < update.ethBurnEvents[j].Height
+		if update.ethBurnEvents[i].LogIndex != update.ethBurnEvents[j].LogIndex {
+			return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
 		}
-		return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
+		return update.ethBurnEvents[i].TxID < update.ethBurnEvents[j].TxID
 	})
 	sort.Slice(update.solanaBurnEvents, func(i, j int) bool {
-		if update.solanaBurnEvents[i].Height != update.solanaBurnEvents[j].Height {
-			return update.solanaBurnEvents[i].Height < update.solanaBurnEvents[j].Height
+		if update.solanaBurnEvents[i].LogIndex != update.solanaBurnEvents[j].LogIndex {
+			return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
 		}
-		return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
+		return update.solanaBurnEvents[i].TxID < update.solanaBurnEvents[j].TxID
 	})
 	sort.Slice(update.redemptions, func(i, j int) bool {
 		return update.redemptions[i].Id < update.redemptions[j].Id
 	})
 	sort.Slice(update.SolanaMintEvents, func(i, j int) bool {
-		if update.SolanaMintEvents[i].Height != update.SolanaMintEvents[j].Height {
-			return update.SolanaMintEvents[i].Height < update.SolanaMintEvents[j].Height
+		iSig := update.SolanaMintEvents[i].SigHash
+		jSig := update.SolanaMintEvents[j].SigHash
+		if cmp := bytes.Compare(iSig, jSig); cmp != 0 {
+			return cmp < 0
 		}
-		// Use TxSig as a secondary sort key for determinism if heights are identical
+		// Fallback to TxSig for determinism when SigHash equal
 		return update.SolanaMintEvents[i].TxSig < update.SolanaMintEvents[j].TxSig
 	})
 
