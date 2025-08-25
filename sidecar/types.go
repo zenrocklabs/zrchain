@@ -37,6 +37,11 @@ var (
 		BTCUSDPrice:             math.LegacyNewDec(0),
 		ETHUSDPrice:             math.LegacyNewDec(0),
 		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+		LastSolZenBTCMintEventID: 0,
+		LastSolRockMintEventID:   0,
+		LastSolZenBTCBurnEventID: 0,
+		LastSolRockBurnEventID:   0,
+		LastEthBurnEventSeq:      0,
 	}
 )
 
@@ -94,6 +99,8 @@ type oracleStateUpdate struct {
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
 	pendingTransactions     map[string]sidecartypes.PendingTxInfo
+	latestEventStoreIDs     map[sidecartypes.SolanaEventType]uint64 // event store watermarks
+	latestEthBurnSeq        uint64                                  // latest ethereum burn sequence (getAllBurns)
 }
 
 type PriceData struct {

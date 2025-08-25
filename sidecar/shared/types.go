@@ -212,6 +212,13 @@ type OracleState struct {
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
 	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
 	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
+	// EventStore ID based watermarks (persisted) - zero means no events processed yet
+	LastSolZenBTCMintEventID uint64 `json:"lastSolZenBTCMintEventID,omitempty"`
+	LastSolRockMintEventID   uint64 `json:"lastSolRockMintEventID,omitempty"`
+	LastSolZenBTCBurnEventID uint64 `json:"lastSolZenBTCBurnEventID,omitempty"`
+	LastSolRockBurnEventID   uint64 `json:"lastSolRockBurnEventID,omitempty"`
+	// Ethereum burn event watermark (for getAllBurns optimization)
+	LastEthBurnEventSeq uint64 `json:"lastEthBurnEventSeq,omitempty"`
 	// Pending transactions that failed processing and need to be retried
 	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`
 }

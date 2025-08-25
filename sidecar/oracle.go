@@ -730,6 +730,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (burnEventResult, error) {
 			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			lastSeq := currentState.LastEthBurnEventSeq
 
 			var newEvents []api.BurnEvent
 			usedAllBurns := false
@@ -749,6 +750,10 @@ func (o *Oracle) fetchEthereumBurnEvents(
 								amount = b.NetValue.Uint64()
 							}
 							dest := []byte(b.Receiver)
+							seq := uint64(idx) // position in returned slice as sequence proxy
+							if seq <= lastSeq { // already processed
+								continue
+							}
 							newEvents = append(newEvents, api.BurnEvent{
 								TxID:            fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, idx),
 								Height:          b.BlockNumber,
@@ -757,6 +762,9 @@ func (o *Oracle) fetchEthereumBurnEvents(
 								Amount:          amount,
 								IsZenBTC:        true,
 							})
+							if seq > update.latestEthBurnSeq {
+								update.latestEthBurnSeq = seq
+							}
 						}
 						usedAllBurns = true
 					}
@@ -910,9 +918,7 @@ func (o *Oracle) processEventStoreEvents(
 	updateMutex.Lock()
 	defer updateMutex.Unlock()
 
-	// TODO: Add persistent watermarking for EventStore IDs
-
-	// Get last processed event IDs for filtering (placeholder for now)
+	// Get last processed event IDs for filtering (persisted across restarts)
 	lastKnownZenBTCMintID := o.getLastProcessedEventID(sidecartypes.SolZenBTCMint)
 	lastKnownRockMintID := o.getLastProcessedEventID(sidecartypes.SolRockMint)
 	lastKnownZenBTCBurnID := o.getLastProcessedEventID(sidecartypes.SolZenBTCBurn)
@@ -1025,12 +1031,25 @@ func (o *Oracle) processEventStoreEvents(
 		}
 	}
 
-	// TODO: Store watermarks with latest event IDs for persistence across restarts
-	slog.Debug("EventStore watermarks would be updated",
-		"zenBTCMint", latestZenBTCMintID,
-		"rockMint", latestRockMintID,
-		"zenBTCBurn", latestZenBTCBurnID,
-		"rockBurn", latestRockBurnID)
+	// Store watermarks with latest event IDs for persistence across restarts
+	if latestZenBTCMintID > lastKnownZenBTCMintID {
+		update.latestEventStoreIDs[sidecartypes.SolZenBTCMint] = latestZenBTCMintID
+	}
+	if latestRockMintID > lastKnownRockMintID {
+		update.latestEventStoreIDs[sidecartypes.SolRockMint] = latestRockMintID
+	}
+	if latestZenBTCBurnID > lastKnownZenBTCBurnID {
+		update.latestEventStoreIDs[sidecartypes.SolZenBTCBurn] = latestZenBTCBurnID
+	}
+	if latestRockBurnID > lastKnownRockBurnID {
+		update.latestEventStoreIDs[sidecartypes.SolRockBurn] = latestRockBurnID
+	}
+
+	slog.Debug("EventStore watermarks update candidates",
+		"prevZenBTCMint", lastKnownZenBTCMintID, "newZenBTCMint", latestZenBTCMintID,
+		"prevRockMint", lastKnownRockMintID, "newRockMint", latestRockMintID,
+		"prevZenBTCBurn", lastKnownZenBTCBurnID, "newZenBTCBurn", latestZenBTCBurnID,
+		"prevRockBurn", lastKnownRockBurnID, "newRockBurn", latestRockBurnID)
 
 	slog.Info("Successfully processed EventStore events using event ID filtering",
 		"zenBTCMintEvents", zenBTCMintCount,
@@ -1052,9 +1071,19 @@ func (o *Oracle) processEventStoreEvents(
 // getLastProcessedEventID returns the last processed event ID for a given event type
 // This is a placeholder implementation - in a real system you'd want to persist these IDs
 func (o *Oracle) getLastProcessedEventID(eventType sidecartypes.SolanaEventType) uint64 {
-	// For now, return 0 to process all events
-	// In production, you'd load this from persistent storage
-	return 0
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	switch eventType {
+	case sidecartypes.SolZenBTCMint:
+		return currentState.LastSolZenBTCMintEventID
+	case sidecartypes.SolRockMint:
+		return currentState.LastSolRockMintEventID
+	case sidecartypes.SolZenBTCBurn:
+		return currentState.LastSolZenBTCBurnEventID
+	case sidecartypes.SolRockBurn:
+		return currentState.LastSolRockBurnEventID
+	default:
+		return 0
+	}
 }
 
 func (o *Oracle) processSolanaMintEvents(
@@ -1455,6 +1484,25 @@ func (o *Oracle) buildFinalState(
 
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
+	// Start with existing EventStore ID watermarks and apply any updates
+	lastZenBTCMintEventID := currentState.LastSolZenBTCMintEventID
+	lastRockMintEventID := currentState.LastSolRockMintEventID
+	lastZenBTCBurnEventID := currentState.LastSolZenBTCBurnEventID
+	lastRockBurnEventID := currentState.LastSolRockBurnEventID
+
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolZenBTCMint]; ok && id > lastZenBTCMintEventID {
+		lastZenBTCMintEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolRockMint]; ok && id > lastRockMintEventID {
+		lastRockMintEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolZenBTCBurn]; ok && id > lastZenBTCBurnEventID {
+		lastZenBTCBurnEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolRockBurn]; ok && id > lastRockBurnEventID {
+		lastRockBurnEventID = id
+	}
+
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
 
@@ -1505,6 +1553,11 @@ func (o *Oracle) buildFinalState(
 		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
 		LastSolRockBurnSig:      lastSolRockBurnSig,
 		PendingSolanaTxs:        update.pendingTransactions,
+		LastSolZenBTCMintEventID: lastZenBTCMintEventID,
+		LastSolRockMintEventID:   lastRockMintEventID,
+		LastSolZenBTCBurnEventID: lastZenBTCBurnEventID,
+		LastSolRockBurnEventID:   lastRockBurnEventID,
+		LastEthBurnEventSeq:      func() uint64 { if update.latestEthBurnSeq > 0 { return update.latestEthBurnSeq } ; return currentState.LastEthBurnEventSeq }(),
 	}
 
 	slog.Info("FINAL STATE CONSTRUCTED",
