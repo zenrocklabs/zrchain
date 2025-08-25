@@ -11,6 +11,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -117,6 +118,13 @@ func (k msgServer) handleKeyRequestFulfilment(ctx sdk.Context, msg *types.MsgFul
 
 		if err := k.KeyStore.Set(ctx, key.Id, *key); err != nil {
 			return nil, err
+		}
+
+		if req.Creator == zentptypes.ModuleName {
+			err := k.zentpKeeper.UpdateDctStatusToKeysCreated(ctx, req.Id)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		// Store public key from first party's response so we can check other parties respond with the same key

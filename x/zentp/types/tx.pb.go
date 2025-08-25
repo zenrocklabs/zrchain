@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
+	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -464,6 +465,220 @@ func (m *MsgSetSolanaROCKSupplyResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSetSolanaROCKSupplyResponse proto.InternalMessageInfo
 
+// MsgInitDct is the Msg/InitDct request type
+type MsgInitDct struct {
+	Creator          string      `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Asset            *types.Coin `protobuf:"bytes,2,opt,name=asset,proto3" json:"asset,omitempty"`
+	DestinationChain string      `protobuf:"bytes,3,opt,name=destination_chain,json=destinationChain,proto3" json:"destination_chain,omitempty"`
+}
+
+func (m *MsgInitDct) Reset()         { *m = MsgInitDct{} }
+func (m *MsgInitDct) String() string { return proto.CompactTextString(m) }
+func (*MsgInitDct) ProtoMessage()    {}
+func (*MsgInitDct) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7dafafbf11daeb27, []int{8}
+}
+func (m *MsgInitDct) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitDct) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitDct.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitDct) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitDct.Merge(m, src)
+}
+func (m *MsgInitDct) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitDct) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitDct.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitDct proto.InternalMessageInfo
+
+func (m *MsgInitDct) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgInitDct) GetAsset() *types.Coin {
+	if m != nil {
+		return m.Asset
+	}
+	return nil
+}
+
+func (m *MsgInitDct) GetDestinationChain() string {
+	if m != nil {
+		return m.DestinationChain
+	}
+	return ""
+}
+
+// MsgInitDctResponse defines the response structure for executing a
+// MsgInitDct message.
+type MsgInitDctResponse struct {
+	Dct *Dct `protobuf:"bytes,1,opt,name=dct,proto3" json:"dct,omitempty"`
+}
+
+func (m *MsgInitDctResponse) Reset()         { *m = MsgInitDctResponse{} }
+func (m *MsgInitDctResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgInitDctResponse) ProtoMessage()    {}
+func (*MsgInitDctResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7dafafbf11daeb27, []int{9}
+}
+func (m *MsgInitDctResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitDctResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitDctResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitDctResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitDctResponse.Merge(m, src)
+}
+func (m *MsgInitDctResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitDctResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitDctResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitDctResponse proto.InternalMessageInfo
+
+func (m *MsgInitDctResponse) GetDct() *Dct {
+	if m != nil {
+		return m.Dct
+	}
+	return nil
+}
+
+// MsgInitDctKeys is the Msg/InitDctKeys request type
+type MsgInitDctKeys struct {
+	Creator    string   `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Denom      string   `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	UnsignedTx [][]byte `protobuf:"bytes,3,rep,name=unsigned_tx,json=unsignedTx,proto3" json:"unsigned_tx,omitempty"`
+}
+
+func (m *MsgInitDctKeys) Reset()         { *m = MsgInitDctKeys{} }
+func (m *MsgInitDctKeys) String() string { return proto.CompactTextString(m) }
+func (*MsgInitDctKeys) ProtoMessage()    {}
+func (*MsgInitDctKeys) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7dafafbf11daeb27, []int{10}
+}
+func (m *MsgInitDctKeys) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitDctKeys) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitDctKeys.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitDctKeys) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitDctKeys.Merge(m, src)
+}
+func (m *MsgInitDctKeys) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitDctKeys) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitDctKeys.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitDctKeys proto.InternalMessageInfo
+
+func (m *MsgInitDctKeys) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgInitDctKeys) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *MsgInitDctKeys) GetUnsignedTx() [][]byte {
+	if m != nil {
+		return m.UnsignedTx
+	}
+	return nil
+}
+
+// MsgInitDctKeysResponse defines the response structure for executing a
+// MsgInitDctKeys message.
+type MsgInitDctKeysResponse struct {
+	SignReqIds []uint64 `protobuf:"varint,1,rep,packed,name=sign_req_ids,json=signReqIds,proto3" json:"sign_req_ids,omitempty"`
+}
+
+func (m *MsgInitDctKeysResponse) Reset()         { *m = MsgInitDctKeysResponse{} }
+func (m *MsgInitDctKeysResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgInitDctKeysResponse) ProtoMessage()    {}
+func (*MsgInitDctKeysResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7dafafbf11daeb27, []int{11}
+}
+func (m *MsgInitDctKeysResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitDctKeysResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitDctKeysResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitDctKeysResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitDctKeysResponse.Merge(m, src)
+}
+func (m *MsgInitDctKeysResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitDctKeysResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitDctKeysResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitDctKeysResponse proto.InternalMessageInfo
+
+func (m *MsgInitDctKeysResponse) GetSignReqIds() []uint64 {
+	if m != nil {
+		return m.SignReqIds
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*MsgUpdateParams)(nil), "zrchain.zentp.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "zrchain.zentp.MsgUpdateParamsResponse")
@@ -473,54 +688,70 @@ func init() {
 	proto.RegisterType((*MsgBurnResponse)(nil), "zrchain.zentp.MsgBurnResponse")
 	proto.RegisterType((*MsgSetSolanaROCKSupply)(nil), "zrchain.zentp.MsgSetSolanaROCKSupply")
 	proto.RegisterType((*MsgSetSolanaROCKSupplyResponse)(nil), "zrchain.zentp.MsgSetSolanaROCKSupplyResponse")
+	proto.RegisterType((*MsgInitDct)(nil), "zrchain.zentp.MsgInitDct")
+	proto.RegisterType((*MsgInitDctResponse)(nil), "zrchain.zentp.MsgInitDctResponse")
+	proto.RegisterType((*MsgInitDctKeys)(nil), "zrchain.zentp.MsgInitDctKeys")
+	proto.RegisterType((*MsgInitDctKeysResponse)(nil), "zrchain.zentp.MsgInitDctKeysResponse")
 }
 
 func init() { proto.RegisterFile("zrchain/zentp/tx.proto", fileDescriptor_7dafafbf11daeb27) }
 
 var fileDescriptor_7dafafbf11daeb27 = []byte{
-	// 661 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xcf, 0x6b, 0xd4, 0x40,
-	0x14, 0xde, 0x6c, 0xb7, 0x5b, 0x76, 0x6c, 0x57, 0x37, 0xd6, 0x6d, 0x1a, 0x24, 0x5d, 0x22, 0x95,
-	0xba, 0xd2, 0x0d, 0x56, 0x28, 0xd2, 0x83, 0xd0, 0xad, 0x78, 0x91, 0xc5, 0x92, 0x45, 0x0f, 0x3d,
-	0xb8, 0x4c, 0x93, 0x21, 0x1d, 0xda, 0xcc, 0x84, 0x99, 0x49, 0x69, 0x7b, 0x12, 0x8f, 0x9e, 0xfc,
-	0x33, 0x3c, 0xf6, 0x20, 0x78, 0xf7, 0xd4, 0x63, 0xf1, 0xa2, 0x27, 0x91, 0x16, 0xdc, 0x7f, 0x43,
-	0x32, 0x93, 0x64, 0x7f, 0x2a, 0xe2, 0x65, 0x37, 0xef, 0x7d, 0xdf, 0xbc, 0x7c, 0xdf, 0x7b, 0x2f,
-	0x03, 0xea, 0x67, 0xcc, 0x3b, 0x80, 0x98, 0x38, 0x67, 0x88, 0x88, 0xc8, 0x11, 0x27, 0xad, 0x88,
-	0x51, 0x41, 0xf5, 0x85, 0x34, 0xdf, 0x92, 0x79, 0xb3, 0x06, 0x43, 0x4c, 0xa8, 0x23, 0x7f, 0x15,
-	0xc3, 0x5c, 0xf2, 0x28, 0x0f, 0x29, 0x77, 0x42, 0x1e, 0x38, 0xc7, 0x8f, 0x92, 0xbf, 0x14, 0x58,
-	0x56, 0x40, 0x4f, 0x46, 0x8e, 0x0a, 0x52, 0x68, 0x31, 0xa0, 0x01, 0x55, 0xf9, 0xe4, 0x29, 0xcd,
-	0x9a, 0xa3, 0x1a, 0x22, 0xc8, 0x60, 0x98, 0x9e, 0xb0, 0x3f, 0x6b, 0xe0, 0x66, 0x87, 0x07, 0xaf,
-	0x22, 0x1f, 0x0a, 0xb4, 0x2b, 0x11, 0x7d, 0x13, 0x54, 0x60, 0x2c, 0x0e, 0x28, 0xc3, 0xe2, 0xd4,
-	0xd0, 0x1a, 0xda, 0x5a, 0xa5, 0x6d, 0x7c, 0xfd, 0xb4, 0xbe, 0x98, 0xbe, 0x6a, 0xdb, 0xf7, 0x19,
-	0xe2, 0xbc, 0x2b, 0x18, 0x26, 0x81, 0x3b, 0xa0, 0xea, 0x4f, 0x40, 0x59, 0xd5, 0x36, 0x8a, 0x0d,
-	0x6d, 0xed, 0xc6, 0xc6, 0x9d, 0xd6, 0x88, 0xc9, 0x96, 0x2a, 0xdf, 0xae, 0x5c, 0xfc, 0x58, 0x29,
-	0x7c, 0xec, 0x9f, 0x37, 0x35, 0x37, 0xe5, 0x6f, 0x6d, 0xbc, 0xeb, 0x9f, 0x37, 0x07, 0x95, 0xde,
-	0xf7, 0xcf, 0x9b, 0x2b, 0x99, 0xe8, 0x93, 0x54, 0xf6, 0x98, 0x4a, 0x7b, 0x19, 0x2c, 0x8d, 0xa5,
-	0x5c, 0xc4, 0x23, 0x4a, 0x38, 0xb2, 0x7f, 0x69, 0xa0, 0xd2, 0xe1, 0x41, 0x9b, 0x61, 0x3f, 0x40,
-	0xba, 0x01, 0xe6, 0x3c, 0x86, 0xa0, 0xa0, 0x4c, 0x99, 0x71, 0xb3, 0x50, 0x7f, 0x00, 0xaa, 0x9c,
-	0xc6, 0xcc, 0x43, 0x3d, 0xa8, 0x3c, 0x49, 0xe1, 0x95, 0x76, 0xd1, 0xd0, 0xdc, 0x05, 0x85, 0xa4,
-	0x66, 0xf5, 0x3a, 0x28, 0xc3, 0x90, 0xc6, 0x44, 0x18, 0x33, 0x0d, 0x6d, 0xad, 0xe4, 0xa6, 0x91,
-	0xbe, 0x08, 0x66, 0x7d, 0x44, 0x68, 0x68, 0x94, 0x64, 0x69, 0x15, 0xe8, 0x0f, 0x41, 0xcd, 0x47,
-	0x5c, 0x60, 0x02, 0x05, 0xa6, 0xa4, 0x27, 0x8d, 0x18, 0xb3, 0x92, 0x71, 0x6b, 0x08, 0xd8, 0x49,
-	0xf2, 0x09, 0x99, 0x21, 0x0f, 0x47, 0x18, 0x11, 0x91, 0x0b, 0x29, 0x2b, 0x72, 0x0e, 0xa4, 0x3a,
-	0xb6, 0xe6, 0x93, 0x4e, 0x65, 0x06, 0xec, 0x7b, 0xa0, 0x96, 0xfb, 0xcc, 0xdc, 0xeb, 0x55, 0x50,
-	0xc4, 0xbe, 0xb4, 0x5a, 0x72, 0x8b, 0xd8, 0xb7, 0xbf, 0x68, 0x60, 0x2e, 0x61, 0xc5, 0x8c, 0xfc,
-	0xf7, 0x68, 0x57, 0x41, 0x35, 0xa4, 0x7e, 0x7c, 0x84, 0x7a, 0xd0, 0xf3, 0x64, 0x1b, 0x64, 0xa7,
-	0xdc, 0x05, 0x95, 0xdd, 0x56, 0xc9, 0x41, 0x37, 0x66, 0x86, 0xbb, 0x31, 0xe8, 0x5d, 0x69, 0xb8,
-	0x77, 0x5b, 0xcd, 0xc9, 0xa9, 0x2f, 0x4d, 0x99, 0x7a, 0x22, 0xdc, 0xae, 0xc9, 0x35, 0x4d, 0x1e,
-	0xf3, 0x29, 0xbf, 0x01, 0xf5, 0x0e, 0x0f, 0xba, 0x48, 0x74, 0xe9, 0x11, 0x24, 0xd0, 0x7d, 0xb9,
-	0xf3, 0xa2, 0x1b, 0x47, 0xd1, 0xd1, 0xa9, 0x7e, 0x77, 0xc2, 0xe5, 0xb0, 0x97, 0x81, 0x9c, 0xe2,
-	0x88, 0x9c, 0xea, 0xa8, 0x1c, 0xbb, 0x01, 0xac, 0xe9, 0xf5, 0x33, 0x05, 0x1b, 0xdf, 0x8a, 0x60,
-	0xa6, 0xc3, 0x03, 0xfd, 0x35, 0x98, 0x1f, 0xf9, 0x80, 0xac, 0xb1, 0xc5, 0x1f, 0xdb, 0x53, 0xf3,
-	0xfe, 0xdf, 0xf1, 0x7c, 0x92, 0xcf, 0x40, 0x39, 0xdb, 0xe1, 0xc9, 0x13, 0x0a, 0x31, 0x1b, 0x7f,
-	0x42, 0xf2, 0x2a, 0x4f, 0x41, 0x49, 0xce, 0xbe, 0x3e, 0x85, 0x19, 0x33, 0x62, 0x5a, 0xd3, 0xf3,
-	0xf9, 0xf9, 0x43, 0x70, 0x7b, 0x5a, 0x93, 0x57, 0x27, 0x8f, 0x4d, 0xa1, 0x99, 0xeb, 0xff, 0x44,
-	0xcb, 0x5e, 0x66, 0xce, 0xbe, 0x4d, 0x2e, 0x86, 0xf6, 0xee, 0xc5, 0x95, 0xa5, 0x5d, 0x5e, 0x59,
-	0xda, 0xcf, 0x2b, 0x4b, 0xfb, 0x70, 0x6d, 0x15, 0x2e, 0xaf, 0xad, 0xc2, 0xf7, 0x6b, 0xab, 0xb0,
-	0xb7, 0x19, 0x60, 0x71, 0x10, 0xef, 0xb7, 0x3c, 0x1a, 0x3a, 0x7b, 0x88, 0x30, 0xea, 0x1d, 0xae,
-	0x3f, 0xa7, 0x31, 0xf1, 0xe5, 0x17, 0xe5, 0x64, 0xfb, 0x73, 0xbc, 0x99, 0xaf, 0x90, 0x38, 0x8d,
-	0x10, 0xdf, 0x2f, 0xcb, 0xfb, 0xee, 0xf1, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0xe5, 0x88, 0xe6,
-	0xa4, 0x91, 0x05, 0x00, 0x00,
+	// 860 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xcf, 0x6f, 0xe3, 0x44,
+	0x14, 0xae, 0xe3, 0x34, 0x55, 0x5e, 0xdb, 0x40, 0x4d, 0x49, 0x5d, 0x0b, 0xdc, 0x10, 0x28, 0x0a,
+	0x45, 0x8d, 0xd5, 0x22, 0x55, 0xa8, 0x07, 0xa4, 0x4d, 0x57, 0xa0, 0xd5, 0x2a, 0x62, 0xe5, 0x00,
+	0x87, 0x3d, 0x10, 0x4d, 0xed, 0x91, 0x3b, 0xda, 0x66, 0xc6, 0xeb, 0x19, 0x57, 0xed, 0x9e, 0x10,
+	0x47, 0x4e, 0x88, 0xbf, 0x82, 0x63, 0x0f, 0x48, 0xdc, 0x39, 0xed, 0xb1, 0xe2, 0xc4, 0x09, 0xa1,
+	0x56, 0xa2, 0x7f, 0x01, 0x77, 0xe4, 0x99, 0xb1, 0xf3, 0xcb, 0x8d, 0x10, 0x97, 0xc4, 0xf3, 0xbe,
+	0xef, 0x3d, 0x7f, 0xdf, 0x9b, 0x37, 0x63, 0x68, 0xbe, 0x4a, 0x82, 0x33, 0x44, 0xa8, 0xf7, 0x0a,
+	0x53, 0x11, 0x7b, 0xe2, 0xb2, 0x1b, 0x27, 0x4c, 0x30, 0x6b, 0x5d, 0xc7, 0xbb, 0x32, 0xee, 0x6c,
+	0xa0, 0x11, 0xa1, 0xcc, 0x93, 0xbf, 0x8a, 0xe1, 0x6c, 0x05, 0x8c, 0x8f, 0x18, 0xf7, 0x46, 0x3c,
+	0xf2, 0x2e, 0x0e, 0xb2, 0x3f, 0x0d, 0x6c, 0x2b, 0x60, 0x28, 0x57, 0x9e, 0x5a, 0x68, 0x68, 0x33,
+	0x62, 0x11, 0x53, 0xf1, 0xec, 0x49, 0x47, 0x9d, 0x69, 0x0d, 0x31, 0x4a, 0xd0, 0x28, 0xcf, 0xd8,
+	0x9a, 0xc6, 0xc2, 0x40, 0x68, 0xc0, 0xd5, 0xaf, 0x3f, 0x45, 0x1c, 0x7b, 0x17, 0x07, 0xa7, 0x58,
+	0xa0, 0x03, 0x2f, 0x60, 0x84, 0x2a, 0xbc, 0xfd, 0xab, 0x01, 0x6f, 0xf4, 0x79, 0xf4, 0x75, 0x1c,
+	0x22, 0x81, 0x9f, 0xc9, 0x92, 0xd6, 0x11, 0xd4, 0x51, 0x2a, 0xce, 0x58, 0x42, 0xc4, 0x95, 0x6d,
+	0xb4, 0x8c, 0x4e, 0xbd, 0x67, 0xff, 0xfe, 0xcb, 0xfe, 0xa6, 0xd6, 0xf8, 0x28, 0x0c, 0x13, 0xcc,
+	0xf9, 0x40, 0x24, 0x84, 0x46, 0xfe, 0x98, 0x6a, 0x7d, 0x0a, 0x35, 0x25, 0xca, 0xae, 0xb4, 0x8c,
+	0xce, 0xea, 0xe1, 0xdb, 0xdd, 0xa9, 0xee, 0x74, 0x55, 0xf9, 0x5e, 0xfd, 0xf5, 0x9f, 0x3b, 0x4b,
+	0x3f, 0xdf, 0x5f, 0xef, 0x19, 0xbe, 0xe6, 0x1f, 0x1f, 0x7e, 0x7f, 0x7f, 0xbd, 0x37, 0xae, 0xf4,
+	0xc3, 0xfd, 0xf5, 0xde, 0x4e, 0xee, 0xe8, 0x52, 0x7b, 0x9a, 0x51, 0xd9, 0xde, 0x86, 0xad, 0x99,
+	0x90, 0x8f, 0x79, 0xcc, 0x28, 0xc7, 0xed, 0xbf, 0x0d, 0xa8, 0xf7, 0x79, 0xd4, 0x4b, 0x48, 0x18,
+	0x61, 0xcb, 0x86, 0x95, 0x20, 0xc1, 0x48, 0xb0, 0x44, 0x99, 0xf1, 0xf3, 0xa5, 0xf5, 0x11, 0x34,
+	0x38, 0x4b, 0x93, 0x00, 0x0f, 0x91, 0xf2, 0x24, 0x85, 0xd7, 0x7b, 0x15, 0xdb, 0xf0, 0xd7, 0x15,
+	0xa2, 0xcd, 0x5a, 0x4d, 0xa8, 0xa1, 0x11, 0x4b, 0xa9, 0xb0, 0xcd, 0x96, 0xd1, 0xa9, 0xfa, 0x7a,
+	0x65, 0x6d, 0xc2, 0x72, 0x88, 0x29, 0x1b, 0xd9, 0x55, 0x59, 0x5a, 0x2d, 0xac, 0x8f, 0x61, 0x23,
+	0xc4, 0x5c, 0x10, 0x8a, 0x04, 0x61, 0x74, 0x28, 0x8d, 0xd8, 0xcb, 0x92, 0xf1, 0xe6, 0x04, 0x70,
+	0x92, 0xc5, 0x33, 0x72, 0x82, 0x03, 0x12, 0x13, 0x4c, 0x45, 0x21, 0xa4, 0xa6, 0xc8, 0x05, 0xa0,
+	0x75, 0x1c, 0xaf, 0x65, 0x9d, 0xca, 0x0d, 0xb4, 0xdf, 0x87, 0x8d, 0xc2, 0x67, 0xee, 0xde, 0x6a,
+	0x40, 0x85, 0x84, 0xd2, 0x6a, 0xd5, 0xaf, 0x90, 0xb0, 0xfd, 0x9b, 0x01, 0x2b, 0x19, 0x2b, 0x4d,
+	0xe8, 0xff, 0xde, 0xda, 0x5d, 0x68, 0x8c, 0x58, 0x98, 0x9e, 0xe3, 0x21, 0x0a, 0x02, 0xd9, 0x06,
+	0xd9, 0x29, 0x7f, 0x5d, 0x45, 0x1f, 0xa9, 0xe0, 0xb8, 0x1b, 0xe6, 0x64, 0x37, 0xc6, 0xbd, 0xab,
+	0x4e, 0xf6, 0xee, 0x78, 0x6f, 0x7e, 0xd7, 0xb7, 0x4a, 0x76, 0x3d, 0x13, 0xde, 0xde, 0x90, 0x63,
+	0x9a, 0x3d, 0x16, 0xbb, 0xfc, 0x2d, 0x34, 0xfb, 0x3c, 0x1a, 0x60, 0x31, 0x60, 0xe7, 0x88, 0x22,
+	0xff, 0xcb, 0x93, 0xa7, 0x83, 0x34, 0x8e, 0xcf, 0xaf, 0xac, 0x77, 0xe6, 0x5c, 0x4e, 0x7a, 0x19,
+	0xcb, 0xa9, 0x4c, 0xc9, 0x69, 0x4c, 0xcb, 0x69, 0xb7, 0xc0, 0x2d, 0xaf, 0x5f, 0x28, 0xf8, 0xc9,
+	0x00, 0xe8, 0xf3, 0xe8, 0x09, 0x25, 0xe2, 0x71, 0x20, 0x16, 0x0c, 0x9a, 0x07, 0xcb, 0x88, 0x73,
+	0x2c, 0xf4, 0xc1, 0xd8, 0xee, 0xea, 0x7e, 0x67, 0xa7, 0xb2, 0xab, 0x4f, 0x65, 0xf7, 0x84, 0x11,
+	0xea, 0x2b, 0x5e, 0xf9, 0x00, 0x99, 0xe5, 0x03, 0x34, 0x33, 0x13, 0xc7, 0x60, 0x8d, 0x35, 0x15,
+	0x43, 0xf1, 0x01, 0x98, 0x61, 0x20, 0xa4, 0xae, 0xd5, 0x43, 0x6b, 0xe6, 0x60, 0x66, 0xc4, 0x0c,
+	0x6e, 0x33, 0x68, 0x8c, 0x73, 0x9f, 0xe2, 0x2b, 0xbe, 0xc0, 0x53, 0xb1, 0xd7, 0x95, 0xc9, 0xbd,
+	0xde, 0x81, 0xd5, 0x94, 0x72, 0x12, 0x51, 0x1c, 0x0e, 0xc5, 0xa5, 0x6d, 0xb6, 0xcc, 0xce, 0x9a,
+	0x0f, 0x79, 0xe8, 0xab, 0xcb, 0x39, 0xb1, 0xcd, 0xe9, 0x17, 0x16, 0x82, 0x5b, 0xb0, 0x96, 0xe5,
+	0x0c, 0x13, 0xfc, 0x72, 0x48, 0x42, 0x6e, 0x1b, 0x2d, 0xb3, 0x53, 0xf5, 0x21, 0x8b, 0xf9, 0xf8,
+	0xe5, 0x93, 0x90, 0x1f, 0xfe, 0x63, 0x82, 0xd9, 0xe7, 0x91, 0xf5, 0x0d, 0xac, 0x4d, 0x5d, 0x5f,
+	0xee, 0x8c, 0xbb, 0x99, 0x5b, 0xc2, 0xf9, 0x70, 0x31, 0x5e, 0x28, 0x78, 0x0c, 0xb5, 0xfc, 0x06,
+	0x99, 0xcf, 0x50, 0x88, 0xd3, 0x7a, 0x08, 0x29, 0xaa, 0x7c, 0x06, 0x55, 0x79, 0xf2, 0x9a, 0x25,
+	0xcc, 0x34, 0xa1, 0x8e, 0x5b, 0x1e, 0x2f, 0xf2, 0x5f, 0xc0, 0x5b, 0x65, 0x23, 0xbe, 0x3b, 0x9f,
+	0x56, 0x42, 0x73, 0xf6, 0xff, 0x13, 0xad, 0x78, 0xd9, 0x17, 0xb0, 0x92, 0x0f, 0xf3, 0xf6, 0x7c,
+	0xa6, 0x86, 0x9c, 0xf7, 0x1e, 0x84, 0x8a, 0x42, 0x03, 0x58, 0x9d, 0x9c, 0xa2, 0x77, 0x1f, 0xcc,
+	0xc8, 0x60, 0x67, 0x77, 0x21, 0x9c, 0x17, 0x75, 0x96, 0xbf, 0xcb, 0x3e, 0x1a, 0xbd, 0x67, 0xaf,
+	0x6f, 0x5d, 0xe3, 0xe6, 0xd6, 0x35, 0xfe, 0xba, 0x75, 0x8d, 0x1f, 0xef, 0xdc, 0xa5, 0x9b, 0x3b,
+	0x77, 0xe9, 0x8f, 0x3b, 0x77, 0xe9, 0xf9, 0x51, 0x44, 0xc4, 0x59, 0x7a, 0xda, 0x0d, 0xd8, 0xc8,
+	0x7b, 0x8e, 0x69, 0xc2, 0x82, 0x17, 0xfb, 0x9f, 0xb3, 0x94, 0x86, 0xf2, 0xb0, 0x78, 0xf9, 0xdd,
+	0x72, 0x71, 0x54, 0x5c, 0x2f, 0xe2, 0x2a, 0xc6, 0xfc, 0xb4, 0x26, 0xbf, 0x85, 0x9f, 0xfc, 0x1b,
+	0x00, 0x00, 0xff, 0xff, 0x28, 0x81, 0x0b, 0xe6, 0xe6, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -543,7 +774,11 @@ type MsgClient interface {
 	Bridge(ctx context.Context, in *MsgBridge, opts ...grpc.CallOption) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(ctx context.Context, in *MsgSetSolanaROCKSupply, opts ...grpc.CallOption) (*MsgSetSolanaROCKSupplyResponse, error)
+	// InitDct defines an operation for initializing a DCT in the Zentp module
+	InitDct(ctx context.Context, in *MsgInitDct, opts ...grpc.CallOption) (*MsgInitDctResponse, error)
+	InitDctKeys(ctx context.Context, in *MsgInitDctKeys, opts ...grpc.CallOption) (*MsgInitDctKeysResponse, error)
 }
 
 type msgClient struct {
@@ -590,6 +825,24 @@ func (c *msgClient) SetSolanaROCKSupply(ctx context.Context, in *MsgSetSolanaROC
 	return out, nil
 }
 
+func (c *msgClient) InitDct(ctx context.Context, in *MsgInitDct, opts ...grpc.CallOption) (*MsgInitDctResponse, error) {
+	out := new(MsgInitDctResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/InitDct", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) InitDctKeys(ctx context.Context, in *MsgInitDctKeys, opts ...grpc.CallOption) (*MsgInitDctKeysResponse, error) {
+	out := new(MsgInitDctKeysResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zentp.Msg/InitDctKeys", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
@@ -600,7 +853,11 @@ type MsgServer interface {
 	Bridge(context.Context, *MsgBridge) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(context.Context, *MsgSetSolanaROCKSupply) (*MsgSetSolanaROCKSupplyResponse, error)
+	// InitDct defines an operation for initializing a DCT in the Zentp module
+	InitDct(context.Context, *MsgInitDct) (*MsgInitDctResponse, error)
+	InitDctKeys(context.Context, *MsgInitDctKeys) (*MsgInitDctKeysResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -618,6 +875,12 @@ func (*UnimplementedMsgServer) Burn(ctx context.Context, req *MsgBurn) (*MsgBurn
 }
 func (*UnimplementedMsgServer) SetSolanaROCKSupply(ctx context.Context, req *MsgSetSolanaROCKSupply) (*MsgSetSolanaROCKSupplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetSolanaROCKSupply not implemented")
+}
+func (*UnimplementedMsgServer) InitDct(ctx context.Context, req *MsgInitDct) (*MsgInitDctResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitDct not implemented")
+}
+func (*UnimplementedMsgServer) InitDctKeys(ctx context.Context, req *MsgInitDctKeys) (*MsgInitDctKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitDctKeys not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -696,6 +959,42 @@ func _Msg_SetSolanaROCKSupply_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_InitDct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInitDct)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).InitDct(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zrchain.zentp.Msg/InitDct",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).InitDct(ctx, req.(*MsgInitDct))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_InitDctKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInitDctKeys)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).InitDctKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zrchain.zentp.Msg/InitDctKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).InitDctKeys(ctx, req.(*MsgInitDctKeys))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "zrchain.zentp.Msg",
@@ -716,6 +1015,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetSolanaROCKSupply",
 			Handler:    _Msg_SetSolanaROCKSupply_Handler,
+		},
+		{
+			MethodName: "InitDct",
+			Handler:    _Msg_InitDct_Handler,
+		},
+		{
+			MethodName: "InitDctKeys",
+			Handler:    _Msg_InitDctKeys_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1006,6 +1313,177 @@ func (m *MsgSetSolanaROCKSupplyResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgInitDct) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitDct) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitDct) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DestinationChain) > 0 {
+		i -= len(m.DestinationChain)
+		copy(dAtA[i:], m.DestinationChain)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.DestinationChain)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Asset != nil {
+		{
+			size, err := m.Asset.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgInitDctResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitDctResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitDctResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Dct != nil {
+		{
+			size, err := m.Dct.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgInitDctKeys) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitDctKeys) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitDctKeys) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.UnsignedTx) > 0 {
+		for iNdEx := len(m.UnsignedTx) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.UnsignedTx[iNdEx])
+			copy(dAtA[i:], m.UnsignedTx[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.UnsignedTx[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgInitDctKeysResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitDctKeysResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitDctKeysResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SignReqIds) > 0 {
+		dAtA5 := make([]byte, len(m.SignReqIds)*10)
+		var j4 int
+		for _, num := range m.SignReqIds {
+			for num >= 1<<7 {
+				dAtA5[j4] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j4++
+			}
+			dAtA5[j4] = uint8(num)
+			j4++
+		}
+		i -= j4
+		copy(dAtA[i:], dAtA5[:j4])
+		i = encodeVarintTx(dAtA, i, uint64(j4))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1140,6 +1618,79 @@ func (m *MsgSetSolanaROCKSupplyResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgInitDct) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Asset != nil {
+		l = m.Asset.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.DestinationChain)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgInitDctResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Dct != nil {
+		l = m.Dct.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgInitDctKeys) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.UnsignedTx) > 0 {
+		for _, b := range m.UnsignedTx {
+			l = len(b)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgInitDctKeysResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.SignReqIds) > 0 {
+		l = 0
+		for _, e := range m.SignReqIds {
+			l += sovTx(uint64(e))
+		}
+		n += 1 + sovTx(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1957,6 +2508,514 @@ func (m *MsgSetSolanaROCKSupplyResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgSetSolanaROCKSupplyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitDct) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitDct: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitDct: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Asset", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Asset == nil {
+				m.Asset = &types.Coin{}
+			}
+			if err := m.Asset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DestinationChain", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DestinationChain = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitDctResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitDctResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitDctResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Dct", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Dct == nil {
+				m.Dct = &Dct{}
+			}
+			if err := m.Dct.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitDctKeys) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitDctKeys: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitDctKeys: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnsignedTx", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnsignedTx = append(m.UnsignedTx, make([]byte, postIndex-iNdEx))
+			copy(m.UnsignedTx[len(m.UnsignedTx)-1], dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitDctKeysResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitDctKeysResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitDctKeysResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTx
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.SignReqIds = append(m.SignReqIds, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTx
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTx
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTx
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.SignReqIds) == 0 {
+					m.SignReqIds = make([]uint64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTx
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.SignReqIds = append(m.SignReqIds, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field SignReqIds", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
