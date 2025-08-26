@@ -120,6 +120,7 @@ var (
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
+	EthBurnFetchBatchSize          = uint64(500)
 	SolanaSleepInterval            = 50 * time.Millisecond
 	SolanaFallbackSleepInterval    = 10 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries     = 10
@@ -217,8 +218,8 @@ type OracleState struct {
 	LastSolRockMintEventID   uint64 `json:"lastSolRockMintEventID,omitempty"`
 	LastSolZenBTCBurnEventID uint64 `json:"lastSolZenBTCBurnEventID,omitempty"`
 	LastSolRockBurnEventID   uint64 `json:"lastSolRockBurnEventID,omitempty"`
-	// Ethereum burn event watermark (for getAllBurns optimization)
-	LastEthBurnEventSeq uint64 `json:"lastEthBurnEventSeq,omitempty"`
+	// Ethereum burn event watermark (count of burns processed; next index to fetch)
+	LastEthBurnCount uint64 `json:"lastEthBurnCount,omitempty"`
 	// Pending transactions that failed processing and need to be retried
 	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`
 }

@@ -173,8 +173,9 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		return sidecartypes.MainLoopTickerInterval
 	}()
 
-	var tickCancel context.CancelFunc = func() {}
-	defer tickCancel()
+	var tickCancel context.CancelFunc
+	// Ensure any active tick context is canceled on exit.
+	defer func() { if tickCancel != nil { tickCancel() } }()
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	if !o.SkipInitialWait {
@@ -193,8 +194,8 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		}
 	} else {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
-		var initialTickCtx context.Context
-		initialTickCtx, tickCancel = context.WithCancel(ctx)
+		initialTickCtx, cancel := context.WithCancel(ctx)
+		tickCancel = cancel
 		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
@@ -213,15 +214,10 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
-			// Cancel the previous tick's processing context. This signals the previous
-			// fetchAndProcessState to wrap up and apply its (potentially partial) state.
-			tickCancel()
-
+			if tickCancel != nil { tickCancel() }
 			// Create a new context for the new tick.
-			var tickCtx context.Context
-			tickCtx, tickCancel = context.WithCancel(ctx)
-
-			// Start the new tick's processing in a goroutine.
+			tickCtx, cancel := context.WithCancel(ctx)
+			tickCancel = cancel
 			go o.processOracleTick(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
@@ -722,64 +718,110 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Optimized Ethereum burn event fetching.
-	// 1. First attempt a single call to the contract's getAllBurns (sidecar helper style) which returns
-	//    all historical burns kept in the on-chain circular/event storage.
-	// 2. If that fails (e.g. older contract version or RPC error), fall back to the legacy
-	//    block-range log scan (getEthBurnEvents) over the recent window.
+	// Ethereum burn event fetching strategy (tiered):
+	// 1. Primary path: incremental range-based retrieval via getBurnCount() + getBurnsFromTo(from,to)
+	//    fetching only new burns since the stored LastEthBurnCount watermark (next index to fetch).
+	//    Therefore we request [lastCount, currentCount) and after successful processing set the watermark to currentCount.
+	// 2. Fallback A: if range-based calls revert (older helper / missing functions), attempt bulk getAllBurns() once
+	//    and derive watermark = len(allBurns).
+	// 3. Fallback B: legacy log scan over recent block window (getEthBurnEvents) if contract helper calls fail.
+	// All paths reconcile with existing local state & perform deduplication.
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (burnEventResult, error) {
 			currentState := o.currentState.Load().(*sidecartypes.OracleState)
-			lastSeq := currentState.LastEthBurnEventSeq
+			// Watermark is count of processed burns (next index to fetch)
+			lastCount := currentState.LastEthBurnCount
 
-			var newEvents []api.BurnEvent
-			usedAllBurns := false
+				var newEvents []api.BurnEvent
+				fetchedViaRange := false
+				fetchedViaAll := false
 
-			// Attempt optimized path
-			if tokenAddrStr, ok := sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network]; ok && tokenAddrStr != "" {
-				contract, err := ethzenbtc.NewZenbtc(common.HexToAddress(tokenAddrStr), o.EthClient)
-				if err == nil {
-					allBurns, err := contract.GetAllBurns(&bind.CallOpts{Context: ctx})
-					if err != nil {
-						slog.Warn("getAllBurns call failed; falling back to range scan", "error", err)
-					} else {
-						slog.Info("Fetched Ethereum burns via getAllBurns", "count", len(allBurns))
-						for idx, b := range allBurns {
-							amount := uint64(0)
-							if b.NetValue != nil {
-								amount = b.NetValue.Uint64()
-							}
-							dest := []byte(b.Receiver)
-							seq := uint64(idx)  // position in returned slice as sequence proxy
-							if seq <= lastSeq { // already processed
-								continue
-							}
-							newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, idx), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
-							if seq > update.latestEthBurnSeq {
-								update.latestEthBurnSeq = seq
+				if tokenAddrStr, ok := sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network]; ok && tokenAddrStr != "" {
+					contract, err := ethzenbtc.NewZenbtc(common.HexToAddress(tokenAddrStr), o.EthClient)
+					if err == nil {
+						// Primary incremental path
+						burnCountBI, err := contract.GetBurnCount(&bind.CallOpts{Context: ctx})
+						if err != nil {
+							slog.Warn("getBurnCount failed; trying getAllBurns", "error", err)
+						} else {
+							burnCount := burnCountBI.Uint64()
+							if burnCount > lastCount {
+								batchSize := sidecartypes.EthBurnFetchBatchSize
+								slog.Info("Fetching new Ethereum burns incrementally", "from", lastCount, "to", burnCount, "batchSize", batchSize)
+								for start := lastCount; start < burnCount; {
+									end := start + batchSize
+									if end > burnCount { end = burnCount }
+									burns, err := contract.GetBurnsFromTo(&bind.CallOpts{Context: ctx}, big.NewInt(int64(start)), big.NewInt(int64(end)))
+									if err != nil {
+										slog.Warn("getBurnsFromTo failed mid-way; attempting fallback getAllBurns", "start", start, "end", end, "error", err)
+										newEvents = nil // discard partial to avoid duplication mixing
+										break
+									}
+									for i, b := range burns {
+										seq := start + uint64(i) // sequence index equals position in global list
+										amount := uint64(0)
+										if b.NetValue != nil {
+											amount = b.NetValue.Uint64()
+										}
+										dest := []byte(b.Receiver)
+										newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, seq), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
+									}
+									start = end
+								}
+								if len(newEvents) > 0 {
+									update.latestEthBurnSeq = burnCount // watermark = count processed
+									fetchedViaRange = true
+								}
+							} else {
+								slog.Debug("No new Ethereum burns", "burnCount", burnCount, "lastCount", lastCount)
+								fetchedViaRange = true // nothing new but successful
 							}
 						}
-						usedAllBurns = true
+
+						// Fallback A: bulk getAllBurns if incremental path incomplete
+						if !fetchedViaRange {
+							allBurns, err := contract.GetAllBurns(&bind.CallOpts{Context: ctx})
+							if err != nil {
+								slog.Warn("getAllBurns call failed; will fall back to log range scan", "error", err)
+							} else {
+								slog.Info("Fetched Ethereum burns via getAllBurns (fallback)", "count", len(allBurns))
+								for idx, b := range allBurns {
+									amount := uint64(0)
+									if b.NetValue != nil {
+										amount = b.NetValue.Uint64()
+									}
+									dest := []byte(b.Receiver)
+									seq := uint64(idx)
+									if seq < lastCount { // already processed under count semantics
+										continue
+									}
+									newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, seq), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
+								}
+								if uint64(len(allBurns)) > lastCount {
+									update.latestEthBurnSeq = uint64(len(allBurns)) // watermark = total count
+								}
+								fetchedViaAll = true
+							}
+						}
+					} else {
+						slog.Warn("Failed to bind ZenBTC contract; falling back to range scan", "error", err)
 					}
 				} else {
-					slog.Warn("Failed to bind ZenBTC contract; falling back to range scan", "error", err)
+					slog.Warn("No ZenBTC token address configured for network; falling back to range scan", "network", o.Config.Network)
 				}
-			} else {
-				slog.Warn("No ZenBTC token address configured for network; falling back to range scan", "network", o.Config.Network)
-			}
 
-			// Legacy fallback: recent window log scan (only if optimized path not used)
-			if !usedAllBurns {
-				fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
-				toBlock := latestHeader.Number
-				rangeEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
-				if err != nil {
-					slog.Warn("Failed to get Ethereum burn events via range scan, proceeding with reconciliation only", "error", err)
-					rangeEvents = []api.BurnEvent{}
+				// Fallback B: legacy block log scan if neither range nor all-burns succeeded
+				if !fetchedViaRange && !fetchedViaAll {
+					fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
+					toBlock := latestHeader.Number
+					rangeEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
+					if err != nil {
+						slog.Warn("Failed to get Ethereum burn events via range scan, proceeding with reconciliation only", "error", err)
+						rangeEvents = []api.BurnEvent{}
+					}
+					newEvents = rangeEvents
 				}
-				newEvents = rangeEvents
-			}
 
 			// Reconcile and merge with existing state (dedup & cleaning)
 			remainingEvents, cleanedEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, "Ethereum")
@@ -1524,11 +1566,11 @@ func (o *Oracle) buildFinalState(
 		LastSolRockMintEventID:   lastRockMintEventID,
 		LastSolZenBTCBurnEventID: lastZenBTCBurnEventID,
 		LastSolRockBurnEventID:   lastRockBurnEventID,
-		LastEthBurnEventSeq: func() uint64 {
+		LastEthBurnCount: func() uint64 {
 			if update.latestEthBurnSeq > 0 {
 				return update.latestEthBurnSeq
 			}
-			return currentState.LastEthBurnEventSeq
+			return currentState.LastEthBurnCount
 		}(),
 	}
 

@@ -41,7 +41,7 @@ var (
 		LastSolRockMintEventID:   0,
 		LastSolZenBTCBurnEventID: 0,
 		LastSolRockBurnEventID:   0,
-		LastEthBurnEventSeq:      0,
+		LastEthBurnCount:         0,
 	}
 )
 
