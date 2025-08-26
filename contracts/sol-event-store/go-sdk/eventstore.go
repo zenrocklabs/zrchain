@@ -13,7 +13,9 @@ import (
 
 const (
 	// EventStore program constants (must match on-chain program)
-	TARGET_EVENTS_PER_TYPE    = 1000
+	// Separate targets because wrap capacity (10*100 = 1000) differs from unwrap (17*60 = 1020).
+	TARGET_WRAP_EVENTS        = ZENBTC_WRAP_SHARD_COUNT * SHARD_SIZE_WRAP     // 1000
+	TARGET_UNWRAP_EVENTS      = ZENBTC_UNWRAP_SHARD_COUNT * SHARD_SIZE_UNWRAP // 1020
 	SHARD_SIZE_WRAP           = 100
 	SHARD_SIZE_UNWRAP         = 60
 	ZENBTC_WRAP_SHARD_COUNT   = 10

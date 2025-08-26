@@ -434,8 +434,11 @@ func TestGetAllShardAddresses(t *testing.T) {
 
 func TestConstants(t *testing.T) {
 	// Test that constants match expected values
-	if TARGET_EVENTS_PER_TYPE != 1000 {
-		t.Errorf("TARGET_EVENTS_PER_TYPE = %d, want 1000", TARGET_EVENTS_PER_TYPE)
+	if TARGET_WRAP_EVENTS != 1000 {
+		t.Errorf("TARGET_WRAP_EVENTS = %d, want 1000", TARGET_WRAP_EVENTS)
+	}
+	if TARGET_UNWRAP_EVENTS != 1020 {
+		t.Errorf("TARGET_UNWRAP_EVENTS = %d, want 1020", TARGET_UNWRAP_EVENTS)
 	}
 
 	if SHARD_SIZE_WRAP != 100 {
@@ -548,7 +551,7 @@ func BenchmarkFlexibleAddressString(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		addr.String()
+		_ = addr.String()
 	}
 }
 
