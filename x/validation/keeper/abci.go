@@ -1365,6 +1365,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
 				signerKey:         solParams.SignerKeyId,
+				eventID:           tx.Id,
 				zenbtc:            true,
 			}
 			k.Logger(ctx).Warn("processing zenbtc solana mint", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount, "fee", feeZenBTC)
@@ -1504,20 +1505,19 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
-				amount:       tx.Amount,
-				fee:          min(solParams.Fee, tx.Amount),
-				recipient:    tx.RecipientAddress,
-				nonce:        nonce,
-				fundReceiver: fundReceiver,
-				programID:    solParams.ProgramId,
-				mintAddress:  solParams.MintAddress,
-				feeWallet:    solParams.FeeWallet,
-
+				amount:            tx.Amount,
+				fee:               min(solParams.Fee, tx.Amount),
+				recipient:         tx.RecipientAddress,
+				nonce:             nonce,
+				fundReceiver:      fundReceiver,
+				programID:         solParams.ProgramId,
+				mintAddress:       solParams.MintAddress,
+				feeWallet:         solParams.FeeWallet,
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
-
-				signerKey: solParams.SignerKeyId,
-				rock:      true,
+				signerKey:         solParams.SignerKeyId,
+				eventID:           tx.Id,
+				rock:              true,
 			})
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
