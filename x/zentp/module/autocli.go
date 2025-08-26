@@ -102,21 +102,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "InitDct",
-					Use:       "init-dct [asset] [amount] [destination-chain]",
+					Use:       "init-dct [asset] [destination-chain]",
 					Short:     "Send a initDct tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "asset"},
-						{ProtoField: "amount"},
 						{ProtoField: "destination_chain"},
 					},
 				},
 				{
-			RpcMethod: "InitDctKeys",
-			Use: "init-dct-keys [denom]",
-			Short: "Send a initDctKeys tx",
-			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "denom"},},
-		},
-		// this line is used by ignite scaffolding # autocli/tx
+					RpcMethod:      "InitDctKeys",
+					Use:            "init-dct-keys [denom]",
+					Short:          "Send a initDctKeys tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "denom"}},
+				},
+				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},
 	}
