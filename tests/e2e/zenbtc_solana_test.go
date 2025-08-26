@@ -2,12 +2,14 @@ package e2e
 
 import (
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -220,6 +222,27 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 		latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
 		Expect(err).ToNot(HaveOccurred())
+		// Derive EventStore PDAs similar to keeper logic (unwrap path).
+		var eventStoreProgram, eventStoreGlobalConfig, zenbtcUnwrapShardPDA solana.PublicKey
+		// Allow optional injection via env var (e.g., SOLANA_EVENTSTORE_PROGRAM_ID); empty means placeholders remain zero.
+		if esProgramID := os.Getenv("SOLANA_EVENTSTORE_PROGRAM_ID"); esProgramID != "" {
+			if parsed, err := solana.PublicKeyFromBase58(esProgramID); err == nil {
+				eventStoreProgram = parsed
+				gc, gcErr := eventstore.DeriveGlobalConfigPDA(eventStoreProgram)
+				if gcErr == nil {
+					eventStoreGlobalConfig = gc
+				}
+				// For tests we don't know the burn event ID beforehand; if desired, set SOLANA_UNWRAP_EVENT_ID to force shard derivation.
+				if unwrapIDStr := os.Getenv("SOLANA_UNWRAP_EVENT_ID"); unwrapIDStr != "" {
+					if unwrapID, convErr := strconv.ParseUint(unwrapIDStr, 10, 64); convErr == nil && unwrapID > 0 {
+						if shard, _, shardErr := eventstore.DeriveZenbtcUnwrapShardPDA(eventStoreProgram, unwrapID); shardErr == nil {
+							zenbtcUnwrapShardPDA = shard
+						}
+					}
+				}
+			}
+		}
+
 		tx, err := solana.NewTransaction(
 			[]solana.Instruction{
 				solzenbtc.Unwrap(
@@ -232,11 +255,10 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 					mintAddress,
 					multisigAddress,
 					feeWallet,
-					// Added EventStore-related arguments (placeholders for test environment)
-					solana.PublicKey{}, // eventStoreProgram (TODO: set real EventStore program ID if available)
-					solana.PublicKey{}, // eventStoreGlobalConfig PDA
-					programId,          // callingProgram (zenbtc program itself)
-					solana.PublicKey{}, // zenbtcUnwrapShard PDA
+					eventStoreProgram,      // eventStore program (zero if not set)
+					eventStoreGlobalConfig, // global config PDA (zero if not derivable)
+					programId,              // calling program (zenbtc)
+					zenbtcUnwrapShardPDA,   // unwrap shard PDA (optional)
 				),
 			},
 			latest.Value.Blockhash,

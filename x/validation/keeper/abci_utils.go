@@ -16,11 +16,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
-	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -1495,6 +1495,7 @@ type solanaMintTxRequest struct {
 	nonceAccountKey   uint64
 	nonceAuthorityKey uint64
 	signerKey         uint64
+	eventID           uint64 // used for EventStore sharding
 	rock              bool
 	zenbtc            bool
 }
@@ -1598,30 +1599,28 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		if err != nil {
 			return nil, err
 		}
-		// Derive real EventStore PDAs now that zenbtc params include EventStoreProgramId.
-		var (
-			eventStoreProgram     solana.PublicKey
-			eventStoreGlobalConfig solana.PublicKey
-			zenbtcWrapShardPDA     solana.PublicKey
-		)
+		// Derive EventStore PDAs via SDK helpers for clarity & reuse.
+		var eventStoreProgram, eventStoreGlobalConfig, zenbtcWrapShardPDA solana.PublicKey
 		if sp := k.zenBTCKeeper.GetSolanaParams(ctx); sp != nil && sp.EventStoreProgramId != "" {
-			// Parse program ID
-			parsed, err := solana.PublicKeyFromBase58(sp.EventStoreProgramId)
-			if err == nil {
+			if parsed, perr := solana.PublicKeyFromBase58(sp.EventStoreProgramId); perr != nil {
+				k.Logger(ctx).Warn("invalid EventStoreProgramId in zenbtc params; continuing with zero pubkeys", "value", sp.EventStoreProgramId, "error", perr)
+			} else {
 				eventStoreProgram = parsed
-				// Derive global config PDA: seed [GLOBAL_CONFIG_SEED]
-				gc, _, gcErr := solana.FindProgramAddress([][]byte{[]byte(eventstore.GLOBAL_CONFIG_SEED)}, eventStoreProgram)
-				if gcErr == nil {
+				gc, gcErr := eventstore.DeriveGlobalConfigPDA(eventStoreProgram)
+				if gcErr != nil {
+					k.Logger(ctx).Warn("failed deriving global config PDA", "error", gcErr)
+				} else {
 					eventStoreGlobalConfig = gc
 				}
-				// Minimal sharding: pick shard index 0 (deterministic). Could hash recipient for distribution later.
-				idxBytes := []byte{0x00, 0x00} // uint16(0) little endian
-				shard, _, shErr := solana.FindProgramAddress([][]byte{[]byte(eventstore.ZENBTC_WRAP_SHARD_SEED), idxBytes}, eventStoreProgram)
-				if shErr == nil {
-					zenbtcWrapShardPDA = shard
+				// Compute shard PDA only if we have a non-zero event ID (zero implies not yet assigned or unknown).
+				if req.eventID > 0 {
+					wrapShard, _, shardErr := eventstore.DeriveZenbtcWrapShardPDA(eventStoreProgram, req.eventID)
+					if shardErr != nil {
+						k.Logger(ctx).Warn("failed deriving zenbtc wrap shard PDA", "event_id", req.eventID, "error", shardErr)
+					} else {
+						zenbtcWrapShardPDA = wrapShard
+					}
 				}
-			} else {
-				k.Logger(ctx).Warn("invalid EventStoreProgramId in zenbtc params; continuing with zero pubkeys", "value", sp.EventStoreProgramId, "error", err)
 			}
 		} else {
 			k.Logger(ctx).Debug("EventStoreProgramId not set in zenbtc params; using zero pubkeys for Wrap instruction")

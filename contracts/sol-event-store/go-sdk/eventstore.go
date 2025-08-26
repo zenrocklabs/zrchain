@@ -155,6 +155,51 @@ func NewClient(rpcClient *rpc.Client, programID *solana.PublicKey) *Client {
 	}
 }
 
+// DeriveGlobalConfigPDA returns the global config PDA for a given EventStore program ID.
+func DeriveGlobalConfigPDA(programID solana.PublicKey) (solana.PublicKey, error) {
+	pda, _, err := solana.FindProgramAddress([][]byte{[]byte(GLOBAL_CONFIG_SEED)}, programID)
+	return pda, err
+}
+
+// DeriveWrapShardPDA deterministically derives the wrap shard PDA for a given event ID.
+// eventID MUST be the canonical u128 (lower 64 bits used here) prior to submission.
+// shardCount is the total number of wrap shards for the asset type (zenbtc or rock).
+// seed must be one of the *_WRAP_SHARD_SEED constants.
+func DeriveWrapShardPDA(programID solana.PublicKey, seed string, eventID uint64, shardCount uint16) (solana.PublicKey, uint16, error) {
+	if shardCount == 0 {
+		return solana.PublicKey{}, 0, fmt.Errorf("shardCount cannot be zero")
+	}
+	shardIndex := uint16(eventID % uint64(shardCount))
+	idxBytes := make([]byte, 2)
+	binary.LittleEndian.PutUint16(idxBytes, shardIndex)
+	pda, _, err := solana.FindProgramAddress([][]byte{[]byte(seed), idxBytes}, programID)
+	return pda, shardIndex, err
+}
+
+// DeriveShardPDA is a generic alias to DeriveWrapShardPDA for semantic clarity when the context
+// is not strictly a wrap operation (e.g., unwrap shards). Maintained for readability.
+func DeriveShardPDA(programID solana.PublicKey, seed string, eventID uint64, shardCount uint16) (solana.PublicKey, uint16, error) {
+	return DeriveWrapShardPDA(programID, seed, eventID, shardCount)
+}
+
+// Convenience wrappers for common shard derivations -------------------------
+
+func DeriveZenbtcWrapShardPDA(programID solana.PublicKey, eventID uint64) (solana.PublicKey, uint16, error) {
+	return DeriveWrapShardPDA(programID, ZENBTC_WRAP_SHARD_SEED, eventID, ZENBTC_WRAP_SHARD_COUNT)
+}
+
+func DeriveZenbtcUnwrapShardPDA(programID solana.PublicKey, eventID uint64) (solana.PublicKey, uint16, error) {
+	return DeriveWrapShardPDA(programID, ZENBTC_UNWRAP_SHARD_SEED, eventID, ZENBTC_UNWRAP_SHARD_COUNT)
+}
+
+func DeriveRockWrapShardPDA(programID solana.PublicKey, eventID uint64) (solana.PublicKey, uint16, error) {
+	return DeriveWrapShardPDA(programID, ROCK_WRAP_SHARD_SEED, eventID, ROCK_WRAP_SHARD_COUNT)
+}
+
+func DeriveRockUnwrapShardPDA(programID solana.PublicKey, eventID uint64) (solana.PublicKey, uint16, error) {
+	return DeriveWrapShardPDA(programID, ROCK_UNWRAP_SHARD_SEED, eventID, ROCK_UNWRAP_SHARD_COUNT)
+}
+
 // getShardPDA generates a shard PDA address
 func (c *Client) getShardPDA(seed string, shardIndex uint16) (solana.PublicKey, error) {
 	indexBytes := make([]byte, 2)
