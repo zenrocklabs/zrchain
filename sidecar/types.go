@@ -21,22 +21,27 @@ import (
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
-		EigenDelegations:        make(map[string]map[string]*big.Int),
-		EthBlockHeight:          0,
-		EthGasLimit:             0,
-		EthBaseFee:              0,
-		EthTipCap:               0,
-		EthBurnEvents:           []api.BurnEvent{},
-		CleanedEthBurnEvents:    make(map[string]bool),
-		SolanaBurnEvents:        []api.BurnEvent{},
-		CleanedSolanaBurnEvents: make(map[string]bool),
-		Redemptions:             []api.Redemption{},
-		SolanaMintEvents:        []api.SolanaMintEvent{},
-		CleanedSolanaMintEvents: make(map[string]bool),
-		ROCKUSDPrice:            math.LegacyNewDec(0),
-		BTCUSDPrice:             math.LegacyNewDec(0),
-		ETHUSDPrice:             math.LegacyNewDec(0),
-		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
+		EigenDelegations:         make(map[string]map[string]*big.Int),
+		EthBlockHeight:           0,
+		EthGasLimit:              0,
+		EthBaseFee:               0,
+		EthTipCap:                0,
+		EthBurnEvents:            []api.BurnEvent{},
+		CleanedEthBurnEvents:     make(map[string]bool),
+		SolanaBurnEvents:         []api.BurnEvent{},
+		CleanedSolanaBurnEvents:  make(map[string]bool),
+		Redemptions:              []api.Redemption{},
+		SolanaMintEvents:         []api.SolanaMintEvent{},
+		CleanedSolanaMintEvents:  make(map[string]bool),
+		ROCKUSDPrice:             math.LegacyNewDec(0),
+		BTCUSDPrice:              math.LegacyNewDec(0),
+		ETHUSDPrice:              math.LegacyNewDec(0),
+		PendingSolanaTxs:         make(map[string]sidecartypes.PendingTxInfo),
+		LastSolZenBTCMintEventID: 0,
+		LastSolRockMintEventID:   0,
+		LastSolZenBTCBurnEventID: 0,
+		LastSolRockBurnEventID:   0,
+		LastEthBurnCount:         0,
 	}
 )
 
@@ -94,6 +99,8 @@ type oracleStateUpdate struct {
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
 	pendingTransactions     map[string]sidecartypes.PendingTxInfo
+	latestEventStoreIDs     map[sidecartypes.SolanaEventType]uint64 // event store watermarks
+	latestEthBurnSeq        uint64                                  // latest ethereum burn sequence (getAllBurns)
 }
 
 type PriceData struct {

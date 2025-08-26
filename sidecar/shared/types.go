@@ -70,7 +70,7 @@ var (
 	}
 
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkDevnet:  "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
+		NetworkDevnet:  "C2NkvFjqw6chyF2wHcRwyhQybK7ivQYvr3L1awb3ihJ2",
 		NetworkTestnet: "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkRegnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
@@ -80,6 +80,14 @@ var (
 		NetworkRegnet:  "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
 		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
+	}
+	// EventStore program IDs (Solana) - RISK OF SLASHING IF CHANGED
+	// These program IDs point to the on-chain unified event store used for wrap/unwrap events.
+	EventStoreProgramID = map[string]string{
+		NetworkDevnet:  "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkRegnet:  "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkTestnet: "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
+		NetworkMainnet: "Hsu6LJz42sZhs2GvF9yzD6L9n2AZTeHnjDx6Cp4DvEdf",
 	}
 
 	// Solana RPC endpoints
@@ -112,6 +120,7 @@ var (
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
+	EthBurnFetchBatchSize          = uint64(500)
 	SolanaSleepInterval            = 50 * time.Millisecond
 	SolanaFallbackSleepInterval    = 10 * time.Millisecond // Sleep between individual fallback requests
 	SolanaEventFetchMaxRetries     = 10
@@ -134,11 +143,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r6"
+	SidecarVersionName = "sturgeon_moon"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r3", "salmon_moon_r4", "salmon_moon_r5", "salmon_moon_r6"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon"}
 
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines
@@ -204,6 +213,13 @@ type OracleState struct {
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
 	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
 	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
+	// EventStore ID based watermarks (persisted) - zero means no events processed yet
+	LastSolZenBTCMintEventID uint64 `json:"lastSolZenBTCMintEventID,omitempty"`
+	LastSolRockMintEventID   uint64 `json:"lastSolRockMintEventID,omitempty"`
+	LastSolZenBTCBurnEventID uint64 `json:"lastSolZenBTCBurnEventID,omitempty"`
+	LastSolRockBurnEventID   uint64 `json:"lastSolRockBurnEventID,omitempty"`
+	// Ethereum burn event watermark (count of burns processed; next index to fetch)
+	LastEthBurnCount uint64 `json:"lastEthBurnCount,omitempty"`
 	// Pending transactions that failed processing and need to be retried
 	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`
 }

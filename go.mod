@@ -1,11 +1,14 @@
 module github.com/Zenrock-Foundation/zrchain/v6
 
-go 1.24.3
+go 1.25
 
 replace (
 	// replace broken sdk lib to ensure problematic version v0.12.0 is not used
 	cosmossdk.io/core => cosmossdk.io/core v0.11.3
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock2
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc => ./contracts/ethzenbtc
+	// TODO: remove below when pushed
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk => ./contracts/sol-event-store/go-sdk
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/cosmos/cosmos-sdk => github.com/zenrocklabs/cosmos-sdk v0.50.13-zenrock2
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
@@ -36,6 +39,8 @@ require (
 	github.com/CosmWasm/wasmd v0.53.2
 	github.com/CosmWasm/wasmvm/v2 v2.1.5
 	github.com/Layr-Labs/eigensdk-go v0.1.12
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc v0.0.0-00010101000000-000000000000
+	github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk v0.0.0-00010101000000-000000000000
 	github.com/beevik/ntp v1.4.3
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
@@ -52,17 +57,26 @@ require (
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/v8 v8.7.0
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/ethereum/go-ethereum v1.14.13
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/gagliardetto/binary v0.8.0
+	github.com/gagliardetto/gofuzz v1.2.2
 	github.com/gagliardetto/solana-go v1.11.0
+	github.com/gagliardetto/treeout v0.1.4
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.4
+	github.com/gookit/color v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/hashicorp/go-metrics v0.5.3
 	github.com/lightninglabs/neutrino v0.16.0
+	github.com/lmittmann/tint v1.1.2
+	github.com/mr-tron/base58 v1.2.0
+	github.com/onsi/ginkgo/v2 v2.23.4
+	github.com/onsi/gomega v1.37.0
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/smartcontractkit/chainlink/v2 v2.17.0
 	github.com/spf13/cast v1.7.1
@@ -70,8 +84,10 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zenrocklabs/zenbtc v1.17.19
+	github.com/zenrocklabs/goem v1.1.0
+	github.com/zenrocklabs/zenbtc v1.18.0
 	github.com/zenrocklabs/zenrock-avs v1.7.0
+	go.uber.org/mock v0.4.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/tools v0.31.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463
@@ -81,20 +97,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
-)
-
-require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/gagliardetto/gofuzz v1.2.2
-	github.com/gagliardetto/treeout v0.1.4
-	github.com/gookit/color v1.5.4
-	github.com/lmittmann/tint v1.1.2
-	github.com/mr-tron/base58 v1.2.0
-	github.com/onsi/ginkgo/v2 v2.23.4
-	github.com/onsi/gomega v1.37.0
-	github.com/pkg/errors v0.9.1
-	github.com/zenrocklabs/goem v1.1.0
-	go.uber.org/mock v0.4.0
 )
 
 require (
@@ -275,6 +277,7 @@ require (
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/near/borsh-go v0.3.1 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
