@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - 6.13.x
+      - 6.13.2-hotfix
 
 jobs:
   release:
