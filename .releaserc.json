@@ -1,8 +1,7 @@
 {
   "branches": [
     "main",
-    { "name": "6.13.x", "range": "6.13.x" },
-    { "name": "6.13.2-hotfix", "range": "6.13.2", "prerelease": "p" }
+    "6.13.x"
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
