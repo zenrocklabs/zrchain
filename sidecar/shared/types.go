@@ -37,7 +37,7 @@ var (
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{
-		NetworkDevnet:  "0x2844bd31B68AE5a0335c672e6251e99324441B73",
+		NetworkDevnet:  "0x624BFAD7c9D415b3a849A993666ec1487c14E1cb",
 		NetworkRegnet:  "0x2419A36682f329d0B5e1834068C8C63046865504",
 		NetworkTestnet: "0xaCE3634AAd9bCC48ef6A194f360F7ACe51F7d9f1",
 		NetworkMainnet: "0xa87bE298115bE701A12F34F9B4585586dF052008",
@@ -46,7 +46,7 @@ var (
 	// ZenBTCTokenAddresses holds token addresses for different blockchains
 	ZenBTCTokenAddresses = ZenBTCToken{
 		Ethereum: map[string]string{
-			NetworkDevnet:  "0x7692E9a796001FeE9023853f490A692bAB2E4834",
+			NetworkDevnet:  "0x745Aa06072bf149117C457C68b0531cF7567C4e1",
 			NetworkRegnet:  "0x745Aa06072bf149117C457C68b0531cF7567C4e1",
 			NetworkTestnet: "0xfA32a2D7546f8C7c229F94E693422A786DaE5E18",
 			NetworkMainnet: "0x2fE9754d5D28bac0ea8971C0Ca59428b8644C776",
@@ -55,7 +55,7 @@ var (
 
 	// WhitelistedRoleAddresses maps network names to whitelisted role addresses
 	WhitelistedRoleAddresses = map[string]string{
-		NetworkDevnet:  "0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe",
+		NetworkDevnet:  "0xADe5178Bef1a267CA891360Ca099977a524dB6B8",
 		NetworkRegnet:  "0x75F1068e904815398045878A41e4324317c93aE4",
 		NetworkTestnet: "0x75F1068e904815398045878A41e4324317c93aE4",
 		NetworkMainnet: "0xBc17325952D043cCe5Bf1e4F42E26aE531962ED0",
@@ -64,7 +64,7 @@ var (
 	// NetworkNames maps network identifiers to their human-readable names
 	NetworkNames = map[string]string{
 		NetworkDevnet:  "Hoodi Ethereum Testnet",
-		NetworkRegnet:  "Hoodi Ethereum Testnet",
+		NetworkRegnet:  "Hoodi Ethereum Testnet (local anvil fork)",
 		NetworkTestnet: "Hoodi Ethereum Testnet",
 		NetworkMainnet: "Ethereum Mainnet",
 	}
@@ -113,10 +113,10 @@ var (
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
 	MainLoopTickerInterval         = 60 * time.Second
-	OracleCacheSize                = 10
+	OracleCacheSize                = 5
 	EthBurnEventsBlockRange        = 1000
 	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit         = 200
+	SolanaEventScanTxLimit         = 100
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
