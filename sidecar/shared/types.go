@@ -23,7 +23,7 @@ const (
 var (
 	// ServiceManagerAddresses maps network names to service manager contract addresses
 	ServiceManagerAddresses = map[string]string{
-		NetworkDevnet:  "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
+		NetworkDevnet:  "0xa6c639cC8506B13d7cb37bFa143318908050Fb70",
 		NetworkRegnet:  "0xa6c639cC8506B13d7cb37bFa143318908050Fb70",
 		NetworkTestnet: "0xa559CDb9e029fc4078170122eBf7A3e622a764E4",
 		NetworkMainnet: "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
