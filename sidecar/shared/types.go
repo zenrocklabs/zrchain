@@ -97,17 +97,17 @@ var (
 	OracleCacheSize            = 20
 	EthBurnEventsBlockRange    = 1000
 	EthBlocksBeforeFinality    = int64(5) // TODO: should this be increased?
-	SolanaEventScanTxLimit     = 500
-	SolanaEventFetchBatchSize  = 25
+	SolanaEventScanTxLimit     = 50
+	SolanaEventFetchBatchSize  = 10
 	SolanaSleepInterval        = 250 * time.Millisecond
-	SolanaEventFetchMaxRetries = 10
+	SolanaEventFetchMaxRetries = 50
 	SolanaEventFetchRetrySleep = 250 * time.Millisecond
 
-	SidecarVersionName = "rose_moon"
+	SidecarVersionName = "rose_moon_r1"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon"}
+	VersionsRequiringCacheReset = []string{"rose_moon", "rose_moon_r1"}
 )
 
 // PriceFeed struct with fields for different price feeds
