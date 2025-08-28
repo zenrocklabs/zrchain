@@ -900,12 +900,15 @@ func processTransaction[T any](
 	txDispatchCallback func(tx T) error,
 	txContinuationCallback func(tx T) error,
 ) {
+	chain := "eth"
 	nonceReqStore := k.EthereumNonceRequested
 	if requestedEthNonce == nil {
 		nonceReqStore = k.SolanaNonceRequested
+		chain = "sol"
 	}
 
 	isRequested, err := isNonceRequested(ctx, nonceReqStore, keyID)
+	k.Logger(ctx).Warn("isNonceRequested - processTransaction", "isRequested", isRequested, "chain", chain)
 	if err != nil {
 		k.Logger(ctx).Error("error checking nonce request state", "keyID", keyID, "error", err)
 		return
@@ -1065,15 +1068,20 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		// pendingGetter: Fetches pending zenBTC mints that are in the DEPOSITED state.
 		// These are transactions that have received a BTC deposit and are ready to be staked on EigenLayer.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactions(
+			pendingMintTransactions, err := k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 				zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED,
 			)
+			k.Logger(ctx).Warn("getPendingMintTransactions - processZenBTCStaking", "pendingMintTransactions", fmt.Sprintf("%v", pendingMintTransactions))
+
+			return pendingMintTransactions, err
 		},
 		// txDispatchCallback: Constructs and submits an Ethereum transaction to stake the deposited assets on EigenLayer.
 		// It uses the current nonce and gas parameters from the oracle data.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Warn("txDispatchCallback initiated - processZenBTCStaking")
+
 			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
@@ -1119,6 +1127,8 @@ func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
 		// txContinuationCallback: This is called when the stake transaction's nonce has been confirmed on-chain.
 		// It updates the transaction's status to STAKED and sets up the system for the next step: minting zenBTC.
 		func(tx zenbtctypes.PendingMintTransaction) error {
+			k.Logger(ctx).Warn("txContinuationCallback initiated - processZenBTCStaking")
+
 			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
