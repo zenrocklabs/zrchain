@@ -75,14 +75,14 @@ class MsgSetSolanaROCKSupplyResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgInitDct(_message.Message):
-    __slots__ = ("creator", "asset", "destination_chain")
+    __slots__ = ("creator", "amount", "destination_chain")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
-    ASSET_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
     DESTINATION_CHAIN_FIELD_NUMBER: _ClassVar[int]
     creator: str
-    asset: _coin_pb2.Coin
+    amount: _coin_pb2.Coin
     destination_chain: str
-    def __init__(self, creator: _Optional[str] = ..., asset: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ..., destination_chain: _Optional[str] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., amount: _Optional[_Union[_coin_pb2.Coin, _Mapping]] = ..., destination_chain: _Optional[str] = ...) -> None: ...
 
 class MsgInitDctResponse(_message.Message):
     __slots__ = ("dct",)

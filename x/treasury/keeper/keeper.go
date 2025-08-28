@@ -11,7 +11,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	shared "github.com/Zenrock-Foundation/zrchain/v6/shared"
+	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"cosmossdk.io/collections"
@@ -264,8 +266,10 @@ func (k *Keeper) zrSignKeyRequest(goCtx context.Context, msg *types.MsgNewKeyReq
 }
 
 func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*types.MsgNewKeyRequestResponse, error) {
-	if _, err := k.identityKeeper.GetWorkspace(ctx, msg.WorkspaceAddr); err != nil {
-		return nil, fmt.Errorf("workspace %s not found", msg.WorkspaceAddr)
+	if !k.IsZentpRequest(ctx, msg.Creator) {
+		if _, err := k.identityKeeper.GetWorkspace(ctx, msg.WorkspaceAddr); err != nil {
+			return nil, fmt.Errorf("workspace %s not found", msg.WorkspaceAddr)
+		}
 	}
 
 	keyring, err := k.identityKeeper.GetKeyring(ctx, msg.KeyringAddr)
@@ -273,7 +277,7 @@ func (k *Keeper) newKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*t
 		return nil, fmt.Errorf("keyring %s not found", msg.KeyringAddr)
 	}
 
-	if keyring.KeyReqFee > 0 {
+	if !k.IsZentpRequest(ctx, msg.Creator) && keyring.KeyReqFee > 0 {
 		err := k.EscrowKeyringFee(ctx, msg.Creator, keyring.KeyReqFee)
 		if err != nil {
 			return nil, err
@@ -809,7 +813,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 }
 
 func (k Keeper) IsZentpRequest(ctx sdk.Context, creator string) bool {
-	if creator != zentptypes.ModuleName {
+	if creator == zentptypes.ModuleName {
 		return true
 	}
 	return false
@@ -828,13 +832,13 @@ func (k Keeper) CreateSolanaKeys(ctx sdk.Context) ([]uint64, error) {
 			zentptypes.ModuleName,
 			"",
 			params.MpcKeyring,
-			types.KeyType_KEY_TYPE_EDDSA_ED25519.String(),
+			"ed25519",
 			params.DefaultBtl,
 			0,
 			100,
 		)
 
-		response, err := k.newKeyRequest(ctx, msg)
+		response, err := k.NewZentpKeyRequest(ctx, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -891,4 +895,27 @@ func (k Keeper) CreateAssetSpl(ctx sdk.Context, paramsSigner uint64, unsignedTx 
 	}
 
 	return resp.Id, nil
+}
+
+func (k Keeper) NewZentpKeyRequest(ctx sdk.Context, msg *types.MsgNewKeyRequest) (*types.MsgNewKeyRequestResponse, error) {
+
+	keyringBytes, err := sdk.GetFromBech32(msg.KeyringAddr, identitytypes.PrefixKeyringAddress)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid keyring address (%s)", err)
+	}
+	if len(keyringBytes) != identitytypes.KeyringAddressLength {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "keyring address length %d is invalid for keyring %s, should be %d", len(keyringBytes), msg.KeyringAddr, identitytypes.KeyringAddressLength)
+	}
+
+	if !slices.Contains(types.ValidKeyTypes, msg.KeyType) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.KeyType, types.ValidKeyTypes)
+	}
+
+	// we have to check if the keyring is Active or not
+	keyring, err := k.identityKeeper.GetKeyring(ctx, msg.KeyringAddr)
+	if err != nil || !keyring.IsActive {
+		return nil, fmt.Errorf("keyring %s is nil or is inactive", msg.KeyringAddr)
+	}
+
+	return k.newKeyRequest(ctx, msg)
 }

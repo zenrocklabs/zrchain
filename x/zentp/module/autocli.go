@@ -57,6 +57,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"show_fees": {Usage: "Whether to include fees in the response (optional)"},
 					},
 				},
+				{
+					RpcMethod: "Dcts",
+					Use: "dcts",
+					Short: "returns dcts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{},
+				},
+
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},
@@ -102,11 +109,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "InitDct",
-					Use:       "init-dct [asset] [destination-chain]",
+					Use:       "init-dct [amount] [destination-chain]",
 					Short:     "Send a initDct tx",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "asset"},
-						{ProtoField: "destination_chain"},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"amount":            {Usage: "Asset to initialize (e.g., 1000stake)"},
+						"destination_chain": {Usage: "Destination chain identifier"},
 					},
 				},
 				{

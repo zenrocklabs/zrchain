@@ -24,6 +24,7 @@ const (
 	Query_Burns_FullMethodName                 = "/zrchain.zentp.Query/Burns"
 	Query_Stats_FullMethodName                 = "/zrchain.zentp.Query/Stats"
 	Query_QuerySolanaROCKSupply_FullMethodName = "/zrchain.zentp.Query/QuerySolanaROCKSupply"
+	Query_Dcts_FullMethodName                  = "/zrchain.zentp.Query/Dcts"
 )
 
 // QueryClient is the client API for Query service.
@@ -42,6 +43,8 @@ type QueryClient interface {
 	Stats(ctx context.Context, in *QueryStatsRequest, opts ...grpc.CallOption) (*QueryStatsResponse, error)
 	// QuerySolanaROCKSupply queries the amount of ROCK on Solana.
 	QuerySolanaROCKSupply(ctx context.Context, in *QuerySolanaROCKSupplyRequest, opts ...grpc.CallOption) (*QuerySolanaROCKSupplyResponse, error)
+	// Queries a list of Dcts items.
+	Dcts(ctx context.Context, in *QueryDctsRequest, opts ...grpc.CallOption) (*QueryDctsResponse, error)
 }
 
 type queryClient struct {
@@ -102,6 +105,16 @@ func (c *queryClient) QuerySolanaROCKSupply(ctx context.Context, in *QuerySolana
 	return out, nil
 }
 
+func (c *queryClient) Dcts(ctx context.Context, in *QueryDctsRequest, opts ...grpc.CallOption) (*QueryDctsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryDctsResponse)
+	err := c.cc.Invoke(ctx, Query_Dcts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
@@ -118,6 +131,8 @@ type QueryServer interface {
 	Stats(context.Context, *QueryStatsRequest) (*QueryStatsResponse, error)
 	// QuerySolanaROCKSupply queries the amount of ROCK on Solana.
 	QuerySolanaROCKSupply(context.Context, *QuerySolanaROCKSupplyRequest) (*QuerySolanaROCKSupplyResponse, error)
+	// Queries a list of Dcts items.
+	Dcts(context.Context, *QueryDctsRequest) (*QueryDctsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -142,6 +157,9 @@ func (UnimplementedQueryServer) Stats(context.Context, *QueryStatsRequest) (*Que
 }
 func (UnimplementedQueryServer) QuerySolanaROCKSupply(context.Context, *QuerySolanaROCKSupplyRequest) (*QuerySolanaROCKSupplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QuerySolanaROCKSupply not implemented")
+}
+func (UnimplementedQueryServer) Dcts(context.Context, *QueryDctsRequest) (*QueryDctsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Dcts not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -254,6 +272,24 @@ func _Query_QuerySolanaROCKSupply_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_Dcts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDctsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Dcts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_Dcts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Dcts(ctx, req.(*QueryDctsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +316,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QuerySolanaROCKSupply",
 			Handler:    _Query_QuerySolanaROCKSupply_Handler,
+		},
+		{
+			MethodName: "Dcts",
+			Handler:    _Query_Dcts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

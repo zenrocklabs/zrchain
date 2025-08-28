@@ -40,6 +40,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.FromString,
                 )
+        self.Dcts = channel.unary_unary(
+                '/zrchain.zentp.Query/Dcts',
+                request_serializer=zrchain_dot_zentp_dot_query__pb2.QueryDctsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryDctsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -81,6 +86,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Dcts(self, request, context):
+        """Queries a list of Dcts items.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -108,6 +120,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.QuerySolanaROCKSupply,
                     request_deserializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.FromString,
                     response_serializer=zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.SerializeToString,
+            ),
+            'Dcts': grpc.unary_unary_rpc_method_handler(
+                    servicer.Dcts,
+                    request_deserializer=zrchain_dot_zentp_dot_query__pb2.QueryDctsRequest.FromString,
+                    response_serializer=zrchain_dot_zentp_dot_query__pb2.QueryDctsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -202,5 +219,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/QuerySolanaROCKSupply',
             zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyRequest.SerializeToString,
             zrchain_dot_zentp_dot_query__pb2.QuerySolanaROCKSupplyResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Dcts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zentp.Query/Dcts',
+            zrchain_dot_zentp_dot_query__pb2.QueryDctsRequest.SerializeToString,
+            zrchain_dot_zentp_dot_query__pb2.QueryDctsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

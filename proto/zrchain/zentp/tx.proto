@@ -114,7 +114,10 @@ message MsgSetSolanaROCKSupplyResponse {}
 message MsgInitDct {
   option (cosmos.msg.v1.signer) = "creator";
   string                   creator           = 1;
-  cosmos.base.v1beta1.Coin asset             = 2;
+  cosmos.base.v1beta1.Coin amount            = 2 [
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true
+  ];
   string                   destination_chain = 3;
 }
 

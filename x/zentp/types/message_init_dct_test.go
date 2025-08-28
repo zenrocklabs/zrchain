@@ -20,7 +20,7 @@ func TestMsgInitDct_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgInitDct{
 				Creator:          "invalid_address",
-				Asset:            &sdk.Coin{Denom: "test", Amount: math.NewInt(100)},
+				Amount:           sdk.NewCoin("test", math.NewInt(100)),
 				DestinationChain: "test",
 			},
 			err: sdkerrors.ErrInvalidAddress,
@@ -28,7 +28,7 @@ func TestMsgInitDct_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgInitDct{
 				Creator:          sample.AccAddress(),
-				Asset:            &sdk.Coin{Denom: "test", Amount: math.NewInt(100)},
+				Amount:           sdk.NewCoin("test", math.NewInt(100)),
 				DestinationChain: "test",
 			},
 		},

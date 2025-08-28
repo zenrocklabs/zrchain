@@ -29,14 +29,12 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 		return k.zrSignKeyRequest(goCtx, msg)
 	}
 
-	if !k.IsZentpRequest(ctx, msg.Creator) {
-		workspaceBytes, err := sdk.GetFromBech32(msg.WorkspaceAddr, identitytypes.PrefixWorkspaceAddress)
-		if err != nil {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid workspace address (%s)", err)
-		}
-		if len(workspaceBytes) != identitytypes.WorkspaceAddressLength {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "workspace address length %d is invalid for workspace %s, should be %d", len(workspaceBytes), msg.WorkspaceAddr, identitytypes.WorkspaceAddressLength)
-		}
+	workspaceBytes, err := sdk.GetFromBech32(msg.WorkspaceAddr, identitytypes.PrefixWorkspaceAddress)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid workspace address (%s)", err)
+	}
+	if len(workspaceBytes) != identitytypes.WorkspaceAddressLength {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "workspace address length %d is invalid for workspace %s, should be %d", len(workspaceBytes), msg.WorkspaceAddr, identitytypes.WorkspaceAddressLength)
 	}
 
 	keyringBytes, err := sdk.GetFromBech32(msg.KeyringAddr, identitytypes.PrefixKeyringAddress)

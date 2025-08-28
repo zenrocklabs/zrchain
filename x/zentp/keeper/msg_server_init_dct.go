@@ -11,7 +11,7 @@ import (
 func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types.MsgInitDctResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, err := k.DctStore.Get(ctx, msg.Asset.Denom)
+	_, err := k.DctStore.Get(ctx, msg.Amount.Denom)
 	if err == nil {
 		return nil, types.ErrDctAlreadyExists
 	}
@@ -24,8 +24,8 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
-		types.ZentpDctCollectorName,
-		sdk.NewCoins(*msg.Asset),
+		types.ModuleName,
+		sdk.NewCoins(msg.Amount),
 	); err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 	}
 
 	dct := types.Dct{
-		Denom: msg.Asset.Denom,
+		Denom: msg.Amount.Denom,
 		Solana: &types.Solana{
 			SignerKeyId:       keyIds[0],
 			NonceAccountKey:   keyIds[1],
@@ -48,7 +48,7 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 		Status: types.DctStatus_DCT_STATUS_KEYS_REQUESTED,
 	}
 
-	err = k.DctStore.Set(ctx, msg.Asset.Denom, dct)
+	err = k.DctStore.Set(ctx, msg.Amount.Denom, dct)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +56,8 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeInitDct,
-			sdk.NewAttribute(types.AttributeKeyDenom, msg.Asset.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, msg.Asset.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, msg.Amount.Denom),
+			sdk.NewAttribute(types.AttributeKeyAmount, msg.Amount.Amount.String()),
 			sdk.NewAttribute(types.AttributeKeyDestinationChain, msg.DestinationChain),
 		),
 	})
