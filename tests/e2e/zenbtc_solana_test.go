@@ -2,12 +2,14 @@ package e2e
 
 import (
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
@@ -127,39 +129,6 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 		GinkgoWriter.Printf("Bitcoin REGNET address: %s\n", bitcoinAddress)
 	})
 
-	// TODO: REMOVE this block once the problem with the first mint is solved
-	It("Creates the first dummy mint", func() {
-		resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-		Expect(err).ToNot(HaveOccurred())
-		initialMints := len(resp.PendingMintTransactions)
-		_, err = env.Docker.Exec("bitcoin", []string{"/app/send.sh", "1.0", bitcoinAddress})
-		Expect(err).ToNot(HaveOccurred())
-
-		// mint is created
-		Eventually(func() (int, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-			if err != nil {
-				return 0, err
-			}
-
-			return len(resp.PendingMintTransactions), nil
-		}, "60s", "5s").Should(BeNumerically(">", initialMints))
-
-		// mint gets minted status
-		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
-			if err != nil {
-				return 0, err
-			}
-			if len(resp.PendingMintTransactions) <= initialMints {
-				return 0, nil // Return 0 status if no new transactions
-			}
-			lastTx := *resp.PendingMintTransactions[len(resp.PendingMintTransactions)-1]
-
-			return lastTx.Status, nil
-		}, "150s", "5s").Should(Equal(zentype.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED))
-	})
-
 	It("deposits on Bitcoin", func() {
 		r, err := env.Docker.Exec("bitcoin", []string{"/app/send.sh", "1.0", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
@@ -227,7 +196,6 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 	It("creates a burn", func() {
 		var burnTx zentype.BurnEvent
-		var numTxs int
 		var client = rpc.New("http://localhost:8899")
 		// Read private key from solana container
 		out, err := env.Docker.Exec("solana", []string{
@@ -252,59 +220,73 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 		multisigAddress, err := solana.PublicKeyFromBase58(SOLANA_ZENBTC_MULTISIG)
 		Expect(err).ToNot(HaveOccurred())
 
-		// TODO remove once first burn is fixed
-		resp, err := env.Query.BurnEvents(env.Ctx, 0, "", 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")
+		latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
 		Expect(err).ToNot(HaveOccurred())
-		if len(resp.BurnEvents) == 0 {
-			numTxs = 2
-		} else {
-			numTxs = 1
-		}
-		for i := 0; i < numTxs; i++ {
-			latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
-			Expect(err).ToNot(HaveOccurred())
-			tx, err := solana.NewTransaction(
-				[]solana.Instruction{
-					solzenbtc.Unwrap(
-						programId,
-						zenbtc_spl_token.UnwrapArgs{
-							Value:    uint64(1000000),
-							DestAddr: []byte(randomBTCAddress),
-						},
-						signer,
-						mintAddress,
-						multisigAddress,
-						feeWallet,
-					),
-				},
-				latest.Value.Blockhash,
-				solana.TransactionPayer(signer),
-			)
-			Expect(err).ToNot(HaveOccurred())
-
-			// Sign transaction
-			_, err = tx.Sign(
-				func(key solana.PublicKey) *solana.PrivateKey {
-					if key.Equals(signerWallet.PublicKey()) {
-						return &signerWallet.PrivateKey
+		// Derive EventStore PDAs similar to keeper logic (unwrap path).
+		var eventStoreProgram, eventStoreGlobalConfig, zenbtcUnwrapShardPDA solana.PublicKey
+		// Allow optional injection via env var (e.g., SOLANA_EVENTSTORE_PROGRAM_ID); empty means placeholders remain zero.
+		if esProgramID := os.Getenv("SOLANA_EVENTSTORE_PROGRAM_ID"); esProgramID != "" {
+			if parsed, err := solana.PublicKeyFromBase58(esProgramID); err == nil {
+				eventStoreProgram = parsed
+				gc, gcErr := eventstore.DeriveGlobalConfigPDA(eventStoreProgram)
+				if gcErr == nil {
+					eventStoreGlobalConfig = gc
+				}
+				// For tests we don't know the burn event ID beforehand; if desired, set SOLANA_UNWRAP_EVENT_ID to force shard derivation.
+				if unwrapIDStr := os.Getenv("SOLANA_UNWRAP_EVENT_ID"); unwrapIDStr != "" {
+					if unwrapID, convErr := strconv.ParseUint(unwrapIDStr, 10, 64); convErr == nil && unwrapID > 0 {
+						if shard, _, shardErr := eventstore.DeriveZenbtcUnwrapShardPDA(eventStoreProgram, unwrapID); shardErr == nil {
+							zenbtcUnwrapShardPDA = shard
+						}
 					}
-					return nil
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			burnTxHash, err = client.SendTransactionWithOpts(env.Ctx, tx, rpc.TransactionOpts{
-				SkipPreflight:       false,
-				PreflightCommitment: rpc.CommitmentProcessed,
-			})
-			Expect(err).ToNot(HaveOccurred())
-			GinkgoWriter.Printf("Signature of burn: %s\n", burnTxHash.String())
-			// fast-forward anvil here to speed up the confirmations needed for EL
-			_, err = env.Docker.Exec("anvil", []string{
-				"cast", "rpc", "anvil_mine", "50",
-			})
-			Expect(err).ToNot(HaveOccurred())
-			time.Sleep(3 * time.Second)
+				}
+			}
 		}
+
+		tx, err := solana.NewTransaction(
+			[]solana.Instruction{
+				solzenbtc.Unwrap(
+					programId,
+					zenbtc_spl_token.UnwrapArgs{
+						Value:    uint64(1000000),
+						DestAddr: []byte(randomBTCAddress),
+					},
+					signer,
+					mintAddress,
+					multisigAddress,
+					feeWallet,
+					eventStoreProgram,      // eventStore program (zero if not set)
+					eventStoreGlobalConfig, // global config PDA (zero if not derivable)
+					programId,              // calling program (zenbtc)
+					zenbtcUnwrapShardPDA,   // unwrap shard PDA (optional)
+				),
+			},
+			latest.Value.Blockhash,
+			solana.TransactionPayer(signer),
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Sign transaction
+		_, err = tx.Sign(
+			func(key solana.PublicKey) *solana.PrivateKey {
+				if key.Equals(signerWallet.PublicKey()) {
+					return &signerWallet.PrivateKey
+				}
+				return nil
+			},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		burnTxHash, err = client.SendTransactionWithOpts(env.Ctx, tx, rpc.TransactionOpts{
+			SkipPreflight:       false,
+			PreflightCommitment: rpc.CommitmentProcessed,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		GinkgoWriter.Printf("Signature of burn: %s\n", burnTxHash.String())
+		// fast-forward anvil here to speed up the confirmations needed for EL
+		_, err = env.Docker.Exec("anvil", []string{
+			"cast", "rpc", "anvil_mine", "50",
+		})
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(func() bool {
 			resp, err := env.Query.BurnEvents(env.Ctx, 0, burnTxHash.String(), 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")

@@ -83,6 +83,10 @@ jobs:
           rm -rf zenrock-stack
           git clone git@github.com:zenrocklabs/zenrock-stack.git
           cd zenrock-stack
+          # Try to checkout the same branch as the caller repo
+          TARGET_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "Trying to switch zenrock-stack to branch $TARGET_BRANCH"
+          git checkout "$TARGET_BRANCH" || :
           ./set_compose_path.py ${CURRENT_PATH}
           docker compose up -d --force-recreate --build
           docker compose logs -f sidecar zrchain > /tmp/logs &

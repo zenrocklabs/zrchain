@@ -58,7 +58,8 @@ message BurnEvent {
   bytes destinationAddr = 4;
   uint64 amount = 5;
   bool IsZenBTC = 6;
-  uint64 height = 7;
+  // height removed (was field 7)
+  reserved 7;
 }
 
 message SidecarStateRequest {}
@@ -101,7 +102,8 @@ message SolanaMintEvent {
   Coin Coint = 1;
   bytes SigHash = 2;
   bytes Recipient = 3;
-  uint64 Height = 4;
+  // Height removed (was field 4)
+  reserved 4;
   uint64 Value = 5;
   uint64 Fee = 6;
   bytes Mint = 7;

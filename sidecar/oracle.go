@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -28,21 +29,22 @@ import (
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
 
+	ethzenbtc "github.com/Zenrock-Foundation/zrchain/v6/contracts/ethzenbtc"
+	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
+	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
+	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
-
-	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
-	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	// Added for bin.Marshal
 )
 
@@ -152,7 +154,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create contract instance: %w", err)
 	}
-	zenBTCControllerHolesky, err := zenbtc.NewZenBTController(
+	zenBTCController, err := zenbtc.NewZenBTController(
 		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
 	)
@@ -163,15 +165,17 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 
 	// Allow customization of ticker interval in regnet network
 	mainLoopTickerIntervalDuration := func() time.Duration {
-		configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
 		if o.Config.Network == "regnet" {
+			configValue := time.Duration(o.Config.E2ETestsTickerInterval) * time.Second
+			configValue = max(configValue, 15*time.Second)
 			return configValue
 		}
 		return sidecartypes.MainLoopTickerInterval
 	}()
 
-	var tickCancel context.CancelFunc = func() {}
-	defer tickCancel()
+	var tickCancel context.CancelFunc
+	// Ensure any active tick context is canceled on exit.
+	defer func() { if tickCancel != nil { tickCancel() } }()
 
 	// Align the start time to the nearest MainLoopTickerInterval.
 	if !o.SkipInitialWait {
@@ -190,9 +194,9 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		}
 	} else {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
-		var initialTickCtx context.Context
-		initialTickCtx, tickCancel = context.WithCancel(ctx)
-		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
+		initialTickCtx, cancel := context.WithCancel(ctx)
+		tickCancel = cancel
+		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -210,16 +214,11 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
-			// Cancel the previous tick's processing context. This signals the previous
-			// fetchAndProcessState to wrap up and apply its (potentially partial) state.
-			tickCancel()
-
+			if tickCancel != nil { tickCancel() }
 			// Create a new context for the new tick.
-			var tickCtx context.Context
-			tickCtx, tickCancel = context.WithCancel(ctx)
-
-			// Start the new tick's processing in a goroutine.
-			go o.processOracleTick(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
+			tickCtx, cancel := context.WithCancel(ctx)
+			tickCancel = cancel
+			go o.processOracleTick(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
 }
@@ -227,13 +226,13 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 func (o *Oracle) processOracleTick(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	mainnetEthClient *ethclient.Client,
 	tickTime time.Time,
 ) {
-	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
@@ -317,7 +316,7 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -359,7 +358,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Started in runOracleMainLoop, not per-tick
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCControllerHolesky, targetBlockNumber, update, &updateMutex, errChan)
+	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
@@ -507,7 +506,7 @@ func (o *Oracle) fetchEthereumContractData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	serviceManager *middleware.ContractZrServiceManager,
-	zenBTCControllerHolesky *zenbtc.ZenBTController,
+	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
@@ -530,7 +529,7 @@ func (o *Oracle) fetchEthereumContractData(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) ([]api.Redemption, error) {
-			return o.getRedemptions(ctx, zenBTCControllerHolesky, targetBlockNumber)
+			return o.getRedemptions(ctx, zenBTCController, targetBlockNumber)
 		},
 		func(result []api.Redemption, update *oracleStateUpdate) {
 			update.redemptions = result
@@ -564,20 +563,64 @@ func (o *Oracle) fetchNetworkData(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (uint64, error) {
+			network := o.Config.Network
+			whitelistedRoleAddr := sidecartypes.WhitelistedRoleAddresses[network]
+			controllerAddr := sidecartypes.ZenBTCControllerAddresses[network]
+
+			slog.Info("DEBUG: Gas estimation parameters",
+				"network", network,
+				"whitelistedRoleAddress", whitelistedRoleAddr,
+				"controllerAddress", controllerAddr,
+				"stakeCallDataAmount", sidecartypes.StakeCallDataAmount,
+			)
+
 			stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(sidecartypes.StakeCallDataAmount))
 			if err != nil {
-				return 0, fmt.Errorf("failed to encode stake call data: %w", err)
+				slog.Error("DEBUG: Failed to encode stake call data", "error", err)
+				const estimatedGasForStake = uint64(1000000) // 1M gas units
+				estimatedGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
+				slog.Info("DEBUG: Using hardcoded gas estimate", "gas", estimatedGas)
+				return estimatedGas, nil
 			}
-			addr := common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network])
+
+			slog.Info("DEBUG: Encoded stake call data",
+				"dataLength", len(stakeCallData),
+				"dataHex", fmt.Sprintf("0x%x", stakeCallData),
+			)
+
+			slog.Info("DEBUG: stakeRockBTC function details",
+				"functionName", "stakeRockBTC",
+				"parameters", fmt.Sprintf("value: %d, approverSignatureAndExpiry: {Signature: [], Expiry: 0}, approverSalt: [32]byte{}", sidecartypes.StakeCallDataAmount),
+				"note", "This function requires valid signature data which we're providing as empty for gas estimation",
+			)
+
+			addr := common.HexToAddress(controllerAddr)
+			slog.Info("DEBUG: Attempting gas estimation",
+				"from", whitelistedRoleAddr,
+				"to", controllerAddr,
+				"dataLength", len(stakeCallData),
+			)
+
 			estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
-				From: common.HexToAddress(sidecartypes.WhitelistedRoleAddresses[o.Config.Network]),
+				From: common.HexToAddress(whitelistedRoleAddr),
 				To:   &addr,
 				Data: stakeCallData,
 			})
 			if err != nil {
-				return 0, fmt.Errorf("failed to estimate gas: %w", err)
+				slog.Error("DEBUG: Gas estimation failed", "error", err)
+				const estimatedGasForStake = uint64(1000000) // 1M gas units
+				fallbackGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
+				slog.Info("DEBUG: Using fallback gas estimate", "gas", fallbackGas)
+				return fallbackGas, nil
 			}
-			return (estimatedGas * sidecartypes.GasEstimationBuffer) / 100, nil
+
+			finalGas := (estimatedGas * sidecartypes.GasEstimationBuffer) / 100
+			slog.Info("DEBUG: Gas estimation successful",
+				"rawEstimatedGas", estimatedGas,
+				"finalGasWithBuffer", finalGas,
+				"bufferPercentage", sidecartypes.GasEstimationBuffer,
+			)
+			return finalGas, nil
 		},
 		func(result uint64, update *oracleStateUpdate) {
 			update.estimatedGas = result
@@ -675,22 +718,112 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetches and processes recent zenBTC burn events from Ethereum within a defined block range.
+	// Ethereum burn event fetching strategy (tiered):
+	// 1. Primary path: incremental range-based retrieval via getBurnCount() + getBurnsFromTo(from,to)
+	//    fetching only new burns since the stored LastEthBurnCount watermark (next index to fetch).
+	//    Therefore we request [lastCount, currentCount) and after successful processing set the watermark to currentCount.
+	// 2. Fallback A: if range-based calls revert (older helper / missing functions), attempt bulk getAllBurns() once
+	//    and derive watermark = len(allBurns).
+	// 3. Fallback B: legacy log scan over recent block window (getEthBurnEvents) if contract helper calls fail.
+	// All paths reconcile with existing local state & perform deduplication.
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (burnEventResult, error) {
 			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			// Watermark is count of processed burns (next index to fetch)
+			lastCount := currentState.LastEthBurnCount
 
-			fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
-			toBlock := latestHeader.Number
-			newEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
-			if err != nil {
-				// Don't return error, just log it and continue with empty events
-				slog.Warn("Failed to get Ethereum burn events, proceeding with reconciliation only", "error", err)
-				newEvents = []api.BurnEvent{} // Ensure slice is not nil
-			}
+				var newEvents []api.BurnEvent
+				fetchedViaRange := false
+				fetchedViaAll := false
 
-			// Reconcile and merge
+				if tokenAddrStr, ok := sidecartypes.ZenBTCTokenAddresses.Ethereum[o.Config.Network]; ok && tokenAddrStr != "" {
+					contract, err := ethzenbtc.NewZenbtc(common.HexToAddress(tokenAddrStr), o.EthClient)
+					if err == nil {
+						// Primary incremental path
+						burnCountBI, err := contract.GetBurnCount(&bind.CallOpts{Context: ctx})
+						if err != nil {
+							slog.Warn("getBurnCount failed; trying getAllBurns", "error", err)
+						} else {
+							burnCount := burnCountBI.Uint64()
+							if burnCount > lastCount {
+								batchSize := sidecartypes.EthBurnFetchBatchSize
+								slog.Info("Fetching new Ethereum burns incrementally", "from", lastCount, "to", burnCount, "batchSize", batchSize)
+								for start := lastCount; start < burnCount; {
+									end := start + batchSize
+									if end > burnCount { end = burnCount }
+									burns, err := contract.GetBurnsFromTo(&bind.CallOpts{Context: ctx}, big.NewInt(int64(start)), big.NewInt(int64(end)))
+									if err != nil {
+										slog.Warn("getBurnsFromTo failed mid-way; attempting fallback getAllBurns", "start", start, "end", end, "error", err)
+										newEvents = nil // discard partial to avoid duplication mixing
+										break
+									}
+									for i, b := range burns {
+										seq := start + uint64(i) // sequence index equals position in global list
+										amount := uint64(0)
+										if b.NetValue != nil {
+											amount = b.NetValue.Uint64()
+										}
+										dest := []byte(b.Receiver)
+										newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, seq), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
+									}
+									start = end
+								}
+								if len(newEvents) > 0 {
+									update.latestEthBurnSeq = burnCount // watermark = count processed
+									fetchedViaRange = true
+								}
+							} else {
+								slog.Debug("No new Ethereum burns", "burnCount", burnCount, "lastCount", lastCount)
+								fetchedViaRange = true // nothing new but successful
+							}
+						}
+
+						// Fallback A: bulk getAllBurns if incremental path incomplete
+						if !fetchedViaRange {
+							allBurns, err := contract.GetAllBurns(&bind.CallOpts{Context: ctx})
+							if err != nil {
+								slog.Warn("getAllBurns call failed; will fall back to log range scan", "error", err)
+							} else {
+								slog.Info("Fetched Ethereum burns via getAllBurns (fallback)", "count", len(allBurns))
+								for idx, b := range allBurns {
+									amount := uint64(0)
+									if b.NetValue != nil {
+										amount = b.NetValue.Uint64()
+									}
+									dest := []byte(b.Receiver)
+									seq := uint64(idx)
+									if seq < lastCount { // already processed under count semantics
+										continue
+									}
+									newEvents = append(newEvents, api.BurnEvent{TxID: fmt.Sprintf("ethburnstore-%d-%d", b.BlockNumber, seq), ChainID: "ethereum", DestinationAddr: dest, Amount: amount, IsZenBTC: true})
+								}
+								if uint64(len(allBurns)) > lastCount {
+									update.latestEthBurnSeq = uint64(len(allBurns)) // watermark = total count
+								}
+								fetchedViaAll = true
+							}
+						}
+					} else {
+						slog.Warn("Failed to bind ZenBTC contract; falling back to range scan", "error", err)
+					}
+				} else {
+					slog.Warn("No ZenBTC token address configured for network; falling back to range scan", "network", o.Config.Network)
+				}
+
+				// Fallback B: legacy block log scan if neither range nor all-burns succeeded
+				if !fetchedViaRange && !fetchedViaAll {
+					fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
+					toBlock := latestHeader.Number
+					rangeEvents, err := o.getEthBurnEvents(ctx, fromBlock, toBlock)
+					if err != nil {
+						slog.Warn("Failed to get Ethereum burn events via range scan, proceeding with reconciliation only", "error", err)
+						rangeEvents = []api.BurnEvent{}
+					}
+					newEvents = rangeEvents
+				}
+
+			// Reconcile and merge with existing state (dedup & cleaning)
 			remainingEvents, cleanedEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.EthBurnEvents, currentState.CleanedEthBurnEvents, "Ethereum")
 			mergedEvents := mergeNewBurnEvents(remainingEvents, cleanedEvents, newEvents, "Ethereum")
 
@@ -708,6 +841,258 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	)
 }
 
+// fetchAllSolanaEventsViaEventStore attempts to fetch all Solana events using the new event store SDK.
+//
+// This function replaces hundreds of individual RPC calls with a single efficient call to the on-chain
+// circular buffer event store. The EventStore stores all wrap/unwrap events for both ZenBTC and ROCK
+// tokens in chronological order, allowing us to fetch everything in one request.
+//
+// Retry Logic:
+// - Attempts up to 10 times with exponential backoff
+// - Only falls back to individual RPC calls after all retries fail
+//
+// Event Processing:
+// - Filters events based on event IDs to avoid duplicates
+// - Converts EventStore events to internal API format
+// - Updates watermarks for all event types
+//
+// Returns true if successful, false if it should fallback to individual RPC calls
+func (o *Oracle) fetchAllSolanaEventsViaEventStore(
+	ctx context.Context,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) (bool, error) {
+	const maxRetries = 10
+
+	// Create EventStore client
+	esClient := func() *eventstore.Client {
+		pidStr := sidecartypes.EventStoreProgramID[o.Config.Network]
+		if pidStr == "" {
+			slog.Warn("No EventStore program ID configured for network; using default", "network", o.Config.Network)
+			return eventstore.NewClient(o.solanaClient, nil)
+		}
+		pk, err := solana.PublicKeyFromBase58(pidStr)
+		if err != nil {
+			slog.Error("Invalid EventStore program ID, using default", "network", o.Config.Network, "pid", pidStr, "error", err)
+			return eventstore.NewClient(o.solanaClient, nil)
+		}
+		slog.Info("Using network-specific EventStore program ID", "network", o.Config.Network, "programID", pidStr)
+		return eventstore.NewClient(o.solanaClient, &pk)
+	}()
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		slog.Info("Attempting to fetch all Solana events via EventStore",
+			"attempt", attempt,
+			"maxRetries", maxRetries)
+
+		// Create timeout context for this attempt
+		fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		allEvents, err := esClient.GetAllEvents(fetchCtx)
+		cancel()
+
+		if err != nil {
+			slog.Warn("EventStore fetch attempt failed",
+				"attempt", attempt,
+				"error", err,
+				"willRetry", attempt < maxRetries)
+
+			if attempt == maxRetries {
+				slog.Error("EventStore failed after all retries, falling back to individual RPC calls",
+					"totalAttempts", maxRetries)
+				return false, nil
+			}
+
+			// Wait before retry (exponential backoff)
+			backoff := time.Duration(attempt) * time.Second
+			time.Sleep(backoff)
+			continue
+		}
+
+		// Success! Process the events
+		slog.Info("Successfully fetched events via EventStore",
+			"zenbtcWrapEvents", len(allEvents.ZenbtcWrapEvents),
+			"zenbtcUnwrapEvents", len(allEvents.ZenbtcUnwrapEvents),
+			"rockWrapEvents", len(allEvents.RockWrapEvents),
+			"rockUnwrapEvents", len(allEvents.RockUnwrapEvents),
+			"attempt", attempt)
+
+		// Convert and process the events
+		err = o.processEventStoreEvents(allEvents, update, updateMutex)
+		if err != nil {
+			slog.Error("Failed to process EventStore events, falling back to individual RPC calls", "error", err)
+			return false, err
+		}
+
+		return true, nil
+	}
+
+	panic("unreachable: fetchAllSolanaEventsViaEventStore should not reach this point")
+}
+
+// processEventStoreEvents converts EventStore events to the expected format and updates the oracle state.
+//
+// Event Type Mapping:
+// - ZenBTC wrap events   -> SolanaMintEvent (mints)
+// - ROCK wrap events     -> SolanaMintEvent (mints)
+// - ZenBTC unwrap events -> BurnEvent (burns)
+// - ROCK unwrap events   -> BurnEvent (burns)
+//
+// Filtering Logic:
+// - Uses event IDs for watermarking since EventStore doesn't include transaction metadata
+// - EventStore returns events in chronological order by ID
+// - Skips events with IDs we've already processed
+//
+// Thread Safety:
+// - Acquires updateMutex for the entire processing duration
+// - Safe for concurrent access with individual RPC fallback
+func (o *Oracle) processEventStoreEvents(
+	allEvents *eventstore.AllEvents,
+	update *oracleStateUpdate,
+	updateMutex *sync.Mutex,
+) error {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+
+	// Get last processed event IDs for filtering (persisted across restarts)
+	lastKnownZenBTCMintID := o.getLastProcessedEventID(sidecartypes.SolZenBTCMint)
+	lastKnownRockMintID := o.getLastProcessedEventID(sidecartypes.SolRockMint)
+	lastKnownZenBTCBurnID := o.getLastProcessedEventID(sidecartypes.SolZenBTCBurn)
+	lastKnownRockBurnID := o.getLastProcessedEventID(sidecartypes.SolRockBurn)
+
+	var zenBTCMintCount, rockMintCount, zenBTCBurnCount, rockBurnCount int
+	var latestZenBTCMintID, latestRockMintID, latestZenBTCBurnID, latestRockBurnID uint64
+
+	// Process ZenBTC wrap events (mints)
+	for _, wrapEvent := range allEvents.ZenbtcWrapEvents {
+		eventID := wrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownZenBTCMintID {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{TxSig: fmt.Sprintf("eventstore-%d", eventID), Mint: []byte(wrapEvent.Mint.String()), Recipient: []byte(wrapEvent.Recipient.String()), Value: wrapEvent.Value, Fee: wrapEvent.Fee}
+		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+		zenBTCMintCount++
+
+		// Track latest event ID
+		if eventID > latestZenBTCMintID {
+			latestZenBTCMintID = eventID
+		}
+	}
+
+	// Process ROCK wrap events (mints)
+	for _, wrapEvent := range allEvents.RockWrapEvents {
+		eventID := wrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownRockMintID {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{TxSig: fmt.Sprintf("eventstore-%d", eventID), Mint: []byte(wrapEvent.Mint.String()), Recipient: []byte(wrapEvent.Recipient.String()), Value: wrapEvent.Value, Fee: wrapEvent.Fee}
+		update.SolanaMintEvents = append(update.SolanaMintEvents, mintEvent)
+		rockMintCount++
+
+		// Track latest event ID
+		if eventID > latestRockMintID {
+			latestRockMintID = eventID
+		}
+	}
+
+	// Process ZenBTC unwrap events (burns)
+	for _, unwrapEvent := range allEvents.ZenbtcUnwrapEvents {
+		eventID := unwrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownZenBTCBurnID {
+			continue
+		}
+
+		burnEvent := api.BurnEvent{TxID: fmt.Sprintf("eventstore-%d", eventID), ChainID: "solana", DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()), Amount: unwrapEvent.Value, IsZenBTC: true}
+		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+		zenBTCBurnCount++
+
+		// Track latest event ID
+		if eventID > latestZenBTCBurnID {
+			latestZenBTCBurnID = eventID
+		}
+	}
+
+	// Process ROCK unwrap events (burns)
+	for _, unwrapEvent := range allEvents.RockUnwrapEvents {
+		eventID := unwrapEvent.GetID()
+
+		// Skip if we already processed this event ID
+		if eventID <= lastKnownRockBurnID {
+			continue
+		}
+
+		burnEvent := api.BurnEvent{TxID: fmt.Sprintf("eventstore-%d", eventID), ChainID: "solana", DestinationAddr: []byte(unwrapEvent.GetBitcoinAddress()), Amount: unwrapEvent.Value, IsZenBTC: false}
+		update.solanaBurnEvents = append(update.solanaBurnEvents, burnEvent)
+		rockBurnCount++
+
+		// Track latest event ID
+		if eventID > latestRockBurnID {
+			latestRockBurnID = eventID
+		}
+	}
+
+	// Store watermarks with latest event IDs for persistence across restarts
+	if latestZenBTCMintID > lastKnownZenBTCMintID {
+		update.latestEventStoreIDs[sidecartypes.SolZenBTCMint] = latestZenBTCMintID
+	}
+	if latestRockMintID > lastKnownRockMintID {
+		update.latestEventStoreIDs[sidecartypes.SolRockMint] = latestRockMintID
+	}
+	if latestZenBTCBurnID > lastKnownZenBTCBurnID {
+		update.latestEventStoreIDs[sidecartypes.SolZenBTCBurn] = latestZenBTCBurnID
+	}
+	if latestRockBurnID > lastKnownRockBurnID {
+		update.latestEventStoreIDs[sidecartypes.SolRockBurn] = latestRockBurnID
+	}
+
+	slog.Debug("EventStore watermarks update candidates",
+		"prevZenBTCMint", lastKnownZenBTCMintID, "newZenBTCMint", latestZenBTCMintID,
+		"prevRockMint", lastKnownRockMintID, "newRockMint", latestRockMintID,
+		"prevZenBTCBurn", lastKnownZenBTCBurnID, "newZenBTCBurn", latestZenBTCBurnID,
+		"prevRockBurn", lastKnownRockBurnID, "newRockBurn", latestRockBurnID)
+
+	slog.Info("Successfully processed EventStore events using event ID filtering",
+		"zenBTCMintEvents", zenBTCMintCount,
+		"rockMintEvents", rockMintCount,
+		"zenBTCBurnEvents", zenBTCBurnCount,
+		"rockBurnEvents", rockBurnCount,
+		"totalProcessed", zenBTCMintCount+rockMintCount+zenBTCBurnCount+rockBurnCount,
+		"totalRaw", len(allEvents.ZenbtcWrapEvents)+len(allEvents.RockWrapEvents)+len(allEvents.ZenbtcUnwrapEvents)+len(allEvents.RockUnwrapEvents),
+		"latestIDs", map[string]uint64{
+			"zenBTCMint": latestZenBTCMintID,
+			"rockMint":   latestRockMintID,
+			"zenBTCBurn": latestZenBTCBurnID,
+			"rockBurn":   latestRockBurnID,
+		})
+
+	return nil
+}
+
+// getLastProcessedEventID returns the last processed persisted EventStore ID for a given Solana event type.
+func (o *Oracle) getLastProcessedEventID(eventType sidecartypes.SolanaEventType) uint64 {
+	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	switch eventType {
+	case sidecartypes.SolZenBTCMint:
+		return currentState.LastSolZenBTCMintEventID
+	case sidecartypes.SolRockMint:
+		return currentState.LastSolRockMintEventID
+	case sidecartypes.SolZenBTCBurn:
+		return currentState.LastSolZenBTCBurnEventID
+	case sidecartypes.SolRockBurn:
+		return currentState.LastSolRockBurnEventID
+	default:
+		return 0
+	}
+}
+
 func (o *Oracle) processSolanaMintEvents(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -720,6 +1105,17 @@ func (o *Oracle) processSolanaMintEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		// Always try EventStore first
+		success, eventStoreErr := o.fetchAllSolanaEventsViaEventStore(ctx, update, updateMutex)
+		if success {
+			slog.Info("Successfully fetched all Solana events via EventStore, skipping individual RPC calls")
+			return
+		}
+
+		// EventStore failed, fall back to individual RPC calls
+		slog.Warn("EventStore approach failed, falling back to individual RPC calls", "error", eventStoreErr)
+
 		currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
 		// Parallel fetch of ROCK and zenBTC mint events
@@ -899,6 +1295,18 @@ func (o *Oracle) fetchSolanaBurnEvents(
 	go func() {
 		defer wg.Done()
 
+		// Check if burn events were already fetched via EventStore
+		updateMutex.Lock()
+		eventStoreHasBurnData := len(update.solanaBurnEvents) > 0
+		updateMutex.Unlock()
+
+		if eventStoreHasBurnData {
+			slog.Info("Skipping individual burn event fetching - already handled by EventStore")
+			return
+		}
+
+		slog.Info("No burn events from EventStore, proceeding with individual RPC calls")
+
 		var zenBtcEvents, rockEvents []api.BurnEvent
 		var zenBtcErr, rockErr error
 		var burnWg sync.WaitGroup
@@ -981,10 +1389,10 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		// Merge and sort all new events (which will be empty if fetches failed)
 		allNewSolanaBurnEvents := append(zenBtcEvents, rockEvents...)
 		sort.Slice(allNewSolanaBurnEvents, func(i, j int) bool {
-			if allNewSolanaBurnEvents[i].Height != allNewSolanaBurnEvents[j].Height {
-				return allNewSolanaBurnEvents[i].Height < allNewSolanaBurnEvents[j].Height
+			if allNewSolanaBurnEvents[i].LogIndex != allNewSolanaBurnEvents[j].LogIndex {
+				return allNewSolanaBurnEvents[i].LogIndex < allNewSolanaBurnEvents[j].LogIndex
 			}
-			return allNewSolanaBurnEvents[i].LogIndex < allNewSolanaBurnEvents[j].LogIndex
+			return allNewSolanaBurnEvents[i].TxID < allNewSolanaBurnEvents[j].TxID
 		})
 
 		// Get current state to merge with new burn events
@@ -1083,56 +1491,87 @@ func (o *Oracle) buildFinalState(
 
 	currentState := o.currentState.Load().(*sidecartypes.OracleState)
 
+	// Start with existing EventStore ID watermarks and apply any updates
+	lastZenBTCMintEventID := currentState.LastSolZenBTCMintEventID
+	lastRockMintEventID := currentState.LastSolRockMintEventID
+	lastZenBTCBurnEventID := currentState.LastSolZenBTCBurnEventID
+	lastRockBurnEventID := currentState.LastSolRockBurnEventID
+
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolZenBTCMint]; ok && id > lastZenBTCMintEventID {
+		lastZenBTCMintEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolRockMint]; ok && id > lastRockMintEventID {
+		lastRockMintEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolZenBTCBurn]; ok && id > lastZenBTCBurnEventID {
+		lastZenBTCBurnEventID = id
+	}
+	if id, ok := update.latestEventStoreIDs[sidecartypes.SolRockBurn]; ok && id > lastRockBurnEventID {
+		lastRockBurnEventID = id
+	}
+
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
 
 	// EigenDelegations map keys are deterministically ordered by encoding/json, so no manual sorting needed.
 
-	// Sort all event slices to ensure deterministic order
+	// Sort all event slices to ensure deterministic order (no per-event chain height retained)
 	sort.Slice(update.ethBurnEvents, func(i, j int) bool {
-		if update.ethBurnEvents[i].Height != update.ethBurnEvents[j].Height {
-			return update.ethBurnEvents[i].Height < update.ethBurnEvents[j].Height
+		if update.ethBurnEvents[i].LogIndex != update.ethBurnEvents[j].LogIndex {
+			return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
 		}
-		return update.ethBurnEvents[i].LogIndex < update.ethBurnEvents[j].LogIndex
+		return update.ethBurnEvents[i].TxID < update.ethBurnEvents[j].TxID
 	})
 	sort.Slice(update.solanaBurnEvents, func(i, j int) bool {
-		if update.solanaBurnEvents[i].Height != update.solanaBurnEvents[j].Height {
-			return update.solanaBurnEvents[i].Height < update.solanaBurnEvents[j].Height
+		if update.solanaBurnEvents[i].LogIndex != update.solanaBurnEvents[j].LogIndex {
+			return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
 		}
-		return update.solanaBurnEvents[i].LogIndex < update.solanaBurnEvents[j].LogIndex
+		return update.solanaBurnEvents[i].TxID < update.solanaBurnEvents[j].TxID
 	})
 	sort.Slice(update.redemptions, func(i, j int) bool {
 		return update.redemptions[i].Id < update.redemptions[j].Id
 	})
 	sort.Slice(update.SolanaMintEvents, func(i, j int) bool {
-		if update.SolanaMintEvents[i].Height != update.SolanaMintEvents[j].Height {
-			return update.SolanaMintEvents[i].Height < update.SolanaMintEvents[j].Height
+		iSig := update.SolanaMintEvents[i].SigHash
+		jSig := update.SolanaMintEvents[j].SigHash
+		if cmp := bytes.Compare(iSig, jSig); cmp != 0 {
+			return cmp < 0
 		}
-		// Use TxSig as a secondary sort key for determinism if heights are identical
+		// Fallback to TxSig for determinism when SigHash equal
 		return update.SolanaMintEvents[i].TxSig < update.SolanaMintEvents[j].TxSig
 	})
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations:        update.eigenDelegations,
-		EthBlockHeight:          targetBlockNumber.Uint64(),
-		EthGasLimit:             update.estimatedGas,
-		EthBaseFee:              latestHeader.BaseFee.Uint64(),
-		EthTipCap:               update.suggestedTip.Uint64(),
-		EthBurnEvents:           update.ethBurnEvents,
-		CleanedEthBurnEvents:    update.cleanedEthBurnEvents,
-		SolanaBurnEvents:        update.solanaBurnEvents,
-		CleanedSolanaBurnEvents: update.cleanedSolanaBurnEvents,
-		Redemptions:             update.redemptions,
-		SolanaMintEvents:        update.SolanaMintEvents,
-		CleanedSolanaMintEvents: update.cleanedSolanaMintEvents,
-		ROCKUSDPrice:            update.ROCKUSDPrice,
-		BTCUSDPrice:             update.BTCUSDPrice,
-		ETHUSDPrice:             update.ETHUSDPrice,
-		LastSolRockMintSig:      lastSolRockMintSig,
-		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
-		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
-		LastSolRockBurnSig:      lastSolRockBurnSig,
-		PendingSolanaTxs:        update.pendingTransactions,
+		EigenDelegations:         update.eigenDelegations,
+		EthBlockHeight:           targetBlockNumber.Uint64(),
+		EthGasLimit:              update.estimatedGas,
+		EthBaseFee:               latestHeader.BaseFee.Uint64(),
+		EthTipCap:                update.suggestedTip.Uint64(),
+		EthBurnEvents:            update.ethBurnEvents,
+		CleanedEthBurnEvents:     update.cleanedEthBurnEvents,
+		SolanaBurnEvents:         update.solanaBurnEvents,
+		CleanedSolanaBurnEvents:  update.cleanedSolanaBurnEvents,
+		Redemptions:              update.redemptions,
+		SolanaMintEvents:         update.SolanaMintEvents,
+		CleanedSolanaMintEvents:  update.cleanedSolanaMintEvents,
+		ROCKUSDPrice:             update.ROCKUSDPrice,
+		BTCUSDPrice:              update.BTCUSDPrice,
+		ETHUSDPrice:              update.ETHUSDPrice,
+		LastSolRockMintSig:       lastSolRockMintSig,
+		LastSolZenBTCMintSig:     lastSolZenBTCMintSig,
+		LastSolZenBTCBurnSig:     lastSolZenBTCBurnSig,
+		LastSolRockBurnSig:       lastSolRockBurnSig,
+		PendingSolanaTxs:         update.pendingTransactions,
+		LastSolZenBTCMintEventID: lastZenBTCMintEventID,
+		LastSolRockMintEventID:   lastRockMintEventID,
+		LastSolZenBTCBurnEventID: lastZenBTCBurnEventID,
+		LastSolRockBurnEventID:   lastRockBurnEventID,
+		LastEthBurnCount: func() uint64 {
+			if update.latestEthBurnSeq > 0 {
+				return update.latestEthBurnSeq
+			}
+			return currentState.LastEthBurnCount
+		}(),
 	}
 
 	slog.Info("FINAL STATE CONSTRUCTED",
@@ -1269,10 +1708,6 @@ func (o *Oracle) getEthBurnEvents(ctx context.Context, fromBlock, toBlock *big.I
 		if event == nil {
 			continue
 		}
-
-		// Use block number as deterministic ordering key
-		height := uint64(event.Raw.BlockNumber)
-
 		burnEvents = append(burnEvents, api.BurnEvent{
 			TxID:            event.Raw.TxHash.Hex(),
 			LogIndex:        uint64(event.Raw.Index),
@@ -1280,7 +1715,6 @@ func (o *Oracle) getEthBurnEvents(ctx context.Context, fromBlock, toBlock *big.I
 			DestinationAddr: event.DestAddr,
 			Amount:          event.Value,
 			IsZenBTC:        true,
-			Height:          height,
 		})
 	}
 
@@ -1297,8 +1731,21 @@ func (o *Oracle) getRedemptions(ctx context.Context, contractInstance *zenbtc.Ze
 		Context:     ctx,
 	}
 
+	// Debug: Log the contract address being used
+	contractAddr := sidecartypes.ZenBTCControllerAddresses[o.Config.Network]
+	slog.Info("DEBUG: Attempting to get redemptions from contract",
+		"contractAddress", contractAddr,
+		"blockHeight", height.String(),
+		"network", o.Config.Network,
+		"networkName", sidecartypes.NetworkNames[o.Config.Network],
+	)
+
 	redemptionData, err := contractInstance.GetReadyForComplete(callOpts)
 	if err != nil {
+		slog.Error("DEBUG: Failed to get redemptions from contract",
+			"contractAddress", contractAddr,
+			"error", err,
+		)
 		return nil, fmt.Errorf("failed to get recent redemptions: %w", err)
 	}
 
@@ -1579,7 +2026,6 @@ func (o *Oracle) processBurnTransaction(
 				DestinationAddr: destAddr,
 				Amount:          value,
 				IsZenBTC:        isZenBTC,
-				Height:          uint64(txResult.Slot),
 			}
 			burnEvents = append(burnEvents, burnEvent)
 			if debugMode {
@@ -1743,7 +2189,6 @@ func (o *Oracle) getSolanaBurnEventFromSig(ctx context.Context, sigStr string, p
 				DestinationAddr: eventData.DestAddr[:],
 				Amount:          eventData.Value,
 				IsZenBTC:        false, // This is a ROCK burn
-				Height:          uint64(txResult.Slot),
 			}
 			if o.DebugMode {
 				slog.Info("Backfilled Solana ROCK Burn Event",
@@ -3385,15 +3830,7 @@ func (o *Oracle) processMintTransaction(
 		if !ok {
 			continue
 		}
-		out = append(out, api.SolanaMintEvent{
-			SigHash:   sigHash[:],
-			Height:    uint64(txResult.Slot),
-			Recipient: recipient.Bytes(),
-			Value:     value,
-			Fee:       fee,
-			Mint:      mint.Bytes(),
-			TxSig:     sig.String(),
-		})
+		out = append(out, api.SolanaMintEvent{SigHash: sigHash[:], Recipient: recipient.Bytes(), Value: value, Fee: fee, Mint: mint.Bytes(), TxSig: sig.String()})
 		if debugMode {
 			slog.Info("Mint event", "eventType", eventTypeName, "tx", sig)
 		}
