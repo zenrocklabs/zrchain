@@ -57,6 +57,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"show_fees": {Usage: "Whether to include fees in the response (optional)"},
 					},
 				},
+				{
+					RpcMethod:      "Dcts",
+					Use:            "dcts",
+					Short:          "returns dcts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{},
+				},
+
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},
@@ -98,6 +105,24 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Set the total ROCK supply on Solana (gov-gated)",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "amount"},
+					},
+				},
+				{
+					RpcMethod: "InitDct",
+					Use:       "init-dct [amount] [destination-chain]",
+					Short:     "Send a initDct tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "amount"},
+						{ProtoField: "destination_chain"},
+					},
+				},
+				{
+					RpcMethod: "InitDctKeys",
+					Use:       "init-dct-keys [denom] [unsigned-tx]",
+					Short:     "Send a initDctKeys tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "denom"},
+						{ProtoField: "unsigned_tx"},
 					},
 				},
 				// this line is used by ignite scaffolding # autocli/tx

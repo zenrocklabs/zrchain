@@ -19,5 +19,6 @@ func Caip2ToSolananNetwork(caip string) treasurytypes.SolanaNetworkType {
 }
 
 const (
-	ZentpCollectorName = "zentp_collector"
+	ZentpCollectorName    = "zentp_collector"
+	ZentpDctCollectorName = "zentp_dct_collector"
 )

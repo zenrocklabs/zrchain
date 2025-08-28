@@ -4,6 +4,7 @@ from google.api import annotations_pb2 as _annotations_pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as _pagination_pb2
 from zrchain.zentp import params_pb2 as _params_pb2
 from zrchain.zentp import bridge_pb2 as _bridge_pb2
+from zrchain.zentp import dct_pb2 as _dct_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -106,3 +107,17 @@ class QuerySolanaROCKSupplyResponse(_message.Message):
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     amount: int
     def __init__(self, amount: _Optional[int] = ...) -> None: ...
+
+class QueryDctsRequest(_message.Message):
+    __slots__ = ("pagination",)
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    pagination: _pagination_pb2.PageRequest
+    def __init__(self, pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
+
+class QueryDctsResponse(_message.Message):
+    __slots__ = ("dct", "pagination")
+    DCT_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    dct: _containers.RepeatedCompositeFieldContainer[_dct_pb2.Dct]
+    pagination: _pagination_pb2.PageResponse
+    def __init__(self, dct: _Optional[_Iterable[_Union[_dct_pb2.Dct, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...

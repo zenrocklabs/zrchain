@@ -206,6 +206,8 @@ if [ "$START_ONLY" = false ]; then
             # First validator node in localnet or default single-node flow: allocate genesis accounts
             # Add funds for Alice (K1)
             zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
+            zenrockd genesis add-genesis-account $(zenrockd keys show $K1 -a --keyring-backend $KEYRING) 250000000000000vrock --keyring-backend $KEYRING --home $HOME_DIR --append
+
             # Add funds for Bob (K2)
             zenrockd genesis add-genesis-account $(zenrockd keys show $K2 -a --keyring-backend $KEYRING) 250000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
             # Add funds for mint module - not a validator

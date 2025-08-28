@@ -8,98 +8,107 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "zrchain/zentp/params.proto";
 import "zrchain/zentp/bridge.proto";
+import "zrchain/zentp/dct.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // Query defines the gRPC querier service.
 service Query {
-
+  
   // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/zrchain/zentp/params";
+  
   }
-
+  
   // Queries a list of Mints.
-  rpc Mints(QueryMintsRequest) returns (QueryMintsResponse) {
+  rpc Mints (QueryMintsRequest) returns (QueryMintsResponse) {
     option (google.api.http).get = "/zrchain/zentp/mints";
+  
   }
-
+  
   // Queries a list of Burns items.
-  rpc Burns(QueryBurnsRequest) returns (QueryBurnsResponse) {
+  rpc Burns (QueryBurnsRequest) returns (QueryBurnsResponse) {
     option (google.api.http).get = "/zrchain/zentp/burns";
+  
   }
-
+  
   // Stats queries the total amounts of mints and burns for an address
-  rpc Stats(QueryStatsRequest) returns (QueryStatsResponse) {
+  rpc Stats (QueryStatsRequest) returns (QueryStatsResponse) {
     option (google.api.http).get = "/zrchain/zentp/stats";
+  
   }
-
+  
   // QuerySolanaROCKSupply queries the amount of ROCK on Solana.
-  rpc QuerySolanaROCKSupply(QuerySolanaROCKSupplyRequest)
-      returns (QuerySolanaROCKSupplyResponse) {
+  rpc QuerySolanaROCKSupply (QuerySolanaROCKSupplyRequest) returns (QuerySolanaROCKSupplyResponse) {
     option (google.api.http).get = "/zrchain/zentp/solana_rock_supply";
+  
+  }
+  
+  // Queries a list of Dcts items.
+  rpc Dcts (QueryDctsRequest) returns (QueryDctsResponse) {
+    option (google.api.http).get = "/zrchain/v6/zentp/dcts";
+  
   }
 }
-
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-
+  
   // params holds all the parameters of this module.
-  Params params = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // QueryMintsRequest is request type for the Query/Mints RPC method.
 message QueryMintsRequest {
-  uint64 id = 1; // Optional
-  string creator = 2; // Optional
-  BridgeStatus status = 3; // Optional
-  string denom = 4; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination = 5;
-  uint64 tx_id = 6; // Optional
-  string source_tx_hash = 7; // Optional
+  uint64                                id             = 1; // Optional
+  string                                creator        = 2; // Optional
+  BridgeStatus                          status         = 3; // Optional
+  string                                denom          = 4; // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination     = 5;
+  uint64                                tx_id          = 6; // Optional
+  string                                source_tx_hash = 7; // Optional
 }
 
 // QueryMintsResponse is response type for the Query/Mints RPC method.
 message QueryMintsResponse {
-  repeated Bridge mints = 1;
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated Bridge                                 mints      = 1;
+           cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryBurnsRequest is request type for the Query/Burns RPC method.
 message QueryBurnsRequest {
-  uint64 id = 1;
-  string denom = 2;
-  BridgeStatus status = 3;
-  uint64 tx_id = 4;
-  string recipient_address = 5;
-  string source_tx_hash = 6;
-  cosmos.base.query.v1beta1.PageRequest pagination = 7;
+  uint64                                id                = 1;
+  string                                denom             = 2;
+  BridgeStatus                          status            = 3;
+  uint64                                tx_id             = 4;
+  string                                recipient_address = 5;
+  string                                source_tx_hash    = 6;
+  cosmos.base.query.v1beta1.PageRequest pagination        = 7;
 }
 
 // QueryBurnsResponse is response type for the Query/Burns RPC method.
 message QueryBurnsResponse {
-  repeated Bridge burns = 1;
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated Bridge                                 burns      = 1;
+           cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryStatsRequest is request type for the Query/Stats RPC method.
 message QueryStatsRequest {
-  string address = 1; // Optional
-  string denom = 2;   // Optional
-  bool show_fees = 3; // Optional
+  string address   = 1; // Optional
+  string denom     = 2; // Optional
+  bool   show_fees = 3; // Optional
 }
 
 // QueryStatsResponse is response type for the Query/Stats RPC method.
 message QueryStatsResponse {
   uint64 total_minted = 1;
   uint64 total_burned = 2;
-  uint64 mints_count = 3;
-  uint64 burns_count = 4;
-  uint64 zentp_fees = 5; // Optional
+  uint64 mints_count  = 3;
+  uint64 burns_count  = 4;
+  uint64 zentp_fees   = 5; // Optional
 }
 
 // QuerySolanaROCKSupplyRequest is request type for the Query/SolanaROCKSupply
@@ -108,4 +117,18 @@ message QuerySolanaROCKSupplyRequest {}
 
 // QuerySolanaROCKSupplyResponse is response type for the Query/SolanaROCKSupply
 // RPC method.
-message QuerySolanaROCKSupplyResponse { uint64 amount = 1; }
+message QuerySolanaROCKSupplyResponse {
+  uint64 amount = 1;
+}
+
+// QueryDctsRequest is request type for the Query/Dcts RPC method.
+message QueryDctsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDctsResponse is response type for the Query/Dcts RPC method.
+message QueryDctsResponse {
+  repeated Dct                                 dct        = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
