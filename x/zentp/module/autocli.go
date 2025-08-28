@@ -58,9 +58,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "Dcts",
-					Use: "dcts",
-					Short: "returns dcts",
+					RpcMethod:      "Dcts",
+					Use:            "dcts",
+					Short:          "returns dcts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{},
 				},
 
@@ -111,16 +111,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "InitDct",
 					Use:       "init-dct [amount] [destination-chain]",
 					Short:     "Send a initDct tx",
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"amount":            {Usage: "Asset to initialize (e.g., 1000stake)"},
-						"destination_chain": {Usage: "Destination chain identifier"},
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "amount"},
+						{ProtoField: "destination_chain"},
 					},
 				},
 				{
-					RpcMethod:      "InitDctKeys",
-					Use:            "init-dct-keys [denom]",
-					Short:          "Send a initDctKeys tx",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "denom"}},
+					RpcMethod: "InitDctKeys",
+					Use:       "init-dct-keys [denom] [unsigned-tx]",
+					Short:     "Send a initDctKeys tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "denom"},
+						{ProtoField: "unsigned_tx"},
+					},
 				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
