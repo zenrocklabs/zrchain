@@ -210,6 +210,7 @@ var maccPerms = map[string][]string{
 	treasurytypes.KeyringEscrowName:    nil,
 	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 	zentptypes.ZentpCollectorName:      nil,
+	zentptypes.ZentpDctCollectorName:   nil,
 }
 
 var (

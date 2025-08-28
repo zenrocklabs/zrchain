@@ -24,7 +24,7 @@ func (k msgServer) InitDct(goCtx context.Context, msg *types.MsgInitDct) (*types
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sdk.MustAccAddressFromBech32(msg.Creator),
-		types.ModuleName,
+		types.ZentpDctCollectorName,
 		sdk.NewCoins(msg.Amount),
 	); err != nil {
 		return nil, err
