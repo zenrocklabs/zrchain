@@ -157,7 +157,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 		panic(fmt.Sprintf("failed to migrate x/%s from version 7 to 8: %v", types.ModuleName, err))
 	}
 	if err := cfg.RegisterMigration(types.ModuleName, 8, m.Migrate8to9); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 7 to 8: %v", types.ModuleName, err))
+		panic(fmt.Sprintf("failed to migrate x/%s from version 8 to 9: %v", types.ModuleName, err))
 	}
 }
 
