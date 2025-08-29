@@ -13,6 +13,7 @@ import (
 	v6 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v6"
 	v7 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v7"
 	v8 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v8"
+	v9 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/migrations/v9"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -65,4 +66,8 @@ func (m Migrator) Migrate6to7(ctx sdk.Context) error {
 
 func (m Migrator) Migrate7to8(ctx sdk.Context) error {
 	return v8.UpdateBtcBlockHeaders(ctx, m.keeper.BtcBlockHeaders, m.keeper.ValidationInfos)
+}
+
+func (m Migrator) Migrate8to9(ctx sdk.Context) error {
+	return v9.ClearEthereumNonceData(ctx, m.keeper.LastUsedEthereumNonce)
 }
