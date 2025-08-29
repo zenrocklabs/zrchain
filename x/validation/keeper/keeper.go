@@ -64,12 +64,12 @@ type Keeper struct {
 	// EthereumNonceRequested - key: key ID | value: bool (is requested)
 	EthereumNonceRequested collections.Map[uint64, bool]
 	// SolanaNonceRequested - key: key ID | value: bool (is requested)
-	SolanaNonceRequested collections.Map[uint64, bool]
-	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
+	SolanaNonceRequested         collections.Map[uint64, bool]
 	SolanaAccountsRequested      collections.Map[string, bool]
 	SolanaZenTPAccountsRequested collections.Map[string, bool]
-	LastUsedEthereumNonce        collections.Map[uint64, zenbtctypes.NonceData]
-	LastUsedSolanaNonce          collections.Map[uint64, types.SolanaNonce]
+	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
+	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
+	LastUsedSolanaNonce   collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
 	// BackfillRequests - key: tx hash | value: bool (is requested)
