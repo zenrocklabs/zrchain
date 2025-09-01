@@ -678,7 +678,7 @@ func (o *Oracle) buildFinalState(
 		LastSolRockBurnSig:         o.lastSolRockBurnSigStr,
 	}
 
-	log.Printf("len(SolanaMintEvents): %d, len(CleanedSolanaMintEvents): %d\n", len(update.SolanaMintEvents), len(currentState.CleanedSolanaMintEvents))
+	log.Printf("SolanaMintEvents count: %d, CleanedSolanaMintEvents count: %d\n", len(update.SolanaMintEvents), len(currentState.CleanedSolanaMintEvents))
 
 	if o.DebugMode {
 		jsonData, err := json.MarshalIndent(newState, "", "  ")
