@@ -94,20 +94,20 @@ var (
 
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 	MainLoopTickerInterval     = 60 * time.Second
-	OracleCacheSize            = 20
+	OracleCacheSize            = 5
 	EthBurnEventsBlockRange    = 1000
-	EthBlocksBeforeFinality    = int64(5) // TODO: should this be increased?
+	EthBlocksBeforeFinality    = int64(8) // TODO: should this be increased?
 	SolanaEventScanTxLimit     = 50
 	SolanaEventFetchBatchSize  = 10
 	SolanaSleepInterval        = 250 * time.Millisecond
 	SolanaEventFetchMaxRetries = 50
 	SolanaEventFetchRetrySleep = 250 * time.Millisecond
 
-	SidecarVersionName = "rose_moon_r1"
+	SidecarVersionName = "rose_moon_r2"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon", "rose_moon_r1"}
+	VersionsRequiringCacheReset = []string{"rose_moon_r2"}
 )
 
 // PriceFeed struct with fields for different price feeds
