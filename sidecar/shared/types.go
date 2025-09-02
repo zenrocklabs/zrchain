@@ -103,11 +103,20 @@ var (
 	SolanaEventFetchMaxRetries = 50
 	SolanaEventFetchRetrySleep = 250 * time.Millisecond
 
-	SidecarVersionName = "rose_moon_r2"
+	SidecarVersionName = "rose_moon_r3"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"rose_moon_r2"}
+	VersionsRequiringCacheReset = []string{"rose_moon_r3"}
+
+	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
+	// should perform a full in-memory + cache reset cycle.
+	// Default: 24 (reset at the first tick after each UTC midnight).
+	// Example values:
+	//   24 => once per day (midnight UTC)
+	//   12 => twice per day (00:00 UTC, 12:00 UTC)
+	//    6 => every 6 hours, etc.
+	OracleStateResetIntervalHours = 24
 )
 
 // PriceFeed struct with fields for different price feeds

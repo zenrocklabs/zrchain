@@ -28,6 +28,7 @@ func main() {
 	// DEBUGGING ONLY - RISK OF SLASHING IF USED IN PRODUCTION
 	noAVS := flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)")
 	skipInitialWait := flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately")
+	testReset := flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)")
 
 	if !flag.Parsed() {
 		flag.Parse()
@@ -94,6 +95,7 @@ func main() {
 	}
 
 	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *debug, *skipInitialWait)
+	oracle.ForceTestReset = *testReset
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
