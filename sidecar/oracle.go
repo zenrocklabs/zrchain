@@ -11,6 +11,7 @@ import (
 	"maps"
 	"math/big"
 	"net/http"
+	"os"
 	"reflect"
 	"sort"
 	"sync"
@@ -92,6 +93,9 @@ func NewOracle(
 		}
 	}
 
+	// Initialize periodic reset scheduling (interval computed dynamically; may be overridden later by test flag)
+	o.scheduleNextReset(time.Now().UTC(), time.Duration(sidecartypes.OracleStateResetIntervalHours)*time.Hour)
+
 	return o
 }
 
@@ -159,6 +163,8 @@ func (o *Oracle) processOracleTick(
 	tickTime time.Time,
 	mainLoopTickerIntervalDuration time.Duration,
 ) {
+	// Perform scheduled reset if due (evaluated using the tick's aligned time)
+	o.maybePerformScheduledReset(tickTime.UTC())
 	successfulFetch := true
 	newState, err := o.fetchAndProcessState(serviceManager, zenBTCControllerHolesky, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
@@ -1935,4 +1941,94 @@ func validateRequestIndex(requestIndex int, batchSize int, eventType string) boo
 		return false
 	}
 	return true
+}
+
+// --- Periodic Reset Logic ---
+
+// maybePerformScheduledReset checks if a full state reset is due at the provided UTC time.
+// It is safe to call on every tick; internal locking ensures idempotence per boundary.
+func (o *Oracle) maybePerformScheduledReset(nowUTC time.Time) {
+	o.resetMutex.Lock()
+	defer o.resetMutex.Unlock()
+
+	// Derive interval dynamically (test flag overrides).
+	interval := time.Duration(sidecartypes.OracleStateResetIntervalHours) * time.Hour
+	if o.ForceTestReset {
+		interval = 2 * time.Minute
+	}
+	if interval <= 0 {
+		interval = 24 * time.Hour
+	}
+
+	// If nextScheduledReset not set OR we switched into a shorter test interval, (re)compute it.
+	if o.nextScheduledReset.IsZero() || (interval < time.Hour && o.nextScheduledReset.Sub(nowUTC) > interval) {
+		o.scheduleNextReset(nowUTC, interval)
+	}
+
+	if !o.nextScheduledReset.IsZero() &&
+		(nowUTC.Equal(o.nextScheduledReset) || nowUTC.After(o.nextScheduledReset)) {
+		log.Printf("Performing scheduled oracle state reset at %s (nextScheduledReset=%s, interval=%s)",
+			nowUTC.Format(time.RFC3339), o.nextScheduledReset.Format(time.RFC3339), interval)
+
+		o.performFullStateResetLocked()
+
+		// Schedule the next reset strictly after 'nowUTC'
+		o.scheduleNextReset(nowUTC.Add(time.Second), interval)
+		log.Printf("Next scheduled oracle state reset at %s", o.nextScheduledReset.Format(time.RFC3339))
+	}
+}
+
+// scheduleNextReset computes the next UTC boundary time > now (or == now if exactly aligned)
+// based on the provided interval (hours or test mode minutes).
+func (o *Oracle) scheduleNextReset(nowUTC time.Time, interval time.Duration) {
+	if interval <= 0 {
+		interval = 24 * time.Hour
+	}
+
+	// For sub-hour (test) intervals, align to that minute boundary.
+	if interval < time.Hour {
+		trunc := nowUTC.Truncate(interval)
+		if nowUTC.Equal(trunc) {
+			o.nextScheduledReset = trunc
+		} else {
+			o.nextScheduledReset = trunc.Add(interval)
+		}
+		return
+	}
+
+	// Normal hour-based scheduling: align to multiples of interval since UTC midnight.
+	midnight := nowUTC.Truncate(24 * time.Hour)
+	elapsed := nowUTC.Sub(midnight)
+	remainder := elapsed % interval
+	if remainder == 0 {
+		o.nextScheduledReset = nowUTC
+	} else {
+		o.nextScheduledReset = nowUTC.Add(interval - remainder)
+	}
+}
+
+// performFullStateResetLocked clears in-memory caches and deletes the on-disk state file.
+// Caller must hold o.resetMutex.
+func (o *Oracle) performFullStateResetLocked() {
+	// Clear oracle runtime state
+	o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
+	o.currentState.Store(&EmptyOracleState)
+
+	// Clear Solana signature watermarks
+	o.lastSolRockMintSigStr = ""
+	o.lastSolZenBTCMintSigStr = ""
+	o.lastSolZenBTCBurnSigStr = ""
+	o.lastSolRockBurnSigStr = ""
+
+	// Remove state file (ignore if it doesn't exist)
+	if err := os.Remove(o.Config.StateFile); err != nil && !os.IsNotExist(err) {
+		log.Printf("Warning: failed to remove state file during scheduled reset (%s): %v", o.Config.StateFile, err)
+	}
+
+	// Persist fresh empty state (recreates file)
+	if err := o.SaveToFile(o.Config.StateFile); err != nil {
+		log.Printf("Warning: failed to write fresh state file after reset (%s): %v", o.Config.StateFile, err)
+	} else {
+		log.Printf("State file reinitialized after scheduled reset: %s", o.Config.StateFile)
+	}
 }
