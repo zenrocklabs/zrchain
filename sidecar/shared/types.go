@@ -144,12 +144,6 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r7"
-
-	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
-	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r7"}
-
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines
 	InitialEventsSliceCapacity          = 100               // Initial capacity for events slice to reduce allocations
@@ -160,6 +154,21 @@ var (
 	TransactionCacheTTL                 = 5 * time.Minute   // Time-to-live for cached transaction results
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
+
+	SidecarVersionName = "sturgeon_moon"
+
+	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
+	// This protects against subtle state incompatibilities after major upgrades.
+	VersionsRequiringCacheReset = []string{"sturgeon_moon"}
+
+	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
+	// should perform a full in-memory + cache reset cycle.
+	// Default: 24 (reset at the first tick after each UTC midnight).
+	// Example values:
+	//   24 => once per day (midnight UTC)
+	//   12 => twice per day (00:00 UTC, 12:00 UTC)
+	//    6 => every 6 hours, etc.
+	OracleStateResetIntervalHours = 12
 )
 
 // PriceFeed struct with fields for different price feeds

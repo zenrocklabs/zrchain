@@ -52,6 +52,11 @@ type Oracle struct {
 	DebugMode          bool
 	SkipInitialWait    bool
 
+	// Periodic reset control (scheduled UTC boundary resets). Interval derived on-the-fly from sidecartypes.OracleStateResetIntervalHours (or test flag).
+	nextScheduledReset time.Time
+	ForceTestReset     bool       // when true (set via test flag) use a 2-minute interval for rapid testing
+	resetMutex         sync.Mutex // guards scheduling updates
+
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
