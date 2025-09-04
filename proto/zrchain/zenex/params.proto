@@ -1,0 +1,16 @@
+syntax = "proto3";
+package zrchain.zenex;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/zenex/Params";
+  option (gogoproto.equal) = true;
+
+  
+  string btcproxyaddress = 1 [(gogoproto.moretags) = "yaml:\"btcproxyaddress\""];
+}

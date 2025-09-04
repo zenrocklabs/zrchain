@@ -27,9 +27,10 @@ from cosmos.msg.v1 import msg_pb2 as cosmos_dot_msg_dot_v1_dot_msg__pb2
 from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.bedrock import params_pb2 as zrchain_dot_bedrock_dot_params__pb2
+from zrchain.bedrock import swap_pb2 as zrchain_dot_bedrock_dot_swap__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18zrchain/bedrock/tx.proto\x12\x0fzrchain.bedrock\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1czrchain/bedrock/params.proto\"\xbb\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12:\n\x06params\x18\x02 \x01(\x0b\x32\x17.zrchain.bedrock.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:4\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*!zrchain/x/bedrock/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse2h\n\x03Msg\x12Z\n\x0cUpdateParams\x12 .zrchain.bedrock.MsgUpdateParams\x1a(.zrchain.bedrock.MsgUpdateParamsResponse\x1a\x05\x80\xe7\xb0*\x01\x42:Z8github.com/Zenrock-Foundation/zrchain/v6/x/bedrock/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18zrchain/bedrock/tx.proto\x12\x0fzrchain.bedrock\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1czrchain/bedrock/params.proto\x1a\x1azrchain/bedrock/swap.proto\"\xbb\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12:\n\x06params\x18\x02 \x01(\x0b\x32\x17.zrchain.bedrock.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:4\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*!zrchain/x/bedrock/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\x92\x02\n\x07MsgSwap\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x12\n\x04pair\x18\x02 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x03 \x01(\tR\tworkspace\x12S\n\tamount_in\x18\x04 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x08\x61mountIn\x12\x14\n\x05yield\x18\x05 \x01(\x08R\x05yield\x12\x1d\n\nsender_key\x18\x06 \x01(\x04R\tsenderKey\x12#\n\rrecipient_key\x18\x07 \x01(\x04R\x0crecipientKey:\x0c\x82\xe7\xb0*\x07\x63reator\"!\n\x0fMsgSwapResponse\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id2\xac\x01\n\x03Msg\x12Z\n\x0cUpdateParams\x12 .zrchain.bedrock.MsgUpdateParams\x1a(.zrchain.bedrock.MsgUpdateParamsResponse\x12\x42\n\x04Swap\x12\x18.zrchain.bedrock.MsgSwap\x1a .zrchain.bedrock.MsgSwapResponse\x1a\x05\x80\xe7\xb0*\x01\x42:Z8github.com/Zenrock-Foundation/zrchain/v6/x/bedrock/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,12 +44,20 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MSGUPDATEPARAMS'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_MSGUPDATEPARAMS']._loaded_options = None
   _globals['_MSGUPDATEPARAMS']._serialized_options = b'\202\347\260*\tauthority\212\347\260*!zrchain/x/bedrock/MsgUpdateParams'
+  _globals['_MSGSWAP'].fields_by_name['amount_in']._loaded_options = None
+  _globals['_MSGSWAP'].fields_by_name['amount_in']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
+  _globals['_MSGSWAP']._loaded_options = None
+  _globals['_MSGSWAP']._serialized_options = b'\202\347\260*\007creator'
   _globals['_MSG']._loaded_options = None
   _globals['_MSG']._serialized_options = b'\200\347\260*\001'
-  _globals['_MSGUPDATEPARAMS']._serialized_start=169
-  _globals['_MSGUPDATEPARAMS']._serialized_end=356
-  _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_start=358
-  _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_end=383
-  _globals['_MSG']._serialized_start=385
-  _globals['_MSG']._serialized_end=489
+  _globals['_MSGUPDATEPARAMS']._serialized_start=197
+  _globals['_MSGUPDATEPARAMS']._serialized_end=384
+  _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_start=386
+  _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_end=411
+  _globals['_MSGSWAP']._serialized_start=414
+  _globals['_MSGSWAP']._serialized_end=688
+  _globals['_MSGSWAPRESPONSE']._serialized_start=690
+  _globals['_MSGSWAPRESPONSE']._serialized_end=723
+  _globals['_MSG']._serialized_start=726
+  _globals['_MSG']._serialized_end=898
 # @@protoc_insertion_point(module_scope)

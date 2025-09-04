@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from zrchain.bedrock import tx_pb2 as zrchain_dot_bedrock_dot_tx__pb2
+from zrchain.zenex import tx_pb2 as zrchain_dot_zenex_dot_tx__pb2
 
 
 class MsgStub(object):
@@ -16,14 +16,14 @@ class MsgStub(object):
             channel: A grpc.Channel.
         """
         self.UpdateParams = channel.unary_unary(
-                '/zrchain.bedrock.Msg/UpdateParams',
-                request_serializer=zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParams.SerializeToString,
-                response_deserializer=zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
+                '/zrchain.zenex.Msg/UpdateParams',
+                request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParams.SerializeToString,
+                response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
         self.Swap = channel.unary_unary(
-                '/zrchain.bedrock.Msg/Swap',
-                request_serializer=zrchain_dot_bedrock_dot_tx__pb2.MsgSwap.SerializeToString,
-                response_deserializer=zrchain_dot_bedrock_dot_tx__pb2.MsgSwapResponse.FromString,
+                '/zrchain.zenex.Msg/Swap',
+                request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwap.SerializeToString,
+                response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.FromString,
                 )
 
 
@@ -51,17 +51,17 @@ def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'UpdateParams': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateParams,
-                    request_deserializer=zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParams.FromString,
-                    response_serializer=zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
+                    request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParams.FromString,
+                    response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
             ),
             'Swap': grpc.unary_unary_rpc_method_handler(
                     servicer.Swap,
-                    request_deserializer=zrchain_dot_bedrock_dot_tx__pb2.MsgSwap.FromString,
-                    response_serializer=zrchain_dot_bedrock_dot_tx__pb2.MsgSwapResponse.SerializeToString,
+                    request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwap.FromString,
+                    response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'zrchain.bedrock.Msg', rpc_method_handlers)
+            'zrchain.zenex.Msg', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -81,9 +81,9 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.bedrock.Msg/UpdateParams',
-            zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParams.SerializeToString,
-            zrchain_dot_bedrock_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/UpdateParams',
+            zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParams.SerializeToString,
+            zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -98,8 +98,8 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.bedrock.Msg/Swap',
-            zrchain_dot_bedrock_dot_tx__pb2.MsgSwap.SerializeToString,
-            zrchain_dot_bedrock_dot_tx__pb2.MsgSwapResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/Swap',
+            zrchain_dot_zenex_dot_tx__pb2.MsgSwap.SerializeToString,
+            zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

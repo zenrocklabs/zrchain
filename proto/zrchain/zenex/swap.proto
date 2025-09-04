@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package zrchain.zenex;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
+
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/validation/asset_data.proto";
+
+// Swap objects defines a cross-chain swap operation
+message Swap {
+  uint64 id = 1;
+  SwapStatus status = 2;
+  string pair = 3;
+  SwapData data = 4;
+  uint64 sender_key_id = 5;
+  uint64 recipient_key_id = 6;
+  string workspace = 7;
+  bool zenbtc_yield = 8;
+}
+
+// SwapStatus defines the status of the swap.
+enum SwapStatus {
+  // The swap status is unspecified (all swaps will be returned)
+  SWAP_STATUS_UNSPECIFIED = 0;
+  // The swap status is requested
+  SWAP_STATUS_REQUESTED = 1;
+  // The swap status is rejected
+  SWAP_STATUS_REJECTED = 2;
+  // The swap status is completed
+  SWAP_STATUS_COMPLETED = 3;
+}
+
+// SwapData defines the data for a swap.
+message SwapData {
+  zrchain.validation.AssetData base_token = 1;
+  zrchain.validation.AssetData quote_token = 2;
+  string price = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  string amount_in = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // amount_out will be filled when the Msg is processed
+  string amount_out = 5 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+}
+
+// SwapPair defines the pair of tokens for a swap
+// using validation asset data
+message SwapPair {
+  zrchain.validation.AssetData base_token = 1;
+  zrchain.validation.AssetData quote_token = 2;
+}

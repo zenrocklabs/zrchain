@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package zrchain.zenex;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/zenex/params.proto";
+import "zrchain/zenex/swap.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams (MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  // Swap defines a (cross-chain) swap operation.
+  rpc Swap         (MsgSwap        ) returns (MsgSwapResponse        );
+}
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) =                         "authority";
+  option           (amino.name) = "zrchain/x/zenex/MsgUpdateParams";
+  
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgSwap defines a (cross-chain) swap operation.
+message MsgSwap {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator   = 1;
+  string pair      = 2;
+  string workspace = 3;
+  string amount_in = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  bool yield     = 5;
+  uint64 sender_key = 6;
+  uint64 recipient_key = 7;
+}
+
+// MsgSwapResponse defines the response structure for executing a
+// MsgSwap message.
+message MsgSwapResponse {
+  uint64 id = 1;
+}
