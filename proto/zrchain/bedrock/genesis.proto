@@ -1,0 +1,17 @@
+syntax = "proto3";
+package zrchain.bedrock;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/bedrock/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/bedrock/types";
+
+// GenesisState defines the bedrock module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
