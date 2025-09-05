@@ -6,12 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {
-	k, ctx := keepertest.zenexKeeper(t)
+	k, ctx := keepertest.ZenexKeeper(t)
 	return k, keeper.NewMsgServerImpl(k), ctx
 }
 

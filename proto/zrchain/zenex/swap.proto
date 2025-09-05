@@ -52,7 +52,9 @@ message SwapData {
   // amount_out will be filled when the Msg is processed
   string amount_out = 5 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
   ];
 }
 

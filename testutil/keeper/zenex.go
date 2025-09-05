@@ -16,12 +16,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
+	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
-func zenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
+func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -33,14 +35,19 @@ func zenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 
+	ctrl := gomock.NewController(t)
+	mockIdentityKeeper := zenextestutil.NewMockIdentityKeeper(ctrl)
+	mockTreasuryKeeper := zenextestutil.NewMockTreasuryKeeper(ctrl)
+	mockValidationKeeper := zenextestutil.NewMockValidationKeeper(ctrl)
+
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		log.NewNopLogger(),
 		authority.String(),
-		nil,
-		nil,
-		nil,
+		mockIdentityKeeper,
+		mockTreasuryKeeper,
+		mockValidationKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

@@ -153,6 +153,9 @@ import (
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zenexkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
+	zenex "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/module"
+	zenextypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
@@ -210,6 +213,7 @@ var maccPerms = map[string][]string{
 	treasurytypes.KeyringEscrowName:    nil,
 	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 	zentptypes.ZentpCollectorName:      nil,
+	zenextypes.ZenexCollectorName:      nil,
 }
 
 var (
@@ -262,6 +266,7 @@ type ZenrockApp struct {
 	PolicyKeeper   policykeeper.Keeper
 	ZenBTCKeeper   zenbtckeeper.Keeper
 	ZentpKeeper    zentpkeeper.Keeper
+	ZenexKeeper    zenexkeeper.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -735,6 +740,19 @@ func NewZenrockApp(
 	)
 
 	zentpModule := zentp.NewAppModule(appCodec, app.ZentpKeeper, app.AccountKeeper, app.BankKeeper)
+
+	app.ZenexKeeper = zenexkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zenextypes.StoreKey]),
+		logger,
+		authAddr,
+		app.IdentityKeeper,
+		app.TreasuryKeeper,
+		app.ValidationKeeper,
+	)
+
+	zenexModule := zenex.NewAppModule(appCodec, app.ZenexKeeper, app.AccountKeeper, app.BankKeeper)
+
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -872,6 +890,7 @@ func NewZenrockApp(
 		policyModule,
 		zenBTCModule,
 		zentpModule,
+		zenexModule,
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -922,6 +941,7 @@ func NewZenrockApp(
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
+		zenextypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -943,6 +963,7 @@ func NewZenrockApp(
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
+		zenextypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -973,6 +994,7 @@ func NewZenrockApp(
 		treasurytypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
+		zenextypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

@@ -5,11 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := keepertest.zenexKeeper(t)
+	keeper, ctx := keepertest.ZenexKeeper(t)
 	params := types.DefaultParams()
 	require.NoError(t, keeper.SetParams(ctx, params))
 

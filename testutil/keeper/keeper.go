@@ -12,6 +12,7 @@ import (
 	identitykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/identity/keeper"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
+	zenexkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
 )
 
@@ -21,6 +22,7 @@ type KeeperTest struct {
 	TreasuryKeeper *treasurykeeper.Keeper
 	PolicyKeeper   *policykeeper.Keeper
 	ZentpKeeper    *zentpkeeper.Keeper
+	ZenexKeeper    *zenexkeeper.Keeper
 }
 
 func NewTest(t testing.TB) *KeeperTest {
@@ -31,6 +33,7 @@ func NewTest(t testing.TB) *KeeperTest {
 	identityKeeper, _ := IdentityKeeper(t, &policyKeeper, db, stateStore)
 	treasuryKeeper, _ := TreasuryKeeper(t, &policyKeeper, &identityKeeper, nil, db, stateStore)
 	zentpKeeper, _ := ZentpKeeper(t)
+	zenexKeeper, _ := ZenexKeeper(t)
 
 	return &KeeperTest{
 		Ctx:            ctx,
@@ -38,5 +41,6 @@ func NewTest(t testing.TB) *KeeperTest {
 		TreasuryKeeper: &treasuryKeeper,
 		PolicyKeeper:   &policyKeeper,
 		ZentpKeeper:    &zentpKeeper,
+		ZenexKeeper:    &zenexKeeper,
 	}
 }

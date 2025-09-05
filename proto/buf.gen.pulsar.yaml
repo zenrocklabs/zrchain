@@ -7,12 +7,14 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: cosmossdk.io/api
+    default: github.com/Zenrock-Foundation/zrchain/v6/api
     except:
       - buf.build/googleapis/googleapis
       - buf.build/cosmos/gogo-proto
       - buf.build/cosmos/cosmos-proto
     override:
+      buf.build/cosmos/cosmos-sdk: cosmossdk.io/api
+      buf.build/tendermint/tendermint: cosmossdk.io/api
       buf.build/zenrock-labs/zenbtc: github.com/zenrocklabs/zenbtc/api
       buf.build/zenrock-foundation/sidecar: github.com/Zenrock-Foundation/zrchain/v6/api
 plugins:

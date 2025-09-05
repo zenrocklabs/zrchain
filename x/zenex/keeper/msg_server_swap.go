@@ -70,7 +70,7 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 			QuoteToken: pair.QuoteToken,
 			Price:      rockBtcPrice,
 			AmountIn:   msg.AmountIn,
-			AmountOut:  &amountOut,
+			AmountOut:  amountOut,
 		},
 		SenderKeyId:    msg.SenderKey,
 		RecipientKeyId: msg.RecipientKey,
