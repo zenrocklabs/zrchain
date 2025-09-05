@@ -1,6 +1,3 @@
-from amino import amino_pb2 as _amino_pb2
-from gogoproto import gogo_pb2 as _gogo_pb2
-from zrchain.zentp import params_pb2 as _params_pb2
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
