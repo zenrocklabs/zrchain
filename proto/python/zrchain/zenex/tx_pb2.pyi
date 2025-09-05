@@ -33,13 +33,13 @@ class MsgSwap(_message.Message):
     creator: str
     pair: str
     workspace: str
-    amount_in: str
+    amount_in: int
     sender_key: int
     recipient_key: int
-    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[str] = ..., sender_key: _Optional[int] = ..., recipient_key: _Optional[int] = ..., **kwargs) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., sender_key: _Optional[int] = ..., recipient_key: _Optional[int] = ..., **kwargs) -> None: ...
 
 class MsgSwapResponse(_message.Message):
-    __slots__ = ("id",)
-    ID_FIELD_NUMBER: _ClassVar[int]
-    id: int
-    def __init__(self, id: _Optional[int] = ...) -> None: ...
+    __slots__ = ("swap_id",)
+    SWAP_ID_FIELD_NUMBER: _ClassVar[int]
+    swap_id: int
+    def __init__(self, swap_id: _Optional[int] = ...) -> None: ...

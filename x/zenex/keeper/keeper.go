@@ -135,6 +135,10 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.Leg
 		return nil, math.LegacyDec{}, fmt.Errorf("unknown key type: %s", pair)
 	}
 
+	if price.IsZero() || price.IsNegative() {
+		return nil, math.LegacyDec{}, fmt.Errorf("price must be positive, got: %s", price.String())
+	}
+
 	return &pairType, price, nil
 }
 
@@ -158,5 +162,25 @@ func (k Keeper) GetPrice(ctx sdk.Context, pair string) (math.LegacyDec, error) {
 		return k.validationKeeper.GetBtcRockPrice(ctx)
 	default:
 		return math.LegacyDec{}, fmt.Errorf("unknown pair: %s", pair)
+	}
+}
+
+func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, price math.LegacyDec) (uint64, error) {
+	switch pair {
+	case "rockbtc":
+		// returns BTC amount in satoshis to transfer
+		satoshis := math.NewUint(amountIn).Mul(math.Uint(price.Abs())).Uint64()
+		if k.GetParams(ctx).MinimumSatoshis > satoshis {
+			return 0, types.ErrMinimumSatoshis
+		}
+		return satoshis, nil
+	case "btcrock":
+		if k.GetParams(ctx).MinimumSatoshis > amountIn {
+			return 0, types.ErrMinimumSatoshis
+		}
+		// returns ROCK amount in urock to transfer
+		return math.NewUint(amountIn).Mul(math.Uint(price.Abs())).Uint64(), nil
+	default:
+		return 0, fmt.Errorf("unknown pair: %s", pair)
 	}
 }

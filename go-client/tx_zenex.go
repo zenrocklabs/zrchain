@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 
-	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
@@ -18,7 +17,7 @@ func NewZenexTxClient(c *RawTxClient) *ZenexTxClient {
 func (c *ZenTPTxClient) NewMsgSwap(
 	ctx context.Context,
 	creator string,
-	amountIn math.LegacyDec,
+	amountIn uint64,
 	yield bool,
 	senderKey uint64,
 	recipientKey uint64,

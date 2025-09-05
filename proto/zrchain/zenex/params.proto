@@ -2,7 +2,6 @@ syntax = "proto3";
 package zrchain.zenex;
 
 import "amino/amino.proto";
-import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
@@ -15,10 +14,5 @@ message Params {
   // the address of the BTC proxy for permissions
   string btc_proxy_address = 1 [(gogoproto.moretags) = "yaml:\"btcproxyaddress\""];
   // to prevent dust swaps
-  string minimum_btc_amount = 2 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  uint64 minimum_satoshis = 2;
 }

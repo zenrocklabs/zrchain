@@ -1,20 +1,17 @@
 package types
 
 import (
+	"errors"
+	"slices"
+
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var _ sdk.Msg = &MsgSwap{}
 
-func NewMsgSwap(creator string, pair string, workspace string, amount string, yield bool, senderKey uint64, recipientKey uint64) *MsgSwap {
-
-	amountIn, err := sdkmath.LegacyNewDecFromStr(amount)
-	if err != nil {
-		panic(err)
-	}
+func NewMsgSwap(creator string, pair string, workspace string, amountIn uint64, yield bool, senderKey uint64, recipientKey uint64) *MsgSwap {
 
 	return &MsgSwap{
 		Creator:      creator,
@@ -32,5 +29,22 @@ func (msg *MsgSwap) ValidateBasic() error {
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	if msg.AmountIn == 0 {
+		return errors.New("amount in is 0")
+	}
+
+	if msg.Pair == "" {
+		return errors.New("pair is empty")
+	}
+
+	if msg.Workspace == "" {
+		return errors.New("workspace is empty")
+	}
+
+	if !slices.Contains(ValidPairTypes, msg.Pair) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.Pair, ValidPairTypes)
+	}
+
 	return nil
 }

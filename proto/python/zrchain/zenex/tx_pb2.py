@@ -29,7 +29,7 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.zenex import params_pb2 as zrchain_dot_zenex_dot_params__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zenex/tx.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zenex/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\x92\x02\n\x07MsgSwap\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x12\n\x04pair\x18\x02 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x03 \x01(\tR\tworkspace\x12S\n\tamount_in\x18\x04 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x08\x61mountIn\x12\x14\n\x05yield\x18\x05 \x01(\x08R\x05yield\x12\x1d\n\nsender_key\x18\x06 \x01(\x04R\tsenderKey\x12#\n\rrecipient_key\x18\x07 \x01(\x04R\x0crecipientKey:\x0c\x82\xe7\xb0*\x07\x63reator\"!\n\x0fMsgSwapResponse\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id2\xa4\x01\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zenex.MsgUpdateParams\x1a&.zrchain.zenex.MsgUpdateParamsResponse\x12>\n\x04Swap\x12\x16.zrchain.zenex.MsgSwap\x1a\x1e.zrchain.zenex.MsgSwapResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zenex/tx.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zenex/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\xda\x01\n\x07MsgSwap\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x12\n\x04pair\x18\x02 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x03 \x01(\tR\tworkspace\x12\x1b\n\tamount_in\x18\x04 \x01(\x04R\x08\x61mountIn\x12\x14\n\x05yield\x18\x05 \x01(\x08R\x05yield\x12\x1d\n\nsender_key\x18\x06 \x01(\x04R\tsenderKey\x12#\n\rrecipient_key\x18\x07 \x01(\x04R\x0crecipientKey:\x0c\x82\xe7\xb0*\x07\x63reator\"*\n\x0fMsgSwapResponse\x12\x17\n\x07swap_id\x18\x01 \x01(\x04R\x06swapId2\xa4\x01\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zenex.MsgUpdateParams\x1a&.zrchain.zenex.MsgUpdateParamsResponse\x12>\n\x04Swap\x12\x16.zrchain.zenex.MsgSwap\x1a\x1e.zrchain.zenex.MsgSwapResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,8 +43,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MSGUPDATEPARAMS'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_MSGUPDATEPARAMS']._loaded_options = None
   _globals['_MSGUPDATEPARAMS']._serialized_options = b'\202\347\260*\tauthority\212\347\260*\037zrchain/x/zenex/MsgUpdateParams'
-  _globals['_MSGSWAP'].fields_by_name['amount_in']._loaded_options = None
-  _globals['_MSGSWAP'].fields_by_name['amount_in']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
   _globals['_MSGSWAP']._loaded_options = None
   _globals['_MSGSWAP']._serialized_options = b'\202\347\260*\007creator'
   _globals['_MSG']._loaded_options = None
@@ -54,9 +52,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_start=348
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_end=373
   _globals['_MSGSWAP']._serialized_start=376
-  _globals['_MSGSWAP']._serialized_end=650
-  _globals['_MSGSWAPRESPONSE']._serialized_start=652
-  _globals['_MSGSWAPRESPONSE']._serialized_end=685
-  _globals['_MSG']._serialized_start=688
-  _globals['_MSG']._serialized_end=852
+  _globals['_MSGSWAP']._serialized_end=594
+  _globals['_MSGSWAPRESPONSE']._serialized_start=596
+  _globals['_MSGSWAPRESPONSE']._serialized_end=638
+  _globals['_MSG']._serialized_start=641
+  _globals['_MSG']._serialized_end=805
 # @@protoc_insertion_point(module_scope)

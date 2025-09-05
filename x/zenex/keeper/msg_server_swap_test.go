@@ -40,14 +40,14 @@ func TestMsgSwap(t *testing.T) {
 				Creator:      "testCreator",
 				Pair:         "rockbtc",
 				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:     sdkmath.LegacyNewDec(100000),
+				AmountIn:     100000,
 				Yield:        false,
 				SenderKey:    1,
 				RecipientKey: 2,
 			},
 			expErr: false,
 			want: &types.MsgSwapResponse{
-				Id: 1,
+				SwapId: 1,
 			},
 			wantSwap: &types.Swap{
 				SwapId: 1,
@@ -61,8 +61,8 @@ func TestMsgSwap(t *testing.T) {
 						Asset: validationtypes.Asset_BTC,
 					},
 					Price:     sdkmath.LegacyNewDec(100000),
-					AmountIn:  sdkmath.LegacyNewDec(100000),
-					AmountOut: sdkmath.LegacyNewDec(100000),
+					AmountIn:  100000,
+					AmountOut: 100000,
 				},
 				SenderKeyId:    1,
 				RecipientKeyId: 2,
@@ -100,7 +100,7 @@ func TestMsgSwap(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.want, got)
 
-				gotSwap, err := zk.SwapsStore.Get(ctx, got.Id)
+				gotSwap, err := zk.SwapsStore.Get(ctx, got.SwapId)
 				require.NoError(t, err)
 				require.Equal(t, tc.wantSwap, &gotSwap)
 			}

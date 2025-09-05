@@ -3,16 +3,17 @@ package keeper
 import (
 	"context"
 	"errors"
-	"slices"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSwapResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	workspace, err := k.identityKeeper.GetWorkspace(ctx, msg.Workspace)
 	if err != nil {
@@ -22,10 +23,6 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).BtcProxyAddress {
 		return nil, errors.New("sender key is not the owner of the workspace")
 	}
-
-	// if msg.AmountIn.LT(k.GetParams(ctx).MinimumBtcAmount) {
-	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "amount in is less than the minimum btc amount")
-	// }
 
 	senderKey, err := k.treasuryKeeper.GetKey(ctx, msg.SenderKey)
 	if err != nil {
@@ -41,17 +38,17 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, errors.New("sender key is not in the workspace")
 	}
 
-	if !slices.Contains(types.ValidPairTypes, msg.Pair) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.Pair, types.ValidPairTypes)
-	}
-
 	pair, price, err := k.GetPair(ctx, msg.Pair)
 	if err != nil {
 		return nil, err
 	}
 
-	// either returns BTC or ROCk amount to transfer
-	amountOut := msg.AmountIn.Quo(price)
+	// either returns BTC or ROCK amount to transfer
+	// checks if the amount in is greater than the minimum satoshis
+	amountOut, err := k.GetAmountOut(ctx, msg.Pair, msg.AmountIn, price)
+	if err != nil {
+		return nil, err
+	}
 
 	swapCount, err := k.SwapsCount.Get(ctx)
 	if err != nil {
@@ -87,5 +84,5 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
-	return &types.MsgSwapResponse{Id: swap.SwapId}, nil
+	return &types.MsgSwapResponse{SwapId: swap.SwapId}, nil
 }

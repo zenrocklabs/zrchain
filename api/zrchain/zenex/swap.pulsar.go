@@ -991,14 +991,14 @@ func (x *fastReflection_SwapData) Range(f func(protoreflect.FieldDescriptor, pro
 			return
 		}
 	}
-	if x.AmountIn != "" {
-		value := protoreflect.ValueOfString(x.AmountIn)
+	if x.AmountIn != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.AmountIn)
 		if !f(fd_SwapData_amount_in, value) {
 			return
 		}
 	}
-	if x.AmountOut != "" {
-		value := protoreflect.ValueOfString(x.AmountOut)
+	if x.AmountOut != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.AmountOut)
 		if !f(fd_SwapData_amount_out, value) {
 			return
 		}
@@ -1025,9 +1025,9 @@ func (x *fastReflection_SwapData) Has(fd protoreflect.FieldDescriptor) bool {
 	case "zrchain.zenex.SwapData.price":
 		return x.Price != ""
 	case "zrchain.zenex.SwapData.amount_in":
-		return x.AmountIn != ""
+		return x.AmountIn != uint64(0)
 	case "zrchain.zenex.SwapData.amount_out":
-		return x.AmountOut != ""
+		return x.AmountOut != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.SwapData"))
@@ -1051,9 +1051,9 @@ func (x *fastReflection_SwapData) Clear(fd protoreflect.FieldDescriptor) {
 	case "zrchain.zenex.SwapData.price":
 		x.Price = ""
 	case "zrchain.zenex.SwapData.amount_in":
-		x.AmountIn = ""
+		x.AmountIn = uint64(0)
 	case "zrchain.zenex.SwapData.amount_out":
-		x.AmountOut = ""
+		x.AmountOut = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.SwapData"))
@@ -1081,10 +1081,10 @@ func (x *fastReflection_SwapData) Get(descriptor protoreflect.FieldDescriptor) p
 		return protoreflect.ValueOfString(value)
 	case "zrchain.zenex.SwapData.amount_in":
 		value := x.AmountIn
-		return protoreflect.ValueOfString(value)
+		return protoreflect.ValueOfUint64(value)
 	case "zrchain.zenex.SwapData.amount_out":
 		value := x.AmountOut
-		return protoreflect.ValueOfString(value)
+		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.SwapData"))
@@ -1112,9 +1112,9 @@ func (x *fastReflection_SwapData) Set(fd protoreflect.FieldDescriptor, value pro
 	case "zrchain.zenex.SwapData.price":
 		x.Price = value.Interface().(string)
 	case "zrchain.zenex.SwapData.amount_in":
-		x.AmountIn = value.Interface().(string)
+		x.AmountIn = value.Uint()
 	case "zrchain.zenex.SwapData.amount_out":
-		x.AmountOut = value.Interface().(string)
+		x.AmountOut = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.SwapData"))
@@ -1173,9 +1173,9 @@ func (x *fastReflection_SwapData) NewField(fd protoreflect.FieldDescriptor) prot
 	case "zrchain.zenex.SwapData.price":
 		return protoreflect.ValueOfString("")
 	case "zrchain.zenex.SwapData.amount_in":
-		return protoreflect.ValueOfString("")
+		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.zenex.SwapData.amount_out":
-		return protoreflect.ValueOfString("")
+		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.SwapData"))
@@ -1257,13 +1257,11 @@ func (x *fastReflection_SwapData) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		l = len(x.AmountIn)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if x.AmountIn != 0 {
+			n += 1 + runtime.Sov(uint64(x.AmountIn))
 		}
-		l = len(x.AmountOut)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if x.AmountOut != 0 {
+			n += 1 + runtime.Sov(uint64(x.AmountOut))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -1294,19 +1292,15 @@ func (x *fastReflection_SwapData) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.AmountOut) > 0 {
-			i -= len(x.AmountOut)
-			copy(dAtA[i:], x.AmountOut)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AmountOut)))
+		if x.AmountOut != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.AmountOut))
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x28
 		}
-		if len(x.AmountIn) > 0 {
-			i -= len(x.AmountIn)
-			copy(dAtA[i:], x.AmountIn)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AmountIn)))
+		if x.AmountIn != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.AmountIn))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x20
 		}
 		if len(x.Price) > 0 {
 			i -= len(x.Price)
@@ -1497,10 +1491,10 @@ func (x *fastReflection_SwapData) ProtoMethods() *protoiface.Methods {
 				x.Price = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 4:
-				if wireType != 2 {
+				if wireType != 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AmountIn", wireType)
 				}
-				var stringLen uint64
+				x.AmountIn = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -1510,29 +1504,16 @@ func (x *fastReflection_SwapData) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					x.AmountIn |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.AmountIn = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			case 5:
-				if wireType != 2 {
+				if wireType != 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AmountOut", wireType)
 				}
-				var stringLen uint64
+				x.AmountOut = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -1542,24 +1523,11 @@ func (x *fastReflection_SwapData) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					x.AmountOut |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.AmountOut = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2288,9 +2256,9 @@ type SwapData struct {
 	BaseToken  *validation.AssetData `protobuf:"bytes,1,opt,name=base_token,json=baseToken,proto3" json:"base_token,omitempty"`
 	QuoteToken *validation.AssetData `protobuf:"bytes,2,opt,name=quote_token,json=quoteToken,proto3" json:"quote_token,omitempty"`
 	Price      string                `protobuf:"bytes,3,opt,name=price,proto3" json:"price,omitempty"`
-	AmountIn   string                `protobuf:"bytes,4,opt,name=amount_in,json=amountIn,proto3" json:"amount_in,omitempty"`
+	AmountIn   uint64                `protobuf:"varint,4,opt,name=amount_in,json=amountIn,proto3" json:"amount_in,omitempty"`
 	// amount_out will be filled when the Msg is processed
-	AmountOut string `protobuf:"bytes,5,opt,name=amount_out,json=amountOut,proto3" json:"amount_out,omitempty"`
+	AmountOut uint64 `protobuf:"varint,5,opt,name=amount_out,json=amountOut,proto3" json:"amount_out,omitempty"`
 }
 
 func (x *SwapData) Reset() {
@@ -2334,18 +2302,18 @@ func (x *SwapData) GetPrice() string {
 	return ""
 }
 
-func (x *SwapData) GetAmountIn() string {
+func (x *SwapData) GetAmountIn() uint64 {
 	if x != nil {
 		return x.AmountIn
 	}
-	return ""
+	return 0
 }
 
-func (x *SwapData) GetAmountOut() string {
+func (x *SwapData) GetAmountOut() uint64 {
 	if x != nil {
 		return x.AmountOut
 	}
-	return ""
+	return 0
 }
 
 // SwapPair defines the pair of tokens for a swap
@@ -2425,7 +2393,7 @@ var file_zrchain_zenex_swap_proto_rawDesc = []byte{
 	0x01, 0x28, 0x09, 0x52, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x21,
 	0x0a, 0x0c, 0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63, 0x5f, 0x79, 0x69, 0x65, 0x6c, 0x64, 0x18, 0x09,
 	0x20, 0x01, 0x28, 0x08, 0x52, 0x0b, 0x7a, 0x65, 0x6e, 0x62, 0x74, 0x63, 0x59, 0x69, 0x65, 0x6c,
-	0x64, 0x22, 0x82, 0x03, 0x0a, 0x08, 0x53, 0x77, 0x61, 0x70, 0x44, 0x61, 0x74, 0x61, 0x12, 0x3c,
+	0x64, 0x22, 0x92, 0x02, 0x0a, 0x08, 0x53, 0x77, 0x61, 0x70, 0x44, 0x61, 0x74, 0x61, 0x12, 0x3c,
 	0x0a, 0x0a, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74,
@@ -2438,17 +2406,10 @@ var file_zrchain_zenex_swap_proto_rawDesc = []byte{
 	0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69,
 	0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63,
 	0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7,
-	0xb0, 0x2a, 0x01, 0x52, 0x05, 0x70, 0x72, 0x69, 0x63, 0x65, 0x12, 0x53, 0x0a, 0x09, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x36, 0xc8,
-	0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
-	0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44,
-	0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63,
-	0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12,
-	0x55, 0x0a, 0x0a, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x6f, 0x75, 0x74, 0x18, 0x05, 0x20,
-	0x01, 0x28, 0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73,
-	0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c,
-	0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d,
-	0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x09, 0x61, 0x6d, 0x6f,
+	0xb0, 0x2a, 0x01, 0x52, 0x05, 0x70, 0x72, 0x69, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x6d,
+	0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x61,
+	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x6d, 0x6f, 0x75, 0x6e,
+	0x74, 0x5f, 0x6f, 0x75, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x61, 0x6d, 0x6f,
 	0x75, 0x6e, 0x74, 0x4f, 0x75, 0x74, 0x22, 0x88, 0x01, 0x0a, 0x08, 0x53, 0x77, 0x61, 0x70, 0x50,
 	0x61, 0x69, 0x72, 0x12, 0x3c, 0x0a, 0x0a, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65,
 	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,

@@ -52,9 +52,9 @@ class SwapData(_message.Message):
     base_token: _asset_data_pb2.AssetData
     quote_token: _asset_data_pb2.AssetData
     price: str
-    amount_in: str
-    amount_out: str
-    def __init__(self, base_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ..., quote_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ..., price: _Optional[str] = ..., amount_in: _Optional[str] = ..., amount_out: _Optional[str] = ...) -> None: ...
+    amount_in: int
+    amount_out: int
+    def __init__(self, base_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ..., quote_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ..., price: _Optional[str] = ..., amount_in: _Optional[int] = ..., amount_out: _Optional[int] = ...) -> None: ...
 
 class SwapPair(_message.Message):
     __slots__ = ("base_token", "quote_token")

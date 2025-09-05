@@ -44,12 +44,7 @@ message MsgSwap {
   string creator   = 1;
   string pair      = 2;
   string workspace = 3;
-  string amount_in = 4 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  uint64 amount_in = 4;
   bool yield     = 5;
   uint64 sender_key = 6;
   uint64 recipient_key = 7;
@@ -58,5 +53,5 @@ message MsgSwap {
 // MsgSwapResponse defines the response structure for executing a
 // MsgSwap message.
 message MsgSwapResponse {
-  uint64 id = 1;
+  uint64 swap_id = 1;
 }

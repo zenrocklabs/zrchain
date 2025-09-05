@@ -3,15 +3,14 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
-	KeyBtcproxyaddress  = []byte("Btcproxyaddress")
-	KeyMinimumBtcAmount = []byte("MinimumBtcAmount")
+	KeyBtcproxyaddress = []byte("Btcproxyaddress")
+	KeyMinimumSatoshis = []byte("MinimumSatoshis")
 	// TODO: Determine the default value
 	DefaultBtcproxyaddress string = "btcproxyaddress"
 )
@@ -24,11 +23,11 @@ func ParamKeyTable() paramtypes.KeyTable {
 // NewParams creates a new Params instance
 func NewParams(
 	btcProxyAddress string,
-	minimumBtcAmount math.LegacyDec,
+	MinimumSatoshis uint64,
 ) Params {
 	return Params{
-		BtcProxyAddress:  btcProxyAddress,
-		MinimumBtcAmount: minimumBtcAmount,
+		BtcProxyAddress: btcProxyAddress,
+		MinimumSatoshis: MinimumSatoshis,
 	}
 }
 
@@ -36,7 +35,7 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcproxyaddress,
-		math.LegacyNewDecFromIntWithPrec(math.NewInt(5000), 8), // 5000 satoshis = 0.00005 BTC
+		5000, // 5000 satoshis = 0.00005 BTC
 	)
 }
 
@@ -44,7 +43,7 @@ func DefaultParams() Params {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyBtcproxyaddress, &p.BtcProxyAddress, validateBtcproxyaddress),
-		paramtypes.NewParamSetPair(KeyMinimumBtcAmount, &p.MinimumBtcAmount, validateMinimumBtcAmount),
+		paramtypes.NewParamSetPair(KeyMinimumSatoshis, &p.MinimumSatoshis, validateMinimumSatoshis),
 	}
 }
 
@@ -53,7 +52,7 @@ func (p Params) Validate() error {
 	if err := validateBtcproxyaddress(p.BtcProxyAddress); err != nil {
 		return err
 	}
-	if err := validateMinimumBtcAmount(p.MinimumBtcAmount); err != nil {
+	if err := validateMinimumSatoshis(p.MinimumSatoshis); err != nil {
 		return err
 	}
 
@@ -73,15 +72,15 @@ func validateBtcproxyaddress(v interface{}) error {
 	return nil
 }
 
-// validateMinimumBtcAmount validates the MinimumBtcAmount param
-func validateMinimumBtcAmount(v interface{}) error {
-	minimumBtcAmount, ok := v.(math.LegacyDec)
+// validateMinimumSatoshis validates the minimum satoshis param
+func validateMinimumSatoshis(v interface{}) error {
+	minimumSatoshis, ok := v.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", v)
 	}
 
-	if minimumBtcAmount.IsNegative() {
-		return fmt.Errorf("minimum BTC amount cannot be negative")
+	if minimumSatoshis < 5000 {
+		return fmt.Errorf("minimum satoshis cannot be smaller than 5000")
 	}
 
 	return nil
