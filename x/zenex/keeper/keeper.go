@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -84,13 +85,15 @@ func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, error) {
+func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.LegacyDec, error) {
 	var pairType types.SwapPair
 	typeStr := strings.ToLower(pair)
 
+	var price math.LegacyDec
+
 	assetPrices, err := k.validationKeeper.GetAssetPrices(ctx)
 	if err != nil {
-		return nil, err
+		return nil, math.LegacyDec{}, err
 	}
 
 	switch {
@@ -107,6 +110,10 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, error) {
 				PriceUSD:  assetPrices[validationtypes.Asset_BTC],
 			},
 		}
+		price, err = k.validationKeeper.GetRockBtcPrice(ctx)
+		if err != nil {
+			return nil, math.LegacyDec{}, err
+		}
 	case strings.Contains(typeStr, "btcrock"):
 		pairType = types.SwapPair{
 			BaseToken: &validationtypes.AssetData{
@@ -120,11 +127,15 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, error) {
 				PriceUSD:  assetPrices[validationtypes.Asset_ROCK],
 			},
 		}
+		price, err = k.validationKeeper.GetBtcRockPrice(ctx)
+		if err != nil {
+			return nil, math.LegacyDec{}, err
+		}
 	default:
-		return nil, fmt.Errorf("unknown key type: %s", pair)
+		return nil, math.LegacyDec{}, fmt.Errorf("unknown key type: %s", pair)
 	}
 
-	return &pairType, nil
+	return &pairType, price, nil
 }
 
 func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
@@ -137,4 +148,15 @@ func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
 		return nil, err
 	}
 	return swaps, nil
+}
+
+func (k Keeper) GetPrice(ctx sdk.Context, pair string) (math.LegacyDec, error) {
+	switch pair {
+	case "rockbtc":
+		return k.validationKeeper.GetRockBtcPrice(ctx)
+	case "btcrock":
+		return k.validationKeeper.GetBtcRockPrice(ctx)
+	default:
+		return math.LegacyDec{}, fmt.Errorf("unknown pair: %s", pair)
+	}
 }

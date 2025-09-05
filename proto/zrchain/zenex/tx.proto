@@ -7,7 +7,6 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zenex/params.proto";
-import "zrchain/zenex/swap.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
 

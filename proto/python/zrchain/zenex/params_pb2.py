@@ -23,10 +23,11 @@ _sym_db = _symbol_database.Default()
 
 
 from amino import amino_pb2 as amino_dot_amino__pb2
+from cosmos_proto import cosmos_pb2 as cosmos__proto_dot_cosmos__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"o\n\x06Params\x12\x44\n\x0f\x62tcproxyaddress\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcproxyaddress:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\"\xd7\x01\n\x06Params\x12\x46\n\x11\x62tc_proxy_address\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcProxyAddress\x12\x64\n\x12minimum_btc_amount\x18\x02 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x10minimumBtcAmount:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,10 +35,12 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'zrchain.zenex.params_pb2', 
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types'
-  _globals['_PARAMS'].fields_by_name['btcproxyaddress']._loaded_options = None
-  _globals['_PARAMS'].fields_by_name['btcproxyaddress']._serialized_options = b'\362\336\037\026yaml:\"btcproxyaddress\"'
+  _globals['_PARAMS'].fields_by_name['btc_proxy_address']._loaded_options = None
+  _globals['_PARAMS'].fields_by_name['btc_proxy_address']._serialized_options = b'\362\336\037\026yaml:\"btcproxyaddress\"'
+  _globals['_PARAMS'].fields_by_name['minimum_btc_amount']._loaded_options = None
+  _globals['_PARAMS'].fields_by_name['minimum_btc_amount']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
   _globals['_PARAMS']._loaded_options = None
   _globals['_PARAMS']._serialized_options = b'\350\240\037\001\212\347\260*\026zrchain/x/zenex/Params'
-  _globals['_PARAMS']._serialized_start=86
-  _globals['_PARAMS']._serialized_end=197
+  _globals['_PARAMS']._serialized_start=114
+  _globals['_PARAMS']._serialized_end=329
 # @@protoc_insertion_point(module_scope)

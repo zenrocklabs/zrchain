@@ -18,16 +18,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Shows the parameters of the module",
 				},
 				{
-					RpcMethod:      "Swaps",
-					Use:            "swaps [creator] [id] [requested|completed|rejected] [workspace] [rockbtc|btcrock]",
-					Short:          "Returns swap objects",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "creator"}, {ProtoField: "id"}, {ProtoField: "status"}, {ProtoField: "workspace"}, {ProtoField: "pair"}},
+					RpcMethod: "Swaps",
+					Use:       "swaps",
+					Short:     "Returns swap objects",
 					FlagOptions: map[string]*autocliv1.FlagOptions{
 						"creator":   {Usage: "Filter by creator address"},
-						"id":        {Usage: "Filter by swap ID"},
-						"status":    {Usage: "Filter by status"},
+						"swap_id":   {Usage: "Filter by swap ID"},
+						"status":    {Usage: "Filter by status (requested|completed|rejected)"},
 						"workspace": {Usage: "Filter by workspace"},
-						"pair":      {Usage: "Filter by pair"},
+						"pair":      {Usage: "Filter by pair (rockbtc|btcrock)"},
 					},
 				},
 
@@ -44,15 +43,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "Swap",
-					Use:       "swap [workspace] [rockbtc|btcrock] [amount_in] [yield] [sender_key] [recipient_key]",
+					Use:       "swap [workspace] [rockbtc|btcrock] [amount_in] [sender_key] [recipient_key]",
 					Short:     "Send a swap tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "workspace"},
 						{ProtoField: "pair"},
 						{ProtoField: "amount_in"},
-						{ProtoField: "yield"},
 						{ProtoField: "sender_key"},
 						{ProtoField: "recipient_key"},
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"yield": {Usage: "Whether to yield the swap (true|false)"},
 					},
 				},
 				// this line is used by ignite scaffolding # autocli/tx

@@ -20,6 +20,7 @@ type TreasuryKeeper interface {
 
 type ValidationKeeper interface {
 	GetRockBtcPrice(ctx context.Context) (math.LegacyDec, error)
+	GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error)
 	GetAssetPrices(ctx context.Context) (map[validationtypes.Asset]math.LegacyDec, error)
 }
 

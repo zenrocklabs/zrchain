@@ -19,9 +19,13 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
-	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).Btcproxyaddress {
+	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).BtcProxyAddress {
 		return nil, errors.New("sender key is not the owner of the workspace")
 	}
+
+	// if msg.AmountIn.LT(k.GetParams(ctx).MinimumBtcAmount) {
+	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "amount in is less than the minimum btc amount")
+	// }
 
 	senderKey, err := k.treasuryKeeper.GetKey(ctx, msg.SenderKey)
 	if err != nil {
@@ -41,18 +45,13 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.Pair, types.ValidPairTypes)
 	}
 
-	pair, err := k.GetPair(ctx, msg.Pair)
+	pair, price, err := k.GetPair(ctx, msg.Pair)
 	if err != nil {
 		return nil, err
 	}
 
-	rockBtcPrice, err := k.validationKeeper.GetRockBtcPrice(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: this calc is a placeholder
-	amountOut := msg.AmountIn.Mul(rockBtcPrice).Abs()
+	// either returns BTC or ROCk amount to transfer
+	amountOut := msg.AmountIn.Quo(price)
 
 	swapCount, err := k.SwapsCount.Get(ctx)
 	if err != nil {
@@ -60,7 +59,6 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 	}
 
 	swapCount++
-
 	swap := types.Swap{
 		Creator: msg.Creator,
 		SwapId:  swapCount,
@@ -69,7 +67,7 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		Data: &types.SwapData{
 			BaseToken:  pair.BaseToken,
 			QuoteToken: pair.QuoteToken,
-			Price:      rockBtcPrice,
+			Price:      price,
 			AmountIn:   msg.AmountIn,
 			AmountOut:  amountOut,
 		},
