@@ -21,8 +21,9 @@ SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
 
 class Swap(_message.Message):
-    __slots__ = ("id", "status", "pair", "data", "sender_key_id", "recipient_key_id", "workspace", "zenbtc_yield")
-    ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "sender_key_id", "recipient_key_id", "workspace", "zenbtc_yield")
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     PAIR_FIELD_NUMBER: _ClassVar[int]
     DATA_FIELD_NUMBER: _ClassVar[int]
@@ -30,7 +31,8 @@ class Swap(_message.Message):
     RECIPIENT_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
     ZENBTC_YIELD_FIELD_NUMBER: _ClassVar[int]
-    id: int
+    creator: str
+    swap_id: int
     status: SwapStatus
     pair: str
     data: SwapData
@@ -38,7 +40,7 @@ class Swap(_message.Message):
     recipient_key_id: int
     workspace: str
     zenbtc_yield: bool
-    def __init__(self, id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., sender_key_id: _Optional[int] = ..., recipient_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., zenbtc_yield: bool = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., sender_key_id: _Optional[int] = ..., recipient_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., zenbtc_yield: bool = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")

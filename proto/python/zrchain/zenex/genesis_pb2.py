@@ -25,9 +25,10 @@ _sym_db = _symbol_database.Default()
 from amino import amino_pb2 as amino_dot_amino__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.zenex import params_pb2 as zrchain_dot_zenex_dot_params__pb2
+from zrchain.zenex import swap_pb2 as zrchain_dot_zenex_dot_swap__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zenex/genesis.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\"H\n\x0cGenesisState\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06paramsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bzrchain/zenex/genesis.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\x1a\x18zrchain/zenex/swap.proto\"y\n\x0cGenesisState\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12/\n\x05swaps\x18\x02 \x03(\x0b\x32\x13.zrchain.zenex.SwapB\x04\xc8\xde\x1f\x00R\x05swapsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,6 +38,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types'
   _globals['_GENESISSTATE'].fields_by_name['params']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
-  _globals['_GENESISSTATE']._serialized_start=115
-  _globals['_GENESISSTATE']._serialized_end=187
+  _globals['_GENESISSTATE'].fields_by_name['swaps']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['swaps']._serialized_options = b'\310\336\037\000'
+  _globals['_GENESISSTATE']._serialized_start=141
+  _globals['_GENESISSTATE']._serialized_end=262
 # @@protoc_insertion_point(module_scope)

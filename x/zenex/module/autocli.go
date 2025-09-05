@@ -17,6 +17,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "params",
 					Short:     "Shows the parameters of the module",
 				},
+				{
+					RpcMethod:      "Swaps",
+					Use:            "swaps [creator] [id] [requested|completed|rejected] [workspace] [rockbtc|btcrock]",
+					Short:          "Returns swap objects",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "creator"}, {ProtoField: "id"}, {ProtoField: "status"}, {ProtoField: "workspace"}, {ProtoField: "pair"}},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"creator":   {Usage: "Filter by creator address"},
+						"id":        {Usage: "Filter by swap ID"},
+						"status":    {Usage: "Filter by status"},
+						"workspace": {Usage: "Filter by workspace"},
+						"pair":      {Usage: "Filter by pair"},
+					},
+				},
+
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},

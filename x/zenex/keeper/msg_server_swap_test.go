@@ -50,7 +50,7 @@ func TestMsgSwap(t *testing.T) {
 				Id: 1,
 			},
 			wantSwap: &types.Swap{
-				Id:     1,
+				SwapId: 1,
 				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
 				Pair:   "rockbtc",
 				Data: &types.SwapData{

@@ -4,6 +4,7 @@ package zrchain.zenex;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zenex/params.proto";
+import "zrchain/zenex/swap.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
 
@@ -14,4 +15,5 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  repeated Swap swaps = 2 [ (gogoproto.nullable) = false ];
 }

@@ -20,6 +20,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_zenex_dot_query__pb2.QueryParamsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zenex_dot_query__pb2.QueryParamsResponse.FromString,
                 )
+        self.Swaps = channel.unary_unary(
+                '/zrchain.zenex.Query/Swaps',
+                request_serializer=zrchain_dot_zenex_dot_query__pb2.QuerySwapsRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zenex_dot_query__pb2.QuerySwapsResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -33,6 +38,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Swaps(self, request, context):
+        """Queries a list of Swaps items.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -40,6 +52,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.Params,
                     request_deserializer=zrchain_dot_zenex_dot_query__pb2.QueryParamsRequest.FromString,
                     response_serializer=zrchain_dot_zenex_dot_query__pb2.QueryParamsResponse.SerializeToString,
+            ),
+            'Swaps': grpc.unary_unary_rpc_method_handler(
+                    servicer.Swaps,
+                    request_deserializer=zrchain_dot_zenex_dot_query__pb2.QuerySwapsRequest.FromString,
+                    response_serializer=zrchain_dot_zenex_dot_query__pb2.QuerySwapsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -66,5 +83,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Query/Params',
             zrchain_dot_zenex_dot_query__pb2.QueryParamsRequest.SerializeToString,
             zrchain_dot_zenex_dot_query__pb2.QueryParamsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Swaps(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Query/Swaps',
+            zrchain_dot_zenex_dot_query__pb2.QuerySwapsRequest.SerializeToString,
+            zrchain_dot_zenex_dot_query__pb2.QuerySwapsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

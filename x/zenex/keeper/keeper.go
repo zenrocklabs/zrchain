@@ -126,3 +126,15 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, error) {
 
 	return &pairType, nil
 }
+
+func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
+	swapStore, err := k.SwapsStore.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	swaps, err := swapStore.Values()
+	if err != nil {
+		return nil, err
+	}
+	return swaps, nil
+}

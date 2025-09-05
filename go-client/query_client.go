@@ -25,6 +25,7 @@ type QueryClient struct {
 	*ValidationQueryClient                  // For querying validator information
 	*ZenBTCQueryClient                      // For querying ZenBTC-related data
 	*ZenTPQueryClient                       // For querying ZenTP-related data
+	*ZenexQueryClient                       // For querying ZenEX-related data
 	conn                   *grpc.ClientConn // The underlying gRPC connection
 }
 
@@ -119,6 +120,7 @@ func NewQueryClientWithConn(conn *grpc.ClientConn) *QueryClient {
 		ValidationQueryClient: NewValidationQueryClient(conn),
 		ZenBTCQueryClient:     NewZenBTCQueryClient(conn),
 		ZenTPQueryClient:      NewZenTPQueryClient(conn),
+		ZenexQueryClient:      NewZenexQueryClient(conn),
 		conn:                  conn,
 	}
 }

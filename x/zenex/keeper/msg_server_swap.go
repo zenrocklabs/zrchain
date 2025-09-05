@@ -19,7 +19,7 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
-	if !workspace.IsOwner(msg.Creator) {
+	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).Btcproxyaddress {
 		return nil, errors.New("sender key is not the owner of the workspace")
 	}
 
@@ -62,9 +62,10 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 	swapCount++
 
 	swap := types.Swap{
-		Id:     swapCount,
-		Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
-		Pair:   msg.Pair,
+		Creator: msg.Creator,
+		SwapId:  swapCount,
+		Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+		Pair:    msg.Pair,
 		Data: &types.SwapData{
 			BaseToken:  pair.BaseToken,
 			QuoteToken: pair.QuoteToken,
@@ -88,5 +89,5 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
-	return &types.MsgSwapResponse{Id: swap.Id}, nil
+	return &types.MsgSwapResponse{Id: swap.SwapId}, nil
 }

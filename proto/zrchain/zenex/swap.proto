@@ -11,14 +11,15 @@ import "zrchain/validation/asset_data.proto";
 
 // Swap objects defines a cross-chain swap operation
 message Swap {
-  uint64 id = 1;
-  SwapStatus status = 2;
-  string pair = 3;
-  SwapData data = 4;
-  uint64 sender_key_id = 5;
-  uint64 recipient_key_id = 6;
-  string workspace = 7;
-  bool zenbtc_yield = 8;
+  string creator = 1;
+  uint64 swap_id = 2;
+  SwapStatus status = 3;
+  string pair = 4;
+  SwapData data = 5;
+  uint64 sender_key_id = 6;
+  uint64 recipient_key_id = 7;
+  string workspace = 8;
+  bool zenbtc_yield = 9;
 }
 
 // SwapStatus defines the status of the swap.
