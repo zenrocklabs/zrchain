@@ -372,6 +372,7 @@ func NewZenrockApp(
 		treasurytypes.StoreKey,
 		zenbtctypes.StoreKey,
 		zentptypes.StoreKey,
+		zenextypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
