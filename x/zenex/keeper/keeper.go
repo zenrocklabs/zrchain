@@ -169,7 +169,9 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 	switch pair {
 	case "rockbtc":
 		// returns BTC amount in satoshis to transfer
-		satoshis := math.NewUint(amountIn).Mul(math.Uint(price.Abs())).Uint64()
+		amountInDec := math.LegacyNewDecFromInt(math.NewIntFromUint64(amountIn))
+		satoshisDec := amountInDec.Mul(price.Abs())
+		satoshis := satoshisDec.TruncateInt().Uint64()
 		if k.GetParams(ctx).MinimumSatoshis > satoshis {
 			return 0, types.ErrMinimumSatoshis
 		}
@@ -179,7 +181,9 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 			return 0, types.ErrMinimumSatoshis
 		}
 		// returns ROCK amount in urock to transfer
-		return math.NewUint(amountIn).Mul(math.Uint(price.Abs())).Uint64(), nil
+		amountInDec := math.LegacyNewDecFromInt(math.NewIntFromUint64(amountIn))
+		urockDec := amountInDec.Mul(price.Abs())
+		return urockDec.TruncateInt().Uint64(), nil
 	default:
 		return 0, fmt.Errorf("unknown pair: %s", pair)
 	}

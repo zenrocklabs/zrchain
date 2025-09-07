@@ -438,3 +438,29 @@ func (s *ValidationKeeperTestSuite) TestHooks() {
 		require.Equal(test.expHooks, hooks)
 	}
 }
+
+func (s *ValidationKeeperTestSuite) TestGetRockBtcPrice() {
+	ctx, keeper := s.ctx, s.validationKeeper
+	require := s.Require()
+
+	expPriceBTC := math.LegacyNewDecFromInt(math.NewInt(110000))
+	expPriceROCK := math.LegacyNewDecFromInt(math.NewInt(25)).Quo(math.LegacyNewDecFromInt(math.NewInt(1000)))
+	require.NoError(keeper.AssetPrices.Set(ctx, validationtypes.Asset_ROCK, expPriceROCK))
+	require.NoError(keeper.AssetPrices.Set(ctx, validationtypes.Asset_BTC, expPriceBTC))
+	resPrice, err := keeper.GetRockBtcPrice(ctx)
+	require.NoError(err)
+	require.Equal(expPriceROCK.Quo(expPriceBTC), resPrice)
+}
+
+func (s *ValidationKeeperTestSuite) TestGetBtcRockPrice() {
+	ctx, keeper := s.ctx, s.validationKeeper
+	require := s.Require()
+
+	expPriceBTC := math.LegacyNewDecFromInt(math.NewInt(110000))
+	expPriceROCK := math.LegacyNewDecFromInt(math.NewInt(25)).Quo(math.LegacyNewDecFromInt(math.NewInt(1000)))
+	require.NoError(keeper.AssetPrices.Set(ctx, validationtypes.Asset_ROCK, expPriceROCK))
+	require.NoError(keeper.AssetPrices.Set(ctx, validationtypes.Asset_BTC, expPriceBTC))
+	resPrice, err := keeper.GetBtcRockPrice(ctx)
+	require.NoError(err)
+	require.Equal(expPriceBTC.Quo(expPriceROCK), resPrice)
+}

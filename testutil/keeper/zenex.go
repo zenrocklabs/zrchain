@@ -16,7 +16,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
@@ -35,10 +34,9 @@ func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 
-	ctrl := gomock.NewController(t)
-	mockIdentityKeeper := zenextestutil.NewMockIdentityKeeper(ctrl)
-	mockTreasuryKeeper := zenextestutil.NewMockTreasuryKeeper(ctrl)
-	mockValidationKeeper := zenextestutil.NewMockValidationKeeper(ctrl)
+	mockIdentityKeeper := &zenextestutil.MockIdentityKeeper{}
+	mockTreasuryKeeper := &zenextestutil.MockTreasuryKeeper{}
+	mockValidationKeeper := &zenextestutil.MockValidationKeeper{}
 
 	k := keeper.NewKeeper(
 		cdc,
