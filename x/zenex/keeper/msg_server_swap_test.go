@@ -1,32 +1,18 @@
 package keeper_test
 
 import (
-	"testing"
+	"cosmossdk.io/math"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/stretchr/testify/require"
-
-	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
-	identity "github.com/Zenrock-Foundation/zrchain/v6/x/identity/module"
 	identitytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
-	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
-	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
+	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
-func TestMsgSwap(t *testing.T) {
-	t.SkipNow() // missing expected keeper calls
-	k, _, ctx := setupMsgServer(t)
-	params := types.DefaultParams()
-	require.NoError(t, k.SetParams(ctx, params))
-	// _ := sdk.UnwrapSDKContext(ctx)
+func (s *IntegrationTestSuite) TestMsgSwap() {
 
-	// default params
-	testCases := []struct {
+	tests := []struct {
 		name      string
 		input     *types.MsgSwap
 		expErr    bool
@@ -37,7 +23,7 @@ func TestMsgSwap(t *testing.T) {
 		{
 			name: "Pass: Happy Path",
 			input: &types.MsgSwap{
-				Creator:      "testCreator",
+				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:         "rockbtc",
 				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:     100000,
@@ -55,12 +41,70 @@ func TestMsgSwap(t *testing.T) {
 				Pair:   "rockbtc",
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
-						Asset: validationtypes.Asset_ROCK,
+						Asset:     validationtypes.Asset_ROCK,
+						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						Precision: 6,
 					},
 					QuoteToken: &validationtypes.AssetData{
-						Asset: validationtypes.Asset_BTC,
+						Asset:     validationtypes.Asset_BTC,
+						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						Precision: 8,
 					},
-					Price:     sdkmath.LegacyNewDec(100000),
+					Price:     math.LegacyNewDec(100000),
+					AmountIn:  100000,
+					AmountOut: 100000,
+				},
+				SenderKeyId:    1,
+				RecipientKeyId: 2,
+				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
+				ZenbtcYield:    false,
+			},
+		},
+		{
+			name: "FAIL: Invalid pair",
+			input: &types.MsgSwap{
+				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:         "wrongpair",
+				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:     100000,
+				Yield:        false,
+				SenderKey:    1,
+				RecipientKey: 2,
+			},
+			expErr:    true,
+			expErrMsg: "invalid keytype wrongpair, valid types [rockbtc btcrock]: invalid request",
+		},
+		{
+			name: "Pass: Proxy address",
+			input: &types.MsgSwap{
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Pair:         "rockbtc",
+				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:     100000,
+				Yield:        false,
+				SenderKey:    1,
+				RecipientKey: 2,
+			},
+			expErr: false,
+			want: &types.MsgSwapResponse{
+				SwapId: 1,
+			},
+			wantSwap: &types.Swap{
+				SwapId: 1,
+				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Pair:   "rockbtc",
+				Data: &types.SwapData{
+					BaseToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_ROCK,
+						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						Precision: 6,
+					},
+					QuoteToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_BTC,
+						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						Precision: 8,
+					},
+					Price:     math.LegacyNewDec(100000),
 					AmountIn:  100000,
 					AmountOut: 100000,
 				},
@@ -72,37 +116,36 @@ func TestMsgSwap(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			keepers := keepertest.NewTest(t)
-			zk := keepers.ZenexKeeper
-			ik := keepers.IdentityKeeper
-			tk := keepers.TreasuryKeeper
-			ctx := keepers.Ctx
-			msgSer := keeper.NewMsgServerImpl(*zk)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := s.zenexKeeper.SwapsCount.Set(s.ctx, 0)
+			s.Require().NoError(err)
 
-			identityGenesis := identitytypes.GenesisState{
-				Workspaces: []identitytypes.Workspace{identitytestutil.DefaultWs},
+			params := types.DefaultParams()
+			params.BtcProxyAddress = tt.input.Creator
+			s.zenexKeeper.SetParams(s.ctx, params)
+
+			if !tt.expErr {
+				s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.SenderKey).Return(&treasurytestutil.DefaultKeys[0], nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RecipientKey).Return(&treasurytestutil.DefaultKeys[1], nil)
+				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
+					validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
+					validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
+				}, nil)
+				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
 			}
-			identity.InitGenesis(ctx, *ik, identityGenesis)
 
-			treasuryGenesis := treasurytypes.GenesisState{
-				Keys: treasurytestutil.DefaultKeys,
-			}
+			swapId, err := s.msgServer.Swap(s.ctx, tt.input)
 
-			treasury.InitGenesis(ctx, *tk, treasuryGenesis)
-
-			got, err := msgSer.Swap(ctx, tc.input)
-
-			if tc.expErr {
-				require.Error(t, err)
+			if tt.expErr {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expErrMsg, err.Error())
+				s.Require().Nil(swapId)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.want, got)
-
-				gotSwap, err := zk.SwapsStore.Get(ctx, got.SwapId)
-				require.NoError(t, err)
-				require.Equal(t, tc.wantSwap, &gotSwap)
+				s.Require().NoError(err)
+				s.Require().NotNil(swapId)
+				s.Require().Equal(tt.want.SwapId, swapId.SwapId)
 			}
 		})
 	}

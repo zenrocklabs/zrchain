@@ -32,6 +32,12 @@ var DefaultWs = types.Workspace{
 	Owners:  []string{"testOwner"},
 }
 
+var DefaultWsWithAlice = types.Workspace{
+	Address: "workspace14a2hpadpsy9h4auve2z8lw",
+	Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+	Owners:  []string{"zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty"},
+}
+
 var DefaultWsWithOwners = types.Workspace{
 	Address: "workspace14a2hpadpsy9h4auve2z8lw",
 	Creator: "testOwner",
