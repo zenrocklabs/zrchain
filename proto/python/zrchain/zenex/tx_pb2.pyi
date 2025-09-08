@@ -4,6 +4,7 @@ from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from zrchain.zenex import params_pb2 as _params_pb2
 from zrchain.treasury import wallet_pb2 as _wallet_pb2
+from zrchain.zenex import swap_pb2 as _swap_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
@@ -61,3 +62,19 @@ class MsgZenexTransferRequestResponse(_message.Message):
     SIGN_TX_ID_FIELD_NUMBER: _ClassVar[int]
     sign_tx_id: int
     def __init__(self, sign_tx_id: _Optional[int] = ...) -> None: ...
+
+class MsgAcknowledgePoolTransfer(_message.Message):
+    __slots__ = ("creator", "swap_id", "source_tx_hash", "status")
+    CREATOR_FIELD_NUMBER: _ClassVar[int]
+    SWAP_ID_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    creator: str
+    swap_id: int
+    source_tx_hash: str
+    status: _swap_pb2.SwapStatus
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., status: _Optional[_Union[_swap_pb2.SwapStatus, str]] = ...) -> None: ...
+
+class MsgAcknowledgePoolTransferResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

@@ -23,7 +23,7 @@ SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
 
 class Swap(_message.Message):
-    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_tx_id")
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_tx_id", "source_tx_hash")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -34,6 +34,7 @@ class Swap(_message.Message):
     ZENEX_POOL_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
     SIGN_TX_ID_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     status: SwapStatus
@@ -44,7 +45,8 @@ class Swap(_message.Message):
     zenex_pool_key_id: int
     workspace: str
     sign_tx_id: int
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ...) -> None: ...
+    source_tx_hash: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")

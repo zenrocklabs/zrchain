@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Msg_UpdateParams_FullMethodName         = "/zrchain.zenex.Msg/UpdateParams"
-	Msg_SwapRequest_FullMethodName          = "/zrchain.zenex.Msg/SwapRequest"
-	Msg_ZenexTransferRequest_FullMethodName = "/zrchain.zenex.Msg/ZenexTransferRequest"
+	Msg_UpdateParams_FullMethodName            = "/zrchain.zenex.Msg/UpdateParams"
+	Msg_SwapRequest_FullMethodName             = "/zrchain.zenex.Msg/SwapRequest"
+	Msg_ZenexTransferRequest_FullMethodName    = "/zrchain.zenex.Msg/ZenexTransferRequest"
+	Msg_AcknowledgePoolTransfer_FullMethodName = "/zrchain.zenex.Msg/AcknowledgePoolTransfer"
 )
 
 // MsgClient is the client API for Msg service.
@@ -38,6 +39,8 @@ type MsgClient interface {
 	// ZenexTransfer defines the message for transferring funds
 	// to or from the change address.
 	ZenexTransferRequest(ctx context.Context, in *MsgZenexTransferRequest, opts ...grpc.CallOption) (*MsgZenexTransferRequestResponse, error)
+	// AcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
+	AcknowledgePoolTransfer(ctx context.Context, in *MsgAcknowledgePoolTransfer, opts ...grpc.CallOption) (*MsgAcknowledgePoolTransferResponse, error)
 }
 
 type msgClient struct {
@@ -78,6 +81,16 @@ func (c *msgClient) ZenexTransferRequest(ctx context.Context, in *MsgZenexTransf
 	return out, nil
 }
 
+func (c *msgClient) AcknowledgePoolTransfer(ctx context.Context, in *MsgAcknowledgePoolTransfer, opts ...grpc.CallOption) (*MsgAcknowledgePoolTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgAcknowledgePoolTransferResponse)
+	err := c.cc.Invoke(ctx, Msg_AcknowledgePoolTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -92,6 +105,8 @@ type MsgServer interface {
 	// ZenexTransfer defines the message for transferring funds
 	// to or from the change address.
 	ZenexTransferRequest(context.Context, *MsgZenexTransferRequest) (*MsgZenexTransferRequestResponse, error)
+	// AcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
+	AcknowledgePoolTransfer(context.Context, *MsgAcknowledgePoolTransfer) (*MsgAcknowledgePoolTransferResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -110,6 +125,9 @@ func (UnimplementedMsgServer) SwapRequest(context.Context, *MsgSwapRequest) (*Ms
 }
 func (UnimplementedMsgServer) ZenexTransferRequest(context.Context, *MsgZenexTransferRequest) (*MsgZenexTransferRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ZenexTransferRequest not implemented")
+}
+func (UnimplementedMsgServer) AcknowledgePoolTransfer(context.Context, *MsgAcknowledgePoolTransfer) (*MsgAcknowledgePoolTransferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcknowledgePoolTransfer not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -186,6 +204,24 @@ func _Msg_ZenexTransferRequest_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_AcknowledgePoolTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAcknowledgePoolTransfer)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AcknowledgePoolTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AcknowledgePoolTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AcknowledgePoolTransfer(ctx, req.(*MsgAcknowledgePoolTransfer))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -204,6 +240,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ZenexTransferRequest",
 			Handler:    _Msg_ZenexTransferRequest_Handler,
+		},
+		{
+			MethodName: "AcknowledgePoolTransfer",
+			Handler:    _Msg_AcknowledgePoolTransfer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

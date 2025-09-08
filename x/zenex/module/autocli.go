@@ -59,6 +59,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			Short: "Send a zenex-bitcoin-transfer tx",
 			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "swapId"}, {ProtoField: "unsignedTx"},},
 		},
+		{
+			RpcMethod: "AcknowledgePoolTransfer",
+			Use: "acknowledge-pool-transfer [swap-id] [source-tx-hash]",
+			Short: "Send a AcknowledgePoolTransfer tx",
+			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "swapId"}, {ProtoField: "sourceTxHash"},},
+		},
 		// this line is used by ignite scaffolding # autocli/tx
 			},
 		},

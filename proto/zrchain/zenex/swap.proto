@@ -21,6 +21,7 @@ message Swap {
   uint64 zenex_pool_key_id = 8;
   string workspace = 9;
   uint64 sign_tx_id = 10;
+  string source_tx_hash = 11;
 }
 
 // SwapStatus defines the status of the swap.

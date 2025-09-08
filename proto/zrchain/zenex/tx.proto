@@ -8,6 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zenex/params.proto";
 import "zrchain/treasury/wallet.proto";
+import "zrchain/zenex/swap.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
 
@@ -20,11 +21,14 @@ service Msg {
   rpc UpdateParams (MsgUpdateParams) returns (MsgUpdateParamsResponse);
   
   // Swap defines a (cross-chain) swap operation.
-  rpc SwapRequest          (MsgSwapRequest         ) returns (MsgSwapRequestResponse         );
+  rpc SwapRequest (MsgSwapRequest) returns (MsgSwapRequestResponse);
   
   // ZenexTransfer defines the message for transferring funds 
   // to or from the change address.
-  rpc ZenexTransferRequest (MsgZenexTransferRequest) returns (MsgZenexTransferRequestResponse);
+  rpc ZenexTransferRequest    (MsgZenexTransferRequest   ) returns (MsgZenexTransferRequestResponse   );
+
+  // AcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
+  rpc AcknowledgePoolTransfer (MsgAcknowledgePoolTransfer) returns (MsgAcknowledgePoolTransferResponse);
 }
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
@@ -47,12 +51,12 @@ message MsgUpdateParamsResponse {}
 // MsgSwapRequest defines a (cross-chain) swap operation.
 message MsgSwapRequest {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator           = 1;
-  string pair              = 2;
-  string workspace         = 3;
-  uint64 amount_in         = 4;
-  uint64 rock_key_id       = 5;
-  uint64 btc_key_id        = 6;
+  string creator     = 1;
+  string pair        = 2;
+  string workspace   = 3;
+  uint64 amount_in   = 4;
+  uint64 rock_key_id = 5;
+  uint64 btc_key_id  = 6;
 }
 
 // MsgSwapResponse defines the response structure for executing a
@@ -61,13 +65,13 @@ message MsgSwapRequestResponse {
   uint64 swap_id = 1;
 }
 
-// MsgZenexTransfer defines the message for transferring funds 
+// MsgZenexTransfer defines the message for transferring funds
 // to or from the change address.
 message MsgZenexTransferRequest {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator    = 1;
-  uint64 swap_id     = 2;
-  bytes unsigned_tx = 3;
+  string                      creator     = 1;
+  uint64                      swap_id     = 2;
+  bytes                       unsigned_tx = 3;
   zrchain.treasury.WalletType wallet_type = 4;
 }
 
@@ -76,4 +80,17 @@ message MsgZenexTransferRequest {
 message MsgZenexTransferRequestResponse {
   uint64 sign_tx_id = 1;
 }
+
+// MsgAcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
+message MsgAcknowledgePoolTransfer {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator      = 1;
+  uint64 swap_id       = 2;
+  string source_tx_hash = 3;
+  zrchain.zenex.SwapStatus status = 4;
+}
+
+// MsgAcknowledgePoolTransferResponse defines the response structure for executing a
+// MsgAcknowledgePoolTransfer message.
+message MsgAcknowledgePoolTransferResponse {}
 
