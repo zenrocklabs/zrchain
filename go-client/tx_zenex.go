@@ -18,19 +18,18 @@ func (c *ZenTPTxClient) NewMsgSwap(
 	ctx context.Context,
 	creator string,
 	amountIn uint64,
-	yield bool,
-	senderKey uint64,
-	recipientKey uint64,
+	rockKeyID uint64,
+	btcKeyID uint64,
 	pair string,
 	workspace string,
 ) (string, error) {
 	msg := &types.MsgSwapRequest{
-		Creator:      creator,
-		Pair:         pair,
-		Workspace:    workspace,
-		AmountIn:     amountIn,
-		SenderKey:    senderKey,
-		RecipientKey: recipientKey,
+		Creator:   creator,
+		Pair:      pair,
+		Workspace: workspace,
+		AmountIn:  amountIn,
+		RockKeyId: rockKeyID,
+		BtcKeyId:  btcKeyID,
 	}
 	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
 	if err != nil {

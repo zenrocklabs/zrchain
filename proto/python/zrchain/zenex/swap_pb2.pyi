@@ -21,24 +21,28 @@ SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
 
 class Swap(_message.Message):
-    __slots__ = ("creator", "swap_id", "status", "pair", "data", "sender_key_id", "recipient_key_id", "workspace")
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "btc_change_key_id", "workspace", "destination_caip_2")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     PAIR_FIELD_NUMBER: _ClassVar[int]
     DATA_FIELD_NUMBER: _ClassVar[int]
-    SENDER_KEY_ID_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    ROCK_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    BTC_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    BTC_CHANGE_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
+    DESTINATION_CAIP_2_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     status: SwapStatus
     pair: str
     data: SwapData
-    sender_key_id: int
-    recipient_key_id: int
+    rock_key_id: int
+    btc_key_id: int
+    btc_change_key_id: int
     workspace: str
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., sender_key_id: _Optional[int] = ..., recipient_key_id: _Optional[int] = ..., workspace: _Optional[str] = ...) -> None: ...
+    destination_caip_2: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., btc_change_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., destination_caip_2: _Optional[str] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")

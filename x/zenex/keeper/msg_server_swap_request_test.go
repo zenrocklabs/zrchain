@@ -26,12 +26,12 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 		{
 			name: "Pass: Happy Path",
 			input: &types.MsgSwapRequest{
-				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:         "rockbtc",
-				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:     100000,
-				SenderKey:    1,
-				RecipientKey: 2,
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      "rockbtc",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  2,
 			},
 			expErr: false,
 			want: &types.MsgSwapRequestResponse{
@@ -56,20 +56,21 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 					AmountIn:  100000,
 					AmountOut: 100000,
 				},
-				SenderKeyId:    1,
-				RecipientKeyId: 2,
+				RockKeyId:      1,
+				BtcKeyId:       2,
+				BtcChangeKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
 		{
 			name: "FAIL: Invalid pair",
 			input: &types.MsgSwapRequest{
-				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:         "wrongpair",
-				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:     100000,
-				SenderKey:    1,
-				RecipientKey: 2,
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      "wrongpair",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  2,
 			},
 			expErr:    true,
 			expErrMsg: "invalid keytype wrongpair, valid types [rockbtc btcrock]: invalid request",
@@ -77,12 +78,12 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 		{
 			name: "Pass: Proxy address",
 			input: &types.MsgSwapRequest{
-				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
-				Pair:         "rockbtc",
-				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:     100000,
-				SenderKey:    1,
-				RecipientKey: 2,
+				Creator:   "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Pair:      "rockbtc",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  2,
 			},
 			expErr: false,
 			want: &types.MsgSwapRequestResponse{
@@ -107,8 +108,9 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 					AmountIn:  100000,
 					AmountOut: 100000,
 				},
-				SenderKeyId:    1,
-				RecipientKeyId: 2,
+				RockKeyId:      1,
+				BtcKeyId:       2,
+				BtcChangeKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
@@ -125,14 +127,14 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 
 			if !tt.expErr {
 				s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.SenderKey).Return(&treasurytestutil.DefaultKeys[tt.input.SenderKey-1], nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RecipientKey).Return(&treasurytestutil.DefaultKeys[tt.input.RecipientKey-1], nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil)
 				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
 					validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
 					validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
 				}, nil)
 				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
-				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.SenderKey-1], "zen")
+				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], "zen")
 				if err != nil {
 					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
 				}

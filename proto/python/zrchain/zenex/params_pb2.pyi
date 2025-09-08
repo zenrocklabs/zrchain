@@ -7,9 +7,11 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Params(_message.Message):
-    __slots__ = ("btc_proxy_address", "minimum_satoshis")
+    __slots__ = ("btc_proxy_address", "btc_change_address_key_id", "minimum_satoshis")
     BTC_PROXY_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    BTC_CHANGE_ADDRESS_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     MINIMUM_SATOSHIS_FIELD_NUMBER: _ClassVar[int]
     btc_proxy_address: str
+    btc_change_address_key_id: int
     minimum_satoshis: int
-    def __init__(self, btc_proxy_address: _Optional[str] = ..., minimum_satoshis: _Optional[int] = ...) -> None: ...
+    def __init__(self, btc_proxy_address: _Optional[str] = ..., btc_change_address_key_id: _Optional[int] = ..., minimum_satoshis: _Optional[int] = ...) -> None: ...

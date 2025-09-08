@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,27 +16,29 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		return nil, err
 	}
 
+	btcChangeKeyId := k.GetParams(ctx).BtcChangeAddressKeyId
+
 	workspace, err := k.identityKeeper.GetWorkspace(ctx, msg.Workspace)
 	if err != nil {
 		return nil, err
 	}
 
 	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).BtcProxyAddress {
-		return nil, errors.New("sender key is not the owner of the workspace")
+		return nil, errors.New("message creator is not the owner of the workspace or the btc proxy address")
 	}
 
-	senderKey, err := k.treasuryKeeper.GetKey(ctx, msg.SenderKey)
+	rockKey, err := k.treasuryKeeper.GetKey(ctx, msg.RockKeyId)
 	if err != nil {
 		return nil, err
 	}
 
-	recipientKey, err := k.treasuryKeeper.GetKey(ctx, msg.RecipientKey)
+	btcKey, err := k.treasuryKeeper.GetKey(ctx, msg.BtcKeyId)
 	if err != nil {
 		return nil, err
 	}
 
-	if senderKey.WorkspaceAddr != msg.Workspace || recipientKey.WorkspaceAddr != msg.Workspace {
-		return nil, errors.New("sender key is not in the workspace")
+	if rockKey.WorkspaceAddr != msg.Workspace || btcKey.WorkspaceAddr != msg.Workspace {
+		return nil, fmt.Errorf("rock key %d or btc key %d is not in the workspace %s", msg.RockKeyId, msg.BtcKeyId, msg.Workspace)
 	}
 
 	pair, price, err := k.GetPair(ctx, msg.Pair)
@@ -43,18 +46,21 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		return nil, err
 	}
 
-	if msg.Pair == "rockbtc" {
-		err = k.EscrowRock(ctx, *senderKey, msg.AmountIn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// either returns BTC or ROCK amount to transfer
 	// checks if the amount in is greater than the minimum satoshis
 	amountOut, err := k.GetAmountOut(ctx, msg.Pair, msg.AmountIn, price)
 	if err != nil {
 		return nil, err
+	}
+
+	switch msg.Pair {
+	case "rockbtc":
+		err = k.EscrowRock(ctx, *rockKey, msg.AmountIn)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("invalid pair: %s", msg.Pair)
 	}
 
 	swapCount, err := k.SwapsCount.Get(ctx)
@@ -75,8 +81,9 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 			AmountIn:   msg.AmountIn,
 			AmountOut:  amountOut,
 		},
-		SenderKeyId:    msg.SenderKey,
-		RecipientKeyId: msg.RecipientKey,
+		RockKeyId:      msg.RockKeyId,
+		BtcKeyId:       msg.BtcKeyId,
+		BtcChangeKeyId: btcChangeKeyId,
 		Workspace:      msg.Workspace,
 	}
 

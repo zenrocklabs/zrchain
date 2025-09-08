@@ -42,18 +42,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Skip:      true, // skipped because authority gated
 				},
 				{
-					RpcMethod: "Swap",
-					Use:       "swap [workspace] [rockbtc|btcrock] [amount_in] [sender_key] [recipient_key]",
+					RpcMethod: "SwapRequest",
+					Use:       "swap [workspace] [rockbtc|btcrock] [amount_in] [rock_key_id] [btc_key_id]",
 					Short:     "Send a swap tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "workspace"},
 						{ProtoField: "pair"},
 						{ProtoField: "amount_in"},
-						{ProtoField: "sender_key"},
-						{ProtoField: "recipient_key"},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"yield": {Usage: "Whether to yield the swap (true|false)"},
+						{ProtoField: "rock_key_id"},
+						{ProtoField: "btc_key_id"},
 					},
 				},
 				// this line is used by ignite scaffolding # autocli/tx

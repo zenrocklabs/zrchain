@@ -29,7 +29,7 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.zenex import params_pb2 as zrchain_dot_zenex_dot_params__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zenex/tx.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zenex/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\xcb\x01\n\x0eMsgSwapRequest\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x12\n\x04pair\x18\x02 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x03 \x01(\tR\tworkspace\x12\x1b\n\tamount_in\x18\x04 \x01(\x04R\x08\x61mountIn\x12\x1d\n\nsender_key\x18\x05 \x01(\x04R\tsenderKey\x12#\n\rrecipient_key\x18\x06 \x01(\x04R\x0crecipientKey:\x0c\x82\xe7\xb0*\x07\x63reator\"1\n\x16MsgSwapRequestResponse\x12\x17\n\x07swap_id\x18\x01 \x01(\x04R\x06swapId2\xb9\x01\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zenex.MsgUpdateParams\x1a&.zrchain.zenex.MsgUpdateParamsResponse\x12S\n\x0bSwapRequest\x12\x1d.zrchain.zenex.MsgSwapRequest\x1a%.zrchain.zenex.MsgSwapRequestResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16zrchain/zenex/tx.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x17\x63osmos/msg/v1/msg.proto\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x14gogoproto/gogo.proto\x1a\x1azrchain/zenex/params.proto\"\xb7\x01\n\x0fMsgUpdateParams\x12\x36\n\tauthority\x18\x01 \x01(\tB\x18\xd2\xb4-\x14\x63osmos.AddressStringR\tauthority\x12\x38\n\x06params\x18\x02 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params:2\x82\xe7\xb0*\tauthority\x8a\xe7\xb0*\x1fzrchain/x/zenex/MsgUpdateParams\"\x19\n\x17MsgUpdateParamsResponse\"\xf2\x01\n\x0eMsgSwapRequest\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x12\n\x04pair\x18\x02 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x03 \x01(\tR\tworkspace\x12\x1b\n\tamount_in\x18\x04 \x01(\x04R\x08\x61mountIn\x12\x1e\n\x0brock_key_id\x18\x05 \x01(\x04R\trockKeyId\x12\x1c\n\nbtc_key_id\x18\x06 \x01(\x04R\x08\x62tcKeyId\x12+\n\x11\x64\x65stination_caip2\x18\x07 \x01(\tR\x10\x64\x65stinationCaip2:\x0c\x82\xe7\xb0*\x07\x63reator\"1\n\x16MsgSwapRequestResponse\x12\x17\n\x07swap_id\x18\x01 \x01(\x04R\x06swapId2\xb9\x01\n\x03Msg\x12V\n\x0cUpdateParams\x12\x1e.zrchain.zenex.MsgUpdateParams\x1a&.zrchain.zenex.MsgUpdateParamsResponse\x12S\n\x0bSwapRequest\x12\x1d.zrchain.zenex.MsgSwapRequest\x1a%.zrchain.zenex.MsgSwapRequestResponse\x1a\x05\x80\xe7\xb0*\x01\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -52,9 +52,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_start=348
   _globals['_MSGUPDATEPARAMSRESPONSE']._serialized_end=373
   _globals['_MSGSWAPREQUEST']._serialized_start=376
-  _globals['_MSGSWAPREQUEST']._serialized_end=579
-  _globals['_MSGSWAPREQUESTRESPONSE']._serialized_start=581
-  _globals['_MSGSWAPREQUESTRESPONSE']._serialized_end=630
-  _globals['_MSG']._serialized_start=633
-  _globals['_MSG']._serialized_end=818
+  _globals['_MSGSWAPREQUEST']._serialized_end=618
+  _globals['_MSGSWAPREQUESTRESPONSE']._serialized_start=620
+  _globals['_MSGSWAPREQUESTRESPONSE']._serialized_end=669
+  _globals['_MSG']._serialized_start=672
+  _globals['_MSG']._serialized_end=857
 # @@protoc_insertion_point(module_scope)

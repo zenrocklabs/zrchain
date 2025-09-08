@@ -22,20 +22,22 @@ class MsgUpdateParamsResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class MsgSwapRequest(_message.Message):
-    __slots__ = ("creator", "pair", "workspace", "amount_in", "sender_key", "recipient_key")
+    __slots__ = ("creator", "pair", "workspace", "amount_in", "rock_key_id", "btc_key_id", "destination_caip2")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     PAIR_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_IN_FIELD_NUMBER: _ClassVar[int]
-    SENDER_KEY_FIELD_NUMBER: _ClassVar[int]
-    RECIPIENT_KEY_FIELD_NUMBER: _ClassVar[int]
+    ROCK_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    BTC_KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    DESTINATION_CAIP2_FIELD_NUMBER: _ClassVar[int]
     creator: str
     pair: str
     workspace: str
     amount_in: int
-    sender_key: int
-    recipient_key: int
-    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., sender_key: _Optional[int] = ..., recipient_key: _Optional[int] = ...) -> None: ...
+    rock_key_id: int
+    btc_key_id: int
+    destination_caip2: str
+    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., destination_caip2: _Optional[str] = ...) -> None: ...
 
 class MsgSwapRequestResponse(_message.Message):
     __slots__ = ("swap_id",)

@@ -11,15 +11,16 @@ import (
 
 var _ sdk.Msg = &MsgSwapRequest{}
 
-func NewMsgSwap(creator string, pair string, workspace string, amountIn uint64, senderKey uint64, recipientKey uint64) *MsgSwapRequest {
+func NewMsgSwap(creator, pair, workspace, destinationCaip2 string, amountIn uint64, rockKeyId uint64, btcKeyId uint64) *MsgSwapRequest {
 
 	return &MsgSwapRequest{
-		Creator:      creator,
-		Pair:         pair,
-		Workspace:    workspace,
-		AmountIn:     amountIn,
-		SenderKey:    senderKey,
-		RecipientKey: recipientKey,
+		Creator:          creator,
+		Pair:             pair,
+		Workspace:        workspace,
+		AmountIn:         amountIn,
+		RockKeyId:        rockKeyId,
+		BtcKeyId:         btcKeyId,
+		DestinationCaip2: destinationCaip2,
 	}
 }
 

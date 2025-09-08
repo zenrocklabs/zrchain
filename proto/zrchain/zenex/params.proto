@@ -13,6 +13,8 @@ message Params {
 
   // the address of the BTC proxy for permissions
   string btc_proxy_address = 1 [(gogoproto.moretags) = "yaml:\"btcproxyaddress\""];
+  // the address to send BTC change to
+  uint64 btc_change_address_key_id = 2 [(gogoproto.moretags) = "yaml:\"btcchangeaddresskeyid\""];
   // to prevent dust swaps
-  uint64 minimum_satoshis = 2;
+  uint64 minimum_satoshis = 3;
 }

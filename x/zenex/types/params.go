@@ -9,10 +9,12 @@ import (
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
-	KeyBtcproxyaddress = []byte("Btcproxyaddress")
-	KeyMinimumSatoshis = []byte("MinimumSatoshis")
+	KeyBtcproxyaddress       = []byte("Btcproxyaddress")
+	KeyMinimumSatoshis       = []byte("MinimumSatoshis")
+	KeyBtcChangeAddressKeyId = []byte("BtcChangeAddressKeyId")
 	// TODO: Determine the default value
-	DefaultBtcproxyaddress string = "btcproxyaddress"
+	DefaultBtcproxyaddress       string = "btcproxyaddress"
+	DefaultBtcChangeAddressKeyId uint64 = 100
 )
 
 // ParamKeyTable the param key table for launch module
@@ -24,10 +26,12 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(
 	btcProxyAddress string,
 	MinimumSatoshis uint64,
+	DefaultBtcChangeAddressKeyId uint64,
 ) Params {
 	return Params{
-		BtcProxyAddress: btcProxyAddress,
-		MinimumSatoshis: MinimumSatoshis,
+		BtcProxyAddress:       btcProxyAddress,
+		MinimumSatoshis:       MinimumSatoshis,
+		BtcChangeAddressKeyId: DefaultBtcChangeAddressKeyId,
 	}
 }
 
@@ -36,6 +40,7 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcproxyaddress,
 		5000, // 5000 satoshis = 0.00005 BTC
+		DefaultBtcChangeAddressKeyId,
 	)
 }
 
@@ -44,6 +49,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyBtcproxyaddress, &p.BtcProxyAddress, validateBtcproxyaddress),
 		paramtypes.NewParamSetPair(KeyMinimumSatoshis, &p.MinimumSatoshis, validateMinimumSatoshis),
+		paramtypes.NewParamSetPair(KeyBtcChangeAddressKeyId, &p.BtcChangeAddressKeyId, validateBtcChangeAddressKeyId),
 	}
 }
 
@@ -53,6 +59,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateMinimumSatoshis(p.MinimumSatoshis); err != nil {
+		return err
+	}
+	if err := validateBtcChangeAddressKeyId(p.BtcChangeAddressKeyId); err != nil {
 		return err
 	}
 
@@ -81,6 +90,16 @@ func validateMinimumSatoshis(v interface{}) error {
 
 	if minimumSatoshis < 5000 {
 		return fmt.Errorf("minimum satoshis cannot be smaller than 5000")
+	}
+
+	return nil
+}
+
+// validateBtcChangeAddressKeyId validates the BtcChangeAddressKeyId param
+func validateBtcChangeAddressKeyId(v interface{}) error {
+	_, ok := v.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", v)
 	}
 
 	return nil

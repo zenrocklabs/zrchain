@@ -45,8 +45,9 @@ message MsgSwapRequest {
   string pair      = 2;
   string workspace = 3;
   uint64 amount_in = 4;
-  uint64 sender_key = 5;
-  uint64 recipient_key = 6;
+  uint64 rock_key_id = 5;
+  uint64 btc_key_id = 6;
+  string destination_caip2 = 7;
 }
 
 // MsgSwapResponse defines the response structure for executing a

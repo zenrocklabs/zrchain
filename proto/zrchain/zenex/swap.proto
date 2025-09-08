@@ -16,9 +16,11 @@ message Swap {
   SwapStatus status = 3;
   string pair = 4;
   SwapData data = 5;
-  uint64 sender_key_id = 6;
-  uint64 recipient_key_id = 7;
-  string workspace = 8;
+  uint64 rock_key_id = 6;
+  uint64 btc_key_id = 7;
+  uint64 btc_change_key_id = 8;
+  string workspace = 9;
+  string destination_caip_2 = 10;
 }
 
 // SwapStatus defines the status of the swap.
