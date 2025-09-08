@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (s *IntegrationTestSuite) TestMsgSwap() {
+func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 
 	tests := []struct {
 		name      string

@@ -12,13 +12,13 @@ import (
 func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZenexTransferRequest) (*types.MsgZenexTransferRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if msg.Creator != k.GetParams(ctx).BtcProxyAddress {
-		return nil, fmt.Errorf("message creator is not the btc proxy address")
-	}
-
 	swap, err := k.SwapsStore.Get(ctx, msg.SwapId)
 	if err != nil {
 		return nil, err
+	}
+
+	if msg.Creator != k.GetParams(ctx).BtcProxyAddress && msg.Creator != swap.Creator {
+		return nil, fmt.Errorf("message creator is not the btc proxy address")
 	}
 
 	if swap.Status != types.SwapStatus_SWAP_STATUS_REQUESTED {
@@ -26,17 +26,20 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	}
 
 	var senderKeyId uint64
+	var txCreator string
 	switch swap.Pair {
 	case "rockbtc":
 		senderKeyId = swap.BtcKeyId
+		txCreator = swap.Creator
 	case "btcrock":
 		senderKeyId = swap.BtcChangeKeyId
+		txCreator = k.GetParams(ctx).BtcProxyAddress
 	default:
 		return nil, fmt.Errorf("invalid pair: %s", swap.Pair)
 	}
 
 	bitcoinTx := treasurytypes.NewMsgNewSignTransactionRequest(
-		swap.Creator,
+		txCreator,
 		[]uint64{senderKeyId},
 		msg.WalletType,
 		msg.UnsignedTx,
