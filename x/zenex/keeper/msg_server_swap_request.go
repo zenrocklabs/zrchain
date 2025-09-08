@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSwapResponse, error) {
+func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest) (*types.MsgSwapRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -78,7 +78,6 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		SenderKeyId:    msg.SenderKey,
 		RecipientKeyId: msg.RecipientKey,
 		Workspace:      msg.Workspace,
-		ZenbtcYield:    msg.Yield,
 	}
 
 	err = k.SwapsStore.Set(ctx, swapCount, swap)
@@ -91,5 +90,5 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
-	return &types.MsgSwapResponse{SwapId: swap.SwapId}, nil
+	return &types.MsgSwapRequestResponse{SwapId: swap.SwapId}, nil
 }

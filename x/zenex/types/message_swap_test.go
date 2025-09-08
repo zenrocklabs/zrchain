@@ -11,18 +11,18 @@ import (
 func TestMsgSwap_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgSwap
+		msg  MsgSwapRequest
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgSwap{
+			msg: MsgSwapRequest{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
-			msg: MsgSwap{
+			msg: MsgSwapRequest{
 				Creator:   sample.AccAddress(),
 				Pair:      "rockbtc",
 				Workspace: sample.WorkspaceAddress(),

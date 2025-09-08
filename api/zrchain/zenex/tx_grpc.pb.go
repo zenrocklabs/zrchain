@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	Msg_UpdateParams_FullMethodName = "/zrchain.zenex.Msg/UpdateParams"
-	Msg_Swap_FullMethodName         = "/zrchain.zenex.Msg/Swap"
+	Msg_SwapRequest_FullMethodName  = "/zrchain.zenex.Msg/SwapRequest"
 )
 
 // MsgClient is the client API for Msg service.
@@ -33,7 +33,7 @@ type MsgClient interface {
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
-	Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOption) (*MsgSwapResponse, error)
+	SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ...grpc.CallOption) (*MsgSwapRequestResponse, error)
 }
 
 type msgClient struct {
@@ -54,10 +54,10 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOption) (*MsgSwapResponse, error) {
+func (c *msgClient) SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ...grpc.CallOption) (*MsgSwapRequestResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MsgSwapResponse)
-	err := c.cc.Invoke(ctx, Msg_Swap_FullMethodName, in, out, cOpts...)
+	out := new(MsgSwapRequestResponse)
+	err := c.cc.Invoke(ctx, Msg_SwapRequest_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ type MsgServer interface {
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
-	Swap(context.Context, *MsgSwap) (*MsgSwapResponse, error)
+	SwapRequest(context.Context, *MsgSwapRequest) (*MsgSwapRequestResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -88,8 +88,8 @@ type UnimplementedMsgServer struct{}
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (UnimplementedMsgServer) Swap(context.Context, *MsgSwap) (*MsgSwapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Swap not implemented")
+func (UnimplementedMsgServer) SwapRequest(context.Context, *MsgSwapRequest) (*MsgSwapRequestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SwapRequest not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -130,20 +130,20 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_Swap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSwap)
+func _Msg_SwapRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSwapRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).Swap(ctx, in)
+		return srv.(MsgServer).SwapRequest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Msg_Swap_FullMethodName,
+		FullMethod: Msg_SwapRequest_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).Swap(ctx, req.(*MsgSwap))
+		return srv.(MsgServer).SwapRequest(ctx, req.(*MsgSwapRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,8 +160,8 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "Swap",
-			Handler:    _Msg_Swap_Handler,
+			MethodName: "SwapRequest",
+			Handler:    _Msg_SwapRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

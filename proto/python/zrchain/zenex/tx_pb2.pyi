@@ -21,13 +21,12 @@ class MsgUpdateParamsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
-class MsgSwap(_message.Message):
+class MsgSwapRequest(_message.Message):
     __slots__ = ("creator", "pair", "workspace", "amount_in", "sender_key", "recipient_key")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     PAIR_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_IN_FIELD_NUMBER: _ClassVar[int]
-    YIELD_FIELD_NUMBER: _ClassVar[int]
     SENDER_KEY_FIELD_NUMBER: _ClassVar[int]
     RECIPIENT_KEY_FIELD_NUMBER: _ClassVar[int]
     creator: str
@@ -36,9 +35,9 @@ class MsgSwap(_message.Message):
     amount_in: int
     sender_key: int
     recipient_key: int
-    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., sender_key: _Optional[int] = ..., recipient_key: _Optional[int] = ..., **kwargs) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., sender_key: _Optional[int] = ..., recipient_key: _Optional[int] = ...) -> None: ...
 
-class MsgSwapResponse(_message.Message):
+class MsgSwapRequestResponse(_message.Message):
     __slots__ = ("swap_id",)
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     swap_id: int

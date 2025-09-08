@@ -20,10 +20,10 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParams.SerializeToString,
                 response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParamsResponse.FromString,
                 )
-        self.Swap = channel.unary_unary(
-                '/zrchain.zenex.Msg/Swap',
-                request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwap.SerializeToString,
-                response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.FromString,
+        self.SwapRequest = channel.unary_unary(
+                '/zrchain.zenex.Msg/SwapRequest',
+                request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.FromString,
                 )
 
 
@@ -39,7 +39,7 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Swap(self, request, context):
+    def SwapRequest(self, request, context):
         """Swap defines a (cross-chain) swap operation.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -54,10 +54,10 @@ def add_MsgServicer_to_server(servicer, server):
                     request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParams.FromString,
                     response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgUpdateParamsResponse.SerializeToString,
             ),
-            'Swap': grpc.unary_unary_rpc_method_handler(
-                    servicer.Swap,
-                    request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwap.FromString,
-                    response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.SerializeToString,
+            'SwapRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.SwapRequest,
+                    request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.FromString,
+                    response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -88,7 +88,7 @@ class Msg(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def Swap(request,
+    def SwapRequest(request,
             target,
             options=(),
             channel_credentials=None,
@@ -98,8 +98,8 @@ class Msg(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/Swap',
-            zrchain_dot_zenex_dot_tx__pb2.MsgSwap.SerializeToString,
-            zrchain_dot_zenex_dot_tx__pb2.MsgSwapResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/SwapRequest',
+            zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.SerializeToString,
+            zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

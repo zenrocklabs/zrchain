@@ -24,12 +24,11 @@ func (c *ZenTPTxClient) NewMsgSwap(
 	pair string,
 	workspace string,
 ) (string, error) {
-	msg := &types.MsgSwap{
+	msg := &types.MsgSwapRequest{
 		Creator:      creator,
 		Pair:         pair,
 		Workspace:    workspace,
 		AmountIn:     amountIn,
-		Yield:        yield,
 		SenderKey:    senderKey,
 		RecipientKey: recipientKey,
 	}

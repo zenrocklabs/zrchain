@@ -19,7 +19,6 @@ message Swap {
   uint64 sender_key_id = 6;
   uint64 recipient_key_id = 7;
   string workspace = 8;
-  bool zenbtc_yield = 9;
 }
 
 // SwapStatus defines the status of the swap.

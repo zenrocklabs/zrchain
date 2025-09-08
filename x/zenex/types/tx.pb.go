@@ -124,29 +124,28 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
-// MsgSwap defines a (cross-chain) swap operation.
-type MsgSwap struct {
+// MsgSwapRequest defines a (cross-chain) swap operation.
+type MsgSwapRequest struct {
 	Creator      string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Pair         string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
 	Workspace    string `protobuf:"bytes,3,opt,name=workspace,proto3" json:"workspace,omitempty"`
 	AmountIn     uint64 `protobuf:"varint,4,opt,name=amount_in,json=amountIn,proto3" json:"amount_in,omitempty"`
-	Yield        bool   `protobuf:"varint,5,opt,name=yield,proto3" json:"yield,omitempty"`
-	SenderKey    uint64 `protobuf:"varint,6,opt,name=sender_key,json=senderKey,proto3" json:"sender_key,omitempty"`
-	RecipientKey uint64 `protobuf:"varint,7,opt,name=recipient_key,json=recipientKey,proto3" json:"recipient_key,omitempty"`
+	SenderKey    uint64 `protobuf:"varint,5,opt,name=sender_key,json=senderKey,proto3" json:"sender_key,omitempty"`
+	RecipientKey uint64 `protobuf:"varint,6,opt,name=recipient_key,json=recipientKey,proto3" json:"recipient_key,omitempty"`
 }
 
-func (m *MsgSwap) Reset()         { *m = MsgSwap{} }
-func (m *MsgSwap) String() string { return proto.CompactTextString(m) }
-func (*MsgSwap) ProtoMessage()    {}
-func (*MsgSwap) Descriptor() ([]byte, []int) {
+func (m *MsgSwapRequest) Reset()         { *m = MsgSwapRequest{} }
+func (m *MsgSwapRequest) String() string { return proto.CompactTextString(m) }
+func (*MsgSwapRequest) ProtoMessage()    {}
+func (*MsgSwapRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f955773c0733d58b, []int{2}
 }
-func (m *MsgSwap) XXX_Unmarshal(b []byte) error {
+func (m *MsgSwapRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSwap) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgSwapRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSwap.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgSwapRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -156,61 +155,54 @@ func (m *MsgSwap) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *MsgSwap) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSwap.Merge(m, src)
+func (m *MsgSwapRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSwapRequest.Merge(m, src)
 }
-func (m *MsgSwap) XXX_Size() int {
+func (m *MsgSwapRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSwap) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSwap.DiscardUnknown(m)
+func (m *MsgSwapRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSwapRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSwap proto.InternalMessageInfo
+var xxx_messageInfo_MsgSwapRequest proto.InternalMessageInfo
 
-func (m *MsgSwap) GetCreator() string {
+func (m *MsgSwapRequest) GetCreator() string {
 	if m != nil {
 		return m.Creator
 	}
 	return ""
 }
 
-func (m *MsgSwap) GetPair() string {
+func (m *MsgSwapRequest) GetPair() string {
 	if m != nil {
 		return m.Pair
 	}
 	return ""
 }
 
-func (m *MsgSwap) GetWorkspace() string {
+func (m *MsgSwapRequest) GetWorkspace() string {
 	if m != nil {
 		return m.Workspace
 	}
 	return ""
 }
 
-func (m *MsgSwap) GetAmountIn() uint64 {
+func (m *MsgSwapRequest) GetAmountIn() uint64 {
 	if m != nil {
 		return m.AmountIn
 	}
 	return 0
 }
 
-func (m *MsgSwap) GetYield() bool {
-	if m != nil {
-		return m.Yield
-	}
-	return false
-}
-
-func (m *MsgSwap) GetSenderKey() uint64 {
+func (m *MsgSwapRequest) GetSenderKey() uint64 {
 	if m != nil {
 		return m.SenderKey
 	}
 	return 0
 }
 
-func (m *MsgSwap) GetRecipientKey() uint64 {
+func (m *MsgSwapRequest) GetRecipientKey() uint64 {
 	if m != nil {
 		return m.RecipientKey
 	}
@@ -219,22 +211,22 @@ func (m *MsgSwap) GetRecipientKey() uint64 {
 
 // MsgSwapResponse defines the response structure for executing a
 // MsgSwap message.
-type MsgSwapResponse struct {
+type MsgSwapRequestResponse struct {
 	SwapId uint64 `protobuf:"varint,1,opt,name=swap_id,json=swapId,proto3" json:"swap_id,omitempty"`
 }
 
-func (m *MsgSwapResponse) Reset()         { *m = MsgSwapResponse{} }
-func (m *MsgSwapResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgSwapResponse) ProtoMessage()    {}
-func (*MsgSwapResponse) Descriptor() ([]byte, []int) {
+func (m *MsgSwapRequestResponse) Reset()         { *m = MsgSwapRequestResponse{} }
+func (m *MsgSwapRequestResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSwapRequestResponse) ProtoMessage()    {}
+func (*MsgSwapRequestResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f955773c0733d58b, []int{3}
 }
-func (m *MsgSwapResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgSwapRequestResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSwapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgSwapRequestResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSwapResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgSwapRequestResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -244,19 +236,19 @@ func (m *MsgSwapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *MsgSwapResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSwapResponse.Merge(m, src)
+func (m *MsgSwapRequestResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSwapRequestResponse.Merge(m, src)
 }
-func (m *MsgSwapResponse) XXX_Size() int {
+func (m *MsgSwapRequestResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSwapResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSwapResponse.DiscardUnknown(m)
+func (m *MsgSwapRequestResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSwapRequestResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSwapResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgSwapRequestResponse proto.InternalMessageInfo
 
-func (m *MsgSwapResponse) GetSwapId() uint64 {
+func (m *MsgSwapRequestResponse) GetSwapId() uint64 {
 	if m != nil {
 		return m.SwapId
 	}
@@ -266,48 +258,48 @@ func (m *MsgSwapResponse) GetSwapId() uint64 {
 func init() {
 	proto.RegisterType((*MsgUpdateParams)(nil), "zrchain.zenex.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "zrchain.zenex.MsgUpdateParamsResponse")
-	proto.RegisterType((*MsgSwap)(nil), "zrchain.zenex.MsgSwap")
-	proto.RegisterType((*MsgSwapResponse)(nil), "zrchain.zenex.MsgSwapResponse")
+	proto.RegisterType((*MsgSwapRequest)(nil), "zrchain.zenex.MsgSwapRequest")
+	proto.RegisterType((*MsgSwapRequestResponse)(nil), "zrchain.zenex.MsgSwapRequestResponse")
 }
 
 func init() { proto.RegisterFile("zrchain/zenex/tx.proto", fileDescriptor_f955773c0733d58b) }
 
 var fileDescriptor_f955773c0733d58b = []byte{
-	// 538 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x52, 0x4f, 0x6b, 0x13, 0x41,
-	0x1c, 0xcd, 0xd8, 0x34, 0xe9, 0x8e, 0x2d, 0xe2, 0x10, 0x9b, 0xed, 0xaa, 0xdb, 0x10, 0x41, 0x42,
-	0xa0, 0x59, 0x8c, 0x10, 0xa4, 0x07, 0xc1, 0x1c, 0x84, 0x52, 0x02, 0x65, 0x8b, 0x1e, 0x7a, 0x09,
-	0xd3, 0xdd, 0x61, 0x33, 0xc4, 0x9d, 0x59, 0x66, 0x26, 0x4d, 0xb6, 0x27, 0xf1, 0xe8, 0xc9, 0x0f,
-	0xe1, 0xc1, 0x63, 0x0e, 0x82, 0x5f, 0xa1, 0xc7, 0xe2, 0x49, 0x3c, 0x88, 0x24, 0x87, 0x7c, 0x0d,
-	0xd9, 0xd9, 0xdd, 0x84, 0x44, 0xf1, 0xb2, 0x3b, 0xbf, 0xf7, 0xde, 0xfc, 0xe6, 0xfd, 0xfe, 0xc0,
-	0xfd, 0x6b, 0xe1, 0x0d, 0x30, 0x65, 0xce, 0x35, 0x61, 0x64, 0xe2, 0xa8, 0x49, 0x2b, 0x12, 0x5c,
-	0x71, 0xb4, 0x97, 0xe1, 0x2d, 0x8d, 0x5b, 0xf7, 0x71, 0x48, 0x19, 0x77, 0xf4, 0x37, 0x55, 0x58,
-	0x55, 0x8f, 0xcb, 0x90, 0x4b, 0x27, 0x94, 0x81, 0x73, 0xf5, 0x2c, 0xf9, 0x65, 0xc4, 0x41, 0x4a,
-	0xf4, 0x75, 0xe4, 0xa4, 0x41, 0x46, 0x55, 0x02, 0x1e, 0xf0, 0x14, 0x4f, 0x4e, 0x19, 0x6a, 0xad,
-	0x7b, 0x88, 0xb0, 0xc0, 0x61, 0x76, 0xa3, 0xfe, 0x0d, 0xc0, 0x7b, 0x3d, 0x19, 0xbc, 0x89, 0x7c,
-	0xac, 0xc8, 0x99, 0x66, 0x50, 0x07, 0x1a, 0x78, 0xa4, 0x06, 0x5c, 0x50, 0x15, 0x9b, 0xa0, 0x06,
-	0x1a, 0x46, 0xd7, 0xfc, 0xfe, 0xf5, 0xa8, 0x92, 0x3d, 0xf5, 0xca, 0xf7, 0x05, 0x91, 0xf2, 0x5c,
-	0x09, 0xca, 0x02, 0x77, 0x25, 0x45, 0x2f, 0x60, 0x29, 0xcd, 0x6d, 0xde, 0xa9, 0x81, 0xc6, 0xdd,
-	0xf6, 0x83, 0xd6, 0x5a, 0x91, 0xad, 0x34, 0x7d, 0xd7, 0xb8, 0xf9, 0x75, 0x58, 0xf8, 0xb2, 0x98,
-	0x36, 0x81, 0x9b, 0xe9, 0x8f, 0xdb, 0x1f, 0x16, 0xd3, 0xe6, 0x2a, 0xd3, 0xc7, 0xc5, 0xb4, 0x79,
-	0x98, 0x9b, 0x9e, 0x64, 0xb6, 0x37, 0x5c, 0xd6, 0x0f, 0x60, 0x75, 0x03, 0x72, 0x89, 0x8c, 0x38,
-	0x93, 0xa4, 0xfe, 0x13, 0xc0, 0x72, 0x4f, 0x06, 0xe7, 0x63, 0x1c, 0x21, 0x13, 0x96, 0x3d, 0x41,
-	0xb0, 0xe2, 0x22, 0x2d, 0xc5, 0xcd, 0x43, 0x84, 0x60, 0x31, 0xc2, 0x54, 0x68, 0xb3, 0x86, 0xab,
-	0xcf, 0xe8, 0x11, 0x34, 0xc6, 0x5c, 0x0c, 0x65, 0x84, 0x3d, 0x62, 0x6e, 0x69, 0x62, 0x05, 0xa0,
-	0x87, 0xd0, 0xc0, 0x21, 0x1f, 0x31, 0xd5, 0xa7, 0xcc, 0x2c, 0xd6, 0x40, 0xa3, 0xe8, 0xee, 0xa4,
-	0xc0, 0x09, 0x43, 0x15, 0xb8, 0x1d, 0x53, 0xf2, 0xce, 0x37, 0xb7, 0x6b, 0xa0, 0xb1, 0xe3, 0xa6,
-	0x01, 0x7a, 0x0c, 0xa1, 0x24, 0xcc, 0x27, 0xa2, 0x3f, 0x24, 0xb1, 0x59, 0xd2, 0x77, 0x8c, 0x14,
-	0x39, 0x25, 0x31, 0x7a, 0x02, 0xf7, 0x04, 0xf1, 0x68, 0x44, 0x09, 0x53, 0x5a, 0x51, 0xd6, 0x8a,
-	0xdd, 0x25, 0x78, 0x4a, 0xe2, 0xe3, 0xdd, 0xa4, 0x3b, 0xb9, 0xed, 0x7a, 0x53, 0x0f, 0x2c, 0xa9,
-	0x2d, 0xaf, 0x17, 0x55, 0x61, 0x59, 0x8e, 0x71, 0xd4, 0xa7, 0xbe, 0xae, 0xb1, 0xe8, 0x96, 0x92,
-	0xf0, 0xc4, 0x6f, 0x7f, 0x06, 0x70, 0xab, 0x27, 0x03, 0xf4, 0x16, 0xee, 0xae, 0x4d, 0xd8, 0xde,
-	0x98, 0xcc, 0x46, 0x23, 0xad, 0xa7, 0xff, 0xe7, 0x97, 0x0f, 0xbf, 0x84, 0x45, 0xdd, 0xe4, 0xfd,
-	0xbf, 0xf5, 0x09, 0x6e, 0xd9, 0xff, 0xc6, 0xf3, 0xfb, 0xd6, 0xf6, 0xfb, 0x64, 0x0d, 0xba, 0x67,
-	0x37, 0x33, 0x1b, 0xdc, 0xce, 0x6c, 0xf0, 0x7b, 0x66, 0x83, 0x4f, 0x73, 0xbb, 0x70, 0x3b, 0xb7,
-	0x0b, 0x3f, 0xe6, 0x76, 0xe1, 0xa2, 0x13, 0x50, 0x35, 0x18, 0x5d, 0xb6, 0x3c, 0x1e, 0x3a, 0x17,
-	0x84, 0x09, 0xee, 0x0d, 0x8f, 0x5e, 0xf3, 0x11, 0xf3, 0xb1, 0xa2, 0x9c, 0x39, 0xf9, 0x8e, 0x5c,
-	0x75, 0x96, 0x6b, 0xa2, 0xe2, 0x88, 0xc8, 0xcb, 0x92, 0xde, 0xee, 0xe7, 0x7f, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0x07, 0x2b, 0x11, 0xf6, 0x7f, 0x03, 0x00, 0x00,
+	// 531 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x52, 0x41, 0x6b, 0xdb, 0x3e,
+	0x1c, 0x8d, 0xfe, 0x4d, 0xd3, 0xbf, 0xd5, 0x74, 0x63, 0xa2, 0x6b, 0x5c, 0x6f, 0x75, 0x43, 0xc6,
+	0x46, 0x08, 0x34, 0xa6, 0x19, 0x84, 0xd1, 0xdb, 0x72, 0x18, 0x94, 0x12, 0x28, 0x0e, 0xdb, 0xa1,
+	0x97, 0xa0, 0xda, 0xc2, 0x11, 0xc1, 0x92, 0x27, 0x29, 0x4d, 0xd2, 0xd3, 0xd8, 0x71, 0xa7, 0x7d,
+	0x8c, 0x1d, 0x73, 0x18, 0x8c, 0x7d, 0x83, 0xc2, 0x2e, 0x65, 0xa7, 0x9d, 0xc6, 0x48, 0x0e, 0xf9,
+	0x1a, 0xc3, 0xb2, 0x9d, 0x34, 0x19, 0xf4, 0x62, 0xeb, 0xf7, 0xde, 0xd3, 0x4f, 0xef, 0x49, 0x3f,
+	0xb8, 0x77, 0x2d, 0xbc, 0x1e, 0xa6, 0xcc, 0xb9, 0x26, 0x8c, 0x8c, 0x1c, 0x35, 0xaa, 0x47, 0x82,
+	0x2b, 0x8e, 0x76, 0x52, 0xbc, 0xae, 0x71, 0xeb, 0x11, 0x0e, 0x29, 0xe3, 0x8e, 0xfe, 0x26, 0x0a,
+	0xab, 0xe4, 0x71, 0x19, 0x72, 0xe9, 0x84, 0x32, 0x70, 0xae, 0x8e, 0xe3, 0x5f, 0x4a, 0xec, 0x27,
+	0x44, 0x57, 0x57, 0x4e, 0x52, 0xa4, 0xd4, 0x6e, 0xc0, 0x03, 0x9e, 0xe0, 0xf1, 0x2a, 0x45, 0xad,
+	0x55, 0x0f, 0x11, 0x16, 0x38, 0x4c, 0x77, 0x54, 0xbe, 0x01, 0xf8, 0xb0, 0x2d, 0x83, 0xb7, 0x91,
+	0x8f, 0x15, 0x39, 0xd7, 0x0c, 0x6a, 0x42, 0x03, 0x0f, 0x54, 0x8f, 0x0b, 0xaa, 0xc6, 0x26, 0x28,
+	0x83, 0xaa, 0xd1, 0x32, 0x7f, 0x7e, 0x3d, 0xda, 0x4d, 0x8f, 0x7a, 0xed, 0xfb, 0x82, 0x48, 0xd9,
+	0x51, 0x82, 0xb2, 0xc0, 0x5d, 0x4a, 0xd1, 0x2b, 0x58, 0x48, 0x7a, 0x9b, 0xff, 0x95, 0x41, 0x75,
+	0xbb, 0xf1, 0xb8, 0xbe, 0x12, 0xb2, 0x9e, 0xb4, 0x6f, 0x19, 0x37, 0xbf, 0x0f, 0x73, 0x5f, 0xe6,
+	0x93, 0x1a, 0x70, 0x53, 0xfd, 0x49, 0xe3, 0xe3, 0x7c, 0x52, 0x5b, 0x76, 0xfa, 0x34, 0x9f, 0xd4,
+	0x0e, 0x33, 0xd3, 0xa3, 0xd4, 0xf6, 0x9a, 0xcb, 0xca, 0x3e, 0x2c, 0xad, 0x41, 0x2e, 0x91, 0x11,
+	0x67, 0x92, 0x54, 0x7e, 0x00, 0xf8, 0xa0, 0x2d, 0x83, 0xce, 0x10, 0x47, 0x2e, 0x79, 0x3f, 0x20,
+	0x52, 0x21, 0x13, 0x6e, 0x79, 0x82, 0x60, 0xc5, 0x45, 0x92, 0xc8, 0xcd, 0x4a, 0x84, 0x60, 0x3e,
+	0xc2, 0x54, 0x68, 0xcf, 0x86, 0xab, 0xd7, 0xe8, 0x29, 0x34, 0x86, 0x5c, 0xf4, 0x65, 0x84, 0x3d,
+	0x62, 0x6e, 0x68, 0x62, 0x09, 0xa0, 0x27, 0xd0, 0xc0, 0x21, 0x1f, 0x30, 0xd5, 0xa5, 0xcc, 0xcc,
+	0x97, 0x41, 0x35, 0xef, 0xfe, 0x9f, 0x00, 0xa7, 0x0c, 0x1d, 0x40, 0x28, 0x09, 0xf3, 0x89, 0xe8,
+	0xf6, 0xc9, 0xd8, 0xdc, 0xd4, 0xac, 0x91, 0x20, 0x67, 0x64, 0x8c, 0x9e, 0xc1, 0x1d, 0x41, 0x3c,
+	0x1a, 0x51, 0xc2, 0x94, 0x56, 0x14, 0xb4, 0xa2, 0xb8, 0x00, 0xcf, 0xc8, 0xf8, 0xa4, 0x18, 0x5f,
+	0x47, 0x66, 0xb0, 0x72, 0x0c, 0xf7, 0x56, 0xc3, 0x64, 0x39, 0x51, 0x09, 0x6e, 0xc9, 0x21, 0x8e,
+	0xba, 0xd4, 0xd7, 0xa1, 0xf2, 0x6e, 0x21, 0x2e, 0x4f, 0xfd, 0xc6, 0x77, 0x00, 0x37, 0xda, 0x32,
+	0x40, 0xef, 0x60, 0x71, 0xe5, 0x65, 0xed, 0xb5, 0x17, 0x59, 0xbb, 0x40, 0xeb, 0xc5, 0xfd, 0xfc,
+	0xe2, 0xe0, 0x0e, 0xdc, 0xbe, 0x7b, 0xb9, 0x07, 0xff, 0x6e, 0xbb, 0x43, 0x5b, 0xcf, 0xef, 0xa5,
+	0xb3, 0xa6, 0xd6, 0xe6, 0x87, 0x78, 0x26, 0x5a, 0xe7, 0x37, 0x53, 0x1b, 0xdc, 0x4e, 0x6d, 0xf0,
+	0x67, 0x6a, 0x83, 0xcf, 0x33, 0x3b, 0x77, 0x3b, 0xb3, 0x73, 0xbf, 0x66, 0x76, 0xee, 0xa2, 0x19,
+	0x50, 0xd5, 0x1b, 0x5c, 0xd6, 0x3d, 0x1e, 0x3a, 0x17, 0x84, 0x09, 0xee, 0xf5, 0x8f, 0xde, 0xf0,
+	0x01, 0xf3, 0xb1, 0xa2, 0x9c, 0x39, 0xd9, 0xc0, 0x5c, 0x35, 0x17, 0x33, 0xa3, 0xc6, 0x11, 0x91,
+	0x97, 0x05, 0x3d, 0xea, 0x2f, 0xff, 0x06, 0x00, 0x00, 0xff, 0xff, 0x8b, 0xbe, 0x5d, 0xb4, 0x8c,
+	0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -326,7 +318,7 @@ type MsgClient interface {
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
-	Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOption) (*MsgSwapResponse, error)
+	SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ...grpc.CallOption) (*MsgSwapRequestResponse, error)
 }
 
 type msgClient struct {
@@ -346,9 +338,9 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) Swap(ctx context.Context, in *MsgSwap, opts ...grpc.CallOption) (*MsgSwapResponse, error) {
-	out := new(MsgSwapResponse)
-	err := c.cc.Invoke(ctx, "/zrchain.zenex.Msg/Swap", in, out, opts...)
+func (c *msgClient) SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ...grpc.CallOption) (*MsgSwapRequestResponse, error) {
+	out := new(MsgSwapRequestResponse)
+	err := c.cc.Invoke(ctx, "/zrchain.zenex.Msg/SwapRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +353,7 @@ type MsgServer interface {
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
-	Swap(context.Context, *MsgSwap) (*MsgSwapResponse, error)
+	SwapRequest(context.Context, *MsgSwapRequest) (*MsgSwapRequestResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -371,8 +363,8 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (*UnimplementedMsgServer) Swap(ctx context.Context, req *MsgSwap) (*MsgSwapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Swap not implemented")
+func (*UnimplementedMsgServer) SwapRequest(ctx context.Context, req *MsgSwapRequest) (*MsgSwapRequestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SwapRequest not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -397,20 +389,20 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_Swap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSwap)
+func _Msg_SwapRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSwapRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).Swap(ctx, in)
+		return srv.(MsgServer).SwapRequest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zrchain.zenex.Msg/Swap",
+		FullMethod: "/zrchain.zenex.Msg/SwapRequest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).Swap(ctx, req.(*MsgSwap))
+		return srv.(MsgServer).SwapRequest(ctx, req.(*MsgSwapRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -425,8 +417,8 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "Swap",
-			Handler:    _Msg_Swap_Handler,
+			MethodName: "SwapRequest",
+			Handler:    _Msg_SwapRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -496,7 +488,7 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgSwap) Marshal() (dAtA []byte, err error) {
+func (m *MsgSwapRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -506,12 +498,12 @@ func (m *MsgSwap) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSwap) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgSwapRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSwap) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgSwapRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -519,20 +511,10 @@ func (m *MsgSwap) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.RecipientKey != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.RecipientKey))
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x30
 	}
 	if m.SenderKey != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.SenderKey))
-		i--
-		dAtA[i] = 0x30
-	}
-	if m.Yield {
-		i--
-		if m.Yield {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
 		i--
 		dAtA[i] = 0x28
 	}
@@ -565,7 +547,7 @@ func (m *MsgSwap) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgSwapResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgSwapRequestResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -575,12 +557,12 @@ func (m *MsgSwapResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSwapResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgSwapRequestResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSwapResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgSwapRequestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -628,7 +610,7 @@ func (m *MsgUpdateParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgSwap) Size() (n int) {
+func (m *MsgSwapRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -649,9 +631,6 @@ func (m *MsgSwap) Size() (n int) {
 	if m.AmountIn != 0 {
 		n += 1 + sovTx(uint64(m.AmountIn))
 	}
-	if m.Yield {
-		n += 2
-	}
 	if m.SenderKey != 0 {
 		n += 1 + sovTx(uint64(m.SenderKey))
 	}
@@ -661,7 +640,7 @@ func (m *MsgSwap) Size() (n int) {
 	return n
 }
 
-func (m *MsgSwapResponse) Size() (n int) {
+func (m *MsgSwapRequestResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -844,7 +823,7 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgSwap) Unmarshal(dAtA []byte) error {
+func (m *MsgSwapRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -867,10 +846,10 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSwap: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgSwapRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSwap: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgSwapRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -990,26 +969,6 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 			}
 		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Yield", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Yield = bool(v != 0)
-		case 6:
-			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SenderKey", wireType)
 			}
 			m.SenderKey = 0
@@ -1027,7 +986,7 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 7:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RecipientKey", wireType)
 			}
@@ -1067,7 +1026,7 @@ func (m *MsgSwap) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgSwapResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgSwapRequestResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1090,10 +1049,10 @@ func (m *MsgSwapResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSwapResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgSwapRequestResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSwapResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgSwapRequestResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

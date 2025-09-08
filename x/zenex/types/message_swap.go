@@ -9,22 +9,21 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var _ sdk.Msg = &MsgSwap{}
+var _ sdk.Msg = &MsgSwapRequest{}
 
-func NewMsgSwap(creator string, pair string, workspace string, amountIn uint64, yield bool, senderKey uint64, recipientKey uint64) *MsgSwap {
+func NewMsgSwap(creator string, pair string, workspace string, amountIn uint64, senderKey uint64, recipientKey uint64) *MsgSwapRequest {
 
-	return &MsgSwap{
+	return &MsgSwapRequest{
 		Creator:      creator,
 		Pair:         pair,
 		Workspace:    workspace,
 		AmountIn:     amountIn,
-		Yield:        yield,
 		SenderKey:    senderKey,
 		RecipientKey: recipientKey,
 	}
 }
 
-func (msg *MsgSwap) ValidateBasic() error {
+func (msg *MsgSwapRequest) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

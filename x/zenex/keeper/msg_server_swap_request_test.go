@@ -17,25 +17,24 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 
 	tests := []struct {
 		name      string
-		input     *types.MsgSwap
+		input     *types.MsgSwapRequest
 		expErr    bool
 		expErrMsg string
-		want      *types.MsgSwapResponse
+		want      *types.MsgSwapRequestResponse
 		wantSwap  *types.Swap
 	}{
 		{
 			name: "Pass: Happy Path",
-			input: &types.MsgSwap{
+			input: &types.MsgSwapRequest{
 				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:         "rockbtc",
 				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:     100000,
-				Yield:        false,
 				SenderKey:    1,
 				RecipientKey: 2,
 			},
 			expErr: false,
-			want: &types.MsgSwapResponse{
+			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
 			wantSwap: &types.Swap{
@@ -60,17 +59,15 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 				SenderKeyId:    1,
 				RecipientKeyId: 2,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-				ZenbtcYield:    false,
 			},
 		},
 		{
 			name: "FAIL: Invalid pair",
-			input: &types.MsgSwap{
+			input: &types.MsgSwapRequest{
 				Creator:      "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:         "wrongpair",
 				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:     100000,
-				Yield:        false,
 				SenderKey:    1,
 				RecipientKey: 2,
 			},
@@ -79,17 +76,16 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 		},
 		{
 			name: "Pass: Proxy address",
-			input: &types.MsgSwap{
+			input: &types.MsgSwapRequest{
 				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				Pair:         "rockbtc",
 				Workspace:    "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:     100000,
-				Yield:        false,
 				SenderKey:    1,
 				RecipientKey: 2,
 			},
 			expErr: false,
-			want: &types.MsgSwapResponse{
+			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
 			wantSwap: &types.Swap{
@@ -114,7 +110,6 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 				SenderKeyId:    1,
 				RecipientKeyId: 2,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-				ZenbtcYield:    false,
 			},
 		},
 	}
@@ -144,7 +139,7 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.input.AmountIn)))).Return(nil)
 			}
 
-			swapId, err := s.msgServer.Swap(s.ctx, tt.input)
+			swapId, err := s.msgServer.SwapRequest(s.ctx, tt.input)
 
 			if tt.expErr {
 				s.Require().Error(err)
