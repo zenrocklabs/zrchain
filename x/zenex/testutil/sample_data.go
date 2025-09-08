@@ -34,7 +34,7 @@ var SampleSwap = []types.Swap{
 		},
 		RockKeyId:      1,
 		BtcKeyId:       2,
-		BtcChangeKeyId: 3,
+		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 	},
 	{
@@ -59,7 +59,7 @@ var SampleSwap = []types.Swap{
 		},
 		RockKeyId:      1,
 		BtcKeyId:       2,
-		BtcChangeKeyId: 3,
+		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 	},
 	{
@@ -84,7 +84,7 @@ var SampleSwap = []types.Swap{
 		},
 		RockKeyId:      1,
 		BtcKeyId:       2,
-		BtcChangeKeyId: 3,
+		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 	},
 }

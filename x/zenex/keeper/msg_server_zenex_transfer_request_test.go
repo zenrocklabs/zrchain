@@ -53,7 +53,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
-				BtcChangeKeyId: 3,
+				ZenexPoolKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 				SignTxId:       1,
 			},
@@ -92,7 +92,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
-				BtcChangeKeyId: 3,
+				ZenexPoolKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 				SignTxId:       1,
 			},
@@ -165,7 +165,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				} else {
 					expectedBitcoinTx = treasurytypes.NewMsgNewSignTransactionRequest(
 						params.BtcProxyAddress,
-						[]uint64{tt.wantSwap.BtcChangeKeyId},
+						[]uint64{tt.wantSwap.ZenexPoolKeyId},
 						tt.input.WalletType,
 						tt.input.UnsignedTx,
 						nil,

@@ -32,7 +32,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		senderKeyId = swap.BtcKeyId
 		txCreator = swap.Creator
 	case "btcrock":
-		senderKeyId = swap.BtcChangeKeyId
+		senderKeyId = swap.ZenexPoolKeyId
 		txCreator = k.GetParams(ctx).BtcProxyAddress
 	default:
 		return nil, fmt.Errorf("invalid pair: %s", swap.Pair)

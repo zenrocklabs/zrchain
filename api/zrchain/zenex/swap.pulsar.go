@@ -25,7 +25,7 @@ var (
 	fd_Swap_data              protoreflect.FieldDescriptor
 	fd_Swap_rock_key_id       protoreflect.FieldDescriptor
 	fd_Swap_btc_key_id        protoreflect.FieldDescriptor
-	fd_Swap_btc_change_key_id protoreflect.FieldDescriptor
+	fd_Swap_zenex_pool_key_id protoreflect.FieldDescriptor
 	fd_Swap_workspace         protoreflect.FieldDescriptor
 	fd_Swap_sign_tx_id        protoreflect.FieldDescriptor
 )
@@ -40,7 +40,7 @@ func init() {
 	fd_Swap_data = md_Swap.Fields().ByName("data")
 	fd_Swap_rock_key_id = md_Swap.Fields().ByName("rock_key_id")
 	fd_Swap_btc_key_id = md_Swap.Fields().ByName("btc_key_id")
-	fd_Swap_btc_change_key_id = md_Swap.Fields().ByName("btc_change_key_id")
+	fd_Swap_zenex_pool_key_id = md_Swap.Fields().ByName("zenex_pool_key_id")
 	fd_Swap_workspace = md_Swap.Fields().ByName("workspace")
 	fd_Swap_sign_tx_id = md_Swap.Fields().ByName("sign_tx_id")
 }
@@ -152,9 +152,9 @@ func (x *fastReflection_Swap) Range(f func(protoreflect.FieldDescriptor, protore
 			return
 		}
 	}
-	if x.BtcChangeKeyId != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.BtcChangeKeyId)
-		if !f(fd_Swap_btc_change_key_id, value) {
+	if x.ZenexPoolKeyId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ZenexPoolKeyId)
+		if !f(fd_Swap_zenex_pool_key_id, value) {
 			return
 		}
 	}
@@ -199,8 +199,8 @@ func (x *fastReflection_Swap) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.RockKeyId != uint64(0)
 	case "zrchain.zenex.Swap.btc_key_id":
 		return x.BtcKeyId != uint64(0)
-	case "zrchain.zenex.Swap.btc_change_key_id":
-		return x.BtcChangeKeyId != uint64(0)
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
+		return x.ZenexPoolKeyId != uint64(0)
 	case "zrchain.zenex.Swap.workspace":
 		return x.Workspace != ""
 	case "zrchain.zenex.Swap.sign_tx_id":
@@ -235,8 +235,8 @@ func (x *fastReflection_Swap) Clear(fd protoreflect.FieldDescriptor) {
 		x.RockKeyId = uint64(0)
 	case "zrchain.zenex.Swap.btc_key_id":
 		x.BtcKeyId = uint64(0)
-	case "zrchain.zenex.Swap.btc_change_key_id":
-		x.BtcChangeKeyId = uint64(0)
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
+		x.ZenexPoolKeyId = uint64(0)
 	case "zrchain.zenex.Swap.workspace":
 		x.Workspace = ""
 	case "zrchain.zenex.Swap.sign_tx_id":
@@ -278,8 +278,8 @@ func (x *fastReflection_Swap) Get(descriptor protoreflect.FieldDescriptor) proto
 	case "zrchain.zenex.Swap.btc_key_id":
 		value := x.BtcKeyId
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.zenex.Swap.btc_change_key_id":
-		value := x.BtcChangeKeyId
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
+		value := x.ZenexPoolKeyId
 		return protoreflect.ValueOfUint64(value)
 	case "zrchain.zenex.Swap.workspace":
 		value := x.Workspace
@@ -321,8 +321,8 @@ func (x *fastReflection_Swap) Set(fd protoreflect.FieldDescriptor, value protore
 		x.RockKeyId = value.Uint()
 	case "zrchain.zenex.Swap.btc_key_id":
 		x.BtcKeyId = value.Uint()
-	case "zrchain.zenex.Swap.btc_change_key_id":
-		x.BtcChangeKeyId = value.Uint()
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
+		x.ZenexPoolKeyId = value.Uint()
 	case "zrchain.zenex.Swap.workspace":
 		x.Workspace = value.Interface().(string)
 	case "zrchain.zenex.Swap.sign_tx_id":
@@ -364,8 +364,8 @@ func (x *fastReflection_Swap) Mutable(fd protoreflect.FieldDescriptor) protorefl
 		panic(fmt.Errorf("field rock_key_id of message zrchain.zenex.Swap is not mutable"))
 	case "zrchain.zenex.Swap.btc_key_id":
 		panic(fmt.Errorf("field btc_key_id of message zrchain.zenex.Swap is not mutable"))
-	case "zrchain.zenex.Swap.btc_change_key_id":
-		panic(fmt.Errorf("field btc_change_key_id of message zrchain.zenex.Swap is not mutable"))
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
+		panic(fmt.Errorf("field zenex_pool_key_id of message zrchain.zenex.Swap is not mutable"))
 	case "zrchain.zenex.Swap.workspace":
 		panic(fmt.Errorf("field workspace of message zrchain.zenex.Swap is not mutable"))
 	case "zrchain.zenex.Swap.sign_tx_id":
@@ -398,7 +398,7 @@ func (x *fastReflection_Swap) NewField(fd protoreflect.FieldDescriptor) protoref
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.zenex.Swap.btc_key_id":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.zenex.Swap.btc_change_key_id":
+	case "zrchain.zenex.Swap.zenex_pool_key_id":
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.zenex.Swap.workspace":
 		return protoreflect.ValueOfString("")
@@ -497,8 +497,8 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 		if x.BtcKeyId != 0 {
 			n += 1 + runtime.Sov(uint64(x.BtcKeyId))
 		}
-		if x.BtcChangeKeyId != 0 {
-			n += 1 + runtime.Sov(uint64(x.BtcChangeKeyId))
+		if x.ZenexPoolKeyId != 0 {
+			n += 1 + runtime.Sov(uint64(x.ZenexPoolKeyId))
 		}
 		l = len(x.Workspace)
 		if l > 0 {
@@ -548,8 +548,8 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 			i--
 			dAtA[i] = 0x4a
 		}
-		if x.BtcChangeKeyId != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.BtcChangeKeyId))
+		if x.ZenexPoolKeyId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ZenexPoolKeyId))
 			i--
 			dAtA[i] = 0x40
 		}
@@ -828,9 +828,9 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 				}
 			case 8:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BtcChangeKeyId", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ZenexPoolKeyId", wireType)
 				}
-				x.BtcChangeKeyId = 0
+				x.ZenexPoolKeyId = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -840,7 +840,7 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.BtcChangeKeyId |= uint64(b&0x7F) << shift
+					x.ZenexPoolKeyId |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -2206,7 +2206,7 @@ type Swap struct {
 	Data           *SwapData  `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`
 	RockKeyId      uint64     `protobuf:"varint,6,opt,name=rock_key_id,json=rockKeyId,proto3" json:"rock_key_id,omitempty"`
 	BtcKeyId       uint64     `protobuf:"varint,7,opt,name=btc_key_id,json=btcKeyId,proto3" json:"btc_key_id,omitempty"`
-	BtcChangeKeyId uint64     `protobuf:"varint,8,opt,name=btc_change_key_id,json=btcChangeKeyId,proto3" json:"btc_change_key_id,omitempty"`
+	ZenexPoolKeyId uint64     `protobuf:"varint,8,opt,name=zenex_pool_key_id,json=zenexPoolKeyId,proto3" json:"zenex_pool_key_id,omitempty"`
 	Workspace      string     `protobuf:"bytes,9,opt,name=workspace,proto3" json:"workspace,omitempty"`
 	SignTxId       uint64     `protobuf:"varint,10,opt,name=sign_tx_id,json=signTxId,proto3" json:"sign_tx_id,omitempty"`
 }
@@ -2280,9 +2280,9 @@ func (x *Swap) GetBtcKeyId() uint64 {
 	return 0
 }
 
-func (x *Swap) GetBtcChangeKeyId() uint64 {
+func (x *Swap) GetZenexPoolKeyId() uint64 {
 	if x != nil {
-		return x.BtcChangeKeyId
+		return x.ZenexPoolKeyId
 	}
 	return 0
 }
@@ -2442,9 +2442,9 @@ var file_zrchain_zenex_swap_proto_rawDesc = []byte{
 	0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x72, 0x6f, 0x63, 0x6b, 0x4b, 0x65, 0x79,
 	0x49, 0x64, 0x12, 0x1c, 0x0a, 0x0a, 0x62, 0x74, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64,
 	0x18, 0x07, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x62, 0x74, 0x63, 0x4b, 0x65, 0x79, 0x49, 0x64,
-	0x12, 0x29, 0x0a, 0x11, 0x62, 0x74, 0x63, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x6b,
-	0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x62, 0x74, 0x63,
-	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x77,
+	0x12, 0x29, 0x0a, 0x11, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x5f, 0x6b,
+	0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x7a, 0x65, 0x6e,
+	0x65, 0x78, 0x50, 0x6f, 0x6f, 0x6c, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x77,
 	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
 	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x1c, 0x0a, 0x0a, 0x73, 0x69, 0x67,
 	0x6e, 0x5f, 0x74, 0x78, 0x5f, 0x69, 0x64, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x73,

@@ -29,9 +29,9 @@ func NewParams(
 	ZenexBtcPoolKeyId uint64,
 ) Params {
 	return Params{
-		BtcProxyAddress:   btcProxyAddress,
-		MinimumSatoshis:   MinimumSatoshis,
-		ZenexBtcPoolKeyId: ZenexBtcPoolKeyId,
+		BtcProxyAddress: btcProxyAddress,
+		MinimumSatoshis: MinimumSatoshis,
+		ZenexPoolKeyId:  ZenexBtcPoolKeyId,
 	}
 }
 
@@ -49,7 +49,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyBtcproxyaddress, &p.BtcProxyAddress, validateBtcproxyaddress),
 		paramtypes.NewParamSetPair(KeyMinimumSatoshis, &p.MinimumSatoshis, validateMinimumSatoshis),
-		paramtypes.NewParamSetPair(KeyZenexBtcPoolKeyId, &p.ZenexBtcPoolKeyId, validateZenexBtcPoolKeyId),
+		paramtypes.NewParamSetPair(KeyZenexBtcPoolKeyId, &p.ZenexPoolKeyId, validateZenexBtcPoolKeyId),
 	}
 }
 
@@ -61,7 +61,7 @@ func (p Params) Validate() error {
 	if err := validateMinimumSatoshis(p.MinimumSatoshis); err != nil {
 		return err
 	}
-	if err := validateZenexBtcPoolKeyId(p.ZenexBtcPoolKeyId); err != nil {
+	if err := validateZenexBtcPoolKeyId(p.ZenexPoolKeyId); err != nil {
 		return err
 	}
 
