@@ -5,6 +5,7 @@ import (
 	_ "cosmossdk.io/api/amino"
 	_ "cosmossdk.io/api/cosmos/msg/v1"
 	fmt "fmt"
+	treasury "github.com/Zenrock-Foundation/zrchain/v6/api/zrchain/treasury"
 	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -872,14 +873,13 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgSwapRequest                   protoreflect.MessageDescriptor
-	fd_MsgSwapRequest_creator           protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_pair              protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_workspace         protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_amount_in         protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_rock_key_id       protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_btc_key_id        protoreflect.FieldDescriptor
-	fd_MsgSwapRequest_destination_caip2 protoreflect.FieldDescriptor
+	md_MsgSwapRequest             protoreflect.MessageDescriptor
+	fd_MsgSwapRequest_creator     protoreflect.FieldDescriptor
+	fd_MsgSwapRequest_pair        protoreflect.FieldDescriptor
+	fd_MsgSwapRequest_workspace   protoreflect.FieldDescriptor
+	fd_MsgSwapRequest_amount_in   protoreflect.FieldDescriptor
+	fd_MsgSwapRequest_rock_key_id protoreflect.FieldDescriptor
+	fd_MsgSwapRequest_btc_key_id  protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -891,7 +891,6 @@ func init() {
 	fd_MsgSwapRequest_amount_in = md_MsgSwapRequest.Fields().ByName("amount_in")
 	fd_MsgSwapRequest_rock_key_id = md_MsgSwapRequest.Fields().ByName("rock_key_id")
 	fd_MsgSwapRequest_btc_key_id = md_MsgSwapRequest.Fields().ByName("btc_key_id")
-	fd_MsgSwapRequest_destination_caip2 = md_MsgSwapRequest.Fields().ByName("destination_caip2")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgSwapRequest)(nil)
@@ -995,12 +994,6 @@ func (x *fastReflection_MsgSwapRequest) Range(f func(protoreflect.FieldDescripto
 			return
 		}
 	}
-	if x.DestinationCaip2 != "" {
-		value := protoreflect.ValueOfString(x.DestinationCaip2)
-		if !f(fd_MsgSwapRequest_destination_caip2, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -1028,8 +1021,6 @@ func (x *fastReflection_MsgSwapRequest) Has(fd protoreflect.FieldDescriptor) boo
 		return x.RockKeyId != uint64(0)
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		return x.BtcKeyId != uint64(0)
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		return x.DestinationCaip2 != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1058,8 +1049,6 @@ func (x *fastReflection_MsgSwapRequest) Clear(fd protoreflect.FieldDescriptor) {
 		x.RockKeyId = uint64(0)
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		x.BtcKeyId = uint64(0)
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		x.DestinationCaip2 = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1094,9 +1083,6 @@ func (x *fastReflection_MsgSwapRequest) Get(descriptor protoreflect.FieldDescrip
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		value := x.BtcKeyId
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		value := x.DestinationCaip2
-		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1129,8 +1115,6 @@ func (x *fastReflection_MsgSwapRequest) Set(fd protoreflect.FieldDescriptor, val
 		x.RockKeyId = value.Uint()
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		x.BtcKeyId = value.Uint()
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		x.DestinationCaip2 = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1163,8 +1147,6 @@ func (x *fastReflection_MsgSwapRequest) Mutable(fd protoreflect.FieldDescriptor)
 		panic(fmt.Errorf("field rock_key_id of message zrchain.zenex.MsgSwapRequest is not mutable"))
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		panic(fmt.Errorf("field btc_key_id of message zrchain.zenex.MsgSwapRequest is not mutable"))
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		panic(fmt.Errorf("field destination_caip2 of message zrchain.zenex.MsgSwapRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1190,8 +1172,6 @@ func (x *fastReflection_MsgSwapRequest) NewField(fd protoreflect.FieldDescriptor
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.zenex.MsgSwapRequest.btc_key_id":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.zenex.MsgSwapRequest.destination_caip2":
-		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgSwapRequest"))
@@ -1282,10 +1262,6 @@ func (x *fastReflection_MsgSwapRequest) ProtoMethods() *protoiface.Methods {
 		if x.BtcKeyId != 0 {
 			n += 1 + runtime.Sov(uint64(x.BtcKeyId))
 		}
-		l = len(x.DestinationCaip2)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1314,13 +1290,6 @@ func (x *fastReflection_MsgSwapRequest) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
-		}
-		if len(x.DestinationCaip2) > 0 {
-			i -= len(x.DestinationCaip2)
-			copy(dAtA[i:], x.DestinationCaip2)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.DestinationCaip2)))
-			i--
-			dAtA[i] = 0x3a
 		}
 		if x.BtcKeyId != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.BtcKeyId))
@@ -1560,38 +1529,6 @@ func (x *fastReflection_MsgSwapRequest) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
-			case 7:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DestinationCaip2", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.DestinationCaip2 = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2031,6 +1968,992 @@ func (x *fastReflection_MsgSwapRequestResponse) ProtoMethods() *protoiface.Metho
 	}
 }
 
+var (
+	md_MsgZenexTransferRequest             protoreflect.MessageDescriptor
+	fd_MsgZenexTransferRequest_creator     protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_swap_id     protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_unsigned_tx protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_wallet_type protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_zenex_tx_proto_init()
+	md_MsgZenexTransferRequest = File_zrchain_zenex_tx_proto.Messages().ByName("MsgZenexTransferRequest")
+	fd_MsgZenexTransferRequest_creator = md_MsgZenexTransferRequest.Fields().ByName("creator")
+	fd_MsgZenexTransferRequest_swap_id = md_MsgZenexTransferRequest.Fields().ByName("swap_id")
+	fd_MsgZenexTransferRequest_unsigned_tx = md_MsgZenexTransferRequest.Fields().ByName("unsigned_tx")
+	fd_MsgZenexTransferRequest_wallet_type = md_MsgZenexTransferRequest.Fields().ByName("wallet_type")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgZenexTransferRequest)(nil)
+
+type fastReflection_MsgZenexTransferRequest MsgZenexTransferRequest
+
+func (x *MsgZenexTransferRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgZenexTransferRequest)(x)
+}
+
+func (x *MsgZenexTransferRequest) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_zenex_tx_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgZenexTransferRequest_messageType fastReflection_MsgZenexTransferRequest_messageType
+var _ protoreflect.MessageType = fastReflection_MsgZenexTransferRequest_messageType{}
+
+type fastReflection_MsgZenexTransferRequest_messageType struct{}
+
+func (x fastReflection_MsgZenexTransferRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgZenexTransferRequest)(nil)
+}
+func (x fastReflection_MsgZenexTransferRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgZenexTransferRequest)
+}
+func (x fastReflection_MsgZenexTransferRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgZenexTransferRequest
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgZenexTransferRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgZenexTransferRequest
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgZenexTransferRequest) Type() protoreflect.MessageType {
+	return _fastReflection_MsgZenexTransferRequest_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgZenexTransferRequest) New() protoreflect.Message {
+	return new(fastReflection_MsgZenexTransferRequest)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgZenexTransferRequest) Interface() protoreflect.ProtoMessage {
+	return (*MsgZenexTransferRequest)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgZenexTransferRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Creator != "" {
+		value := protoreflect.ValueOfString(x.Creator)
+		if !f(fd_MsgZenexTransferRequest_creator, value) {
+			return
+		}
+	}
+	if x.SwapId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.SwapId)
+		if !f(fd_MsgZenexTransferRequest_swap_id, value) {
+			return
+		}
+	}
+	if len(x.UnsignedTx) != 0 {
+		value := protoreflect.ValueOfBytes(x.UnsignedTx)
+		if !f(fd_MsgZenexTransferRequest_unsigned_tx, value) {
+			return
+		}
+	}
+	if x.WalletType != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.WalletType))
+		if !f(fd_MsgZenexTransferRequest_wallet_type, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgZenexTransferRequest) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		return x.Creator != ""
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		return x.SwapId != uint64(0)
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		return len(x.UnsignedTx) != 0
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		return x.WalletType != 0
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequest) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		x.Creator = ""
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		x.SwapId = uint64(0)
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		x.UnsignedTx = nil
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		x.WalletType = 0
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgZenexTransferRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		value := x.Creator
+		return protoreflect.ValueOfString(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		value := x.SwapId
+		return protoreflect.ValueOfUint64(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		value := x.UnsignedTx
+		return protoreflect.ValueOfBytes(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		value := x.WalletType
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		x.Creator = value.Interface().(string)
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		x.SwapId = value.Uint()
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		x.UnsignedTx = value.Bytes()
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		x.WalletType = (treasury.WalletType)(value.Enum())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		panic(fmt.Errorf("field creator of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		panic(fmt.Errorf("field swap_id of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		panic(fmt.Errorf("field unsigned_tx of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		panic(fmt.Errorf("field wallet_type of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgZenexTransferRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.creator":
+		return protoreflect.ValueOfString("")
+	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
+		return protoreflect.ValueOfBytes(nil)
+	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
+		return protoreflect.ValueOfEnum(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgZenexTransferRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zenex.MsgZenexTransferRequest", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgZenexTransferRequest) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequest) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgZenexTransferRequest) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgZenexTransferRequest)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Creator)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.SwapId != 0 {
+			n += 1 + runtime.Sov(uint64(x.SwapId))
+		}
+		l = len(x.UnsignedTx)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.WalletType != 0 {
+			n += 1 + runtime.Sov(uint64(x.WalletType))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgZenexTransferRequest)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.WalletType != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.WalletType))
+			i--
+			dAtA[i] = 0x20
+		}
+		if len(x.UnsignedTx) > 0 {
+			i -= len(x.UnsignedTx)
+			copy(dAtA[i:], x.UnsignedTx)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UnsignedTx)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if x.SwapId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SwapId))
+			i--
+			dAtA[i] = 0x10
+		}
+		if len(x.Creator) > 0 {
+			i -= len(x.Creator)
+			copy(dAtA[i:], x.Creator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Creator)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgZenexTransferRequest)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgZenexTransferRequest: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgZenexTransferRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Creator = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SwapId", wireType)
+				}
+				x.SwapId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.SwapId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UnsignedTx", wireType)
+				}
+				var byteLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					byteLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if byteLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + byteLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.UnsignedTx = append(x.UnsignedTx[:0], dAtA[iNdEx:postIndex]...)
+				if x.UnsignedTx == nil {
+					x.UnsignedTx = []byte{}
+				}
+				iNdEx = postIndex
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field WalletType", wireType)
+				}
+				x.WalletType = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.WalletType |= treasury.WalletType(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgZenexTransferRequestResponse            protoreflect.MessageDescriptor
+	fd_MsgZenexTransferRequestResponse_sign_tx_id protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_zenex_tx_proto_init()
+	md_MsgZenexTransferRequestResponse = File_zrchain_zenex_tx_proto.Messages().ByName("MsgZenexTransferRequestResponse")
+	fd_MsgZenexTransferRequestResponse_sign_tx_id = md_MsgZenexTransferRequestResponse.Fields().ByName("sign_tx_id")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgZenexTransferRequestResponse)(nil)
+
+type fastReflection_MsgZenexTransferRequestResponse MsgZenexTransferRequestResponse
+
+func (x *MsgZenexTransferRequestResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgZenexTransferRequestResponse)(x)
+}
+
+func (x *MsgZenexTransferRequestResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_zenex_tx_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgZenexTransferRequestResponse_messageType fastReflection_MsgZenexTransferRequestResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgZenexTransferRequestResponse_messageType{}
+
+type fastReflection_MsgZenexTransferRequestResponse_messageType struct{}
+
+func (x fastReflection_MsgZenexTransferRequestResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgZenexTransferRequestResponse)(nil)
+}
+func (x fastReflection_MsgZenexTransferRequestResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgZenexTransferRequestResponse)
+}
+func (x fastReflection_MsgZenexTransferRequestResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgZenexTransferRequestResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgZenexTransferRequestResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgZenexTransferRequestResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgZenexTransferRequestResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgZenexTransferRequestResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgZenexTransferRequestResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.SignTxId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.SignTxId)
+		if !f(fd_MsgZenexTransferRequestResponse_sign_tx_id, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		return x.SignTxId != uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		x.SignTxId = uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		value := x.SignTxId
+		return protoreflect.ValueOfUint64(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		x.SignTxId = value.Uint()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequestResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		panic(fmt.Errorf("field sign_tx_id of message zrchain.zenex.MsgZenexTransferRequestResponse is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgZenexTransferRequestResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.zenex.MsgZenexTransferRequestResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgZenexTransferRequestResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.zenex.MsgZenexTransferRequestResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgZenexTransferRequestResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgZenexTransferRequestResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgZenexTransferRequestResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgZenexTransferRequestResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgZenexTransferRequestResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.SignTxId != 0 {
+			n += 1 + runtime.Sov(uint64(x.SignTxId))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgZenexTransferRequestResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.SignTxId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SignTxId))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgZenexTransferRequestResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgZenexTransferRequestResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgZenexTransferRequestResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SignTxId", wireType)
+				}
+				x.SignTxId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.SignTxId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 // 	protoc-gen-go v1.27.0
@@ -2124,13 +3047,12 @@ type MsgSwapRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Creator          string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Pair             string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	Workspace        string `protobuf:"bytes,3,opt,name=workspace,proto3" json:"workspace,omitempty"`
-	AmountIn         uint64 `protobuf:"varint,4,opt,name=amount_in,json=amountIn,proto3" json:"amount_in,omitempty"`
-	RockKeyId        uint64 `protobuf:"varint,5,opt,name=rock_key_id,json=rockKeyId,proto3" json:"rock_key_id,omitempty"`
-	BtcKeyId         uint64 `protobuf:"varint,6,opt,name=btc_key_id,json=btcKeyId,proto3" json:"btc_key_id,omitempty"`
-	DestinationCaip2 string `protobuf:"bytes,7,opt,name=destination_caip2,json=destinationCaip2,proto3" json:"destination_caip2,omitempty"`
+	Creator   string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Pair      string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	Workspace string `protobuf:"bytes,3,opt,name=workspace,proto3" json:"workspace,omitempty"`
+	AmountIn  uint64 `protobuf:"varint,4,opt,name=amount_in,json=amountIn,proto3" json:"amount_in,omitempty"`
+	RockKeyId uint64 `protobuf:"varint,5,opt,name=rock_key_id,json=rockKeyId,proto3" json:"rock_key_id,omitempty"`
+	BtcKeyId  uint64 `protobuf:"varint,6,opt,name=btc_key_id,json=btcKeyId,proto3" json:"btc_key_id,omitempty"`
 }
 
 func (x *MsgSwapRequest) Reset() {
@@ -2195,13 +3117,6 @@ func (x *MsgSwapRequest) GetBtcKeyId() uint64 {
 	return 0
 }
 
-func (x *MsgSwapRequest) GetDestinationCaip2() string {
-	if x != nil {
-		return x.DestinationCaip2
-	}
-	return ""
-}
-
 // MsgSwapResponse defines the response structure for executing a
 // MsgSwap message.
 type MsgSwapRequestResponse struct {
@@ -2239,6 +3154,104 @@ func (x *MsgSwapRequestResponse) GetSwapId() uint64 {
 	return 0
 }
 
+// MsgZenexTransfer defines the message for transferring funds
+// to or from the change address.
+type MsgZenexTransferRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Creator    string              `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	SwapId     uint64              `protobuf:"varint,2,opt,name=swap_id,json=swapId,proto3" json:"swap_id,omitempty"`
+	UnsignedTx []byte              `protobuf:"bytes,3,opt,name=unsigned_tx,json=unsignedTx,proto3" json:"unsigned_tx,omitempty"`
+	WalletType treasury.WalletType `protobuf:"varint,4,opt,name=wallet_type,json=walletType,proto3,enum=zrchain.treasury.WalletType" json:"wallet_type,omitempty"`
+}
+
+func (x *MsgZenexTransferRequest) Reset() {
+	*x = MsgZenexTransferRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_zenex_tx_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgZenexTransferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgZenexTransferRequest) ProtoMessage() {}
+
+// Deprecated: Use MsgZenexTransferRequest.ProtoReflect.Descriptor instead.
+func (*MsgZenexTransferRequest) Descriptor() ([]byte, []int) {
+	return file_zrchain_zenex_tx_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MsgZenexTransferRequest) GetCreator() string {
+	if x != nil {
+		return x.Creator
+	}
+	return ""
+}
+
+func (x *MsgZenexTransferRequest) GetSwapId() uint64 {
+	if x != nil {
+		return x.SwapId
+	}
+	return 0
+}
+
+func (x *MsgZenexTransferRequest) GetUnsignedTx() []byte {
+	if x != nil {
+		return x.UnsignedTx
+	}
+	return nil
+}
+
+func (x *MsgZenexTransferRequest) GetWalletType() treasury.WalletType {
+	if x != nil {
+		return x.WalletType
+	}
+	return treasury.WalletType(0)
+}
+
+// MsgZenexTransferResponse defines the response structure for executing a
+// MsgZenexTransfer message.
+type MsgZenexTransferRequestResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SignTxId uint64 `protobuf:"varint,1,opt,name=sign_tx_id,json=signTxId,proto3" json:"sign_tx_id,omitempty"`
+}
+
+func (x *MsgZenexTransferRequestResponse) Reset() {
+	*x = MsgZenexTransferRequestResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_zenex_tx_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgZenexTransferRequestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgZenexTransferRequestResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgZenexTransferRequestResponse.ProtoReflect.Descriptor instead.
+func (*MsgZenexTransferRequestResponse) Descriptor() ([]byte, []int) {
+	return file_zrchain_zenex_tx_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *MsgZenexTransferRequestResponse) GetSignTxId() uint64 {
+	if x != nil {
+		return x.SignTxId
+	}
+	return 0
+}
+
 var File_zrchain_zenex_tx_proto protoreflect.FileDescriptor
 
 var file_zrchain_zenex_tx_proto_rawDesc = []byte{
@@ -2252,38 +3265,53 @@ var file_zrchain_zenex_tx_proto_rawDesc = []byte{
 	0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1a, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x7a, 0x65,
 	0x6e, 0x65, 0x78, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x22, 0xb7, 0x01, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61,
-	0x72, 0x61, 0x6d, 0x73, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74,
-	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73,
-	0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e,
-	0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x38, 0x0a, 0x06,
-	0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x50, 0x61, 0x72,
-	0x61, 0x6d, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06,
-	0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x3a, 0x32, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74,
-	0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x1f, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2f, 0x4d, 0x73, 0x67, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf2, 0x01, 0x0a, 0x0e, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61,
-	0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61,
-	0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74,
-	0x6f, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x70, 0x61, 0x69, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70,
-	0x61, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73,
-	0x70, 0x61, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69,
-	0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49,
-	0x6e, 0x12, 0x1e, 0x0a, 0x0b, 0x72, 0x6f, 0x63, 0x6b, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64,
-	0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x72, 0x6f, 0x63, 0x6b, 0x4b, 0x65, 0x79, 0x49,
-	0x64, 0x12, 0x1c, 0x0a, 0x0a, 0x62, 0x74, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18,
-	0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x62, 0x74, 0x63, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12,
-	0x2b, 0x0a, 0x11, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x63,
-	0x61, 0x69, 0x70, 0x32, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x64, 0x65, 0x73, 0x74,
-	0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x61, 0x69, 0x70, 0x32, 0x3a, 0x0c, 0x82, 0xe7,
-	0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x31, 0x0a, 0x16, 0x4d, 0x73,
-	0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x69, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61, 0x70, 0x49, 0x64, 0x32, 0xb9, 0x01,
+	0x1a, 0x1d, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75,
+	0x72, 0x79, 0x2f, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
+	0xb7, 0x01, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72,
+	0x61, 0x6d, 0x73, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67,
+	0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x38, 0x0a, 0x06, 0x70,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x50, 0x61, 0x72, 0x61,
+	0x6d, 0x73, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x70,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x3a, 0x32, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68,
+	0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x1f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2f, 0x78, 0x2f, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2f, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xc5, 0x01, 0x0a, 0x0e, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74,
+	0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f,
+	0x72, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x70, 0x61, 0x69, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e,
+	0x12, 0x1e, 0x0a, 0x0b, 0x72, 0x6f, 0x63, 0x6b, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x72, 0x6f, 0x63, 0x6b, 0x4b, 0x65, 0x79, 0x49, 0x64,
+	0x12, 0x1c, 0x0a, 0x0a, 0x62, 0x74, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x06,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x62, 0x74, 0x63, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x3a, 0x0c,
+	0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x31, 0x0a, 0x16,
+	0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61, 0x70, 0x49, 0x64, 0x22,
+	0xba, 0x01, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e,
+	0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x63,
+	0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x72,
+	0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x69, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61, 0x70, 0x49, 0x64, 0x12, 0x1f,
+	0x0a, 0x0b, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x74, 0x78, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x0a, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x54, 0x78, 0x12,
+	0x3d, 0x0a, 0x0b, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x1c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74,
+	0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79,
+	0x70, 0x65, 0x52, 0x0a, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x0c,
+	0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x3f, 0x0a, 0x1f,
+	0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x1c, 0x0a, 0x0a, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x74, 0x78, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x08, 0x73, 0x69, 0x67, 0x6e, 0x54, 0x78, 0x49, 0x64, 0x32, 0xa9, 0x02,
 	0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x56, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
 	0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x1e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
 	0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
@@ -2295,6 +3323,13 @@ var file_zrchain_zenex_tx_proto_rawDesc = []byte{
 	0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x7a, 0x72,
 	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x53,
 	0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x6e, 0x0a, 0x14, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73,
+	0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a, 0x65,
+	0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e,
+	0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73,
+	0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
 	0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xad, 0x01, 0x0a, 0x11, 0x63, 0x6f,
 	0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x42,
 	0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3a, 0x67, 0x69, 0x74, 0x68,
@@ -2322,25 +3357,31 @@ func file_zrchain_zenex_tx_proto_rawDescGZIP() []byte {
 	return file_zrchain_zenex_tx_proto_rawDescData
 }
 
-var file_zrchain_zenex_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_zrchain_zenex_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_zrchain_zenex_tx_proto_goTypes = []interface{}{
-	(*MsgUpdateParams)(nil),         // 0: zrchain.zenex.MsgUpdateParams
-	(*MsgUpdateParamsResponse)(nil), // 1: zrchain.zenex.MsgUpdateParamsResponse
-	(*MsgSwapRequest)(nil),          // 2: zrchain.zenex.MsgSwapRequest
-	(*MsgSwapRequestResponse)(nil),  // 3: zrchain.zenex.MsgSwapRequestResponse
-	(*Params)(nil),                  // 4: zrchain.zenex.Params
+	(*MsgUpdateParams)(nil),                 // 0: zrchain.zenex.MsgUpdateParams
+	(*MsgUpdateParamsResponse)(nil),         // 1: zrchain.zenex.MsgUpdateParamsResponse
+	(*MsgSwapRequest)(nil),                  // 2: zrchain.zenex.MsgSwapRequest
+	(*MsgSwapRequestResponse)(nil),          // 3: zrchain.zenex.MsgSwapRequestResponse
+	(*MsgZenexTransferRequest)(nil),         // 4: zrchain.zenex.MsgZenexTransferRequest
+	(*MsgZenexTransferRequestResponse)(nil), // 5: zrchain.zenex.MsgZenexTransferRequestResponse
+	(*Params)(nil),                          // 6: zrchain.zenex.Params
+	(treasury.WalletType)(0),                // 7: zrchain.treasury.WalletType
 }
 var file_zrchain_zenex_tx_proto_depIdxs = []int32{
-	4, // 0: zrchain.zenex.MsgUpdateParams.params:type_name -> zrchain.zenex.Params
-	0, // 1: zrchain.zenex.Msg.UpdateParams:input_type -> zrchain.zenex.MsgUpdateParams
-	2, // 2: zrchain.zenex.Msg.SwapRequest:input_type -> zrchain.zenex.MsgSwapRequest
-	1, // 3: zrchain.zenex.Msg.UpdateParams:output_type -> zrchain.zenex.MsgUpdateParamsResponse
-	3, // 4: zrchain.zenex.Msg.SwapRequest:output_type -> zrchain.zenex.MsgSwapRequestResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6, // 0: zrchain.zenex.MsgUpdateParams.params:type_name -> zrchain.zenex.Params
+	7, // 1: zrchain.zenex.MsgZenexTransferRequest.wallet_type:type_name -> zrchain.treasury.WalletType
+	0, // 2: zrchain.zenex.Msg.UpdateParams:input_type -> zrchain.zenex.MsgUpdateParams
+	2, // 3: zrchain.zenex.Msg.SwapRequest:input_type -> zrchain.zenex.MsgSwapRequest
+	4, // 4: zrchain.zenex.Msg.ZenexTransferRequest:input_type -> zrchain.zenex.MsgZenexTransferRequest
+	1, // 5: zrchain.zenex.Msg.UpdateParams:output_type -> zrchain.zenex.MsgUpdateParamsResponse
+	3, // 6: zrchain.zenex.Msg.SwapRequest:output_type -> zrchain.zenex.MsgSwapRequestResponse
+	5, // 7: zrchain.zenex.Msg.ZenexTransferRequest:output_type -> zrchain.zenex.MsgZenexTransferRequestResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_zenex_tx_proto_init() }
@@ -2398,6 +3439,30 @@ func file_zrchain_zenex_tx_proto_init() {
 				return nil
 			}
 		}
+		file_zrchain_zenex_tx_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgZenexTransferRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_zenex_tx_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgZenexTransferRequestResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2405,7 +3470,7 @@ func file_zrchain_zenex_tx_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_zenex_tx_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

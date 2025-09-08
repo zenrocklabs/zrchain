@@ -9,12 +9,12 @@ import (
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
-	KeyBtcproxyaddress       = []byte("Btcproxyaddress")
-	KeyMinimumSatoshis       = []byte("MinimumSatoshis")
-	KeyBtcChangeAddressKeyId = []byte("BtcChangeAddressKeyId")
+	KeyBtcproxyaddress   = []byte("Btcproxyaddress")
+	KeyMinimumSatoshis   = []byte("MinimumSatoshis")
+	KeyZenexBtcPoolKeyId = []byte("ZenexBtcPoolKeyId")
 	// TODO: Determine the default value
-	DefaultBtcproxyaddress       string = "btcproxyaddress"
-	DefaultBtcChangeAddressKeyId uint64 = 100
+	DefaultBtcproxyaddress   string = "btcproxyaddress"
+	DefaultZenexBtcPoolKeyId uint64 = 100
 )
 
 // ParamKeyTable the param key table for launch module
@@ -26,12 +26,12 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(
 	btcProxyAddress string,
 	MinimumSatoshis uint64,
-	DefaultBtcChangeAddressKeyId uint64,
+	ZenexBtcPoolKeyId uint64,
 ) Params {
 	return Params{
-		BtcProxyAddress:       btcProxyAddress,
-		MinimumSatoshis:       MinimumSatoshis,
-		BtcChangeAddressKeyId: DefaultBtcChangeAddressKeyId,
+		BtcProxyAddress:   btcProxyAddress,
+		MinimumSatoshis:   MinimumSatoshis,
+		ZenexBtcPoolKeyId: ZenexBtcPoolKeyId,
 	}
 }
 
@@ -40,7 +40,7 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcproxyaddress,
 		5000, // 5000 satoshis = 0.00005 BTC
-		DefaultBtcChangeAddressKeyId,
+		DefaultZenexBtcPoolKeyId,
 	)
 }
 
@@ -49,7 +49,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyBtcproxyaddress, &p.BtcProxyAddress, validateBtcproxyaddress),
 		paramtypes.NewParamSetPair(KeyMinimumSatoshis, &p.MinimumSatoshis, validateMinimumSatoshis),
-		paramtypes.NewParamSetPair(KeyBtcChangeAddressKeyId, &p.BtcChangeAddressKeyId, validateBtcChangeAddressKeyId),
+		paramtypes.NewParamSetPair(KeyZenexBtcPoolKeyId, &p.ZenexBtcPoolKeyId, validateZenexBtcPoolKeyId),
 	}
 }
 
@@ -61,7 +61,7 @@ func (p Params) Validate() error {
 	if err := validateMinimumSatoshis(p.MinimumSatoshis); err != nil {
 		return err
 	}
-	if err := validateBtcChangeAddressKeyId(p.BtcChangeAddressKeyId); err != nil {
+	if err := validateZenexBtcPoolKeyId(p.ZenexBtcPoolKeyId); err != nil {
 		return err
 	}
 
@@ -96,7 +96,7 @@ func validateMinimumSatoshis(v interface{}) error {
 }
 
 // validateBtcChangeAddressKeyId validates the BtcChangeAddressKeyId param
-func validateBtcChangeAddressKeyId(v interface{}) error {
+func validateZenexBtcPoolKeyId(v interface{}) error {
 	_, ok := v.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", v)

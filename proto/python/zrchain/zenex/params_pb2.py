@@ -26,7 +26,7 @@ from amino import amino_pb2 as amino_dot_amino__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"\xf8\x01\n\x06Params\x12\x46\n\x11\x62tc_proxy_address\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcProxyAddress\x12Z\n\x19\x62tc_change_address_key_id\x18\x02 \x01(\x04\x42 \xf2\xde\x1f\x1cyaml:\"btcchangeaddresskeyid\"R\x15\x62tcChangeAddressKeyId\x12)\n\x10minimum_satoshis\x18\x03 \x01(\x04R\x0fminimumSatoshis:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"\xf0\x01\n\x06Params\x12\x46\n\x11\x62tc_proxy_address\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcProxyAddress\x12R\n\x15zenex_btc_pool_key_id\x18\x02 \x01(\x04\x42 \xf2\xde\x1f\x1cyaml:\"btcchangeaddresskeyid\"R\x11zenexBtcPoolKeyId\x12)\n\x10minimum_satoshis\x18\x03 \x01(\x04R\x0fminimumSatoshis:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,10 +36,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types'
   _globals['_PARAMS'].fields_by_name['btc_proxy_address']._loaded_options = None
   _globals['_PARAMS'].fields_by_name['btc_proxy_address']._serialized_options = b'\362\336\037\026yaml:\"btcproxyaddress\"'
-  _globals['_PARAMS'].fields_by_name['btc_change_address_key_id']._loaded_options = None
-  _globals['_PARAMS'].fields_by_name['btc_change_address_key_id']._serialized_options = b'\362\336\037\034yaml:\"btcchangeaddresskeyid\"'
+  _globals['_PARAMS'].fields_by_name['zenex_btc_pool_key_id']._loaded_options = None
+  _globals['_PARAMS'].fields_by_name['zenex_btc_pool_key_id']._serialized_options = b'\362\336\037\034yaml:\"btcchangeaddresskeyid\"'
   _globals['_PARAMS']._loaded_options = None
   _globals['_PARAMS']._serialized_options = b'\350\240\037\001\212\347\260*\026zrchain/x/zenex/Params'
   _globals['_PARAMS']._serialized_start=87
-  _globals['_PARAMS']._serialized_end=335
+  _globals['_PARAMS']._serialized_end=327
 # @@protoc_insertion_point(module_scope)

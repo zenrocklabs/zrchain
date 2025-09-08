@@ -16,7 +16,7 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		return nil, err
 	}
 
-	btcChangeKeyId := k.GetParams(ctx).BtcChangeAddressKeyId
+	btcChangeKeyId := k.GetParams(ctx).ZenexBtcPoolKeyId
 
 	workspace, err := k.identityKeeper.GetWorkspace(ctx, msg.Workspace)
 	if err != nil {

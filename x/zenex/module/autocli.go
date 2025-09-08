@@ -53,7 +53,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "btc_key_id"},
 					},
 				},
-				// this line is used by ignite scaffolding # autocli/tx
+				{
+			RpcMethod: "ZenexBitcoinTransfer",
+			Use: "zenex-bitcoin-transfer [swap-id] [unsigned-tx]",
+			Short: "Send a zenex-bitcoin-transfer tx",
+			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "swapId"}, {ProtoField: "unsignedTx"},},
+		},
+		// this line is used by ignite scaffolding # autocli/tx
 			},
 		},
 	}

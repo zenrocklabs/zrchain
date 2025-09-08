@@ -7,6 +7,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/zenex/params.proto";
+import "zrchain/treasury/wallet.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
 
@@ -17,12 +18,17 @@ service Msg {
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
   rpc UpdateParams (MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  
   // Swap defines a (cross-chain) swap operation.
-  rpc SwapRequest (MsgSwapRequest) returns (MsgSwapRequestResponse        );
+  rpc SwapRequest          (MsgSwapRequest         ) returns (MsgSwapRequestResponse         );
+  
+  // ZenexTransfer defines the message for transferring funds 
+  // to or from the change address.
+  rpc ZenexTransferRequest (MsgZenexTransferRequest) returns (MsgZenexTransferRequestResponse);
 }
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
-  option (cosmos.msg.v1.signer) =                         "authority";
+  option (cosmos.msg.v1.signer) =                       "authority";
   option           (amino.name) = "zrchain/x/zenex/MsgUpdateParams";
   
   // authority is the address that controls the module (defaults to x/gov unless overwritten).
@@ -41,13 +47,12 @@ message MsgUpdateParamsResponse {}
 // MsgSwapRequest defines a (cross-chain) swap operation.
 message MsgSwapRequest {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator   = 1;
-  string pair      = 2;
-  string workspace = 3;
-  uint64 amount_in = 4;
-  uint64 rock_key_id = 5;
-  uint64 btc_key_id = 6;
-  string destination_caip2 = 7;
+  string creator           = 1;
+  string pair              = 2;
+  string workspace         = 3;
+  uint64 amount_in         = 4;
+  uint64 rock_key_id       = 5;
+  uint64 btc_key_id        = 6;
 }
 
 // MsgSwapResponse defines the response structure for executing a
@@ -55,3 +60,20 @@ message MsgSwapRequest {
 message MsgSwapRequestResponse {
   uint64 swap_id = 1;
 }
+
+// MsgZenexTransfer defines the message for transferring funds 
+// to or from the change address.
+message MsgZenexTransferRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator    = 1;
+  uint64 swap_id     = 2;
+  bytes unsigned_tx = 3;
+  zrchain.treasury.WalletType wallet_type = 4;
+}
+
+// MsgZenexTransferResponse defines the response structure for executing a
+// MsgZenexTransfer message.
+message MsgZenexTransferRequestResponse {
+  uint64 sign_tx_id = 1;
+}
+

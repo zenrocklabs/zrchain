@@ -25,6 +25,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.SerializeToString,
                 response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.FromString,
                 )
+        self.ZenexTransferRequest = channel.unary_unary(
+                '/zrchain.zenex.Msg/ZenexTransferRequest',
+                request_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequest.SerializeToString,
+                response_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequestResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -46,6 +51,14 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ZenexTransferRequest(self, request, context):
+        """ZenexTransfer defines the message for transferring funds 
+        to or from the change address.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -58,6 +71,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.SwapRequest,
                     request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.FromString,
                     response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.SerializeToString,
+            ),
+            'ZenexTransferRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.ZenexTransferRequest,
+                    request_deserializer=zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequest.FromString,
+                    response_serializer=zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequestResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -101,5 +119,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/SwapRequest',
             zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequest.SerializeToString,
             zrchain_dot_zenex_dot_tx__pb2.MsgSwapRequestResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ZenexTransferRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.zenex.Msg/ZenexTransferRequest',
+            zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequest.SerializeToString,
+            zrchain_dot_zenex_dot_tx__pb2.MsgZenexTransferRequestResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

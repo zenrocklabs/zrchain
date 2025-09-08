@@ -20,7 +20,7 @@ message Swap {
   uint64 btc_key_id = 7;
   uint64 btc_change_key_id = 8;
   string workspace = 9;
-  string destination_caip_2 = 10;
+  uint64 sign_tx_id = 10;
 }
 
 // SwapStatus defines the status of the swap.
@@ -29,10 +29,12 @@ enum SwapStatus {
   SWAP_STATUS_UNSPECIFIED = 0;
   // The swap status is requested
   SWAP_STATUS_REQUESTED = 1;
+  // The swap status is transfer requested
+  SWAP_STATUS_SWAP_TRANSFER_REQUESTED = 2;
   // The swap status is rejected
-  SWAP_STATUS_REJECTED = 2;
+  SWAP_STATUS_REJECTED = 3;
   // The swap status is completed
-  SWAP_STATUS_COMPLETED = 3;
+  SWAP_STATUS_COMPLETED = 4;
 }
 
 // SwapData defines the data for a swap.

@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Msg_UpdateParams_FullMethodName = "/zrchain.zenex.Msg/UpdateParams"
-	Msg_SwapRequest_FullMethodName  = "/zrchain.zenex.Msg/SwapRequest"
+	Msg_UpdateParams_FullMethodName         = "/zrchain.zenex.Msg/UpdateParams"
+	Msg_SwapRequest_FullMethodName          = "/zrchain.zenex.Msg/SwapRequest"
+	Msg_ZenexTransferRequest_FullMethodName = "/zrchain.zenex.Msg/ZenexTransferRequest"
 )
 
 // MsgClient is the client API for Msg service.
@@ -34,6 +35,9 @@ type MsgClient interface {
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
 	SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ...grpc.CallOption) (*MsgSwapRequestResponse, error)
+	// ZenexTransfer defines the message for transferring funds
+	// to or from the change address.
+	ZenexTransferRequest(ctx context.Context, in *MsgZenexTransferRequest, opts ...grpc.CallOption) (*MsgZenexTransferRequestResponse, error)
 }
 
 type msgClient struct {
@@ -64,6 +68,16 @@ func (c *msgClient) SwapRequest(ctx context.Context, in *MsgSwapRequest, opts ..
 	return out, nil
 }
 
+func (c *msgClient) ZenexTransferRequest(ctx context.Context, in *MsgZenexTransferRequest, opts ...grpc.CallOption) (*MsgZenexTransferRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgZenexTransferRequestResponse)
+	err := c.cc.Invoke(ctx, Msg_ZenexTransferRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -75,6 +89,9 @@ type MsgServer interface {
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// Swap defines a (cross-chain) swap operation.
 	SwapRequest(context.Context, *MsgSwapRequest) (*MsgSwapRequestResponse, error)
+	// ZenexTransfer defines the message for transferring funds
+	// to or from the change address.
+	ZenexTransferRequest(context.Context, *MsgZenexTransferRequest) (*MsgZenexTransferRequestResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -90,6 +107,9 @@ func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*
 }
 func (UnimplementedMsgServer) SwapRequest(context.Context, *MsgSwapRequest) (*MsgSwapRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SwapRequest not implemented")
+}
+func (UnimplementedMsgServer) ZenexTransferRequest(context.Context, *MsgZenexTransferRequest) (*MsgZenexTransferRequestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ZenexTransferRequest not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -148,6 +168,24 @@ func _Msg_SwapRequest_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ZenexTransferRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgZenexTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ZenexTransferRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_ZenexTransferRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ZenexTransferRequest(ctx, req.(*MsgZenexTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -162,6 +200,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SwapRequest",
 			Handler:    _Msg_SwapRequest_Handler,
+		},
+		{
+			MethodName: "ZenexTransferRequest",
+			Handler:    _Msg_ZenexTransferRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

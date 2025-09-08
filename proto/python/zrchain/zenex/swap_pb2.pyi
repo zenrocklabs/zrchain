@@ -13,15 +13,17 @@ class SwapStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     SWAP_STATUS_UNSPECIFIED: _ClassVar[SwapStatus]
     SWAP_STATUS_REQUESTED: _ClassVar[SwapStatus]
+    SWAP_STATUS_SWAP_TRANSFER_REQUESTED: _ClassVar[SwapStatus]
     SWAP_STATUS_REJECTED: _ClassVar[SwapStatus]
     SWAP_STATUS_COMPLETED: _ClassVar[SwapStatus]
 SWAP_STATUS_UNSPECIFIED: SwapStatus
 SWAP_STATUS_REQUESTED: SwapStatus
+SWAP_STATUS_SWAP_TRANSFER_REQUESTED: SwapStatus
 SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
 
 class Swap(_message.Message):
-    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "btc_change_key_id", "workspace", "destination_caip_2")
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "btc_change_key_id", "workspace", "sign_tx_id")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -31,7 +33,7 @@ class Swap(_message.Message):
     BTC_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     BTC_CHANGE_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
-    DESTINATION_CAIP_2_FIELD_NUMBER: _ClassVar[int]
+    SIGN_TX_ID_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     status: SwapStatus
@@ -41,8 +43,8 @@ class Swap(_message.Message):
     btc_key_id: int
     btc_change_key_id: int
     workspace: str
-    destination_caip_2: str
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., btc_change_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., destination_caip_2: _Optional[str] = ...) -> None: ...
+    sign_tx_id: int
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., btc_change_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")
