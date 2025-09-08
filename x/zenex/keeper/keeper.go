@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
@@ -28,6 +30,7 @@ type (
 		identityKeeper   types.IdentityKeeper
 		treasuryKeeper   types.TreasuryKeeper
 		validationKeeper types.ValidationKeeper
+		bankKeeper       types.BankKeeper
 
 		Schema     collections.Schema
 		SwapsCount collections.Item[uint64]
@@ -44,6 +47,7 @@ func NewKeeper(
 	identityKeeper types.IdentityKeeper,
 	treasuryKeeper types.TreasuryKeeper,
 	validationKeeper types.ValidationKeeper,
+	bankKeeper types.BankKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -60,6 +64,7 @@ func NewKeeper(
 		identityKeeper:   identityKeeper,
 		treasuryKeeper:   treasuryKeeper,
 		validationKeeper: validationKeeper,
+		bankKeeper:       bankKeeper,
 
 		SwapsCount: collections.NewItem(sb, types.SwapsCountKey, types.SwapsCountIndex, collections.Uint64Value),
 		SwapsStore: collections.NewMap(sb, types.SwapsKey, types.SwapsIndex, collections.Uint64Key, codec.CollValue[types.Swap](cdc)),
@@ -187,4 +192,23 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 	default:
 		return 0, fmt.Errorf("unknown pair: %s", pair)
 	}
+}
+
+func (k Keeper) EscrowRock(ctx sdk.Context, senderKey treasurytypes.Key, amount uint64) error {
+
+	if senderKey.Type != treasurytypes.KeyType_KEY_TYPE_ECDSA_SECP256K1 {
+		return types.ErrWrongKeyType
+	}
+
+	senderAddress, err := treasurytypes.NativeAddress(&senderKey, "zen")
+	if err != nil {
+		return fmt.Errorf("failed to convert sender key to zenrock address: %w", err)
+	}
+
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount))))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -6,7 +6,10 @@ import (
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
+	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
@@ -35,6 +38,7 @@ type IntegrationTestSuite struct {
 	identityKeeper   *zenextestutil.MockIdentityKeeper
 	treasuryKeeper   *zenextestutil.MockTreasuryKeeper
 	validationKeeper *zenextestutil.MockValidationKeeper
+	bankKeeper       *zenextestutil.MockBankKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -53,11 +57,13 @@ func (s *IntegrationTestSuite) SetupTest() {
 	treasuryKeeper := zenextestutil.NewMockTreasuryKeeper(ctrl)
 	identityKeeper := zenextestutil.NewMockIdentityKeeper(ctrl)
 	validationKeeper := zenextestutil.NewMockValidationKeeper(ctrl)
+	bankKeeper := zenextestutil.NewMockBankKeeper(ctrl)
 
 	// Assign the mock keepers to the suite fields
 	s.treasuryKeeper = treasuryKeeper
 	s.identityKeeper = identityKeeper
 	s.validationKeeper = validationKeeper
+	s.bankKeeper = bankKeeper
 	s.zenexKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -66,6 +72,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		identityKeeper,
 		treasuryKeeper,
 		validationKeeper,
+		bankKeeper,
 	)
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
@@ -278,6 +285,52 @@ func (s *IntegrationTestSuite) TestGetPair() {
 				s.Require().NotNil(pair)
 				s.Require().Equal(tt.expected, *pair)
 				s.Require().Equal(tt.expectedPrice, price)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestEscrowRock() {
+	tests := []struct {
+		name        string
+		senderKey   treasurytypes.Key
+		amountIn    uint64
+		errExpected bool
+		expectedErr error
+	}{
+		{
+			name:        "happy path",
+			senderKey:   treasurytestutil.DefaultKeys[0],
+			amountIn:    100000,
+			errExpected: false,
+			expectedErr: nil,
+		},
+		{
+			name:        "fail: wrong key type",
+			senderKey:   treasurytestutil.DefaultKeys[2],
+			amountIn:    100000,
+			errExpected: true,
+			expectedErr: types.ErrWrongKeyType,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			if !tt.errExpected {
+				senderAddress, err := treasurytypes.NativeAddress(&tt.senderKey, "zen")
+				if err != nil {
+					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
+				}
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.amountIn)))).Return(nil)
+			}
+
+			err := s.zenexKeeper.EscrowRock(s.ctx, tt.senderKey, tt.amountIn)
+
+			if tt.expectedErr != nil {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
 			}
 		})
 	}

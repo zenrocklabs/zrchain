@@ -208,6 +208,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		in.IdentityKeeper,
 		in.TreasuryKeeper,
 		in.ValidationKeeper,
+		in.BankKeeper,
 	)
 	m := NewAppModule(
 		in.Cdc,

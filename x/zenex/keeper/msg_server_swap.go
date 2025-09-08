@@ -43,6 +43,13 @@ func (k msgServer) Swap(goCtx context.Context, msg *types.MsgSwap) (*types.MsgSw
 		return nil, err
 	}
 
+	if msg.Pair == "rockbtc" {
+		err = k.EscrowRock(ctx, *senderKey, msg.AmountIn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// either returns BTC or ROCK amount to transfer
 	// checks if the amount in is greater than the minimum satoshis
 	amountOut, err := k.GetAmountOut(ctx, msg.Pair, msg.AmountIn, price)

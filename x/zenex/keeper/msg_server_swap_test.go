@@ -3,11 +3,14 @@ package keeper_test
 import (
 	"cosmossdk.io/math"
 
+	appparams "github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	identitytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/identity/testutil"
 	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (s *IntegrationTestSuite) TestMsgSwap() {
@@ -127,13 +130,18 @@ func (s *IntegrationTestSuite) TestMsgSwap() {
 
 			if !tt.expErr {
 				s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.SenderKey).Return(&treasurytestutil.DefaultKeys[0], nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RecipientKey).Return(&treasurytestutil.DefaultKeys[1], nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.SenderKey).Return(&treasurytestutil.DefaultKeys[tt.input.SenderKey-1], nil)
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RecipientKey).Return(&treasurytestutil.DefaultKeys[tt.input.RecipientKey-1], nil)
 				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
 					validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
 					validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
 				}, nil)
 				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
+				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.SenderKey-1], "zen")
+				if err != nil {
+					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
+				}
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.input.AmountIn)))).Return(nil)
 			}
 
 			swapId, err := s.msgServer.Swap(s.ctx, tt.input)

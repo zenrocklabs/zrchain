@@ -37,6 +37,7 @@ func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	mockIdentityKeeper := &zenextestutil.MockIdentityKeeper{}
 	mockTreasuryKeeper := &zenextestutil.MockTreasuryKeeper{}
 	mockValidationKeeper := &zenextestutil.MockValidationKeeper{}
+	mockBankKeeper := &zenextestutil.MockBankKeeper{}
 
 	k := keeper.NewKeeper(
 		cdc,
@@ -46,6 +47,7 @@ func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 		mockIdentityKeeper,
 		mockTreasuryKeeper,
 		mockValidationKeeper,
+		mockBankKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
