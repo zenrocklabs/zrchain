@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 )
 
@@ -14,7 +15,7 @@ func NewZenexTxClient(c *RawTxClient) *ZenexTxClient {
 	return &ZenexTxClient{c: c}
 }
 
-func (c *ZenTPTxClient) NewMsgSwap(
+func (c *ZenTPTxClient) NewMsgSwapRequest(
 	ctx context.Context,
 	creator string,
 	amountIn uint64,
@@ -31,6 +32,33 @@ func (c *ZenTPTxClient) NewMsgSwap(
 		RockKeyId: rockKeyID,
 		BtcKeyId:  btcKeyID,
 	}
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := c.c.SendWaitTx(ctx, txBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
+}
+
+func (c *ZenexTxClient) NewMsgZenexTransferRequest(
+	ctx context.Context,
+	creator string,
+	swapId uint64,
+	unsignedTx []byte,
+	walletType treasurytypes.WalletType,
+) (string, error) {
+	msg := &types.MsgZenexTransferRequest{
+		Creator:    creator,
+		SwapId:     swapId,
+		UnsignedTx: unsignedTx,
+		WalletType: walletType,
+	}
+
 	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
 	if err != nil {
 		return "", err
