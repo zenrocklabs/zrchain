@@ -59,6 +59,8 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		if err != nil {
 			return nil, err
 		}
+	case "btcrock":
+		// Proxy makes the transaction in the zenex transfer request
 	default:
 		return nil, fmt.Errorf("invalid pair: %s", msg.Pair)
 	}

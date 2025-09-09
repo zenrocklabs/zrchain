@@ -3,9 +3,9 @@ package types
 import (
 	"testing"
 
+	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 )
 
 func TestMsgAcknowledgePoolTransfer_ValidateBasic(t *testing.T) {
@@ -24,6 +24,7 @@ func TestMsgAcknowledgePoolTransfer_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgAcknowledgePoolTransfer{
 				Creator: sample.AccAddress(),
+				Status:  SwapStatus_SWAP_STATUS_COMPLETED,
 			},
 		},
 	}

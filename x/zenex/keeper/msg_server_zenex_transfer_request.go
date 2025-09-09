@@ -12,6 +12,10 @@ import (
 func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZenexTransferRequest) (*types.MsgZenexTransferRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	swap, err := k.SwapsStore.Get(ctx, msg.SwapId)
 	if err != nil {
 		return nil, err

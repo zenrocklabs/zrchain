@@ -203,15 +203,27 @@ func (k Keeper) EscrowRock(ctx sdk.Context, senderKey treasurytypes.Key, amount 
 		return types.ErrWrongKeyType
 	}
 
-	senderAddress, err := treasurytypes.NativeAddress(&senderKey, "zen")
+	rockAddress, err := k.GetRockAddress(ctx, senderKey.Id)
 	if err != nil {
-		return fmt.Errorf("failed to convert sender key to zenrock address: %w", err)
+		return err
 	}
 
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount))))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.MustAccAddressFromBech32(rockAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amount))))
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (k Keeper) GetRockAddress(ctx sdk.Context, rockKeyId uint64) (string, error) {
+	rockKey, err := k.treasuryKeeper.GetKey(ctx, rockKeyId)
+	if err != nil {
+		return "", err
+	}
+	rockAddress, err := treasurytypes.NativeAddress(rockKey, "zen")
+	if err != nil {
+		return "", err
+	}
+	return rockAddress, nil
 }
