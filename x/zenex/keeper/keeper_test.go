@@ -321,6 +321,7 @@ func (s *IntegrationTestSuite) TestEscrowRock() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			if !tt.errExpected {
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.senderKey.Id).Return(&tt.senderKey, nil).AnyTimes()
 				senderAddress, err := treasurytypes.NativeAddress(&tt.senderKey, "zen")
 				if err != nil {
 					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)

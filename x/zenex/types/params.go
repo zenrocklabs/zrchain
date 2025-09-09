@@ -13,7 +13,7 @@ var (
 	KeyMinimumSatoshis   = []byte("MinimumSatoshis")
 	KeyZenexBtcPoolKeyId = []byte("ZenexBtcPoolKeyId")
 	// TODO: Determine the default value
-	DefaultBtcproxyaddress   string = "btcproxyaddress"
+	DefaultBtcproxyaddress   string = "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
 	DefaultZenexBtcPoolKeyId uint64 = 100
 )
 

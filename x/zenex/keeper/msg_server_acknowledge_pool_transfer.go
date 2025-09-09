@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
-	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,12 +13,12 @@ import (
 func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.MsgAcknowledgePoolTransfer) (*types.MsgAcknowledgePoolTransferResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if msg.Creator != k.GetParams(ctx).BtcProxyAddress {
-		return nil, fmt.Errorf("message creator is not the btc proxy address: %s", msg.Creator)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
 	}
 
-	if msg.Status != types.SwapStatus_SWAP_STATUS_COMPLETED && msg.Status != types.SwapStatus_SWAP_STATUS_REJECTED {
-		return nil, fmt.Errorf("msg status is not completed or rejected: %s", msg.Status)
+	if msg.Creator != k.GetParams(ctx).BtcProxyAddress {
+		return nil, fmt.Errorf("message creator is not the btc proxy address: %s", msg.Creator)
 	}
 
 	swap, err := k.SwapsStore.Get(ctx, msg.SwapId)
@@ -38,17 +37,23 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 		if err != nil {
 			return nil, err
 		}
+		// Release previously pending escrowed funds
+		if swap.Pair == "rockbtc" {
+			rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
+			if err != nil {
+				return nil, err
+			}
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(rockAddress), sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountIn))))
+			if err != nil {
+				return nil, err
+			}
+		}
 		return &types.MsgAcknowledgePoolTransferResponse{}, nil
 	}
 
 	if swap.Pair == "btcrock" {
 
-		rockKey, err := k.treasuryKeeper.GetKey(ctx, swap.RockKeyId)
-		if err != nil {
-			return nil, err
-		}
-
-		rockAddress, err := treasurytypes.NativeAddress(rockKey, "zen")
+		rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
 		if err != nil {
 			return nil, err
 		}

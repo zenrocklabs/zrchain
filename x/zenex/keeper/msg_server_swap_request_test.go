@@ -24,7 +24,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 		wantSwap  *types.Swap
 	}{
 		{
-			name: "Pass: Happy Path",
+			name: "Pass: Happy Path: rockbtc",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      "rockbtc",
@@ -114,6 +114,58 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
+		{
+			name: "FAIL: Invalid creator",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts",
+				Pair:      "rockbtc",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  2,
+			},
+			expErr:    true,
+			expErrMsg: "message creator is not the owner of the workspace or the btc proxy address",
+		},
+		{
+			name: "Pass: Happy Path btcrock",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      "btcrock",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  2,
+			},
+			expErr: false,
+			want: &types.MsgSwapRequestResponse{
+				SwapId: 1,
+			},
+			wantSwap: &types.Swap{
+				SwapId: 1,
+				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Pair:   "btcrock",
+				Data: &types.SwapData{
+					BaseToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_BTC,
+						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						Precision: 8,
+					},
+					QuoteToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_ROCK,
+						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						Precision: 6,
+					},
+					Price:     math.LegacyNewDec(100000),
+					AmountIn:  100000,
+					AmountOut: 100000,
+				},
+				RockKeyId:      1,
+				BtcKeyId:       2,
+				ZenexPoolKeyId: 3,
+				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -122,23 +174,28 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			s.Require().NoError(err)
 
 			params := types.DefaultParams()
-			params.BtcProxyAddress = tt.input.Creator
 			s.zenexKeeper.SetParams(s.ctx, params)
 
+			s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil).AnyTimes()
+			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], nil).AnyTimes()
+			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil).AnyTimes()
+
 			if !tt.expErr {
-				s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], nil)
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil)
 				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
 					validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
 					validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
-				}, nil)
-				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
+				}, nil).AnyTimes()
+				// Set up price expectations based on the pair
+				if tt.input.Pair == "rockbtc" {
+					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil).AnyTimes()
+				} else if tt.input.Pair == "btcrock" {
+					s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+				}
 				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], "zen")
 				if err != nil {
 					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
 				}
-				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.input.AmountIn)))).Return(nil)
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.input.AmountIn)))).Return(nil).AnyTimes()
 			}
 
 			swapId, err := s.msgServer.SwapRequest(s.ctx, tt.input)

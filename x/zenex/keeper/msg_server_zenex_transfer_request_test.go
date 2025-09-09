@@ -100,7 +100,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 		{
 			name: "FAIL: invalid msg sender",
 			input: &types.MsgZenexTransferRequest{
-				Creator:    "nottheproxy",
+				Creator:    "zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn",
 				SwapId:     zenextestutil.SampleSwap[1].SwapId,
 				UnsignedTx: []byte("unsigned_tx"),
 				WalletType: treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
@@ -129,6 +129,17 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			},
 			expErr:    true,
 			expErrMsg: "swap status is not requested",
+		},
+		{
+			name: "FAIL: invalid wallet type",
+			input: &types.MsgZenexTransferRequest{
+				Creator:    "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				SwapId:     zenextestutil.SampleSwap[0].SwapId,
+				UnsignedTx: []byte("unsigned_tx"),
+				WalletType: treasurytypes.WalletType_WALLET_TYPE_NATIVE,
+			},
+			expErr:    true,
+			expErrMsg: "invalid wallet type: WALLET_TYPE_NATIVE",
 		},
 	}
 

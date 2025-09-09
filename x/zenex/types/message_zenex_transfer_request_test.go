@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,8 @@ func TestMsgZenexBitcoinTransfer_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgZenexTransferRequest{
-				Creator: sample.AccAddress(),
+				Creator:    sample.AccAddress(),
+				WalletType: treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 		},
 	}

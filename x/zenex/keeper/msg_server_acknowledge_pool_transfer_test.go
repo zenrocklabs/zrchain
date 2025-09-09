@@ -26,7 +26,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 		{
 			name: "Pass: Happy Path rockbtc",
 			input: &types.MsgAcknowledgePoolTransfer{
-				Creator:      "btcproxyaddress",
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       4,
 				SourceTxHash: "source_tx_hash",
 				Status:       types.SwapStatus_SWAP_STATUS_COMPLETED,
@@ -63,7 +63,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 		{
 			name: "Pass: Happy Path btcrock",
 			input: &types.MsgAcknowledgePoolTransfer{
-				Creator:      "btcproxyaddress",
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       5,
 				SourceTxHash: "source_tx_hash",
 				Status:       types.SwapStatus_SWAP_STATUS_COMPLETED,
@@ -100,7 +100,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 		{
 			name: "Pass: swap status rejected",
 			input: &types.MsgAcknowledgePoolTransfer{
-				Creator:      "btcproxyaddress",
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       6,
 				SourceTxHash: "source_tx_hash",
 				Status:       types.SwapStatus_SWAP_STATUS_REJECTED,
@@ -138,7 +138,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 		{
 			name: "FAIL: msg status not swap transfer completed/rejected",
 			input: &types.MsgAcknowledgePoolTransfer{
-				Creator:      "btcproxyaddress",
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       6,
 				SourceTxHash: "source_tx_hash",
 				Status:       types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
@@ -149,7 +149,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 		{
 			name: "FAIL: swap status is already completed/rejected",
 			input: &types.MsgAcknowledgePoolTransfer{
-				Creator:      "btcproxyaddress",
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       7,
 				SourceTxHash: "source_tx_hash",
 				Status:       types.SwapStatus_SWAP_STATUS_COMPLETED,
