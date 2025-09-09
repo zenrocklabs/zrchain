@@ -19,7 +19,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 	}
 
 	if msg.Status != types.SwapStatus_SWAP_STATUS_COMPLETED && msg.Status != types.SwapStatus_SWAP_STATUS_REJECTED {
-		return nil, fmt.Errorf("swap status is not completed or rejected: %s", msg.Status)
+		return nil, fmt.Errorf("msg status is not completed or rejected: %s", msg.Status)
 	}
 
 	swap, err := k.SwapsStore.Get(ctx, msg.SwapId)
@@ -31,7 +31,17 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 		return nil, fmt.Errorf("swap status is not swap transfer requested: %s", swap.Status)
 	}
 
-	if swap.Pair != "btcrock" {
+	if msg.Status == types.SwapStatus_SWAP_STATUS_REJECTED {
+		swap.Status = types.SwapStatus_SWAP_STATUS_REJECTED
+		swap.RejectReason = msg.RejectReason
+		err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
+		if err != nil {
+			return nil, err
+		}
+		return &types.MsgAcknowledgePoolTransferResponse{}, nil
+	}
+
+	if swap.Pair == "btcrock" {
 
 		rockKey, err := k.treasuryKeeper.GetKey(ctx, swap.RockKeyId)
 		if err != nil {

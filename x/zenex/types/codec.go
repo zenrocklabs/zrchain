@@ -15,9 +15,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgZenexTransferRequest{},
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-	&MsgAcknowledgePoolTransfer{},
-)
-// this line is used by starport scaffolding # 3
+		&MsgAcknowledgePoolTransfer{},
+	)
+	// this line is used by starport scaffolding # 3
 
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgUpdateParams{},

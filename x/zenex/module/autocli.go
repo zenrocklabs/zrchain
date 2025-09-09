@@ -30,6 +30,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 
+				{
+					RpcMethod:      "RockPool",
+					Use:            "rock-pool",
+					Short:          "Query rock-pool",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{},
+				},
+
 				// this line is used by ignite scaffolding # autocli/query
 			},
 		},
@@ -54,18 +61,29 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-			RpcMethod: "ZenexBitcoinTransfer",
-			Use: "zenex-bitcoin-transfer [swap-id] [unsigned-tx]",
-			Short: "Send a zenex-bitcoin-transfer tx",
-			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "swapId"}, {ProtoField: "unsignedTx"},},
-		},
-		{
-			RpcMethod: "AcknowledgePoolTransfer",
-			Use: "acknowledge-pool-transfer [swap-id] [source-tx-hash]",
-			Short: "Send a AcknowledgePoolTransfer tx",
-			PositionalArgs: []*autocliv1.PositionalArgDescriptor{{ProtoField: "swapId"}, {ProtoField: "sourceTxHash"},},
-		},
-		// this line is used by ignite scaffolding # autocli/tx
+					RpcMethod: "ZenexTransferRequest",
+					Use:       "zenex-transfer-request [swap-id] [unsigned-tx] [wallet-type]",
+					Short:     "Send a zenex-transfer-request tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "swap_id"},
+						{ProtoField: "unsigned_tx"},
+						{ProtoField: "wallet_type"},
+					},
+				},
+				{
+					RpcMethod: "AcknowledgePoolTransfer",
+					Use:       "acknowledge-pool-transfer [swap-id] [source-tx-hash] [status]",
+					Short:     "Send a AcknowledgePoolTransfer tx",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "swap_id"},
+						{ProtoField: "source_tx_hash"},
+						{ProtoField: "status"},
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"reject_reason": {Usage: "Optional reason for rejection (only used when status is rejected)"},
+					},
+				},
+				// this line is used by ignite scaffolding # autocli/tx
 			},
 		},
 	}

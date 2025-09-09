@@ -30,3 +30,7 @@ func (c *ZenexQueryClient) Swaps(ctx context.Context, creator, pair, workspace s
 		Workspace: workspace,
 	})
 }
+
+func (c *ZenexQueryClient) RockPool(ctx context.Context) (*types.QueryRockPoolResponse, error) {
+	return c.client.RockPool(ctx, &types.QueryRockPoolRequest{})
+}

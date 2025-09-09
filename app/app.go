@@ -751,6 +751,7 @@ func NewZenrockApp(
 		app.TreasuryKeeper,
 		app.ValidationKeeper,
 		app.BankKeeper,
+		app.AccountKeeper,
 	)
 
 	zenexModule := zenex.NewAppModule(appCodec, app.ZenexKeeper, app.AccountKeeper, app.BankKeeper)

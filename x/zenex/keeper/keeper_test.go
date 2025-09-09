@@ -39,6 +39,7 @@ type IntegrationTestSuite struct {
 	treasuryKeeper   *zenextestutil.MockTreasuryKeeper
 	validationKeeper *zenextestutil.MockValidationKeeper
 	bankKeeper       *zenextestutil.MockBankKeeper
+	accountKeeper    *zenextestutil.MockAccountKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -58,12 +59,14 @@ func (s *IntegrationTestSuite) SetupTest() {
 	identityKeeper := zenextestutil.NewMockIdentityKeeper(ctrl)
 	validationKeeper := zenextestutil.NewMockValidationKeeper(ctrl)
 	bankKeeper := zenextestutil.NewMockBankKeeper(ctrl)
+	accountKeeper := zenextestutil.NewMockAccountKeeper(ctrl)
 
 	// Assign the mock keepers to the suite fields
 	s.treasuryKeeper = treasuryKeeper
 	s.identityKeeper = identityKeeper
 	s.validationKeeper = validationKeeper
 	s.bankKeeper = bankKeeper
+	s.accountKeeper = accountKeeper
 	s.zenexKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -73,6 +76,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		treasuryKeeper,
 		validationKeeper,
 		bankKeeper,
+		accountKeeper,
 	)
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),

@@ -25,6 +25,12 @@ service Query {
     option (google.api.http).get = "/zrchain/v6/zenex/swaps";
   
   }
+  
+  // Queries a list of RockPool items.
+  rpc RockPool (QueryRockPoolRequest) returns (QueryRockPoolResponse) {
+    option (google.api.http).get = "/zrchain/v6/zenex/rock_pool";
+  
+  }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
@@ -48,7 +54,15 @@ message QuerySwapsRequest {
 
 // QuerySwapsResponse is response type for the Query/Swaps RPC method.
 message QuerySwapsResponse {
-  repeated Swap swaps = 1;
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated Swap                                   swaps      = 1;
+           cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryRockPoolRequest is request type for the Query/RockPool RPC method.
+message QueryRockPoolRequest {}
+
+// QueryRockPoolResponse is response type for the Query/RockPool RPC method.
+message QueryRockPoolResponse {
+  uint64 rock_balance = 1;
 }
 

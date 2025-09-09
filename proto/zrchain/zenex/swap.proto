@@ -22,6 +22,7 @@ message Swap {
   string workspace = 9;
   uint64 sign_tx_id = 10;
   string source_tx_hash = 11;
+  string reject_reason = 12;
 }
 
 // SwapStatus defines the status of the swap.

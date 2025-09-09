@@ -201,7 +201,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 	k := keeper.NewKeeper(
-		in.Cdc,
+		in.Cdc.(codec.BinaryCodec),
 		in.StoreService,
 		in.Logger,
 		authority.String(),
@@ -209,6 +209,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		in.TreasuryKeeper,
 		in.ValidationKeeper,
 		in.BankKeeper,
+		in.AccountKeeper,
 	)
 	m := NewAppModule(
 		in.Cdc,

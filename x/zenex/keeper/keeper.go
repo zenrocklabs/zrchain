@@ -31,6 +31,7 @@ type (
 		treasuryKeeper   types.TreasuryKeeper
 		validationKeeper types.ValidationKeeper
 		bankKeeper       types.BankKeeper
+		accountKeeper    types.AccountKeeper
 
 		Schema     collections.Schema
 		SwapsCount collections.Item[uint64]
@@ -48,6 +49,7 @@ func NewKeeper(
 	treasuryKeeper types.TreasuryKeeper,
 	validationKeeper types.ValidationKeeper,
 	bankKeeper types.BankKeeper,
+	accountKeeper types.AccountKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -65,6 +67,7 @@ func NewKeeper(
 		treasuryKeeper:   treasuryKeeper,
 		validationKeeper: validationKeeper,
 		bankKeeper:       bankKeeper,
+		accountKeeper:    accountKeeper,
 
 		SwapsCount: collections.NewItem(sb, types.SwapsCountKey, types.SwapsCountIndex, collections.Uint64Value),
 		SwapsStore: collections.NewMap(sb, types.SwapsKey, types.SwapsIndex, collections.Uint64Key, codec.CollValue[types.Swap](cdc)),

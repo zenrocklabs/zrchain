@@ -88,6 +88,7 @@ message MsgAcknowledgePoolTransfer {
   uint64 swap_id       = 2;
   string source_tx_hash = 3;
   zrchain.zenex.SwapStatus status = 4;
+  string reject_reason = 5; // optional
 }
 
 // MsgAcknowledgePoolTransferResponse defines the response structure for executing a

@@ -15,7 +15,7 @@ func NewZenexTxClient(c *RawTxClient) *ZenexTxClient {
 	return &ZenexTxClient{c: c}
 }
 
-func (c *ZenTPTxClient) NewMsgSwapRequest(
+func (c *ZenexTxClient) NewMsgSwapRequest(
 	ctx context.Context,
 	creator string,
 	amountIn uint64,
@@ -57,6 +57,33 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 		SwapId:     swapId,
 		UnsignedTx: unsignedTx,
 		WalletType: walletType,
+	}
+
+	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := c.c.SendWaitTx(ctx, txBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
+}
+
+func (c *ZenexTxClient) NewMsgAcknowledgePoolTransfer(
+	ctx context.Context,
+	creator string,
+	swapId uint64,
+	sourceTxHash string,
+	status types.SwapStatus,
+) (string, error) {
+	msg := &types.MsgAcknowledgePoolTransfer{
+		Creator:      creator,
+		SwapId:       swapId,
+		SourceTxHash: sourceTxHash,
+		Status:       status,
 	}
 
 	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)

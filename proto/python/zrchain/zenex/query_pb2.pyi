@@ -44,3 +44,13 @@ class QuerySwapsResponse(_message.Message):
     swaps: _containers.RepeatedCompositeFieldContainer[_swap_pb2.Swap]
     pagination: _pagination_pb2.PageResponse
     def __init__(self, swaps: _Optional[_Iterable[_Union[_swap_pb2.Swap, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
+
+class QueryRockPoolRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class QueryRockPoolResponse(_message.Message):
+    __slots__ = ("rock_balance",)
+    ROCK_BALANCE_FIELD_NUMBER: _ClassVar[int]
+    rock_balance: int
+    def __init__(self, rock_balance: _Optional[int] = ...) -> None: ...

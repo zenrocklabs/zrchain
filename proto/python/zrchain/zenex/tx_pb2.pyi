@@ -64,16 +64,18 @@ class MsgZenexTransferRequestResponse(_message.Message):
     def __init__(self, sign_tx_id: _Optional[int] = ...) -> None: ...
 
 class MsgAcknowledgePoolTransfer(_message.Message):
-    __slots__ = ("creator", "swap_id", "source_tx_hash", "status")
+    __slots__ = ("creator", "swap_id", "source_tx_hash", "status", "reject_reason")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
+    REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     source_tx_hash: str
     status: _swap_pb2.SwapStatus
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., status: _Optional[_Union[_swap_pb2.SwapStatus, str]] = ...) -> None: ...
+    reject_reason: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., status: _Optional[_Union[_swap_pb2.SwapStatus, str]] = ..., reject_reason: _Optional[str] = ...) -> None: ...
 
 class MsgAcknowledgePoolTransferResponse(_message.Message):
     __slots__ = ()
