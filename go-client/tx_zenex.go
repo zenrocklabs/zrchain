@@ -17,7 +17,6 @@ func NewZenexTxClient(c *RawTxClient) *ZenexTxClient {
 
 func (c *ZenexTxClient) NewMsgSwapRequest(
 	ctx context.Context,
-	creator string,
 	amountIn uint64,
 	rockKeyID uint64,
 	btcKeyID uint64,
@@ -25,7 +24,6 @@ func (c *ZenexTxClient) NewMsgSwapRequest(
 	workspace string,
 ) (string, error) {
 	msg := &types.MsgSwapRequest{
-		Creator:   creator,
 		Pair:      pair,
 		Workspace: workspace,
 		AmountIn:  amountIn,
@@ -53,7 +51,6 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 	walletType treasurytypes.WalletType,
 ) (string, error) {
 	msg := &types.MsgZenexTransferRequest{
-		Creator:    creator,
 		SwapId:     swapId,
 		UnsignedTx: unsignedTx,
 		WalletType: walletType,
@@ -74,13 +71,11 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 
 func (c *ZenexTxClient) NewMsgAcknowledgePoolTransfer(
 	ctx context.Context,
-	creator string,
 	swapId uint64,
 	sourceTxHash string,
 	status types.SwapStatus,
 ) (string, error) {
 	msg := &types.MsgAcknowledgePoolTransfer{
-		Creator:      creator,
 		SwapId:       swapId,
 		SourceTxHash: sourceTxHash,
 		Status:       status,
