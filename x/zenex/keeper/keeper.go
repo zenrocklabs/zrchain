@@ -181,7 +181,7 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 		satoshisDec := amountInDec.Mul(price.Abs())
 		satoshis := satoshisDec.TruncateInt().Uint64()
 		if k.GetParams(ctx).MinimumSatoshis > satoshis {
-			return 0, fmt.Errorf("amount %d in is less than the minimum satoshis %d", amountIn, k.GetParams(ctx).MinimumSatoshis)
+			return 0, fmt.Errorf("calculated satoshis %d is less than the minimum satoshis %d", satoshis, k.GetParams(ctx).MinimumSatoshis)
 		}
 		return satoshis, nil
 	case "btcrock":

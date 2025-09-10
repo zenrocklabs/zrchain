@@ -88,8 +88,8 @@ func validateMinimumSatoshis(v interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", v)
 	}
 
-	if minimumSatoshis < 5000 {
-		return fmt.Errorf("minimum satoshis cannot be smaller than 5000")
+	if minimumSatoshis < 1000 {
+		return fmt.Errorf("minimum satoshis cannot be smaller than 1000")
 	}
 
 	return nil

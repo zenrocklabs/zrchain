@@ -98,16 +98,16 @@ func (s *IntegrationTestSuite) TestGetPrice() {
 		{
 			name:      "rockbtc",
 			pair:      "rockbtc",
-			rockPrice: math.LegacyNewDecFromInt(math.NewInt(25)).Quo(math.LegacyNewDecFromInt(math.NewInt(1000))), // $0.025 USD
-			btcPrice:  math.LegacyNewDecFromInt(math.NewInt(110000)),                                              // $110,000 USD
-			expected:  zenextestutil.SampleRockBtcPrice,                                                           // 4,400,000 ROCK per BTC
+			rockPrice: zenextestutil.SampleRockUSDPrice, // $0.025 USD
+			btcPrice:  zenextestutil.SampleBtcUSDPrice,  // $110,000 USD
+			expected:  zenextestutil.SampleRockBtcPrice, // 4,400,000 ROCK per BTC
 		},
 		{
 			name:      "btcrock",
 			pair:      "btcrock",
-			rockPrice: math.LegacyNewDecFromInt(math.NewInt(25)).Quo(math.LegacyNewDecFromInt(math.NewInt(1000))), // $0.025 USD
-			btcPrice:  math.LegacyNewDecFromInt(math.NewInt(110000)),                                              // $110,000 USD
-			expected:  zenextestutil.SampleBtcRockPrice,                                                           // 0.000000227 BTC per ROCK
+			rockPrice: zenextestutil.SampleRockUSDPrice, // $0.025 USD
+			btcPrice:  zenextestutil.SampleBtcUSDPrice,  // $110,000 USD
+			expected:  zenextestutil.SampleBtcRockPrice, // 0.000000227 BTC per ROCK
 		},
 		{
 			name:        "unknown pair",
