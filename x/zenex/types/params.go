@@ -39,7 +39,7 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcproxyaddress,
-		5000, // 5000 satoshis = 0.00005 BTC
+		1000, // 1000 satoshis = 0.0001 BTC
 		DefaultZenexBtcPoolKeyId,
 	)
 }
