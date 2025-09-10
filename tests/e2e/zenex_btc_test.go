@@ -17,6 +17,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 	var ecdsaRequestID uint64
 	var rockAddress string
 	var bitcoinAddress string
+	var workspaceAddress string
 
 	BeforeEach(func() {
 		env = setupTestEnv(GinkgoT())
@@ -25,11 +26,34 @@ var _ = Describe("Zenex BTC flow:", func() {
 		}
 	})
 
+	It("creates a new workspace", func() {
+		hash, err := env.Tx.NewWorkspace(env.Ctx)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(hash).ToNot(BeEmpty())
+
+		r, err := env.Tx.GetTx(env.Ctx, hash)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(r.TxResponse).ToNot(BeNil())
+		Expect(r.TxResponse.RawLog).To(BeEmpty())
+
+		for _, event := range r.TxResponse.Events {
+			if event.Type == "new_workspace" {
+				for _, attr := range event.Attributes {
+					if attr.Key == "workspace_addr" {
+						workspaceAddress = attr.Value
+						break
+					}
+				}
+			}
+		}
+
+	})
+
 	It("creates a new ecdsa key request", func() {
 
 		hash, err := env.Tx.NewKeyRequest(
 			env.Ctx,
-			"workspace1mphgzyhncnzyggfxmv4nmh",
+			workspaceAddress,
 			"keyring1k6vc6vhp6e6l3rxalue9v4ux",
 			"ecdsa",
 		)
@@ -102,7 +126,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 
 		hash, err := env.Tx.NewKeyRequest(
 			env.Ctx,
-			"workspace1mphgzyhncnzyggfxmv4nmh",
+			workspaceAddress,
 			"keyring1k6vc6vhp6e6l3rxalue9v4ux",
 			"bitcoin",
 		)
@@ -188,7 +212,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 			ecdsaRequestID,
 			btcRequestID,
 			"rockbtc",
-			"workspace1mphgzyhncnzyggfxmv4nmh",
+			workspaceAddress,
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())

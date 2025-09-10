@@ -20,6 +20,7 @@ import (
 // It provides a unified access point for querying different aspects of the Zenrock blockchain.
 type QueryClient struct {
 	*AuthQueryClient                        // For querying account-related information
+	*IdentityQueryClient                    // For querying identity module data
 	*TreasuryQueryClient                    // For querying treasury module data
 	*PolicyQueryClient                      // For querying policy-related information
 	*ValidationQueryClient                  // For querying validator information
