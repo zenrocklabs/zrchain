@@ -150,7 +150,7 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 		expectedErr error
 	}{
 		{
-			name:     "rockbtc",
+			name:     "happy path rockbtc",
 			pair:     "rockbtc",
 			amountIn: 10000000000,                      // 10 billion urock (10 ROCK)
 			price:    zenextestutil.SampleRockBtcPrice, // 0.00000022727 satoshis per urock
@@ -159,17 +159,17 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 		{
 			name:        "rockbtc",
 			pair:        "rockbtc",
-			amountIn:    1000000,                                                                // 1 million urock (1 ROCK)
-			price:       zenextestutil.SampleRockBtcPrice,                                       // 0.00000022727 satoshis per urock
-			expected:    0,                                                                      // 1,000,000 * 0.00000022727 = 0.22727 satoshis (truncated to 0)
-			expectedErr: fmt.Errorf("amount 1000000 in is less than the minimum satoshis 1000"), // 0.22727 < 1000 minimum
+			amountIn:    100000000,                                                                   // 1 million urock (1 ROCK)
+			price:       zenextestutil.SampleRockBtcPrice,                                            // 0.00000022727 satoshis per urock
+			expected:    22,                                                                          // 1,000,000 * 0.00000022727 = 0.22727 satoshis (truncated to 0)
+			expectedErr: fmt.Errorf("calculated satoshis 22 is less than the minimum satoshis 1000"), // 0.22727 < 1000 minimum
 		},
 		{
 			name:        "rockbtc with less than minimum satoshis",
 			pair:        "rockbtc",
-			amountIn:    1,                                                                // 1 urock
-			price:       math.LegacyNewDecFromInt(math.NewInt(1)),                         // 1 satoshi per urock (very small price)
-			expectedErr: fmt.Errorf("amount 1 in is less than the minimum satoshis 1000"), // 1 * 1 = 1 satoshi < 1000 minimum
+			amountIn:    10000,                                                                      // 10,000 urock (0.01 ROCK)
+			price:       zenextestutil.SampleRockBtcPrice,                                           // 0.00000022727 satoshis per urock
+			expectedErr: fmt.Errorf("calculated satoshis 0 is less than the minimum satoshis 1000"), // 10000 * 0.00000022727 = 0.0022727 satoshis (truncated to 0) < 1000 minimum
 		},
 		{
 			name:     "btcrock",
@@ -183,7 +183,7 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 			pair:        "btcrock",
 			amountIn:    999, // 999 satoshis (above 1000 minimum)
 			price:       zenextestutil.SampleBtcRockPrice,
-			expectedErr: fmt.Errorf("amount 999 in is less than the minimum satoshis 1000"),
+			expectedErr: fmt.Errorf("999 satoshis in is less than the minimum satoshis 1000"),
 		},
 		{
 			name:        "unknown pair",

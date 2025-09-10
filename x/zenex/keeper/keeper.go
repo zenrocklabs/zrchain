@@ -186,7 +186,7 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 		return satoshis, nil
 	case "btcrock":
 		if k.GetParams(ctx).MinimumSatoshis > amountIn {
-			return 0, fmt.Errorf("amount %d in is less than the minimum satoshis %d", amountIn, k.GetParams(ctx).MinimumSatoshis)
+			return 0, fmt.Errorf("%d satoshis in is less than the minimum satoshis %d", amountIn, k.GetParams(ctx).MinimumSatoshis)
 		}
 		// returns ROCK amount in urock to transfer
 		amountInDec := math.LegacyNewDecFromInt(math.NewIntFromUint64(amountIn))
