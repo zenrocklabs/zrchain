@@ -39,7 +39,7 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcproxyaddress,
-		5000, // 5000 satoshis = 0.00005 BTC
+		1000, // 1000 satoshis = 0.0001 BTC
 		DefaultZenexBtcPoolKeyId,
 	)
 }
@@ -88,8 +88,8 @@ func validateMinimumSatoshis(v interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", v)
 	}
 
-	if minimumSatoshis < 5000 {
-		return fmt.Errorf("minimum satoshis cannot be smaller than 5000")
+	if minimumSatoshis < 1000 {
+		return fmt.Errorf("minimum satoshis cannot be smaller than 1000")
 	}
 
 	return nil

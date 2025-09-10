@@ -21,7 +21,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 		expErr    bool
 		expErrMsg string
 		want      *types.MsgSwapRequestResponse
-		wantSwap  *types.Swap
+		wantSwap  types.Swap
 	}{
 		{
 			name: "Pass: Happy Path: rockbtc",
@@ -29,7 +29,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      "rockbtc",
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:  100000,
+				AmountIn:  10000000000,
 				RockKeyId: 1,
 				BtcKeyId:  2,
 			},
@@ -37,28 +37,29 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
-			wantSwap: &types.Swap{
-				SwapId: 1,
-				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:   "rockbtc",
+			wantSwap: types.Swap{
+				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				SwapId:  1,
+				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Pair:    "rockbtc",
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
-						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						PriceUSD:  zenextestutil.SampleRockUSDPrice, // 0.025 USD per ROCK
 						Precision: 6,
 					},
 					QuoteToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
-						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						PriceUSD:  zenextestutil.SampleBtcUSDPrice, // 110,000 USD per BTC
 						Precision: 8,
 					},
-					Price:     math.LegacyNewDec(100000),
-					AmountIn:  100000,
-					AmountOut: 100000,
+					Price:     zenextestutil.SampleRockBtcPrice, // 0.00000022727 satoshis per urock
+					AmountIn:  10000000000,                      // 10,000,000,000 urock
+					AmountOut: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
-				ZenexPoolKeyId: 3,
+				ZenexPoolKeyId: 100, // DefaultParams sets this to 100
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
@@ -81,7 +82,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator:   "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				Pair:      "rockbtc",
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:  100000,
+				AmountIn:  10000000000, // 10,000,000,000 urock
 				RockKeyId: 1,
 				BtcKeyId:  2,
 			},
@@ -89,28 +90,29 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
-			wantSwap: &types.Swap{
-				SwapId: 1,
-				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:   "rockbtc",
+			wantSwap: types.Swap{
+				Creator: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				SwapId:  1,
+				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Pair:    "rockbtc",
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
-						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						PriceUSD:  zenextestutil.SampleRockUSDPrice,
 						Precision: 6,
 					},
 					QuoteToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
-						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						PriceUSD:  zenextestutil.SampleBtcUSDPrice,
 						Precision: 8,
 					},
-					Price:     math.LegacyNewDec(100000),
-					AmountIn:  100000,
-					AmountOut: 100000,
+					Price:     zenextestutil.SampleRockBtcPrice, // 0.00000022727 satoshis per urock
+					AmountIn:  10000000000,                      // 10,000,000,000 urock
+					AmountOut: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
-				ZenexPoolKeyId: 3,
+				ZenexPoolKeyId: 100,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
@@ -133,7 +135,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      "btcrock",
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:  100000,
+				AmountIn:  2000,
 				RockKeyId: 1,
 				BtcKeyId:  2,
 			},
@@ -141,28 +143,29 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
-			wantSwap: &types.Swap{
-				SwapId: 1,
-				Status: types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:   "btcrock",
+			wantSwap: types.Swap{
+				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				SwapId:  1,
+				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Pair:    "btcrock",
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
-						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						PriceUSD:  zenextestutil.SampleBtcUSDPrice,
 						Precision: 8,
 					},
 					QuoteToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
-						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						PriceUSD:  zenextestutil.SampleRockUSDPrice,
 						Precision: 6,
 					},
-					Price:     math.LegacyNewDec(100000),
-					AmountIn:  100000,
-					AmountOut: 100000,
+					Price:     zenextestutil.SampleBtcRockPrice, // 4,400,000 urock per satoshi
+					AmountIn:  2000,                             // 2,000 satoshis
+					AmountOut: 8800000000,                       // 2,000 * 4,400,000 = 8.8 billion urock
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
-				ZenexPoolKeyId: 3,
+				ZenexPoolKeyId: 100,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
@@ -182,8 +185,8 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 
 			if !tt.expErr {
 				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
-					validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
-					validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
+					validationtypes.Asset_ROCK: zenextestutil.SampleRockUSDPrice, // 0.025 USD per ROCK
+					validationtypes.Asset_BTC:  zenextestutil.SampleBtcUSDPrice,  // 110,000 USD per BTC
 				}, nil).AnyTimes()
 				// Set up price expectations based on the pair
 				if tt.input.Pair == "rockbtc" {
@@ -205,9 +208,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				s.Require().Equal(tt.expErrMsg, err.Error())
 				s.Require().Nil(swapId)
 			} else {
+				swap, err := s.zenexKeeper.SwapsStore.Get(s.ctx, tt.want.SwapId)
 				s.Require().NoError(err)
-				s.Require().NotNil(swapId)
+				s.Require().NotNil(swap)
 				s.Require().Equal(tt.want.SwapId, swapId.SwapId)
+				s.Require().Equal(tt.wantSwap, swap)
 			}
 		})
 	}

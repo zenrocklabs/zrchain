@@ -7,8 +7,16 @@ import (
 )
 
 var (
-	SampleRockBtcPrice = math.LegacyNewDecFromInt(math.NewInt(4400000))
-	SampleBtcRockPrice = math.LegacyNewDecFromInt(math.NewInt(2272727))
+	// ROCK price: 0.025 USD per ROCK (1,000,000 urock)
+	// BTC price: 110,000 USD per BTC (100,000,000 satoshis)
+	// ROCK/BTC price = 0.025 / 110,000 = 0.00000022727 satoshis per urock
+	SampleRockBtcPrice, _ = math.LegacyNewDecFromStr("0.00000022727")
+	// BTC/ROCK price = 110,000 / 0.025 = 4,400,000 urock per satoshi
+	SampleBtcRockPrice, _ = math.LegacyNewDecFromStr("4400000")
+	// ROCK price: 0.025 USD per ROCK
+	SampleRockUSDPrice, _ = math.LegacyNewDecFromStr("0.025")
+	// BTC price: 110,000 USD per BTC
+	SampleBtcUSDPrice, _ = math.LegacyNewDecFromStr("110000")
 )
 
 var SampleSwap = []types.Swap{
