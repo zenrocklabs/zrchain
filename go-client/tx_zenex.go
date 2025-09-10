@@ -24,6 +24,7 @@ func (c *ZenexTxClient) NewMsgSwapRequest(
 	workspace string,
 ) (string, error) {
 	msg := &types.MsgSwapRequest{
+		Creator:   c.c.Identity.Address.String(),
 		Pair:      pair,
 		Workspace: workspace,
 		AmountIn:  amountIn,
@@ -51,6 +52,7 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 	walletType treasurytypes.WalletType,
 ) (string, error) {
 	msg := &types.MsgZenexTransferRequest{
+		Creator:    c.c.Identity.Address.String(),
 		SwapId:     swapId,
 		UnsignedTx: unsignedTx,
 		WalletType: walletType,
@@ -76,6 +78,7 @@ func (c *ZenexTxClient) NewMsgAcknowledgePoolTransfer(
 	status types.SwapStatus,
 ) (string, error) {
 	msg := &types.MsgAcknowledgePoolTransfer{
+		Creator:      c.c.Identity.Address.String(),
 		SwapId:       swapId,
 		SourceTxHash: sourceTxHash,
 		Status:       status,
