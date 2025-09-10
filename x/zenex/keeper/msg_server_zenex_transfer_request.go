@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
@@ -62,6 +63,13 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventZenexTransferRequest,
+			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+		),
+	})
 
 	return &types.MsgZenexTransferRequestResponse{
 		SignTxId: signTxResponse.Id,

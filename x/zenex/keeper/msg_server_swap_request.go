@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -98,6 +99,14 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventSwapRequest,
+			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+		),
+	})
 
 	return &types.MsgSwapRequestResponse{SwapId: swap.SwapId}, nil
 }

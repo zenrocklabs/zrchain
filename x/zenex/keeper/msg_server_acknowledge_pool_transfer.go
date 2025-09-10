@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
@@ -70,6 +71,14 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventAcknowledgePoolTransfer,
+			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+		),
+	})
 
 	return &types.MsgAcknowledgePoolTransferResponse{}, nil
 }
