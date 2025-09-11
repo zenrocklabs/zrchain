@@ -33,10 +33,10 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	var senderKeyId uint64
 	var txCreator string
 	switch swap.Pair {
-	case "rockbtc":
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		senderKeyId = swap.BtcKeyId
 		txCreator = swap.Creator
-	case "btcrock":
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
 		senderKeyId = swap.ZenexPoolKeyId
 		txCreator = k.GetParams(ctx).BtcProxyAddress
 	default:
@@ -69,7 +69,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 			types.EventZenexTransferRequest,
 			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
 			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
-			sdk.NewAttribute(types.AttributePair, swap.Pair),
+			sdk.NewAttribute(types.AttributePair, swap.Pair.String()),
 		),
 	})
 

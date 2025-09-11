@@ -36,7 +36,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  4,
 				Status:  types.SwapStatus_SWAP_STATUS_COMPLETED,
-				Pair:    "rockbtc",
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
@@ -73,7 +73,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  5,
 				Status:  types.SwapStatus_SWAP_STATUS_COMPLETED,
-				Pair:    "btcrock",
+				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
@@ -111,7 +111,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  6,
 				Status:  types.SwapStatus_SWAP_STATUS_REJECTED,
-				Pair:    "btcrock",
+				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
@@ -186,7 +186,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 				}
 			}
 
-			if !tt.expErr && tt.wantSwap.Pair == "btcrock" && tt.input.Status == types.SwapStatus_SWAP_STATUS_COMPLETED {
+			if !tt.expErr && tt.wantSwap.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK && tt.input.Status == types.SwapStatus_SWAP_STATUS_COMPLETED {
 				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.wantSwap.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.wantSwap.RockKeyId-1], nil)
 				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.wantSwap.RockKeyId-1], "zen")
 				if err != nil {

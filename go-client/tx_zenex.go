@@ -20,7 +20,7 @@ func (c *ZenexTxClient) NewMsgSwapRequest(
 	amountIn uint64,
 	rockKeyID uint64,
 	btcKeyID uint64,
-	pair string,
+	pair types.TradePair,
 	workspace string,
 ) (string, error) {
 	msg := &types.MsgSwapRequest{

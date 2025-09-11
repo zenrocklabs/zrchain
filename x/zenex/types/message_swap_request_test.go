@@ -24,7 +24,7 @@ func TestMsgSwap_ValidateBasic(t *testing.T) {
 			name: "valid address",
 			msg: MsgSwapRequest{
 				Creator:   sample.AccAddress(),
-				Pair:      "rockbtc",
+				Pair:      TradePair_TRADE_PAIR_ROCK_BTC,
 				Workspace: sample.WorkspaceAddress(),
 				AmountIn:  100000,
 			},

@@ -39,7 +39,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			return nil, err
 		}
 		// Release previously pending escrowed funds
-		if swap.Pair == "rockbtc" {
+		if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
 			rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
 			if err != nil {
 				return nil, err
@@ -52,7 +52,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 		return &types.MsgAcknowledgePoolTransferResponse{}, nil
 	}
 
-	if swap.Pair == "btcrock" {
+	if swap.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
 
 		rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
 		if err != nil {
@@ -77,7 +77,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			types.EventAcknowledgePoolTransfer,
 			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
 			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
-			sdk.NewAttribute(types.AttributePair, swap.Pair),
+			sdk.NewAttribute(types.AttributePair, swap.Pair.String()),
 		),
 	})
 

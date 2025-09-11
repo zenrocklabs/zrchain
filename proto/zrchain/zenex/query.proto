@@ -48,7 +48,7 @@
     string                                creator    = 1; // Optional
     uint64                                swap_id    = 2; // Optional
     SwapStatus                            status     = 3; // Optional
-    string                                pair       = 4; // Optional
+    TradePair                             pair       = 4; // Optional
     string                                workspace  = 5; // Optional
     string                                source_tx_hash = 6; // Optional
     cosmos.base.query.v1beta1.PageRequest pagination = 7;

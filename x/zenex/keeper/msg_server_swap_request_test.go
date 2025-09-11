@@ -27,7 +27,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			name: "Pass: Happy Path: rockbtc",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:      "rockbtc",
+				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  10000000000,
 				RockKeyId: 1,
@@ -41,7 +41,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
 				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:    "rockbtc",
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
@@ -67,20 +67,20 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			name: "FAIL: Invalid pair",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:      "wrongpair",
+				Pair:      types.TradePair_TRADE_PAIR_UNSPECIFIED,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  100000,
 				RockKeyId: 1,
 				BtcKeyId:  2,
 			},
 			expErr:    true,
-			expErrMsg: "invalid keytype wrongpair, valid types [rockbtc btcrock]: invalid request",
+			expErrMsg: "pair is unspecified",
 		},
 		{
 			name: "Pass: Proxy address",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
-				Pair:      "rockbtc",
+				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  10000000000, // 10,000,000,000 urock
 				RockKeyId: 1,
@@ -94,7 +94,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:  1,
 				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:    "rockbtc",
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
@@ -120,7 +120,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			name: "FAIL: Invalid creator",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts",
-				Pair:      "rockbtc",
+				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  100000,
 				RockKeyId: 1,
@@ -133,7 +133,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			name: "Pass: Happy Path btcrock",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:      "btcrock",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  2000,
 				RockKeyId: 1,
@@ -147,7 +147,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
 				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
-				Pair:    "btcrock",
+				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
@@ -173,7 +173,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			name: "FAIL: Not enough rock balance in pool",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
-				Pair:      "btcrock",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  3000000, // waay too much
 				RockKeyId: 1,
@@ -197,7 +197,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil).AnyTimes()
 
 			// Set up mocks needed for both success and error cases
-			if tt.input.Pair == "btcrock" {
+			if tt.input.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
 				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
 				s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000000000000))).AnyTimes()
@@ -209,7 +209,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 					validationtypes.Asset_BTC:  zenextestutil.SampleBtcUSDPrice,  // 110,000 USD per BTC
 				}, nil).AnyTimes()
 				// Set up price expectations based on the pair
-				if tt.input.Pair == "rockbtc" {
+				if tt.input.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
 					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil).AnyTimes()
 				}
 				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], "zen")

@@ -34,11 +34,11 @@ class QuerySwapsRequest(_message.Message):
     creator: str
     swap_id: int
     status: _swap_pb2.SwapStatus
-    pair: str
+    pair: _swap_pb2.TradePair
     workspace: str
     source_tx_hash: str
     pagination: _pagination_pb2.PageRequest
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[_swap_pb2.SwapStatus, str]] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., source_tx_hash: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[_swap_pb2.SwapStatus, str]] = ..., pair: _Optional[_Union[_swap_pb2.TradePair, str]] = ..., workspace: _Optional[str] = ..., source_tx_hash: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
 
 class QuerySwapsResponse(_message.Message):
     __slots__ = ("swaps", "pagination")

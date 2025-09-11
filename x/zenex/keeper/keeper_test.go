@@ -89,7 +89,7 @@ func (s *IntegrationTestSuite) TestGetPrice() {
 
 	tests := []struct {
 		name        string
-		pair        string
+		pair        types.TradePair
 		rockPrice   math.LegacyDec
 		btcPrice    math.LegacyDec
 		expected    math.LegacyDec
@@ -97,32 +97,32 @@ func (s *IntegrationTestSuite) TestGetPrice() {
 	}{
 		{
 			name:      "rockbtc",
-			pair:      "rockbtc",
+			pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
 			rockPrice: zenextestutil.SampleRockUSDPrice, // $0.025 USD
 			btcPrice:  zenextestutil.SampleBtcUSDPrice,  // $110,000 USD
 			expected:  zenextestutil.SampleRockBtcPrice, // 4,400,000 ROCK per BTC
 		},
 		{
 			name:      "btcrock",
-			pair:      "btcrock",
+			pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
 			rockPrice: zenextestutil.SampleRockUSDPrice, // $0.025 USD
 			btcPrice:  zenextestutil.SampleBtcUSDPrice,  // $110,000 USD
 			expected:  zenextestutil.SampleBtcRockPrice, // 0.000000227 BTC per ROCK
 		},
 		{
 			name:        "unknown pair",
-			pair:        "unknown",
+			pair:        types.TradePair_TRADE_PAIR_UNSPECIFIED,
 			expected:    math.LegacyDec{},
-			expectedErr: fmt.Errorf("unknown pair: unknown"),
+			expectedErr: fmt.Errorf("unknown pair: TRADE_PAIR_UNSPECIFIED"),
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			// Set up expectations based on the pair
-			if tt.pair == "rockbtc" {
+			if tt.pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
 				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(tt.expected, nil)
-			} else if tt.pair == "btcrock" {
+			} else if tt.pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
 				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(tt.expected, nil)
 			}
 
@@ -143,7 +143,7 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 
 	tests := []struct {
 		name        string
-		pair        string
+		pair        types.TradePair
 		amountIn    uint64
 		price       math.LegacyDec
 		expected    uint64
@@ -151,14 +151,14 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 	}{
 		{
 			name:     "happy path rockbtc",
-			pair:     "rockbtc",
+			pair:     types.TradePair_TRADE_PAIR_ROCK_BTC,
 			amountIn: 10000000000,                      // 10 billion urock (10 ROCK)
 			price:    zenextestutil.SampleRockBtcPrice, // 0.00000022727 satoshis per urock
 			expected: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis (truncated to 2272)
 		},
 		{
 			name:        "rockbtc",
-			pair:        "rockbtc",
+			pair:        types.TradePair_TRADE_PAIR_ROCK_BTC,
 			amountIn:    100000000,                                                                   // 1 million urock (1 ROCK)
 			price:       zenextestutil.SampleRockBtcPrice,                                            // 0.00000022727 satoshis per urock
 			expected:    22,                                                                          // 1,000,000 * 0.00000022727 = 0.22727 satoshis (truncated to 0)
@@ -166,30 +166,30 @@ func (s *IntegrationTestSuite) TestGetAmountOut() {
 		},
 		{
 			name:        "rockbtc with less than minimum satoshis",
-			pair:        "rockbtc",
+			pair:        types.TradePair_TRADE_PAIR_ROCK_BTC,
 			amountIn:    10000,                                                                      // 10,000 urock (0.01 ROCK)
 			price:       zenextestutil.SampleRockBtcPrice,                                           // 0.00000022727 satoshis per urock
 			expectedErr: fmt.Errorf("calculated satoshis 0 is less than the minimum satoshis 1000"), // 10000 * 0.00000022727 = 0.0022727 satoshis (truncated to 0) < 1000 minimum
 		},
 		{
 			name:     "btcrock",
-			pair:     "btcrock",
+			pair:     types.TradePair_TRADE_PAIR_BTC_ROCK,
 			amountIn: 10000,                            // 10,000 satoshis
 			price:    zenextestutil.SampleBtcRockPrice, // 4,400,000 urock per satoshi
 			expected: 44000000000,                      // 10,000 * 4,400,000 = 44 billion urock
 		},
 		{
 			name:        "btcrock with 999 satoshis",
-			pair:        "btcrock",
+			pair:        types.TradePair_TRADE_PAIR_BTC_ROCK,
 			amountIn:    999, // 999 satoshis (above 1000 minimum)
 			price:       zenextestutil.SampleBtcRockPrice,
 			expectedErr: fmt.Errorf("999 satoshis in is less than the minimum satoshis 1000"),
 		},
 		{
 			name:        "unknown pair",
-			pair:        "unknown",
+			pair:        types.TradePair_TRADE_PAIR_UNSPECIFIED,
 			expected:    0,
-			expectedErr: fmt.Errorf("unknown pair: unknown"),
+			expectedErr: fmt.Errorf("unknown pair: TRADE_PAIR_UNSPECIFIED"),
 		},
 	}
 
@@ -220,14 +220,14 @@ func (s *IntegrationTestSuite) TestGetPair() {
 
 	tests := []struct {
 		name          string
-		pair          string
+		pair          types.TradePair
 		expected      types.SwapPair
 		expectedPrice math.LegacyDec
 		expectedErr   error
 	}{
 		{
 			name: "rockbtc",
-			pair: "rockbtc",
+			pair: types.TradePair_TRADE_PAIR_ROCK_BTC,
 			expected: types.SwapPair{
 				BaseToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_ROCK,
@@ -245,7 +245,7 @@ func (s *IntegrationTestSuite) TestGetPair() {
 		},
 		{
 			name: "btcrock",
-			pair: "btcrock",
+			pair: types.TradePair_TRADE_PAIR_BTC_ROCK,
 			expected: types.SwapPair{
 				BaseToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_BTC,
@@ -263,10 +263,10 @@ func (s *IntegrationTestSuite) TestGetPair() {
 		},
 		{
 			name:          "unknown pair",
-			pair:          "unknown",
+			pair:          types.TradePair_TRADE_PAIR_UNSPECIFIED,
 			expected:      types.SwapPair{},
 			expectedPrice: math.LegacyDec{},
-			expectedErr:   fmt.Errorf("unknown key type: unknown"),
+			expectedErr:   fmt.Errorf("unknown pair: TRADE_PAIR_UNSPECIFIED"),
 		},
 	}
 
@@ -279,9 +279,9 @@ func (s *IntegrationTestSuite) TestGetPair() {
 			}, nil)
 
 			// Set up expectations based on the pair
-			if tt.pair == "rockbtc" {
+			if tt.pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
 				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
-			} else if tt.pair == "btcrock" {
+			} else if tt.pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
 				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil)
 			}
 
@@ -354,7 +354,7 @@ func (s *IntegrationTestSuite) TestCheckRedeemableAsset() {
 		name             string
 		amountIn         uint64
 		zenexRockBalance uint64
-		pair             string
+		pair             types.TradePair
 		errExpected      bool
 		expectedErr      error
 	}{
@@ -362,7 +362,7 @@ func (s *IntegrationTestSuite) TestCheckRedeemableAsset() {
 			name:             "happy path",
 			amountIn:         2000,
 			zenexRockBalance: 1000000000000,
-			pair:             "btcrock",
+			pair:             types.TradePair_TRADE_PAIR_BTC_ROCK,
 			errExpected:      false,
 			expectedErr:      nil,
 		},
@@ -370,7 +370,7 @@ func (s *IntegrationTestSuite) TestCheckRedeemableAsset() {
 			name:             "fail: not enough rock balance in pool",
 			amountIn:         100000,
 			zenexRockBalance: 100000,
-			pair:             "btcrock",
+			pair:             types.TradePair_TRADE_PAIR_BTC_ROCK,
 			errExpected:      true,
 			expectedErr:      fmt.Errorf("amount 440000000000 is greater than the available rock balance 100000"),
 		},

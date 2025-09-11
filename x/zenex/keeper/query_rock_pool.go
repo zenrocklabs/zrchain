@@ -42,7 +42,7 @@ func (k Keeper) getRedeemableAssets(ctx context.Context, rockBalance uint64) ([]
 	// 	return nil, err
 	// }
 
-	btcRockPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), "btcrock")
+	btcRockPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_BTC_ROCK)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (k Keeper) getRedeemableAssets(ctx context.Context, rockBalance uint64) ([]
 	for _, asset := range assets {
 		switch asset {
 		case validationtypes.Asset_BTC:
-			amountOut, err = k.GetAmountOut(sdk.UnwrapSDKContext(ctx), "btcrock", rockBalance, btcRockPrice)
+			amountOut, err = k.GetAmountOut(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_BTC_ROCK, rockBalance, btcRockPrice)
 			if err != nil {
 				return nil, err
 			}

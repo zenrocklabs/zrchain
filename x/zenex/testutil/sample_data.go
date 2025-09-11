@@ -24,7 +24,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  1,
 		Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
-		Pair:    "rockbtc",
+		Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_ROCK,
@@ -49,7 +49,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  2,
 		Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
-		Pair:    "btcrock",
+		Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,
@@ -74,7 +74,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  3,
 		Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-		Pair:    "btcrock",
+		Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,
@@ -99,7 +99,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  4,
 		Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-		Pair:    "rockbtc",
+		Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_ROCK,
@@ -127,7 +127,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  5,
 		Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-		Pair:    "btcrock",
+		Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,
@@ -154,7 +154,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  6,
 		Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-		Pair:    "btcrock",
+		Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,
@@ -180,7 +180,7 @@ var SampleSwap = []types.Swap{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 		SwapId:  7,
 		Status:  types.SwapStatus_SWAP_STATUS_COMPLETED,
-		Pair:    "btcrock",
+		Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 		Data: &types.SwapData{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,

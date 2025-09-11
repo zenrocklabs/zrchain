@@ -228,7 +228,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 			amountRockIn,
 			ecdsaRequestID,
 			btcRequestID,
-			"rockbtc",
+			zenextypes.TradePair_TRADE_PAIR_ROCK_BTC,
 			workspaceAddress,
 		)
 		Expect(err).ToNot(HaveOccurred())
@@ -253,7 +253,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 			}
 		}
 		Expect(swapID).ToNot(BeZero())
-		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED, zenextypes.TradePair_TRADE_PAIR_ROCK_BTC)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
 		Expect(swaps.Swaps[0].SwapId).To(Equal(swapID))
@@ -329,7 +329,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 
 	// Check the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED
 	It("checks the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED", func() {
-		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED, zenextypes.TradePair_TRADE_PAIR_ROCK_BTC)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
 		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED))
@@ -355,7 +355,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		Expect(r.TxResponse.RawLog).To(BeEmpty())
 
 		// Check the swap status to be SWAP_STATUS_COMPLETED
-		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED, zenextypes.TradePair_TRADE_PAIR_ROCK_BTC)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
 		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_COMPLETED))

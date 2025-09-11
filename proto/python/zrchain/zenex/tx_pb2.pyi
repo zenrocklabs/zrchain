@@ -32,12 +32,12 @@ class MsgSwapRequest(_message.Message):
     ROCK_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     BTC_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     creator: str
-    pair: str
+    pair: _swap_pb2.TradePair
     workspace: str
     amount_in: int
     rock_key_id: int
     btc_key_id: int
-    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[str] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., pair: _Optional[_Union[_swap_pb2.TradePair, str]] = ..., workspace: _Optional[str] = ..., amount_in: _Optional[int] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ...) -> None: ...
 
 class MsgSwapRequestResponse(_message.Message):
     __slots__ = ("swap_id",)
