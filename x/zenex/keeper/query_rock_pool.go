@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -37,12 +38,7 @@ func (k Keeper) getRedeemableAssets(ctx context.Context, rockBalance uint64) ([]
 		return nil, err
 	}
 
-	// rockBtcPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_ROCK_BTC)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	btcRockPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_BTC_ROCK)
+	rockBtcPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_ROCK_BTC)
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +48,15 @@ func (k Keeper) getRedeemableAssets(ctx context.Context, rockBalance uint64) ([]
 	for _, asset := range assets {
 		switch asset {
 		case validationtypes.Asset_BTC:
-			amountOut, err = k.GetAmountOut(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_BTC_ROCK, rockBalance, btcRockPrice)
+			amountOut, err = k.GetAmountOut(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_ROCK_BTC, rockBalance, rockBtcPrice)
 			if err != nil {
-				return nil, err
+				// If the error is due to insufficient satoshis, set amountOut to 0 instead of returning error
+				// This allows the rock-pool query to succeed even with low balances
+				if strings.Contains(err.Error(), "calculated satoshis") {
+					amountOut = 0
+				} else {
+					return nil, err
+				}
 			}
 		default:
 			continue
