@@ -14,7 +14,7 @@ message Swap {
   string creator = 1;
   uint64 swap_id = 2;
   SwapStatus status = 3;
-  string pair = 4;
+  TradePair pair = 4;
   SwapData data = 5;
   uint64 rock_key_id = 6;
   uint64 btc_key_id = 7;
@@ -59,4 +59,14 @@ message SwapData {
 message SwapPair {
   zrchain.validation.AssetData base_token = 1;
   zrchain.validation.AssetData quote_token = 2;
+}
+
+// TradePair defines the pair of tokens for a trade.
+enum TradePair {
+  // The trade pair is unspecified (all trade pairs will be returned)
+  TRADE_PAIR_UNSPECIFIED = 0;
+  // The trade pair is ROCK_BTC
+  TRADE_PAIR_ROCK_BTC = 1;
+  // The trade pair is BTC_ROCK
+  TRADE_PAIR_BTC_ROCK = 2;
 }

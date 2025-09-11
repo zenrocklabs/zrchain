@@ -21,13 +21,14 @@ func (c *ZenexQueryClient) Params(ctx context.Context) (*types.QueryParamsRespon
 	return c.client.Params(ctx, &types.QueryParamsRequest{})
 }
 
-func (c *ZenexQueryClient) Swaps(ctx context.Context, creator, pair, workspace string, swapId uint64, status types.SwapStatus) (*types.QuerySwapsResponse, error) {
+func (c *ZenexQueryClient) Swaps(ctx context.Context, creator, workspace, sourceTxHash string, swapId uint64, status types.SwapStatus, pair types.TradePair) (*types.QuerySwapsResponse, error) {
 	return c.client.Swaps(ctx, &types.QuerySwapsRequest{
-		Creator:   creator,
-		SwapId:    swapId,
-		Status:    status,
-		Pair:      pair,
-		Workspace: workspace,
+		Creator:      creator,
+		SwapId:       swapId,
+		Status:       status,
+		Pair:         pair,
+		Workspace:    workspace,
+		SourceTxHash: sourceTxHash,
 	})
 }
 

@@ -552,3 +552,10 @@ func (k Keeper) GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error) {
 
 	return btcPrice.Quo(rockPrice), nil
 }
+
+func (k Keeper) GetAssets(ctx context.Context) ([]types.Asset, error) {
+
+	assets := []types.Asset{types.Asset_ROCK, types.Asset_BTC, types.Asset_ETH}
+
+	return assets, nil
+}

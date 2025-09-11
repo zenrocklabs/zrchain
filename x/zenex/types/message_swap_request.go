@@ -11,7 +11,7 @@ import (
 
 var _ sdk.Msg = &MsgSwapRequest{}
 
-func NewMsgSwap(creator, pair, workspace, destinationCaip2 string, amountIn uint64, rockKeyId uint64, btcKeyId uint64) *MsgSwapRequest {
+func NewMsgSwap(creator string, pair TradePair, workspace, destinationCaip2 string, amountIn uint64, rockKeyId uint64, btcKeyId uint64) *MsgSwapRequest {
 
 	return &MsgSwapRequest{
 		Creator:   creator,
@@ -33,16 +33,16 @@ func (msg *MsgSwapRequest) ValidateBasic() error {
 		return errors.New("amount in is 0")
 	}
 
-	if msg.Pair == "" {
-		return errors.New("pair is empty")
+	if msg.Pair == TradePair_TRADE_PAIR_UNSPECIFIED {
+		return errors.New("pair is unspecified")
 	}
 
 	if msg.Workspace == "" {
 		return errors.New("workspace is empty")
 	}
 
-	if !slices.Contains(ValidPairTypes, msg.Pair) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.Pair, ValidPairTypes)
+	if !slices.Contains(ValidPairTypes, msg.Pair.String()) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pair %s, valid types %+v", msg.Pair, ValidPairTypes)
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,15 +55,18 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 	}
 
 	switch msg.Pair {
-	case "rockbtc":
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		err = k.EscrowRock(ctx, *rockKey, msg.AmountIn)
 		if err != nil {
 			return nil, err
 		}
-	case "btcrock":
-		// Proxy makes the transaction in the zenex transfer request
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
+		err = k.CheckRedeemableAsset(ctx, msg.AmountIn, msg.Pair)
+		if err != nil {
+			return nil, err
+		}
 	default:
-		return nil, fmt.Errorf("invalid pair: %s", msg.Pair)
+		return nil, fmt.Errorf("invalid pair: %d", msg.Pair)
 	}
 
 	swapCount, err := k.SwapsCount.Get(ctx)
@@ -98,6 +102,15 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventSwapRequest,
+			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+			sdk.NewAttribute(types.AttributePair, swap.Pair.String()),
+		),
+	})
 
 	return &types.MsgSwapRequestResponse{SwapId: swap.SwapId}, nil
 }

@@ -35,7 +35,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
 				Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-				Pair:    "rockbtc",
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_ROCK,
@@ -74,7 +74,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  2,
 				Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
-				Pair:    "btcrock",
+				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
 						Asset:     validationtypes.Asset_BTC,
@@ -164,7 +164,8 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 
 			var expectedBitcoinTx *treasurytypes.MsgNewSignTransactionRequest
 			if !tt.expErr {
-				if tt.wantSwap.Pair == "rockbtc" {
+				switch tt.wantSwap.Pair {
+				case types.TradePair_TRADE_PAIR_ROCK_BTC:
 					expectedBitcoinTx = treasurytypes.NewMsgNewSignTransactionRequest(
 						tt.wantSwap.Creator,            // txCreator from swap
 						[]uint64{tt.wantSwap.BtcKeyId}, // senderKeyId from swap for "rockbtc" pair
@@ -173,7 +174,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 						nil,
 						treasurytypes.DefaultParams().DefaultBtl,
 					)
-				} else {
+				case types.TradePair_TRADE_PAIR_BTC_ROCK:
 					expectedBitcoinTx = treasurytypes.NewMsgNewSignTransactionRequest(
 						params.BtcProxyAddress,
 						[]uint64{tt.wantSwap.ZenexPoolKeyId},

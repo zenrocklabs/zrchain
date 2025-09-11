@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
@@ -32,10 +33,10 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	var senderKeyId uint64
 	var txCreator string
 	switch swap.Pair {
-	case "rockbtc":
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		senderKeyId = swap.BtcKeyId
 		txCreator = swap.Creator
-	case "btcrock":
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
 		senderKeyId = swap.ZenexPoolKeyId
 		txCreator = k.GetParams(ctx).BtcProxyAddress
 	default:
@@ -62,6 +63,15 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventZenexTransferRequest,
+			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+			sdk.NewAttribute(types.AttributePair, swap.Pair.String()),
+		),
+	})
 
 	return &types.MsgZenexTransferRequestResponse{
 		SignTxId: signTxResponse.Id,

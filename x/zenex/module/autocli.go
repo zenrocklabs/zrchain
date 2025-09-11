@@ -22,11 +22,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "swaps",
 					Short:     "Returns swap objects",
 					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"creator":   {Usage: "Filter by creator address"},
-						"swap_id":   {Usage: "Filter by swap ID"},
-						"status":    {Usage: "Filter by status (requested|completed|rejected)"},
-						"workspace": {Usage: "Filter by workspace"},
-						"pair":      {Usage: "Filter by pair (rockbtc|btcrock)"},
+						"creator":        {Usage: "Filter by creator address"},
+						"swap_id":        {Usage: "Filter by swap ID"},
+						"status":         {Usage: "Filter by status (requested|completed|rejected)"},
+						"workspace":      {Usage: "Filter by workspace"},
+						"pair":           {Usage: "Filter by pair (rock-btc|btc-rock)"},
+						"source_tx_hash": {Usage: "Filter by source transaction hash"},
 					},
 				},
 
@@ -50,7 +51,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SwapRequest",
-					Use:       "swap [workspace] [rockbtc|btcrock] [amount_in] [rock_key_id] [btc_key_id]",
+					Use:       "swap [workspace] [rock-btc|btc-rock] [amount_in] [rock_key_id] [btc_key_id]",
 					Short:     "Send a swap tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "workspace"},

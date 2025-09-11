@@ -16,11 +16,20 @@ class SwapStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SWAP_STATUS_SWAP_TRANSFER_REQUESTED: _ClassVar[SwapStatus]
     SWAP_STATUS_REJECTED: _ClassVar[SwapStatus]
     SWAP_STATUS_COMPLETED: _ClassVar[SwapStatus]
+
+class TradePair(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    TRADE_PAIR_UNSPECIFIED: _ClassVar[TradePair]
+    TRADE_PAIR_ROCK_BTC: _ClassVar[TradePair]
+    TRADE_PAIR_BTC_ROCK: _ClassVar[TradePair]
 SWAP_STATUS_UNSPECIFIED: SwapStatus
 SWAP_STATUS_REQUESTED: SwapStatus
 SWAP_STATUS_SWAP_TRANSFER_REQUESTED: SwapStatus
 SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
+TRADE_PAIR_UNSPECIFIED: TradePair
+TRADE_PAIR_ROCK_BTC: TradePair
+TRADE_PAIR_BTC_ROCK: TradePair
 
 class Swap(_message.Message):
     __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_tx_id", "source_tx_hash", "reject_reason")
@@ -39,7 +48,7 @@ class Swap(_message.Message):
     creator: str
     swap_id: int
     status: SwapStatus
-    pair: str
+    pair: TradePair
     data: SwapData
     rock_key_id: int
     btc_key_id: int
@@ -48,7 +57,7 @@ class Swap(_message.Message):
     sign_tx_id: int
     source_tx_hash: str
     reject_reason: str
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[str] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[_Union[TradePair, str]] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")

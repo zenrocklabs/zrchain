@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
@@ -93,9 +92,8 @@ func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.LegacyDec, error) {
+func (k Keeper) GetPair(ctx sdk.Context, pair types.TradePair) (*types.SwapPair, math.LegacyDec, error) {
 	var pairType types.SwapPair
-	typeStr := strings.ToLower(pair)
 
 	var price math.LegacyDec
 
@@ -104,8 +102,8 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.Leg
 		return nil, math.LegacyDec{}, err
 	}
 
-	switch {
-	case strings.Contains(typeStr, "rockbtc"):
+	switch pair {
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		pairType = types.SwapPair{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_ROCK,
@@ -122,7 +120,7 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.Leg
 		if err != nil {
 			return nil, math.LegacyDec{}, err
 		}
-	case strings.Contains(typeStr, "btcrock"):
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
 		pairType = types.SwapPair{
 			BaseToken: &validationtypes.AssetData{
 				Asset:     validationtypes.Asset_BTC,
@@ -140,7 +138,7 @@ func (k Keeper) GetPair(ctx sdk.Context, pair string) (*types.SwapPair, math.Leg
 			return nil, math.LegacyDec{}, err
 		}
 	default:
-		return nil, math.LegacyDec{}, fmt.Errorf("unknown key type: %s", pair)
+		return nil, math.LegacyDec{}, fmt.Errorf("unknown pair: %s", pair)
 	}
 
 	if price.IsZero() || price.IsNegative() {
@@ -162,20 +160,20 @@ func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
 	return swaps, nil
 }
 
-func (k Keeper) GetPrice(ctx sdk.Context, pair string) (math.LegacyDec, error) {
+func (k Keeper) GetPrice(ctx sdk.Context, pair types.TradePair) (math.LegacyDec, error) {
 	switch pair {
-	case "rockbtc":
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		return k.validationKeeper.GetRockBtcPrice(ctx)
-	case "btcrock":
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
 		return k.validationKeeper.GetBtcRockPrice(ctx)
 	default:
 		return math.LegacyDec{}, fmt.Errorf("unknown pair: %s", pair)
 	}
 }
 
-func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, price math.LegacyDec) (uint64, error) {
+func (k Keeper) GetAmountOut(ctx sdk.Context, pair types.TradePair, amountIn uint64, price math.LegacyDec) (uint64, error) {
 	switch pair {
-	case "rockbtc":
+	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		// returns BTC amount in satoshis to transfer
 		amountInDec := math.LegacyNewDecFromInt(math.NewIntFromUint64(amountIn))
 		satoshisDec := amountInDec.Mul(price.Abs())
@@ -184,7 +182,7 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair string, amountIn uint64, pric
 			return 0, fmt.Errorf("calculated satoshis %d is less than the minimum satoshis %d", satoshis, k.GetParams(ctx).MinimumSatoshis)
 		}
 		return satoshis, nil
-	case "btcrock":
+	case types.TradePair_TRADE_PAIR_BTC_ROCK:
 		if k.GetParams(ctx).MinimumSatoshis > amountIn {
 			return 0, fmt.Errorf("%d satoshis in is less than the minimum satoshis %d", amountIn, k.GetParams(ctx).MinimumSatoshis)
 		}
@@ -226,4 +224,20 @@ func (k Keeper) GetRockAddress(ctx sdk.Context, rockKeyId uint64) (string, error
 		return "", err
 	}
 	return rockAddress, nil
+}
+
+func (k Keeper) CheckRedeemableAsset(ctx sdk.Context, amountIn uint64, pair types.TradePair) error {
+	price, err := k.GetPrice(ctx, pair)
+	if err != nil {
+		return err
+	}
+	amountOut, err := k.GetAmountOut(ctx, pair, amountIn, price)
+	if err != nil {
+		return err
+	}
+	availableRockBalance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ZenexCollectorName), params.BondDenom).Amount.Uint64()
+	if amountOut > availableRockBalance {
+		return fmt.Errorf("amount %d is greater than the available rock balance %d", amountOut, availableRockBalance)
+	}
+	return nil
 }
