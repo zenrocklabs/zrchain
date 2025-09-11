@@ -42,7 +42,7 @@ func (msg *MsgSwapRequest) ValidateBasic() error {
 	}
 
 	if !slices.Contains(ValidPairTypes, msg.Pair.String()) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid keytype %s, valid types %+v", msg.Pair, ValidPairTypes)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pair %s, valid types %+v", msg.Pair, ValidPairTypes)
 	}
 
 	return nil

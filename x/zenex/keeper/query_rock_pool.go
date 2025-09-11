@@ -37,7 +37,7 @@ func (k Keeper) getRedeemableAssets(ctx context.Context, rockBalance uint64) ([]
 		return nil, err
 	}
 
-	// rockBtcPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), "rockbtc")
+	// rockBtcPrice, err := k.GetPrice(sdk.UnwrapSDKContext(ctx), types.TradePair_TRADE_PAIR_ROCK_BTC)
 	// if err != nil {
 	// 	return nil, err
 	// }

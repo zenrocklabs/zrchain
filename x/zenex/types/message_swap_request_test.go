@@ -1,6 +1,7 @@
 package types
 
 import (
+	fmt "fmt"
 	"testing"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
@@ -20,7 +21,8 @@ func TestMsgSwap_ValidateBasic(t *testing.T) {
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
-		}, {
+		},
+		{
 			name: "valid address",
 			msg: MsgSwapRequest{
 				Creator:   sample.AccAddress(),
@@ -28,6 +30,16 @@ func TestMsgSwap_ValidateBasic(t *testing.T) {
 				Workspace: sample.WorkspaceAddress(),
 				AmountIn:  100000,
 			},
+		},
+		{
+			name: "invalid pair",
+			msg: MsgSwapRequest{
+				Creator:   sample.AccAddress(),
+				Pair:      TradePair_TRADE_PAIR_UNSPECIFIED,
+				Workspace: sample.WorkspaceAddress(),
+				AmountIn:  100000,
+			},
+			err: fmt.Errorf("pair is unspecified"),
 		},
 	}
 	for _, tt := range tests {
