@@ -77,6 +77,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			types.EventAcknowledgePoolTransfer,
 			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
 			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+			sdk.NewAttribute(types.AttributePair, swap.Pair),
 		),
 	})
 

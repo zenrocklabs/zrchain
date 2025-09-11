@@ -61,7 +61,10 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 			return nil, err
 		}
 	case "btcrock":
-		// Proxy makes the transaction in the zenex transfer request
+		err = k.CheckRedeemableAsset(ctx, msg.AmountIn, msg.Pair)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("invalid pair: %s", msg.Pair)
 	}
@@ -105,6 +108,7 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 			types.EventSwapRequest,
 			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
 			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+			sdk.NewAttribute(types.AttributePair, swap.Pair),
 		),
 	})
 

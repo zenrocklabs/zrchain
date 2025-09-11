@@ -169,6 +169,19 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
 		},
+		{
+			name: "FAIL: Not enough rock balance in pool",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      "btcrock",
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  3000000, // waay too much
+				RockKeyId: 1,
+				BtcKeyId:  2,
+			},
+			expErr:    true,
+			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
+		},
 	}
 
 	for _, tt := range tests {
@@ -183,6 +196,13 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], nil).AnyTimes()
 			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil).AnyTimes()
 
+			// Set up mocks needed for both success and error cases
+			if tt.input.Pair == "btcrock" {
+				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
+				s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000000000000))).AnyTimes()
+			}
+
 			if !tt.expErr {
 				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
 					validationtypes.Asset_ROCK: zenextestutil.SampleRockUSDPrice, // 0.025 USD per ROCK
@@ -191,8 +211,6 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				// Set up price expectations based on the pair
 				if tt.input.Pair == "rockbtc" {
 					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil).AnyTimes()
-				} else if tt.input.Pair == "btcrock" {
-					s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
 				}
 				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], "zen")
 				if err != nil {
@@ -201,17 +219,17 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(s.ctx, sdk.MustAccAddressFromBech32(senderAddress), types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.input.AmountIn)))).Return(nil).AnyTimes()
 			}
 
-			swapId, err := s.msgServer.SwapRequest(s.ctx, tt.input)
+			response, err := s.msgServer.SwapRequest(s.ctx, tt.input)
 
 			if tt.expErr {
 				s.Require().Error(err)
 				s.Require().Equal(tt.expErrMsg, err.Error())
-				s.Require().Nil(swapId)
+				s.Require().Nil(response)
 			} else {
 				swap, err := s.zenexKeeper.SwapsStore.Get(s.ctx, tt.want.SwapId)
 				s.Require().NoError(err)
 				s.Require().NotNil(swap)
-				s.Require().Equal(tt.want.SwapId, swapId.SwapId)
+				s.Require().Equal(tt.want.SwapId, response.SwapId)
 				s.Require().Equal(tt.wantSwap, swap)
 			}
 		})

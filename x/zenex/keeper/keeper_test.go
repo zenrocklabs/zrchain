@@ -348,3 +348,55 @@ func (s *IntegrationTestSuite) TestEscrowRock() {
 		})
 	}
 }
+
+func (s *IntegrationTestSuite) TestCheckRedeemableAsset() {
+	tests := []struct {
+		name             string
+		amountIn         uint64
+		zenexRockBalance uint64
+		pair             string
+		errExpected      bool
+		expectedErr      error
+	}{
+		{
+			name:             "happy path",
+			amountIn:         2000,
+			zenexRockBalance: 1000000000000,
+			pair:             "btcrock",
+			errExpected:      false,
+			expectedErr:      nil,
+		},
+		{
+			name:             "fail: not enough rock balance in pool",
+			amountIn:         100000,
+			zenexRockBalance: 100000,
+			pair:             "btcrock",
+			errExpected:      true,
+			expectedErr:      fmt.Errorf("amount 440000000000 is greater than the available rock balance 100000"),
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			// Set up mocks needed for both success and error cases
+			s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+			s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
+				validationtypes.Asset_ROCK: zenextestutil.SampleRockUSDPrice, // 0.025 USD per ROCK
+				validationtypes.Asset_BTC:  zenextestutil.SampleBtcUSDPrice,  // 110,000 USD per BTC
+			}, nil).AnyTimes()
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
+
+			// Set up balance expectation for this specific test case
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.zenexRockBalance))).Times(1)
+
+			err := s.zenexKeeper.CheckRedeemableAsset(s.ctx, tt.amountIn, tt.pair)
+
+			if tt.expectedErr != nil {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
+}

@@ -28,9 +28,10 @@ from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 from cosmos.base.query.v1beta1 import pagination_pb2 as cosmos_dot_base_dot_query_dot_v1beta1_dot_pagination__pb2
 from zrchain.zenex import params_pb2 as zrchain_dot_zenex_dot_params__pb2
 from zrchain.zenex import swap_pb2 as zrchain_dot_zenex_dot_swap__pb2
+from zrchain.validation import asset_data_pb2 as zrchain_dot_validation_dot_asset__data__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/zenex/query.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1cgoogle/api/annotations.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1azrchain/zenex/params.proto\x1a\x18zrchain/zenex/swap.proto\"\x14\n\x12QueryParamsRequest\"O\n\x13QueryParamsResponse\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\"\xf3\x01\n\x11QuerySwapsRequest\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x17\n\x07swap_id\x18\x02 \x01(\x04R\x06swapId\x12\x31\n\x06status\x18\x03 \x01(\x0e\x32\x19.zrchain.zenex.SwapStatusR\x06status\x12\x12\n\x04pair\x18\x04 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x05 \x01(\tR\tworkspace\x12\x46\n\npagination\x18\x06 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\"\x88\x01\n\x12QuerySwapsResponse\x12)\n\x05swaps\x18\x01 \x03(\x0b\x32\x13.zrchain.zenex.SwapR\x05swaps\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"\x16\n\x14QueryRockPoolRequest\":\n\x15QueryRockPoolResponse\x12!\n\x0crock_balance\x18\x01 \x01(\x04R\x0brockBalance2\xe5\x02\n\x05Query\x12q\n\x06Params\x12!.zrchain.zenex.QueryParamsRequest\x1a\".zrchain.zenex.QueryParamsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/zrchain/v6/zenex/params\x12m\n\x05Swaps\x12 .zrchain.zenex.QuerySwapsRequest\x1a!.zrchain.zenex.QuerySwapsResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/zrchain/v6/zenex/swaps\x12z\n\x08RockPool\x12#.zrchain.zenex.QueryRockPoolRequest\x1a$.zrchain.zenex.QueryRockPoolResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/zrchain/v6/zenex/rock_poolB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/zenex/query.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x1cgoogle/api/annotations.proto\x1a*cosmos/base/query/v1beta1/pagination.proto\x1a\x1azrchain/zenex/params.proto\x1a\x18zrchain/zenex/swap.proto\x1a#zrchain/validation/asset_data.proto\"\x14\n\x12QueryParamsRequest\"O\n\x13QueryParamsResponse\x12\x38\n\x06params\x18\x01 \x01(\x0b\x32\x15.zrchain.zenex.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\"\x99\x02\n\x11QuerySwapsRequest\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x17\n\x07swap_id\x18\x02 \x01(\x04R\x06swapId\x12\x31\n\x06status\x18\x03 \x01(\x0e\x32\x19.zrchain.zenex.SwapStatusR\x06status\x12\x12\n\x04pair\x18\x04 \x01(\tR\x04pair\x12\x1c\n\tworkspace\x18\x05 \x01(\tR\tworkspace\x12$\n\x0esource_tx_hash\x18\x06 \x01(\tR\x0csourceTxHash\x12\x46\n\npagination\x18\x07 \x01(\x0b\x32&.cosmos.base.query.v1beta1.PageRequestR\npagination\"\x88\x01\n\x12QuerySwapsResponse\x12)\n\x05swaps\x18\x01 \x03(\x0b\x32\x13.zrchain.zenex.SwapR\x05swaps\x12G\n\npagination\x18\x02 \x01(\x0b\x32\'.cosmos.base.query.v1beta1.PageResponseR\npagination\"\x16\n\x14QueryRockPoolRequest\"\x92\x01\n\x15QueryRockPoolResponse\x12!\n\x0crock_balance\x18\x01 \x01(\x04R\x0brockBalance\x12V\n\x11redeemable_assets\x18\x02 \x03(\x0b\x32\x1e.zrchain.zenex.RedeemableAssetB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x10redeemableAssets\"Z\n\x0fRedeemableAsset\x12/\n\x05\x61sset\x18\x01 \x01(\x0e\x32\x19.zrchain.validation.AssetR\x05\x61sset\x12\x16\n\x06\x61mount\x18\x02 \x01(\x04R\x06\x61mount2\xe5\x02\n\x05Query\x12q\n\x06Params\x12!.zrchain.zenex.QueryParamsRequest\x1a\".zrchain.zenex.QueryParamsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/zrchain/v6/zenex/params\x12m\n\x05Swaps\x12 .zrchain.zenex.QuerySwapsRequest\x1a!.zrchain.zenex.QuerySwapsResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/zrchain/v6/zenex/swaps\x12z\n\x08RockPool\x12#.zrchain.zenex.QueryRockPoolRequest\x1a$.zrchain.zenex.QueryRockPoolResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/zrchain/v6/zenex/rock_poolB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -40,24 +41,28 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types'
   _globals['_QUERYPARAMSRESPONSE'].fields_by_name['params']._loaded_options = None
   _globals['_QUERYPARAMSRESPONSE'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_QUERYROCKPOOLRESPONSE'].fields_by_name['redeemable_assets']._loaded_options = None
+  _globals['_QUERYROCKPOOLRESPONSE'].fields_by_name['redeemable_assets']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_QUERY'].methods_by_name['Params']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Params']._serialized_options = b'\202\323\344\223\002\032\022\030/zrchain/v6/zenex/params'
   _globals['_QUERY'].methods_by_name['Swaps']._loaded_options = None
   _globals['_QUERY'].methods_by_name['Swaps']._serialized_options = b'\202\323\344\223\002\031\022\027/zrchain/v6/zenex/swaps'
   _globals['_QUERY'].methods_by_name['RockPool']._loaded_options = None
   _globals['_QUERY'].methods_by_name['RockPool']._serialized_options = b'\202\323\344\223\002\035\022\033/zrchain/v6/zenex/rock_pool'
-  _globals['_QUERYPARAMSREQUEST']._serialized_start=213
-  _globals['_QUERYPARAMSREQUEST']._serialized_end=233
-  _globals['_QUERYPARAMSRESPONSE']._serialized_start=235
-  _globals['_QUERYPARAMSRESPONSE']._serialized_end=314
-  _globals['_QUERYSWAPSREQUEST']._serialized_start=317
-  _globals['_QUERYSWAPSREQUEST']._serialized_end=560
-  _globals['_QUERYSWAPSRESPONSE']._serialized_start=563
-  _globals['_QUERYSWAPSRESPONSE']._serialized_end=699
-  _globals['_QUERYROCKPOOLREQUEST']._serialized_start=701
-  _globals['_QUERYROCKPOOLREQUEST']._serialized_end=723
-  _globals['_QUERYROCKPOOLRESPONSE']._serialized_start=725
-  _globals['_QUERYROCKPOOLRESPONSE']._serialized_end=783
-  _globals['_QUERY']._serialized_start=786
-  _globals['_QUERY']._serialized_end=1143
+  _globals['_QUERYPARAMSREQUEST']._serialized_start=250
+  _globals['_QUERYPARAMSREQUEST']._serialized_end=270
+  _globals['_QUERYPARAMSRESPONSE']._serialized_start=272
+  _globals['_QUERYPARAMSRESPONSE']._serialized_end=351
+  _globals['_QUERYSWAPSREQUEST']._serialized_start=354
+  _globals['_QUERYSWAPSREQUEST']._serialized_end=635
+  _globals['_QUERYSWAPSRESPONSE']._serialized_start=638
+  _globals['_QUERYSWAPSRESPONSE']._serialized_end=774
+  _globals['_QUERYROCKPOOLREQUEST']._serialized_start=776
+  _globals['_QUERYROCKPOOLREQUEST']._serialized_end=798
+  _globals['_QUERYROCKPOOLRESPONSE']._serialized_start=801
+  _globals['_QUERYROCKPOOLRESPONSE']._serialized_end=947
+  _globals['_REDEEMABLEASSET']._serialized_start=949
+  _globals['_REDEEMABLEASSET']._serialized_end=1039
+  _globals['_QUERY']._serialized_start=1042
+  _globals['_QUERY']._serialized_end=1399
 # @@protoc_insertion_point(module_scope)

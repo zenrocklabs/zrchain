@@ -1,68 +1,80 @@
-syntax = "proto3";
+  syntax = "proto3";
 
-package zrchain.zenex;
+  package zrchain.zenex;
 
-import "amino/amino.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "zrchain/zenex/params.proto";
-import "zrchain/zenex/swap.proto";
+  import "amino/amino.proto";
+  import "gogoproto/gogo.proto";
+  import "google/api/annotations.proto";
+  import "cosmos/base/query/v1beta1/pagination.proto";
+  import "zrchain/zenex/params.proto";
+  import "zrchain/zenex/swap.proto";
+  import "zrchain/validation/asset_data.proto";
 
-option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
+  option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
 
-// Query defines the gRPC querier service.
-service Query {
-  
-  // Parameters queries the parameters of the module.
-  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/zrchain/v6/zenex/params";
-  
+  // Query defines the gRPC querier service.
+  service Query {
+    
+    // Parameters queries the parameters of the module.
+    rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+      option (google.api.http).get = "/zrchain/v6/zenex/params";
+    
+    }
+    
+    // Queries a list of Swaps items.
+    rpc Swaps (QuerySwapsRequest) returns (QuerySwapsResponse) {
+      option (google.api.http).get = "/zrchain/v6/zenex/swaps";
+    
+    }
+    
+    // Queries a list of RockPool items.
+    rpc RockPool (QueryRockPoolRequest) returns (QueryRockPoolResponse) {
+      option (google.api.http).get = "/zrchain/v6/zenex/rock_pool";
+    
+    }
   }
-  
-  // Queries a list of Swaps items.
-  rpc Swaps (QuerySwapsRequest) returns (QuerySwapsResponse) {
-    option (google.api.http).get = "/zrchain/v6/zenex/swaps";
-  
+  // QueryParamsRequest is request type for the Query/Params RPC method.
+  message QueryParamsRequest {}
+
+  // QueryParamsResponse is response type for the Query/Params RPC method.
+  message QueryParamsResponse {
+    
+    // params holds all the parameters of this module.
+    Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   }
-  
-  // Queries a list of RockPool items.
-  rpc RockPool (QueryRockPoolRequest) returns (QueryRockPoolResponse) {
-    option (google.api.http).get = "/zrchain/v6/zenex/rock_pool";
-  
+
+  // QuerySwapsRequest is request type for the Query/Swaps RPC method.
+  message QuerySwapsRequest {
+    string                                creator    = 1; // Optional
+    uint64                                swap_id    = 2; // Optional
+    SwapStatus                            status     = 3; // Optional
+    string                                pair       = 4; // Optional
+    string                                workspace  = 5; // Optional
+    string                                source_tx_hash = 6; // Optional
+    cosmos.base.query.v1beta1.PageRequest pagination = 7;
   }
-}
-// QueryParamsRequest is request type for the Query/Params RPC method.
-message QueryParamsRequest {}
 
-// QueryParamsResponse is response type for the Query/Params RPC method.
-message QueryParamsResponse {
-  
-  // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
-}
+  // QuerySwapsResponse is response type for the Query/Swaps RPC method.
+  message QuerySwapsResponse {
+    repeated Swap                                   swaps      = 1;
+            cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  }
 
-// QuerySwapsRequest is request type for the Query/Swaps RPC method.
-message QuerySwapsRequest {
-  string                                creator    = 1; // Optional
-  uint64                                swap_id    = 2; // Optional
-  SwapStatus                            status     = 3; // Optional
-  string                                pair       = 4; // Optional
-  string                                workspace  = 5; // Optional
-  cosmos.base.query.v1beta1.PageRequest pagination = 6;
-}
+  // QueryRockPoolRequest is request type for the Query/RockPool RPC method.
+  message QueryRockPoolRequest {}
 
-// QuerySwapsResponse is response type for the Query/Swaps RPC method.
-message QuerySwapsResponse {
-  repeated Swap                                   swaps      = 1;
-           cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
+  // QueryRockPoolResponse is response type for the Query/RockPool RPC method.
+  message QueryRockPoolResponse {
+    uint64 rock_balance = 1;
+    repeated RedeemableAsset redeemable_assets = 2 [
+      (gogoproto.nullable) = false,
+      (amino.dont_omitempty) = true
+    ];
+  }
 
-// QueryRockPoolRequest is request type for the Query/RockPool RPC method.
-message QueryRockPoolRequest {}
-
-// QueryRockPoolResponse is response type for the Query/RockPool RPC method.
-message QueryRockPoolResponse {
-  uint64 rock_balance = 1;
-}
+  // RedeemableAsset represents an asset that can be redeemed with its amount
+  message RedeemableAsset {
+    zrchain.validation.Asset asset = 1;
+    uint64 amount = 2;
+  }
 

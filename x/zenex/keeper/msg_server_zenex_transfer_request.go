@@ -68,6 +68,8 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		sdk.NewEvent(
 			types.EventZenexTransferRequest,
 			sdk.NewAttribute(types.AttributeSwapId, strconv.FormatUint(swap.SwapId, 10)),
+			sdk.NewAttribute(types.AttributeNewSwapStatus, swap.Status.String()),
+			sdk.NewAttribute(types.AttributePair, swap.Pair),
 		),
 	})
 

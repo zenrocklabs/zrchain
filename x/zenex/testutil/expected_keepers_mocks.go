@@ -153,6 +153,21 @@ func (mr *MockValidationKeeperMockRecorder) GetAssetPrices(ctx any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssetPrices", reflect.TypeOf((*MockValidationKeeper)(nil).GetAssetPrices), ctx)
 }
 
+// GetAssets mocks base method.
+func (m *MockValidationKeeper) GetAssets(ctx context.Context) ([]types1.Asset, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAssets", ctx)
+	ret0, _ := ret[0].([]types1.Asset)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAssets indicates an expected call of GetAssets.
+func (mr *MockValidationKeeperMockRecorder) GetAssets(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssets", reflect.TypeOf((*MockValidationKeeper)(nil).GetAssets), ctx)
+}
+
 // GetBtcRockPrice mocks base method.
 func (m *MockValidationKeeper) GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error) {
 	m.ctrl.T.Helper()

@@ -9,4 +9,5 @@ const (
 const (
 	AttributeSwapId        = "swap_id"
 	AttributeNewSwapStatus = "swap_status"
+	AttributePair          = "pair"
 )

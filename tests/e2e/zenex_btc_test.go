@@ -18,6 +18,9 @@ var _ = Describe("Zenex BTC flow:", func() {
 	var rockAddress string
 	var bitcoinAddress string
 	var workspaceAddress string
+	var swapID uint64
+	var signTxID uint64
+	var amountRockIn uint64
 
 	BeforeEach(func() {
 		env = setupTestEnv(GinkgoT())
@@ -26,6 +29,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		}
 	})
 
+	// Isolated workspace for this test only
 	It("creates a new workspace", func() {
 		hash, err := env.Tx.NewWorkspace(env.Ctx)
 		Expect(err).ToNot(HaveOccurred())
@@ -49,6 +53,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 
 	})
 
+	// Require a new ecdsa key to deposit ROCK
 	It("creates a new ecdsa key request", func() {
 
 		hash, err := env.Tx.NewKeyRequest(
@@ -82,6 +87,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("ECDSA Key Request created: %d\n", ecdsaRequestID)
 	})
 
+	// Waiting for the ecdsa key request to be included onchain
 	It("fetches the ecdsa key request within 5 seconds", func() {
 		Eventually(func() (uint64, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, ecdsaRequestID)
@@ -93,6 +99,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("ECDSA Key Request fetched: %d\n", ecdsaRequestID)
 	})
 
+	// Waiting for the ecdsa key request to be fulfilled
 	It("gets fulfilled within 15 seconds", func() {
 		Eventually(func() (string, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, ecdsaRequestID)
@@ -104,6 +111,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("ECDSA Key Request fulfilled: %d\n", ecdsaRequestID)
 	})
 
+	// Fetching the ecdsa zrchain address from the returned public key
 	It("fetches the ecdsa zrchain address", func() {
 		req, err := env.Query.GetKey(env.Ctx, ecdsaRequestID)
 		Expect(err).ToNot(HaveOccurred())
@@ -116,12 +124,14 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("zrchain address: %s\n", rockAddress)
 	})
 
+	// Depositing 100000 ROCK on Zrchain to convert to btc
 	It("deposits 100000 ROCK on Zrchain", func() {
 		r, err := env.Docker.Exec("zenrockd", []string{"/app/send.sh", "100000", rockAddress})
 		Expect(err).ToNot(HaveOccurred())
 		GinkgoWriter.Printf("response docker cmd: %s\n", r)
 	})
 
+	// Creating a new bitcoin key request
 	It("creates a new bitcoin key request", func() {
 
 		hash, err := env.Tx.NewKeyRequest(
@@ -155,6 +165,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Bitcoin Key Request created: %d\n", btcRequestID)
 	})
 
+	// Waiting for the bitcoin key request to be included onchain
 	It("fetches the bitcoin key request within 5 seconds", func() {
 		Eventually(func() (uint64, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, btcRequestID)
@@ -166,6 +177,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Bitcoin Key Request fetched: %d\n", btcRequestID)
 	})
 
+	// Waiting for the bitcoin key request to be fulfilled
 	It("gets fulfilled within 15 seconds", func() {
 		Eventually(func() (string, error) {
 			req, err := env.Query.GetKeyRequest(env.Ctx, btcRequestID)
@@ -177,6 +189,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Bitcoin Key Request fulfilled: %d\n", btcRequestID)
 	})
 
+	// Fetching the bitcoin REGNET key address from the returned public key
 	It("fetches the bitcoin REGNET key address", func() {
 		req, err := env.Query.GetKey(env.Ctx, btcRequestID)
 		Expect(err).ToNot(HaveOccurred())
@@ -189,12 +202,14 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Bitcoin REGNET address: %s\n", bitcoinAddress)
 	})
 
+	// Depositing 1 BTC on Bitcoin
 	It("deposits 1 BTC on Bitcoin", func() {
 		r, err := env.Docker.Exec("bitcoin", []string{"/app/send.sh", "1.0", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
 		GinkgoWriter.Printf("response docker cmd: %s\n", r)
 	})
 
+	// Verifying BTC deposit arrived
 	It("verifies BTC deposit arrived", func() {
 		out, err := env.Docker.Exec("bitcoin", []string{"/app/balance.sh", bitcoinAddress})
 		Expect(err).ToNot(HaveOccurred())
@@ -204,11 +219,13 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("BTC balance on address %s: %f\n", bitcoinAddress, balance)
 	})
 
+	// Creating a zenex rockbtc swap request on zrchain
 	It("creates a zenex rockbtc swap request on zrchain", func() {
+		amountRockIn = 1000000000 // 10000 ROCK
 		// Create a zenex swap request transaction
 		hash, err := env.Tx.NewMsgSwapRequest(
 			env.Ctx,
-			10000000000, // 100000 ROCK
+			amountRockIn,
 			ecdsaRequestID,
 			btcRequestID,
 			"rockbtc",
@@ -224,7 +241,6 @@ var _ = Describe("Zenex BTC flow:", func() {
 		Expect(r.TxResponse.RawLog).To(BeEmpty())
 
 		// Extract swap ID from transaction events
-		var swapID uint64
 		for _, event := range r.TxResponse.Events {
 			if event.Type == "zenex_swap_request" {
 				for _, attr := range event.Attributes {
@@ -237,7 +253,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 			}
 		}
 		Expect(swapID).ToNot(BeZero())
-		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
 		Expect(swaps.Swaps[0].SwapId).To(Equal(swapID))
@@ -246,4 +262,103 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Zenex swap request created with swap ID: %d, tx hash: %s\n", swapID, hash)
 	})
 
+	// checks the swap amount is in the module account
+	It("checks the swap amount is in the module account", func() {
+		rockPool, err := env.Query.RockPool(env.Ctx)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(rockPool.RockBalance).To(BeNumerically("==", amountRockIn))
+		GinkgoWriter.Printf("Rock balance in module account: %d\n", rockPool.RockBalance)
+	})
+
+	// TODO: btc proxy magic to craft unsigned btc transaction for workspace key
+
+	// TODO: send unsigned btc transaction to zenex transfer request
+	It("sends unsigned btc transaction to zenex transfer request", func() {
+		hash, err := env.Tx.NewMsgZenexTransferRequest(
+			env.Ctx,
+			workspaceAddress,
+			swapID,
+			[]byte("someunsignedtx"), // TODO: craft unsigned btc transaction for workspace key
+			types.WalletType_WALLET_TYPE_BTC_REGNET,
+		)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(hash).ToNot(BeEmpty())
+
+		r, err := env.Tx.GetTx(env.Ctx, hash)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(r.TxResponse).ToNot(BeNil())
+		Expect(r.TxResponse.RawLog).To(BeEmpty())
+
+		// Extract sign tx ID from transaction events
+		for _, event := range r.TxResponse.Events {
+			if event.Type == "zenex_transfer_request" {
+				for _, attr := range event.Attributes {
+					if attr.Key == "sign_tx_id" {
+						signTxID, err = strconv.ParseUint(attr.Value, 10, 64)
+						Expect(err).ToNot(HaveOccurred())
+						break
+					}
+				}
+			}
+		}
+	})
+
+	// Waiting for the zenex transfer request to be included onchain
+	It("fetches the signature request for the zenex transfer request within 5 seconds", func() {
+		Eventually(func() (uint64, error) {
+			req, err := env.Query.GetSignatureRequest(env.Ctx, signTxID)
+			if err != nil {
+				return 0, err
+			}
+			return req.Id, nil
+		}, "5s", "1s").Should(Equal(signTxID))
+		GinkgoWriter.Printf("Signature request for zenex transfer request fetched: %d\n", signTxID)
+	})
+
+	It("gets signature request fulfilled within 15 seconds", func() {
+		Eventually(func() (string, error) {
+			req, err := env.Query.GetSignatureRequest(env.Ctx, signTxID)
+			if err != nil {
+				return "", err
+			}
+			return req.Status, nil
+		}, "15s", "1s").Should(Equal(types.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED.String()))
+		GinkgoWriter.Printf("Signature request for zenex transfer request fulfilled: %d\n", signTxID)
+	})
+
+	// Check the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED
+	It("checks the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED", func() {
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(swaps.Swaps).ToNot(BeEmpty())
+		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED))
+	})
+
+	// TODO: Proxy needs to fetch the signed btc transaction and send it to the bitcoin zenex pool key Id
+
+	// Proxy acknowledges the pool transfer and sets swap to completed
+	It("proxy acknowledges the pool transfer and sets swap to completed", func() {
+
+		hash, err := env.Tx.NewMsgAcknowledgePoolTransfer(
+			env.Ctx,
+			swapID,
+			"source_tx_hash",
+			zenextypes.SwapStatus_SWAP_STATUS_COMPLETED,
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(hash).ToNot(BeEmpty())
+
+		r, err := env.Tx.GetTx(env.Ctx, hash)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(r.TxResponse).ToNot(BeNil())
+		Expect(r.TxResponse.RawLog).To(BeEmpty())
+
+		// Check the swap status to be SWAP_STATUS_COMPLETED
+		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(swaps.Swaps).ToNot(BeEmpty())
+		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_COMPLETED))
+		GinkgoWriter.Printf("Swap status: %s\n", swaps.Swaps[0].Status)
+	})
 })
