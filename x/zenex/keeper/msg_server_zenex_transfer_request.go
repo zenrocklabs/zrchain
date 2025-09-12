@@ -26,7 +26,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		return nil, fmt.Errorf("message creator is not the btc proxy address")
 	}
 
-	if swap.Status != types.SwapStatus_SWAP_STATUS_REQUESTED {
+	if swap.Status != types.SwapStatus_SWAP_STATUS_INITIATED {
 		return nil, fmt.Errorf("swap status is not requested")
 	}
 
@@ -58,7 +58,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	}
 
 	swap.SignTxId = signTxResponse.Id
-	swap.Status = types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED
+	swap.Status = types.SwapStatus_SWAP_STATUS_REQUESTED
 	err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
 	if err != nil {
 		return nil, err

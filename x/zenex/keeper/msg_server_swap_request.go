@@ -78,7 +78,7 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 	swap := types.Swap{
 		Creator: msg.Creator,
 		SwapId:  swapCount,
-		Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+		Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 		Pair:    msg.Pair,
 		Data: &types.SwapData{
 			BaseToken:  pair.BaseToken,

@@ -29,10 +29,10 @@ message Swap {
 enum SwapStatus {
   // The swap status is unspecified (all swaps will be returned)
   SWAP_STATUS_UNSPECIFIED = 0;
-  // The swap status is requested
-  SWAP_STATUS_REQUESTED = 1;
-  // The swap status is transfer requested
-  SWAP_STATUS_SWAP_TRANSFER_REQUESTED = 2;
+  // The swap status is iniated and waiting for the swap request
+  SWAP_STATUS_INITIATED = 1;
+  // The swap status is requested and waiting for confirmation of the bitcoi transaction
+  SWAP_STATUS_REQUESTED = 2;
   // The swap status is rejected
   SWAP_STATUS_REJECTED = 3;
   // The swap status is completed

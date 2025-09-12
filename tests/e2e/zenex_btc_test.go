@@ -257,7 +257,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
 		Expect(swaps.Swaps[0].SwapId).To(Equal(swapID))
-		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_REQUESTED))
+		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_INITIATED))
 
 		GinkgoWriter.Printf("Zenex swap request created with swap ID: %d, tx hash: %s\n", swapID, hash)
 	})
@@ -327,12 +327,12 @@ var _ = Describe("Zenex BTC flow:", func() {
 		GinkgoWriter.Printf("Signature request for zenex transfer request fulfilled: %d\n", signTxID)
 	})
 
-	// Check the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED
-	It("checks the swap status to be SWAP_STATUS_SWAP_TRANSFER_REQUESTED", func() {
+	// Check the swap status to be SWAP_STATUS_REQUESTED
+	It("checks the swap status to be SWAP_STATUS_REQUESTED", func() {
 		swaps, err := env.Query.Swaps(env.Ctx, "", "", "", swapID, zenextypes.SwapStatus_SWAP_STATUS_UNSPECIFIED, zenextypes.TradePair_TRADE_PAIR_ROCK_BTC)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(swaps.Swaps).ToNot(BeEmpty())
-		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED))
+		Expect(swaps.Swaps[0].Status).To(Equal(zenextypes.SwapStatus_SWAP_STATUS_REQUESTED))
 	})
 
 	// TODO: Proxy needs to fetch the signed btc transaction and send it to the bitcoin zenex pool key Id

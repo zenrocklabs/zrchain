@@ -38,7 +38,7 @@ for key_type in "${key_types[@]}"; do
 done
 
 # Only runs if alice is the admin key
-# zenrockd tx zentp set-solana-rock-supply 100000000000000 --from alice --chain-id zenrock --fees 500000urock --yes
+zenrockd tx zentp set-solana-rock-supply 100000000000000 --from alice --chain-id zenrock --fees 500000urock --yes
 
 echo "mammal romance obtain swarm disorder snake apology debris daughter magnet column scrub crowd drift empty rebuild address first patch believe myself grow aware muffin" |zenrockd keys add btcproxy --recover --keyring-backend test
 sleep 5

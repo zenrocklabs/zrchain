@@ -40,7 +40,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -93,7 +93,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -146,7 +146,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{

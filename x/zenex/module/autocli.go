@@ -24,7 +24,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					FlagOptions: map[string]*autocliv1.FlagOptions{
 						"creator":        {Usage: "Filter by creator address"},
 						"swap_id":        {Usage: "Filter by swap ID"},
-						"status":         {Usage: "Filter by status (requested|completed|rejected)"},
+						"status":         {Usage: "Filter by status (initiated|requested|completed|rejected)"},
 						"workspace":      {Usage: "Filter by workspace"},
 						"pair":           {Usage: "Filter by pair (rock-btc|btc-rock)"},
 						"source_tx_hash": {Usage: "Filter by source transaction hash"},

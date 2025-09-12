@@ -34,7 +34,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
 				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -73,7 +73,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  2,
-				Status:  types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
 				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{

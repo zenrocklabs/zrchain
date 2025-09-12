@@ -27,7 +27,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 		return nil, err
 	}
 
-	if swap.Status != types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED {
+	if swap.Status != types.SwapStatus_SWAP_STATUS_REQUESTED {
 		return nil, fmt.Errorf("swap status is not swap transfer requested: %s", swap.Status)
 	}
 

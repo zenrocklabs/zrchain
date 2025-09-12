@@ -12,8 +12,8 @@ DESCRIPTOR: _descriptor.FileDescriptor
 class SwapStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     SWAP_STATUS_UNSPECIFIED: _ClassVar[SwapStatus]
+    SWAP_STATUS_INITIATED: _ClassVar[SwapStatus]
     SWAP_STATUS_REQUESTED: _ClassVar[SwapStatus]
-    SWAP_STATUS_SWAP_TRANSFER_REQUESTED: _ClassVar[SwapStatus]
     SWAP_STATUS_REJECTED: _ClassVar[SwapStatus]
     SWAP_STATUS_COMPLETED: _ClassVar[SwapStatus]
 
@@ -23,8 +23,8 @@ class TradePair(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     TRADE_PAIR_ROCK_BTC: _ClassVar[TradePair]
     TRADE_PAIR_BTC_ROCK: _ClassVar[TradePair]
 SWAP_STATUS_UNSPECIFIED: SwapStatus
+SWAP_STATUS_INITIATED: SwapStatus
 SWAP_STATUS_REQUESTED: SwapStatus
-SWAP_STATUS_SWAP_TRANSFER_REQUESTED: SwapStatus
 SWAP_STATUS_REJECTED: SwapStatus
 SWAP_STATUS_COMPLETED: SwapStatus
 TRADE_PAIR_UNSPECIFIED: TradePair
