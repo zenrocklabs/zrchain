@@ -40,7 +40,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -93,7 +93,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -146,7 +146,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			wantSwap: types.Swap{
 				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
 				Pair:    types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Data: &types.SwapData{
 					BaseToken: &validationtypes.AssetData{
@@ -182,6 +182,19 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			expErr:    true,
 			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
 		},
+		{
+			name: "FAIL: Not enough rock balance in pool",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  3000000, // waay too much
+				RockKeyId: 1,
+				BtcKeyId:  2,
+			},
+			expErr:    true,
+			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
+		},
 	}
 
 	for _, tt := range tests {
@@ -195,6 +208,13 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			s.identityKeeper.EXPECT().GetWorkspace(s.ctx, tt.input.Workspace).Return(&identitytestutil.DefaultWsWithAlice, nil).AnyTimes()
 			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], nil).AnyTimes()
 			s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.input.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.input.BtcKeyId-1], nil).AnyTimes()
+
+			// Set up mocks needed for both success and error cases
+			if tt.input.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
+				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
+				s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000000000000))).AnyTimes()
+			}
 
 			// Set up mocks needed for both success and error cases
 			if tt.input.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
@@ -225,10 +245,12 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				s.Require().Error(err)
 				s.Require().Equal(tt.expErrMsg, err.Error())
 				s.Require().Nil(response)
+				s.Require().Nil(response)
 			} else {
 				swap, err := s.zenexKeeper.SwapsStore.Get(s.ctx, tt.want.SwapId)
 				s.Require().NoError(err)
 				s.Require().NotNil(swap)
+				s.Require().Equal(tt.want.SwapId, response.SwapId)
 				s.Require().Equal(tt.want.SwapId, response.SwapId)
 				s.Require().Equal(tt.wantSwap, swap)
 			}

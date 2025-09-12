@@ -141,10 +141,10 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       6,
 				SourceTxHash: "source_tx_hash",
-				Status:       types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED,
+				Status:       types.SwapStatus_SWAP_STATUS_REQUESTED,
 			},
 			expErr:    true,
-			expErrMsg: fmt.Sprintf("msg status is not completed or rejected: %s", types.SwapStatus_SWAP_STATUS_SWAP_TRANSFER_REQUESTED.String()),
+			expErrMsg: fmt.Sprintf("msg status is not completed or rejected: %s", types.SwapStatus_SWAP_STATUS_REQUESTED.String()),
 		},
 		{
 			name: "FAIL: swap status is already completed/rejected",
