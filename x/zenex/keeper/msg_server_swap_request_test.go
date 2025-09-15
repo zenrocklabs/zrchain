@@ -31,7 +31,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  10000000000,
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr: false,
 			want: &types.MsgSwapRequestResponse{
@@ -58,7 +58,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 					AmountOut: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis
 				},
 				RockKeyId:      1,
-				BtcKeyId:       2,
+				BtcKeyId:       4,
 				ZenexPoolKeyId: 100, // DefaultParams sets this to 100
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
@@ -71,7 +71,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  100000,
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr:    true,
 			expErrMsg: "pair is unspecified",
@@ -84,7 +84,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  10000000000, // 10,000,000,000 urock
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr: false,
 			want: &types.MsgSwapRequestResponse{
@@ -111,7 +111,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 					AmountOut: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis
 				},
 				RockKeyId:      1,
-				BtcKeyId:       2,
+				BtcKeyId:       4,
 				ZenexPoolKeyId: 100,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
@@ -124,7 +124,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  100000,
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr:    true,
 			expErrMsg: "message creator is not the owner of the workspace or the btc proxy address",
@@ -137,7 +137,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  2000,
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr: false,
 			want: &types.MsgSwapRequestResponse{
@@ -164,7 +164,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 					AmountOut: 8800000000,                       // 2,000 * 4,400,000 = 8.8 billion urock
 				},
 				RockKeyId:      1,
-				BtcKeyId:       2,
+				BtcKeyId:       4,
 				ZenexPoolKeyId: 100,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 			},
@@ -177,7 +177,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  3000000, // waay too much
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr:    true,
 			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
@@ -190,10 +190,36 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
 				AmountIn:  3000000, // waay too much
 				RockKeyId: 1,
-				BtcKeyId:  2,
+				BtcKeyId:  4,
 			},
 			expErr:    true,
 			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
+		},
+		{
+			name: "FAIL: Rock key is not an ECDSA SECP256K1 key",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  3000000, // waay too much
+				RockKeyId: 3,
+				BtcKeyId:  4,
+			},
+			expErr:    true,
+			expErrMsg: "rock key 3 or btc key 4 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
+		},
+		{
+			name: "FAIL: Btc key is not an BITCOIN SECP256K1 key",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  3000000, // waay too much
+				RockKeyId: 1,
+				BtcKeyId:  3,
+			},
+			expErr:    true,
+			expErrMsg: "rock key 1 or btc key 3 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
 		},
 	}
 

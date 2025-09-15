@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -38,6 +39,10 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		return nil, err
 	}
 
+	if rockKey.Type != treasurytypes.KeyType_KEY_TYPE_ECDSA_SECP256K1 || btcKey.Type != treasurytypes.KeyType_KEY_TYPE_BITCOIN_SECP256K1 {
+		return nil, fmt.Errorf("rock key %d or btc key %d is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key", msg.RockKeyId, msg.BtcKeyId)
+	}
+
 	if rockKey.WorkspaceAddr != msg.Workspace || btcKey.WorkspaceAddr != msg.Workspace {
 		return nil, fmt.Errorf("rock key %d or btc key %d is not in the workspace %s", msg.RockKeyId, msg.BtcKeyId, msg.Workspace)
 	}
@@ -61,7 +66,7 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 			return nil, err
 		}
 	case types.TradePair_TRADE_PAIR_BTC_ROCK:
-		err = k.CheckRedeemableAsset(ctx, msg.AmountIn, msg.Pair)
+		err = k.CheckRedeemableAsset(ctx, amountOut, price)
 		if err != nil {
 			return nil, err
 		}

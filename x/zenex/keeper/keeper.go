@@ -226,18 +226,12 @@ func (k Keeper) GetRockAddress(ctx sdk.Context, rockKeyId uint64) (string, error
 	return rockAddress, nil
 }
 
-func (k Keeper) CheckRedeemableAsset(ctx sdk.Context, amountIn uint64, pair types.TradePair) error {
-	price, err := k.GetPrice(ctx, pair)
-	if err != nil {
-		return err
-	}
-	amountOut, err := k.GetAmountOut(ctx, pair, amountIn, price)
-	if err != nil {
-		return err
-	}
+func (k Keeper) CheckRedeemableAsset(ctx sdk.Context, amountOut uint64, price math.LegacyDec) error {
 	availableRockBalance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ZenexCollectorName), params.BondDenom).Amount.Uint64()
+
 	if amountOut > availableRockBalance {
 		return fmt.Errorf("amount %d is greater than the available rock balance %d", amountOut, availableRockBalance)
 	}
+
 	return nil
 }
