@@ -15,6 +15,7 @@ import (
 // transactions across various modules.
 type TxClient struct {
 	*RawTxClient      // Handles low-level transaction construction and signing
+	*BankTxClient     // Handles bank-specific transactions (sending funds)
 	*IdentityTxClient // Handles identity-specific transactions
 	*TreasuryTxClient // Handles treasury-specific transactions
 	*ZenBTCTxClient   // Handles ZenBTC-specific transactions
@@ -49,6 +50,7 @@ func NewTxClient(id Identity, chainID string, c *grpc.ClientConn, accountFetcher
 	}
 	return &TxClient{
 		RawTxClient:      raw,
+		BankTxClient:     NewBankTxClient(raw),
 		IdentityTxClient: NewIdentityTxClient(raw),
 		TreasuryTxClient: NewTreasuryTxClient(raw),
 		ZenBTCTxClient:   NewZenBTCTxClient(raw),
