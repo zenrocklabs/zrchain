@@ -220,7 +220,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 
 	// Creating a zenex rockbtc swap request on zrchain
 	It("creates a zenex rockbtc swap request on zrchain", func() {
-		amountRockIn = 1000000000 // 10000 ROCK
+		amountRockIn = 10000000000 // 10000 ROCK
 		// Create a zenex swap request transaction
 		hash, err := env.Tx.NewMsgSwapRequest(
 			env.Ctx,
