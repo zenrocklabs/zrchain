@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -18,14 +19,15 @@ func (k Keeper) GetAVSRewardsRate(ctx context.Context) math.LegacyDec {
 // GetBedrockDefaultValOperAddr returns the HV param for default bedrock validator operator address
 // Fallbacks to types.DefaultBedrockValidatorOperAddr if not set.
 func (k Keeper) GetBedrockDefaultValOperAddr(ctx context.Context) string {
-	// NOTE: We return the default for now if params retrieval fails or field is empty.
-	// The proto contains the field; once protobufs are regenerated the HVParams struct will expose it.
-	_ , err := k.HVParams.Get(ctx)
+	params, err := k.HVParams.Get(ctx)
 	if err != nil {
 		return types.DefaultBedrockValidatorOperAddr
 	}
-	// TODO: read from params.BedrockDefaultValOperAddr when available in generated code
-	return types.DefaultBedrockValidatorOperAddr
+	addr := params.GetBedrockDefaultValOperAddr()
+	if strings.TrimSpace(addr) == "" {
+		return types.DefaultBedrockValidatorOperAddr
+	}
+	return addr
 }
 
 func (k Keeper) GetBlockTime(ctx context.Context) int64 {

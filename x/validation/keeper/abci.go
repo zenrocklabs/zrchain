@@ -1276,7 +1276,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 
 // adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative via Int sign) BTC sats to the default validator's TokensBedrock (Asset_BTC)
 func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
-	oper := k.GetBedrockDefaultValidatorOperAddr(ctx)
+	oper := k.GetBedrockDefaultValOperAddr(ctx)
 	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
 	if err != nil {
 		return err
