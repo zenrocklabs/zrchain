@@ -170,7 +170,7 @@ sequenceDiagram
     end
 ```
 
-### Redemption and Burn
+### Redemption and Burn (Direct mode without EigenLayer)
 
 This flow describes how a user burns zenBTC on a destination chain to redeem their original BTC.
 
@@ -195,56 +195,7 @@ sequenceDiagram
     Note over zrChain: PreBlocker: storeNewZenBTCBurnEvents()
     zrChain->>zrChain: Check burn event not already processed (prevent duplicates)
     zrChain->>zrChain: Create BurnEvent (status: BURNED)
-    zrChain->>zrChain: Request Unstaker Nonce for EigenLayer
-
-    Sidecar->>Ethereum: Polls for nonce values
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with unstaker nonces
-    zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-    Note over zrChain: PreBlocker: processZenBTCBurnEvents()
-    zrChain->>zrChain: Create SignTransactionRequest for unstaking
-    MPC Stack->>zrChain: Poll for signature requests
-    zrChain-->>MPC Stack: Unstaking transaction request found
-    MPC Stack->>MPC Stack: Generate signature
-    MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Unstake Tx picked up
-    Relayer->>Ethereum: Broadcast Unstake Tx (EigenLayer contracts)
-    
-    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
-    Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates status to UNSTAKING
-
-    Sidecar->>Ethereum: Polls for unstake completion status
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with EigenLayer redemption data
-    zrChain->>Sidecar: PrepareProposal: Proposer validates redemption data against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on redemption data
-    Note over zrChain: PreBlocker: storeNewZenBTCRedemptions()
-    zrChain->>zrChain: Create Redemption object (status: INITIATED)
-    zrChain->>zrChain: Wait for EigenLayer withdrawal ecrow period to elapse
-
-    Note over zrChain: After withdrawal ecrow period elapsed, redemption becomes available for completion
-
-    Sidecar->>Ethereum: Polls for nonce values
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with completer nonces
-    zrChain->>Sidecar: PrepareProposal: Proposer validates completer nonce against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
-    zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
-    Note over zrChain: PreBlocker: processZenBTCRedemptions()
-    zrChain->>zrChain: Create SignTransactionRequest for unstaking completion
-    MPC Stack->>zrChain: Poll for signature requests
-    zrChain-->>MPC Stack: Unstaking completion transaction request found
-    MPC Stack->>MPC Stack: Generate signature
-    MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed CompleteWithdrawal Tx picked up
-    Relayer->>Ethereum: Broadcast Tx (EigenLayer contracts)
-    
-    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
-    Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates redemption status to UNSTAKED
+    zrChain->>zrChain: Create Redemption object (status: UNSTAKED)
 
     Bitcoin Proxy->>zrChain: Poll for UNSTAKED redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)
@@ -263,13 +214,7 @@ sequenceDiagram
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
     
     Note over zrChain: checkForRedemptionFulfilment() monitors AWAITING_SIGN redemptions
-    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED
-    
-    Bitcoin Proxy->>zrChain: Poll for fulfilled BTC tx
-    zrChain-->>Bitcoin Proxy: Signed BTC Transaction
-    Bitcoin Proxy->>Bitcoin: Broadcast signed tx
-    Bitcoin-->>User: Receives redeemed BTC
-    zrChain->>zrChain: Mark redemption as COMPLETED
+    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED and adjust bedrock BTC accounting
 ```
 
 ## zenTP (Zenrock Transport Protocol)

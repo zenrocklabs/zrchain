@@ -48,7 +48,13 @@ var (
 	LatestBtcHeaderHeightKey    = collections.NewPrefix(101)
 	ValidatorMismatchCounts     = collections.NewPrefix(102)
 	LastCompletedZentpMintIDKey = collections.NewPrefix(103)
+	BedrockDefaultValOperKey    = collections.NewPrefix(104)
 )
+
+var (
+	// Keys for store prefixes
+	// Last* values are constant during a block.
+	LastValidatorPowerKey = []byte{0x11} // prefix for each key to a validator index, for bonded validators
 
 var (
 	// Keys for store prefixes
@@ -105,6 +111,7 @@ var (
 	LatestBtcHeaderHeightIndex             = "latest_btc_header_height"
 	ValidatorMismatchCountsIndex           = "validator_mismatch_counts"
 	LastCompletedZentpMintIDIndex          = "last_completed_zentp_mint_id"
+	BedrockDefaultValOperIndex             = "bedrock_default_val_oper"
 )
 
 const (

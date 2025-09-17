@@ -1263,9 +1263,49 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				"minted_new", supply.MintedZenBTC,
 			)
 			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+			// Update local bedrock accounting for default validator (BTC in sats)
+			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err != nil {
+				return err
+			}
+			btcSats := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(tx.Amount)).Mul(exchangeRate).TruncateInt()
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, btcSats); err != nil {
+				k.Logger(ctx).Error("error adjusting bedrock BTC on mint", "error", err)
+			}
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	)
+}
+
+// adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative via Int sign) BTC sats to the default validator's TokensBedrock (Asset_BTC)
+func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
+	oper := k.GetBedrockDefaultValidatorOperAddr(ctx)
+	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
+	if err != nil {
+		return err
+	}
+	// Find existing BTC entry
+	idx := -1
+	for i, td := range v.TokensBedrock {
+		if td != nil && td.Asset == types.Asset_BTC {
+			idx = i
+			break
+		}
+	}
+	if idx >= 0 {
+		newAmt := v.TokensBedrock[idx].Amount.Add(delta)
+		if newAmt.IsNegative() {
+			newAmt = sdkmath.ZeroInt()
+		}
+		v.TokensBedrock[idx].Amount = newAmt
+	} else {
+		amt := delta
+		if amt.IsNegative() {
+			amt = sdkmath.ZeroInt()
+		}
+		v.TokensBedrock = append(v.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
+	}
+	return k.SetValidator(ctx, v)
 }
 
 // processZenBTCMintsSolana processes pending mint transactions.
@@ -1831,6 +1871,18 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("zenBTCKeeper.SetPendingMintTransaction: ", err.Error())
 			}
+
+			// Adjust bedrock BTC for default validator (convert zenBTC minted -> BTC sats)
+			exRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+			if err == nil {
+				btcSats := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(pendingMint.Amount)).Mul(exRate).TruncateInt()
+				if err := k.adjustDefaultValidatorBedrockBTC(ctx, btcSats); err != nil {
+					k.Logger(ctx).Error("error adjusting bedrock BTC on solana mint", "error", err)
+				}
+			} else {
+				k.Logger(ctx).Error("error getting exchange rate for bedrock adjustment", "error", err)
+			}
+
 			break // Found and processed, no need to check other events for this pending mint.
 		}
 	}
@@ -2274,6 +2326,11 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 			// Update supplies (zenBTC burned, BTC released)
 			supply.MintedZenBTC -= redemption.Data.Amount
 			supply.CustodiedBTC -= btcToRelease
+
+			// Adjust bedrock BTC for default validator (subtract released BTC)
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(btcToRelease).Neg()); err != nil {
+				k.Logger(ctx).Error("error adjusting bedrock BTC on redemption fulfilment", "error", err)
+			}
 
 			k.Logger(ctx).Warn("minted supply updated", "minted_old", supply.MintedZenBTC+redemption.Data.Amount, "minted_new", supply.MintedZenBTC)
 			k.Logger(ctx).Warn("custodied supply updated", "custodied_old", supply.CustodiedBTC+btcToRelease, "custodied_new", supply.CustodiedBTC)
