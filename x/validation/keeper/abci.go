@@ -376,9 +376,10 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
 
-		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
-			k.storeNewZenBTCRedemptions(ctx, oracleData)
-		}
+		// Skipping EigenLayer-based redemptions ingestion; redemptions will be initiated directly on burn
+		// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
+		// 	k.storeNewZenBTCRedemptions(ctx, oracleData)
+		// }
 
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 			k.processSolanaZenBTCMintEvents(ctx, oracleData)
@@ -391,11 +392,23 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		}
 
 		// 2. Process pending transaction queues based on the latest state
-		k.processZenBTCStaking(ctx, oracleData)
+		// Request nonces/accounts for direct minting (no EigenLayer staking)
+		if pendingEVM, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, zenbtctypes.WalletType_WALLET_TYPE_EVM); err == nil && len(pendingEVM) > 0 {
+			_ = k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
+		}
+		if pendingSol, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA); err == nil && len(pendingSol) > 0 {
+			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+			_ = k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true)
+			for _, tx := range pendingSol {
+				_ = k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true)
+			}
+		}
+
+		// Mint directly on destination chains
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
-		k.processZenBTCBurnEvents(ctx, oracleData)
-		k.processZenBTCRedemptions(ctx, oracleData)
+
+		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
 
@@ -1149,12 +1162,12 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 		k.zenBTCKeeper.GetEthMinterKeyID(ctx),
 		&oracleData.RequestedEthMinterNonce,
 		nil,
-		// pendingGetter: Fetches pending zenBTC mints for EVM chains that are in the STAKED state.
-		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on the destination chain.
+		// pendingGetter: Fetches pending zenBTC mints for EVM chains that are in the DEPOSITED state.
+		// We skip EigenLayer staking and mint directly on the destination chain.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
 				ctx,
-				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
+				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 				zenbtctypes.WalletType_WALLET_TYPE_EVM,
 			)
 		},
@@ -1263,12 +1276,12 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 		k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		nil,
 		oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		// pendingGetter: Fetches pending zenBTC mints for Solana that are in the STAKED state.
-		// These transactions have completed the EigenLayer staking step and are ready for zenBTC to be minted on Solana.
+		// pendingGetter: Fetches pending zenBTC mints for Solana that are in the DEPOSITED state.
+		// We skip EigenLayer staking and mint directly on Solana.
 		func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
-				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
+				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 				zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 			)
 			k.Logger(ctx).Warn("pending zenbtc solana mints", "mints", fmt.Sprintf("%v", pendingMints), "count", len(pendingMints))
@@ -1835,6 +1848,8 @@ func (k *Keeper) storeNewZenBTCBurnEventsSolana(ctx sdk.Context, oracleData Orac
 
 // storeNewZenBTCBurnEvents is a helper function to store new burn events from a given source.
 func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecarapitypes.BurnEvent, source string, nonceErrorMsg string) {
+	// We skip EigenLayer unstake/completion, so nonceErrorMsg is not used in this mode.
+	_ = nonceErrorMsg
 	k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Started.", "source", source, "incoming_event_count", len(burnEvents))
 	if source == "solana" && len(burnEvents) > 0 {
 		for i, dbgEvent := range burnEvents {
@@ -1844,7 +1859,6 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 		}
 	}
 
-	foundNewBurn := false
 	processedInThisRun := make(map[string]bool)
 	processedTxHashes := make(map[string]bool)
 	// Loop over each burn event from oracle to check for new ones.
@@ -1897,23 +1911,31 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 				continue // Process next event
 			}
 			k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Successfully created new burn event in store.", "source", source, "new_burn_id", createdID, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
-			foundNewBurn = true
+
+			// Direct redemption initiation (skip EigenLayer unstake/completion)
+			// Use the newly created burn event ID as the redemption ID. Amount is kept in zenBTC units.
+			if has, err := k.zenBTCKeeper.HasRedemption(ctx, createdID); err != nil {
+				k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error checking redemption existence.", "redemption_id", createdID, "error", err)
+			} else if !has {
+				red := zenbtctypes.Redemption{
+					Data: zenbtctypes.RedemptionData{
+						Id:                 createdID,
+						DestinationAddress: burn.DestinationAddr,
+						Amount:             burn.Amount, // zenBTC amount burned
+					},
+					Status: zenbtctypes.RedemptionStatus_UNSTAKED,
+				}
+				if err := k.zenBTCKeeper.SetRedemption(ctx, createdID, red); err != nil {
+					k.Logger(ctx).Error("StoreNewZenBTCBurnEvents: Error creating redemption for burn.", "redemption_id", createdID, "error", err)
+				} else {
+					k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: Created redemption for burn (direct mode).", "redemption_id", createdID)
+				}
+			}
+
 			processedTxHashes[burn.TxID] = true
 		} else {
 			k.Logger(ctx).Debug("StoreNewZenBTCBurnEvents: Skipping pre-existing event.", "source", source, "tx_id", burn.TxID, "log_idx", burn.LogIndex)
 		}
-	}
-
-	// If a new burn event is found, we need to request the unstaker's Ethereum nonce
-	// because the unstaking transaction happens on Ethereum, regardless of the burn source.
-	if foundNewBurn {
-		unstakerKeyID := k.zenBTCKeeper.GetUnstakerKeyID(ctx)
-		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: New burn events found. Setting EthereumNonceRequested for unstaker.", "source", source, "unstaker_key_id", unstakerKeyID)
-		if err := k.EthereumNonceRequested.Set(ctx, unstakerKeyID, true); err != nil {
-			k.Logger(ctx).Warn(fmt.Sprintf("storeNewZenBTCBurnEvents: %s", nonceErrorMsg), "source", source, "error", err)
-		}
-	} else {
-		k.Logger(ctx).Info("StoreNewZenBTCBurnEvents: No new burn events found to store.", "source", source)
 	}
 
 	// Clear any corresponding backfill requests for successfully processed events.
