@@ -78,8 +78,6 @@ type Keeper struct {
 	ValidatorMismatchCounts collections.Map[string, types.ValidatorMismatchCount]
 	// LastCompletedZentpMintID - value: id of last completed zentp mint
 	LastCompletedZentpMintID collections.Item[uint64]
-	// BedrockDefaultValOper - default validator operator address to attribute TokensBedrock BTC (v1)
-	BedrockDefaultValOper collections.Item[string]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -169,7 +167,6 @@ func NewKeeper(
 		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
 		ValidatorMismatchCounts:           collections.NewMap(sb, types.ValidatorMismatchCounts, types.ValidatorMismatchCountsIndex, collections.StringKey, codec.CollValue[types.ValidatorMismatchCount](cdc)),
 		LastCompletedZentpMintID:          collections.NewItem(sb, types.LastCompletedZentpMintIDKey, types.LastCompletedZentpMintIDIndex, collections.Uint64Value),
-		BedrockDefaultValOper:             collections.NewItem(sb, types.BedrockDefaultValOperKey, types.BedrockDefaultValOperIndex, collections.StringValue),
 	}
 }
 

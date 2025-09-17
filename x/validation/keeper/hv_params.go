@@ -15,6 +15,19 @@ func (k Keeper) GetAVSRewardsRate(ctx context.Context) math.LegacyDec {
 	return params.AVSRewardsRate
 }
 
+// GetBedrockDefaultValOperAddr returns the HV param for default bedrock validator operator address
+// Fallbacks to types.DefaultBedrockValidatorOperAddr if not set.
+func (k Keeper) GetBedrockDefaultValOperAddr(ctx context.Context) string {
+	// NOTE: We return the default for now if params retrieval fails or field is empty.
+	// The proto contains the field; once protobufs are regenerated the HVParams struct will expose it.
+	_ , err := k.HVParams.Get(ctx)
+	if err != nil {
+		return types.DefaultBedrockValidatorOperAddr
+	}
+	// TODO: read from params.BedrockDefaultValOperAddr when available in generated code
+	return types.DefaultBedrockValidatorOperAddr
+}
+
 func (k Keeper) GetBlockTime(ctx context.Context) int64 {
 	params, err := k.HVParams.Get(ctx)
 	if err != nil {

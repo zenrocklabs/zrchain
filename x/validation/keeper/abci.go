@@ -1264,12 +1264,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			)
 			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
 			// Update local bedrock accounting for default validator (BTC in sats)
-			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-			if err != nil {
-				return err
-			}
-			btcSats := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(tx.Amount)).Mul(exchangeRate).TruncateInt()
-			if err := k.adjustDefaultValidatorBedrockBTC(ctx, btcSats); err != nil {
+// NOTE: For TokensBedrock accounting we do not use exchangeRate.
+			// We record the event amount directly for v1 (units must correspond to BTC-sats in future update).
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(tx.Amount)); err != nil {
 				k.Logger(ctx).Error("error adjusting bedrock BTC on mint", "error", err)
 			}
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
@@ -1873,14 +1870,9 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			}
 
 			// Adjust bedrock BTC for default validator (convert zenBTC minted -> BTC sats)
-			exRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-			if err == nil {
-				btcSats := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(pendingMint.Amount)).Mul(exRate).TruncateInt()
-				if err := k.adjustDefaultValidatorBedrockBTC(ctx, btcSats); err != nil {
-					k.Logger(ctx).Error("error adjusting bedrock BTC on solana mint", "error", err)
-				}
-			} else {
-				k.Logger(ctx).Error("error getting exchange rate for bedrock adjustment", "error", err)
+// NOTE: For TokensBedrock accounting we do not use exchangeRate.
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
+				k.Logger(ctx).Error("error adjusting bedrock BTC on solana mint", "error", err)
 			}
 
 			break // Found and processed, no need to check other events for this pending mint.
@@ -2328,7 +2320,8 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 			supply.CustodiedBTC -= btcToRelease
 
 			// Adjust bedrock BTC for default validator (subtract released BTC)
-			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(btcToRelease).Neg()); err != nil {
+// NOTE: For TokensBedrock accounting we do not use exchangeRate. Use redemption data amount for v1.
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(redemption.Data.Amount).Neg()); err != nil {
 				k.Logger(ctx).Error("error adjusting bedrock BTC on redemption fulfilment", "error", err)
 			}
 

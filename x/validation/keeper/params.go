@@ -44,14 +44,6 @@ func (k Keeper) BondDenom(ctx context.Context) (string, error) {
 	return params.BondDenom, err
 }
 
-// GetBedrockDefaultValidatorOperAddr returns the operator address used for TokensBedrock BTC accounting (v1)
-func (k Keeper) GetBedrockDefaultValidatorOperAddr(ctx context.Context) string {
-	addr, err := k.BedrockDefaultValOper.Get(ctx)
-	if err != nil || addr == "" {
-		return types.DefaultBedrockValidatorOperAddr
-	}
-	return addr
-}
 
 // PowerReduction - is the amount of staking tokens required for 1 unit of consensus-engine power.
 // Currently, this returns a global variable that the app developer can tweak.
