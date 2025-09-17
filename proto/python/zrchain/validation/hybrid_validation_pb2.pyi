@@ -14,7 +14,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class ValidatorHV(_message.Message):
-    __slots__ = ("operator_address", "consensus_pubkey", "jailed", "status", "tokensNative", "tokensAVS", "delegator_shares", "description", "unbonding_height", "unbonding_time", "commission", "min_self_delegation", "unbonding_on_hold_ref_count", "unbonding_ids")
+    __slots__ = ("operator_address", "consensus_pubkey", "jailed", "status", "tokensNative", "tokensAVS", "delegator_shares", "description", "unbonding_height", "unbonding_time", "commission", "min_self_delegation", "unbonding_on_hold_ref_count", "unbonding_ids", "tokens_bedrock")
     OPERATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     CONSENSUS_PUBKEY_FIELD_NUMBER: _ClassVar[int]
     JAILED_FIELD_NUMBER: _ClassVar[int]
@@ -29,6 +29,7 @@ class ValidatorHV(_message.Message):
     MIN_SELF_DELEGATION_FIELD_NUMBER: _ClassVar[int]
     UNBONDING_ON_HOLD_REF_COUNT_FIELD_NUMBER: _ClassVar[int]
     UNBONDING_IDS_FIELD_NUMBER: _ClassVar[int]
+    TOKENS_BEDROCK_FIELD_NUMBER: _ClassVar[int]
     operator_address: str
     consensus_pubkey: _any_pb2.Any
     jailed: bool
@@ -43,7 +44,16 @@ class ValidatorHV(_message.Message):
     min_self_delegation: str
     unbonding_on_hold_ref_count: int
     unbonding_ids: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, operator_address: _Optional[str] = ..., consensus_pubkey: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., jailed: bool = ..., status: _Optional[_Union[_staking_pb2.BondStatus, str]] = ..., tokensNative: _Optional[str] = ..., tokensAVS: _Optional[str] = ..., delegator_shares: _Optional[str] = ..., description: _Optional[_Union[_staking_pb2.Description, _Mapping]] = ..., unbonding_height: _Optional[int] = ..., unbonding_time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., commission: _Optional[_Union[_staking_pb2.Commission, _Mapping]] = ..., min_self_delegation: _Optional[str] = ..., unbonding_on_hold_ref_count: _Optional[int] = ..., unbonding_ids: _Optional[_Iterable[int]] = ...) -> None: ...
+    tokens_bedrock: _containers.RepeatedCompositeFieldContainer[TokenData]
+    def __init__(self, operator_address: _Optional[str] = ..., consensus_pubkey: _Optional[_Union[_any_pb2.Any, _Mapping]] = ..., jailed: bool = ..., status: _Optional[_Union[_staking_pb2.BondStatus, str]] = ..., tokensNative: _Optional[str] = ..., tokensAVS: _Optional[str] = ..., delegator_shares: _Optional[str] = ..., description: _Optional[_Union[_staking_pb2.Description, _Mapping]] = ..., unbonding_height: _Optional[int] = ..., unbonding_time: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., commission: _Optional[_Union[_staking_pb2.Commission, _Mapping]] = ..., min_self_delegation: _Optional[str] = ..., unbonding_on_hold_ref_count: _Optional[int] = ..., unbonding_ids: _Optional[_Iterable[int]] = ..., tokens_bedrock: _Optional[_Iterable[_Union[TokenData, _Mapping]]] = ...) -> None: ...
+
+class TokenData(_message.Message):
+    __slots__ = ("asset", "amount")
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    asset: _asset_data_pb2.Asset
+    amount: str
+    def __init__(self, asset: _Optional[_Union[_asset_data_pb2.Asset, str]] = ..., amount: _Optional[str] = ...) -> None: ...
 
 class HistoricalInfoHV(_message.Message):
     __slots__ = ("header", "valset")

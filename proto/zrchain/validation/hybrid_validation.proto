@@ -89,6 +89,17 @@ message ValidatorHV {
   // list of unbonding ids, each uniquely identifying an unbonding of this
   // validator
   repeated uint64 unbonding_ids = 14;
+
+  repeated TokenData tokens_bedrock = 15;
+}
+
+message TokenData {
+  Asset asset = 1;
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // HistoricalInfo contains header and validator information for a given block.
