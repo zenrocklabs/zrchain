@@ -19,84 +19,6 @@ import (
 // zenBTC flow logic
 // =========================
 
-// processZenBTCStaking processes pending staking transactions.
-func (k *Keeper) processZenBTCStaking(ctx sdk.Context, oracleData OracleData) {
-	processEVMQueue(k, ctx, EVMQueueArgs[zenbtctypes.PendingMintTransaction]{
-		KeyID:               k.zenBTCKeeper.GetStakerKeyID(ctx),
-		RequestedNonce:      oracleData.RequestedStakerNonce,
-		NonceRequestedStore: k.EthereumNonceRequested,
-		Pending: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
-			return k.getPendingMintTransactions(
-				ctx,
-				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
-				zenbtctypes.WalletType_WALLET_TYPE_UNSPECIFIED,
-			)
-		},
-		Dispatch: func(tx zenbtctypes.PendingMintTransaction) error {
-			if err := k.zenBTCKeeper.SetFirstPendingStakeTransaction(ctx, tx.Id); err != nil {
-				return err
-			}
-
-			// Check for consensus
-			if err := k.validateConsensusForTxFields(ctx, oracleData, []VoteExtensionField{VEFieldRequestedStakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice},
-				"zenBTC stake", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
-				return err
-			}
-
-			unsignedTxHash, unsignedTx, err := k.constructStakeTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				tx.Amount,
-				oracleData.RequestedStakerNonce,
-				oracleData.EthGasLimit,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-
-			k.Logger(ctx).Warn("processing zenBTC stake",
-				"recipient", tx.RecipientAddress,
-				"amount", tx.Amount,
-				"nonce", oracleData.RequestedStakerNonce,
-				"gas_limit", oracleData.EthGasLimit,
-				"base_fee", oracleData.EthBaseFee,
-				"tip_cap", oracleData.EthTipCap,
-			)
-
-			return k.submitEthereumTransaction(
-				ctx,
-				tx.Creator,
-				k.zenBTCKeeper.GetStakerKeyID(ctx),
-				treasurytypes.WalletType_WALLET_TYPE_EVM,
-				getChainIDForEigen(ctx),
-				unsignedTx,
-				unsignedTxHash,
-			)
-		},
-		OnHeadConfirmed: func(tx zenbtctypes.PendingMintTransaction) error {
-			tx.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
-			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
-				return err
-			}
-			if types.IsSolanaCAIP2(ctx, tx.Caip2ChainId) {
-				solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
-					return err
-				}
-				if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
-					return err
-				}
-				k.Logger(ctx).Warn("processed zenbtc stake", "tx_id", tx.Id, "recipient", tx.RecipientAddress, "amount", tx.Amount)
-				return nil
-			} else if types.IsEthereumCAIP2(ctx, tx.Caip2ChainId) {
-				return k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
-			}
-			return fmt.Errorf("unsupported chain type for chain ID: %s", tx.Caip2ChainId)
-		},
-	})
-}
 
 // processZenBTCMintsEthereum processes pending mint transactions on EVM chains.
 func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
@@ -198,36 +120,6 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			return k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx)
 		},
 	})
-}
-
-// adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to the default validator's TokensBedrock (Asset_BTC)
-func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
-	oper := k.GetBedrockDefaultValOperAddr(ctx)
-	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
-	if err != nil {
-		return err
-	}
-	idx := -1
-	for i, td := range v.TokensBedrock {
-		if td != nil && td.Asset == types.Asset_BTC {
-			idx = i
-			break
-		}
-	}
-	if idx >= 0 {
-		newAmt := v.TokensBedrock[idx].Amount.Add(delta)
-		if newAmt.IsNegative() {
-			newAmt = sdkmath.ZeroInt()
-		}
-		v.TokensBedrock[idx].Amount = newAmt
-	} else {
-		amt := delta
-		if amt.IsNegative() {
-			amt = sdkmath.ZeroInt()
-		}
-		v.TokensBedrock = append(v.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
-	}
-	return k.SetValidator(ctx, v)
 }
 
 // processZenBTCMintsSolana processes pending zenBTC mints on Solana.
@@ -633,4 +525,34 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 		_ = k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption)
 	}
 	_ = k.zenBTCKeeper.SetSupply(ctx, supply)
+}
+
+// adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to the default validator's TokensBedrock (Asset_BTC)
+func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
+	oper := k.GetBedrockDefaultValOperAddr(ctx)
+	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
+	if err != nil {
+		return err
+	}
+	idx := -1
+	for i, td := range v.TokensBedrock {
+		if td != nil && td.Asset == types.Asset_BTC {
+			idx = i
+			break
+		}
+	}
+	if idx >= 0 {
+		newAmt := v.TokensBedrock[idx].Amount.Add(delta)
+		if newAmt.IsNegative() {
+			newAmt = sdkmath.ZeroInt()
+		}
+		v.TokensBedrock[idx].Amount = newAmt
+	} else {
+		amt := delta
+		if amt.IsNegative() {
+			amt = sdkmath.ZeroInt()
+		}
+		v.TokensBedrock = append(v.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
+	}
+	return k.SetValidator(ctx, v)
 }
