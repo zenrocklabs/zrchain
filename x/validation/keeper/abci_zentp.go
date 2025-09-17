@@ -22,16 +22,14 @@ import (
 
 // processSolanaROCKMints processes pending mint transactions for ROCK on Solana.
 func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) {
-	processTransaction(
-		k,
-		ctx,
-		k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
-		nil,
-		oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
+	processSolanaQueue(k, ctx, SolanaQueueArgs[*zentptypes.Bridge]{
+		NonceAccountKey:     k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
+		NonceAccount:        oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		NonceRequestedStore: k.SolanaNonceRequested,
+		Pending: func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatusPending(ctx)
 		},
-		func(tx *zentptypes.Bridge) error {
+		Dispatch: func(tx *zentptypes.Bridge) error {
 			if tx.BlockHeight > 0 {
 				return nil
 			}
@@ -92,7 +90,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
-		func(tx *zentptypes.Bridge) error {
+		OnTick: func(tx *zentptypes.Bridge) error {
 			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 				return nil
 			}
@@ -108,7 +106,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			}
 			return k.zentpKeeper.UpdateMint(ctx, tx.Id, tx)
 		},
-	)
+	})
 }
 
 // processSolanaROCKMintEvents finalizes pending ROCK mints based on oracle events and supply invariants.
