@@ -412,7 +412,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	return nil
 }
 
-// shouldProcessOracleData checks if oracle data should be processed for this block.
 // requestMintDispatches inspects pending zenBTC mints and requests dispatch for Ethereum and Solana
 // by setting the appropriate flags. All errors are logged and do not abort the block.
 func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
@@ -452,6 +451,7 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	}
 }
 
+// shouldProcessOracleData checks if oracle data should be processed for this block.
 func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
 	if len(req.Txs) == 0 {
 		k.Logger(ctx).Debug("no transactions in block")
@@ -832,18 +832,3 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, newHeaderHeight, latestSt
 // ZENBTC PROCESSING: STAKING, MINTING, BURN EVENTS & REDEMPTIONS
 // =============================================================================
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
