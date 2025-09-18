@@ -21,23 +21,23 @@ type DispatchRequestChecker[K comparable] interface {
 // TxDispatchRequestChecker adapts a collections.Map[K,bool] to the
 // DispatchRequestChecker interface.
 type TxDispatchRequestChecker[K comparable] struct {
-	M collections.Map[K, bool]
+	Store collections.Map[K, bool]
 }
 
-func (c TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
-	v, err := c.M.Get(ctx, key)
+func (checker TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
+	isRequested, err := checker.Store.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return false, nil
 		}
 		return false, fmt.Errorf("error reading dispatch request flag: %w", err)
 	}
-	return v, nil
+	return isRequested, nil
 }
 
-func (c TxDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
+func (checker TxDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
 	// Remove the flag entry entirely (treats absence as not requested)
-	if err := c.M.Remove(ctx, key); err != nil && !errors.Is(err, collections.ErrNotFound) {
+	if err := checker.Store.Remove(ctx, key); err != nil && !errors.Is(err, collections.ErrNotFound) {
 		return fmt.Errorf("error clearing dispatch request flag: %w", err)
 	}
 	return nil
