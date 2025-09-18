@@ -9,7 +9,7 @@ The zrChain network uses a **Vote Extension** based consensus mechanism where va
 ### Vote Extension Lifecycle
 
 1. **ExtendVoteHandler**: Each validator's sidecar collects oracle data and creates vote extensions containing hashes
-2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity  
+2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity
 3. **PrepareProposal**: The proposer aggregates vote extensions and determines consensus fields
 4. **ProcessProposal**: All validators verify the proposed oracle data matches consensus
 5. **PreBlocker**: Oracle data with consensus is applied to on-chain state and triggers transaction processing
@@ -25,10 +25,10 @@ This ensures that external blockchain state is only acted upon when there is str
 
 ### Consensus Details
 
-**Supermajority Threshold**: Most fields require >2/3 of total voting power to reach consensus  
-**Simple Majority Fields**: Gas-related fields (ETH gas prices, Solana fees) use >1/2 threshold for faster updates  
-**Deterministic Tie-Breaking**: When multiple values have equal vote power, lexicographic ordering ensures all validators select the same result  
-**Field-Level Consensus**: Each data field (prices, nonces, events) reaches consensus independently, allowing partial state updates  
+**Supermajority Threshold**: Most fields require >2/3 of total voting power to reach consensus
+**Simple Majority Fields**: Gas-related fields (ETH gas prices, Solana fees) use >1/2 threshold for faster updates
+**Deterministic Tie-Breaking**: When multiple values have equal vote power, lexicographic ordering ensures all validators select the same result
+**Field-Level Consensus**: Each data field (prices, nonces, events) reaches consensus independently, allowing partial state updates
 
 This granular consensus approach maximizes system uptime by allowing critical operations to proceed even when some oracle data is unavailable.
 
@@ -73,14 +73,14 @@ sequenceDiagram
     Web Frontend-->>User: Display deposit address
 
     User->>Bitcoin: Deposit BTC to provided address
-    
+
     Note over Bitcoin: Block mined (deposit tx included)
-    
+
     Sidecar->>Bitcoin: Polls for new block headers
     zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with BTC headers/prices/fees
     zrChain->>Sidecar: PrepareProposal: Proposer validates sidecar state against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
-    
+
     Bitcoin Proxy->>Bitcoin: Detects deposit
     Bitcoin Proxy->>Bitcoin Proxy: Generate Merkle proof of BTC deposit transaction
     Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
@@ -189,8 +189,16 @@ sequenceDiagram
     zrChain-->>MPC Stack: BTC redemption transaction request found
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    
+
     Note over zrChain: checkForRedemptionFulfilment() monitors AWAITING_SIGN redemptions
+    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED
+
+    Bitcoin Proxy->>zrChain: Poll for fulfilled BTC tx
+    zrChain-->>Bitcoin Proxy: Signed BTC Transaction
+    Bitcoin Proxy->>Bitcoin: Broadcast signed tx
+    Bitcoin-->>User: Receives redeemed BTC
+    zrChain->>zrChain: Adjust bedrock BTC accounting
+    zrChain->>zrChain: Mark redemption as COMPLETED
     Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED and adjust bedrock BTC accounting
 ```
 
