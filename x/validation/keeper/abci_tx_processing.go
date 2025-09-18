@@ -171,31 +171,31 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 }
 
 // EthereumTxQueueArgs describes the parameters needed to process an Ethereum-based tx queue.
-type EthereumTxQueueArgs[T any] struct {
-	KeyID               uint64
-	RequestedNonce      uint64
-	NonceRequestedStore collections.Map[uint64, bool]
-	GetPendingTxs       func(ctx sdk.Context) ([]T, error)
-	DispatchTx          func(tx T) error
-	OnTxConfirmed       func(tx T) error // called when the head tx is confirmed (nonce advanced)
+type EVMQueueArgs[T any] struct {
+	KeyID                    uint64
+	RequestedNonce           uint64
+	DispatchRequestedChecker DispatchRequestChecker[uint64]
+	GetPendingTxs            func(ctx sdk.Context) ([]T, error)
+	DispatchTx               func(tx T) error
+	OnTxConfirmed            func(tx T) error // called when the head tx is confirmed (nonce advanced)
 }
 
 // SolanaQueueArgs describes the parameters needed to process a Solana-based tx queue.
 type SolanaQueueArgs[T any] struct {
-	NonceAccountKey       uint64
-	NonceAccount          *solSystem.NonceAccount
-	NonceRequestedStore   collections.Map[uint64, bool]
-	GetPendingTxs         func(ctx sdk.Context) ([]T, error)
-	DispatchTx            func(tx T) error
-	UpdatePendingTxStatus func(tx T) error // status/timeout checks for head each block
+	NonceAccountKey            uint64
+	NonceAccount               *solSystem.NonceAccount
+	DispatchRequestedChecker   DispatchRequestChecker[uint64]
+	GetPendingTxs              func(ctx sdk.Context) ([]T, error)
+	DispatchTx                 func(tx T) error
+	UpdatePendingTxStatus      func(tx T) error // status/timeout checks for head each block
 }
 
 // processEthereumTxQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
-func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EthereumTxQueueArgs[T]) {
+func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 	(EthereumTxProcessor[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
-		Checker:        TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:        args.DispatchRequestedChecker,
 		Processor: QueueProcessor[T]{
 			GetPendingTxs: args.GetPendingTxs,
 			DispatchTx:    args.DispatchTx,
@@ -210,7 +210,7 @@ func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArg
 	(SolanaTxProcessor[T]{
 		NonceAccountKey: args.NonceAccountKey,
 		NonceAccount:    args.NonceAccount,
-		Checker:         TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:         args.DispatchRequestedChecker,
 		Processor: QueueProcessor[T]{
 			GetPendingTxs:         args.GetPendingTxs,
 			DispatchTx:            args.DispatchTx,
