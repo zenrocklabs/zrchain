@@ -170,8 +170,8 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	}
 }
 
-// EVMQueueArgs describes the parameters needed to process an EVM-based tx queue.
-type EVMQueueArgs[T any] struct {
+// EthereumTxQueueArgs describes the parameters needed to process an Ethereum-based tx queue.
+type EthereumTxQueueArgs[T any] struct {
 	KeyID               uint64
 	RequestedNonce      uint64
 	NonceRequestedStore collections.Map[uint64, bool]
@@ -191,7 +191,7 @@ type SolanaQueueArgs[T any] struct {
 }
 
 // processEthereumTxQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
-func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
+func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EthereumTxQueueArgs[T]) {
 	(EthereumTxProcessor[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
