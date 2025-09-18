@@ -23,9 +23,9 @@ import (
 // processSolanaROCKMints processes pending mint transactions for ROCK on Solana.
 func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) {
 	processSolanaQueue(k, ctx, SolanaQueueArgs[*zentptypes.Bridge]{
-		NonceAccountKey:        k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
-		NonceAccount:           oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		NonceRequestedStore:    k.SolanaNonceRequested,
+		NonceAccountKey:     k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
+		NonceAccount:        oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		NonceRequestedStore: k.SolanaNonceRequested,
 		GetPendingTxs: func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatusPending(ctx)
 		},

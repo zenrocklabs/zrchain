@@ -37,13 +37,11 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err := k.zenBTCKeeper.SetFirstPendingEthMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
-
 			requiredFields := []VoteExtensionField{VEFieldRequestedEthMinterNonce, VEFieldBTCUSDPrice}
 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields,
 				"zenBTC mint", fmt.Sprintf("tx_id: %d, recipient: %s, amount: %d", tx.Id, tx.RecipientAddress, tx.Amount)); err != nil {
 				return err
 			}
-
 			exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
 			if err != nil {
 				return err
@@ -55,12 +53,10 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			}
 			feeZenBTC := k.CalculateFlatZenBTCMintFee(btcUSDPrice, exchangeRate)
 			feeZenBTC = min(feeZenBTC, tx.Amount)
-
 			chainID, err := types.ValidateEVMChainID(ctx, tx.Caip2ChainId)
 			if err != nil {
 				return fmt.Errorf("unsupported chain ID: %w", err)
 			}
-
 			unsignedMintTxHash, unsignedMintTx, err := k.constructMintTx(
 				ctx,
 				tx.RecipientAddress,
@@ -75,7 +71,6 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 			if err != nil {
 				return err
 			}
-
 			k.Logger(ctx).Warn("processing zenBTC mint",
 				"recipient", tx.RecipientAddress,
 				"amount", tx.Amount,
@@ -84,7 +79,6 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				"base_fee", oracleData.EthBaseFee,
 				"tip_cap", oracleData.EthTipCap,
 			)
-
 			return k.submitEthereumTransaction(
 				ctx,
 				tx.Creator,
@@ -125,9 +119,9 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 // processZenBTCMintsSolana processes pending zenBTC mints on Solana.
 func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData) {
 	processSolanaQueue(k, ctx, SolanaQueueArgs[zenbtctypes.PendingMintTransaction]{
-		NonceAccountKey:        k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
-		NonceAccount:           oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		NonceRequestedStore:    k.SolanaNonceRequested,
+		NonceAccountKey:     k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
+		NonceAccount:        oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		NonceRequestedStore: k.SolanaNonceRequested,
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			pendingMints, err := k.getPendingMintTransactions(
 				ctx,

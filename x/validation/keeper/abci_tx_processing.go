@@ -10,6 +10,166 @@ import (
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
+// DispatchRequestChecker defines an explicit controller to check and clear
+// whether dispatch has been requested for a given key. This replaces vague
+// names like NonceRequestedStore.
+type DispatchRequestChecker[K comparable] interface {
+	IsDispatchRequested(ctx sdk.Context, key K) (bool, error)
+	ClearDispatchRequest(ctx sdk.Context, key K) error
+}
+
+// MapBoolDispatchRequestChecker adapts a collections.Map[K,bool] to the
+// DispatchRequestChecker interface.
+type MapBoolDispatchRequestChecker[K comparable] struct {
+	M collections.Map[K, bool]
+}
+
+func (c MapBoolDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
+	v, err := c.M.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("error reading dispatch request flag: %w", err)
+	}
+	return v, nil
+}
+
+func (c MapBoolDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
+	// Remove the flag entry entirely (treats absence as not requested)
+	if err := c.M.Remove(ctx, key); err != nil && !errors.Is(err, collections.ErrNotFound) {
+		return fmt.Errorf("error clearing dispatch request flag: %w", err)
+	}
+	return nil
+}
+
+// QueueProcessor captures the business callbacks for pending tx handling.
+type QueueProcessor[T any] struct {
+	GetPendingTxs         func(ctx sdk.Context) ([]T, error)
+	DispatchTx            func(item T) error
+	OnTxConfirmed         func(item T) error            // EVM
+	UpdatePendingTxStatus func(item T) error            // Solana
+}
+
+// EVMRunner encapsulates EVM queue control flow (dispatch request, nonce, confirm, dispatch).
+type EVMRunner[T any] struct {
+	KeyID          uint64
+	RequestedNonce uint64
+	Checker        DispatchRequestChecker[uint64]
+	Processor      QueueProcessor[T]
+	Keeper         *Keeper
+}
+
+func (r EVMRunner[T]) Run(ctx sdk.Context) {
+	k := r.Keeper
+	requested, err := r.Checker.IsDispatchRequested(ctx, r.KeyID)
+	if err != nil {
+		k.Logger(ctx).Error("error checking dispatch request", "keyID", r.KeyID, "error", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	items, err := r.Processor.GetPendingTxs(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending transactions", "error", err)
+		return
+	}
+	if len(items) == 0 {
+		if err := r.Checker.ClearDispatchRequest(ctx, r.KeyID); err != nil {
+			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
+		}
+		return
+	}
+
+	nonceData, err := k.getNonceDataWithInit(ctx, r.KeyID)
+	if err != nil {
+		k.Logger(ctx).Error("error getting nonce data", "keyID", r.KeyID, "error", err)
+		return
+	}
+	k.Logger(ctx).Info("Nonce info", "nonce", nonceData.Nonce, "prev", nonceData.PrevNonce, "counter", nonceData.Counter, "skip", nonceData.Skip, "requested", r.RequestedNonce)
+
+	if nonceData.Nonce != 0 && r.RequestedNonce == 0 {
+		return
+	}
+
+	nonceUpdated, err := handleNonceUpdate(k, ctx, r.KeyID, r.RequestedNonce, nonceData, items[0], r.Processor.OnTxConfirmed)
+	if err != nil {
+		k.Logger(ctx).Error("error handling nonce update", "keyID", r.KeyID, "error", err)
+		return
+	}
+
+	if len(items) == 1 && nonceUpdated {
+		if err := r.Checker.ClearDispatchRequest(ctx, r.KeyID); err != nil {
+			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
+		}
+		return
+	}
+
+	if nonceData.Skip {
+		return
+	}
+
+	idx := 0
+	if nonceUpdated {
+		idx = 1
+	}
+	if idx < len(items) {
+		if err := r.Processor.DispatchTx(items[idx]); err != nil {
+			k.Logger(ctx).Error("tx dispatch callback error", "keyID", r.KeyID, "error", err)
+		}
+	}
+}
+
+// SolanaRunner encapsulates Solana queue control flow (dispatch request, status, dispatch).
+type SolanaRunner[T any] struct {
+	NonceAccountKey uint64
+	NonceAccount    *solSystem.NonceAccount
+	Checker         DispatchRequestChecker[uint64]
+	Processor       QueueProcessor[T]
+	Keeper          *Keeper
+}
+
+func (r SolanaRunner[T]) Run(ctx sdk.Context) {
+	k := r.Keeper
+	requested, err := r.Checker.IsDispatchRequested(ctx, r.NonceAccountKey)
+	if err != nil {
+		k.Logger(ctx).Error("error checking dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
+		return
+	}
+	if !requested {
+		return
+	}
+
+	items, err := r.Processor.GetPendingTxs(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error getting pending transactions", "error", err)
+		return
+	}
+	if len(items) == 0 {
+		if err := r.Checker.ClearDispatchRequest(ctx, r.NonceAccountKey); err != nil {
+			k.Logger(ctx).Error("error clearing solana dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
+		}
+		return
+	}
+
+	if r.NonceAccount == nil || r.NonceAccount.Nonce.IsZero() {
+		k.Logger(ctx).Error("solana nonce is zero or missing", "nonce_account_key", r.NonceAccountKey)
+		return
+	}
+
+	if r.Processor.UpdatePendingTxStatus != nil {
+		if err := r.Processor.UpdatePendingTxStatus(items[0]); err != nil {
+			k.Logger(ctx).Error("error updating solana tx status", "nonce_account_key", r.NonceAccountKey, "error", err)
+			return
+		}
+	}
+	if err := r.Processor.DispatchTx(items[0]); err != nil {
+		k.Logger(ctx).Error("tx dispatch callback error", "nonce_account_key", r.NonceAccountKey, "error", err)
+	}
+}
+
 // EVMQueueArgs describes the parameters needed to process an EVM-based tx queue.
 type EVMQueueArgs[T any] struct {
 	KeyID               uint64
@@ -30,108 +190,34 @@ type SolanaQueueArgs[T any] struct {
 	UpdatePendingTxStatus  func(tx T) error // status/timeout checks for head each block
 }
 
-// processEVMQueue processes an EVM queue with clear nonce-advance and dispatch semantics.
+// processEVMQueue remains for backward-compat call sites; it delegates to EVMRunner.
 func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
-	isRequested, err := isNonceRequested(ctx, args.NonceRequestedStore, args.KeyID)
-	if err != nil {
-		k.Logger(ctx).Error("error checking nonce request state", "keyID", args.KeyID, "error", err)
-		return
-	}
-	if !isRequested {
-		return
-	}
-
-	pendingTxs, err := args.GetPendingTxs(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("error getting pending transactions", "error", err)
-		return
-	}
-	if len(pendingTxs) == 0 {
-		if err := k.clearNonceRequest(ctx, args.NonceRequestedStore, args.KeyID); err != nil {
-			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", args.KeyID, "error", err)
-		}
-		return
-	}
-
-	nonceData, err := k.getNonceDataWithInit(ctx, args.KeyID)
-	if err != nil {
-		k.Logger(ctx).Error("error getting nonce data", "keyID", args.KeyID, "error", err)
-		return
-	}
-	k.Logger(ctx).Info("Nonce info", "nonce", nonceData.Nonce, "prev", nonceData.PrevNonce, "counter", nonceData.Counter, "skip", nonceData.Skip, "requested", args.RequestedNonce)
-
-	// Defensive: if we have a known non-zero nonce but requested is zero (no consensus yet), do nothing.
-	if nonceData.Nonce != 0 && args.RequestedNonce == 0 {
-		return
-	}
-
-	// If on-chain nonce advanced for head, run continuation callback and update prev nonce.
-	nonceUpdated, err := handleNonceUpdate(k, ctx, args.KeyID, args.RequestedNonce, nonceData, pendingTxs[0], args.OnTxConfirmed)
-	if err != nil {
-		k.Logger(ctx).Error("error handling nonce update", "keyID", args.KeyID, "error", err)
-		return
-	}
-
-	// If only one pending and it's now confirmed (nonce advanced), we can clear the request for this key.
-	if len(pendingTxs) == 1 && nonceUpdated {
-		if err := k.clearNonceRequest(ctx, args.NonceRequestedStore, args.KeyID); err != nil {
-			k.Logger(ctx).Error("error clearing ethereum nonce request", "keyID", args.KeyID, "error", err)
-		}
-		return
-	}
-
-	if nonceData.Skip {
-		return
-	}
-
-	// If head confirmed, try to dispatch the next item, else retry dispatching head (idempotent).
-	idx := 0
-	if nonceUpdated {
-		idx = 1
-	}
-	if idx < len(pendingTxs) {
-		if err := args.DispatchTx(pendingTxs[idx]); err != nil {
-			k.Logger(ctx).Error("tx dispatch callback error", "keyID", args.KeyID, "error", err)
-		}
-	}
+	(EVMRunner[T]{
+		KeyID:          args.KeyID,
+		RequestedNonce: args.RequestedNonce,
+		Checker:        MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Processor: QueueProcessor[T]{
+			GetPendingTxs: args.GetPendingTxs,
+			DispatchTx:    args.DispatchTx,
+			OnTxConfirmed: args.OnTxConfirmed,
+		},
+		Keeper: k,
+	}).Run(ctx)
 }
 
 // processSolanaQueue processes a Solana queue with clear nonce and status/timeout semantics.
 func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[T]) {
-	isRequested, err := isNonceRequested(ctx, args.NonceRequestedStore, args.NonceAccountKey)
-	if err != nil {
-		k.Logger(ctx).Error("error checking nonce request state", "nonce_account_key", args.NonceAccountKey, "error", err)
-		return
-	}
-	if !isRequested {
-		return
-	}
-
-	pendingTxs, err := args.GetPendingTxs(ctx)
-	if err != nil {
-		k.Logger(ctx).Error("error getting pending transactions", "error", err)
-		return
-	}
-	if len(pendingTxs) == 0 {
-		if err := k.clearNonceRequest(ctx, args.NonceRequestedStore, args.NonceAccountKey); err != nil {
-			k.Logger(ctx).Error("error clearing solana nonce request", "nonce_account_key", args.NonceAccountKey, "error", err)
-		}
-		return
-	}
-
-	if args.NonceAccount == nil || args.NonceAccount.Nonce.IsZero() {
-		k.Logger(ctx).Error("solana nonce is zero or missing", "nonce_account_key", args.NonceAccountKey)
-		return
-	}
-
-	// Update head status/timeout and then attempt dispatch (both idempotent).
-	if err := args.UpdatePendingTxStatus(pendingTxs[0]); err != nil {
-		k.Logger(ctx).Error("error handling solana transaction status check", "nonce_account_key", args.NonceAccountKey, "error", err)
-		return
-	}
-	if err := args.DispatchTx(pendingTxs[0]); err != nil {
-		k.Logger(ctx).Error("tx dispatch callback error", "nonce_account_key", args.NonceAccountKey, "error", err)
-	}
+	(SolanaRunner[T]{
+		NonceAccountKey: args.NonceAccountKey,
+		NonceAccount:    args.NonceAccount,
+		Checker:         MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Processor: QueueProcessor[T]{
+			GetPendingTxs:         args.GetPendingTxs,
+			DispatchTx:            args.DispatchTx,
+			UpdatePendingTxStatus: args.UpdatePendingTxStatus,
+		},
+		Keeper: k,
+	}).Run(ctx)
 }
 
 // getPendingTransactions is a generic helper that walks a store with key type uint64
