@@ -444,7 +444,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 processEthereumTxQueue(k, ctx, EVMQueueArgs[zenbtctypes.Redemption]{
 		KeyID:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		RequestedNonce:      oracleData.RequestedCompleterNonce,
-		NonceRequestedStore: k.EthereumNonceRequested,
+DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{M: k.EthereumNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
 			firstPendingID, _ := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
 			return k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
