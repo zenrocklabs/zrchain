@@ -137,7 +137,9 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 			if bytes.Equal(event.SigHash, sigHash[:]) {
 				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
 					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
-					_ = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
+					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+						k.Logger(ctx).Error("error marking solROCK mint as failed (cap)", "id", pendingMint.Id, "error", err)
+					}
 					continue
 				}
 				totalSupplyBefore, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
@@ -154,15 +156,21 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))); err != nil {
 					continue
 				}
-				_ = k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id)
+				if err := k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id); err != nil {
+					k.Logger(ctx).Error("error setting last completed zentp mint id", "id", pendingMint.Id, "error", err)
+				}
 				totalSupplyAfter, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
 				if err != nil || !totalSupplyBefore.Equal(totalSupplyAfter) {
 					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
-					_ = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
+					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+						k.Logger(ctx).Error("error marking solROCK mint failed (supply invariant)", "id", pendingMint.Id, "error", err)
+					}
 					continue
 				}
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
-				_ = k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint)
+				if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+					k.Logger(ctx).Error("error marking solROCK mint completed", "id", pendingMint.Id, "error", err)
+				}
 			}
 		}
 	}
@@ -227,11 +235,18 @@ func (k Keeper) processSolanaROCKBurnEvents(ctx sdk.Context, oracleData OracleDa
 		if newSolanaSupply.IsNegative() || k.zentpKeeper.SetSolanaROCKSupply(ctx, newSolanaSupply) != nil {
 			continue
 		}
-		_ = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount)
-		if bridgeFeeCoins.AmountOf(params.BondDenom).IsPositive() {
-			_ = k.bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ModuleName, zentptypes.ZentpCollectorName, bridgeFeeCoins)
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, zentptypes.ModuleName, accAddr, bridgeAmount); err != nil {
+			k.Logger(ctx).Error("error sending bridged coins to account", "addr", accAddr.String(), "error", err)
+			continue
 		}
-		_ = k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{Denom: params.BondDenom, Amount: burn.Amount, RecipientAddress: accAddr.String(), SourceChain: burn.ChainID, TxHash: burn.TxID, State: zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED, BlockHeight: ctx.BlockHeight()})
+		if bridgeFeeCoins.AmountOf(params.BondDenom).IsPositive() {
+			if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ModuleName, zentptypes.ZentpCollectorName, bridgeFeeCoins); err != nil {
+				k.Logger(ctx).Error("error sending bridge fee to collector", "error", err)
+			}
+		}
+		if err := k.zentpKeeper.AddBurn(ctx, &zentptypes.Bridge{Denom: params.BondDenom, Amount: burn.Amount, RecipientAddress: accAddr.String(), SourceChain: burn.ChainID, TxHash: burn.TxID, State: zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED, BlockHeight: ctx.BlockHeight()}); err != nil {
+			k.Logger(ctx).Error("error adding burn record", "tx", burn.TxID, "error", err)
+		}
 		processedTxHashes[burn.TxID] = true
 		// Emit event
 		sdk.UnwrapSDKContext(ctx).EventManager().EmitEvent(
