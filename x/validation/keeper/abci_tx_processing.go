@@ -190,12 +190,12 @@ type SolanaQueueArgs[T any] struct {
 	UpdatePendingTxStatus func(tx T) error // status/timeout checks for head each block
 }
 
-// processEVMQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
-func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
+// processEthereumTxQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
+func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 	(EthereumTxProcessor[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
-		Checker:        MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:        TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs: args.GetPendingTxs,
 			DispatchTx:    args.DispatchTx,
@@ -205,12 +205,12 @@ func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 	}).ProcessTxs(ctx)
 }
 
-// processSolanaQueue processes a Solana queue with clear nonce and status/timeout semantics.
-func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[T]) {
+// processSolanaTxQueue processes a Solana queue with clear nonce and status/timeout semantics.
+func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[T]) {
 	(SolanaTxProcessor[T]{
 		NonceAccountKey: args.NonceAccountKey,
 		NonceAccount:    args.NonceAccount,
-		Checker:         MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:         TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs:         args.GetPendingTxs,
 			DispatchTx:            args.DispatchTx,
