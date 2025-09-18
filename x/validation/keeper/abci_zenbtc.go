@@ -26,14 +26,14 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 		KeyID:               k.zenBTCKeeper.GetEthMinterKeyID(ctx),
 		RequestedNonce:      oracleData.RequestedEthMinterNonce,
 		NonceRequestedStore: k.EthereumNonceRequested,
-		Pending: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
+		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 				zenbtctypes.WalletType_WALLET_TYPE_EVM,
 			)
 		},
-		Dispatch: func(tx zenbtctypes.PendingMintTransaction) error {
+		DispatchTx: func(tx zenbtctypes.PendingMintTransaction) error {
 			if err := k.zenBTCKeeper.SetFirstPendingEthMintTransaction(ctx, tx.Id); err != nil {
 				return err
 			}
@@ -95,7 +95,7 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 				unsignedMintTxHash,
 			)
 		},
-		OnHeadConfirmed: func(tx zenbtctypes.PendingMintTransaction) error {
+		OnTxConfirmed: func(tx zenbtctypes.PendingMintTransaction) error {
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return err
@@ -125,10 +125,10 @@ func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleDa
 // processZenBTCMintsSolana processes pending zenBTC mints on Solana.
 func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData) {
 	processSolanaQueue(k, ctx, SolanaQueueArgs[zenbtctypes.PendingMintTransaction]{
-		NonceAccountKey:     k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
-		NonceAccount:        oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		NonceRequestedStore: k.SolanaNonceRequested,
-		Pending: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
+		NonceAccountKey:        k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
+		NonceAccount:           oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		NonceRequestedStore:    k.SolanaNonceRequested,
+		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
 				zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
@@ -137,7 +137,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			k.Logger(ctx).Warn("pending zenbtc solana mints", "count", len(pendingMints))
 			return pendingMints, err
 		},
-		Dispatch: func(tx zenbtctypes.PendingMintTransaction) error {
+		DispatchTx: func(tx zenbtctypes.PendingMintTransaction) error {
 			if tx.BlockHeight > 0 {
 				k.Logger(ctx).Info("waiting for pending zenbtc solana mint tx", "tx_id", tx.Id, "block_height", tx.BlockHeight)
 				return nil
@@ -224,7 +224,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 		},
-		OnTick: func(tx zenbtctypes.PendingMintTransaction) error {
+		UpdatePendingTxStatus: func(tx zenbtctypes.PendingMintTransaction) error {
 			if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 				k.Logger(ctx).Debug("Skipping Solana mint retry/timeout checks – no consensus on SolanaMintEventsHash", "tx_id", tx.Id)
 				return nil
@@ -372,10 +372,10 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 		KeyID:               k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 		RequestedNonce:      oracleData.RequestedUnstakerNonce,
 		NonceRequestedStore: k.EthereumNonceRequested,
-		Pending: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
+		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 			return k.getPendingBurnEvents(ctx)
 		},
-		Dispatch: func(be zenbtctypes.BurnEvent) error {
+		DispatchTx: func(be zenbtctypes.BurnEvent) error {
 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
 				return err
 			}
@@ -404,7 +404,7 @@ func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData)
 			}
 			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
 		},
-		OnHeadConfirmed: func(be zenbtctypes.BurnEvent) error {
+		OnTxConfirmed: func(be zenbtctypes.BurnEvent) error {
 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
 		},
@@ -452,11 +452,11 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 		KeyID:               k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		RequestedNonce:      oracleData.RequestedCompleterNonce,
 		NonceRequestedStore: k.EthereumNonceRequested,
-		Pending: func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
+		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
 			firstPendingID, _ := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
 			return k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
 		},
-		Dispatch: func(r zenbtctypes.Redemption) error {
+		DispatchTx: func(r zenbtctypes.Redemption) error {
 			if err := k.zenBTCKeeper.SetFirstPendingRedemption(ctx, r.Data.Id); err != nil {
 				return err
 			}
@@ -474,7 +474,7 @@ func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData
 			}
 			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetCompleterKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
 		},
-		OnHeadConfirmed: func(r zenbtctypes.Redemption) error {
+		OnTxConfirmed: func(r zenbtctypes.Redemption) error {
 			r.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 			if err := k.zenBTCKeeper.SetRedemption(ctx, r.Data.Id, r); err != nil {
 				return err

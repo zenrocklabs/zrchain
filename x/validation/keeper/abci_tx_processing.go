@@ -15,19 +15,19 @@ type EVMQueueArgs[T any] struct {
 	KeyID               uint64
 	RequestedNonce      uint64
 	NonceRequestedStore collections.Map[uint64, bool]
-	Pending             func(ctx sdk.Context) ([]T, error)
-	Dispatch            func(tx T) error
-	OnHeadConfirmed     func(tx T) error // called when on-chain nonce advanced for head
+	GetPendingTxs       func(ctx sdk.Context) ([]T, error)
+	DispatchTx          func(tx T) error
+	OnTxConfirmed       func(tx T) error // called when the head tx is confirmed (nonce advanced)
 }
 
 // SolanaQueueArgs describes the parameters needed to process a Solana-based tx queue.
 type SolanaQueueArgs[T any] struct {
-	NonceAccountKey     uint64
-	NonceAccount        *solSystem.NonceAccount
-	NonceRequestedStore collections.Map[uint64, bool]
-	Pending             func(ctx sdk.Context) ([]T, error)
-	Dispatch            func(tx T) error
-	OnTick              func(tx T) error // called every block for head (status/timeout checks)
+	NonceAccountKey        uint64
+	NonceAccount           *solSystem.NonceAccount
+	NonceRequestedStore    collections.Map[uint64, bool]
+	GetPendingTxs          func(ctx sdk.Context) ([]T, error)
+	DispatchTx             func(tx T) error
+	UpdatePendingTxStatus  func(tx T) error // status/timeout checks for head each block
 }
 
 // processEVMQueue processes an EVM queue with clear nonce-advance and dispatch semantics.
@@ -41,7 +41,7 @@ func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 		return
 	}
 
-	pendingTxs, err := args.Pending(ctx)
+	pendingTxs, err := args.GetPendingTxs(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
 		return
@@ -66,7 +66,7 @@ func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 	}
 
 	// If on-chain nonce advanced for head, run continuation callback and update prev nonce.
-	nonceUpdated, err := handleNonceUpdate(k, ctx, args.KeyID, args.RequestedNonce, nonceData, pendingTxs[0], args.OnHeadConfirmed)
+	nonceUpdated, err := handleNonceUpdate(k, ctx, args.KeyID, args.RequestedNonce, nonceData, pendingTxs[0], args.OnTxConfirmed)
 	if err != nil {
 		k.Logger(ctx).Error("error handling nonce update", "keyID", args.KeyID, "error", err)
 		return
@@ -90,7 +90,7 @@ func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 		idx = 1
 	}
 	if idx < len(pendingTxs) {
-		if err := args.Dispatch(pendingTxs[idx]); err != nil {
+		if err := args.DispatchTx(pendingTxs[idx]); err != nil {
 			k.Logger(ctx).Error("tx dispatch callback error", "keyID", args.KeyID, "error", err)
 		}
 	}
@@ -107,7 +107,7 @@ func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[
 		return
 	}
 
-	pendingTxs, err := args.Pending(ctx)
+	pendingTxs, err := args.GetPendingTxs(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
 		return
@@ -124,12 +124,12 @@ func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[
 		return
 	}
 
-	// Tick the head: status/timeout checks (idempotent) then attempt dispatch (also idempotent).
-	if err := args.OnTick(pendingTxs[0]); err != nil {
+	// Update head status/timeout and then attempt dispatch (both idempotent).
+	if err := args.UpdatePendingTxStatus(pendingTxs[0]); err != nil {
 		k.Logger(ctx).Error("error handling solana transaction status check", "nonce_account_key", args.NonceAccountKey, "error", err)
 		return
 	}
-	if err := args.Dispatch(pendingTxs[0]); err != nil {
+	if err := args.DispatchTx(pendingTxs[0]); err != nil {
 		k.Logger(ctx).Error("tx dispatch callback error", "nonce_account_key", args.NonceAccountKey, "error", err)
 	}
 }
