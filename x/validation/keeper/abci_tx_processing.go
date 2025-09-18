@@ -42,26 +42,26 @@ func (checker TxDispatchRequestChecker[K]) ClearTxDispatchRequest(ctx sdk.Contex
 	return nil
 }
 
-// QueueProcessor captures the business callbacks for pending tx handling.
-type QueueProcessor[T any] struct {
+// TxQueueProcessor captures the business callbacks for pending tx handling.
+type TxQueueProcessor[T any] struct {
 	GetPendingTxs         func(ctx sdk.Context) ([]T, error)
 	DispatchTx            func(item T) error
-	OnTxConfirmed         func(item T) error // EVM
+	OnTxConfirmed         func(item T) error // Ethereum
 	UpdatePendingTxStatus func(item T) error // Solana
 }
 
-// EthereumTxProcessor encapsulates EVM queue control flow (dispatch request, nonce, confirm, dispatch).
+// EthereumTxProcessor encapsulates Ethereum queue control flow (dispatch request, nonce, confirm, dispatch).
 type EthereumTxProcessor[T any] struct {
-	KeyID          uint64
-	RequestedNonce uint64
-	Checker        TxDispatchRequestChecker[uint64]
-	Processor      QueueProcessor[T]
-	Keeper         *Keeper
+	KeyID                    uint64
+	RequestedNonce           uint64
+	TxDispatchRequestChecker TxDispatchRequestChecker[uint64]
+	TxQueueProcessor         TxQueueProcessor[T]
+	Keeper                   *Keeper
 }
 
 func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
-	requested, err := r.Checker.IsTxDispatchRequested(ctx, r.KeyID)
+	requested, err := r.TxDispatchRequestChecker.IsTxDispatchRequested(ctx, r.KeyID)
 	if err != nil {
 		k.Logger(ctx).Error("error checking dispatch request", "keyID", r.KeyID, "error", err)
 		return
@@ -70,13 +70,13 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 
-	items, err := r.Processor.GetPendingTxs(ctx)
+	items, err := r.TxQueueProcessor.GetPendingTxs(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
 		return
 	}
 	if len(items) == 0 {
-		if err := r.Checker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
+		if err := r.TxDispatchRequestChecker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
 			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
 		}
 		return
@@ -93,14 +93,14 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 
-	nonceUpdated, err := handleNonceUpdate(k, ctx, r.KeyID, r.RequestedNonce, nonceData, items[0], r.Processor.OnTxConfirmed)
+	nonceUpdated, err := handleNonceUpdate(k, ctx, r.KeyID, r.RequestedNonce, nonceData, items[0], r.TxQueueProcessor.OnTxConfirmed)
 	if err != nil {
 		k.Logger(ctx).Error("error handling nonce update", "keyID", r.KeyID, "error", err)
 		return
 	}
 
 	if len(items) == 1 && nonceUpdated {
-		if err := r.Checker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
+		if err := r.TxDispatchRequestChecker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
 			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
 		}
 		return
@@ -115,7 +115,7 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		idx = 1
 	}
 	if idx < len(items) {
-		if err := r.Processor.DispatchTx(items[idx]); err != nil {
+		if err := r.TxQueueProcessor.DispatchTx(items[idx]); err != nil {
 			k.Logger(ctx).Error("tx dispatch callback error", "keyID", r.KeyID, "error", err)
 		}
 	}
@@ -123,16 +123,16 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 
 // SolanaTxProcessor encapsulates Solana queue control flow (dispatch request, status, dispatch).
 type SolanaTxProcessor[T any] struct {
-	NonceAccountKey uint64
-	NonceAccount    *solSystem.NonceAccount
-	Checker         TxDispatchRequestChecker[uint64]
-	Processor       QueueProcessor[T]
-	Keeper          *Keeper
+	NonceAccountKey          uint64
+	NonceAccount             *solSystem.NonceAccount
+	TxDispatchRequestChecker TxDispatchRequestChecker[uint64]
+	TxQueueProcessor         TxQueueProcessor[T]
+	Keeper                   *Keeper
 }
 
 func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
-	requested, err := r.Checker.IsTxDispatchRequested(ctx, r.NonceAccountKey)
+	requested, err := r.TxDispatchRequestChecker.IsTxDispatchRequested(ctx, r.NonceAccountKey)
 	if err != nil {
 		k.Logger(ctx).Error("error checking dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
 		return
@@ -141,13 +141,13 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 
-	items, err := r.Processor.GetPendingTxs(ctx)
+	items, err := r.TxQueueProcessor.GetPendingTxs(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
 		return
 	}
 	if len(items) == 0 {
-		if err := r.Checker.ClearTxDispatchRequest(ctx, r.NonceAccountKey); err != nil {
+		if err := r.TxDispatchRequestChecker.ClearTxDispatchRequest(ctx, r.NonceAccountKey); err != nil {
 			k.Logger(ctx).Error("error clearing solana dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
 		}
 		return
@@ -158,13 +158,13 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 
-	if r.Processor.UpdatePendingTxStatus != nil {
-		if err := r.Processor.UpdatePendingTxStatus(items[0]); err != nil {
+	if r.TxQueueProcessor.UpdatePendingTxStatus != nil {
+		if err := r.TxQueueProcessor.UpdatePendingTxStatus(items[0]); err != nil {
 			k.Logger(ctx).Error("error updating solana tx status", "nonce_account_key", r.NonceAccountKey, "error", err)
 			return
 		}
 	}
-	if err := r.Processor.DispatchTx(items[0]); err != nil {
+	if err := r.TxQueueProcessor.DispatchTx(items[0]); err != nil {
 		k.Logger(ctx).Error("tx dispatch callback error", "nonce_account_key", r.NonceAccountKey, "error", err)
 	}
 }
@@ -192,10 +192,10 @@ type SolanaTxQueueArgs[T any] struct {
 // processEthereumTxQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
 func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EthereumTxQueueArgs[T]) {
 	(EthereumTxProcessor[T]{
-		KeyID:          args.KeyID,
-		RequestedNonce: args.RequestedNonce,
-		Checker:        args.DispatchRequestedChecker,
-		Processor: QueueProcessor[T]{
+		KeyID:                    args.KeyID,
+		RequestedNonce:           args.RequestedNonce,
+		TxDispatchRequestChecker: args.DispatchRequestedChecker,
+		TxQueueProcessor: TxQueueProcessor[T]{
 			GetPendingTxs: args.GetPendingTxs,
 			DispatchTx:    args.DispatchTx,
 			OnTxConfirmed: args.OnTxConfirmed,
@@ -207,10 +207,10 @@ func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EthereumTxQu
 // processSolanaTxQueue processes a Solana queue with clear nonce and status/timeout semantics.
 func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaTxQueueArgs[T]) {
 	(SolanaTxProcessor[T]{
-		NonceAccountKey: args.NonceAccountKey,
-		NonceAccount:    args.NonceAccount,
-		Checker:         args.DispatchRequestedChecker,
-		Processor: QueueProcessor[T]{
+		NonceAccountKey:          args.NonceAccountKey,
+		NonceAccount:             args.NonceAccount,
+		TxDispatchRequestChecker: args.DispatchRequestedChecker,
+		TxQueueProcessor: TxQueueProcessor[T]{
 			GetPendingTxs:         args.GetPendingTxs,
 			DispatchTx:            args.DispatchTx,
 			UpdatePendingTxStatus: args.UpdatePendingTxStatus,
