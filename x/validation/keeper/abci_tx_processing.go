@@ -10,21 +10,20 @@ import (
 	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
-// DispatchRequestChecker defines an explicit controller to check and clear
-// whether dispatch has been requested for a given key. This replaces vague
-// names like NonceRequestedStore.
-type DispatchRequestChecker[K comparable] interface {
-	IsDispatchRequested(ctx sdk.Context, key K) (bool, error)
-	ClearDispatchRequest(ctx sdk.Context, key K) error
+// TxDispatchRequestCheckerInterface defines an explicit controller to check and clear
+// whether dispatch has been requested for a given key.
+type TxDispatchRequestCheckerInterface[K comparable] interface {
+	IsTxDispatchRequested(ctx sdk.Context, key K) (bool, error)
+	ClearTxDispatchRequest(ctx sdk.Context, key K) error
 }
 
 // TxDispatchRequestChecker adapts a collections.Map[K,bool] to the
-// DispatchRequestChecker interface.
+// TxDispatchRequestChecker interface.
 type TxDispatchRequestChecker[K comparable] struct {
 	Store collections.Map[K, bool]
 }
 
-func (checker TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
+func (checker TxDispatchRequestChecker[K]) IsTxDispatchRequested(ctx sdk.Context, key K) (bool, error) {
 	isTxDispatchRequested, err := checker.Store.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -35,7 +34,7 @@ func (checker TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, 
 	return isTxDispatchRequested, nil
 }
 
-func (checker TxDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
+func (checker TxDispatchRequestChecker[K]) ClearTxDispatchRequest(ctx sdk.Context, key K) error {
 	// Remove the flag entry entirely (treats absence as not requested)
 	if err := checker.Store.Remove(ctx, key); err != nil && !errors.Is(err, collections.ErrNotFound) {
 		return fmt.Errorf("error clearing dispatch request flag: %w", err)
@@ -55,14 +54,14 @@ type QueueProcessor[T any] struct {
 type EthereumTxProcessor[T any] struct {
 	KeyID          uint64
 	RequestedNonce uint64
-	Checker        DispatchRequestChecker[uint64]
+	Checker        TxDispatchRequestChecker[uint64]
 	Processor      QueueProcessor[T]
 	Keeper         *Keeper
 }
 
 func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
-	requested, err := r.Checker.IsDispatchRequested(ctx, r.KeyID)
+	requested, err := r.Checker.IsTxDispatchRequested(ctx, r.KeyID)
 	if err != nil {
 		k.Logger(ctx).Error("error checking dispatch request", "keyID", r.KeyID, "error", err)
 		return
@@ -77,7 +76,7 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 	if len(items) == 0 {
-		if err := r.Checker.ClearDispatchRequest(ctx, r.KeyID); err != nil {
+		if err := r.Checker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
 			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
 		}
 		return
@@ -101,7 +100,7 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	}
 
 	if len(items) == 1 && nonceUpdated {
-		if err := r.Checker.ClearDispatchRequest(ctx, r.KeyID); err != nil {
+		if err := r.Checker.ClearTxDispatchRequest(ctx, r.KeyID); err != nil {
 			k.Logger(ctx).Error("error clearing dispatch request", "keyID", r.KeyID, "error", err)
 		}
 		return
@@ -126,14 +125,14 @@ func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 type SolanaTxProcessor[T any] struct {
 	NonceAccountKey uint64
 	NonceAccount    *solSystem.NonceAccount
-	Checker         DispatchRequestChecker[uint64]
+	Checker         TxDispatchRequestChecker[uint64]
 	Processor       QueueProcessor[T]
 	Keeper          *Keeper
 }
 
 func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
-	requested, err := r.Checker.IsDispatchRequested(ctx, r.NonceAccountKey)
+	requested, err := r.Checker.IsTxDispatchRequested(ctx, r.NonceAccountKey)
 	if err != nil {
 		k.Logger(ctx).Error("error checking dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
 		return
@@ -148,7 +147,7 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 	if len(items) == 0 {
-		if err := r.Checker.ClearDispatchRequest(ctx, r.NonceAccountKey); err != nil {
+		if err := r.Checker.ClearTxDispatchRequest(ctx, r.NonceAccountKey); err != nil {
 			k.Logger(ctx).Error("error clearing solana dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
 		}
 		return
@@ -174,7 +173,7 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 type EthereumTxQueueArgs[T any] struct {
 	KeyID                    uint64
 	RequestedNonce           uint64
-	DispatchRequestedChecker DispatchRequestChecker[uint64]
+	DispatchRequestedChecker TxDispatchRequestChecker[uint64]
 	GetPendingTxs            func(ctx sdk.Context) ([]T, error)
 	DispatchTx               func(tx T) error
 	OnTxConfirmed            func(tx T) error // called when the head tx is confirmed (nonce advanced)
@@ -184,7 +183,7 @@ type EthereumTxQueueArgs[T any] struct {
 type SolanaTxQueueArgs[T any] struct {
 	NonceAccountKey          uint64
 	NonceAccount             *solSystem.NonceAccount
-	DispatchRequestedChecker DispatchRequestChecker[uint64]
+	DispatchRequestedChecker TxDispatchRequestChecker[uint64]
 	GetPendingTxs            func(ctx sdk.Context) ([]T, error)
 	DispatchTx               func(tx T) error
 	UpdatePendingTxStatus    func(tx T) error // status/timeout checks for head each block
