@@ -367,10 +367,10 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 
 // processZenBTCBurnEvents constructs unstake transactions for BURNED events.
 func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
-	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
+processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
 		KeyID:                    k.zenBTCKeeper.GetUnstakerKeyID(ctx),
 		RequestedNonce:           oracleData.RequestedUnstakerNonce,
-DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested}
+		DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 			return k.getPendingBurnEvents(ctx)
 		},
@@ -454,10 +454,10 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 
 // processZenBTCRedemptions completes INITIATED redemptions by calling 'complete' on EigenLayer.
 func (k *Keeper) processZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.Redemption]{
+processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.Redemption]{
 		KeyID:                    k.zenBTCKeeper.GetCompleterKeyID(ctx),
 		RequestedNonce:           oracleData.RequestedCompleterNonce,
-DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested}
+		DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.Redemption, error) {
 			firstPendingID, _ := k.zenBTCKeeper.GetFirstPendingRedemption(ctx)
 			return k.GetRedemptionsByStatus(ctx, zenbtctypes.RedemptionStatus_INITIATED, 2, firstPendingID)
