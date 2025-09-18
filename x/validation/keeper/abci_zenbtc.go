@@ -362,9 +362,7 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			processedTxHashes[burn.TxID] = true
 		}
 	}
-	if err := k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes); err != nil {
-		k.Logger(ctx).Error("error clearing processed backfill requests", "type", types.EventType_EVENT_TYPE_ZENBTC_BURN, "error", err)
-	}
+k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)
 }
 
 // processZenBTCBurnEvents constructs unstake transactions for BURNED events.
