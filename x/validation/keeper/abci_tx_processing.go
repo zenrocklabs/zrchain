@@ -25,14 +25,14 @@ type TxDispatchRequestChecker[K comparable] struct {
 }
 
 func (checker TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
-	isRequested, err := checker.Store.Get(ctx, key)
+	isTxDispatchRequested, err := checker.Store.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return false, nil
 		}
 		return false, fmt.Errorf("error reading dispatch request flag: %w", err)
 	}
-	return isRequested, nil
+	return isTxDispatchRequested, nil
 }
 
 func (checker TxDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
