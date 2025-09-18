@@ -23,8 +23,8 @@ import (
 func (k *Keeper) processZenBTCMintsEthereum(ctx sdk.Context, oracleData OracleData) {
 	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.PendingMintTransaction]{
 		KeyID:                    k.zenBTCKeeper.GetEthMinterKeyID(ctx),
-		RequestedNonce:           oracleData.RequestedEthMinterNonce,
-DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested}
+RequestedNonce:           oracleData.RequestedEthMinterNonce,
+		DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			return k.getPendingMintTransactions(
 				ctx,
@@ -119,8 +119,8 @@ DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.EthereumNonc
 func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData) {
 	processSolanaTxQueue(k, ctx, SolanaTxQueueArgs[zenbtctypes.PendingMintTransaction]{
 		NonceAccountKey:          k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey,
-		NonceAccount:             oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
-DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.SolanaNonceRequested}
+NonceAccount:             oracleData.SolanaMintNonces[k.zenBTCKeeper.GetSolanaParams(ctx).NonceAccountKey],
+		DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{Store: k.SolanaNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.PendingMintTransaction, error) {
 			pendingMints, err := k.getPendingMintTransactions(
 				ctx,
