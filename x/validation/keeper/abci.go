@@ -385,16 +385,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 		// 2. Process pending transaction queues based on the latest state
 		// Request nonces/accounts for direct minting (no EigenLayer staking)
-		if pendingEVM, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, zenbtctypes.WalletType_WALLET_TYPE_EVM); err == nil && len(pendingEVM) > 0 {
-			_ = k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true)
-		}
-		if pendingSol, err := k.getPendingMintTransactions(ctx, zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, zenbtctypes.WalletType_WALLET_TYPE_SOLANA); err == nil && len(pendingSol) > 0 {
-			solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-			_ = k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true)
-			for _, tx := range pendingSol {
-				_ = k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true)
-			}
-		}
+		k.requestMintDispatches(ctx)
 
 		// Mint directly on destination chains
 		k.processZenBTCMintsEthereum(ctx, oracleData)
@@ -422,6 +413,45 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 }
 
 // shouldProcessOracleData checks if oracle data should be processed for this block.
+// requestMintDispatches inspects pending zenBTC mints and requests dispatch for Ethereum and Solana
+// by setting the appropriate flags. All errors are logged and do not abort the block.
+func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
+	// Ethereum
+	pendingEVM, err := k.getPendingMintTransactions(ctx,
+		zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
+		zenbtctypes.WalletType_WALLET_TYPE_EVM,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error fetching pending EVM zenBTC mints", "error", err)
+	} else if len(pendingEVM) > 0 {
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting Ethereum nonce requested flag for minter", "error", err)
+		}
+	}
+
+	// Solana
+	pendingSol, err := k.getPendingMintTransactions(ctx,
+		zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
+		zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
+	)
+	if err != nil {
+		k.Logger(ctx).Error("error fetching pending Solana zenBTC mints", "error", err)
+		return
+	}
+	if len(pendingSol) == 0 {
+		return
+	}
+	solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+	if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+		k.Logger(ctx).Error("error setting Solana nonce requested flag", "error", err)
+	}
+	for _, tx := range pendingSol {
+		if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
+			k.Logger(ctx).Error("error setting Solana requested account flag", "recipient", tx.RecipientAddress, "error", err)
+		}
+	}
+}
+
 func (k *Keeper) shouldProcessOracleData(ctx sdk.Context, req *abci.RequestFinalizeBlock) bool {
 	if len(req.Txs) == 0 {
 		k.Logger(ctx).Debug("no transactions in block")
