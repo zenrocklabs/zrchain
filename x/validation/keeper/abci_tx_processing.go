@@ -171,7 +171,7 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 }
 
 // EthereumTxQueueArgs describes the parameters needed to process an Ethereum-based tx queue.
-type EVMQueueArgs[T any] struct {
+type EthereumTxQueueArgs[T any] struct {
 	KeyID                    uint64
 	RequestedNonce           uint64
 	DispatchRequestedChecker DispatchRequestChecker[uint64]
@@ -180,18 +180,18 @@ type EVMQueueArgs[T any] struct {
 	OnTxConfirmed            func(tx T) error // called when the head tx is confirmed (nonce advanced)
 }
 
-// SolanaQueueArgs describes the parameters needed to process a Solana-based tx queue.
-type SolanaQueueArgs[T any] struct {
-	NonceAccountKey            uint64
-	NonceAccount               *solSystem.NonceAccount
-	DispatchRequestedChecker   DispatchRequestChecker[uint64]
-	GetPendingTxs              func(ctx sdk.Context) ([]T, error)
-	DispatchTx                 func(tx T) error
-	UpdatePendingTxStatus      func(tx T) error // status/timeout checks for head each block
+// SolanaTxQueueArgs describes the parameters needed to process a Solana-based tx queue.
+type SolanaTxQueueArgs[T any] struct {
+	NonceAccountKey          uint64
+	NonceAccount             *solSystem.NonceAccount
+	DispatchRequestedChecker DispatchRequestChecker[uint64]
+	GetPendingTxs            func(ctx sdk.Context) ([]T, error)
+	DispatchTx               func(tx T) error
+	UpdatePendingTxStatus    func(tx T) error // status/timeout checks for head each block
 }
 
 // processEthereumTxQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
-func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
+func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EthereumTxQueueArgs[T]) {
 	(EthereumTxProcessor[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
@@ -206,7 +206,7 @@ func processEthereumTxQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs
 }
 
 // processSolanaTxQueue processes a Solana queue with clear nonce and status/timeout semantics.
-func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[T]) {
+func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaTxQueueArgs[T]) {
 	(SolanaTxProcessor[T]{
 		NonceAccountKey: args.NonceAccountKey,
 		NonceAccount:    args.NonceAccount,
