@@ -51,8 +51,8 @@ type QueueProcessor[T any] struct {
 	UpdatePendingTxStatus func(item T) error // Solana
 }
 
-// EVMRunner encapsulates EVM queue control flow (dispatch request, nonce, confirm, dispatch).
-type EVMRunner[T any] struct {
+// EthereumTxProcessor encapsulates EVM queue control flow (dispatch request, nonce, confirm, dispatch).
+type EthereumTxProcessor[T any] struct {
 	KeyID          uint64
 	RequestedNonce uint64
 	Checker        DispatchRequestChecker[uint64]
@@ -60,7 +60,7 @@ type EVMRunner[T any] struct {
 	Keeper         *Keeper
 }
 
-func (r EVMRunner[T]) Run(ctx sdk.Context) {
+func (r EthereumTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
 	requested, err := r.Checker.IsDispatchRequested(ctx, r.KeyID)
 	if err != nil {
@@ -122,8 +122,8 @@ func (r EVMRunner[T]) Run(ctx sdk.Context) {
 	}
 }
 
-// SolanaRunner encapsulates Solana queue control flow (dispatch request, status, dispatch).
-type SolanaRunner[T any] struct {
+// SolanaTxProcessor encapsulates Solana queue control flow (dispatch request, status, dispatch).
+type SolanaTxProcessor[T any] struct {
 	NonceAccountKey uint64
 	NonceAccount    *solSystem.NonceAccount
 	Checker         DispatchRequestChecker[uint64]
@@ -131,7 +131,7 @@ type SolanaRunner[T any] struct {
 	Keeper          *Keeper
 }
 
-func (r SolanaRunner[T]) Run(ctx sdk.Context) {
+func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 	k := r.Keeper
 	requested, err := r.Checker.IsDispatchRequested(ctx, r.NonceAccountKey)
 	if err != nil {
@@ -190,34 +190,34 @@ type SolanaQueueArgs[T any] struct {
 	UpdatePendingTxStatus func(tx T) error // status/timeout checks for head each block
 }
 
-// processEVMQueue remains for backward-compat call sites; it delegates to EVMRunner.
+// processEVMQueue remains for backward-compat call sites; it delegates to EthereumTxProcessor.
 func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
-	(EVMRunner[T]{
+	(EthereumTxProcessor[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
-		Checker:        TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:        MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs: args.GetPendingTxs,
 			DispatchTx:    args.DispatchTx,
 			OnTxConfirmed: args.OnTxConfirmed,
 		},
 		Keeper: k,
-	}).Run(ctx)
+	}).ProcessTxs(ctx)
 }
 
 // processSolanaQueue processes a Solana queue with clear nonce and status/timeout semantics.
 func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[T]) {
-	(SolanaRunner[T]{
+	(SolanaTxProcessor[T]{
 		NonceAccountKey: args.NonceAccountKey,
 		NonceAccount:    args.NonceAccount,
-		Checker:         TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:         MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs:         args.GetPendingTxs,
 			DispatchTx:            args.DispatchTx,
 			UpdatePendingTxStatus: args.UpdatePendingTxStatus,
 		},
 		Keeper: k,
-	}).Run(ctx)
+	}).ProcessTxs(ctx)
 }
 
 // getPendingTransactions is a generic helper that walks a store with key type uint64
