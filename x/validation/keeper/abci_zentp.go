@@ -25,7 +25,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 processSolanaTxQueue(k, ctx, SolanaQueueArgs[*zentptypes.Bridge]{
 		NonceAccountKey:     k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey,
 		NonceAccount:        oracleData.SolanaMintNonces[k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey],
-		NonceRequestedStore: k.SolanaNonceRequested,
+DispatchRequestedChecker: TxDispatchRequestChecker[uint64]{M: k.SolanaNonceRequested},
 		GetPendingTxs: func(ctx sdk.Context) ([]*zentptypes.Bridge, error) {
 			return k.zentpKeeper.GetMintsWithStatusPending(ctx)
 		},
