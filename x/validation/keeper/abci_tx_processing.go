@@ -18,13 +18,13 @@ type DispatchRequestChecker[K comparable] interface {
 	ClearDispatchRequest(ctx sdk.Context, key K) error
 }
 
-// MapBoolDispatchRequestChecker adapts a collections.Map[K,bool] to the
+// TxDispatchRequestChecker adapts a collections.Map[K,bool] to the
 // DispatchRequestChecker interface.
-type MapBoolDispatchRequestChecker[K comparable] struct {
+type TxDispatchRequestChecker[K comparable] struct {
 	M collections.Map[K, bool]
 }
 
-func (c MapBoolDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
+func (c TxDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, key K) (bool, error) {
 	v, err := c.M.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -35,7 +35,7 @@ func (c MapBoolDispatchRequestChecker[K]) IsDispatchRequested(ctx sdk.Context, k
 	return v, nil
 }
 
-func (c MapBoolDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
+func (c TxDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, key K) error {
 	// Remove the flag entry entirely (treats absence as not requested)
 	if err := c.M.Remove(ctx, key); err != nil && !errors.Is(err, collections.ErrNotFound) {
 		return fmt.Errorf("error clearing dispatch request flag: %w", err)
@@ -47,8 +47,8 @@ func (c MapBoolDispatchRequestChecker[K]) ClearDispatchRequest(ctx sdk.Context, 
 type QueueProcessor[T any] struct {
 	GetPendingTxs         func(ctx sdk.Context) ([]T, error)
 	DispatchTx            func(item T) error
-	OnTxConfirmed         func(item T) error            // EVM
-	UpdatePendingTxStatus func(item T) error            // Solana
+	OnTxConfirmed         func(item T) error // EVM
+	UpdatePendingTxStatus func(item T) error // Solana
 }
 
 // EVMRunner encapsulates EVM queue control flow (dispatch request, nonce, confirm, dispatch).
@@ -182,12 +182,12 @@ type EVMQueueArgs[T any] struct {
 
 // SolanaQueueArgs describes the parameters needed to process a Solana-based tx queue.
 type SolanaQueueArgs[T any] struct {
-	NonceAccountKey        uint64
-	NonceAccount           *solSystem.NonceAccount
-	NonceRequestedStore    collections.Map[uint64, bool]
-	GetPendingTxs          func(ctx sdk.Context) ([]T, error)
-	DispatchTx             func(tx T) error
-	UpdatePendingTxStatus  func(tx T) error // status/timeout checks for head each block
+	NonceAccountKey       uint64
+	NonceAccount          *solSystem.NonceAccount
+	NonceRequestedStore   collections.Map[uint64, bool]
+	GetPendingTxs         func(ctx sdk.Context) ([]T, error)
+	DispatchTx            func(tx T) error
+	UpdatePendingTxStatus func(tx T) error // status/timeout checks for head each block
 }
 
 // processEVMQueue remains for backward-compat call sites; it delegates to EVMRunner.
@@ -195,7 +195,7 @@ func processEVMQueue[T any](k *Keeper, ctx sdk.Context, args EVMQueueArgs[T]) {
 	(EVMRunner[T]{
 		KeyID:          args.KeyID,
 		RequestedNonce: args.RequestedNonce,
-		Checker:        MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:        TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs: args.GetPendingTxs,
 			DispatchTx:    args.DispatchTx,
@@ -210,7 +210,7 @@ func processSolanaQueue[T any](k *Keeper, ctx sdk.Context, args SolanaQueueArgs[
 	(SolanaRunner[T]{
 		NonceAccountKey: args.NonceAccountKey,
 		NonceAccount:    args.NonceAccount,
-		Checker:         MapBoolDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
+		Checker:         TxDispatchRequestChecker[uint64]{M: args.NonceRequestedStore},
 		Processor: QueueProcessor[T]{
 			GetPendingTxs:         args.GetPendingTxs,
 			DispatchTx:            args.DispatchTx,
