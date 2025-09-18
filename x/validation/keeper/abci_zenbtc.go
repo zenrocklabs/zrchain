@@ -291,8 +291,12 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			}
 			pendingMint.TxHash = event.TxSig
 			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			_ = k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint)
-			_ = k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount))
+			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+				k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
+			}
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
+				k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
+			}
 			break
 		}
 	}
@@ -342,21 +346,25 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			}
 			createdID, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
 			if createErr == nil {
-				if has, err := k.zenBTCKeeper.HasRedemption(ctx, createdID); err == nil && !has {
-					_ = k.zenBTCKeeper.SetRedemption(ctx, createdID, zenbtctypes.Redemption{
+			if has, err := k.zenBTCKeeper.HasRedemption(ctx, createdID); err == nil && !has {
+					if err := k.zenBTCKeeper.SetRedemption(ctx, createdID, zenbtctypes.Redemption{
 						Data: zenbtctypes.RedemptionData{
 							Id:                 createdID,
 							DestinationAddress: burn.DestinationAddr,
 							Amount:             burn.Amount,
 						},
 						Status: zenbtctypes.RedemptionStatus_UNSTAKED,
-					})
+					}); err != nil {
+						k.Logger(ctx).Error("error creating redemption from burn event", "burn_tx", burn.TxID, "error", err)
+					}
 				}
 			}
 			processedTxHashes[burn.TxID] = true
 		}
 	}
-	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)
+	if err := k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes); err != nil {
+		k.Logger(ctx).Error("error clearing processed backfill requests", "type", types.EventType_EVENT_TYPE_ZENBTC_BURN, "error", err)
+	}
 }
 
 // processZenBTCBurnEvents constructs unstake transactions for BURNED events.
@@ -423,18 +431,25 @@ func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleDat
 	}
 	foundNew := false
 	for _, redemption := range oracleData.Redemptions {
-		if exists, _ := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); exists {
+		if exists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); err != nil || exists {
+			if err != nil {
+				k.Logger(ctx).Error("error checking redemption existence", "id", redemption.Id, "error", err)
+			}
 			continue
 		}
 		foundNew = true
 		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
-		_ = k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
 			Data:   zenbtctypes.RedemptionData{Id: redemption.Id, DestinationAddress: redemption.DestinationAddress, Amount: uint64(btcAmount)},
 			Status: zenbtctypes.RedemptionStatus_INITIATED,
-		})
+		}); err != nil {
+			k.Logger(ctx).Error("error setting redemption", "id", redemption.Id, "error", err)
+		}
 	}
 	if foundNew {
-		_ = k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true)
+		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
+			k.Logger(ctx).Error("error setting completer nonce requested flag", "error", err)
+		}
 	}
 	_ = firstInitiated // keep behavior if needed by future logic
 }
@@ -484,7 +499,9 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 	if err != nil || len(redemptions) == 0 {
 		return
 	}
-	_ = k.zenBTCKeeper.SetFirstRedemptionAwaitingSign(ctx, redemptions[0].Data.Id)
+	if err := k.zenBTCKeeper.SetFirstRedemptionAwaitingSign(ctx, redemptions[0].Data.Id); err != nil {
+		k.Logger(ctx).Error("error setting first redemption awaiting sign", "id", redemptions[0].Data.Id, "error", err)
+	}
 	supply, err := k.zenBTCKeeper.GetSupply(ctx)
 	if err != nil {
 		return
@@ -508,16 +525,22 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 			}
 			supply.MintedZenBTC -= redemption.Data.Amount
 			supply.CustodiedBTC -= btcToRelease
-			_ = k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(redemption.Data.Amount).Neg())
+			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(redemption.Data.Amount).Neg()); err != nil {
+				k.Logger(ctx).Error("error adjusting bedrock BTC on redemption fulfilment", "id", redemption.Data.Id, "error", err)
+			}
 			redemption.Status = zenbtctypes.RedemptionStatus_COMPLETED
 		}
 		if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
 			redemption.Data.SignReqId = 0
 			redemption.Status = zenbtctypes.RedemptionStatus_UNSTAKED
 		}
-		_ = k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption)
+		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Data.Id, redemption); err != nil {
+			k.Logger(ctx).Error("error updating redemption after fulfilment", "id", redemption.Data.Id, "error", err)
+		}
 	}
-	_ = k.zenBTCKeeper.SetSupply(ctx, supply)
+	if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+		k.Logger(ctx).Error("error updating supply after fulfilment", "error", err)
+	}
 }
 
 // adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to the default validator's TokensBedrock (Asset_BTC)
