@@ -172,17 +172,25 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			s.SetupTest()
 			err := s.zenexKeeper.SwapsCount.Set(s.ctx, 0)
 			s.Require().NoError(err)
 
 			params := types.DefaultParams()
 			s.zenexKeeper.SetParams(s.ctx, params)
 
-			// Set up the swap in the store first
 			if tt.wantSwap != (types.Swap{}) {
 				for _, swap := range zenextestutil.SampleSwap {
 					err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
 					s.Require().NoError(err)
+				}
+			} else {
+				for _, swap := range zenextestutil.SampleSwap {
+					if swap.SwapId == tt.input.SwapId {
+						err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
+						s.Require().NoError(err)
+						break
+					}
 				}
 			}
 

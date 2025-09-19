@@ -44,6 +44,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			if err != nil {
 				return nil, err
 			}
+			// Sending Swap.AmountIn to the mpc rock address
 			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(rockAddress), sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountIn))))
 			if err != nil {
 				return nil, err
@@ -59,6 +60,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			return nil, err
 		}
 
+		// Sending Swap.AmountOut to the rock address
 		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(rockAddress), sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountOut))))
 		if err != nil {
 			return nil, err

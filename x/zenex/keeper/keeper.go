@@ -102,6 +102,10 @@ func (k Keeper) GetPair(ctx sdk.Context, pair types.TradePair) (*types.SwapPair,
 		return nil, math.LegacyDec{}, err
 	}
 
+	if assetPrices[validationtypes.Asset_ROCK].IsZero() || assetPrices[validationtypes.Asset_BTC].IsZero() {
+		return nil, math.LegacyDec{}, fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=%s, BTC=%s", assetPrices[validationtypes.Asset_ROCK].String(), assetPrices[validationtypes.Asset_BTC].String())
+	}
+
 	switch pair {
 	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		pairType = types.SwapPair{

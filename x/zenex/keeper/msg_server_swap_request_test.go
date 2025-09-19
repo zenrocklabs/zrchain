@@ -16,12 +16,15 @@ import (
 func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 
 	tests := []struct {
-		name      string
-		input     *types.MsgSwapRequest
-		expErr    bool
-		expErrMsg string
-		want      *types.MsgSwapRequestResponse
-		wantSwap  types.Swap
+		name           string
+		input          *types.MsgSwapRequest
+		assetPrice     math.LegacyDec
+		assetPriceBtc  math.LegacyDec
+		assetPriceRock math.LegacyDec
+		expErr         bool
+		expErrMsg      string
+		want           *types.MsgSwapRequestResponse
+		wantSwap       types.Swap
 	}{
 		{
 			name: "Pass: Happy Path: rockbtc",
@@ -33,7 +36,10 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr: false,
+			assetPrice:     zenextestutil.SampleRockBtcPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         false,
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
@@ -73,8 +79,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr:    true,
-			expErrMsg: "pair is unspecified",
+			assetPrice:     zenextestutil.SampleRockBtcPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "pair is unspecified",
 		},
 		{
 			name: "Pass: Proxy address",
@@ -86,7 +95,10 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr: false,
+			assetPrice:     zenextestutil.SampleRockBtcPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         false,
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
@@ -126,8 +138,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr:    true,
-			expErrMsg: "message creator is not the owner of the workspace or the btc proxy address",
+			assetPrice:     zenextestutil.SampleRockBtcPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "message creator is not the owner of the workspace or the btc proxy address",
 		},
 		{
 			name: "Pass: Happy Path btcrock",
@@ -139,7 +154,10 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr: false,
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         false,
 			want: &types.MsgSwapRequestResponse{
 				SwapId: 1,
 			},
@@ -179,8 +197,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr:    true,
-			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "amount 13200000000000 is greater than the available rock balance 10000000000000",
 		},
 		{
 			name: "FAIL: Not enough rock balance in pool",
@@ -192,8 +213,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				RockKeyId: 1,
 				BtcKeyId:  4,
 			},
-			expErr:    true,
-			expErrMsg: "amount 13200000000000 is greater than the available rock balance 10000000000000",
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "amount 13200000000000 is greater than the available rock balance 10000000000000",
 		},
 		{
 			name: "FAIL: Rock key is not an ECDSA SECP256K1 key",
@@ -201,12 +225,15 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:  3000000, // waay too much
+				AmountIn:  2000,
 				RockKeyId: 3,
 				BtcKeyId:  4,
 			},
-			expErr:    true,
-			expErrMsg: "rock key 3 or btc key 4 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "rock key 3 or btc key 4 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
 		},
 		{
 			name: "FAIL: Btc key is not an BITCOIN SECP256K1 key",
@@ -214,17 +241,37 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
 				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
-				AmountIn:  3000000, // waay too much
+				AmountIn:  2000,
 				RockKeyId: 1,
 				BtcKeyId:  3,
 			},
-			expErr:    true,
-			expErrMsg: "rock key 1 or btc key 3 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "rock key 1 or btc key 3 is not an ECDSA SECP256K1 or BITCOIN SECP256K1 key",
+		},
+		{
+			name: "FAIL: Price is zero",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  2000,
+				RockKeyId: 1,
+				BtcKeyId:  4,
+			},
+			assetPriceBtc:  math.LegacyNewDecFromInt(math.NewInt(0)),
+			assetPriceRock: math.LegacyNewDecFromInt(math.NewInt(0)),
+			assetPrice:     math.LegacyNewDecFromInt(math.NewInt(0)),
+			expErr:         true,
+			expErrMsg:      "price is zero, check sidecar consensus, got: ROCK=0.000000000000000000, BTC=0.000000000000000000",
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			s.SetupTest()
 			err := s.zenexKeeper.SwapsCount.Set(s.ctx, 0)
 			s.Require().NoError(err)
 
@@ -237,26 +284,27 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 
 			// Set up mocks needed for both success and error cases
 			if tt.input.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
-				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(tt.assetPrice, nil).AnyTimes()
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
 				s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000000000000))).AnyTimes()
 			}
 
 			// Set up mocks needed for both success and error cases
 			if tt.input.Pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
-				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil).AnyTimes()
+				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(tt.assetPrice, nil).AnyTimes()
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ZenexCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
 				s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), appparams.BondDenom).Return(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(10000000000000))).AnyTimes()
 			}
 
+			s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
+				validationtypes.Asset_ROCK: tt.assetPriceRock,
+				validationtypes.Asset_BTC:  tt.assetPriceBtc,
+			}, nil).AnyTimes()
+
 			if !tt.expErr {
-				s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
-					validationtypes.Asset_ROCK: zenextestutil.SampleRockUSDPrice, // 0.025 USD per ROCK
-					validationtypes.Asset_BTC:  zenextestutil.SampleBtcUSDPrice,  // 110,000 USD per BTC
-				}, nil).AnyTimes()
 				// Set up price expectations based on the pair
 				if tt.input.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
-					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil).AnyTimes()
+					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(tt.assetPrice, nil).AnyTimes()
 				}
 				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.input.RockKeyId-1], "zen")
 				if err != nil {
