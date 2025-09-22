@@ -658,7 +658,7 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	return "testnet4"
 }
 
-func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context, requestedBtcHeaderHeight int64) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
 	// Always get the latest Bitcoin header
 	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
 		ChainName: k.bitcoinNetwork(ctx),
@@ -679,14 +679,26 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBl
 		}
 	}
 
-	// Get requested historical headers if any
+	// If a consensus-selected requested height is provided, fetch exactly that
+	if requestedBtcHeaderHeight > 0 {
+		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   k.bitcoinNetwork(ctx),
+			BlockHeight: requestedBtcHeaderHeight,
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBtcHeaderHeight, err)
+		}
+		return latest, requested, nil
+	}
+
+	// Otherwise fall back to the first pending requested height if any
 	if len(requestedBitcoinHeaders.Heights) > 0 {
 		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
 			ChainName:   k.bitcoinNetwork(ctx),
 			BlockHeight: requestedBitcoinHeaders.Heights[0],
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
+			return latest, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
 		}
 		return latest, requested, nil
 	}

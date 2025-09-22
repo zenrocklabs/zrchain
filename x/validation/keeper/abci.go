@@ -80,7 +80,7 @@ func (k *Keeper) gatherOracleDataForVoteExtension(ctx context.Context, height in
 		return nil, fmt.Errorf("error retrieving sidecar state: %w", err)
 	}
 
-	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -511,7 +511,13 @@ func (k *Keeper) GetValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		return nil, fmt.Errorf("no consensus on eth block height")
 	}
 
-	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx)
+	// Prefer the consensus-selected requested height (if present) to avoid drift
+	var requestedBtcHeaderHeight int64
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldRequestedBtcHeaderHash) {
+		requestedBtcHeaderHeight = voteExt.RequestedBtcBlockHeight
+	}
+	latestHeader, requestedHeader, err := k.retrieveBitcoinHeaders(ctx, requestedBtcHeaderHeight)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching bitcoin headers: %w", err)
 	}
