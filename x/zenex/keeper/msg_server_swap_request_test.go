@@ -267,6 +267,22 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			expErr:         true,
 			expErrMsg:      "price is zero, check sidecar consensus, got: ROCK=0.000000000000000000, BTC=0.000000000000000000",
 		},
+		{
+			name: "FAIL: key is not in the workspace",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				AmountIn:  2000,
+				RockKeyId: 5,
+				BtcKeyId:  4,
+			},
+			assetPrice:     zenextestutil.SampleBtcRockPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "rock key 5 or btc key 4 is not in the workspace workspace14a2hpadpsy9h4auve2z8lw",
+		},
 	}
 
 	for _, tt := range tests {

@@ -202,4 +202,30 @@ var SampleSwap = []types.Swap{
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 		SignTxId:       1,
 	},
+	{
+		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+		SwapId:  8,
+		Status:  types.SwapStatus_SWAP_STATUS_REQUESTED,
+		Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
+		Data: &types.SwapData{
+			BaseToken: &validationtypes.AssetData{
+				Asset:     validationtypes.Asset_ROCK,
+				PriceUSD:  SampleRockBtcPrice,
+				Precision: 6,
+			},
+			QuoteToken: &validationtypes.AssetData{
+				Asset:     validationtypes.Asset_BTC,
+				PriceUSD:  SampleBtcRockPrice,
+				Precision: 8,
+			},
+			Price:     SampleBtcRockPrice,
+			AmountIn:  4400000,
+			AmountOut: 2000,
+		},
+		RockKeyId:      1,
+		BtcKeyId:       2,
+		ZenexPoolKeyId: 3,
+		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
+		SignTxId:       1,
+	},
 }
