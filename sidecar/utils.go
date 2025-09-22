@@ -391,7 +391,6 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 		cleanedSolanaMintEvents: make(map[string]bool),
 		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
 		pendingTransactions:     pendingTransactions,
-		latestEventStoreIDs:     make(map[sidecartypes.SolanaEventType]uint64),
 	}
 }
 
