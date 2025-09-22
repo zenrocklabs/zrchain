@@ -221,41 +221,47 @@ func (s *IntegrationTestSuite) TestGetPair() {
 	tests := []struct {
 		name          string
 		pair          types.TradePair
+		rockPrice     math.LegacyDec
+		btcPrice      math.LegacyDec
 		expected      types.SwapPair
 		expectedPrice math.LegacyDec
 		expectedErr   error
 	}{
 		{
-			name: "rockbtc",
-			pair: types.TradePair_TRADE_PAIR_ROCK_BTC,
+			name:      "rockbtc",
+			pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
+			rockPrice: zenextestutil.SampleRockUSDPrice,
+			btcPrice:  zenextestutil.SampleBtcUSDPrice,
 			expected: types.SwapPair{
 				BaseToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_ROCK,
 					Precision: 6,
-					PriceUSD:  zenextestutil.SampleRockBtcPrice,
+					PriceUSD:  zenextestutil.SampleRockUSDPrice,
 				},
 				QuoteToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_BTC,
 					Precision: 8,
-					PriceUSD:  zenextestutil.SampleBtcRockPrice,
+					PriceUSD:  zenextestutil.SampleBtcUSDPrice,
 				},
 			},
 			expectedPrice: zenextestutil.SampleRockBtcPrice,
 			expectedErr:   nil,
 		},
 		{
-			name: "btcrock",
-			pair: types.TradePair_TRADE_PAIR_BTC_ROCK,
+			name:      "btcrock",
+			pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
+			rockPrice: zenextestutil.SampleRockUSDPrice,
+			btcPrice:  zenextestutil.SampleBtcUSDPrice,
 			expected: types.SwapPair{
 				BaseToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_BTC,
 					Precision: 8,
-					PriceUSD:  zenextestutil.SampleBtcRockPrice,
+					PriceUSD:  zenextestutil.SampleBtcUSDPrice,
 				},
 				QuoteToken: &validationtypes.AssetData{
 					Asset:     validationtypes.Asset_ROCK,
 					Precision: 6,
-					PriceUSD:  zenextestutil.SampleRockBtcPrice,
+					PriceUSD:  zenextestutil.SampleRockUSDPrice,
 				},
 			},
 			expectedPrice: zenextestutil.SampleBtcRockPrice,
@@ -264,9 +270,31 @@ func (s *IntegrationTestSuite) TestGetPair() {
 		{
 			name:          "unknown pair",
 			pair:          types.TradePair_TRADE_PAIR_UNSPECIFIED,
+			rockPrice:     zenextestutil.SampleRockUSDPrice,
+			btcPrice:      zenextestutil.SampleBtcUSDPrice,
 			expected:      types.SwapPair{},
 			expectedPrice: math.LegacyDec{},
 			expectedErr:   fmt.Errorf("unknown pair: TRADE_PAIR_UNSPECIFIED"),
+		},
+		{
+			name:      "price is zero",
+			pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
+			rockPrice: math.LegacyNewDecFromInt(math.NewInt(0)),
+			btcPrice:  math.LegacyNewDecFromInt(math.NewInt(0)),
+			expected: types.SwapPair{
+				BaseToken: &validationtypes.AssetData{
+					Asset:     validationtypes.Asset_ROCK,
+					Precision: 6,
+					PriceUSD:  math.LegacyNewDecFromInt(math.NewInt(0)),
+				},
+				QuoteToken: &validationtypes.AssetData{
+					Asset:     validationtypes.Asset_BTC,
+					Precision: 8,
+					PriceUSD:  math.LegacyNewDecFromInt(math.NewInt(0)),
+				},
+			},
+			expectedPrice: math.LegacyDec{},
+			expectedErr:   fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=0.000000000000000000, BTC=0.000000000000000000"),
 		},
 	}
 
@@ -274,15 +302,16 @@ func (s *IntegrationTestSuite) TestGetPair() {
 		s.Run(tt.name, func() {
 			// GetAssetPrices is always called first
 			s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
-				validationtypes.Asset_ROCK: zenextestutil.SampleRockBtcPrice,
-				validationtypes.Asset_BTC:  zenextestutil.SampleBtcRockPrice,
+				validationtypes.Asset_ROCK: tt.rockPrice,
+				validationtypes.Asset_BTC:  tt.btcPrice,
 			}, nil)
 
-			// Set up expectations based on the pair
-			if tt.pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
-				s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
-			} else if tt.pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
-				s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil)
+			if tt.expectedErr == nil {
+				if tt.pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
+					s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(zenextestutil.SampleRockBtcPrice, nil)
+				} else if tt.pair == types.TradePair_TRADE_PAIR_BTC_ROCK {
+					s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(zenextestutil.SampleBtcRockPrice, nil)
+				}
 			}
 
 			pair, price, err := s.zenexKeeper.GetPair(s.ctx, tt.pair)

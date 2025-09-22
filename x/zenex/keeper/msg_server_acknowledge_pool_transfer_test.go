@@ -98,7 +98,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 			},
 		},
 		{
-			name: "Pass: swap status rejected",
+			name: "Pass: rock-btc swap status rejected",
 			input: &types.MsgAcknowledgePoolTransfer{
 				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
 				SwapId:       6,
@@ -126,6 +126,44 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 					Price:     math.LegacyNewDec(100000),
 					AmountIn:  100000,
 					AmountOut: 100000,
+				},
+				RockKeyId:      1,
+				BtcKeyId:       2,
+				ZenexPoolKeyId: 3,
+				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
+				SignTxId:       1,
+				RejectReason:   "reject_reason",
+			},
+		},
+		{
+			name: "Pass: btc-rock swap status rejected",
+			input: &types.MsgAcknowledgePoolTransfer{
+				Creator:      "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				SwapId:       8,
+				SourceTxHash: "source_tx_hash",
+				Status:       types.SwapStatus_SWAP_STATUS_REJECTED,
+				RejectReason: "reject_reason",
+			},
+			expErr: false,
+			wantSwap: types.Swap{
+				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				SwapId:  8,
+				Status:  types.SwapStatus_SWAP_STATUS_REJECTED,
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
+				Data: &types.SwapData{
+					BaseToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_ROCK,
+						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						Precision: 6,
+					},
+					QuoteToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_BTC,
+						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						Precision: 8,
+					},
+					Price:     zenextestutil.SampleBtcRockPrice,
+					AmountIn:  4400000,
+					AmountOut: 2000,
 				},
 				RockKeyId:      1,
 				BtcKeyId:       2,
@@ -172,17 +210,25 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			s.SetupTest()
 			err := s.zenexKeeper.SwapsCount.Set(s.ctx, 0)
 			s.Require().NoError(err)
 
 			params := types.DefaultParams()
 			s.zenexKeeper.SetParams(s.ctx, params)
 
-			// Set up the swap in the store first
 			if tt.wantSwap != (types.Swap{}) {
 				for _, swap := range zenextestutil.SampleSwap {
 					err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
 					s.Require().NoError(err)
+				}
+			} else {
+				for _, swap := range zenextestutil.SampleSwap {
+					if swap.SwapId == tt.input.SwapId {
+						err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
+						s.Require().NoError(err)
+						break
+					}
 				}
 			}
 
@@ -193,6 +239,15 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
 				}
 				s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(senderAddress), sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.wantSwap.Data.AmountOut)))).Return(nil)
+			}
+
+			if !tt.expErr && tt.wantSwap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && tt.input.Status == types.SwapStatus_SWAP_STATUS_REJECTED {
+				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.wantSwap.RockKeyId).Return(&treasurytestutil.DefaultKeys[tt.wantSwap.RockKeyId-1], nil)
+				senderAddress, err := treasurytypes.NativeAddress(&treasurytestutil.DefaultKeys[tt.wantSwap.RockKeyId-1], "zen")
+				if err != nil {
+					s.T().Fatalf("failed to convert sender key to zenrock address: %v", err)
+				}
+				s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(senderAddress), sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.wantSwap.Data.AmountIn)))).Return(nil)
 			}
 
 			resp, err := s.msgServer.AcknowledgePoolTransfer(s.ctx, tt.input)
