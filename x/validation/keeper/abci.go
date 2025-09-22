@@ -805,6 +805,15 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, newHeaderHeight, latestSt
 		numHistoricalHeadersToRequest = 6
 	}
 
+	// Only run when we advance the latest stored height; skip for historical/non-advancing headers
+	if newHeaderHeight <= latestStoredHeight {
+		k.Logger(ctx).Debug("skipping reorg check for non-advancing or historical header",
+			"new_height", newHeaderHeight,
+			"latest_stored_height", latestStoredHeight,
+		)
+		return
+	}
+
 	// Check for gaps between the latest stored header and the new header.
 	// Only run the check if we have a previously stored height (i.e., it's not the first run).
 	if latestStoredHeight > 0 {
