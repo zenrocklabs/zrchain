@@ -11,12 +11,14 @@ import (
 
 var _ sdk.Msg = &MsgZenexTransferRequest{}
 
-func NewMsgZenexTransferRequest(creator string, swapId uint64, unsignedTx []byte, walletType treasurytypes.WalletType) *MsgZenexTransferRequest {
+func NewMsgZenexTransferRequest(creator string, swapId uint64, unsignedPlusTx []byte, walletType treasurytypes.WalletType, cacheId []byte, dataForSigning []*InputHashes) *MsgZenexTransferRequest {
 	return &MsgZenexTransferRequest{
-		Creator:    creator,
-		SwapId:     swapId,
-		UnsignedTx: unsignedTx,
-		WalletType: walletType,
+		Creator:        creator,
+		SwapId:         swapId,
+		UnsignedPlusTx: unsignedPlusTx,
+		WalletType:     walletType,
+		CacheId:        cacheId,
+		DataForSigning: dataForSigning,
 	}
 }
 

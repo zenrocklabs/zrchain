@@ -17,6 +17,7 @@ type IdentityKeeper interface {
 type TreasuryKeeper interface {
 	GetKey(ctx sdk.Context, keyID uint64) (*treasurytypes.Key, error)
 	MakeSignTransactionRequest(goCtx context.Context, msg *treasurytypes.MsgNewSignTransactionRequest) (*treasurytypes.MsgNewSignTransactionRequestResponse, error)
+	HandleSignatureRequest(ctx sdk.Context, msg *treasurytypes.MsgNewSignatureRequest) (*treasurytypes.MsgNewSignatureRequestResponse, error)
 }
 
 type ValidationKeeper interface {

@@ -119,7 +119,7 @@ var SampleSwap = []types.Swap{
 		BtcKeyId:       2,
 		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-		SignTxId:       1,
+		SignReqId:      1,
 		SourceTxHash:   "source_tx_hash",
 	},
 	{
@@ -147,7 +147,7 @@ var SampleSwap = []types.Swap{
 		BtcKeyId:       2,
 		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-		SignTxId:       1,
+		SignReqId:      1,
 		SourceTxHash:   "source_tx_hash",
 	},
 	{
@@ -174,7 +174,7 @@ var SampleSwap = []types.Swap{
 		BtcKeyId:       2,
 		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-		SignTxId:       1,
+		SignReqId:      1,
 	},
 	{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
@@ -200,7 +200,7 @@ var SampleSwap = []types.Swap{
 		BtcKeyId:       2,
 		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-		SignTxId:       1,
+		SignReqId:      1,
 	},
 	{
 		Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
@@ -226,6 +226,6 @@ var SampleSwap = []types.Swap{
 		BtcKeyId:       2,
 		ZenexPoolKeyId: 3,
 		Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-		SignTxId:       1,
+		SignReqId:      1,
 	},
 }
