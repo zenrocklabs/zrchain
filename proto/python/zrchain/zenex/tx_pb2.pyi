@@ -47,20 +47,22 @@ class MsgSwapRequestResponse(_message.Message):
     def __init__(self, swap_id: _Optional[int] = ...) -> None: ...
 
 class MsgZenexTransferRequest(_message.Message):
-    __slots__ = ("creator", "swap_id", "data_for_signing", "wallet_type", "cache_id", "unsigned_plus_tx")
+    __slots__ = ("creator", "swap_id", "data_for_signing", "wallet_type", "cache_id", "unsigned_plus_tx", "reject_reason")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     WALLET_TYPE_FIELD_NUMBER: _ClassVar[int]
     CACHE_ID_FIELD_NUMBER: _ClassVar[int]
     UNSIGNED_PLUS_TX_FIELD_NUMBER: _ClassVar[int]
+    REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     data_for_signing: _containers.RepeatedCompositeFieldContainer[_swap_pb2.InputHashes]
     wallet_type: _wallet_pb2.WalletType
     cache_id: bytes
     unsigned_plus_tx: bytes
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., data_for_signing: _Optional[_Iterable[_Union[_swap_pb2.InputHashes, _Mapping]]] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., cache_id: _Optional[bytes] = ..., unsigned_plus_tx: _Optional[bytes] = ...) -> None: ...
+    reject_reason: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., data_for_signing: _Optional[_Iterable[_Union[_swap_pb2.InputHashes, _Mapping]]] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., cache_id: _Optional[bytes] = ..., unsigned_plus_tx: _Optional[bytes] = ..., reject_reason: _Optional[str] = ...) -> None: ...
 
 class MsgZenexTransferRequestResponse(_message.Message):
     __slots__ = ("sign_req_id",)

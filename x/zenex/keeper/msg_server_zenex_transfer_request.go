@@ -31,6 +31,18 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		return nil, fmt.Errorf("swap status is not requested")
 	}
 
+	if msg.RejectReason != "" {
+		swap.Status = types.SwapStatus_SWAP_STATUS_REJECTED
+		swap.RejectReason = msg.RejectReason
+		err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
+		if err != nil {
+			return nil, err
+		}
+		return &types.MsgZenexTransferRequestResponse{
+			SignReqId: 0,
+		}, nil
+	}
+
 	keyIDs := make([]uint64, len(msg.DataForSigning))
 	hashes := make([]string, len(msg.DataForSigning))
 	for i, input := range msg.DataForSigning {

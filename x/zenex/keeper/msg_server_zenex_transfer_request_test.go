@@ -155,6 +155,48 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			expErr:    true,
 			expErrMsg: "invalid wallet type: WALLET_TYPE_NATIVE",
 		},
+		{
+			name: "Pass: Reject Swap",
+			input: &types.MsgZenexTransferRequest{
+				Creator:        types.DefaultParams().BtcProxyAddress,
+				SwapId:         zenextestutil.SampleSwap[0].SwapId,
+				UnsignedPlusTx: nil,
+				CacheId:        nil,
+				DataForSigning: nil,
+				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
+				RejectReason:   "some_reject_reason",
+			},
+			expErr: false,
+			want: &types.MsgZenexTransferRequestResponse{
+				SignReqId: 0,
+			},
+			wantSwap: types.Swap{
+				Creator: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				SwapId:  1,
+				Status:  types.SwapStatus_SWAP_STATUS_REJECTED,
+				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
+				Data: &types.SwapData{
+					BaseToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_ROCK,
+						PriceUSD:  zenextestutil.SampleRockBtcPrice,
+						Precision: 6,
+					},
+					QuoteToken: &validationtypes.AssetData{
+						Asset:     validationtypes.Asset_BTC,
+						PriceUSD:  zenextestutil.SampleBtcRockPrice,
+						Precision: 8,
+					},
+					Price:     math.LegacyNewDec(100000),
+					AmountIn:  100000,
+					AmountOut: 100000,
+				},
+				RockKeyId:      1,
+				BtcKeyId:       2,
+				RejectReason:   "some_reject_reason",
+				ZenexPoolKeyId: 3,
+				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
+			},
+		},
 	}
 
 	for _, tt := range tests {

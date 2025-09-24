@@ -52,6 +52,7 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 	walletType treasurytypes.WalletType,
 	cacheId []byte,
 	dataForSigning []*types.InputHashes,
+	rejectReason string,
 ) (string, error) {
 	msg := &types.MsgZenexTransferRequest{
 		Creator:        c.c.Identity.Address.String(),
@@ -60,6 +61,7 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 		WalletType:     walletType,
 		CacheId:        cacheId,
 		DataForSigning: dataForSigning,
+		RejectReason:   rejectReason,
 	}
 
 	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)

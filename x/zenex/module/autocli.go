@@ -72,6 +72,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "cache_id"},
 						{ProtoField: "data_for_signing"},
 					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"reject_reason": {Usage: "Optional reason for rejection (only used when status is rejected)"},
+					},
 				},
 				{
 					RpcMethod: "AcknowledgePoolTransfer",

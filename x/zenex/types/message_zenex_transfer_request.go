@@ -11,7 +11,7 @@ import (
 
 var _ sdk.Msg = &MsgZenexTransferRequest{}
 
-func NewMsgZenexTransferRequest(creator string, swapId uint64, unsignedPlusTx []byte, walletType treasurytypes.WalletType, cacheId []byte, dataForSigning []*InputHashes) *MsgZenexTransferRequest {
+func NewMsgZenexTransferRequest(creator string, swapId uint64, unsignedPlusTx []byte, walletType treasurytypes.WalletType, cacheId []byte, dataForSigning []*InputHashes, rejectReason string) *MsgZenexTransferRequest {
 	return &MsgZenexTransferRequest{
 		Creator:        creator,
 		SwapId:         swapId,
@@ -19,6 +19,7 @@ func NewMsgZenexTransferRequest(creator string, swapId uint64, unsignedPlusTx []
 		WalletType:     walletType,
 		CacheId:        cacheId,
 		DataForSigning: dataForSigning,
+		RejectReason:   rejectReason,
 	}
 }
 
@@ -30,6 +31,10 @@ func (msg *MsgZenexTransferRequest) ValidateBasic() error {
 
 	if msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET && msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET && msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET {
 		return fmt.Errorf("invalid wallet type: %s", msg.WalletType.String())
+	}
+
+	if msg.RejectReason != "" && (msg.CacheId != nil || msg.UnsignedPlusTx != nil || msg.DataForSigning != nil) {
+		return ErrInvalidRejectMsg
 	}
 
 	return nil

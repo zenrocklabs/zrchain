@@ -75,6 +75,7 @@ message MsgZenexTransferRequest {
   zrchain.treasury.WalletType wallet_type = 4;
   bytes                       cache_id = 5;
   bytes                       unsigned_plus_tx = 6;
+  string                      reject_reason = 7; // optional
 }
 
 // MsgZenexTransferResponse defines the response structure for executing a
