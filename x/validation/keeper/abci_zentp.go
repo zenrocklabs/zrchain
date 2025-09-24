@@ -72,7 +72,6 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
 				signerKey:         solParams.SignerKeyId,
-				eventID:           tx.Id,
 				rock:              true,
 			})
 			if err != nil {

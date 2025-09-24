@@ -191,7 +191,6 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
 				signerKey:         solParams.SignerKeyId,
-				eventID:           tx.Id,
 				zenbtc:            true,
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)

@@ -16,7 +16,6 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
-	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
@@ -1507,7 +1506,6 @@ type solanaMintTxRequest struct {
 	nonceAccountKey   uint64
 	nonceAuthorityKey uint64
 	signerKey         uint64
-	eventID           uint64 // used for EventStore sharding
 	rock              bool
 	zenbtc            bool
 }
@@ -1611,32 +1609,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		if err != nil {
 			return nil, err
 		}
-		// Derive EventStore PDAs via SDK helpers for clarity & reuse.
-		var eventStoreProgram, eventStoreGlobalConfig, zenbtcWrapShardPDA solana.PublicKey
-		if sp := k.zenBTCKeeper.GetSolanaParams(ctx); sp != nil && sp.EventStoreProgramId != "" {
-			if parsed, perr := solana.PublicKeyFromBase58(sp.EventStoreProgramId); perr != nil {
-				k.Logger(ctx).Warn("invalid EventStoreProgramId in zenbtc params; continuing with zero pubkeys", "value", sp.EventStoreProgramId, "error", perr)
-			} else {
-				eventStoreProgram = parsed
-				gc, gcErr := eventstore.DeriveGlobalConfigPDA(eventStoreProgram)
-				if gcErr != nil {
-					k.Logger(ctx).Warn("failed deriving global config PDA", "error", gcErr)
-				} else {
-					eventStoreGlobalConfig = gc
-				}
-				// Compute shard PDA only if we have a non-zero event ID (zero implies not yet assigned or unknown).
-				if req.eventID > 0 {
-					wrapShard, _, shardErr := eventstore.DeriveZenbtcWrapShardPDA(eventStoreProgram, req.eventID)
-					if shardErr != nil {
-						k.Logger(ctx).Warn("failed deriving zenbtc wrap shard PDA", "event_id", req.eventID, "error", shardErr)
-					} else {
-						zenbtcWrapShardPDA = wrapShard
-					}
-				}
-			}
-		} else {
-			k.Logger(ctx).Debug("EventStoreProgramId not set in zenbtc params; using zero pubkeys for Wrap instruction")
-		}
 
 		instructions = append(instructions, solzenbtc.Wrap(
 			programID,
@@ -1648,10 +1620,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			feeWalletAta,
 			recipientPubKey,
 			receiverAta,
-			eventStoreProgram,
-			eventStoreGlobalConfig,
-			programID, // calling program (zenbtc)
-			zenbtcWrapShardPDA,
 		))
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")
