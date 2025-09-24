@@ -8,6 +8,7 @@ import (
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
+	"go.uber.org/mock/gomock"
 )
 
 func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
@@ -25,7 +26,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        types.DefaultParams().BtcProxyAddress,
 				SwapId:         zenextestutil.SampleSwap[0].SwapId,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 			expErr: false,
@@ -64,7 +67,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        types.DefaultParams().BtcProxyAddress,
 				SwapId:         zenextestutil.SampleSwap[1].SwapId,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 			expErr: false,
@@ -103,7 +108,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        "zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn",
 				SwapId:         zenextestutil.SampleSwap[1].SwapId,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 			expErr:    true,
@@ -114,7 +121,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        types.DefaultParams().BtcProxyAddress,
 				SwapId:         1000,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 			expErr:    true,
@@ -125,7 +134,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:         zenextestutil.SampleSwap[2].SwapId,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET,
 			},
 			expErr:    true,
@@ -136,7 +147,9 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			input: &types.MsgZenexTransferRequest{
 				Creator:        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				SwapId:         zenextestutil.SampleSwap[0].SwapId,
-				UnsignedPlusTx: []byte("unsigned_tx"),
+				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
+				CacheId:        zenextestutil.Btc_tx[0].CacheId,
+				DataForSigning: zenextestutil.Btc_tx[0].DataForSigning,
 				WalletType:     treasurytypes.WalletType_WALLET_TYPE_NATIVE,
 			},
 			expErr:    true,
@@ -169,37 +182,17 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			params := types.DefaultParams()
 			s.zenexKeeper.SetParams(s.ctx, params)
 
-			var expectedBitcoinTx *treasurytypes.MsgNewSignTransactionRequest
 			if !tt.expErr {
-				switch tt.wantSwap.Pair {
-				case types.TradePair_TRADE_PAIR_ROCK_BTC:
-					expectedBitcoinTx = treasurytypes.NewMsgNewSignTransactionRequest(
-						tt.wantSwap.Creator,            // txCreator from swap
-						[]uint64{tt.wantSwap.BtcKeyId}, // senderKeyId from swap for "rockbtc" pair
-						tt.input.WalletType,
-						tt.input.UnsignedPlusTx,
-						nil,
-						treasurytypes.DefaultParams().DefaultBtl,
-					)
-				case types.TradePair_TRADE_PAIR_BTC_ROCK:
-					expectedBitcoinTx = treasurytypes.NewMsgNewSignTransactionRequest(
-						params.BtcProxyAddress,
-						[]uint64{tt.wantSwap.ZenexPoolKeyId},
-						tt.input.WalletType,
-						tt.input.UnsignedPlusTx,
-						nil,
-						treasurytypes.DefaultParams().DefaultBtl,
-					)
+				swap, err := s.zenexKeeper.SwapsStore.Get(s.ctx, tt.input.SwapId)
+				s.Require().NoError(err)
+
+				s.treasuryKeeper.EXPECT().HandleSignatureRequest(s.ctx, gomock.Any()).Return(&treasurytypes.MsgNewSignatureRequestResponse{
+					SigReqId: tt.want.SignReqId,
+				}, nil).AnyTimes()
+
+				if swap.BtcKeyId > 0 {
+					s.treasuryKeeper.EXPECT().GetKey(s.ctx, swap.BtcKeyId).Return(&treasurytestutil.DefaultKeys[swap.BtcKeyId], nil).AnyTimes()
 				}
-
-				s.treasuryKeeper.EXPECT().MakeSignTransactionRequest(s.ctx, expectedBitcoinTx).Return(&treasurytypes.MsgNewSignTransactionRequestResponse{
-					Id: tt.want.SignReqId,
-				}, nil)
-			}
-
-			// Only set up GetKey expectation if we have a valid BtcKeyId
-			if tt.wantSwap.BtcKeyId > 0 {
-				s.treasuryKeeper.EXPECT().GetKey(s.ctx, tt.wantSwap.BtcKeyId).Return(&treasurytestutil.DefaultKeys[tt.wantSwap.BtcKeyId-1], nil).AnyTimes()
 			}
 
 			zenexTransferResult, err := s.msgServer.ZenexTransferRequest(s.ctx, tt.input)
