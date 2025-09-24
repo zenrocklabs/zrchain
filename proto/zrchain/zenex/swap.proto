@@ -20,7 +20,7 @@ message Swap {
   uint64 btc_key_id = 7;
   uint64 zenex_pool_key_id = 8;
   string workspace = 9;
-  uint64 sign_tx_id = 10;
+  uint64 sign_req_id = 10;
   string source_tx_hash = 11;
   string reject_reason = 12;
 }
@@ -69,4 +69,10 @@ enum TradePair {
   TRADE_PAIR_ROCK_BTC = 1;
   // The trade pair is BTC_ROCK
   TRADE_PAIR_BTC_ROCK = 2;
+}
+
+// InputHashes defines the input hashes for a transfer request.
+message InputHashes {
+  string hash = 1;
+  uint64 key_id = 2;
 }

@@ -32,7 +32,7 @@ TRADE_PAIR_ROCK_BTC: TradePair
 TRADE_PAIR_BTC_ROCK: TradePair
 
 class Swap(_message.Message):
-    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_tx_id", "source_tx_hash", "reject_reason")
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_req_id", "source_tx_hash", "reject_reason")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -42,7 +42,7 @@ class Swap(_message.Message):
     BTC_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     ZENEX_POOL_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     WORKSPACE_FIELD_NUMBER: _ClassVar[int]
-    SIGN_TX_ID_FIELD_NUMBER: _ClassVar[int]
+    SIGN_REQ_ID_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
     REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
     creator: str
@@ -54,10 +54,10 @@ class Swap(_message.Message):
     btc_key_id: int
     zenex_pool_key_id: int
     workspace: str
-    sign_tx_id: int
+    sign_req_id: int
     source_tx_hash: str
     reject_reason: str
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[_Union[TradePair, str]] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_tx_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ...) -> None: ...
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[_Union[TradePair, str]] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_req_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")
@@ -80,3 +80,11 @@ class SwapPair(_message.Message):
     base_token: _asset_data_pb2.AssetData
     quote_token: _asset_data_pb2.AssetData
     def __init__(self, base_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ..., quote_token: _Optional[_Union[_asset_data_pb2.AssetData, _Mapping]] = ...) -> None: ...
+
+class InputHashes(_message.Message):
+    __slots__ = ("hash", "key_id")
+    HASH_FIELD_NUMBER: _ClassVar[int]
+    KEY_ID_FIELD_NUMBER: _ClassVar[int]
+    hash: str
+    key_id: int
+    def __init__(self, hash: _Optional[str] = ..., key_id: _Optional[int] = ...) -> None: ...

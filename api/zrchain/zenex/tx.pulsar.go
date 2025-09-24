@@ -1952,12 +1952,66 @@ func (x *fastReflection_MsgSwapRequestResponse) ProtoMethods() *protoiface.Metho
 	}
 }
 
+var _ protoreflect.List = (*_MsgZenexTransferRequest_3_list)(nil)
+
+type _MsgZenexTransferRequest_3_list struct {
+	list *[]*InputHashes
+}
+
+func (x *_MsgZenexTransferRequest_3_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_MsgZenexTransferRequest_3_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_MsgZenexTransferRequest_3_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*InputHashes)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_MsgZenexTransferRequest_3_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*InputHashes)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_MsgZenexTransferRequest_3_list) AppendMutable() protoreflect.Value {
+	v := new(InputHashes)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_MsgZenexTransferRequest_3_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_MsgZenexTransferRequest_3_list) NewElement() protoreflect.Value {
+	v := new(InputHashes)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_MsgZenexTransferRequest_3_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_MsgZenexTransferRequest             protoreflect.MessageDescriptor
-	fd_MsgZenexTransferRequest_creator     protoreflect.FieldDescriptor
-	fd_MsgZenexTransferRequest_swap_id     protoreflect.FieldDescriptor
-	fd_MsgZenexTransferRequest_unsigned_tx protoreflect.FieldDescriptor
-	fd_MsgZenexTransferRequest_wallet_type protoreflect.FieldDescriptor
+	md_MsgZenexTransferRequest                  protoreflect.MessageDescriptor
+	fd_MsgZenexTransferRequest_creator          protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_swap_id          protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_data_for_signing protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_wallet_type      protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_cache_id         protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_unsigned_plus_tx protoreflect.FieldDescriptor
+	fd_MsgZenexTransferRequest_reject_reason    protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -1965,8 +2019,11 @@ func init() {
 	md_MsgZenexTransferRequest = File_zrchain_zenex_tx_proto.Messages().ByName("MsgZenexTransferRequest")
 	fd_MsgZenexTransferRequest_creator = md_MsgZenexTransferRequest.Fields().ByName("creator")
 	fd_MsgZenexTransferRequest_swap_id = md_MsgZenexTransferRequest.Fields().ByName("swap_id")
-	fd_MsgZenexTransferRequest_unsigned_tx = md_MsgZenexTransferRequest.Fields().ByName("unsigned_tx")
+	fd_MsgZenexTransferRequest_data_for_signing = md_MsgZenexTransferRequest.Fields().ByName("data_for_signing")
 	fd_MsgZenexTransferRequest_wallet_type = md_MsgZenexTransferRequest.Fields().ByName("wallet_type")
+	fd_MsgZenexTransferRequest_cache_id = md_MsgZenexTransferRequest.Fields().ByName("cache_id")
+	fd_MsgZenexTransferRequest_unsigned_plus_tx = md_MsgZenexTransferRequest.Fields().ByName("unsigned_plus_tx")
+	fd_MsgZenexTransferRequest_reject_reason = md_MsgZenexTransferRequest.Fields().ByName("reject_reason")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgZenexTransferRequest)(nil)
@@ -2046,15 +2103,33 @@ func (x *fastReflection_MsgZenexTransferRequest) Range(f func(protoreflect.Field
 			return
 		}
 	}
-	if len(x.UnsignedTx) != 0 {
-		value := protoreflect.ValueOfBytes(x.UnsignedTx)
-		if !f(fd_MsgZenexTransferRequest_unsigned_tx, value) {
+	if len(x.DataForSigning) != 0 {
+		value := protoreflect.ValueOfList(&_MsgZenexTransferRequest_3_list{list: &x.DataForSigning})
+		if !f(fd_MsgZenexTransferRequest_data_for_signing, value) {
 			return
 		}
 	}
 	if x.WalletType != 0 {
 		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.WalletType))
 		if !f(fd_MsgZenexTransferRequest_wallet_type, value) {
+			return
+		}
+	}
+	if len(x.CacheId) != 0 {
+		value := protoreflect.ValueOfBytes(x.CacheId)
+		if !f(fd_MsgZenexTransferRequest_cache_id, value) {
+			return
+		}
+	}
+	if len(x.UnsignedPlusTx) != 0 {
+		value := protoreflect.ValueOfBytes(x.UnsignedPlusTx)
+		if !f(fd_MsgZenexTransferRequest_unsigned_plus_tx, value) {
+			return
+		}
+	}
+	if x.RejectReason != "" {
+		value := protoreflect.ValueOfString(x.RejectReason)
+		if !f(fd_MsgZenexTransferRequest_reject_reason, value) {
 			return
 		}
 	}
@@ -2077,10 +2152,16 @@ func (x *fastReflection_MsgZenexTransferRequest) Has(fd protoreflect.FieldDescri
 		return x.Creator != ""
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		return x.SwapId != uint64(0)
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		return len(x.UnsignedTx) != 0
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		return len(x.DataForSigning) != 0
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		return x.WalletType != 0
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		return len(x.CacheId) != 0
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		return len(x.UnsignedPlusTx) != 0
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		return x.RejectReason != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2101,10 +2182,16 @@ func (x *fastReflection_MsgZenexTransferRequest) Clear(fd protoreflect.FieldDesc
 		x.Creator = ""
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		x.SwapId = uint64(0)
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		x.UnsignedTx = nil
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		x.DataForSigning = nil
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		x.WalletType = 0
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		x.CacheId = nil
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		x.UnsignedPlusTx = nil
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		x.RejectReason = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2127,12 +2214,24 @@ func (x *fastReflection_MsgZenexTransferRequest) Get(descriptor protoreflect.Fie
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		value := x.SwapId
 		return protoreflect.ValueOfUint64(value)
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		value := x.UnsignedTx
-		return protoreflect.ValueOfBytes(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		if len(x.DataForSigning) == 0 {
+			return protoreflect.ValueOfList(&_MsgZenexTransferRequest_3_list{})
+		}
+		listValue := &_MsgZenexTransferRequest_3_list{list: &x.DataForSigning}
+		return protoreflect.ValueOfList(listValue)
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		value := x.WalletType
 		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		value := x.CacheId
+		return protoreflect.ValueOfBytes(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		value := x.UnsignedPlusTx
+		return protoreflect.ValueOfBytes(value)
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		value := x.RejectReason
+		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2157,10 +2256,18 @@ func (x *fastReflection_MsgZenexTransferRequest) Set(fd protoreflect.FieldDescri
 		x.Creator = value.Interface().(string)
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		x.SwapId = value.Uint()
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		x.UnsignedTx = value.Bytes()
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		lv := value.List()
+		clv := lv.(*_MsgZenexTransferRequest_3_list)
+		x.DataForSigning = *clv.list
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		x.WalletType = (treasury.WalletType)(value.Enum())
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		x.CacheId = value.Bytes()
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		x.UnsignedPlusTx = value.Bytes()
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		x.RejectReason = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2181,14 +2288,24 @@ func (x *fastReflection_MsgZenexTransferRequest) Set(fd protoreflect.FieldDescri
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgZenexTransferRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		if x.DataForSigning == nil {
+			x.DataForSigning = []*InputHashes{}
+		}
+		value := &_MsgZenexTransferRequest_3_list{list: &x.DataForSigning}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.zenex.MsgZenexTransferRequest.creator":
 		panic(fmt.Errorf("field creator of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		panic(fmt.Errorf("field swap_id of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		panic(fmt.Errorf("field unsigned_tx of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		panic(fmt.Errorf("field wallet_type of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		panic(fmt.Errorf("field cache_id of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		panic(fmt.Errorf("field unsigned_plus_tx of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		panic(fmt.Errorf("field reject_reason of message zrchain.zenex.MsgZenexTransferRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2206,10 +2323,17 @@ func (x *fastReflection_MsgZenexTransferRequest) NewField(fd protoreflect.FieldD
 		return protoreflect.ValueOfString("")
 	case "zrchain.zenex.MsgZenexTransferRequest.swap_id":
 		return protoreflect.ValueOfUint64(uint64(0))
-	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_tx":
-		return protoreflect.ValueOfBytes(nil)
+	case "zrchain.zenex.MsgZenexTransferRequest.data_for_signing":
+		list := []*InputHashes{}
+		return protoreflect.ValueOfList(&_MsgZenexTransferRequest_3_list{list: &list})
 	case "zrchain.zenex.MsgZenexTransferRequest.wallet_type":
 		return protoreflect.ValueOfEnum(0)
+	case "zrchain.zenex.MsgZenexTransferRequest.cache_id":
+		return protoreflect.ValueOfBytes(nil)
+	case "zrchain.zenex.MsgZenexTransferRequest.unsigned_plus_tx":
+		return protoreflect.ValueOfBytes(nil)
+	case "zrchain.zenex.MsgZenexTransferRequest.reject_reason":
+		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequest"))
@@ -2286,12 +2410,26 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 		if x.SwapId != 0 {
 			n += 1 + runtime.Sov(uint64(x.SwapId))
 		}
-		l = len(x.UnsignedTx)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if len(x.DataForSigning) > 0 {
+			for _, e := range x.DataForSigning {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
 		}
 		if x.WalletType != 0 {
 			n += 1 + runtime.Sov(uint64(x.WalletType))
+		}
+		l = len(x.CacheId)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.UnsignedPlusTx)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.RejectReason)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -2322,17 +2460,47 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
+		if len(x.RejectReason) > 0 {
+			i -= len(x.RejectReason)
+			copy(dAtA[i:], x.RejectReason)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.RejectReason)))
+			i--
+			dAtA[i] = 0x3a
+		}
+		if len(x.UnsignedPlusTx) > 0 {
+			i -= len(x.UnsignedPlusTx)
+			copy(dAtA[i:], x.UnsignedPlusTx)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UnsignedPlusTx)))
+			i--
+			dAtA[i] = 0x32
+		}
+		if len(x.CacheId) > 0 {
+			i -= len(x.CacheId)
+			copy(dAtA[i:], x.CacheId)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.CacheId)))
+			i--
+			dAtA[i] = 0x2a
+		}
 		if x.WalletType != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.WalletType))
 			i--
 			dAtA[i] = 0x20
 		}
-		if len(x.UnsignedTx) > 0 {
-			i -= len(x.UnsignedTx)
-			copy(dAtA[i:], x.UnsignedTx)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UnsignedTx)))
-			i--
-			dAtA[i] = 0x1a
+		if len(x.DataForSigning) > 0 {
+			for iNdEx := len(x.DataForSigning) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.DataForSigning[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x1a
+			}
 		}
 		if x.SwapId != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.SwapId))
@@ -2448,7 +2616,60 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 				}
 			case 3:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UnsignedTx", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DataForSigning", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.DataForSigning = append(x.DataForSigning, &InputHashes{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.DataForSigning[len(x.DataForSigning)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field WalletType", wireType)
+				}
+				x.WalletType = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.WalletType |= treasury.WalletType(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 5:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field CacheId", wireType)
 				}
 				var byteLen int
 				for shift := uint(0); ; shift += 7 {
@@ -2475,16 +2696,16 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.UnsignedTx = append(x.UnsignedTx[:0], dAtA[iNdEx:postIndex]...)
-				if x.UnsignedTx == nil {
-					x.UnsignedTx = []byte{}
+				x.CacheId = append(x.CacheId[:0], dAtA[iNdEx:postIndex]...)
+				if x.CacheId == nil {
+					x.CacheId = []byte{}
 				}
 				iNdEx = postIndex
-			case 4:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field WalletType", wireType)
+			case 6:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UnsignedPlusTx", wireType)
 				}
-				x.WalletType = 0
+				var byteLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2494,11 +2715,58 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.WalletType |= treasury.WalletType(b&0x7F) << shift
+					byteLen |= int(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
+				if byteLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + byteLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.UnsignedPlusTx = append(x.UnsignedPlusTx[:0], dAtA[iNdEx:postIndex]...)
+				if x.UnsignedPlusTx == nil {
+					x.UnsignedPlusTx = []byte{}
+				}
+				iNdEx = postIndex
+			case 7:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RejectReason", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.RejectReason = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2535,14 +2803,14 @@ func (x *fastReflection_MsgZenexTransferRequest) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgZenexTransferRequestResponse            protoreflect.MessageDescriptor
-	fd_MsgZenexTransferRequestResponse_sign_tx_id protoreflect.FieldDescriptor
+	md_MsgZenexTransferRequestResponse             protoreflect.MessageDescriptor
+	fd_MsgZenexTransferRequestResponse_sign_req_id protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_zrchain_zenex_tx_proto_init()
 	md_MsgZenexTransferRequestResponse = File_zrchain_zenex_tx_proto.Messages().ByName("MsgZenexTransferRequestResponse")
-	fd_MsgZenexTransferRequestResponse_sign_tx_id = md_MsgZenexTransferRequestResponse.Fields().ByName("sign_tx_id")
+	fd_MsgZenexTransferRequestResponse_sign_req_id = md_MsgZenexTransferRequestResponse.Fields().ByName("sign_req_id")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgZenexTransferRequestResponse)(nil)
@@ -2610,9 +2878,9 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Interface() protoreflec
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.SignTxId != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.SignTxId)
-		if !f(fd_MsgZenexTransferRequestResponse_sign_tx_id, value) {
+	if x.SignReqId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.SignReqId)
+		if !f(fd_MsgZenexTransferRequestResponse_sign_req_id, value) {
 			return
 		}
 	}
@@ -2631,8 +2899,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Range(f func(protorefle
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
-		return x.SignTxId != uint64(0)
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
+		return x.SignReqId != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
@@ -2649,8 +2917,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Has(fd protoreflect.Fie
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
-		x.SignTxId = uint64(0)
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
+		x.SignReqId = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
@@ -2667,8 +2935,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Clear(fd protoreflect.F
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
-		value := x.SignTxId
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
+		value := x.SignReqId
 		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
@@ -2690,8 +2958,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Get(descriptor protoref
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
-		x.SignTxId = value.Uint()
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
+		x.SignReqId = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
@@ -2712,8 +2980,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Set(fd protoreflect.Fie
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgZenexTransferRequestResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
-		panic(fmt.Errorf("field sign_tx_id of message zrchain.zenex.MsgZenexTransferRequestResponse is not mutable"))
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
+		panic(fmt.Errorf("field sign_req_id of message zrchain.zenex.MsgZenexTransferRequestResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.MsgZenexTransferRequestResponse"))
@@ -2727,7 +2995,7 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) Mutable(fd protoreflect
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_MsgZenexTransferRequestResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_tx_id":
+	case "zrchain.zenex.MsgZenexTransferRequestResponse.sign_req_id":
 		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
@@ -2798,8 +3066,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) ProtoMethods() *protoif
 		var n int
 		var l int
 		_ = l
-		if x.SignTxId != 0 {
-			n += 1 + runtime.Sov(uint64(x.SignTxId))
+		if x.SignReqId != 0 {
+			n += 1 + runtime.Sov(uint64(x.SignReqId))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -2830,8 +3098,8 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) ProtoMethods() *protoif
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.SignTxId != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.SignTxId))
+		if x.SignReqId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SignReqId))
 			i--
 			dAtA[i] = 0x8
 		}
@@ -2886,9 +3154,9 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) ProtoMethods() *protoif
 			switch fieldNum {
 			case 1:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SignTxId", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SignReqId", wireType)
 				}
-				x.SignTxId = 0
+				x.SignReqId = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2898,7 +3166,7 @@ func (x *fastReflection_MsgZenexTransferRequestResponse) ProtoMethods() *protoif
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.SignTxId |= uint64(b&0x7F) << shift
+					x.SignReqId |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -4145,10 +4413,13 @@ type MsgZenexTransferRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Creator    string              `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	SwapId     uint64              `protobuf:"varint,2,opt,name=swap_id,json=swapId,proto3" json:"swap_id,omitempty"`
-	UnsignedTx []byte              `protobuf:"bytes,3,opt,name=unsigned_tx,json=unsignedTx,proto3" json:"unsigned_tx,omitempty"`
-	WalletType treasury.WalletType `protobuf:"varint,4,opt,name=wallet_type,json=walletType,proto3,enum=zrchain.treasury.WalletType" json:"wallet_type,omitempty"`
+	Creator        string              `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	SwapId         uint64              `protobuf:"varint,2,opt,name=swap_id,json=swapId,proto3" json:"swap_id,omitempty"`
+	DataForSigning []*InputHashes      `protobuf:"bytes,3,rep,name=data_for_signing,json=dataForSigning,proto3" json:"data_for_signing,omitempty"`
+	WalletType     treasury.WalletType `protobuf:"varint,4,opt,name=wallet_type,json=walletType,proto3,enum=zrchain.treasury.WalletType" json:"wallet_type,omitempty"`
+	CacheId        []byte              `protobuf:"bytes,5,opt,name=cache_id,json=cacheId,proto3" json:"cache_id,omitempty"`
+	UnsignedPlusTx []byte              `protobuf:"bytes,6,opt,name=unsigned_plus_tx,json=unsignedPlusTx,proto3" json:"unsigned_plus_tx,omitempty"`
+	RejectReason   string              `protobuf:"bytes,7,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"` // optional
 }
 
 func (x *MsgZenexTransferRequest) Reset() {
@@ -4185,9 +4456,9 @@ func (x *MsgZenexTransferRequest) GetSwapId() uint64 {
 	return 0
 }
 
-func (x *MsgZenexTransferRequest) GetUnsignedTx() []byte {
+func (x *MsgZenexTransferRequest) GetDataForSigning() []*InputHashes {
 	if x != nil {
-		return x.UnsignedTx
+		return x.DataForSigning
 	}
 	return nil
 }
@@ -4199,6 +4470,27 @@ func (x *MsgZenexTransferRequest) GetWalletType() treasury.WalletType {
 	return treasury.WalletType(0)
 }
 
+func (x *MsgZenexTransferRequest) GetCacheId() []byte {
+	if x != nil {
+		return x.CacheId
+	}
+	return nil
+}
+
+func (x *MsgZenexTransferRequest) GetUnsignedPlusTx() []byte {
+	if x != nil {
+		return x.UnsignedPlusTx
+	}
+	return nil
+}
+
+func (x *MsgZenexTransferRequest) GetRejectReason() string {
+	if x != nil {
+		return x.RejectReason
+	}
+	return ""
+}
+
 // MsgZenexTransferResponse defines the response structure for executing a
 // MsgZenexTransfer message.
 type MsgZenexTransferRequestResponse struct {
@@ -4206,7 +4498,7 @@ type MsgZenexTransferRequestResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SignTxId uint64 `protobuf:"varint,1,opt,name=sign_tx_id,json=signTxId,proto3" json:"sign_tx_id,omitempty"`
+	SignReqId uint64 `protobuf:"varint,1,opt,name=sign_req_id,json=signReqId,proto3" json:"sign_req_id,omitempty"`
 }
 
 func (x *MsgZenexTransferRequestResponse) Reset() {
@@ -4229,9 +4521,9 @@ func (*MsgZenexTransferRequestResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_zenex_tx_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *MsgZenexTransferRequestResponse) GetSignTxId() uint64 {
+func (x *MsgZenexTransferRequestResponse) GetSignReqId() uint64 {
 	if x != nil {
-		return x.SignTxId
+		return x.SignReqId
 	}
 	return 0
 }
@@ -4379,77 +4671,86 @@ var file_zrchain_zenex_tx_proto_rawDesc = []byte{
 	0x22, 0x31, 0x0a, 0x16, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77,
 	0x61, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61,
-	0x70, 0x49, 0x64, 0x22, 0xba, 0x01, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78,
+	0x70, 0x49, 0x64, 0x22, 0xc9, 0x02, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78,
 	0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77, 0x61,
 	0x70, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61, 0x70,
-	0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x74,
-	0x78, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65,
-	0x64, 0x54, 0x78, 0x12, 0x3d, 0x0a, 0x0b, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x5f, 0x74, 0x79,
-	0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79, 0x2e, 0x57, 0x61, 0x6c, 0x6c,
-	0x65, 0x74, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0a, 0x77, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79,
-	0x70, 0x65, 0x3a, 0x0c, 0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72,
-	0x22, 0x3f, 0x0a, 0x1f, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e,
-	0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x1c, 0x0a, 0x0a, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x74, 0x78, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x73, 0x69, 0x67, 0x6e, 0x54, 0x78, 0x49,
-	0x64, 0x22, 0xdb, 0x01, 0x0a, 0x1a, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c,
-	0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72,
-	0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x17, 0x0a, 0x07, 0x73, 0x77,
-	0x61, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77, 0x61,
-	0x70, 0x49, 0x64, 0x12, 0x24, 0x0a, 0x0e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x74, 0x78,
-	0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x12, 0x31, 0x0a, 0x06, 0x73, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x53, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x23, 0x0a, 0x0d,
-	0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x05, 0x20,
+	0x49, 0x64, 0x12, 0x44, 0x0a, 0x10, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x66, 0x6f, 0x72, 0x5f, 0x73,
+	0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x7a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x49, 0x6e, 0x70,
+	0x75, 0x74, 0x48, 0x61, 0x73, 0x68, 0x65, 0x73, 0x52, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x46, 0x6f,
+	0x72, 0x53, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x12, 0x3d, 0x0a, 0x0b, 0x77, 0x61, 0x6c, 0x6c,
+	0x65, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1c, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x74, 0x72, 0x65, 0x61, 0x73, 0x75, 0x72, 0x79,
+	0x2e, 0x57, 0x61, 0x6c, 0x6c, 0x65, 0x74, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0a, 0x77, 0x61, 0x6c,
+	0x6c, 0x65, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x63, 0x61, 0x63, 0x68, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x61, 0x63, 0x68, 0x65,
+	0x49, 0x64, 0x12, 0x28, 0x0a, 0x10, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x70,
+	0x6c, 0x75, 0x73, 0x5f, 0x74, 0x78, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0e, 0x75, 0x6e,
+	0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x50, 0x6c, 0x75, 0x73, 0x54, 0x78, 0x12, 0x23, 0x0a, 0x0d,
+	0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x07, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f,
 	0x6e, 0x3a, 0x0c, 0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x22,
-	0x24, 0x0a, 0x22, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64, 0x67,
-	0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xa2, 0x03, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x56, 0x0a,
-	0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x1e, 0x2e,
-	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x26, 0x2e,
-	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x53, 0x0a, 0x0b, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a,
+	0x41, 0x0a, 0x1f, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73,
+	0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x1e, 0x0a, 0x0b, 0x73, 0x69, 0x67, 0x6e, 0x5f, 0x72, 0x65, 0x71, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x65, 0x71,
+	0x49, 0x64, 0x22, 0xdb, 0x01, 0x0a, 0x1a, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77,
+	0x6c, 0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65,
+	0x72, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x17, 0x0a, 0x07, 0x73,
+	0x77, 0x61, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x77,
+	0x61, 0x70, 0x49, 0x64, 0x12, 0x24, 0x0a, 0x0e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x74,
+	0x78, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x12, 0x31, 0x0a, 0x06, 0x73, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x53,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x23, 0x0a,
+	0x0d, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73,
+	0x6f, 0x6e, 0x3a, 0x0c, 0x82, 0xe7, 0xb0, 0x2a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x6f, 0x72,
+	0x22, 0x24, 0x0a, 0x22, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64,
+	0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xa2, 0x03, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x56,
+	0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x1e,
+	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d,
+	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x26,
+	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d,
+	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x53, 0x0a, 0x0b, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a,
 	0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65,
-	0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x14, 0x5a, 0x65,
-	0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e,
-	0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73,
-	0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63,
-	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a, 0x65,
-	0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x17, 0x41, 0x63,
-	0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61,
-	0x6e, 0x73, 0x66, 0x65, 0x72, 0x12, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
-	0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c,
-	0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72,
-	0x1a, 0x31, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78,
-	0x2e, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x50,
-	0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xad, 0x01, 0x0a, 0x11, 0x63,
-	0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78,
-	0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3a, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x5a, 0x65, 0x6e, 0x72, 0x6f, 0x63, 0x6b, 0x2d,
-	0x46, 0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2f, 0x76, 0x36, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02, 0x0d,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0xca, 0x02, 0x0d,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0xe2, 0x02, 0x19,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x5c, 0x47, 0x50,
-	0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6e, 0x0a, 0x14, 0x5a,
+	0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65,
+	0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e,
+	0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x5a,
+	0x65, 0x6e, 0x65, 0x78, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x17, 0x41,
+	0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72,
+	0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x12, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2e, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0x2e, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77,
+	0x6c, 0x65, 0x64, 0x67, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65,
+	0x72, 0x1a, 0x31, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65,
+	0x78, 0x2e, 0x4d, 0x73, 0x67, 0x41, 0x63, 0x6b, 0x6e, 0x6f, 0x77, 0x6c, 0x65, 0x64, 0x67, 0x65,
+	0x50, 0x6f, 0x6f, 0x6c, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xad, 0x01, 0x0a, 0x11,
+	0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x7a, 0x65, 0x6e, 0x65,
+	0x78, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3a, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x5a, 0x65, 0x6e, 0x72, 0x6f, 0x63, 0x6b,
+	0x2d, 0x46, 0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2f, 0x76, 0x36, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2f, 0x7a, 0x65, 0x6e, 0x65, 0x78, 0xa2, 0x02, 0x03, 0x5a, 0x5a, 0x58, 0xaa, 0x02,
+	0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0xca, 0x02,
+	0x0d, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0xe2, 0x02,
+	0x19, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x5c, 0x47,
+	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x5a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x5a, 0x65, 0x6e, 0x65, 0x78, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4476,27 +4777,29 @@ var file_zrchain_zenex_tx_proto_goTypes = []interface{}{
 	(*MsgAcknowledgePoolTransferResponse)(nil), // 7: zrchain.zenex.MsgAcknowledgePoolTransferResponse
 	(*Params)(nil),                             // 8: zrchain.zenex.Params
 	(TradePair)(0),                             // 9: zrchain.zenex.TradePair
-	(treasury.WalletType)(0),                   // 10: zrchain.treasury.WalletType
-	(SwapStatus)(0),                            // 11: zrchain.zenex.SwapStatus
+	(*InputHashes)(nil),                        // 10: zrchain.zenex.InputHashes
+	(treasury.WalletType)(0),                   // 11: zrchain.treasury.WalletType
+	(SwapStatus)(0),                            // 12: zrchain.zenex.SwapStatus
 }
 var file_zrchain_zenex_tx_proto_depIdxs = []int32{
 	8,  // 0: zrchain.zenex.MsgUpdateParams.params:type_name -> zrchain.zenex.Params
 	9,  // 1: zrchain.zenex.MsgSwapRequest.pair:type_name -> zrchain.zenex.TradePair
-	10, // 2: zrchain.zenex.MsgZenexTransferRequest.wallet_type:type_name -> zrchain.treasury.WalletType
-	11, // 3: zrchain.zenex.MsgAcknowledgePoolTransfer.status:type_name -> zrchain.zenex.SwapStatus
-	0,  // 4: zrchain.zenex.Msg.UpdateParams:input_type -> zrchain.zenex.MsgUpdateParams
-	2,  // 5: zrchain.zenex.Msg.SwapRequest:input_type -> zrchain.zenex.MsgSwapRequest
-	4,  // 6: zrchain.zenex.Msg.ZenexTransferRequest:input_type -> zrchain.zenex.MsgZenexTransferRequest
-	6,  // 7: zrchain.zenex.Msg.AcknowledgePoolTransfer:input_type -> zrchain.zenex.MsgAcknowledgePoolTransfer
-	1,  // 8: zrchain.zenex.Msg.UpdateParams:output_type -> zrchain.zenex.MsgUpdateParamsResponse
-	3,  // 9: zrchain.zenex.Msg.SwapRequest:output_type -> zrchain.zenex.MsgSwapRequestResponse
-	5,  // 10: zrchain.zenex.Msg.ZenexTransferRequest:output_type -> zrchain.zenex.MsgZenexTransferRequestResponse
-	7,  // 11: zrchain.zenex.Msg.AcknowledgePoolTransfer:output_type -> zrchain.zenex.MsgAcknowledgePoolTransferResponse
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	10, // 2: zrchain.zenex.MsgZenexTransferRequest.data_for_signing:type_name -> zrchain.zenex.InputHashes
+	11, // 3: zrchain.zenex.MsgZenexTransferRequest.wallet_type:type_name -> zrchain.treasury.WalletType
+	12, // 4: zrchain.zenex.MsgAcknowledgePoolTransfer.status:type_name -> zrchain.zenex.SwapStatus
+	0,  // 5: zrchain.zenex.Msg.UpdateParams:input_type -> zrchain.zenex.MsgUpdateParams
+	2,  // 6: zrchain.zenex.Msg.SwapRequest:input_type -> zrchain.zenex.MsgSwapRequest
+	4,  // 7: zrchain.zenex.Msg.ZenexTransferRequest:input_type -> zrchain.zenex.MsgZenexTransferRequest
+	6,  // 8: zrchain.zenex.Msg.AcknowledgePoolTransfer:input_type -> zrchain.zenex.MsgAcknowledgePoolTransfer
+	1,  // 9: zrchain.zenex.Msg.UpdateParams:output_type -> zrchain.zenex.MsgUpdateParamsResponse
+	3,  // 10: zrchain.zenex.Msg.SwapRequest:output_type -> zrchain.zenex.MsgSwapRequestResponse
+	5,  // 11: zrchain.zenex.Msg.ZenexTransferRequest:output_type -> zrchain.zenex.MsgZenexTransferRequestResponse
+	7,  // 12: zrchain.zenex.Msg.AcknowledgePoolTransfer:output_type -> zrchain.zenex.MsgAcknowledgePoolTransferResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_zenex_tx_proto_init() }

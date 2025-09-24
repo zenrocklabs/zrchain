@@ -99,19 +99,19 @@ func (mr *MockTreasuryKeeperMockRecorder) GetKey(ctx, keyID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKey", reflect.TypeOf((*MockTreasuryKeeper)(nil).GetKey), ctx, keyID)
 }
 
-// MakeSignTransactionRequest mocks base method.
-func (m *MockTreasuryKeeper) MakeSignTransactionRequest(goCtx context.Context, msg *types0.MsgNewSignTransactionRequest) (*types0.MsgNewSignTransactionRequestResponse, error) {
+// HandleSignatureRequest mocks base method.
+func (m *MockTreasuryKeeper) HandleSignatureRequest(ctx types2.Context, msg *types0.MsgNewSignatureRequest) (*types0.MsgNewSignatureRequestResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MakeSignTransactionRequest", goCtx, msg)
-	ret0, _ := ret[0].(*types0.MsgNewSignTransactionRequestResponse)
+	ret := m.ctrl.Call(m, "HandleSignatureRequest", ctx, msg)
+	ret0, _ := ret[0].(*types0.MsgNewSignatureRequestResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// MakeSignTransactionRequest indicates an expected call of MakeSignTransactionRequest.
-func (mr *MockTreasuryKeeperMockRecorder) MakeSignTransactionRequest(goCtx, msg any) *gomock.Call {
+// HandleSignatureRequest indicates an expected call of HandleSignatureRequest.
+func (mr *MockTreasuryKeeperMockRecorder) HandleSignatureRequest(ctx, msg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeSignTransactionRequest", reflect.TypeOf((*MockTreasuryKeeper)(nil).MakeSignTransactionRequest), goCtx, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleSignatureRequest", reflect.TypeOf((*MockTreasuryKeeper)(nil).HandleSignatureRequest), ctx, msg)
 }
 
 // MockValidationKeeper is a mock of ValidationKeeper interface.

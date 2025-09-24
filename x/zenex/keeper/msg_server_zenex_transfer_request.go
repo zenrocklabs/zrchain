@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,34 +33,49 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		return nil, fmt.Errorf("swap status is not requested")
 	}
 
-	var senderKeyId uint64
-	var txCreator string
-	switch swap.Pair {
-	case types.TradePair_TRADE_PAIR_ROCK_BTC:
-		senderKeyId = swap.BtcKeyId
-		txCreator = swap.Creator
-	case types.TradePair_TRADE_PAIR_BTC_ROCK:
-		senderKeyId = swap.ZenexPoolKeyId
-		txCreator = k.GetParams(ctx).BtcProxyAddress
-	default:
-		return nil, fmt.Errorf("invalid pair: %s", swap.Pair)
+	if msg.RejectReason != "" {
+		swap.Status = types.SwapStatus_SWAP_STATUS_REJECTED
+		swap.RejectReason = msg.RejectReason
+		err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
+		if err != nil {
+			return nil, err
+		}
+		// Release previously pending escrowed funds
+		if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
+			rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
+			if err != nil {
+				return nil, err
+			}
+			// Sending Swap.AmountIn to the mpc rock address
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(rockAddress), sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountIn))))
+			if err != nil {
+				return nil, err
+			}
+		}
+		return &types.MsgZenexTransferRequestResponse{}, nil
 	}
 
-	bitcoinTx := treasurytypes.NewMsgNewSignTransactionRequest(
-		txCreator,
-		[]uint64{senderKeyId},
-		msg.WalletType,
-		msg.UnsignedTx,
-		nil,
-		treasurytypes.DefaultParams().DefaultBtl,
-	)
+	keyIDs := make([]uint64, len(msg.DataForSigning))
+	hashes := make([]string, len(msg.DataForSigning))
+	for i, input := range msg.DataForSigning {
+		keyIDs[i] = input.KeyId
+		hashes[i] = input.Hash
+	}
 
-	signTxResponse, err := k.treasuryKeeper.MakeSignTransactionRequest(ctx, bitcoinTx)
+	signReq := &treasurytypes.MsgNewSignatureRequest{
+		Creator:        msg.Creator,
+		KeyIds:         keyIDs,
+		DataForSigning: strings.Join(hashes, ","), // hex string, each unsigned utxo is separated by comma
+		CacheId:        msg.CacheId,
+		ZenbtcTxBytes:  msg.UnsignedPlusTx,
+	}
+
+	signReqResponse, err := k.treasuryKeeper.HandleSignatureRequest(ctx, signReq)
 	if err != nil {
 		return nil, err
 	}
 
-	swap.SignTxId = signTxResponse.Id
+	swap.SignReqId = signReqResponse.SigReqId
 	swap.Status = types.SwapStatus_SWAP_STATUS_REQUESTED
 	err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
 	if err != nil {
@@ -74,6 +92,6 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 	})
 
 	return &types.MsgZenexTransferRequestResponse{
-		SignTxId: signTxResponse.Id,
+		SignReqId: signReqResponse.SigReqId,
 	}, nil
 }

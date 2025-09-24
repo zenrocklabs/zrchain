@@ -5,9 +5,10 @@ from gogoproto import gogo_pb2 as _gogo_pb2
 from zrchain.zenex import params_pb2 as _params_pb2
 from zrchain.treasury import wallet_pb2 as _wallet_pb2
 from zrchain.zenex import swap_pb2 as _swap_pb2
+from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -46,22 +47,28 @@ class MsgSwapRequestResponse(_message.Message):
     def __init__(self, swap_id: _Optional[int] = ...) -> None: ...
 
 class MsgZenexTransferRequest(_message.Message):
-    __slots__ = ("creator", "swap_id", "unsigned_tx", "wallet_type")
+    __slots__ = ("creator", "swap_id", "data_for_signing", "wallet_type", "cache_id", "unsigned_plus_tx", "reject_reason")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
-    UNSIGNED_TX_FIELD_NUMBER: _ClassVar[int]
+    DATA_FOR_SIGNING_FIELD_NUMBER: _ClassVar[int]
     WALLET_TYPE_FIELD_NUMBER: _ClassVar[int]
+    CACHE_ID_FIELD_NUMBER: _ClassVar[int]
+    UNSIGNED_PLUS_TX_FIELD_NUMBER: _ClassVar[int]
+    REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
-    unsigned_tx: bytes
+    data_for_signing: _containers.RepeatedCompositeFieldContainer[_swap_pb2.InputHashes]
     wallet_type: _wallet_pb2.WalletType
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., unsigned_tx: _Optional[bytes] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ...) -> None: ...
+    cache_id: bytes
+    unsigned_plus_tx: bytes
+    reject_reason: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., data_for_signing: _Optional[_Iterable[_Union[_swap_pb2.InputHashes, _Mapping]]] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., cache_id: _Optional[bytes] = ..., unsigned_plus_tx: _Optional[bytes] = ..., reject_reason: _Optional[str] = ...) -> None: ...
 
 class MsgZenexTransferRequestResponse(_message.Message):
-    __slots__ = ("sign_tx_id",)
-    SIGN_TX_ID_FIELD_NUMBER: _ClassVar[int]
-    sign_tx_id: int
-    def __init__(self, sign_tx_id: _Optional[int] = ...) -> None: ...
+    __slots__ = ("sign_req_id",)
+    SIGN_REQ_ID_FIELD_NUMBER: _ClassVar[int]
+    sign_req_id: int
+    def __init__(self, sign_req_id: _Optional[int] = ...) -> None: ...
 
 class MsgAcknowledgePoolTransfer(_message.Message):
     __slots__ = ("creator", "swap_id", "source_tx_hash", "status", "reject_reason")

@@ -71,14 +71,17 @@ message MsgZenexTransferRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string                      creator     = 1;
   uint64                      swap_id     = 2;
-  bytes                       unsigned_tx = 3;
+  repeated InputHashes        data_for_signing = 3;
   zrchain.treasury.WalletType wallet_type = 4;
+  bytes                       cache_id = 5;
+  bytes                       unsigned_plus_tx = 6;
+  string                      reject_reason = 7; // optional
 }
 
 // MsgZenexTransferResponse defines the response structure for executing a
 // MsgZenexTransfer message.
 message MsgZenexTransferRequestResponse {
-  uint64 sign_tx_id = 1;
+  uint64 sign_req_id = 1;
 }
 
 // MsgAcknowledgePoolTransfer defines the message for acknowledging a pool transfer.

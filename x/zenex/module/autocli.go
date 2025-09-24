@@ -63,12 +63,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "ZenexTransferRequest",
-					Use:       "zenex-transfer-request [swap-id] [unsigned-tx] [wallet-type]",
+					Use:       "zenex-transfer-request [swap-id] [unsigned-plus-tx] [wallet-type] [cache-id] [data-for-signing]",
 					Short:     "Send a zenex-transfer-request tx",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "swap_id"},
-						{ProtoField: "unsigned_tx"},
+						{ProtoField: "unsigned_plus_tx"},
 						{ProtoField: "wallet_type"},
+						{ProtoField: "cache_id"},
+						{ProtoField: "data_for_signing"},
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"reject_reason": {Usage: "Optional reason for rejection (only used when status is rejected)"},
 					},
 				},
 				{

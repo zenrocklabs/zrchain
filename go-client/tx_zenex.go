@@ -48,14 +48,20 @@ func (c *ZenexTxClient) NewMsgZenexTransferRequest(
 	ctx context.Context,
 	creator string,
 	swapId uint64,
-	unsignedTx []byte,
+	unsignedPlusTx []byte,
 	walletType treasurytypes.WalletType,
+	cacheId []byte,
+	dataForSigning []*types.InputHashes,
+	rejectReason string,
 ) (string, error) {
 	msg := &types.MsgZenexTransferRequest{
-		Creator:    c.c.Identity.Address.String(),
-		SwapId:     swapId,
-		UnsignedTx: unsignedTx,
-		WalletType: walletType,
+		Creator:        c.c.Identity.Address.String(),
+		SwapId:         swapId,
+		UnsignedPlusTx: unsignedPlusTx,
+		WalletType:     walletType,
+		CacheId:        cacheId,
+		DataForSigning: dataForSigning,
+		RejectReason:   rejectReason,
 	}
 
 	txBytes, err := c.c.BuildAndSignTx(ctx, ZenBTCGasLimit, ZenBTCDefaultFees, msg)

@@ -748,7 +748,7 @@ func NewZenrockApp(
 		logger,
 		authAddr,
 		app.IdentityKeeper,
-		app.TreasuryKeeper,
+		&app.TreasuryKeeper,
 		app.ValidationKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,

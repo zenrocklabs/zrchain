@@ -14,7 +14,7 @@ var (
 	KeyZenexBtcPoolKeyId = []byte("ZenexBtcPoolKeyId")
 	// TODO: Determine the default value
 	DefaultBtcproxyaddress   string = "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
-	DefaultZenexBtcPoolKeyId uint64 = 100
+	DefaultZenexBtcPoolKeyId uint64 = 16
 )
 
 // ParamKeyTable the param key table for launch module

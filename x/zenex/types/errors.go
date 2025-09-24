@@ -14,4 +14,5 @@ var (
 	ErrInsufficientFunds = sdkerrors.Register(ModuleName, 1103, "insufficient funds")
 	ErrWrongKeyType      = sdkerrors.Register(ModuleName, 1104, "sender key is not an ECDSA SECP256K1 key")
 	ErrInvalidWalletType = sdkerrors.Register(ModuleName, 1105, "invalid wallet type: %s")
+	ErrInvalidRejectMsg  = sdkerrors.Register(ModuleName, 1106, "when reject reason is not empty, btc tx data should be empty")
 )
