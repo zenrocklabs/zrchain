@@ -11,10 +11,11 @@ import (
 
 // Network constants
 const (
-	NetworkDevnet  = "devnet"
-	NetworkRegnet  = "regnet"
-	NetworkTestnet = "testnet"
-	NetworkMainnet = "mainnet"
+	NetworkLocalnet = "localnet"
+	NetworkRegnet   = "regnet"
+	NetworkDevnet   = "devnet"
+	NetworkTestnet  = "testnet"
+	NetworkMainnet  = "mainnet"
 )
 
 // Contract address constants and other network-specific configuration values
@@ -23,10 +24,11 @@ const (
 var (
 	// ServiceManagerAddresses maps network names to service manager contract addresses
 	ServiceManagerAddresses = map[string]string{
-		NetworkDevnet:  "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
-		NetworkRegnet:  "0xa6c639cC8506B13d7cb37bFa143318908050Fb70",
-		NetworkTestnet: "0xa559CDb9e029fc4078170122eBf7A3e622a764E4",
-		NetworkMainnet: "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
+		NetworkLocalnet: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
+		NetworkRegnet:   "0xa6c639cC8506B13d7cb37bFa143318908050Fb70",
+		NetworkDevnet:   "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
+		NetworkTestnet:  "0xa559CDb9e029fc4078170122eBf7A3e622a764E4",
+		NetworkMainnet:  "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
 	}
 
 	// PriceFeedAddresses contains addresses for different price feed contracts
@@ -37,66 +39,74 @@ var (
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{
-		NetworkDevnet:  "0x2844bd31B68AE5a0335c672e6251e99324441B73",
-		NetworkRegnet:  "0x2419A36682f329d0B5e1834068C8C63046865504",
-		NetworkTestnet: "0xaCE3634AAd9bCC48ef6A194f360F7ACe51F7d9f1",
-		NetworkMainnet: "0xa87bE298115bE701A12F34F9B4585586dF052008",
+		NetworkLocalnet: "0x2844bd31B68AE5a0335c672e6251e99324441B73",
+		NetworkRegnet:   "0x2419A36682f329d0B5e1834068C8C63046865504",
+		NetworkDevnet:   "0x2844bd31B68AE5a0335c672e6251e99324441B73",
+		NetworkTestnet:  "0xaCE3634AAd9bCC48ef6A194f360F7ACe51F7d9f1",
+		NetworkMainnet:  "0xa87bE298115bE701A12F34F9B4585586dF052008",
 	}
 
 	// ZenBTCTokenAddresses holds token addresses for different blockchains
 	ZenBTCTokenAddresses = ZenBTCToken{
 		Ethereum: map[string]string{
-			NetworkDevnet:  "0x7692E9a796001FeE9023853f490A692bAB2E4834",
-			NetworkRegnet:  "0x745Aa06072bf149117C457C68b0531cF7567C4e1",
-			NetworkTestnet: "0xfA32a2D7546f8C7c229F94E693422A786DaE5E18",
-			NetworkMainnet: "0x2fE9754d5D28bac0ea8971C0Ca59428b8644C776",
+			NetworkLocalnet: "0x7692E9a796001FeE9023853f490A692bAB2E4834",
+			NetworkRegnet:   "0x745Aa06072bf149117C457C68b0531cF7567C4e1",
+			NetworkDevnet:   "0x7692E9a796001FeE9023853f490A692bAB2E4834",
+			NetworkTestnet:  "0xfA32a2D7546f8C7c229F94E693422A786DaE5E18",
+			NetworkMainnet:  "0x2fE9754d5D28bac0ea8971C0Ca59428b8644C776",
 		},
 	}
 
 	// WhitelistedRoleAddresses maps network names to whitelisted role addresses
 	WhitelistedRoleAddresses = map[string]string{
-		NetworkDevnet:  "0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe",
-		NetworkRegnet:  "0x75F1068e904815398045878A41e4324317c93aE4",
-		NetworkTestnet: "0x75F1068e904815398045878A41e4324317c93aE4",
-		NetworkMainnet: "0xBc17325952D043cCe5Bf1e4F42E26aE531962ED0",
+		NetworkLocalnet: "0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe",
+		NetworkRegnet:   "0x75F1068e904815398045878A41e4324317c93aE4",
+		NetworkDevnet:   "0x697bc4CAC913792f3D5BFdfE7655881A3b73e7Fe",
+		NetworkTestnet:  "0x75F1068e904815398045878A41e4324317c93aE4",
+		NetworkMainnet:  "0xBc17325952D043cCe5Bf1e4F42E26aE531962ED0",
 	}
 
 	// NetworkNames maps network identifiers to their human-readable names
 	NetworkNames = map[string]string{
-		NetworkDevnet:  "Hoodi Ethereum Testnet",
-		NetworkRegnet:  "Hoodi Ethereum Testnet",
-		NetworkTestnet: "Hoodi Ethereum Testnet",
-		NetworkMainnet: "Ethereum Mainnet",
+		NetworkLocalnet: "Hoodi Ethereum Testnet",
+		NetworkRegnet:   "Hoodi Ethereum Testnet",
+		NetworkDevnet:   "Hoodi Ethereum Testnet",
+		NetworkTestnet:  "Hoodi Ethereum Testnet",
+		NetworkMainnet:  "Ethereum Mainnet",
 	}
 
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkDevnet:  "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
-		NetworkTestnet: "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
-		NetworkRegnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
-		NetworkMainnet: "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
+		NetworkLocalnet: "BoPDAvu4Q3JjFzQKjHru6BmJLbEYMBxuKqy8pHVTA7A3",
+		NetworkRegnet:   "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
+		NetworkDevnet:   "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
+		NetworkTestnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
+		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 	SolRockProgramID = map[string]string{
-		NetworkDevnet:  "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
-		NetworkRegnet:  "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
-		NetworkTestnet: "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
-		NetworkMainnet: "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
+		NetworkLocalnet: "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
+		NetworkRegnet:   "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
+		NetworkDevnet:   "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
+		NetworkTestnet:  "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
+		NetworkMainnet:  "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
 	}
 
 	// Solana RPC endpoints
 	SolanaRPCEndpoints = map[string]string{
-		NetworkDevnet:  solrpc.DevNet_RPC,
-		NetworkRegnet:  solrpc.DevNet_RPC,
-		NetworkTestnet: solrpc.DevNet_RPC,
-		NetworkMainnet: solrpc.MainNetBeta_RPC,
+		NetworkLocalnet: solrpc.DevNet.RPC,
+		NetworkRegnet:   solrpc.DevNet_RPC,
+		NetworkDevnet:   solrpc.DevNet_RPC,
+		NetworkTestnet:  solrpc.DevNet_RPC,
+		NetworkMainnet:  solrpc.MainNetBeta_RPC,
 	}
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
 	// Solana devnet is used for both devnet and testnet environments
 	SolanaCAIP2 = map[string]string{
-		NetworkDevnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-		NetworkRegnet:  "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD",
-		NetworkTestnet: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
-		NetworkMainnet: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+		NetworkLocalnet: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkRegnet:   "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD",
+		NetworkDevnet:   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkTestnet:  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+		NetworkMainnet:  "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
 	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
@@ -134,11 +144,11 @@ var (
 	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
-	SidecarVersionName = "salmon_moon_r6"
+	SidecarVersionName = "salmon_moon_r7"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"salmon_moon_r3", "salmon_moon_r4", "salmon_moon_r5", "salmon_moon_r6"}
+	VersionsRequiringCacheReset = []string{"salmon_moon_r7"}
 
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines
