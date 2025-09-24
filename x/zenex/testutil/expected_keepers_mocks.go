@@ -114,21 +114,6 @@ func (mr *MockTreasuryKeeperMockRecorder) HandleSignatureRequest(ctx, msg any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleSignatureRequest", reflect.TypeOf((*MockTreasuryKeeper)(nil).HandleSignatureRequest), ctx, msg)
 }
 
-// MakeSignTransactionRequest mocks base method.
-func (m *MockTreasuryKeeper) MakeSignTransactionRequest(goCtx context.Context, msg *types0.MsgNewSignTransactionRequest) (*types0.MsgNewSignTransactionRequestResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MakeSignTransactionRequest", goCtx, msg)
-	ret0, _ := ret[0].(*types0.MsgNewSignTransactionRequestResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// MakeSignTransactionRequest indicates an expected call of MakeSignTransactionRequest.
-func (mr *MockTreasuryKeeperMockRecorder) MakeSignTransactionRequest(goCtx, msg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeSignTransactionRequest", reflect.TypeOf((*MockTreasuryKeeper)(nil).MakeSignTransactionRequest), goCtx, msg)
-}
-
 // MockValidationKeeper is a mock of ValidationKeeper interface.
 type MockValidationKeeper struct {
 	ctrl     *gomock.Controller
