@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"cosmossdk.io/math"
+	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,9 +40,19 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		if err != nil {
 			return nil, err
 		}
-		return &types.MsgZenexTransferRequestResponse{
-			SignReqId: 0,
-		}, nil
+		// Release previously pending escrowed funds
+		if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
+			rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
+			if err != nil {
+				return nil, err
+			}
+			// Sending Swap.AmountIn to the mpc rock address
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ZenexCollectorName, sdk.MustAccAddressFromBech32(rockAddress), sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountIn))))
+			if err != nil {
+				return nil, err
+			}
+		}
+		return &types.MsgZenexTransferRequestResponse{}, nil
 	}
 
 	keyIDs := make([]uint64, len(msg.DataForSigning))

@@ -228,12 +228,19 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				swap, err := s.zenexKeeper.SwapsStore.Get(s.ctx, tt.input.SwapId)
 				s.Require().NoError(err)
 
-				s.treasuryKeeper.EXPECT().HandleSignatureRequest(s.ctx, gomock.Any()).Return(&treasurytypes.MsgNewSignatureRequestResponse{
-					SigReqId: tt.want.SignReqId,
-				}, nil).AnyTimes()
+				if tt.input.RejectReason == "" {
+					s.treasuryKeeper.EXPECT().HandleSignatureRequest(s.ctx, gomock.Any()).Return(&treasurytypes.MsgNewSignatureRequestResponse{
+						SigReqId: tt.want.SignReqId,
+					}, nil).AnyTimes()
 
-				if swap.BtcKeyId > 0 {
-					s.treasuryKeeper.EXPECT().GetKey(s.ctx, swap.BtcKeyId).Return(&treasurytestutil.DefaultKeys[swap.BtcKeyId], nil).AnyTimes()
+					if swap.BtcKeyId > 0 {
+						s.treasuryKeeper.EXPECT().GetKey(s.ctx, swap.BtcKeyId).Return(&treasurytestutil.DefaultKeys[swap.BtcKeyId], nil).AnyTimes()
+					}
+				} else {
+					if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && swap.RockKeyId > 0 {
+						s.treasuryKeeper.EXPECT().GetKey(s.ctx, swap.RockKeyId).Return(&treasurytestutil.DefaultKeys[swap.RockKeyId], nil).AnyTimes()
+						s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, types.ZenexCollectorName, gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+					}
 				}
 			}
 
