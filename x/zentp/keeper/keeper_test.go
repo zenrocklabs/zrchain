@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -407,36 +406,36 @@ func (s *IntegrationTestSuite) TestCalculateZentpMintFee() {
 	tests := []struct {
 		name                string
 		amount              uint64
-		expectedTotalAmount math.Int
-		expectedTotalFee    math.Int
+		expectedTotalAmount sdkmath.Int
+		expectedTotalFee    sdkmath.Int
 		expectedError       error
 	}{
 		{
 			name:                "1 ROCK + flat fee",
 			amount:              1000000,
-			expectedTotalAmount: math.NewInt(201005000),
-			expectedTotalFee:    math.NewInt(200005000),
+			expectedTotalAmount: sdkmath.NewInt(201005000),
+			expectedTotalFee:    sdkmath.NewInt(200005000),
 			expectedError:       nil,
 		},
 		{
 			name:                "0.0001 ROCK + flat fee",
 			amount:              100,
-			expectedTotalAmount: math.NewInt(200000100),
-			expectedTotalFee:    math.NewInt(200000000),
+			expectedTotalAmount: sdkmath.NewInt(200000100),
+			expectedTotalFee:    sdkmath.NewInt(200000000),
 			expectedError:       nil,
 		},
 		{
 			name:                "large amount",
 			amount:              1000000000000000000,
-			expectedTotalAmount: math.NewInt(1005000000200000000),
-			expectedTotalFee:    math.NewInt(5000000200000000),
+			expectedTotalAmount: sdkmath.NewInt(1005000000200000000),
+			expectedTotalFee:    sdkmath.NewInt(5000000200000000),
 			expectedError:       nil,
 		},
 		{
 			name:                "int overflow - very large amount",
 			amount:              18400000000000000000,
-			expectedTotalAmount: math.Int{},
-			expectedTotalFee:    math.Int{},
+			expectedTotalAmount: sdkmath.Int{},
+			expectedTotalFee:    sdkmath.Int{},
 			expectedError:       fmt.Errorf("total amount %s exceeds max uint64", "18492000000200000000"),
 		},
 	}

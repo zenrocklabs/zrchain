@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -37,7 +36,7 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 		return nil, errors.New("invalid denomination")
 	}
 
-	baseAmountInt := sdkmath.NewIntFromUint64(req.Amount)
+	baseAmountInt := math.NewIntFromUint64(req.Amount)
 
 	totalAmountInt, totalFeeInt, err := k.CalculateZentpMintFee(ctx, req.Amount)
 	if err != nil {
