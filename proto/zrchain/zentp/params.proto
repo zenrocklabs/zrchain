@@ -19,6 +19,7 @@ message Params {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  uint64 flat_fee = 3;
 }
 
 // Solana represents the parameters for the Solana relayer configuration.

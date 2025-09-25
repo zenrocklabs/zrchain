@@ -191,7 +191,8 @@ if [ "$START_ONLY" = false ]; then
           "fee_wallet": "5aLz81F9uugwKBmvUY3DcXB1B7G2Yf7tB9zacdJBhZbh",
           "fee": 0,
           "btl": 20
-        }
+        },
+        "flat_fee": 200000000
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {
         if [[ "$OSTYPE" == "darwin"* ]]; then
