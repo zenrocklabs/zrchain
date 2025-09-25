@@ -8,12 +8,14 @@ from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Opti
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Params(_message.Message):
-    __slots__ = ("solana", "bridge_fee")
+    __slots__ = ("solana", "bridge_fee", "flat_fee")
     SOLANA_FIELD_NUMBER: _ClassVar[int]
     BRIDGE_FEE_FIELD_NUMBER: _ClassVar[int]
+    FLAT_FEE_FIELD_NUMBER: _ClassVar[int]
     solana: Solana
     bridge_fee: str
-    def __init__(self, solana: _Optional[_Union[Solana, _Mapping]] = ..., bridge_fee: _Optional[str] = ...) -> None: ...
+    flat_fee: int
+    def __init__(self, solana: _Optional[_Union[Solana, _Mapping]] = ..., bridge_fee: _Optional[str] = ..., flat_fee: _Optional[int] = ...) -> None: ...
 
 class Solana(_message.Message):
     __slots__ = ("signer_key_id", "program_id", "nonce_account_key", "nonce_authority_key", "mint_address", "fee_wallet", "fee", "btl")

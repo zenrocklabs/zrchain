@@ -31,6 +31,7 @@ func NewParams() Params {
 	return Params{
 		Solana:    DefaultSolanaParams,
 		BridgeFee: math.LegacyNewDecWithPrec(5, 3),
+		FlatFee:   200000000,
 	}
 }
 
