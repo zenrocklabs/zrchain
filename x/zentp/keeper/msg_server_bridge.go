@@ -38,14 +38,11 @@ func (k msgServer) Bridge(goCtx context.Context, req *types.MsgBridge) (*types.M
 	}
 
 	baseAmountInt := sdkmath.NewIntFromUint64(req.Amount)
-	zentpParams, err := k.ParamStore.Get(ctx)
+
+	totalAmountInt, totalFeeInt, err := k.CalculateZentpMintFee(ctx, req.Amount)
 	if err != nil {
 		return nil, err
 	}
-	feeInt := math.LegacyNewDecFromInt(baseAmountInt).Mul(zentpParams.BridgeFee).TruncateInt()
-	feeIntFlat := math.NewIntFromUint64(zentpParams.FlatFee)
-	totalFeeInt := feeInt.Add(feeIntFlat)
-	totalAmountInt := baseAmountInt.Add(totalFeeInt)
 
 	bal := k.bankKeeper.GetBalance(ctx, sdk.MustAccAddressFromBech32(req.Creator), params.BondDenom)
 	if bal.Amount.LT(totalAmountInt) {
