@@ -23,6 +23,7 @@ message Swap {
   uint64 sign_req_id = 10;
   string source_tx_hash = 11;
   string reject_reason = 12;
+  string unsigned_plus_tx = 13;
 }
 
 // SwapStatus defines the status of the swap.

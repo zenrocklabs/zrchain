@@ -32,7 +32,7 @@ TRADE_PAIR_ROCK_BTC: TradePair
 TRADE_PAIR_BTC_ROCK: TradePair
 
 class Swap(_message.Message):
-    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_req_id", "source_tx_hash", "reject_reason")
+    __slots__ = ("creator", "swap_id", "status", "pair", "data", "rock_key_id", "btc_key_id", "zenex_pool_key_id", "workspace", "sign_req_id", "source_tx_hash", "reject_reason", "unsigned_plus_tx")
     CREATOR_FIELD_NUMBER: _ClassVar[int]
     SWAP_ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -45,6 +45,7 @@ class Swap(_message.Message):
     SIGN_REQ_ID_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TX_HASH_FIELD_NUMBER: _ClassVar[int]
     REJECT_REASON_FIELD_NUMBER: _ClassVar[int]
+    UNSIGNED_PLUS_TX_FIELD_NUMBER: _ClassVar[int]
     creator: str
     swap_id: int
     status: SwapStatus
@@ -57,7 +58,8 @@ class Swap(_message.Message):
     sign_req_id: int
     source_tx_hash: str
     reject_reason: str
-    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[_Union[TradePair, str]] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_req_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ...) -> None: ...
+    unsigned_plus_tx: str
+    def __init__(self, creator: _Optional[str] = ..., swap_id: _Optional[int] = ..., status: _Optional[_Union[SwapStatus, str]] = ..., pair: _Optional[_Union[TradePair, str]] = ..., data: _Optional[_Union[SwapData, _Mapping]] = ..., rock_key_id: _Optional[int] = ..., btc_key_id: _Optional[int] = ..., zenex_pool_key_id: _Optional[int] = ..., workspace: _Optional[str] = ..., sign_req_id: _Optional[int] = ..., source_tx_hash: _Optional[str] = ..., reject_reason: _Optional[str] = ..., unsigned_plus_tx: _Optional[str] = ...) -> None: ...
 
 class SwapData(_message.Message):
     __slots__ = ("base_token", "quote_token", "price", "amount_in", "amount_out")

@@ -28,7 +28,7 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.validation import asset_data_pb2 as zrchain_dot_validation_dot_asset__data__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18zrchain/zenex/swap.proto\x12\rzrchain.zenex\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a#zrchain/validation/asset_data.proto\"\xb9\x03\n\x04Swap\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x17\n\x07swap_id\x18\x02 \x01(\x04R\x06swapId\x12\x31\n\x06status\x18\x03 \x01(\x0e\x32\x19.zrchain.zenex.SwapStatusR\x06status\x12,\n\x04pair\x18\x04 \x01(\x0e\x32\x18.zrchain.zenex.TradePairR\x04pair\x12+\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x17.zrchain.zenex.SwapDataR\x04\x64\x61ta\x12\x1e\n\x0brock_key_id\x18\x06 \x01(\x04R\trockKeyId\x12\x1c\n\nbtc_key_id\x18\x07 \x01(\x04R\x08\x62tcKeyId\x12)\n\x11zenex_pool_key_id\x18\x08 \x01(\x04R\x0ezenexPoolKeyId\x12\x1c\n\tworkspace\x18\t \x01(\tR\tworkspace\x12\x1e\n\x0bsign_req_id\x18\n \x01(\x04R\tsignReqId\x12$\n\x0esource_tx_hash\x18\x0b \x01(\tR\x0csourceTxHash\x12#\n\rreject_reason\x18\x0c \x01(\tR\x0crejectReason\"\x92\x02\n\x08SwapData\x12<\n\nbase_token\x18\x01 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\tbaseToken\x12>\n\x0bquote_token\x18\x02 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\nquoteToken\x12L\n\x05price\x18\x03 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x05price\x12\x1b\n\tamount_in\x18\x04 \x01(\x04R\x08\x61mountIn\x12\x1d\n\namount_out\x18\x05 \x01(\x04R\tamountOut\"\x88\x01\n\x08SwapPair\x12<\n\nbase_token\x18\x01 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\tbaseToken\x12>\n\x0bquote_token\x18\x02 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\nquoteToken\"8\n\x0bInputHashes\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\x12\x15\n\x06key_id\x18\x02 \x01(\x04R\x05keyId*\x94\x01\n\nSwapStatus\x12\x1b\n\x17SWAP_STATUS_UNSPECIFIED\x10\x00\x12\x19\n\x15SWAP_STATUS_INITIATED\x10\x01\x12\x19\n\x15SWAP_STATUS_REQUESTED\x10\x02\x12\x18\n\x14SWAP_STATUS_REJECTED\x10\x03\x12\x19\n\x15SWAP_STATUS_COMPLETED\x10\x04*Y\n\tTradePair\x12\x1a\n\x16TRADE_PAIR_UNSPECIFIED\x10\x00\x12\x17\n\x13TRADE_PAIR_ROCK_BTC\x10\x01\x12\x17\n\x13TRADE_PAIR_BTC_ROCK\x10\x02\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18zrchain/zenex/swap.proto\x12\rzrchain.zenex\x1a\x19\x63osmos_proto/cosmos.proto\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a#zrchain/validation/asset_data.proto\"\xe3\x03\n\x04Swap\x12\x18\n\x07\x63reator\x18\x01 \x01(\tR\x07\x63reator\x12\x17\n\x07swap_id\x18\x02 \x01(\x04R\x06swapId\x12\x31\n\x06status\x18\x03 \x01(\x0e\x32\x19.zrchain.zenex.SwapStatusR\x06status\x12,\n\x04pair\x18\x04 \x01(\x0e\x32\x18.zrchain.zenex.TradePairR\x04pair\x12+\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x17.zrchain.zenex.SwapDataR\x04\x64\x61ta\x12\x1e\n\x0brock_key_id\x18\x06 \x01(\x04R\trockKeyId\x12\x1c\n\nbtc_key_id\x18\x07 \x01(\x04R\x08\x62tcKeyId\x12)\n\x11zenex_pool_key_id\x18\x08 \x01(\x04R\x0ezenexPoolKeyId\x12\x1c\n\tworkspace\x18\t \x01(\tR\tworkspace\x12\x1e\n\x0bsign_req_id\x18\n \x01(\x04R\tsignReqId\x12$\n\x0esource_tx_hash\x18\x0b \x01(\tR\x0csourceTxHash\x12#\n\rreject_reason\x18\x0c \x01(\tR\x0crejectReason\x12(\n\x10unsigned_plus_tx\x18\r \x01(\tR\x0eunsignedPlusTx\"\x92\x02\n\x08SwapData\x12<\n\nbase_token\x18\x01 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\tbaseToken\x12>\n\x0bquote_token\x18\x02 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\nquoteToken\x12L\n\x05price\x18\x03 \x01(\tB6\xc8\xde\x1f\x00\xda\xde\x1f\x1b\x63osmossdk.io/math.LegacyDec\xd2\xb4-\ncosmos.Dec\xa8\xe7\xb0*\x01R\x05price\x12\x1b\n\tamount_in\x18\x04 \x01(\x04R\x08\x61mountIn\x12\x1d\n\namount_out\x18\x05 \x01(\x04R\tamountOut\"\x88\x01\n\x08SwapPair\x12<\n\nbase_token\x18\x01 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\tbaseToken\x12>\n\x0bquote_token\x18\x02 \x01(\x0b\x32\x1d.zrchain.validation.AssetDataR\nquoteToken\"8\n\x0bInputHashes\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\x12\x15\n\x06key_id\x18\x02 \x01(\x04R\x05keyId*\x94\x01\n\nSwapStatus\x12\x1b\n\x17SWAP_STATUS_UNSPECIFIED\x10\x00\x12\x19\n\x15SWAP_STATUS_INITIATED\x10\x01\x12\x19\n\x15SWAP_STATUS_REQUESTED\x10\x02\x12\x18\n\x14SWAP_STATUS_REJECTED\x10\x03\x12\x19\n\x15SWAP_STATUS_COMPLETED\x10\x04*Y\n\tTradePair\x12\x1a\n\x16TRADE_PAIR_UNSPECIFIED\x10\x00\x12\x17\n\x13TRADE_PAIR_ROCK_BTC\x10\x01\x12\x17\n\x13TRADE_PAIR_BTC_ROCK\x10\x02\x42\x38Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -38,16 +38,16 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types'
   _globals['_SWAPDATA'].fields_by_name['price']._loaded_options = None
   _globals['_SWAPDATA'].fields_by_name['price']._serialized_options = b'\310\336\037\000\332\336\037\033cosmossdk.io/math.LegacyDec\322\264-\ncosmos.Dec\250\347\260*\001'
-  _globals['_SWAPSTATUS']._serialized_start=1067
-  _globals['_SWAPSTATUS']._serialized_end=1215
-  _globals['_TRADEPAIR']._serialized_start=1217
-  _globals['_TRADEPAIR']._serialized_end=1306
+  _globals['_SWAPSTATUS']._serialized_start=1109
+  _globals['_SWAPSTATUS']._serialized_end=1257
+  _globals['_TRADEPAIR']._serialized_start=1259
+  _globals['_TRADEPAIR']._serialized_end=1348
   _globals['_SWAP']._serialized_start=149
-  _globals['_SWAP']._serialized_end=590
-  _globals['_SWAPDATA']._serialized_start=593
-  _globals['_SWAPDATA']._serialized_end=867
-  _globals['_SWAPPAIR']._serialized_start=870
-  _globals['_SWAPPAIR']._serialized_end=1006
-  _globals['_INPUTHASHES']._serialized_start=1008
-  _globals['_INPUTHASHES']._serialized_end=1064
+  _globals['_SWAP']._serialized_end=632
+  _globals['_SWAPDATA']._serialized_start=635
+  _globals['_SWAPDATA']._serialized_end=909
+  _globals['_SWAPPAIR']._serialized_start=912
+  _globals['_SWAPPAIR']._serialized_end=1048
+  _globals['_INPUTHASHES']._serialized_start=1050
+  _globals['_INPUTHASHES']._serialized_end=1106
 # @@protoc_insertion_point(module_scope)
