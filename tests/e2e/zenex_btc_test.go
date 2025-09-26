@@ -14,8 +14,10 @@ var _ = Describe("Zenex BTC flow:", func() {
 	var shouldSkip bool
 	var btcRequestID uint64
 	var ecdsaRequestID uint64
+	var btcPoolKeyRequestId uint64
 	var rockAddress string
 	var bitcoinAddress string
+	var bitcoinPoolKeyAddress string
 	var workspaceAddress string
 	var swapID uint64
 	// var signTxID uint64
@@ -70,6 +72,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(r.TxResponse).ToNot(BeNil())
 		Expect(r.TxResponse.RawLog).To(BeEmpty())
+
 		var ecdsaRequestIDStr string
 		for _, event := range r.TxResponse.Events {
 			if event.Type == "new_key_request" {
@@ -81,6 +84,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 				}
 			}
 		}
+
 		ecdsaRequestID, err = strconv.ParseUint(ecdsaRequestIDStr, 10, 64)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(ecdsaRequestID).ToNot(BeNil())
@@ -142,6 +146,7 @@ var _ = Describe("Zenex BTC flow:", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())
+
 		r, err := env.Tx.GetTx(env.Ctx, hash)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(r.TxResponse).ToNot(BeNil())
@@ -217,10 +222,82 @@ var _ = Describe("Zenex BTC flow:", func() {
 		Expect(balance).To(BeNumerically(">=", 1.0))
 		GinkgoWriter.Printf("BTC balance on address %s: %f\n", bitcoinAddress, balance)
 	})
+	// Creating a new bitcoin key request for the poolkeyid
+	It("creates a new bitcoin key request for the pool keyid ", func() {
+
+		hash, err := env.Tx.NewKeyRequest(
+			env.Ctx,
+			workspaceAddress,
+			"keyring1k6vc6vhp6e6l3rxalue9v4ux",
+			"bitcoin",
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(hash).ToNot(BeEmpty())
+
+		r, err := env.Tx.GetTx(env.Ctx, hash)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(r.TxResponse).ToNot(BeNil())
+		Expect(r.TxResponse.RawLog).To(BeEmpty())
+
+		var requestIDStr string
+		for _, event := range r.TxResponse.Events {
+			if event.Type == "new_key_request" {
+				for _, attr := range event.Attributes {
+					if attr.Key == "request_id" {
+						requestIDStr = attr.Value
+						break
+					}
+				}
+			}
+		}
+
+		btcPoolKeyRequestId, err = strconv.ParseUint(requestIDStr, 10, 64)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(btcRequestID).ToNot(BeNil())
+		GinkgoWriter.Printf("Bitcoin Key Request for pool address created: %d\n", btcPoolKeyRequestId)
+	})
+
+	// Waiting for the bitcoin key request to be included onchain
+	It("fetches the bitcoin key request within 5 seconds", func() {
+		Eventually(func() (uint64, error) {
+			req, err := env.Query.GetKeyRequest(env.Ctx, btcPoolKeyRequestId)
+			if err != nil {
+				return 0, err
+			}
+			return req.Id, nil
+		}, "5s", "1s").Should(Equal(btcPoolKeyRequestId))
+		GinkgoWriter.Printf("Bitcoin Key Request fetched: %d\n", btcPoolKeyRequestId)
+	})
+
+	// Waiting for the bitcoin key request to be fulfilled
+	It("gets fulfilled within 15 seconds", func() {
+		Eventually(func() (string, error) {
+			req, err := env.Query.GetKeyRequest(env.Ctx, btcPoolKeyRequestId)
+			if err != nil {
+				return "", err
+			}
+			return req.Status, nil
+		}, "15s", "1s").Should(Equal(types.KeyRequestStatus_KEY_REQUEST_STATUS_FULFILLED.String()))
+		GinkgoWriter.Printf("Bitcoin Key Request fulfilled: %d\n", btcPoolKeyRequestId)
+	})
+
+	// Fetching the bitcoin REGNET key address from the returned public key
+	It("fetches the bitcoin REGNET key address", func() {
+		req, err := env.Query.GetKey(env.Ctx, btcPoolKeyRequestId)
+		Expect(err).ToNot(HaveOccurred())
+		for _, w := range req.Wallets {
+			if w.Type == "WALLET_TYPE_BTC_REGNET" {
+				bitcoinPoolKeyAddress = w.Address
+			}
+		}
+		Expect(bitcoinPoolKeyAddress).ToNot(BeEmpty())
+		GinkgoWriter.Printf("Bitcoin REGNET address: %s\n", bitcoinPoolKeyAddress)
+	})
 
 	// Creating a zenex rockbtc swap request on zrchain
 	It("creates a zenex rockbtc swap request on zrchain", func() {
-		amountRockIn = 10000000000 // 10000 ROCK
+		amountRockIn = 30000000000 // 30000 ROCK
+
 		// Create a zenex swap request transaction
 		hash, err := env.Tx.NewMsgSwapRequest(
 			env.Ctx,
