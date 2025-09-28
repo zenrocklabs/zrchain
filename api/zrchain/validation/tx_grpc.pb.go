@@ -28,6 +28,7 @@ const (
 	Msg_UpdateParams_FullMethodName              = "/zrchain.validation.Msg/UpdateParams"
 	Msg_UpdateHVParams_FullMethodName            = "/zrchain.validation.Msg/UpdateHVParams"
 	Msg_TriggerEventBackfill_FullMethodName      = "/zrchain.validation.Msg/TriggerEventBackfill"
+	Msg_RequestHeaderBackfill_FullMethodName     = "/zrchain.validation.Msg/RequestHeaderBackfill"
 )
 
 // MsgClient is the client API for Msg service.
@@ -60,6 +61,9 @@ type MsgClient interface {
 	UpdateHVParams(ctx context.Context, in *MsgUpdateHVParams, opts ...grpc.CallOption) (*MsgUpdateHVParamsResponse, error)
 	// TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
 	TriggerEventBackfill(ctx context.Context, in *MsgTriggerEventBackfill, opts ...grpc.CallOption) (*MsgTriggerEventBackfillResponse, error)
+	// RequestHeaderBackfill requests a specific Bitcoin header by height.
+	// The header will be fetched by sidecars and populated via normal ABCI flow.
+	RequestHeaderBackfill(ctx context.Context, in *MsgRequestHeaderBackfill, opts ...grpc.CallOption) (*MsgRequestHeaderBackfillResponse, error)
 }
 
 type msgClient struct {
@@ -160,6 +164,16 @@ func (c *msgClient) TriggerEventBackfill(ctx context.Context, in *MsgTriggerEven
 	return out, nil
 }
 
+func (c *msgClient) RequestHeaderBackfill(ctx context.Context, in *MsgRequestHeaderBackfill, opts ...grpc.CallOption) (*MsgRequestHeaderBackfillResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgRequestHeaderBackfillResponse)
+	err := c.cc.Invoke(ctx, Msg_RequestHeaderBackfill_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -190,6 +204,9 @@ type MsgServer interface {
 	UpdateHVParams(context.Context, *MsgUpdateHVParams) (*MsgUpdateHVParamsResponse, error)
 	// TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
 	TriggerEventBackfill(context.Context, *MsgTriggerEventBackfill) (*MsgTriggerEventBackfillResponse, error)
+	// RequestHeaderBackfill requests a specific Bitcoin header by height.
+	// The header will be fetched by sidecars and populated via normal ABCI flow.
+	RequestHeaderBackfill(context.Context, *MsgRequestHeaderBackfill) (*MsgRequestHeaderBackfillResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -226,6 +243,9 @@ func (UnimplementedMsgServer) UpdateHVParams(context.Context, *MsgUpdateHVParams
 }
 func (UnimplementedMsgServer) TriggerEventBackfill(context.Context, *MsgTriggerEventBackfill) (*MsgTriggerEventBackfillResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TriggerEventBackfill not implemented")
+}
+func (UnimplementedMsgServer) RequestHeaderBackfill(context.Context, *MsgRequestHeaderBackfill) (*MsgRequestHeaderBackfillResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestHeaderBackfill not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -410,6 +430,24 @@ func _Msg_TriggerEventBackfill_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_RequestHeaderBackfill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRequestHeaderBackfill)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RequestHeaderBackfill(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_RequestHeaderBackfill_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RequestHeaderBackfill(ctx, req.(*MsgRequestHeaderBackfill))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -452,6 +490,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TriggerEventBackfill",
 			Handler:    _Msg_TriggerEventBackfill_Handler,
+		},
+		{
+			MethodName: "RequestHeaderBackfill",
+			Handler:    _Msg_RequestHeaderBackfill_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

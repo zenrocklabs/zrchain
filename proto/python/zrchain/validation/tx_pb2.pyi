@@ -174,6 +174,18 @@ class MsgTriggerEventBackfillResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class MsgRequestHeaderBackfill(_message.Message):
+    __slots__ = ("authority", "height")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    height: int
+    def __init__(self, authority: _Optional[str] = ..., height: _Optional[int] = ...) -> None: ...
+
+class MsgRequestHeaderBackfillResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class BackfillRequests(_message.Message):
     __slots__ = ("requests",)
     REQUESTS_FIELD_NUMBER: _ClassVar[int]

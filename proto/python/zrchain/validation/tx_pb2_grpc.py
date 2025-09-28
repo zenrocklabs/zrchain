@@ -60,6 +60,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.FromString,
                 )
+        self.RequestHeaderBackfill = channel.unary_unary(
+                '/zrchain.validation.Msg/RequestHeaderBackfill',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfill.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfillResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -138,6 +143,14 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RequestHeaderBackfill(self, request, context):
+        """RequestHeaderBackfill requests a specific Bitcoin header by height.
+        The header will be fetched by sidecars and populated via normal ABCI flow.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -185,6 +198,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.TriggerEventBackfill,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.SerializeToString,
+            ),
+            'RequestHeaderBackfill': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestHeaderBackfill,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfill.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfillResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -347,5 +365,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/TriggerEventBackfill',
             zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfill.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgTriggerEventBackfillResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RequestHeaderBackfill(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/RequestHeaderBackfill',
+            zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfill.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgRequestHeaderBackfillResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
