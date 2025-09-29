@@ -14,10 +14,11 @@ import (
 // It aggregates multiple specialized transaction clients to handle different types of
 // transactions across various modules.
 type TxClient struct {
-	*RawTxClient      // Handles low-level transaction construction and signing
-	*TreasuryTxClient // Handles treasury-specific transactions
-	*ZenBTCTxClient   // Handles ZenBTC-specific transactions
-	*ZenTPTxClient    // Handles ZenTP-specific transactions
+	*RawTxClient        // Handles low-level transaction construction and signing
+	*TreasuryTxClient   // Handles treasury-specific transactions
+	*ZenBTCTxClient     // Handles ZenBTC-specific transactions
+	*ZenTPTxClient      // Handles ZenTP-specific transactions
+	*ValidationTxClient // Handles validation module transactions
 }
 
 // NewTxClient creates a new transaction client instance with all necessary sub-clients initialized.
@@ -46,9 +47,10 @@ func NewTxClient(id Identity, chainID string, c *grpc.ClientConn, accountFetcher
 		return nil, fmt.Errorf("can't create raw tx client: %w", err)
 	}
 	return &TxClient{
-		RawTxClient:      raw,
-		TreasuryTxClient: NewTreasuryTxClient(raw),
-		ZenBTCTxClient:   NewZenBTCTxClient(raw),
-		ZenTPTxClient:    NewZenTPTxClient(raw),
+		RawTxClient:        raw,
+		TreasuryTxClient:   NewTreasuryTxClient(raw),
+		ZenBTCTxClient:     NewZenBTCTxClient(raw),
+		ZenTPTxClient:      NewZenTPTxClient(raw),
+		ValidationTxClient: NewValidationTxClient(raw),
 	}, nil
 }
