@@ -16,6 +16,52 @@ import (
 	sync "sync"
 )
 
+var _ protoreflect.List = (*_Swap_13_list)(nil)
+
+type _Swap_13_list struct {
+	list *[][]byte
+}
+
+func (x *_Swap_13_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_Swap_13_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfBytes((*x.list)[i])
+}
+
+func (x *_Swap_13_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Bytes()
+	concreteValue := valueUnwrapped
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_Swap_13_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Bytes()
+	concreteValue := valueUnwrapped
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_Swap_13_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message Swap at list field UnsignedPlusTx as it is not of Message kind"))
+}
+
+func (x *_Swap_13_list) Truncate(n int) {
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_Swap_13_list) NewElement() protoreflect.Value {
+	var v []byte
+	return protoreflect.ValueOfBytes(v)
+}
+
+func (x *_Swap_13_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_Swap                   protoreflect.MessageDescriptor
 	fd_Swap_creator           protoreflect.FieldDescriptor
@@ -188,8 +234,8 @@ func (x *fastReflection_Swap) Range(f func(protoreflect.FieldDescriptor, protore
 			return
 		}
 	}
-	if x.UnsignedPlusTx != "" {
-		value := protoreflect.ValueOfString(x.UnsignedPlusTx)
+	if len(x.UnsignedPlusTx) != 0 {
+		value := protoreflect.ValueOfList(&_Swap_13_list{list: &x.UnsignedPlusTx})
 		if !f(fd_Swap_unsigned_plus_tx, value) {
 			return
 		}
@@ -234,7 +280,7 @@ func (x *fastReflection_Swap) Has(fd protoreflect.FieldDescriptor) bool {
 	case "zrchain.zenex.Swap.reject_reason":
 		return x.RejectReason != ""
 	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		return x.UnsignedPlusTx != ""
+		return len(x.UnsignedPlusTx) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -276,7 +322,7 @@ func (x *fastReflection_Swap) Clear(fd protoreflect.FieldDescriptor) {
 	case "zrchain.zenex.Swap.reject_reason":
 		x.RejectReason = ""
 	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		x.UnsignedPlusTx = ""
+		x.UnsignedPlusTx = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -330,8 +376,11 @@ func (x *fastReflection_Swap) Get(descriptor protoreflect.FieldDescriptor) proto
 		value := x.RejectReason
 		return protoreflect.ValueOfString(value)
 	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		value := x.UnsignedPlusTx
-		return protoreflect.ValueOfString(value)
+		if len(x.UnsignedPlusTx) == 0 {
+			return protoreflect.ValueOfList(&_Swap_13_list{})
+		}
+		listValue := &_Swap_13_list{list: &x.UnsignedPlusTx}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -377,7 +426,9 @@ func (x *fastReflection_Swap) Set(fd protoreflect.FieldDescriptor, value protore
 	case "zrchain.zenex.Swap.reject_reason":
 		x.RejectReason = value.Interface().(string)
 	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		x.UnsignedPlusTx = value.Interface().(string)
+		lv := value.List()
+		clv := lv.(*_Swap_13_list)
+		x.UnsignedPlusTx = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -403,6 +454,12 @@ func (x *fastReflection_Swap) Mutable(fd protoreflect.FieldDescriptor) protorefl
 			x.Data = new(SwapData)
 		}
 		return protoreflect.ValueOfMessage(x.Data.ProtoReflect())
+	case "zrchain.zenex.Swap.unsigned_plus_tx":
+		if x.UnsignedPlusTx == nil {
+			x.UnsignedPlusTx = [][]byte{}
+		}
+		value := &_Swap_13_list{list: &x.UnsignedPlusTx}
+		return protoreflect.ValueOfList(value)
 	case "zrchain.zenex.Swap.creator":
 		panic(fmt.Errorf("field creator of message zrchain.zenex.Swap is not mutable"))
 	case "zrchain.zenex.Swap.swap_id":
@@ -425,8 +482,6 @@ func (x *fastReflection_Swap) Mutable(fd protoreflect.FieldDescriptor) protorefl
 		panic(fmt.Errorf("field source_tx_hash of message zrchain.zenex.Swap is not mutable"))
 	case "zrchain.zenex.Swap.reject_reason":
 		panic(fmt.Errorf("field reject_reason of message zrchain.zenex.Swap is not mutable"))
-	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		panic(fmt.Errorf("field unsigned_plus_tx of message zrchain.zenex.Swap is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -466,7 +521,8 @@ func (x *fastReflection_Swap) NewField(fd protoreflect.FieldDescriptor) protoref
 	case "zrchain.zenex.Swap.reject_reason":
 		return protoreflect.ValueOfString("")
 	case "zrchain.zenex.Swap.unsigned_plus_tx":
-		return protoreflect.ValueOfString("")
+		list := [][]byte{}
+		return protoreflect.ValueOfList(&_Swap_13_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.zenex.Swap"))
@@ -577,9 +633,11 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		l = len(x.UnsignedPlusTx)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if len(x.UnsignedPlusTx) > 0 {
+			for _, b := range x.UnsignedPlusTx {
+				l = len(b)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -611,11 +669,13 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], x.unknownFields)
 		}
 		if len(x.UnsignedPlusTx) > 0 {
-			i -= len(x.UnsignedPlusTx)
-			copy(dAtA[i:], x.UnsignedPlusTx)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UnsignedPlusTx)))
-			i--
-			dAtA[i] = 0x6a
+			for iNdEx := len(x.UnsignedPlusTx) - 1; iNdEx >= 0; iNdEx-- {
+				i -= len(x.UnsignedPlusTx[iNdEx])
+				copy(dAtA[i:], x.UnsignedPlusTx[iNdEx])
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UnsignedPlusTx[iNdEx])))
+				i--
+				dAtA[i] = 0x6a
+			}
 		}
 		if len(x.RejectReason) > 0 {
 			i -= len(x.RejectReason)
@@ -1044,7 +1104,7 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UnsignedPlusTx", wireType)
 				}
-				var stringLen uint64
+				var byteLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -1054,23 +1114,23 @@ func (x *fastReflection_Swap) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					byteLen |= int(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
+				if byteLen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + intStringLen
+				postIndex := iNdEx + byteLen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.UnsignedPlusTx = string(dAtA[iNdEx:postIndex])
+				x.UnsignedPlusTx = append(x.UnsignedPlusTx, make([]byte, postIndex-iNdEx))
+				copy(x.UnsignedPlusTx[len(x.UnsignedPlusTx)-1], dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -2908,7 +2968,7 @@ type Swap struct {
 	SignReqId      uint64     `protobuf:"varint,10,opt,name=sign_req_id,json=signReqId,proto3" json:"sign_req_id,omitempty"`
 	SourceTxHash   string     `protobuf:"bytes,11,opt,name=source_tx_hash,json=sourceTxHash,proto3" json:"source_tx_hash,omitempty"`
 	RejectReason   string     `protobuf:"bytes,12,opt,name=reject_reason,json=rejectReason,proto3" json:"reject_reason,omitempty"`
-	UnsignedPlusTx string     `protobuf:"bytes,13,opt,name=unsigned_plus_tx,json=unsignedPlusTx,proto3" json:"unsigned_plus_tx,omitempty"`
+	UnsignedPlusTx [][]byte   `protobuf:"bytes,13,rep,name=unsigned_plus_tx,json=unsignedPlusTx,proto3" json:"unsigned_plus_tx,omitempty"`
 }
 
 func (x *Swap) Reset() {
@@ -3015,11 +3075,11 @@ func (x *Swap) GetRejectReason() string {
 	return ""
 }
 
-func (x *Swap) GetUnsignedPlusTx() string {
+func (x *Swap) GetUnsignedPlusTx() [][]byte {
 	if x != nil {
 		return x.UnsignedPlusTx
 	}
-	return ""
+	return nil
 }
 
 // SwapData defines the data for a swap.
@@ -3221,7 +3281,7 @@ var file_zrchain_zenex_swap_proto_rawDesc = []byte{
 	0x65, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x0c, 0x72, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12, 0x28,
 	0x0a, 0x10, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x5f, 0x70, 0x6c, 0x75, 0x73, 0x5f,
-	0x74, 0x78, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e,
+	0x74, 0x78, 0x18, 0x0d, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x0e, 0x75, 0x6e, 0x73, 0x69, 0x67, 0x6e,
 	0x65, 0x64, 0x50, 0x6c, 0x75, 0x73, 0x54, 0x78, 0x22, 0x92, 0x02, 0x0a, 0x08, 0x53, 0x77, 0x61,
 	0x70, 0x44, 0x61, 0x74, 0x61, 0x12, 0x3c, 0x0a, 0x0a, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x74, 0x6f,
 	0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68,
