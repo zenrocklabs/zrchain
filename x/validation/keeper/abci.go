@@ -750,6 +750,30 @@ func (k *Keeper) processAndStoreBtcHeader(
 	requestedHeaders *zenbtctypes.RequestedBitcoinHeaders,
 	headerType string,
 ) (int64, bool) {
+	return k.processAndStoreBtcHeaderInternal(ctx, headerHeight, header, latestBtcHeaderHeight, requestedHeaders, headerType, true)
+}
+
+// processAndStoreBtcHeaderManual processes a manually input Bitcoin header without triggering reorg checks.
+// It returns the updated latestBtcHeaderHeight and a boolean indicating if it was updated.
+func (k *Keeper) processAndStoreBtcHeaderManual(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestBtcHeaderHeight int64,
+) (int64, bool) {
+	return k.processAndStoreBtcHeaderInternal(ctx, headerHeight, header, latestBtcHeaderHeight, nil, "manual", false)
+}
+
+// processAndStoreBtcHeaderInternal is the internal implementation for processing Bitcoin headers.
+func (k *Keeper) processAndStoreBtcHeaderInternal(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestBtcHeaderHeight int64,
+	requestedHeaders *zenbtctypes.RequestedBitcoinHeaders,
+	headerType string,
+	performReorgCheck bool,
+) (int64, bool) {
 	if headerHeight <= 0 || header == nil || header.MerkleRoot == "" {
 		return latestBtcHeaderHeight, false
 	}
@@ -788,8 +812,10 @@ func (k *Keeper) processAndStoreBtcHeader(
 
 	k.Logger(ctx).Info("stored new bitcoin header", "type", headerType, "height", headerHeight)
 
-	// Always perform reorg/gap check when a new header is stored
-	k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, requestedHeaders)
+	// Perform reorg/gap check only if requested (not for manual headers)
+	if performReorgCheck && requestedHeaders != nil {
+		k.checkForBitcoinReorg(ctx, headerHeight, latestBtcHeaderHeight, requestedHeaders)
+	}
 
 	// Update the latest height if this header is newer than what we had before
 	if headerHeight > latestBtcHeaderHeight {

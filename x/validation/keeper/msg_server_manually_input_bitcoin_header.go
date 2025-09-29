@@ -60,7 +60,7 @@ func (k msgServer) ManuallyInputBitcoinHeader(ctx context.Context, msg *types.Ms
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if newHeight, updated := k.processAndStoreBtcHeader(sdkCtx, header.BlockHeight, &header, latestHeight, &requested, "manual"); updated {
+	if newHeight, updated := k.processAndStoreBtcHeaderManual(sdkCtx, header.BlockHeight, &header, latestHeight); updated {
 		latestHeight = newHeight
 	}
 

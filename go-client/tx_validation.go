@@ -53,7 +53,7 @@ func (c *ValidationTxClient) ManuallyInputBitcoinHeader(ctx context.Context, hea
 		Header:    header,
 	}
 
-	txBytes, err := c.c.BuildAndSignTx(ctx, DefaultGasLimit, DefaultFees, msg)
+	txBytes, err := c.c.BuildAndSignTx(ctx, InjectHeaderGasLimit, DefaultFees, msg)
 	if err != nil {
 		return "", err
 	}
