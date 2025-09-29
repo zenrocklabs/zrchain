@@ -186,6 +186,38 @@ class MsgRequestHeaderBackfillResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class MsgManuallyInputBitcoinHeader(_message.Message):
+    __slots__ = ("authority", "header")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    HEADER_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    header: BitcoinHeader
+    def __init__(self, authority: _Optional[str] = ..., header: _Optional[_Union[BitcoinHeader, _Mapping]] = ...) -> None: ...
+
+class BitcoinHeader(_message.Message):
+    __slots__ = ("version", "prev_block", "merkle_root", "timestamp", "bits", "nonce", "block_hash", "block_height")
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    PREV_BLOCK_FIELD_NUMBER: _ClassVar[int]
+    MERKLE_ROOT_FIELD_NUMBER: _ClassVar[int]
+    TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
+    BITS_FIELD_NUMBER: _ClassVar[int]
+    NONCE_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    version: int
+    prev_block: str
+    merkle_root: str
+    timestamp: int
+    bits: int
+    nonce: int
+    block_hash: str
+    block_height: int
+    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., timestamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
+
+class MsgManuallyInputBitcoinHeaderResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class BackfillRequests(_message.Message):
     __slots__ = ("requests",)
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
