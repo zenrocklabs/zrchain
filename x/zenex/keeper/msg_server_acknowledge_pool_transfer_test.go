@@ -217,7 +217,7 @@ func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
 			params := types.DefaultParams()
 			s.zenexKeeper.SetParams(s.ctx, params)
 
-			if tt.wantSwap != (types.Swap{}) {
+			if tt.wantSwap.SwapId != 0 {
 				for _, swap := range zenextestutil.SampleSwap {
 					err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
 					s.Require().NoError(err)

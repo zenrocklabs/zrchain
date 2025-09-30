@@ -60,6 +60,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				ZenexPoolKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 				SignReqId:      1,
+				UnsignedPlusTx: [][]byte{zenextestutil.Btc_tx[0].UnsignedPlusTx},
 			},
 		},
 		{
@@ -101,6 +102,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 				ZenexPoolKeyId: 3,
 				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
 				SignReqId:      1,
+				UnsignedPlusTx: [][]byte{zenextestutil.Btc_tx[0].UnsignedPlusTx},
 			},
 		},
 		{
@@ -206,7 +208,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 			s.Require().NoError(err)
 
 			// Set up the swap in the store first
-			if tt.wantSwap != (types.Swap{}) {
+			if tt.wantSwap.SwapId != 0 {
 				for _, swap := range zenextestutil.SampleSwap {
 					err = s.zenexKeeper.SwapsStore.Set(s.ctx, swap.SwapId, swap)
 					s.Require().NoError(err)

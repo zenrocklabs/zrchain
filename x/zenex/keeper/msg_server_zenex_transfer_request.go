@@ -67,7 +67,6 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		KeyIds:         keyIDs,
 		DataForSigning: strings.Join(hashes, ","), // hex string, each unsigned utxo is separated by comma
 		CacheId:        msg.CacheId,
-		ZenbtcTxBytes:  msg.UnsignedPlusTx,
 	}
 
 	signReqResponse, err := k.treasuryKeeper.HandleSignatureRequest(ctx, signReq)
@@ -77,6 +76,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 
 	swap.SignReqId = signReqResponse.SigReqId
 	swap.Status = types.SwapStatus_SWAP_STATUS_REQUESTED
+	swap.UnsignedPlusTx = [][]byte{msg.UnsignedPlusTx}
 	err = k.SwapsStore.Set(ctx, swap.SwapId, swap)
 	if err != nil {
 		return nil, err
