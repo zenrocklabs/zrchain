@@ -1,10 +1,6 @@
 syntax = "proto3";
 package zrchain.zentp;
 
-import "amino/amino.proto";
-import "gogoproto/gogo.proto";
-import "zrchain/zentp/params.proto";
-
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types";
 
 // MBStatus represents the different possible states of a mint/burn operation.

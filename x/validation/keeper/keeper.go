@@ -526,3 +526,36 @@ func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) (map[string]type
 
 	return validatorMismatchCounts, nil
 }
+
+func (k Keeper) GetRockBtcPrice(ctx context.Context) (math.LegacyDec, error) {
+	rockPrice, err := k.AssetPrices.Get(ctx, types.Asset_ROCK)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+	btcPrice, err := k.AssetPrices.Get(ctx, types.Asset_BTC)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+
+	return rockPrice.Quo(btcPrice), nil
+}
+
+func (k Keeper) GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error) {
+	rockPrice, err := k.AssetPrices.Get(ctx, types.Asset_ROCK)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+	btcPrice, err := k.AssetPrices.Get(ctx, types.Asset_BTC)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+
+	return btcPrice.Quo(rockPrice), nil
+}
+
+func (k Keeper) GetAssets(ctx context.Context) ([]types.Asset, error) {
+
+	assets := []types.Asset{types.Asset_ROCK, types.Asset_BTC, types.Asset_ETH}
+
+	return assets, nil
+}

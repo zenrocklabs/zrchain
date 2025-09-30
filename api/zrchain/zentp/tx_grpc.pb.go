@@ -39,6 +39,7 @@ type MsgClient interface {
 	Bridge(ctx context.Context, in *MsgBridge, opts ...grpc.CallOption) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(ctx context.Context, in *MsgSetSolanaROCKSupply, opts ...grpc.CallOption) (*MsgSetSolanaROCKSupplyResponse, error)
 }
 
@@ -104,6 +105,7 @@ type MsgServer interface {
 	Bridge(context.Context, *MsgBridge) (*MsgBridgeResponse, error)
 	// Burn defines an operation for burning Rock for a module account
 	Burn(context.Context, *MsgBurn) (*MsgBurnResponse, error)
+	// SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
 	SetSolanaROCKSupply(context.Context, *MsgSetSolanaROCKSupply) (*MsgSetSolanaROCKSupplyResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
