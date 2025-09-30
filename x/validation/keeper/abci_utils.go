@@ -1448,10 +1448,15 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (syst
 		return system.NonceAccount{}, err
 	}
 	nonceAccount := system.NonceAccount{}
+
+	if len(resp.Account) == 0 {
+		return nonceAccount, fmt.Errorf("nonce account %s is likely not a valid nonce account.", publicKey.String())
+	}
+
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	if err = nonceAccount.UnmarshalWithDecoder(decoder); err != nil {
-		return nonceAccount, err
+		return nonceAccount, fmt.Errorf("failed to unmarshal nonce account: %w (data length: %d)", err, len(resp.Account))
 	}
 	return nonceAccount, err
 }
