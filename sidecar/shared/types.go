@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
-	solrpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 // Network constants
@@ -76,27 +75,19 @@ var (
 	}
 
 	ZenBTCSolanaProgramID = map[string]string{
-		NetworkLocalnet: "BoPDAvu4Q3JjFzQKjHru6BmJLbEYMBxuKqy8pHVTA7A3",
+		NetworkLocalnet: "886BBKmJ71jrqWhZBAzqhdNRKk761Mx9WVCPzFkY4uBb",
 		NetworkRegnet:   "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkDevnet:   "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
 		NetworkTestnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
+
 	SolRockProgramID = map[string]string{
 		NetworkLocalnet: "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkRegnet:   "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
 		NetworkDevnet:   "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkTestnet:  "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet:  "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
-	}
-
-	// Solana RPC endpoints
-	SolanaRPCEndpoints = map[string]string{
-		NetworkLocalnet: solrpc.DevNet.RPC,
-		NetworkRegnet:   solrpc.DevNet_RPC,
-		NetworkDevnet:   solrpc.DevNet_RPC,
-		NetworkTestnet:  solrpc.DevNet_RPC,
-		NetworkMainnet:  solrpc.MainNetBeta_RPC,
 	}
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)
