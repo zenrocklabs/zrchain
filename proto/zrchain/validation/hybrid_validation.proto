@@ -89,6 +89,17 @@ message ValidatorHV {
   // list of unbonding ids, each uniquely identifying an unbonding of this
   // validator
   repeated uint64 unbonding_ids = 14;
+
+  repeated TokenData tokens_bedrock = 15;
+}
+
+message TokenData {
+  Asset asset = 1;
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // HistoricalInfo contains header and validator information for a given block.
@@ -137,6 +148,7 @@ message HVParams {
   int64 VEJailDurationMinutes = 6;    // jail duration in minutes for VE mismatches
   int64 VEWindowSize = 7;             // block window size for VE mismatch tracking
   int64 VEJailThreshold = 8;          // number of VE mismatches before jailing
+  string bedrockDefaultValOperAddr = 9; // default validator operator address for TokensBedrock accounting
 }
 
 // ValidationInfo defines the validation info.

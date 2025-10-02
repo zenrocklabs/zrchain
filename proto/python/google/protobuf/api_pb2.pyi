@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Api(_message.Message):
-    __slots__ = ("name", "methods", "options", "version", "source_context", "mixins", "syntax")
+    __slots__ = ("name", "methods", "options", "version", "source_context", "mixins", "syntax", "edition")
     NAME_FIELD_NUMBER: _ClassVar[int]
     METHODS_FIELD_NUMBER: _ClassVar[int]
     OPTIONS_FIELD_NUMBER: _ClassVar[int]
@@ -16,6 +16,7 @@ class Api(_message.Message):
     SOURCE_CONTEXT_FIELD_NUMBER: _ClassVar[int]
     MIXINS_FIELD_NUMBER: _ClassVar[int]
     SYNTAX_FIELD_NUMBER: _ClassVar[int]
+    EDITION_FIELD_NUMBER: _ClassVar[int]
     name: str
     methods: _containers.RepeatedCompositeFieldContainer[Method]
     options: _containers.RepeatedCompositeFieldContainer[_type_pb2.Option]
@@ -23,10 +24,11 @@ class Api(_message.Message):
     source_context: _source_context_pb2.SourceContext
     mixins: _containers.RepeatedCompositeFieldContainer[Mixin]
     syntax: _type_pb2.Syntax
-    def __init__(self, name: _Optional[str] = ..., methods: _Optional[_Iterable[_Union[Method, _Mapping]]] = ..., options: _Optional[_Iterable[_Union[_type_pb2.Option, _Mapping]]] = ..., version: _Optional[str] = ..., source_context: _Optional[_Union[_source_context_pb2.SourceContext, _Mapping]] = ..., mixins: _Optional[_Iterable[_Union[Mixin, _Mapping]]] = ..., syntax: _Optional[_Union[_type_pb2.Syntax, str]] = ...) -> None: ...
+    edition: str
+    def __init__(self, name: _Optional[str] = ..., methods: _Optional[_Iterable[_Union[Method, _Mapping]]] = ..., options: _Optional[_Iterable[_Union[_type_pb2.Option, _Mapping]]] = ..., version: _Optional[str] = ..., source_context: _Optional[_Union[_source_context_pb2.SourceContext, _Mapping]] = ..., mixins: _Optional[_Iterable[_Union[Mixin, _Mapping]]] = ..., syntax: _Optional[_Union[_type_pb2.Syntax, str]] = ..., edition: _Optional[str] = ...) -> None: ...
 
 class Method(_message.Message):
-    __slots__ = ("name", "request_type_url", "request_streaming", "response_type_url", "response_streaming", "options", "syntax")
+    __slots__ = ("name", "request_type_url", "request_streaming", "response_type_url", "response_streaming", "options", "syntax", "edition")
     NAME_FIELD_NUMBER: _ClassVar[int]
     REQUEST_TYPE_URL_FIELD_NUMBER: _ClassVar[int]
     REQUEST_STREAMING_FIELD_NUMBER: _ClassVar[int]
@@ -34,6 +36,7 @@ class Method(_message.Message):
     RESPONSE_STREAMING_FIELD_NUMBER: _ClassVar[int]
     OPTIONS_FIELD_NUMBER: _ClassVar[int]
     SYNTAX_FIELD_NUMBER: _ClassVar[int]
+    EDITION_FIELD_NUMBER: _ClassVar[int]
     name: str
     request_type_url: str
     request_streaming: bool
@@ -41,7 +44,8 @@ class Method(_message.Message):
     response_streaming: bool
     options: _containers.RepeatedCompositeFieldContainer[_type_pb2.Option]
     syntax: _type_pb2.Syntax
-    def __init__(self, name: _Optional[str] = ..., request_type_url: _Optional[str] = ..., request_streaming: bool = ..., response_type_url: _Optional[str] = ..., response_streaming: bool = ..., options: _Optional[_Iterable[_Union[_type_pb2.Option, _Mapping]]] = ..., syntax: _Optional[_Union[_type_pb2.Syntax, str]] = ...) -> None: ...
+    edition: str
+    def __init__(self, name: _Optional[str] = ..., request_type_url: _Optional[str] = ..., request_streaming: bool = ..., response_type_url: _Optional[str] = ..., response_streaming: bool = ..., options: _Optional[_Iterable[_Union[_type_pb2.Option, _Mapping]]] = ..., syntax: _Optional[_Union[_type_pb2.Syntax, str]] = ..., edition: _Optional[str] = ...) -> None: ...
 
 class Mixin(_message.Message):
     __slots__ = ("name", "root")

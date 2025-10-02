@@ -16,7 +16,6 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
-	eventstore "github.com/Zenrock-Foundation/zrchain/v6/contracts/sol-event-store/go-sdk"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
@@ -658,7 +657,7 @@ func (k *Keeper) bitcoinNetwork(ctx context.Context) string {
 	return "testnet4"
 }
 
-func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
+func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context, requestedBtcHeaderHeight int64) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
 	// Always get the latest Bitcoin header
 	latest, err := k.sidecarClient.GetLatestBitcoinBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
 		ChainName: k.bitcoinNetwork(ctx),
@@ -679,14 +678,26 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context) (*sidecar.BitcoinBl
 		}
 	}
 
-	// Get requested historical headers if any
+	// If a consensus-selected requested height is provided, fetch exactly that
+	if requestedBtcHeaderHeight > 0 {
+		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   k.bitcoinNetwork(ctx),
+			BlockHeight: requestedBtcHeaderHeight,
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBtcHeaderHeight, err)
+		}
+		return latest, requested, nil
+	}
+
+	// Otherwise fall back to the first pending requested height if any
 	if len(requestedBitcoinHeaders.Heights) > 0 {
 		requested, err := k.sidecarClient.GetBitcoinBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
 			ChainName:   k.bitcoinNetwork(ctx),
 			BlockHeight: requestedBitcoinHeaders.Heights[0],
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
+			return latest, nil, fmt.Errorf("failed to get requested Bitcoin header at height %d: %w", requestedBitcoinHeaders.Heights[0], err)
 		}
 		return latest, requested, nil
 	}
@@ -1437,10 +1448,15 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (syst
 		return system.NonceAccount{}, err
 	}
 	nonceAccount := system.NonceAccount{}
+
+	if len(resp.Account) == 0 {
+		return nonceAccount, fmt.Errorf("nonce account %s is likely not a valid nonce account.", publicKey.String())
+	}
+
 	decoder := bin.NewBorshDecoder(resp.Account)
 
 	if err = nonceAccount.UnmarshalWithDecoder(decoder); err != nil {
-		return nonceAccount, err
+		return nonceAccount, fmt.Errorf("failed to unmarshal nonce account: %w (data length: %d)", err, len(resp.Account))
 	}
 	return nonceAccount, err
 }
@@ -1495,7 +1511,6 @@ type solanaMintTxRequest struct {
 	nonceAccountKey   uint64
 	nonceAuthorityKey uint64
 	signerKey         uint64
-	eventID           uint64 // used for EventStore sharding
 	rock              bool
 	zenbtc            bool
 }
@@ -1599,32 +1614,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		if err != nil {
 			return nil, err
 		}
-		// Derive EventStore PDAs via SDK helpers for clarity & reuse.
-		var eventStoreProgram, eventStoreGlobalConfig, zenbtcWrapShardPDA solana.PublicKey
-		if sp := k.zenBTCKeeper.GetSolanaParams(ctx); sp != nil && sp.EventStoreProgramId != "" {
-			if parsed, perr := solana.PublicKeyFromBase58(sp.EventStoreProgramId); perr != nil {
-				k.Logger(ctx).Warn("invalid EventStoreProgramId in zenbtc params; continuing with zero pubkeys", "value", sp.EventStoreProgramId, "error", perr)
-			} else {
-				eventStoreProgram = parsed
-				gc, gcErr := eventstore.DeriveGlobalConfigPDA(eventStoreProgram)
-				if gcErr != nil {
-					k.Logger(ctx).Warn("failed deriving global config PDA", "error", gcErr)
-				} else {
-					eventStoreGlobalConfig = gc
-				}
-				// Compute shard PDA only if we have a non-zero event ID (zero implies not yet assigned or unknown).
-				if req.eventID > 0 {
-					wrapShard, _, shardErr := eventstore.DeriveZenbtcWrapShardPDA(eventStoreProgram, req.eventID)
-					if shardErr != nil {
-						k.Logger(ctx).Warn("failed deriving zenbtc wrap shard PDA", "event_id", req.eventID, "error", shardErr)
-					} else {
-						zenbtcWrapShardPDA = wrapShard
-					}
-				}
-			}
-		} else {
-			k.Logger(ctx).Debug("EventStoreProgramId not set in zenbtc params; using zero pubkeys for Wrap instruction")
-		}
 
 		instructions = append(instructions, solzenbtc.Wrap(
 			programID,
@@ -1636,10 +1625,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			feeWalletAta,
 			recipientPubKey,
 			receiverAta,
-			eventStoreProgram,
-			eventStoreGlobalConfig,
-			programID, // calling program (zenbtc)
-			zenbtcWrapShardPDA,
 		))
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")

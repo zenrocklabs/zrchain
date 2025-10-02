@@ -35,25 +35,13 @@ type Wrap struct {
 	// [9] = [] token_program
 	//
 	// [10] = [] associated_token_program
-	//
-	// [11] = [] event_store_program
-	// ··········· EventStore program for CPI calls
-	//
-	// [12] = [] event_store_global_config
-	// ··········· EventStore global config PDA
-	//
-	// [13] = [] calling_program
-	// ··········· This program (zenbtc) as the calling program for EventStore CPI
-	//
-	// [14] = [] zenbtc_wrap_shard
-	// ··········· Zenbtc wrap shard account (determined by event ID)
 	ag_solanago.AccountMetaSlice `bin:"-"`
 }
 
 // NewWrapInstructionBuilder creates a new `Wrap` instruction builder.
 func NewWrapInstructionBuilder() *Wrap {
 	nd := &Wrap{
-		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 15),
+		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 11),
 	}
 	nd.AccountMetaSlice[8] = ag_solanago.Meta(Addresses["11111111111111111111111111111111"])
 	nd.AccountMetaSlice[9] = ag_solanago.Meta(Addresses["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"])
@@ -326,58 +314,6 @@ func (inst *Wrap) GetAssociatedTokenProgramAccount() *ag_solanago.AccountMeta {
 	return inst.AccountMetaSlice.Get(10)
 }
 
-// SetEventStoreProgramAccount sets the "event_store_program" account.
-// EventStore program for CPI calls
-func (inst *Wrap) SetEventStoreProgramAccount(eventStoreProgram ag_solanago.PublicKey) *Wrap {
-	inst.AccountMetaSlice[11] = ag_solanago.Meta(eventStoreProgram)
-	return inst
-}
-
-// GetEventStoreProgramAccount gets the "event_store_program" account.
-// EventStore program for CPI calls
-func (inst *Wrap) GetEventStoreProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(11)
-}
-
-// SetEventStoreGlobalConfigAccount sets the "event_store_global_config" account.
-// EventStore global config PDA
-func (inst *Wrap) SetEventStoreGlobalConfigAccount(eventStoreGlobalConfig ag_solanago.PublicKey) *Wrap {
-	inst.AccountMetaSlice[12] = ag_solanago.Meta(eventStoreGlobalConfig)
-	return inst
-}
-
-// GetEventStoreGlobalConfigAccount gets the "event_store_global_config" account.
-// EventStore global config PDA
-func (inst *Wrap) GetEventStoreGlobalConfigAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(12)
-}
-
-// SetCallingProgramAccount sets the "calling_program" account.
-// This program (zenbtc) as the calling program for EventStore CPI
-func (inst *Wrap) SetCallingProgramAccount(callingProgram ag_solanago.PublicKey) *Wrap {
-	inst.AccountMetaSlice[13] = ag_solanago.Meta(callingProgram)
-	return inst
-}
-
-// GetCallingProgramAccount gets the "calling_program" account.
-// This program (zenbtc) as the calling program for EventStore CPI
-func (inst *Wrap) GetCallingProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(13)
-}
-
-// SetZenbtcWrapShardAccount sets the "zenbtc_wrap_shard" account.
-// Zenbtc wrap shard account (determined by event ID)
-func (inst *Wrap) SetZenbtcWrapShardAccount(zenbtcWrapShard ag_solanago.PublicKey) *Wrap {
-	inst.AccountMetaSlice[14] = ag_solanago.Meta(zenbtcWrapShard)
-	return inst
-}
-
-// GetZenbtcWrapShardAccount gets the "zenbtc_wrap_shard" account.
-// Zenbtc wrap shard account (determined by event ID)
-func (inst *Wrap) GetZenbtcWrapShardAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(14)
-}
-
 func (inst Wrap) Build() *Instruction {
 	return &Instruction{BaseVariant: ag_binary.BaseVariant{
 		Impl:   inst,
@@ -438,18 +374,6 @@ func (inst *Wrap) Validate() error {
 		if inst.AccountMetaSlice[10] == nil {
 			return errors.New("accounts.AssociatedTokenProgram is not set")
 		}
-		if inst.AccountMetaSlice[11] == nil {
-			return errors.New("accounts.EventStoreProgram is not set")
-		}
-		if inst.AccountMetaSlice[12] == nil {
-			return errors.New("accounts.EventStoreGlobalConfig is not set")
-		}
-		if inst.AccountMetaSlice[13] == nil {
-			return errors.New("accounts.CallingProgram is not set")
-		}
-		if inst.AccountMetaSlice[14] == nil {
-			return errors.New("accounts.ZenbtcWrapShard is not set")
-		}
 	}
 	return nil
 }
@@ -468,22 +392,18 @@ func (inst *Wrap) EncodeToTree(parent ag_treeout.Branches) {
 					})
 
 					// Accounts of the instruction:
-					instructionBranch.Child("Accounts[len=15]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
-						accountsBranch.Child(ag_format.Meta("                   signer", inst.AccountMetaSlice.Get(0)))
-						accountsBranch.Child(ag_format.Meta("            global_config", inst.AccountMetaSlice.Get(1)))
-						accountsBranch.Child(ag_format.Meta("             spl_multisig", inst.AccountMetaSlice.Get(2)))
-						accountsBranch.Child(ag_format.Meta("                     mint", inst.AccountMetaSlice.Get(3)))
-						accountsBranch.Child(ag_format.Meta("               fee_wallet", inst.AccountMetaSlice.Get(4)))
-						accountsBranch.Child(ag_format.Meta("           fee_wallet_ata", inst.AccountMetaSlice.Get(5)))
-						accountsBranch.Child(ag_format.Meta("                 receiver", inst.AccountMetaSlice.Get(6)))
-						accountsBranch.Child(ag_format.Meta("             receiver_ata", inst.AccountMetaSlice.Get(7)))
-						accountsBranch.Child(ag_format.Meta("           system_program", inst.AccountMetaSlice.Get(8)))
-						accountsBranch.Child(ag_format.Meta("            token_program", inst.AccountMetaSlice.Get(9)))
-						accountsBranch.Child(ag_format.Meta(" associated_token_program", inst.AccountMetaSlice.Get(10)))
-						accountsBranch.Child(ag_format.Meta("      event_store_program", inst.AccountMetaSlice.Get(11)))
-						accountsBranch.Child(ag_format.Meta("event_store_global_config", inst.AccountMetaSlice.Get(12)))
-						accountsBranch.Child(ag_format.Meta("          calling_program", inst.AccountMetaSlice.Get(13)))
-						accountsBranch.Child(ag_format.Meta("        zenbtc_wrap_shard", inst.AccountMetaSlice.Get(14)))
+					instructionBranch.Child("Accounts[len=11]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
+						accountsBranch.Child(ag_format.Meta("                  signer", inst.AccountMetaSlice.Get(0)))
+						accountsBranch.Child(ag_format.Meta("           global_config", inst.AccountMetaSlice.Get(1)))
+						accountsBranch.Child(ag_format.Meta("            spl_multisig", inst.AccountMetaSlice.Get(2)))
+						accountsBranch.Child(ag_format.Meta("                    mint", inst.AccountMetaSlice.Get(3)))
+						accountsBranch.Child(ag_format.Meta("              fee_wallet", inst.AccountMetaSlice.Get(4)))
+						accountsBranch.Child(ag_format.Meta("          fee_wallet_ata", inst.AccountMetaSlice.Get(5)))
+						accountsBranch.Child(ag_format.Meta("                receiver", inst.AccountMetaSlice.Get(6)))
+						accountsBranch.Child(ag_format.Meta("            receiver_ata", inst.AccountMetaSlice.Get(7)))
+						accountsBranch.Child(ag_format.Meta("          system_program", inst.AccountMetaSlice.Get(8)))
+						accountsBranch.Child(ag_format.Meta("           token_program", inst.AccountMetaSlice.Get(9)))
+						accountsBranch.Child(ag_format.Meta("associated_token_program", inst.AccountMetaSlice.Get(10)))
 					})
 				})
 		})
@@ -521,11 +441,7 @@ func NewWrapInstruction(
 	receiverAta ag_solanago.PublicKey,
 	systemProgram ag_solanago.PublicKey,
 	tokenProgram ag_solanago.PublicKey,
-	associatedTokenProgram ag_solanago.PublicKey,
-	eventStoreProgram ag_solanago.PublicKey,
-	eventStoreGlobalConfig ag_solanago.PublicKey,
-	callingProgram ag_solanago.PublicKey,
-	zenbtcWrapShard ag_solanago.PublicKey) *Wrap {
+	associatedTokenProgram ag_solanago.PublicKey) *Wrap {
 	return NewWrapInstructionBuilder().
 		SetArgs(args).
 		SetSignerAccount(signer).
@@ -538,9 +454,5 @@ func NewWrapInstruction(
 		SetReceiverAtaAccount(receiverAta).
 		SetSystemProgramAccount(systemProgram).
 		SetTokenProgramAccount(tokenProgram).
-		SetAssociatedTokenProgramAccount(associatedTokenProgram).
-		SetEventStoreProgramAccount(eventStoreProgram).
-		SetEventStoreGlobalConfigAccount(eventStoreGlobalConfig).
-		SetCallingProgramAccount(callingProgram).
-		SetZenbtcWrapShardAccount(zenbtcWrapShard)
+		SetAssociatedTokenProgramAccount(associatedTokenProgram)
 }

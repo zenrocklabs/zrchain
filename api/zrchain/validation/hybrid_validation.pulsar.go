@@ -64,6 +64,57 @@ func (x *_ValidatorHV_14_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_ValidatorHV_15_list)(nil)
+
+type _ValidatorHV_15_list struct {
+	list *[]*TokenData
+}
+
+func (x *_ValidatorHV_15_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_ValidatorHV_15_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_ValidatorHV_15_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*TokenData)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_ValidatorHV_15_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*TokenData)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_ValidatorHV_15_list) AppendMutable() protoreflect.Value {
+	v := new(TokenData)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_ValidatorHV_15_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_ValidatorHV_15_list) NewElement() protoreflect.Value {
+	v := new(TokenData)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_ValidatorHV_15_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_ValidatorHV                             protoreflect.MessageDescriptor
 	fd_ValidatorHV_operator_address            protoreflect.FieldDescriptor
@@ -80,6 +131,7 @@ var (
 	fd_ValidatorHV_min_self_delegation         protoreflect.FieldDescriptor
 	fd_ValidatorHV_unbonding_on_hold_ref_count protoreflect.FieldDescriptor
 	fd_ValidatorHV_unbonding_ids               protoreflect.FieldDescriptor
+	fd_ValidatorHV_tokens_bedrock              protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -99,6 +151,7 @@ func init() {
 	fd_ValidatorHV_min_self_delegation = md_ValidatorHV.Fields().ByName("min_self_delegation")
 	fd_ValidatorHV_unbonding_on_hold_ref_count = md_ValidatorHV.Fields().ByName("unbonding_on_hold_ref_count")
 	fd_ValidatorHV_unbonding_ids = md_ValidatorHV.Fields().ByName("unbonding_ids")
+	fd_ValidatorHV_tokens_bedrock = md_ValidatorHV.Fields().ByName("tokens_bedrock")
 }
 
 var _ protoreflect.Message = (*fastReflection_ValidatorHV)(nil)
@@ -250,6 +303,12 @@ func (x *fastReflection_ValidatorHV) Range(f func(protoreflect.FieldDescriptor, 
 			return
 		}
 	}
+	if len(x.TokensBedrock) != 0 {
+		value := protoreflect.ValueOfList(&_ValidatorHV_15_list{list: &x.TokensBedrock})
+		if !f(fd_ValidatorHV_tokens_bedrock, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -293,6 +352,8 @@ func (x *fastReflection_ValidatorHV) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.UnbondingOnHoldRefCount != int64(0)
 	case "zrchain.validation.ValidatorHV.unbonding_ids":
 		return len(x.UnbondingIds) != 0
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		return len(x.TokensBedrock) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ValidatorHV"))
@@ -337,6 +398,8 @@ func (x *fastReflection_ValidatorHV) Clear(fd protoreflect.FieldDescriptor) {
 		x.UnbondingOnHoldRefCount = int64(0)
 	case "zrchain.validation.ValidatorHV.unbonding_ids":
 		x.UnbondingIds = nil
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		x.TokensBedrock = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ValidatorHV"))
@@ -398,6 +461,12 @@ func (x *fastReflection_ValidatorHV) Get(descriptor protoreflect.FieldDescriptor
 		}
 		listValue := &_ValidatorHV_14_list{list: &x.UnbondingIds}
 		return protoreflect.ValueOfList(listValue)
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		if len(x.TokensBedrock) == 0 {
+			return protoreflect.ValueOfList(&_ValidatorHV_15_list{})
+		}
+		listValue := &_ValidatorHV_15_list{list: &x.TokensBedrock}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ValidatorHV"))
@@ -448,6 +517,10 @@ func (x *fastReflection_ValidatorHV) Set(fd protoreflect.FieldDescriptor, value 
 		lv := value.List()
 		clv := lv.(*_ValidatorHV_14_list)
 		x.UnbondingIds = *clv.list
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		lv := value.List()
+		clv := lv.(*_ValidatorHV_15_list)
+		x.TokensBedrock = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ValidatorHV"))
@@ -493,6 +566,12 @@ func (x *fastReflection_ValidatorHV) Mutable(fd protoreflect.FieldDescriptor) pr
 			x.UnbondingIds = []uint64{}
 		}
 		value := &_ValidatorHV_14_list{list: &x.UnbondingIds}
+		return protoreflect.ValueOfList(value)
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		if x.TokensBedrock == nil {
+			x.TokensBedrock = []*TokenData{}
+		}
+		value := &_ValidatorHV_15_list{list: &x.TokensBedrock}
 		return protoreflect.ValueOfList(value)
 	case "zrchain.validation.ValidatorHV.operator_address":
 		panic(fmt.Errorf("field operator_address of message zrchain.validation.ValidatorHV is not mutable"))
@@ -558,6 +637,9 @@ func (x *fastReflection_ValidatorHV) NewField(fd protoreflect.FieldDescriptor) p
 	case "zrchain.validation.ValidatorHV.unbonding_ids":
 		list := []uint64{}
 		return protoreflect.ValueOfList(&_ValidatorHV_14_list{list: &list})
+	case "zrchain.validation.ValidatorHV.tokens_bedrock":
+		list := []*TokenData{}
+		return protoreflect.ValueOfList(&_ValidatorHV_15_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.ValidatorHV"))
@@ -682,6 +764,12 @@ func (x *fastReflection_ValidatorHV) ProtoMethods() *protoiface.Methods {
 			}
 			n += 1 + runtime.Sov(uint64(l)) + l
 		}
+		if len(x.TokensBedrock) > 0 {
+			for _, e := range x.TokensBedrock {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -710,6 +798,22 @@ func (x *fastReflection_ValidatorHV) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.TokensBedrock) > 0 {
+			for iNdEx := len(x.TokensBedrock) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.TokensBedrock[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x7a
+			}
 		}
 		if len(x.UnbondingIds) > 0 {
 			var pksize2 int
@@ -1353,6 +1457,508 @@ func (x *fastReflection_ValidatorHV) ProtoMethods() *protoiface.Methods {
 				} else {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UnbondingIds", wireType)
 				}
+			case 15:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field TokensBedrock", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.TokensBedrock = append(x.TokensBedrock, &TokenData{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.TokensBedrock[len(x.TokensBedrock)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_TokenData        protoreflect.MessageDescriptor
+	fd_TokenData_asset  protoreflect.FieldDescriptor
+	fd_TokenData_amount protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_validation_hybrid_validation_proto_init()
+	md_TokenData = File_zrchain_validation_hybrid_validation_proto.Messages().ByName("TokenData")
+	fd_TokenData_asset = md_TokenData.Fields().ByName("asset")
+	fd_TokenData_amount = md_TokenData.Fields().ByName("amount")
+}
+
+var _ protoreflect.Message = (*fastReflection_TokenData)(nil)
+
+type fastReflection_TokenData TokenData
+
+func (x *TokenData) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_TokenData)(x)
+}
+
+func (x *TokenData) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_TokenData_messageType fastReflection_TokenData_messageType
+var _ protoreflect.MessageType = fastReflection_TokenData_messageType{}
+
+type fastReflection_TokenData_messageType struct{}
+
+func (x fastReflection_TokenData_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_TokenData)(nil)
+}
+func (x fastReflection_TokenData_messageType) New() protoreflect.Message {
+	return new(fastReflection_TokenData)
+}
+func (x fastReflection_TokenData_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_TokenData
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_TokenData) Descriptor() protoreflect.MessageDescriptor {
+	return md_TokenData
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_TokenData) Type() protoreflect.MessageType {
+	return _fastReflection_TokenData_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_TokenData) New() protoreflect.Message {
+	return new(fastReflection_TokenData)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_TokenData) Interface() protoreflect.ProtoMessage {
+	return (*TokenData)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_TokenData) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Asset != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Asset))
+		if !f(fd_TokenData_asset, value) {
+			return
+		}
+	}
+	if x.Amount != "" {
+		value := protoreflect.ValueOfString(x.Amount)
+		if !f(fd_TokenData_amount, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_TokenData) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		return x.Asset != 0
+	case "zrchain.validation.TokenData.amount":
+		return x.Amount != ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_TokenData) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		x.Asset = 0
+	case "zrchain.validation.TokenData.amount":
+		x.Amount = ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_TokenData) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		value := x.Asset
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	case "zrchain.validation.TokenData.amount":
+		value := x.Amount
+		return protoreflect.ValueOfString(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_TokenData) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		x.Asset = (Asset)(value.Enum())
+	case "zrchain.validation.TokenData.amount":
+		x.Amount = value.Interface().(string)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_TokenData) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		panic(fmt.Errorf("field asset of message zrchain.validation.TokenData is not mutable"))
+	case "zrchain.validation.TokenData.amount":
+		panic(fmt.Errorf("field amount of message zrchain.validation.TokenData is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_TokenData) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.TokenData.asset":
+		return protoreflect.ValueOfEnum(0)
+	case "zrchain.validation.TokenData.amount":
+		return protoreflect.ValueOfString("")
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.TokenData"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.TokenData does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_TokenData) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.TokenData", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_TokenData) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_TokenData) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_TokenData) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_TokenData) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*TokenData)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.Asset != 0 {
+			n += 1 + runtime.Sov(uint64(x.Asset))
+		}
+		l = len(x.Amount)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*TokenData)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.Amount) > 0 {
+			i -= len(x.Amount)
+			copy(dAtA[i:], x.Amount)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Amount)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if x.Asset != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Asset))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*TokenData)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: TokenData: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: TokenData: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Asset", wireType)
+				}
+				x.Asset = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Asset |= Asset(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Amount = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1461,7 +2067,7 @@ func (x *HistoricalInfoHV) ProtoReflect() protoreflect.Message {
 }
 
 func (x *HistoricalInfoHV) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[1]
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1989,7 +2595,7 @@ func (x *SlashEvent) ProtoReflect() protoreflect.Message {
 }
 
 func (x *SlashEvent) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[2]
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2673,15 +3279,16 @@ func (x *_HVParams_3_list) IsValid() bool {
 }
 
 var (
-	md_HVParams                          protoreflect.MessageDescriptor
-	fd_HVParams_AVSRewardsRate           protoreflect.FieldDescriptor
-	fd_HVParams_BlockTime                protoreflect.FieldDescriptor
-	fd_HVParams_stakeableAssets          protoreflect.FieldDescriptor
-	fd_HVParams_priceRetentionBlockRange protoreflect.FieldDescriptor
-	fd_HVParams_VEJailingEnabled         protoreflect.FieldDescriptor
-	fd_HVParams_VEJailDurationMinutes    protoreflect.FieldDescriptor
-	fd_HVParams_VEWindowSize             protoreflect.FieldDescriptor
-	fd_HVParams_VEJailThreshold          protoreflect.FieldDescriptor
+	md_HVParams                           protoreflect.MessageDescriptor
+	fd_HVParams_AVSRewardsRate            protoreflect.FieldDescriptor
+	fd_HVParams_BlockTime                 protoreflect.FieldDescriptor
+	fd_HVParams_stakeableAssets           protoreflect.FieldDescriptor
+	fd_HVParams_priceRetentionBlockRange  protoreflect.FieldDescriptor
+	fd_HVParams_VEJailingEnabled          protoreflect.FieldDescriptor
+	fd_HVParams_VEJailDurationMinutes     protoreflect.FieldDescriptor
+	fd_HVParams_VEWindowSize              protoreflect.FieldDescriptor
+	fd_HVParams_VEJailThreshold           protoreflect.FieldDescriptor
+	fd_HVParams_bedrockDefaultValOperAddr protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -2695,6 +3302,7 @@ func init() {
 	fd_HVParams_VEJailDurationMinutes = md_HVParams.Fields().ByName("VEJailDurationMinutes")
 	fd_HVParams_VEWindowSize = md_HVParams.Fields().ByName("VEWindowSize")
 	fd_HVParams_VEJailThreshold = md_HVParams.Fields().ByName("VEJailThreshold")
+	fd_HVParams_bedrockDefaultValOperAddr = md_HVParams.Fields().ByName("bedrockDefaultValOperAddr")
 }
 
 var _ protoreflect.Message = (*fastReflection_HVParams)(nil)
@@ -2706,7 +3314,7 @@ func (x *HVParams) ProtoReflect() protoreflect.Message {
 }
 
 func (x *HVParams) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[3]
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2810,6 +3418,12 @@ func (x *fastReflection_HVParams) Range(f func(protoreflect.FieldDescriptor, pro
 			return
 		}
 	}
+	if x.BedrockDefaultValOperAddr != "" {
+		value := protoreflect.ValueOfString(x.BedrockDefaultValOperAddr)
+		if !f(fd_HVParams_bedrockDefaultValOperAddr, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -2841,6 +3455,8 @@ func (x *fastReflection_HVParams) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.VEWindowSize != int64(0)
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		return x.VEJailThreshold != int64(0)
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		return x.BedrockDefaultValOperAddr != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2873,6 +3489,8 @@ func (x *fastReflection_HVParams) Clear(fd protoreflect.FieldDescriptor) {
 		x.VEWindowSize = int64(0)
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		x.VEJailThreshold = int64(0)
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		x.BedrockDefaultValOperAddr = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2916,6 +3534,9 @@ func (x *fastReflection_HVParams) Get(descriptor protoreflect.FieldDescriptor) p
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		value := x.VEJailThreshold
 		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		value := x.BedrockDefaultValOperAddr
+		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2954,6 +3575,8 @@ func (x *fastReflection_HVParams) Set(fd protoreflect.FieldDescriptor, value pro
 		x.VEWindowSize = value.Int()
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		x.VEJailThreshold = value.Int()
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		x.BedrockDefaultValOperAddr = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -2994,6 +3617,8 @@ func (x *fastReflection_HVParams) Mutable(fd protoreflect.FieldDescriptor) proto
 		panic(fmt.Errorf("field VEWindowSize of message zrchain.validation.HVParams is not mutable"))
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		panic(fmt.Errorf("field VEJailThreshold of message zrchain.validation.HVParams is not mutable"))
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		panic(fmt.Errorf("field bedrockDefaultValOperAddr of message zrchain.validation.HVParams is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -3024,6 +3649,8 @@ func (x *fastReflection_HVParams) NewField(fd protoreflect.FieldDescriptor) prot
 		return protoreflect.ValueOfInt64(int64(0))
 	case "zrchain.validation.HVParams.VEJailThreshold":
 		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.HVParams.bedrockDefaultValOperAddr":
+		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.HVParams"))
@@ -3121,6 +3748,10 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 		if x.VEJailThreshold != 0 {
 			n += 1 + runtime.Sov(uint64(x.VEJailThreshold))
 		}
+		l = len(x.BedrockDefaultValOperAddr)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -3149,6 +3780,13 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.BedrockDefaultValOperAddr) > 0 {
+			i -= len(x.BedrockDefaultValOperAddr)
+			copy(dAtA[i:], x.BedrockDefaultValOperAddr)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BedrockDefaultValOperAddr)))
+			i--
+			dAtA[i] = 0x4a
 		}
 		if x.VEJailThreshold != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.VEJailThreshold))
@@ -3438,6 +4076,38 @@ func (x *fastReflection_HVParams) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
+			case 9:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BedrockDefaultValOperAddr", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.BedrockDefaultValOperAddr = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -3589,7 +4259,7 @@ func (x *ValidationInfo) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ValidationInfo) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[4]
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4195,7 +4865,7 @@ func (x *ValidatorMismatchCount) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ValidatorMismatchCount) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[5]
+	mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4834,7 +5504,8 @@ type ValidatorHV struct {
 	UnbondingOnHoldRefCount int64 `protobuf:"varint,13,opt,name=unbonding_on_hold_ref_count,json=unbondingOnHoldRefCount,proto3" json:"unbonding_on_hold_ref_count,omitempty"`
 	// list of unbonding ids, each uniquely identifying an unbonding of this
 	// validator
-	UnbondingIds []uint64 `protobuf:"varint,14,rep,packed,name=unbonding_ids,json=unbondingIds,proto3" json:"unbonding_ids,omitempty"`
+	UnbondingIds  []uint64     `protobuf:"varint,14,rep,packed,name=unbonding_ids,json=unbondingIds,proto3" json:"unbonding_ids,omitempty"`
+	TokensBedrock []*TokenData `protobuf:"bytes,15,rep,name=tokens_bedrock,json=tokensBedrock,proto3" json:"tokens_bedrock,omitempty"`
 }
 
 func (x *ValidatorHV) Reset() {
@@ -4955,6 +5626,56 @@ func (x *ValidatorHV) GetUnbondingIds() []uint64 {
 	return nil
 }
 
+func (x *ValidatorHV) GetTokensBedrock() []*TokenData {
+	if x != nil {
+		return x.TokensBedrock
+	}
+	return nil
+}
+
+type TokenData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Asset  Asset  `protobuf:"varint,1,opt,name=asset,proto3,enum=zrchain.validation.Asset" json:"asset,omitempty"`
+	Amount string `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
+}
+
+func (x *TokenData) Reset() {
+	*x = TokenData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TokenData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TokenData) ProtoMessage() {}
+
+// Deprecated: Use TokenData.ProtoReflect.Descriptor instead.
+func (*TokenData) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TokenData) GetAsset() Asset {
+	if x != nil {
+		return x.Asset
+	}
+	return Asset_UNSPECIFIED
+}
+
+func (x *TokenData) GetAmount() string {
+	if x != nil {
+		return x.Amount
+	}
+	return ""
+}
+
 // HistoricalInfo contains header and validator information for a given block.
 // It is stored as part of staking module's state, which persists the `n` most
 // recent HistoricalInfo
@@ -4971,7 +5692,7 @@ type HistoricalInfoHV struct {
 func (x *HistoricalInfoHV) Reset() {
 	*x = HistoricalInfoHV{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[1]
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4985,7 +5706,7 @@ func (*HistoricalInfoHV) ProtoMessage() {}
 
 // Deprecated: Use HistoricalInfoHV.ProtoReflect.Descriptor instead.
 func (*HistoricalInfoHV) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{1}
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *HistoricalInfoHV) GetHeader() *types.Header {
@@ -5018,7 +5739,7 @@ type SlashEvent struct {
 func (x *SlashEvent) Reset() {
 	*x = SlashEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[2]
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5032,7 +5753,7 @@ func (*SlashEvent) ProtoMessage() {}
 
 // Deprecated: Use SlashEvent.ProtoReflect.Descriptor instead.
 func (*SlashEvent) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{2}
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SlashEvent) GetBlockHeight() int64 {
@@ -5076,20 +5797,21 @@ type HVParams struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AVSRewardsRate           string       `protobuf:"bytes,1,opt,name=AVSRewardsRate,proto3" json:"AVSRewardsRate,omitempty"` // % APR
-	BlockTime                int64        `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`          // seconds
-	StakeableAssets          []*AssetData `protobuf:"bytes,3,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
-	PriceRetentionBlockRange int64        `protobuf:"varint,4,opt,name=priceRetentionBlockRange,proto3" json:"priceRetentionBlockRange,omitempty"`
-	VEJailingEnabled         bool         `protobuf:"varint,5,opt,name=VEJailingEnabled,proto3" json:"VEJailingEnabled,omitempty"`           // whether to jail validators for VE mismatches
-	VEJailDurationMinutes    int64        `protobuf:"varint,6,opt,name=VEJailDurationMinutes,proto3" json:"VEJailDurationMinutes,omitempty"` // jail duration in minutes for VE mismatches
-	VEWindowSize             int64        `protobuf:"varint,7,opt,name=VEWindowSize,proto3" json:"VEWindowSize,omitempty"`                   // block window size for VE mismatch tracking
-	VEJailThreshold          int64        `protobuf:"varint,8,opt,name=VEJailThreshold,proto3" json:"VEJailThreshold,omitempty"`             // number of VE mismatches before jailing
+	AVSRewardsRate            string       `protobuf:"bytes,1,opt,name=AVSRewardsRate,proto3" json:"AVSRewardsRate,omitempty"` // % APR
+	BlockTime                 int64        `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`          // seconds
+	StakeableAssets           []*AssetData `protobuf:"bytes,3,rep,name=stakeableAssets,proto3" json:"stakeableAssets,omitempty"`
+	PriceRetentionBlockRange  int64        `protobuf:"varint,4,opt,name=priceRetentionBlockRange,proto3" json:"priceRetentionBlockRange,omitempty"`
+	VEJailingEnabled          bool         `protobuf:"varint,5,opt,name=VEJailingEnabled,proto3" json:"VEJailingEnabled,omitempty"`                  // whether to jail validators for VE mismatches
+	VEJailDurationMinutes     int64        `protobuf:"varint,6,opt,name=VEJailDurationMinutes,proto3" json:"VEJailDurationMinutes,omitempty"`        // jail duration in minutes for VE mismatches
+	VEWindowSize              int64        `protobuf:"varint,7,opt,name=VEWindowSize,proto3" json:"VEWindowSize,omitempty"`                          // block window size for VE mismatch tracking
+	VEJailThreshold           int64        `protobuf:"varint,8,opt,name=VEJailThreshold,proto3" json:"VEJailThreshold,omitempty"`                    // number of VE mismatches before jailing
+	BedrockDefaultValOperAddr string       `protobuf:"bytes,9,opt,name=bedrockDefaultValOperAddr,proto3" json:"bedrockDefaultValOperAddr,omitempty"` // default validator operator address for TokensBedrock accounting
 }
 
 func (x *HVParams) Reset() {
 	*x = HVParams{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[3]
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5103,7 +5825,7 @@ func (*HVParams) ProtoMessage() {}
 
 // Deprecated: Use HVParams.ProtoReflect.Descriptor instead.
 func (*HVParams) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{3}
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *HVParams) GetAVSRewardsRate() string {
@@ -5162,6 +5884,13 @@ func (x *HVParams) GetVEJailThreshold() int64 {
 	return 0
 }
 
+func (x *HVParams) GetBedrockDefaultValOperAddr() string {
+	if x != nil {
+		return x.BedrockDefaultValOperAddr
+	}
+	return ""
+}
+
 // ValidationInfo defines the validation info.
 type ValidationInfo struct {
 	state         protoimpl.MessageState
@@ -5176,7 +5905,7 @@ type ValidationInfo struct {
 func (x *ValidationInfo) Reset() {
 	*x = ValidationInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[4]
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5190,7 +5919,7 @@ func (*ValidationInfo) ProtoMessage() {}
 
 // Deprecated: Use ValidationInfo.ProtoReflect.Descriptor instead.
 func (*ValidationInfo) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{4}
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ValidationInfo) GetNonVotingValidators() []string {
@@ -5228,7 +5957,7 @@ type ValidatorMismatchCount struct {
 func (x *ValidatorMismatchCount) Reset() {
 	*x = ValidatorMismatchCount{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[5]
+		mi := &file_zrchain_validation_hybrid_validation_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5242,7 +5971,7 @@ func (*ValidatorMismatchCount) ProtoMessage() {}
 
 // Deprecated: Use ValidatorMismatchCount.ProtoReflect.Descriptor instead.
 func (*ValidatorMismatchCount) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{5}
+	return file_zrchain_validation_hybrid_validation_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ValidatorMismatchCount) GetValidatorAddress() string {
@@ -5287,7 +6016,7 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x74, 0x61, 0x6b, 0x69, 0x6e, 0x67, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xd7, 0x07, 0x0a, 0x0b, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9d, 0x08, 0x0a, 0x0b, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
 	0x74, 0x6f, 0x72, 0x48, 0x56, 0x12, 0x43, 0x0a, 0x10, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x6f,
 	0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
 	0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72,
@@ -5348,100 +6077,116 @@ var file_zrchain_validation_hybrid_validation_proto_rawDesc = []byte{
 	0x6e, 0x67, 0x4f, 0x6e, 0x48, 0x6f, 0x6c, 0x64, 0x52, 0x65, 0x66, 0x43, 0x6f, 0x75, 0x6e, 0x74,
 	0x12, 0x23, 0x0a, 0x0d, 0x75, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x5f, 0x69, 0x64,
 	0x73, 0x18, 0x0e, 0x20, 0x03, 0x28, 0x04, 0x52, 0x0c, 0x75, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69,
-	0x6e, 0x67, 0x49, 0x64, 0x73, 0x3a, 0x08, 0x88, 0xa0, 0x1f, 0x00, 0xe8, 0xa0, 0x1f, 0x00, 0x22,
-	0x93, 0x01, 0x0a, 0x10, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x49, 0x6e,
-	0x66, 0x6f, 0x48, 0x56, 0x12, 0x3b, 0x0a, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x74, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x74, 0x2e, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x09,
-	0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65,
-	0x72, 0x12, 0x42, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
-	0x48, 0x56, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x76,
-	0x61, 0x6c, 0x73, 0x65, 0x74, 0x22, 0xed, 0x02, 0x0a, 0x0a, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x45,
-	0x76, 0x65, 0x6e, 0x74, 0x12, 0x20, 0x0a, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69,
-	0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
-	0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x24, 0x0a, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x12, 0x5f, 0x0a, 0x11,
-	0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x61, 0x67, 0x65, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65,
-	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x31, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f,
-	0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61,
-	0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x11, 0x70, 0x65, 0x72, 0x63,
-	0x65, 0x6e, 0x74, 0x61, 0x67, 0x65, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x12, 0x5d, 0x0a,
-	0x13, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x4e, 0x61,
-	0x74, 0x69, 0x76, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2b, 0xc8, 0xde, 0x1f, 0x00,
-	0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
-	0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73,
-	0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x13, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53,
-	0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x4e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x12, 0x57, 0x0a, 0x10,
-	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x41, 0x56, 0x53,
-	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2b, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74,
-	0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
-	0x49, 0x6e, 0x74, 0x52, 0x10, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68,
-	0x65, 0x64, 0x41, 0x56, 0x53, 0x22, 0xb8, 0x03, 0x0a, 0x08, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61,
-	0x6d, 0x73, 0x12, 0x59, 0x0a, 0x0e, 0x41, 0x56, 0x53, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73,
-	0x52, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x31, 0xc8, 0xde, 0x1f, 0x00,
-	0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
-	0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2,
-	0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x0e, 0x41,
-	0x56, 0x53, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x52, 0x61, 0x74, 0x65, 0x12, 0x1c, 0x0a,
-	0x09, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x54, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x09, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x47, 0x0a, 0x0f, 0x73,
-	0x74, 0x61, 0x6b, 0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x03,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44,
-	0x61, 0x74, 0x61, 0x52, 0x0f, 0x73, 0x74, 0x61, 0x6b, 0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73,
-	0x73, 0x65, 0x74, 0x73, 0x12, 0x3a, 0x0a, 0x18, 0x70, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x74,
-	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x18, 0x70, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x74,
-	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65,
-	0x12, 0x2a, 0x0a, 0x10, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x61,
-	0x62, 0x6c, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x10, 0x56, 0x45, 0x4a, 0x61,
-	0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x34, 0x0a, 0x15,
-	0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69,
-	0x6e, 0x75, 0x74, 0x65, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x15, 0x56, 0x45, 0x4a,
-	0x61, 0x69, 0x6c, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69, 0x6e, 0x75, 0x74,
-	0x65, 0x73, 0x12, 0x22, 0x0a, 0x0c, 0x56, 0x45, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x53, 0x69,
-	0x7a, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x56, 0x45, 0x57, 0x69, 0x6e, 0x64,
-	0x6f, 0x77, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x28, 0x0a, 0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c,
-	0x54, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x54, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64,
-	0x22, 0xa5, 0x01, 0x0a, 0x0e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49,
-	0x6e, 0x66, 0x6f, 0x12, 0x32, 0x0a, 0x15, 0x6e, 0x6f, 0x6e, 0x5f, 0x76, 0x6f, 0x74, 0x69, 0x6e,
-	0x67, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03,
-	0x28, 0x09, 0x52, 0x13, 0x6e, 0x6f, 0x6e, 0x56, 0x6f, 0x74, 0x69, 0x6e, 0x67, 0x56, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x3c, 0x0a, 0x1a, 0x6d, 0x69, 0x73, 0x6d, 0x61,
-	0x74, 0x63, 0x68, 0x65, 0x64, 0x5f, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x74, 0x65, 0x6e,
-	0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x18, 0x6d, 0x69, 0x73,
-	0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e,
-	0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x68,
-	0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x62, 0x6c, 0x6f,
-	0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22, 0x8f, 0x01, 0x0a, 0x16, 0x56, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x12, 0x2b, 0x0a, 0x11, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
-	0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10,
-	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
-	0x12, 0x27, 0x0a, 0x0f, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x62, 0x6c, 0x6f,
-	0x63, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x03, 0x52, 0x0e, 0x6d, 0x69, 0x73, 0x6d, 0x61,
-	0x74, 0x63, 0x68, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x74, 0x6f, 0x74,
-	0x61, 0x6c, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a,
-	0x74, 0x6f, 0x74, 0x61, 0x6c, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0xbd, 0x01, 0x0a, 0x16, 0x63,
-	0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x15, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x56, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68,
-	0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02,
-	0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
-	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a,
-	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x6e, 0x67, 0x49, 0x64, 0x73, 0x12, 0x44, 0x0a, 0x0e, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x5f,
+	0x62, 0x65, 0x64, 0x72, 0x6f, 0x63, 0x6b, 0x18, 0x0f, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x52, 0x0d, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x73, 0x42, 0x65, 0x64, 0x72, 0x6f, 0x63, 0x6b, 0x3a, 0x08, 0x88, 0xa0, 0x1f,
+	0x00, 0xe8, 0xa0, 0x1f, 0x00, 0x22, 0x81, 0x01, 0x0a, 0x09, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x44,
+	0x61, 0x74, 0x61, 0x12, 0x2f, 0x0a, 0x05, 0x61, 0x73, 0x73, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0e, 0x32, 0x19, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x05, 0x61,
+	0x73, 0x73, 0x65, 0x74, 0x12, 0x43, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x2b, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e,
+	0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e,
+	0x74, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x93, 0x01, 0x0a, 0x10, 0x48, 0x69,
+	0x73, 0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x49, 0x6e, 0x66, 0x6f, 0x48, 0x56, 0x12, 0x3b,
+	0x0a, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18,
+	0x2e, 0x74, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x74, 0x2e, 0x74, 0x79, 0x70, 0x65,
+	0x73, 0x2e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7,
+	0xb0, 0x2a, 0x01, 0x52, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x12, 0x42, 0x0a, 0x06, 0x76,
+	0x61, 0x6c, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x48, 0x56, 0x42, 0x09, 0xc8, 0xde,
+	0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x73, 0x65, 0x74, 0x22,
+	0xed, 0x02, 0x0a, 0x0a, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x20,
+	0x0a, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74,
+	0x12, 0x24, 0x0a, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64,
+	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x12, 0x5f, 0x0a, 0x11, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e,
+	0x74, 0x61, 0x67, 0x65, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x31, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
+	0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x4c, 0x65, 0x67,
+	0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x2e, 0x44, 0x65, 0x63, 0x52, 0x11, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x61, 0x67, 0x65,
+	0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x12, 0x5d, 0x0a, 0x13, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
+	0x73, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x4e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x2b, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e,
+	0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e,
+	0x74, 0x52, 0x13, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64,
+	0x4e, 0x61, 0x74, 0x69, 0x76, 0x65, 0x12, 0x57, 0x0a, 0x10, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73,
+	0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x41, 0x56, 0x53, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x2b, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2,
+	0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x10, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x65, 0x64, 0x41, 0x56, 0x53, 0x22,
+	0xf6, 0x03, 0x0a, 0x08, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x59, 0x0a, 0x0e,
+	0x41, 0x56, 0x53, 0x52, 0x65, 0x77, 0x61, 0x72, 0x64, 0x73, 0x52, 0x61, 0x74, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x31, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x1b, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e,
+	0x4c, 0x65, 0x67, 0x61, 0x63, 0x79, 0x44, 0x65, 0x63, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x0e, 0x41, 0x56, 0x53, 0x52, 0x65, 0x77, 0x61,
+	0x72, 0x64, 0x73, 0x52, 0x61, 0x74, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x42, 0x6c, 0x6f, 0x63, 0x6b,
+	0x54, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x47, 0x0a, 0x0f, 0x73, 0x74, 0x61, 0x6b, 0x65, 0x61, 0x62,
+	0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d,
+	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x0f, 0x73,
+	0x74, 0x61, 0x6b, 0x65, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x73, 0x12, 0x3a,
+	0x0a, 0x18, 0x70, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e,
+	0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x18, 0x70, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e,
+	0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x2a, 0x0a, 0x10, 0x56, 0x45,
+	0x4a, 0x61, 0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x10, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x69, 0x6e, 0x67, 0x45,
+	0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x34, 0x0a, 0x15, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c,
+	0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69, 0x6e, 0x75, 0x74, 0x65, 0x73, 0x18,
+	0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x15, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x44, 0x75, 0x72,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x69, 0x6e, 0x75, 0x74, 0x65, 0x73, 0x12, 0x22, 0x0a, 0x0c,
+	0x56, 0x45, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x53, 0x69, 0x7a, 0x65, 0x18, 0x07, 0x20, 0x01,
+	0x28, 0x03, 0x52, 0x0c, 0x56, 0x45, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x53, 0x69, 0x7a, 0x65,
+	0x12, 0x28, 0x0a, 0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69, 0x6c, 0x54, 0x68, 0x72, 0x65, 0x73, 0x68,
+	0x6f, 0x6c, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x56, 0x45, 0x4a, 0x61, 0x69,
+	0x6c, 0x54, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f, 0x6c, 0x64, 0x12, 0x3c, 0x0a, 0x19, 0x62, 0x65,
+	0x64, 0x72, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c, 0x4f,
+	0x70, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x19, 0x62,
+	0x65, 0x64, 0x72, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c,
+	0x4f, 0x70, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x22, 0xa5, 0x01, 0x0a, 0x0e, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x32, 0x0a, 0x15, 0x6e,
+	0x6f, 0x6e, 0x5f, 0x76, 0x6f, 0x74, 0x69, 0x6e, 0x67, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x13, 0x6e, 0x6f, 0x6e, 0x56,
+	0x6f, 0x74, 0x69, 0x6e, 0x67, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x12,
+	0x3c, 0x0a, 0x1a, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x5f, 0x76, 0x6f,
+	0x74, 0x65, 0x5f, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x18, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x56,
+	0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x21, 0x0a,
+	0x0c, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74,
+	0x22, 0x8f, 0x01, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69,
+	0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x2b, 0x0a, 0x11, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x27, 0x0a, 0x0f, 0x6d, 0x69, 0x73, 0x6d,
+	0x61, 0x74, 0x63, 0x68, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x03, 0x52, 0x0e, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x42, 0x6c, 0x6f, 0x63, 0x6b,
+	0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x43, 0x6f, 0x75,
+	0x6e, 0x74, 0x42, 0xbd, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x15, 0x48,
+	0x79, 0x62, 0x72, 0x69, 0x64, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50,
+	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64,
+	0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56,
+	0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a,
+	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -5456,36 +6201,40 @@ func file_zrchain_validation_hybrid_validation_proto_rawDescGZIP() []byte {
 	return file_zrchain_validation_hybrid_validation_proto_rawDescData
 }
 
-var file_zrchain_validation_hybrid_validation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_zrchain_validation_hybrid_validation_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_zrchain_validation_hybrid_validation_proto_goTypes = []interface{}{
 	(*ValidatorHV)(nil),            // 0: zrchain.validation.ValidatorHV
-	(*HistoricalInfoHV)(nil),       // 1: zrchain.validation.HistoricalInfoHV
-	(*SlashEvent)(nil),             // 2: zrchain.validation.SlashEvent
-	(*HVParams)(nil),               // 3: zrchain.validation.HVParams
-	(*ValidationInfo)(nil),         // 4: zrchain.validation.ValidationInfo
-	(*ValidatorMismatchCount)(nil), // 5: zrchain.validation.ValidatorMismatchCount
-	(*anypb.Any)(nil),              // 6: google.protobuf.Any
-	(BondStatus)(0),                // 7: zrchain.validation.BondStatus
-	(*Description)(nil),            // 8: zrchain.validation.Description
-	(*timestamppb.Timestamp)(nil),  // 9: google.protobuf.Timestamp
-	(*Commission)(nil),             // 10: zrchain.validation.Commission
-	(*types.Header)(nil),           // 11: tendermint.types.Header
-	(*AssetData)(nil),              // 12: zrchain.validation.AssetData
+	(*TokenData)(nil),              // 1: zrchain.validation.TokenData
+	(*HistoricalInfoHV)(nil),       // 2: zrchain.validation.HistoricalInfoHV
+	(*SlashEvent)(nil),             // 3: zrchain.validation.SlashEvent
+	(*HVParams)(nil),               // 4: zrchain.validation.HVParams
+	(*ValidationInfo)(nil),         // 5: zrchain.validation.ValidationInfo
+	(*ValidatorMismatchCount)(nil), // 6: zrchain.validation.ValidatorMismatchCount
+	(*anypb.Any)(nil),              // 7: google.protobuf.Any
+	(BondStatus)(0),                // 8: zrchain.validation.BondStatus
+	(*Description)(nil),            // 9: zrchain.validation.Description
+	(*timestamppb.Timestamp)(nil),  // 10: google.protobuf.Timestamp
+	(*Commission)(nil),             // 11: zrchain.validation.Commission
+	(Asset)(0),                     // 12: zrchain.validation.Asset
+	(*types.Header)(nil),           // 13: tendermint.types.Header
+	(*AssetData)(nil),              // 14: zrchain.validation.AssetData
 }
 var file_zrchain_validation_hybrid_validation_proto_depIdxs = []int32{
-	6,  // 0: zrchain.validation.ValidatorHV.consensus_pubkey:type_name -> google.protobuf.Any
-	7,  // 1: zrchain.validation.ValidatorHV.status:type_name -> zrchain.validation.BondStatus
-	8,  // 2: zrchain.validation.ValidatorHV.description:type_name -> zrchain.validation.Description
-	9,  // 3: zrchain.validation.ValidatorHV.unbonding_time:type_name -> google.protobuf.Timestamp
-	10, // 4: zrchain.validation.ValidatorHV.commission:type_name -> zrchain.validation.Commission
-	11, // 5: zrchain.validation.HistoricalInfoHV.header:type_name -> tendermint.types.Header
-	0,  // 6: zrchain.validation.HistoricalInfoHV.valset:type_name -> zrchain.validation.ValidatorHV
-	12, // 7: zrchain.validation.HVParams.stakeableAssets:type_name -> zrchain.validation.AssetData
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	7,  // 0: zrchain.validation.ValidatorHV.consensus_pubkey:type_name -> google.protobuf.Any
+	8,  // 1: zrchain.validation.ValidatorHV.status:type_name -> zrchain.validation.BondStatus
+	9,  // 2: zrchain.validation.ValidatorHV.description:type_name -> zrchain.validation.Description
+	10, // 3: zrchain.validation.ValidatorHV.unbonding_time:type_name -> google.protobuf.Timestamp
+	11, // 4: zrchain.validation.ValidatorHV.commission:type_name -> zrchain.validation.Commission
+	1,  // 5: zrchain.validation.ValidatorHV.tokens_bedrock:type_name -> zrchain.validation.TokenData
+	12, // 6: zrchain.validation.TokenData.asset:type_name -> zrchain.validation.Asset
+	13, // 7: zrchain.validation.HistoricalInfoHV.header:type_name -> tendermint.types.Header
+	0,  // 8: zrchain.validation.HistoricalInfoHV.valset:type_name -> zrchain.validation.ValidatorHV
+	14, // 9: zrchain.validation.HVParams.stakeableAssets:type_name -> zrchain.validation.AssetData
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_validation_hybrid_validation_proto_init() }
@@ -5509,7 +6258,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			}
 		}
 		file_zrchain_validation_hybrid_validation_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*HistoricalInfoHV); i {
+			switch v := v.(*TokenData); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5521,7 +6270,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			}
 		}
 		file_zrchain_validation_hybrid_validation_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SlashEvent); i {
+			switch v := v.(*HistoricalInfoHV); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5533,7 +6282,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			}
 		}
 		file_zrchain_validation_hybrid_validation_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*HVParams); i {
+			switch v := v.(*SlashEvent); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5545,7 +6294,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			}
 		}
 		file_zrchain_validation_hybrid_validation_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ValidationInfo); i {
+			switch v := v.(*HVParams); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5557,6 +6306,18 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			}
 		}
 		file_zrchain_validation_hybrid_validation_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ValidationInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_hybrid_validation_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ValidatorMismatchCount); i {
 			case 0:
 				return &v.state
@@ -5575,7 +6336,7 @@ func file_zrchain_validation_hybrid_validation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_validation_hybrid_validation_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
