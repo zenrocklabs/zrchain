@@ -168,11 +168,22 @@ func (s *oracleService) GetSolanaAccountInfo(ctx context.Context, req *api.Solan
 	)
 	if err != nil {
 		if errors.Is(err, rpc.ErrNotFound) {
+			log.Printf("Solana account %s not found (ErrNotFound)", req.PubKey)
 			return &api.SolanaAccountInfoResponse{}, nil
 		}
+		log.Printf("Failed to get Solana account info for %s: %v", req.PubKey, err)
 		return nil, fmt.Errorf("failed to get Solana account info: %w", err)
 	}
+
+	if accountInfo == nil || accountInfo.Value == nil {
+		log.Printf("Solana account %s returned nil value", req.PubKey)
+		return &api.SolanaAccountInfoResponse{}, nil
+	}
+
+	binary := accountInfo.GetBinary()
+	log.Printf("Retrieved Solana account %s: %d bytes, owner: %s", req.PubKey, len(binary), accountInfo.Value.Owner.String())
+
 	return &api.SolanaAccountInfoResponse{
-		Account: accountInfo.GetBinary(),
+		Account: binary,
 	}, nil
 }

@@ -44,6 +44,7 @@ func (k Keeper) BondDenom(ctx context.Context) (string, error) {
 	return params.BondDenom, err
 }
 
+
 // PowerReduction - is the amount of staking tokens required for 1 unit of consensus-engine power.
 // Currently, this returns a global variable that the app developer can tweak.
 // TODO: we might turn this into an on-chain param:

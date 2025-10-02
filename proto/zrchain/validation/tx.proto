@@ -54,6 +54,14 @@ service Msg {
 
   // TriggerEventBackfill defines an operation for triggering a backfill event for a specific transaction and event type.
   rpc TriggerEventBackfill(MsgTriggerEventBackfill) returns (MsgTriggerEventBackfillResponse);
+
+  // RequestHeaderBackfill requests a specific Bitcoin header by height.
+  // The header will be fetched by sidecars and populated via normal ABCI flow.
+  rpc RequestHeaderBackfill(MsgRequestHeaderBackfill) returns (MsgRequestHeaderBackfillResponse);
+
+  // ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
+  rpc ManuallyInputBitcoinHeader(MsgManuallyInputBitcoinHeader)
+      returns (MsgManuallyInputBitcoinHeaderResponse);
 }
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
@@ -295,6 +303,53 @@ message MsgTriggerEventBackfill {
 // MsgTriggerEventBackfillResponse defines the response structure for executing
 // a MsgTriggerEventBackfill message.
 message MsgTriggerEventBackfillResponse {}
+
+// MsgRequestHeaderBackfill requests backfill of a specific Bitcoin header height.
+message MsgRequestHeaderBackfill {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgRequestHeaderBackfill";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // height is the Bitcoin block height to request.
+  int64 height = 2;
+}
+
+// MsgRequestHeaderBackfillResponse defines the response for header backfill request.
+message MsgRequestHeaderBackfillResponse {}
+
+// MsgManuallyInputBitcoinHeader allows an authorized account to provide all
+// fields of a Bitcoin block header manually.
+message MsgManuallyInputBitcoinHeader {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgManuallyInputBitcoinHeader";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // header contains the Bitcoin block header data to store.
+  BitcoinHeader header = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// BitcoinHeader mirrors the fields required for a Bitcoin block header.
+message BitcoinHeader {
+  int64 version = 1;
+  string prev_block = 2;
+  string merkle_root = 3;
+  int64 timestamp = 4;
+  int64 bits = 5;
+  int64 nonce = 6;
+  string block_hash = 7;
+  int64 block_height = 8;
+}
+
+// MsgManuallyInputBitcoinHeaderResponse defines the response structure for
+// a manually provided Bitcoin header.
+message MsgManuallyInputBitcoinHeaderResponse {}
 
 // EventType enumerates the possible event types for backfill requests.
 enum EventType {

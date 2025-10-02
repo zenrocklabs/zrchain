@@ -9,7 +9,7 @@ The zrChain network uses a **Vote Extension** based consensus mechanism where va
 ### Vote Extension Lifecycle
 
 1. **ExtendVoteHandler**: Each validator's sidecar collects oracle data and creates vote extensions containing hashes
-2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity  
+2. **VerifyVoteExtensionHandler**: Validators verify each other's vote extensions for basic validity
 3. **PrepareProposal**: The proposer aggregates vote extensions and determines consensus fields
 4. **ProcessProposal**: All validators verify the proposed oracle data matches consensus
 5. **PreBlocker**: Oracle data with consensus is applied to on-chain state and triggers transaction processing
@@ -25,10 +25,10 @@ This ensures that external blockchain state is only acted upon when there is str
 
 ### Consensus Details
 
-**Supermajority Threshold**: Most fields require >2/3 of total voting power to reach consensus  
-**Simple Majority Fields**: Gas-related fields (ETH gas prices, Solana fees) use >1/2 threshold for faster updates  
-**Deterministic Tie-Breaking**: When multiple values have equal vote power, lexicographic ordering ensures all validators select the same result  
-**Field-Level Consensus**: Each data field (prices, nonces, events) reaches consensus independently, allowing partial state updates  
+**Supermajority Threshold**: Most fields require >2/3 of total voting power to reach consensus
+**Simple Majority Fields**: Gas-related fields (ETH gas prices, Solana fees) use >1/2 threshold for faster updates
+**Deterministic Tie-Breaking**: When multiple values have equal vote power, lexicographic ordering ensures all validators select the same result
+**Field-Level Consensus**: Each data field (prices, nonces, events) reaches consensus independently, allowing partial state updates
 
 This granular consensus approach maximizes system uptime by allowing critical operations to proceed even when some oracle data is unavailable.
 
@@ -43,12 +43,11 @@ This granular consensus approach maximizes system uptime by allowing critical op
 ## zenBTC Protocol
 
 zenBTC allows for the trust-minimized bridging of Bitcoin to and from other blockchains like Solana and Ethereum.
-The system allows for liquid restaking of tokens via platforms such as EigenLayer.
 
 ### Deposit and Mint
 
 This flow shows the complete process from depositing BTC to receiving zenBTC tokens on the destination chain.
-Deposited BTC is automatically staked through EigenLayer, with zenBTC serving as a liquid token representing a claim on the underlying staked Bitcoin.
+Deposited BTC is custodied and tracked on zrChain and zenBTC is minted directly on the destination chain. The system no longer routes through EigenLayer staking for deposits; instead, zenBTC supply, custodied BTC, and validator bedrock accounting are updated upon mint confirmation.
 
 ```mermaid
 sequenceDiagram
@@ -74,14 +73,14 @@ sequenceDiagram
     Web Frontend-->>User: Display deposit address
 
     User->>Bitcoin: Deposit BTC to provided address
-    
+
     Note over Bitcoin: Block mined (deposit tx included)
-    
+
     Sidecar->>Bitcoin: Polls for new block headers
     zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with BTC headers/prices/fees
     zrChain->>Sidecar: PrepareProposal: Proposer validates sidecar state against vote extensions
     Note over zrChain: Vote Extensions reach supermajority consensus on external chain data
-    
+
     Bitcoin Proxy->>Bitcoin: Detects deposit
     Bitcoin Proxy->>Bitcoin Proxy: Generate Merkle proof of BTC deposit transaction
     Bitcoin Proxy->>zrChain: MsgVerifyDepositBlockInclusion(proof)
@@ -91,66 +90,44 @@ sequenceDiagram
     zrChain->>zrChain: Compare + store historical Bitcoin headers for reorg protection
     zrChain->>zrChain: Validate transaction outputs and amounts
     zrChain->>zrChain: Create PendingMintTransaction (status: DEPOSITED)
-    zrChain->>zrChain: Request Staker Nonce for EigenLayer
+    alt Destination = Solana
+        zrChain->>zrChain: Request Solana Nonce & mark recipient account requested
+    else Destination = EVM
+        zrChain->>zrChain: Request Ethereum Minter Nonce
+    end
 
-    Sidecar->>Ethereum: Polls for ETH/BTC price feeds and gas prices
-    Sidecar->>Ethereum: Polls for nonce values
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with ETH nonces/gas data
-    zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-    zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
-    Note over zrChain: PreBlocker: processZenBTCStaking()
-    zrChain->>zrChain: Create SignTransactionRequest for staking
-    MPC Stack->>zrChain: Poll for signature requests
-    zrChain-->>MPC Stack: Staking transaction request found
-    MPC Stack->>MPC Stack: Generate signature
-    MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Stake Tx picked up
-    Relayer->>Ethereum: Broadcast Stake Tx (EigenLayer contracts)
-
-    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce data
-    Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates status to STAKED
-    zrChain->>zrChain: Request Minter Nonce (ETH or SOL)
+    Sidecar->>Ethereum: Polls ETH/BTC prices and gas data
+    Sidecar->>Solana: Polls for fees, nonce and account data
+    zrChain->>Sidecar: ExtendVoteHandler: Validators populate vote extensions with nonces/accounts/prices
+    zrChain->>Sidecar: PrepareProposal: Proposer validates nonces/accounts/prices against vote extensions
+    Note over zrChain: Vote Extensions reach supermajority consensus on required fields
 
     alt Mint on Solana
-        Sidecar->>Solana: Polls for fees, nonce and account data
-        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with SOL nonces/accounts
-        zrChain->>Sidecar: PrepareProposal: Proposer validates Solana data against vote extensions
-        Note over zrChain: Vote Extensions reach supermajority consensus on Solana data
         Note over zrChain: PreBlocker: processZenBTCMintsSolana()
-        zrChain->>zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        zrChain->>zrChain: Calculate zenBTC mint fee (flat) from BTC price & exchange rate
         zrChain->>zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Solana mint
         MPC Stack->>zrChain: Poll for signature requests
         zrChain-->>MPC Stack: Solana mint transaction request found
-        MPC Stack->>MPC Stack: Generate signature
+        MPC Stack->>MPC Stack: Generate signature(s)
         MPC Stack->>zrChain: Submit signature request fulfillment transaction
         Relayer->>zrChain: Poll for fulfilled requests
         zrChain-->>Relayer: Signed Mint Tx picked up
         Relayer->>Solana: Broadcast Mint Tx
-        Note over zrChain: Timeout management (when sidecars have consensus): BTL expiry check and AwaitingEventSince tracking
-        zrChain->>zrChain: Check transaction BTL (blocks-to-live) expiry for retry timeout management
-        zrChain->>zrChain: Set AwaitingEventSince timestamp to track confirmation wait time for secondary timeout logic
+        Note over zrChain: Timeout management with BTL & AwaitingEventSince
 
-        Sidecar->>Solana: Scans for mint events
-        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with SOL mint events
+        Sidecar->>Solana: Scans for zenBTC mint events
+        zrChain->>Sidecar: ExtendVoteHandler: Validators populate vote extensions with mint events
         zrChain->>Sidecar: PrepareProposal: Proposer validates mint events against vote extensions
         Note over zrChain: Vote Extensions reach supermajority consensus on mint events
         Note over zrChain: PreBlocker: processSolanaZenBTCMintEvents()
         zrChain->>zrChain: Match event to PendingMintTransaction
         zrChain->>zrChain: Update PendingMintTransaction (status: MINTED)
-        zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
+        zrChain->>zrChain: Update supply (PendingZenBTC → MintedZenBTC) and adjust validator bedrock BTC
         zrChain-->>User: zenBTC minted on Solana
     else Mint on Ethereum
-        Sidecar->>Ethereum: Polls for gas prices and nonce values
-        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with ETH nonces/gas data
-        zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
-        Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
         Note over zrChain: PreBlocker: processZenBTCMintsEthereum()
-        zrChain->>zrChain: Calculate zenBTC mint fee: Convert ETH gas costs to BTC using price feeds, then to zenBTC via exchange rate
+        zrChain->>zrChain: Calculate zenBTC mint fee (flat) from BTC price & exchange rate
         zrChain->>zrChain: Determine mint amount from deposited BTC using current exchange rate
         zrChain->>zrChain: Create SignTransactionRequest for Ethereum mint
         MPC Stack->>zrChain: Poll for signature requests
@@ -162,15 +139,15 @@ sequenceDiagram
         Relayer->>Ethereum: Broadcast Mint Tx
 
         Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-        zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
+        zrChain->>Sidecar: ExtendVoteHandler: Validators populate vote extensions with updated nonces
         Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-        zrChain->>zrChain: Updates status to MINTED
-        zrChain->>zrChain: Updates zenBTC supply tracking (PendingZenBTC → MintedZenBTC)
+        zrChain->>zrChain: Update status to MINTED
+        zrChain->>zrChain: Update supply (PendingZenBTC → MintedZenBTC) and adjust validator bedrock BTC
         zrChain-->>User: zenBTC minted on Ethereum
     end
 ```
 
-### Redemption and Burn
+### Redemption and Burn (Direct mode without EigenLayer)
 
 This flow describes how a user burns zenBTC on a destination chain to redeem their original BTC.
 
@@ -195,56 +172,7 @@ sequenceDiagram
     Note over zrChain: PreBlocker: storeNewZenBTCBurnEvents()
     zrChain->>zrChain: Check burn event not already processed (prevent duplicates)
     zrChain->>zrChain: Create BurnEvent (status: BURNED)
-    zrChain->>zrChain: Request Unstaker Nonce for EigenLayer
-
-    Sidecar->>Ethereum: Polls for nonce values
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with unstaker nonces
-    zrChain->>Sidecar: PrepareProposal: Proposer validates nonce data against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on nonce data
-    Note over zrChain: PreBlocker: processZenBTCBurnEvents()
-    zrChain->>zrChain: Create SignTransactionRequest for unstaking
-    MPC Stack->>zrChain: Poll for signature requests
-    zrChain-->>MPC Stack: Unstaking transaction request found
-    MPC Stack->>MPC Stack: Generate signature
-    MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed Unstake Tx picked up
-    Relayer->>Ethereum: Broadcast Unstake Tx (EigenLayer contracts)
-    
-    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
-    Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates status to UNSTAKING
-
-    Sidecar->>Ethereum: Polls for unstake completion status
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with EigenLayer redemption data
-    zrChain->>Sidecar: PrepareProposal: Proposer validates redemption data against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on redemption data
-    Note over zrChain: PreBlocker: storeNewZenBTCRedemptions()
-    zrChain->>zrChain: Create Redemption object (status: INITIATED)
-    zrChain->>zrChain: Wait for EigenLayer withdrawal ecrow period to elapse
-
-    Note over zrChain: After withdrawal ecrow period elapsed, redemption becomes available for completion
-
-    Sidecar->>Ethereum: Polls for nonce values
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with completer nonces
-    zrChain->>Sidecar: PrepareProposal: Proposer validates completer nonce against vote extensions
-    Note over zrChain: Vote Extensions reach supermajority consensus on completer nonce
-    zrChain->>zrChain: Validates consensus on required fields (nonce, gas, prices) before transaction
-    Note over zrChain: PreBlocker: processZenBTCRedemptions()
-    zrChain->>zrChain: Create SignTransactionRequest for unstaking completion
-    MPC Stack->>zrChain: Poll for signature requests
-    zrChain-->>MPC Stack: Unstaking completion transaction request found
-    MPC Stack->>MPC Stack: Generate signature
-    MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    Relayer->>zrChain: Poll for fulfilled requests
-    zrChain-->>Relayer: Signed CompleteWithdrawal Tx picked up
-    Relayer->>Ethereum: Broadcast Tx (EigenLayer contracts)
-    
-    Sidecar->>Ethereum: Polls for nonce update after tx broadcast
-    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars to populate vote extensions with nonce updates
-    Note over zrChain: Vote Extensions reach supermajority consensus on updated nonce
-    zrChain->>zrChain: Updates redemption status to UNSTAKED
+    zrChain->>zrChain: Create Redemption object (status: UNSTAKED)
 
     Bitcoin Proxy->>zrChain: Poll for UNSTAKED redemptions
     zrChain-->>Bitcoin Proxy: Redemption Info (amount, address)
@@ -261,15 +189,17 @@ sequenceDiagram
     zrChain-->>MPC Stack: BTC redemption transaction request found
     MPC Stack->>MPC Stack: Generate signature
     MPC Stack->>zrChain: Submit signature request fulfillment transaction
-    
+
     Note over zrChain: checkForRedemptionFulfilment() monitors AWAITING_SIGN redemptions
     Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED
-    
+
     Bitcoin Proxy->>zrChain: Poll for fulfilled BTC tx
     zrChain-->>Bitcoin Proxy: Signed BTC Transaction
     Bitcoin Proxy->>Bitcoin: Broadcast signed tx
     Bitcoin-->>User: Receives redeemed BTC
+    zrChain->>zrChain: Adjust bedrock BTC accounting
     zrChain->>zrChain: Mark redemption as COMPLETED
+    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED and adjust bedrock BTC accounting
 ```
 
 ## zenTP (Zenrock Transport Protocol)

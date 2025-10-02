@@ -8988,6 +8988,2473 @@ func (x *fastReflection_MsgTriggerEventBackfillResponse) ProtoMethods() *protoif
 	}
 }
 
+var (
+	md_MsgRequestHeaderBackfill           protoreflect.MessageDescriptor
+	fd_MsgRequestHeaderBackfill_authority protoreflect.FieldDescriptor
+	fd_MsgRequestHeaderBackfill_height    protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgRequestHeaderBackfill = File_zrchain_validation_tx_proto.Messages().ByName("MsgRequestHeaderBackfill")
+	fd_MsgRequestHeaderBackfill_authority = md_MsgRequestHeaderBackfill.Fields().ByName("authority")
+	fd_MsgRequestHeaderBackfill_height = md_MsgRequestHeaderBackfill.Fields().ByName("height")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgRequestHeaderBackfill)(nil)
+
+type fastReflection_MsgRequestHeaderBackfill MsgRequestHeaderBackfill
+
+func (x *MsgRequestHeaderBackfill) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRequestHeaderBackfill)(x)
+}
+
+func (x *MsgRequestHeaderBackfill) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgRequestHeaderBackfill_messageType fastReflection_MsgRequestHeaderBackfill_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRequestHeaderBackfill_messageType{}
+
+type fastReflection_MsgRequestHeaderBackfill_messageType struct{}
+
+func (x fastReflection_MsgRequestHeaderBackfill_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRequestHeaderBackfill)(nil)
+}
+func (x fastReflection_MsgRequestHeaderBackfill_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRequestHeaderBackfill)
+}
+func (x fastReflection_MsgRequestHeaderBackfill_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRequestHeaderBackfill
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgRequestHeaderBackfill) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRequestHeaderBackfill
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgRequestHeaderBackfill) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRequestHeaderBackfill_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgRequestHeaderBackfill) New() protoreflect.Message {
+	return new(fastReflection_MsgRequestHeaderBackfill)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgRequestHeaderBackfill) Interface() protoreflect.ProtoMessage {
+	return (*MsgRequestHeaderBackfill)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgRequestHeaderBackfill) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Authority != "" {
+		value := protoreflect.ValueOfString(x.Authority)
+		if !f(fd_MsgRequestHeaderBackfill_authority, value) {
+			return
+		}
+	}
+	if x.Height != int64(0) {
+		value := protoreflect.ValueOfInt64(x.Height)
+		if !f(fd_MsgRequestHeaderBackfill_height, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgRequestHeaderBackfill) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		return x.Authority != ""
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		return x.Height != int64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfill) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		x.Authority = ""
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		x.Height = int64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgRequestHeaderBackfill) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		value := x.Authority
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		value := x.Height
+		return protoreflect.ValueOfInt64(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfill) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		x.Authority = value.Interface().(string)
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		x.Height = value.Int()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfill) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		panic(fmt.Errorf("field authority of message zrchain.validation.MsgRequestHeaderBackfill is not mutable"))
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		panic(fmt.Errorf("field height of message zrchain.validation.MsgRequestHeaderBackfill is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgRequestHeaderBackfill) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgRequestHeaderBackfill.authority":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.MsgRequestHeaderBackfill.height":
+		return protoreflect.ValueOfInt64(int64(0))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfill"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfill does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgRequestHeaderBackfill) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgRequestHeaderBackfill", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgRequestHeaderBackfill) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfill) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgRequestHeaderBackfill) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgRequestHeaderBackfill) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfill)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Authority)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.Height != 0 {
+			n += 1 + runtime.Sov(uint64(x.Height))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfill)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.Height != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Height))
+			i--
+			dAtA[i] = 0x10
+		}
+		if len(x.Authority) > 0 {
+			i -= len(x.Authority)
+			copy(dAtA[i:], x.Authority)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfill)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRequestHeaderBackfill: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRequestHeaderBackfill: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Authority = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+				}
+				x.Height = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Height |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgRequestHeaderBackfillResponse protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgRequestHeaderBackfillResponse = File_zrchain_validation_tx_proto.Messages().ByName("MsgRequestHeaderBackfillResponse")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgRequestHeaderBackfillResponse)(nil)
+
+type fastReflection_MsgRequestHeaderBackfillResponse MsgRequestHeaderBackfillResponse
+
+func (x *MsgRequestHeaderBackfillResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRequestHeaderBackfillResponse)(x)
+}
+
+func (x *MsgRequestHeaderBackfillResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgRequestHeaderBackfillResponse_messageType fastReflection_MsgRequestHeaderBackfillResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRequestHeaderBackfillResponse_messageType{}
+
+type fastReflection_MsgRequestHeaderBackfillResponse_messageType struct{}
+
+func (x fastReflection_MsgRequestHeaderBackfillResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRequestHeaderBackfillResponse)(nil)
+}
+func (x fastReflection_MsgRequestHeaderBackfillResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRequestHeaderBackfillResponse)
+}
+func (x fastReflection_MsgRequestHeaderBackfillResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRequestHeaderBackfillResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRequestHeaderBackfillResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRequestHeaderBackfillResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgRequestHeaderBackfillResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgRequestHeaderBackfillResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgRequestHeaderBackfillResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgRequestHeaderBackfillResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgRequestHeaderBackfillResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgRequestHeaderBackfillResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfillResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfillResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRequestHeaderBackfillResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRequestHeaderBackfillResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRequestHeaderBackfillResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgManuallyInputBitcoinHeader           protoreflect.MessageDescriptor
+	fd_MsgManuallyInputBitcoinHeader_authority protoreflect.FieldDescriptor
+	fd_MsgManuallyInputBitcoinHeader_header    protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgManuallyInputBitcoinHeader = File_zrchain_validation_tx_proto.Messages().ByName("MsgManuallyInputBitcoinHeader")
+	fd_MsgManuallyInputBitcoinHeader_authority = md_MsgManuallyInputBitcoinHeader.Fields().ByName("authority")
+	fd_MsgManuallyInputBitcoinHeader_header = md_MsgManuallyInputBitcoinHeader.Fields().ByName("header")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgManuallyInputBitcoinHeader)(nil)
+
+type fastReflection_MsgManuallyInputBitcoinHeader MsgManuallyInputBitcoinHeader
+
+func (x *MsgManuallyInputBitcoinHeader) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgManuallyInputBitcoinHeader)(x)
+}
+
+func (x *MsgManuallyInputBitcoinHeader) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgManuallyInputBitcoinHeader_messageType fastReflection_MsgManuallyInputBitcoinHeader_messageType
+var _ protoreflect.MessageType = fastReflection_MsgManuallyInputBitcoinHeader_messageType{}
+
+type fastReflection_MsgManuallyInputBitcoinHeader_messageType struct{}
+
+func (x fastReflection_MsgManuallyInputBitcoinHeader_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgManuallyInputBitcoinHeader)(nil)
+}
+func (x fastReflection_MsgManuallyInputBitcoinHeader_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgManuallyInputBitcoinHeader)
+}
+func (x fastReflection_MsgManuallyInputBitcoinHeader_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManuallyInputBitcoinHeader
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManuallyInputBitcoinHeader
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Type() protoreflect.MessageType {
+	return _fastReflection_MsgManuallyInputBitcoinHeader_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) New() protoreflect.Message {
+	return new(fastReflection_MsgManuallyInputBitcoinHeader)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Interface() protoreflect.ProtoMessage {
+	return (*MsgManuallyInputBitcoinHeader)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Authority != "" {
+		value := protoreflect.ValueOfString(x.Authority)
+		if !f(fd_MsgManuallyInputBitcoinHeader_authority, value) {
+			return
+		}
+	}
+	if x.Header != nil {
+		value := protoreflect.ValueOfMessage(x.Header.ProtoReflect())
+		if !f(fd_MsgManuallyInputBitcoinHeader_header, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		return x.Authority != ""
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		return x.Header != nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		x.Authority = ""
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		x.Header = nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		value := x.Authority
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		value := x.Header
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		x.Authority = value.Interface().(string)
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		x.Header = value.Message().Interface().(*BitcoinHeader)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		if x.Header == nil {
+			x.Header = new(BitcoinHeader)
+		}
+		return protoreflect.ValueOfMessage(x.Header.ProtoReflect())
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		panic(fmt.Errorf("field authority of message zrchain.validation.MsgManuallyInputBitcoinHeader is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.authority":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.MsgManuallyInputBitcoinHeader.header":
+		m := new(BitcoinHeader)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgManuallyInputBitcoinHeader", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgManuallyInputBitcoinHeader) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeader)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Authority)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.Header != nil {
+			l = options.Size(x.Header)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeader)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.Header != nil {
+			encoded, err := options.Marshal(x.Header)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if len(x.Authority) > 0 {
+			i -= len(x.Authority)
+			copy(dAtA[i:], x.Authority)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeader)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManuallyInputBitcoinHeader: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManuallyInputBitcoinHeader: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Authority = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.Header == nil {
+					x.Header = &BitcoinHeader{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Header); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_BitcoinHeader              protoreflect.MessageDescriptor
+	fd_BitcoinHeader_version      protoreflect.FieldDescriptor
+	fd_BitcoinHeader_prev_block   protoreflect.FieldDescriptor
+	fd_BitcoinHeader_merkle_root  protoreflect.FieldDescriptor
+	fd_BitcoinHeader_timestamp    protoreflect.FieldDescriptor
+	fd_BitcoinHeader_bits         protoreflect.FieldDescriptor
+	fd_BitcoinHeader_nonce        protoreflect.FieldDescriptor
+	fd_BitcoinHeader_block_hash   protoreflect.FieldDescriptor
+	fd_BitcoinHeader_block_height protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_BitcoinHeader = File_zrchain_validation_tx_proto.Messages().ByName("BitcoinHeader")
+	fd_BitcoinHeader_version = md_BitcoinHeader.Fields().ByName("version")
+	fd_BitcoinHeader_prev_block = md_BitcoinHeader.Fields().ByName("prev_block")
+	fd_BitcoinHeader_merkle_root = md_BitcoinHeader.Fields().ByName("merkle_root")
+	fd_BitcoinHeader_timestamp = md_BitcoinHeader.Fields().ByName("timestamp")
+	fd_BitcoinHeader_bits = md_BitcoinHeader.Fields().ByName("bits")
+	fd_BitcoinHeader_nonce = md_BitcoinHeader.Fields().ByName("nonce")
+	fd_BitcoinHeader_block_hash = md_BitcoinHeader.Fields().ByName("block_hash")
+	fd_BitcoinHeader_block_height = md_BitcoinHeader.Fields().ByName("block_height")
+}
+
+var _ protoreflect.Message = (*fastReflection_BitcoinHeader)(nil)
+
+type fastReflection_BitcoinHeader BitcoinHeader
+
+func (x *BitcoinHeader) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_BitcoinHeader)(x)
+}
+
+func (x *BitcoinHeader) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_BitcoinHeader_messageType fastReflection_BitcoinHeader_messageType
+var _ protoreflect.MessageType = fastReflection_BitcoinHeader_messageType{}
+
+type fastReflection_BitcoinHeader_messageType struct{}
+
+func (x fastReflection_BitcoinHeader_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_BitcoinHeader)(nil)
+}
+func (x fastReflection_BitcoinHeader_messageType) New() protoreflect.Message {
+	return new(fastReflection_BitcoinHeader)
+}
+func (x fastReflection_BitcoinHeader_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_BitcoinHeader
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_BitcoinHeader) Descriptor() protoreflect.MessageDescriptor {
+	return md_BitcoinHeader
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_BitcoinHeader) Type() protoreflect.MessageType {
+	return _fastReflection_BitcoinHeader_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_BitcoinHeader) New() protoreflect.Message {
+	return new(fastReflection_BitcoinHeader)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_BitcoinHeader) Interface() protoreflect.ProtoMessage {
+	return (*BitcoinHeader)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_BitcoinHeader) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Version != int64(0) {
+		value := protoreflect.ValueOfInt64(x.Version)
+		if !f(fd_BitcoinHeader_version, value) {
+			return
+		}
+	}
+	if x.PrevBlock != "" {
+		value := protoreflect.ValueOfString(x.PrevBlock)
+		if !f(fd_BitcoinHeader_prev_block, value) {
+			return
+		}
+	}
+	if x.MerkleRoot != "" {
+		value := protoreflect.ValueOfString(x.MerkleRoot)
+		if !f(fd_BitcoinHeader_merkle_root, value) {
+			return
+		}
+	}
+	if x.Timestamp != int64(0) {
+		value := protoreflect.ValueOfInt64(x.Timestamp)
+		if !f(fd_BitcoinHeader_timestamp, value) {
+			return
+		}
+	}
+	if x.Bits != int64(0) {
+		value := protoreflect.ValueOfInt64(x.Bits)
+		if !f(fd_BitcoinHeader_bits, value) {
+			return
+		}
+	}
+	if x.Nonce != int64(0) {
+		value := protoreflect.ValueOfInt64(x.Nonce)
+		if !f(fd_BitcoinHeader_nonce, value) {
+			return
+		}
+	}
+	if x.BlockHash != "" {
+		value := protoreflect.ValueOfString(x.BlockHash)
+		if !f(fd_BitcoinHeader_block_hash, value) {
+			return
+		}
+	}
+	if x.BlockHeight != int64(0) {
+		value := protoreflect.ValueOfInt64(x.BlockHeight)
+		if !f(fd_BitcoinHeader_block_height, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_BitcoinHeader) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		return x.Version != int64(0)
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		return x.PrevBlock != ""
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		return x.MerkleRoot != ""
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		return x.Timestamp != int64(0)
+	case "zrchain.validation.BitcoinHeader.bits":
+		return x.Bits != int64(0)
+	case "zrchain.validation.BitcoinHeader.nonce":
+		return x.Nonce != int64(0)
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		return x.BlockHash != ""
+	case "zrchain.validation.BitcoinHeader.block_height":
+		return x.BlockHeight != int64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_BitcoinHeader) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		x.Version = int64(0)
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		x.PrevBlock = ""
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		x.MerkleRoot = ""
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		x.Timestamp = int64(0)
+	case "zrchain.validation.BitcoinHeader.bits":
+		x.Bits = int64(0)
+	case "zrchain.validation.BitcoinHeader.nonce":
+		x.Nonce = int64(0)
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		x.BlockHash = ""
+	case "zrchain.validation.BitcoinHeader.block_height":
+		x.BlockHeight = int64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_BitcoinHeader) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		value := x.Version
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		value := x.PrevBlock
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		value := x.MerkleRoot
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		value := x.Timestamp
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.BitcoinHeader.bits":
+		value := x.Bits
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.BitcoinHeader.nonce":
+		value := x.Nonce
+		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		value := x.BlockHash
+		return protoreflect.ValueOfString(value)
+	case "zrchain.validation.BitcoinHeader.block_height":
+		value := x.BlockHeight
+		return protoreflect.ValueOfInt64(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_BitcoinHeader) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		x.Version = value.Int()
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		x.PrevBlock = value.Interface().(string)
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		x.MerkleRoot = value.Interface().(string)
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		x.Timestamp = value.Int()
+	case "zrchain.validation.BitcoinHeader.bits":
+		x.Bits = value.Int()
+	case "zrchain.validation.BitcoinHeader.nonce":
+		x.Nonce = value.Int()
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		x.BlockHash = value.Interface().(string)
+	case "zrchain.validation.BitcoinHeader.block_height":
+		x.BlockHeight = value.Int()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_BitcoinHeader) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		panic(fmt.Errorf("field version of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		panic(fmt.Errorf("field prev_block of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		panic(fmt.Errorf("field merkle_root of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		panic(fmt.Errorf("field timestamp of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.bits":
+		panic(fmt.Errorf("field bits of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.nonce":
+		panic(fmt.Errorf("field nonce of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		panic(fmt.Errorf("field block_hash of message zrchain.validation.BitcoinHeader is not mutable"))
+	case "zrchain.validation.BitcoinHeader.block_height":
+		panic(fmt.Errorf("field block_height of message zrchain.validation.BitcoinHeader is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_BitcoinHeader) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "zrchain.validation.BitcoinHeader.version":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.BitcoinHeader.prev_block":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.BitcoinHeader.merkle_root":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.BitcoinHeader.timestamp":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.BitcoinHeader.bits":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.BitcoinHeader.nonce":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.BitcoinHeader.block_hash":
+		return protoreflect.ValueOfString("")
+	case "zrchain.validation.BitcoinHeader.block_height":
+		return protoreflect.ValueOfInt64(int64(0))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.BitcoinHeader"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.BitcoinHeader does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_BitcoinHeader) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.BitcoinHeader", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_BitcoinHeader) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_BitcoinHeader) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_BitcoinHeader) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_BitcoinHeader) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*BitcoinHeader)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.Version != 0 {
+			n += 1 + runtime.Sov(uint64(x.Version))
+		}
+		l = len(x.PrevBlock)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.MerkleRoot)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.Timestamp != 0 {
+			n += 1 + runtime.Sov(uint64(x.Timestamp))
+		}
+		if x.Bits != 0 {
+			n += 1 + runtime.Sov(uint64(x.Bits))
+		}
+		if x.Nonce != 0 {
+			n += 1 + runtime.Sov(uint64(x.Nonce))
+		}
+		l = len(x.BlockHash)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.BlockHeight != 0 {
+			n += 1 + runtime.Sov(uint64(x.BlockHeight))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*BitcoinHeader)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.BlockHeight != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.BlockHeight))
+			i--
+			dAtA[i] = 0x40
+		}
+		if len(x.BlockHash) > 0 {
+			i -= len(x.BlockHash)
+			copy(dAtA[i:], x.BlockHash)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BlockHash)))
+			i--
+			dAtA[i] = 0x3a
+		}
+		if x.Nonce != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Nonce))
+			i--
+			dAtA[i] = 0x30
+		}
+		if x.Bits != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Bits))
+			i--
+			dAtA[i] = 0x28
+		}
+		if x.Timestamp != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Timestamp))
+			i--
+			dAtA[i] = 0x20
+		}
+		if len(x.MerkleRoot) > 0 {
+			i -= len(x.MerkleRoot)
+			copy(dAtA[i:], x.MerkleRoot)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.MerkleRoot)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if len(x.PrevBlock) > 0 {
+			i -= len(x.PrevBlock)
+			copy(dAtA[i:], x.PrevBlock)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.PrevBlock)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if x.Version != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Version))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*BitcoinHeader)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: BitcoinHeader: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: BitcoinHeader: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+				}
+				x.Version = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Version |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field PrevBlock", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.PrevBlock = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MerkleRoot", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.MerkleRoot = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+				}
+				x.Timestamp = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Timestamp |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 5:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Bits", wireType)
+				}
+				x.Bits = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Bits |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+				}
+				x.Nonce = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Nonce |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 7:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BlockHash", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.BlockHash = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 8:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+				}
+				x.BlockHeight = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.BlockHeight |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgManuallyInputBitcoinHeaderResponse protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_zrchain_validation_tx_proto_init()
+	md_MsgManuallyInputBitcoinHeaderResponse = File_zrchain_validation_tx_proto.Messages().ByName("MsgManuallyInputBitcoinHeaderResponse")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgManuallyInputBitcoinHeaderResponse)(nil)
+
+type fastReflection_MsgManuallyInputBitcoinHeaderResponse MsgManuallyInputBitcoinHeaderResponse
+
+func (x *MsgManuallyInputBitcoinHeaderResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgManuallyInputBitcoinHeaderResponse)(x)
+}
+
+func (x *MsgManuallyInputBitcoinHeaderResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_zrchain_validation_tx_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType{}
+
+type fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType struct{}
+
+func (x fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgManuallyInputBitcoinHeaderResponse)(nil)
+}
+func (x fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgManuallyInputBitcoinHeaderResponse)
+}
+func (x fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManuallyInputBitcoinHeaderResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgManuallyInputBitcoinHeaderResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgManuallyInputBitcoinHeaderResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgManuallyInputBitcoinHeaderResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgManuallyInputBitcoinHeaderResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse"))
+		}
+		panic(fmt.Errorf("message zrchain.validation.MsgManuallyInputBitcoinHeaderResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in zrchain.validation.MsgManuallyInputBitcoinHeaderResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgManuallyInputBitcoinHeaderResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeaderResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeaderResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgManuallyInputBitcoinHeaderResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManuallyInputBitcoinHeaderResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgManuallyInputBitcoinHeaderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 var _ protoreflect.List = (*_BackfillRequests_1_list)(nil)
 
 type _BackfillRequests_1_list struct {
@@ -9059,7 +11526,7 @@ func (x *BackfillRequests) ProtoReflect() protoreflect.Message {
 }
 
 func (x *BackfillRequests) slowProtoReflect() protoreflect.Message {
-	mi := &file_zrchain_validation_tx_proto_msgTypes[18]
+	mi := &file_zrchain_validation_tx_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10399,6 +12866,248 @@ func (*MsgTriggerEventBackfillResponse) Descriptor() ([]byte, []int) {
 	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{17}
 }
 
+// MsgRequestHeaderBackfill requests backfill of a specific Bitcoin header height.
+type MsgRequestHeaderBackfill struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// height is the Bitcoin block height to request.
+	Height int64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (x *MsgRequestHeaderBackfill) Reset() {
+	*x = MsgRequestHeaderBackfill{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgRequestHeaderBackfill) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgRequestHeaderBackfill) ProtoMessage() {}
+
+// Deprecated: Use MsgRequestHeaderBackfill.ProtoReflect.Descriptor instead.
+func (*MsgRequestHeaderBackfill) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MsgRequestHeaderBackfill) GetAuthority() string {
+	if x != nil {
+		return x.Authority
+	}
+	return ""
+}
+
+func (x *MsgRequestHeaderBackfill) GetHeight() int64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+// MsgRequestHeaderBackfillResponse defines the response for header backfill request.
+type MsgRequestHeaderBackfillResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MsgRequestHeaderBackfillResponse) Reset() {
+	*x = MsgRequestHeaderBackfillResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgRequestHeaderBackfillResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgRequestHeaderBackfillResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgRequestHeaderBackfillResponse.ProtoReflect.Descriptor instead.
+func (*MsgRequestHeaderBackfillResponse) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{19}
+}
+
+// MsgManuallyInputBitcoinHeader allows an authorized account to provide all
+// fields of a Bitcoin block header manually.
+type MsgManuallyInputBitcoinHeader struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// authority is the address that controls the module (defaults to x/gov unless
+	// overwritten).
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// header contains the Bitcoin block header data to store.
+	Header *BitcoinHeader `protobuf:"bytes,2,opt,name=header,proto3" json:"header,omitempty"`
+}
+
+func (x *MsgManuallyInputBitcoinHeader) Reset() {
+	*x = MsgManuallyInputBitcoinHeader{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgManuallyInputBitcoinHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgManuallyInputBitcoinHeader) ProtoMessage() {}
+
+// Deprecated: Use MsgManuallyInputBitcoinHeader.ProtoReflect.Descriptor instead.
+func (*MsgManuallyInputBitcoinHeader) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *MsgManuallyInputBitcoinHeader) GetAuthority() string {
+	if x != nil {
+		return x.Authority
+	}
+	return ""
+}
+
+func (x *MsgManuallyInputBitcoinHeader) GetHeader() *BitcoinHeader {
+	if x != nil {
+		return x.Header
+	}
+	return nil
+}
+
+// BitcoinHeader mirrors the fields required for a Bitcoin block header.
+type BitcoinHeader struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Version     int64  `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	PrevBlock   string `protobuf:"bytes,2,opt,name=prev_block,json=prevBlock,proto3" json:"prev_block,omitempty"`
+	MerkleRoot  string `protobuf:"bytes,3,opt,name=merkle_root,json=merkleRoot,proto3" json:"merkle_root,omitempty"`
+	Timestamp   int64  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Bits        int64  `protobuf:"varint,5,opt,name=bits,proto3" json:"bits,omitempty"`
+	Nonce       int64  `protobuf:"varint,6,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	BlockHash   string `protobuf:"bytes,7,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	BlockHeight int64  `protobuf:"varint,8,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+}
+
+func (x *BitcoinHeader) Reset() {
+	*x = BitcoinHeader{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BitcoinHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BitcoinHeader) ProtoMessage() {}
+
+// Deprecated: Use BitcoinHeader.ProtoReflect.Descriptor instead.
+func (*BitcoinHeader) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *BitcoinHeader) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *BitcoinHeader) GetPrevBlock() string {
+	if x != nil {
+		return x.PrevBlock
+	}
+	return ""
+}
+
+func (x *BitcoinHeader) GetMerkleRoot() string {
+	if x != nil {
+		return x.MerkleRoot
+	}
+	return ""
+}
+
+func (x *BitcoinHeader) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *BitcoinHeader) GetBits() int64 {
+	if x != nil {
+		return x.Bits
+	}
+	return 0
+}
+
+func (x *BitcoinHeader) GetNonce() int64 {
+	if x != nil {
+		return x.Nonce
+	}
+	return 0
+}
+
+func (x *BitcoinHeader) GetBlockHash() string {
+	if x != nil {
+		return x.BlockHash
+	}
+	return ""
+}
+
+func (x *BitcoinHeader) GetBlockHeight() int64 {
+	if x != nil {
+		return x.BlockHeight
+	}
+	return 0
+}
+
+// MsgManuallyInputBitcoinHeaderResponse defines the response structure for
+// a manually provided Bitcoin header.
+type MsgManuallyInputBitcoinHeaderResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MsgManuallyInputBitcoinHeaderResponse) Reset() {
+	*x = MsgManuallyInputBitcoinHeaderResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zrchain_validation_tx_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgManuallyInputBitcoinHeaderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgManuallyInputBitcoinHeaderResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgManuallyInputBitcoinHeaderResponse.ProtoReflect.Descriptor instead.
+func (*MsgManuallyInputBitcoinHeaderResponse) Descriptor() ([]byte, []int) {
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{22}
+}
+
 // BackfillRequests contains a list of MsgTriggerEventBackfill requests.
 type BackfillRequests struct {
 	state         protoimpl.MessageState
@@ -10412,7 +13121,7 @@ type BackfillRequests struct {
 func (x *BackfillRequests) Reset() {
 	*x = BackfillRequests{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_zrchain_validation_tx_proto_msgTypes[18]
+		mi := &file_zrchain_validation_tx_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -10426,7 +13135,7 @@ func (*BackfillRequests) ProtoMessage() {}
 
 // Deprecated: Use BackfillRequests.ProtoReflect.Descriptor instead.
 func (*BackfillRequests) Descriptor() ([]byte, []int) {
-	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{18}
+	return file_zrchain_validation_tx_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *BackfillRequests) GetRequests() []*MsgTriggerEventBackfill {
@@ -10684,95 +13393,157 @@ var file_zrchain_validation_tx_proto_rawDesc = []byte{
 	0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63,
 	0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x22, 0x21, 0x0a, 0x1f, 0x4d, 0x73, 0x67, 0x54, 0x72, 0x69, 0x67,
 	0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5b, 0x0a, 0x10, 0x42, 0x61, 0x63, 0x6b,
-	0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x12, 0x47, 0x0a, 0x08,
-	0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2b,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76,
-	0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x08, 0x72, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x73, 0x2a, 0x95, 0x01, 0x0a, 0x09, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x54,
-	0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50,
-	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
-	0x1a, 0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45,
-	0x4e, 0x42, 0x54, 0x43, 0x5f, 0x4d, 0x49, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x45,
-	0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x42, 0x54, 0x43,
-	0x5f, 0x42, 0x55, 0x52, 0x4e, 0x10, 0x02, 0x12, 0x19, 0x0a, 0x15, 0x45, 0x56, 0x45, 0x4e, 0x54,
-	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x54, 0x50, 0x5f, 0x4d, 0x49, 0x4e, 0x54,
-	0x10, 0x03, 0x12, 0x19, 0x0a, 0x15, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45,
-	0x5f, 0x5a, 0x45, 0x4e, 0x54, 0x50, 0x5f, 0x42, 0x55, 0x52, 0x4e, 0x10, 0x04, 0x32, 0xc7, 0x07,
-	0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x69, 0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73,
-	0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
-	0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x63, 0x0a, 0x0d, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
-	0x72, 0x12, 0x24, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x1a, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xac, 0x01, 0x0a, 0x18, 0x4d, 0x73, 0x67,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x61, 0x63,
+	0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69,
+	0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f,
+	0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69,
+	0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x16, 0x0a,
+	0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68,
+	0x65, 0x69, 0x67, 0x68, 0x74, 0x3a, 0x40, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68,
+	0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x2d, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2f, 0x78, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x4d,
+	0x73, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42,
+	0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x22, 0x22, 0x0a, 0x20, 0x4d, 0x73, 0x67, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x61, 0x63, 0x6b, 0x66,
+	0x69, 0x6c, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xe4, 0x01, 0x0a, 0x1d,
+	0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x6c, 0x79, 0x49, 0x6e, 0x70, 0x75, 0x74,
+	0x42, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x12, 0x36, 0x0a,
+	0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68,
+	0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x44, 0x0a, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x42, 0x69, 0x74, 0x63, 0x6f,
+	0x69, 0x6e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7,
+	0xb0, 0x2a, 0x01, 0x52, 0x06, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x3a, 0x45, 0x82, 0xe7, 0xb0,
+	0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x8a, 0xe7, 0xb0, 0x2a, 0x32,
+	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x78, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x4d, 0x73, 0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x6c, 0x79,
+	0x49, 0x6e, 0x70, 0x75, 0x74, 0x42, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x48, 0x65, 0x61, 0x64,
+	0x65, 0x72, 0x22, 0xf3, 0x01, 0x0a, 0x0d, 0x42, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x48, 0x65,
+	0x61, 0x64, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x1d,
+	0x0a, 0x0a, 0x70, 0x72, 0x65, 0x76, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x09, 0x70, 0x72, 0x65, 0x76, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x1f, 0x0a,
+	0x0b, 0x6d, 0x65, 0x72, 0x6b, 0x6c, 0x65, 0x5f, 0x72, 0x6f, 0x6f, 0x74, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0a, 0x6d, 0x65, 0x72, 0x6b, 0x6c, 0x65, 0x52, 0x6f, 0x6f, 0x74, 0x12, 0x1c,
+	0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x12, 0x0a, 0x04,
+	0x62, 0x69, 0x74, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x62, 0x69, 0x74, 0x73,
+	0x12, 0x14, 0x0a, 0x05, 0x6e, 0x6f, 0x6e, 0x63, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x05, 0x6e, 0x6f, 0x6e, 0x63, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f,
+	0x68, 0x61, 0x73, 0x68, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x62, 0x6c, 0x6f, 0x63,
+	0x6b, 0x48, 0x61, 0x73, 0x68, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x68,
+	0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x62, 0x6c, 0x6f,
+	0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22, 0x27, 0x0a, 0x25, 0x4d, 0x73, 0x67, 0x4d,
+	0x61, 0x6e, 0x75, 0x61, 0x6c, 0x6c, 0x79, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x42, 0x69, 0x74, 0x63,
+	0x6f, 0x69, 0x6e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x5b, 0x0a, 0x10, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x73, 0x12, 0x47, 0x0a, 0x08, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
 	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
-	0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74,
-	0x65, 0x12, 0x1f, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61,
-	0x74, 0x65, 0x1a, 0x27, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67,
-	0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x69, 0x0a, 0x0f, 0x42,
-	0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x26,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65,
-	0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x42,
-	0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5a, 0x0a, 0x0a, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65,
-	0x67, 0x61, 0x74, 0x65, 0x12, 0x21, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e, 0x64,
-	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
-	0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x87, 0x01, 0x0a, 0x19, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62,
-	0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x12, 0x30, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55,
-	0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x1a, 0x38, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65,
-	0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x60, 0x0a, 0x0c,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x23, 0x2e, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x1a, 0x2b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x66,
-	0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73,
-	0x12, 0x25, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48,
-	0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x2d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x78, 0x0a, 0x14, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65,
-	0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x2b,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76,
-	0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x1a, 0x33, 0x2e, 0x7a, 0x72,
+	0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b,
+	0x66, 0x69, 0x6c, 0x6c, 0x52, 0x08, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x2a, 0x95,
+	0x01, 0x0a, 0x09, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16,
+	0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45,
+	0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e,
+	0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x42, 0x54, 0x43, 0x5f, 0x4d, 0x49,
+	0x4e, 0x54, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59,
+	0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x42, 0x54, 0x43, 0x5f, 0x42, 0x55, 0x52, 0x4e, 0x10, 0x02,
+	0x12, 0x19, 0x0a, 0x15, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a,
+	0x45, 0x4e, 0x54, 0x50, 0x5f, 0x4d, 0x49, 0x4e, 0x54, 0x10, 0x03, 0x12, 0x19, 0x0a, 0x15, 0x45,
+	0x56, 0x45, 0x4e, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5a, 0x45, 0x4e, 0x54, 0x50, 0x5f,
+	0x42, 0x55, 0x52, 0x4e, 0x10, 0x04, 0x32, 0xd1, 0x09, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x69,
+	0x0a, 0x0f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x1a, 0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d,
+	0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x63, 0x0a, 0x0d, 0x45, 0x64, 0x69,
+	0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x24, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x4d, 0x73, 0x67, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
+	0x1a, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x45, 0x64, 0x69, 0x74, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54,
+	0x0a, 0x08, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x1f, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a, 0x27, 0x2e, 0x7a, 0x72,
 	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x2e, 0x4d, 0x73, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74,
-	0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xaf, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e,
+	0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x69, 0x0a, 0x0f, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64,
+	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x26, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
+	0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x1a,
+	0x2e, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x42, 0x65, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x64,
+	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x5a, 0x0a, 0x0a, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x12, 0x21, 0x2e,
 	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x23, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f,
-	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61,
-	0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0xca, 0x02, 0x12,
-	0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
-	0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x56,
-	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65,
+	0x1a, 0x29, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x6e, 0x64, 0x65, 0x6c, 0x65, 0x67,
+	0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x87, 0x01, 0x0a, 0x19,
+	0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44,
+	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x30, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d,
+	0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64, 0x69, 0x6e,
+	0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x38, 0x2e, 0x7a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x4d, 0x73, 0x67, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x55, 0x6e, 0x62, 0x6f, 0x6e, 0x64,
+	0x69, 0x6e, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x60, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x23, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x2b, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x66, 0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x25, 0x2e, 0x7a, 0x72, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d,
+	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48, 0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73,
+	0x1a, 0x2d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x48,
+	0x56, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x78, 0x0a, 0x14, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42,
+	0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x2b, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67,
+	0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b,
+	0x66, 0x69, 0x6c, 0x6c, 0x1a, 0x33, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x54, 0x72, 0x69,
+	0x67, 0x67, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c,
+	0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x7b, 0x0a, 0x15, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69,
+	0x6c, 0x6c, 0x12, 0x2c, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c,
+	0x1a, 0x34, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x42, 0x61, 0x63, 0x6b, 0x66, 0x69, 0x6c, 0x6c, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x8a, 0x01, 0x0a, 0x1a, 0x4d, 0x61, 0x6e, 0x75, 0x61,
+	0x6c, 0x6c, 0x79, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x42, 0x69, 0x74, 0x63, 0x6f, 0x69, 0x6e, 0x48,
+	0x65, 0x61, 0x64, 0x65, 0x72, 0x12, 0x31, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73, 0x67, 0x4d, 0x61,
+	0x6e, 0x75, 0x61, 0x6c, 0x6c, 0x79, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x42, 0x69, 0x74, 0x63, 0x6f,
+	0x69, 0x6e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x1a, 0x39, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x73,
+	0x67, 0x4d, 0x61, 0x6e, 0x75, 0x61, 0x6c, 0x6c, 0x79, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x42, 0x69,
+	0x74, 0x63, 0x6f, 0x69, 0x6e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xaf, 0x01, 0x0a, 0x16, 0x63,
+	0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
+	0x5a, 0x23, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0xa2, 0x02, 0x03, 0x5a, 0x56, 0x58, 0xaa, 0x02, 0x12, 0x5a, 0x72,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0xca, 0x02, 0x12, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0xe2, 0x02, 0x1e, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c,
+	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x13, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x3a, 0x3a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -10788,77 +13559,87 @@ func file_zrchain_validation_tx_proto_rawDescGZIP() []byte {
 }
 
 var file_zrchain_validation_tx_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_zrchain_validation_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_zrchain_validation_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_zrchain_validation_tx_proto_goTypes = []interface{}{
-	(EventType)(0),                               // 0: zrchain.validation.EventType
-	(*MsgCreateValidator)(nil),                   // 1: zrchain.validation.MsgCreateValidator
-	(*MsgCreateValidatorResponse)(nil),           // 2: zrchain.validation.MsgCreateValidatorResponse
-	(*MsgEditValidator)(nil),                     // 3: zrchain.validation.MsgEditValidator
-	(*MsgEditValidatorResponse)(nil),             // 4: zrchain.validation.MsgEditValidatorResponse
-	(*MsgDelegate)(nil),                          // 5: zrchain.validation.MsgDelegate
-	(*MsgDelegateResponse)(nil),                  // 6: zrchain.validation.MsgDelegateResponse
-	(*MsgBeginRedelegate)(nil),                   // 7: zrchain.validation.MsgBeginRedelegate
-	(*MsgBeginRedelegateResponse)(nil),           // 8: zrchain.validation.MsgBeginRedelegateResponse
-	(*MsgUndelegate)(nil),                        // 9: zrchain.validation.MsgUndelegate
-	(*MsgUndelegateResponse)(nil),                // 10: zrchain.validation.MsgUndelegateResponse
-	(*MsgCancelUnbondingDelegation)(nil),         // 11: zrchain.validation.MsgCancelUnbondingDelegation
-	(*MsgCancelUnbondingDelegationResponse)(nil), // 12: zrchain.validation.MsgCancelUnbondingDelegationResponse
-	(*MsgUpdateParams)(nil),                      // 13: zrchain.validation.MsgUpdateParams
-	(*MsgUpdateParamsResponse)(nil),              // 14: zrchain.validation.MsgUpdateParamsResponse
-	(*MsgUpdateHVParams)(nil),                    // 15: zrchain.validation.MsgUpdateHVParams
-	(*MsgUpdateHVParamsResponse)(nil),            // 16: zrchain.validation.MsgUpdateHVParamsResponse
-	(*MsgTriggerEventBackfill)(nil),              // 17: zrchain.validation.MsgTriggerEventBackfill
-	(*MsgTriggerEventBackfillResponse)(nil),      // 18: zrchain.validation.MsgTriggerEventBackfillResponse
-	(*BackfillRequests)(nil),                     // 19: zrchain.validation.BackfillRequests
-	(*Description)(nil),                          // 20: zrchain.validation.Description
-	(*CommissionRates)(nil),                      // 21: zrchain.validation.CommissionRates
-	(*anypb.Any)(nil),                            // 22: google.protobuf.Any
-	(*v1beta1.Coin)(nil),                         // 23: cosmos.base.v1beta1.Coin
-	(*timestamppb.Timestamp)(nil),                // 24: google.protobuf.Timestamp
-	(*Params)(nil),                               // 25: zrchain.validation.Params
-	(*HVParams)(nil),                             // 26: zrchain.validation.HVParams
+	(EventType)(0),                                // 0: zrchain.validation.EventType
+	(*MsgCreateValidator)(nil),                    // 1: zrchain.validation.MsgCreateValidator
+	(*MsgCreateValidatorResponse)(nil),            // 2: zrchain.validation.MsgCreateValidatorResponse
+	(*MsgEditValidator)(nil),                      // 3: zrchain.validation.MsgEditValidator
+	(*MsgEditValidatorResponse)(nil),              // 4: zrchain.validation.MsgEditValidatorResponse
+	(*MsgDelegate)(nil),                           // 5: zrchain.validation.MsgDelegate
+	(*MsgDelegateResponse)(nil),                   // 6: zrchain.validation.MsgDelegateResponse
+	(*MsgBeginRedelegate)(nil),                    // 7: zrchain.validation.MsgBeginRedelegate
+	(*MsgBeginRedelegateResponse)(nil),            // 8: zrchain.validation.MsgBeginRedelegateResponse
+	(*MsgUndelegate)(nil),                         // 9: zrchain.validation.MsgUndelegate
+	(*MsgUndelegateResponse)(nil),                 // 10: zrchain.validation.MsgUndelegateResponse
+	(*MsgCancelUnbondingDelegation)(nil),          // 11: zrchain.validation.MsgCancelUnbondingDelegation
+	(*MsgCancelUnbondingDelegationResponse)(nil),  // 12: zrchain.validation.MsgCancelUnbondingDelegationResponse
+	(*MsgUpdateParams)(nil),                       // 13: zrchain.validation.MsgUpdateParams
+	(*MsgUpdateParamsResponse)(nil),               // 14: zrchain.validation.MsgUpdateParamsResponse
+	(*MsgUpdateHVParams)(nil),                     // 15: zrchain.validation.MsgUpdateHVParams
+	(*MsgUpdateHVParamsResponse)(nil),             // 16: zrchain.validation.MsgUpdateHVParamsResponse
+	(*MsgTriggerEventBackfill)(nil),               // 17: zrchain.validation.MsgTriggerEventBackfill
+	(*MsgTriggerEventBackfillResponse)(nil),       // 18: zrchain.validation.MsgTriggerEventBackfillResponse
+	(*MsgRequestHeaderBackfill)(nil),              // 19: zrchain.validation.MsgRequestHeaderBackfill
+	(*MsgRequestHeaderBackfillResponse)(nil),      // 20: zrchain.validation.MsgRequestHeaderBackfillResponse
+	(*MsgManuallyInputBitcoinHeader)(nil),         // 21: zrchain.validation.MsgManuallyInputBitcoinHeader
+	(*BitcoinHeader)(nil),                         // 22: zrchain.validation.BitcoinHeader
+	(*MsgManuallyInputBitcoinHeaderResponse)(nil), // 23: zrchain.validation.MsgManuallyInputBitcoinHeaderResponse
+	(*BackfillRequests)(nil),                      // 24: zrchain.validation.BackfillRequests
+	(*Description)(nil),                           // 25: zrchain.validation.Description
+	(*CommissionRates)(nil),                       // 26: zrchain.validation.CommissionRates
+	(*anypb.Any)(nil),                             // 27: google.protobuf.Any
+	(*v1beta1.Coin)(nil),                          // 28: cosmos.base.v1beta1.Coin
+	(*timestamppb.Timestamp)(nil),                 // 29: google.protobuf.Timestamp
+	(*Params)(nil),                                // 30: zrchain.validation.Params
+	(*HVParams)(nil),                              // 31: zrchain.validation.HVParams
 }
 var file_zrchain_validation_tx_proto_depIdxs = []int32{
-	20, // 0: zrchain.validation.MsgCreateValidator.description:type_name -> zrchain.validation.Description
-	21, // 1: zrchain.validation.MsgCreateValidator.commission:type_name -> zrchain.validation.CommissionRates
-	22, // 2: zrchain.validation.MsgCreateValidator.pubkey:type_name -> google.protobuf.Any
-	23, // 3: zrchain.validation.MsgCreateValidator.value:type_name -> cosmos.base.v1beta1.Coin
-	20, // 4: zrchain.validation.MsgEditValidator.description:type_name -> zrchain.validation.Description
-	23, // 5: zrchain.validation.MsgDelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	23, // 6: zrchain.validation.MsgBeginRedelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	24, // 7: zrchain.validation.MsgBeginRedelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
-	23, // 8: zrchain.validation.MsgUndelegate.amount:type_name -> cosmos.base.v1beta1.Coin
-	24, // 9: zrchain.validation.MsgUndelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
-	23, // 10: zrchain.validation.MsgUndelegateResponse.amount:type_name -> cosmos.base.v1beta1.Coin
-	23, // 11: zrchain.validation.MsgCancelUnbondingDelegation.amount:type_name -> cosmos.base.v1beta1.Coin
-	25, // 12: zrchain.validation.MsgUpdateParams.Params:type_name -> zrchain.validation.Params
-	26, // 13: zrchain.validation.MsgUpdateParams.HVParams:type_name -> zrchain.validation.HVParams
-	26, // 14: zrchain.validation.MsgUpdateHVParams.HVParams:type_name -> zrchain.validation.HVParams
+	25, // 0: zrchain.validation.MsgCreateValidator.description:type_name -> zrchain.validation.Description
+	26, // 1: zrchain.validation.MsgCreateValidator.commission:type_name -> zrchain.validation.CommissionRates
+	27, // 2: zrchain.validation.MsgCreateValidator.pubkey:type_name -> google.protobuf.Any
+	28, // 3: zrchain.validation.MsgCreateValidator.value:type_name -> cosmos.base.v1beta1.Coin
+	25, // 4: zrchain.validation.MsgEditValidator.description:type_name -> zrchain.validation.Description
+	28, // 5: zrchain.validation.MsgDelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	28, // 6: zrchain.validation.MsgBeginRedelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	29, // 7: zrchain.validation.MsgBeginRedelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
+	28, // 8: zrchain.validation.MsgUndelegate.amount:type_name -> cosmos.base.v1beta1.Coin
+	29, // 9: zrchain.validation.MsgUndelegateResponse.completion_time:type_name -> google.protobuf.Timestamp
+	28, // 10: zrchain.validation.MsgUndelegateResponse.amount:type_name -> cosmos.base.v1beta1.Coin
+	28, // 11: zrchain.validation.MsgCancelUnbondingDelegation.amount:type_name -> cosmos.base.v1beta1.Coin
+	30, // 12: zrchain.validation.MsgUpdateParams.Params:type_name -> zrchain.validation.Params
+	31, // 13: zrchain.validation.MsgUpdateParams.HVParams:type_name -> zrchain.validation.HVParams
+	31, // 14: zrchain.validation.MsgUpdateHVParams.HVParams:type_name -> zrchain.validation.HVParams
 	0,  // 15: zrchain.validation.MsgTriggerEventBackfill.event_type:type_name -> zrchain.validation.EventType
-	17, // 16: zrchain.validation.BackfillRequests.requests:type_name -> zrchain.validation.MsgTriggerEventBackfill
-	1,  // 17: zrchain.validation.Msg.CreateValidator:input_type -> zrchain.validation.MsgCreateValidator
-	3,  // 18: zrchain.validation.Msg.EditValidator:input_type -> zrchain.validation.MsgEditValidator
-	5,  // 19: zrchain.validation.Msg.Delegate:input_type -> zrchain.validation.MsgDelegate
-	7,  // 20: zrchain.validation.Msg.BeginRedelegate:input_type -> zrchain.validation.MsgBeginRedelegate
-	9,  // 21: zrchain.validation.Msg.Undelegate:input_type -> zrchain.validation.MsgUndelegate
-	11, // 22: zrchain.validation.Msg.CancelUnbondingDelegation:input_type -> zrchain.validation.MsgCancelUnbondingDelegation
-	13, // 23: zrchain.validation.Msg.UpdateParams:input_type -> zrchain.validation.MsgUpdateParams
-	15, // 24: zrchain.validation.Msg.UpdateHVParams:input_type -> zrchain.validation.MsgUpdateHVParams
-	17, // 25: zrchain.validation.Msg.TriggerEventBackfill:input_type -> zrchain.validation.MsgTriggerEventBackfill
-	2,  // 26: zrchain.validation.Msg.CreateValidator:output_type -> zrchain.validation.MsgCreateValidatorResponse
-	4,  // 27: zrchain.validation.Msg.EditValidator:output_type -> zrchain.validation.MsgEditValidatorResponse
-	6,  // 28: zrchain.validation.Msg.Delegate:output_type -> zrchain.validation.MsgDelegateResponse
-	8,  // 29: zrchain.validation.Msg.BeginRedelegate:output_type -> zrchain.validation.MsgBeginRedelegateResponse
-	10, // 30: zrchain.validation.Msg.Undelegate:output_type -> zrchain.validation.MsgUndelegateResponse
-	12, // 31: zrchain.validation.Msg.CancelUnbondingDelegation:output_type -> zrchain.validation.MsgCancelUnbondingDelegationResponse
-	14, // 32: zrchain.validation.Msg.UpdateParams:output_type -> zrchain.validation.MsgUpdateParamsResponse
-	16, // 33: zrchain.validation.Msg.UpdateHVParams:output_type -> zrchain.validation.MsgUpdateHVParamsResponse
-	18, // 34: zrchain.validation.Msg.TriggerEventBackfill:output_type -> zrchain.validation.MsgTriggerEventBackfillResponse
-	26, // [26:35] is the sub-list for method output_type
-	17, // [17:26] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	22, // 16: zrchain.validation.MsgManuallyInputBitcoinHeader.header:type_name -> zrchain.validation.BitcoinHeader
+	17, // 17: zrchain.validation.BackfillRequests.requests:type_name -> zrchain.validation.MsgTriggerEventBackfill
+	1,  // 18: zrchain.validation.Msg.CreateValidator:input_type -> zrchain.validation.MsgCreateValidator
+	3,  // 19: zrchain.validation.Msg.EditValidator:input_type -> zrchain.validation.MsgEditValidator
+	5,  // 20: zrchain.validation.Msg.Delegate:input_type -> zrchain.validation.MsgDelegate
+	7,  // 21: zrchain.validation.Msg.BeginRedelegate:input_type -> zrchain.validation.MsgBeginRedelegate
+	9,  // 22: zrchain.validation.Msg.Undelegate:input_type -> zrchain.validation.MsgUndelegate
+	11, // 23: zrchain.validation.Msg.CancelUnbondingDelegation:input_type -> zrchain.validation.MsgCancelUnbondingDelegation
+	13, // 24: zrchain.validation.Msg.UpdateParams:input_type -> zrchain.validation.MsgUpdateParams
+	15, // 25: zrchain.validation.Msg.UpdateHVParams:input_type -> zrchain.validation.MsgUpdateHVParams
+	17, // 26: zrchain.validation.Msg.TriggerEventBackfill:input_type -> zrchain.validation.MsgTriggerEventBackfill
+	19, // 27: zrchain.validation.Msg.RequestHeaderBackfill:input_type -> zrchain.validation.MsgRequestHeaderBackfill
+	21, // 28: zrchain.validation.Msg.ManuallyInputBitcoinHeader:input_type -> zrchain.validation.MsgManuallyInputBitcoinHeader
+	2,  // 29: zrchain.validation.Msg.CreateValidator:output_type -> zrchain.validation.MsgCreateValidatorResponse
+	4,  // 30: zrchain.validation.Msg.EditValidator:output_type -> zrchain.validation.MsgEditValidatorResponse
+	6,  // 31: zrchain.validation.Msg.Delegate:output_type -> zrchain.validation.MsgDelegateResponse
+	8,  // 32: zrchain.validation.Msg.BeginRedelegate:output_type -> zrchain.validation.MsgBeginRedelegateResponse
+	10, // 33: zrchain.validation.Msg.Undelegate:output_type -> zrchain.validation.MsgUndelegateResponse
+	12, // 34: zrchain.validation.Msg.CancelUnbondingDelegation:output_type -> zrchain.validation.MsgCancelUnbondingDelegationResponse
+	14, // 35: zrchain.validation.Msg.UpdateParams:output_type -> zrchain.validation.MsgUpdateParamsResponse
+	16, // 36: zrchain.validation.Msg.UpdateHVParams:output_type -> zrchain.validation.MsgUpdateHVParamsResponse
+	18, // 37: zrchain.validation.Msg.TriggerEventBackfill:output_type -> zrchain.validation.MsgTriggerEventBackfillResponse
+	20, // 38: zrchain.validation.Msg.RequestHeaderBackfill:output_type -> zrchain.validation.MsgRequestHeaderBackfillResponse
+	23, // 39: zrchain.validation.Msg.ManuallyInputBitcoinHeader:output_type -> zrchain.validation.MsgManuallyInputBitcoinHeaderResponse
+	29, // [29:40] is the sub-list for method output_type
+	18, // [18:29] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_validation_tx_proto_init() }
@@ -11086,6 +13867,66 @@ func file_zrchain_validation_tx_proto_init() {
 			}
 		}
 		file_zrchain_validation_tx_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgRequestHeaderBackfill); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgRequestHeaderBackfillResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgManuallyInputBitcoinHeader); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BitcoinHeader); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgManuallyInputBitcoinHeaderResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zrchain_validation_tx_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BackfillRequests); i {
 			case 0:
 				return &v.state
@@ -11104,7 +13945,7 @@ func file_zrchain_validation_tx_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_validation_tx_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
