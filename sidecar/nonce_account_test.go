@@ -16,6 +16,7 @@ import (
 
 // TestGetSolanaNonceAccount tests fetching the specific nonce account that's failing
 func TestGetSolanaNonceAccount(t *testing.T) {
+	t.Skip() // Don't run on CI
 	// Initialize oracle with Solana client
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)
@@ -51,6 +52,7 @@ func TestGetSolanaNonceAccount(t *testing.T) {
 
 // TestVerifyZenBTCAccounts verifies all accounts needed for zenBTC wrap transaction
 func TestVerifyZenBTCAccounts(t *testing.T) {
+	t.Skip() // Don't run on CI
 	// Configuration from params
 	mintAddress := "nRy9PYAWC6vYQcwGk44S8kqRaNs56noWzJjfg1mY4fx"
 	feeWallet := "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd"
@@ -139,12 +141,10 @@ func TestVerifyZenBTCAccounts(t *testing.T) {
 	t.Run("Fee wallet ATA", func(t *testing.T) {
 		info, err := client.GetAccountInfo(ctx, feeWalletAta)
 		if err != nil || info.Value == nil {
-			fmt.Printf("\n✗✗✗ FOUND THE ISSUE ✗✗✗\n")
 			fmt.Printf("Fee wallet ATA does NOT exist: %s\n", feeWalletAta)
-			fmt.Printf("This is likely why the transaction simulation is failing!\n")
 			fmt.Printf("\nTo fix, run:\n")
 			fmt.Printf("spl-token create-account %s --owner %s --url devnet\n\n", mintKey, feeKey)
-			t.Errorf("Fee wallet ATA does not exist - this will cause transaction to fail")
+			t.Errorf("Fee wallet ATA does not exist")
 		} else {
 			fmt.Printf("✓ Fee wallet ATA exists: %s\n", feeWalletAta)
 		}
@@ -168,7 +168,6 @@ func TestVerifyZenBTCAccounts(t *testing.T) {
 			fmt.Printf("\n✗✗✗ CRITICAL: Global Config PDA does NOT exist ✗✗✗\n")
 			fmt.Printf("Global Config PDA: %s\n", globalConfigPDA)
 			fmt.Printf("The program must be initialized first!\n")
-			fmt.Printf("This is likely why the transaction simulation is failing!\n\n")
 			t.Errorf("Global Config PDA does not exist - program not initialized")
 		} else {
 			fmt.Printf("✓ Global Config PDA exists: %s (owner: %s, size: %d bytes)\n",
