@@ -364,7 +364,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Started in runOracleMainLoop, not per-tick
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
+	// o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
@@ -375,7 +375,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Fetch zenBTC burn events from Ethereum
 	o.fetchEthereumBurnEvents(routinesCtx, &wg, latestHeader, update, &updateMutex, errChan)
 
-	// Fetch Solana mint events for zenBTC (only if Solana is enabled)
+	// Fetch Solana mint events for zenBTC and ROCK (only if Solana is enabled)
 	if o.solanaClient != nil {
 		o.processSolanaMintEvents(routinesCtx, &wg, update, &updateMutex, errChan)
 	}
