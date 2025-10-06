@@ -364,7 +364,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Started in runOracleMainLoop, not per-tick
 
 	// Fetch Ethereum contract data (AVS delegations and redemptions on EigenLayer)
-	o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
+	// o.fetchEthereumContractData(routinesCtx, &wg, serviceManager, zenBTCController, targetBlockNumber, update, &updateMutex, errChan)
 
 	// Fetch network data (gas estimates, tips, Solana fees)
 	o.fetchNetworkData(routinesCtx, &wg, update, &updateMutex, errChan)
@@ -375,7 +375,7 @@ func (o *Oracle) fetchAndProcessState(
 	// Fetch zenBTC burn events from Ethereum
 	o.fetchEthereumBurnEvents(routinesCtx, &wg, latestHeader, update, &updateMutex, errChan)
 
-	// Fetch Solana mint events for zenBTC (only if Solana is enabled)
+	// Fetch Solana mint events for zenBTC and ROCK (only if Solana is enabled)
 	if o.solanaClient != nil {
 		o.processSolanaMintEvents(routinesCtx, &wg, update, &updateMutex, errChan)
 	}
@@ -545,6 +545,19 @@ func (o *Oracle) fetchEthereumContractData(
 	)
 }
 
+// applyGasBuffer applies the gas estimation buffer to a gas value
+func applyGasBuffer(gas uint64) uint64 {
+	return (gas * sidecartypes.GasEstimationBuffer) / 100
+}
+
+// handleGasEstimationFallback logs an error and returns a fallback gas estimate with buffer applied
+func handleGasEstimationFallback(err error, operation string) uint64 {
+	slog.Error(operation, "error", err)
+	bufferedGas := applyGasBuffer(sidecartypes.WrapCallGasLimitFallback)
+	slog.Info("Using fallback gas estimate", "gas", bufferedGas)
+	return bufferedGas
+}
+
 func (o *Oracle) fetchNetworkData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -573,59 +586,26 @@ func (o *Oracle) fetchNetworkData(
 			whitelistedRoleAddr := sidecartypes.WhitelistedRoleAddresses[network]
 			controllerAddr := sidecartypes.ZenBTCControllerAddresses[network]
 
-			slog.Info("DEBUG: Gas estimation parameters",
-				"network", network,
-				"whitelistedRoleAddress", whitelistedRoleAddr,
-				"controllerAddress", controllerAddr,
-				"stakeCallDataAmount", sidecartypes.StakeCallDataAmount,
+			wrapCallData, err := validationkeeper.EncodeWrapCallData(
+				common.HexToAddress("0x0000000000000000000000000000000000000000"),
+				big.NewInt(1000000000),
+				1,
 			)
-
-			stakeCallData, err := validationkeeper.EncodeStakeCallData(big.NewInt(sidecartypes.StakeCallDataAmount))
 			if err != nil {
-				slog.Error("DEBUG: Failed to encode stake call data", "error", err)
-				const estimatedGasForStake = uint64(1000000) // 1M gas units
-				estimatedGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
-				slog.Info("DEBUG: Using hardcoded gas estimate", "gas", estimatedGas)
-				return estimatedGas, nil
+				return handleGasEstimationFallback(err, "Failed to encode wrap call data"), nil
 			}
 
-			slog.Info("DEBUG: Encoded stake call data",
-				"dataLength", len(stakeCallData),
-				"dataHex", fmt.Sprintf("0x%x", stakeCallData),
-			)
-
-			slog.Info("DEBUG: stakeRockBTC function details",
-				"functionName", "stakeRockBTC",
-				"parameters", fmt.Sprintf("value: %d, approverSignatureAndExpiry: {Signature: [], Expiry: 0}, approverSalt: [32]byte{}", sidecartypes.StakeCallDataAmount),
-				"note", "This function requires valid signature data which we're providing as empty for gas estimation",
-			)
-
 			addr := common.HexToAddress(controllerAddr)
-			slog.Info("DEBUG: Attempting gas estimation",
-				"from", whitelistedRoleAddr,
-				"to", controllerAddr,
-				"dataLength", len(stakeCallData),
-			)
-
 			estimatedGas, err := o.EthClient.EstimateGas(context.Background(), ethereum.CallMsg{
 				From: common.HexToAddress(whitelistedRoleAddr),
 				To:   &addr,
-				Data: stakeCallData,
+				Data: wrapCallData,
 			})
 			if err != nil {
-				slog.Error("DEBUG: Gas estimation failed", "error", err)
-				const estimatedGasForStake = uint64(1000000) // 1M gas units
-				fallbackGas := (estimatedGasForStake * sidecartypes.GasEstimationBuffer) / 100
-				slog.Info("DEBUG: Using fallback gas estimate", "gas", fallbackGas)
-				return fallbackGas, nil
+				return handleGasEstimationFallback(err, "Gas estimation failed"), nil
 			}
 
-			finalGas := (estimatedGas * sidecartypes.GasEstimationBuffer) / 100
-			slog.Info("DEBUG: Gas estimation successful",
-				"rawEstimatedGas", estimatedGas,
-				"finalGasWithBuffer", finalGas,
-				"bufferPercentage", sidecartypes.GasEstimationBuffer,
-			)
+			finalGas := applyGasBuffer(estimatedGas)
 			return finalGas, nil
 		},
 		func(result uint64, update *oracleStateUpdate) {
