@@ -138,7 +138,7 @@ var (
 	// Oracle processing constants
 	ErrorChannelBufferSize              = 16                // Buffer size for error channels in goroutines
 	InitialEventsSliceCapacity          = 100               // Initial capacity for events slice to reduce allocations
-	StakeCallDataAmount                 = int64(1000000000) // Amount used for zenBTC stake call gas estimation
+	WrapCallGasLimitFallback            = uint64(100_000)   // Fallback gas limit for zenBTC wrap call
 	PendingTransactionCheckInterval     = 5 * time.Second   // How often to check for pending transactions when queue is empty
 	PendingTransactionStatusLogInterval = 15 * time.Second  // How often to log pending transaction processing status
 	PendingTransactionMaxRetries        = 100               // Maximum retry attempts before removing from pending queue

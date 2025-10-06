@@ -43,12 +43,12 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpda
 	}
 
 	// Provision the AVS staking rewards for the current block
-	if err := k.provisionAVSValidatorRewards(sdkCtx); err != nil {
-		return nil, err
-	}
-	if err := k.provisionAVSDelegatorRewardsAndCommissions(sdkCtx); err != nil {
-		return nil, err
-	}
+	// if err := k.provisionAVSValidatorRewards(sdkCtx); err != nil {
+	// 	return nil, err
+	// }
+	// if err := k.provisionAVSDelegatorRewardsAndCommissions(sdkCtx); err != nil {
+	// 	return nil, err
+	// }
 
 	// unbond all mature validators from the unbonding queue
 	if err = k.UnbondAllMatureValidators(ctx); err != nil {
