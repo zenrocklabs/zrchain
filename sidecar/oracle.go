@@ -55,6 +55,7 @@ func NewOracle(
 	zrChainQueryClient *client.QueryClient,
 	debugMode bool,
 	skipInitialWait bool,
+	forceTestReset bool,
 ) *Oracle {
 	o := &Oracle{
 		stateCache:         make([]sidecartypes.OracleState, 0),
@@ -65,6 +66,7 @@ func NewOracle(
 		zrChainQueryClient: zrChainQueryClient,
 		DebugMode:          debugMode,
 		SkipInitialWait:    skipInitialWait,
+		ForceTestReset:     forceTestReset,
 
 		// Initialize performance optimization fields
 		solanaRateLimiter: make(chan struct{}, sidecartypes.SolanaMaxConcurrentRPCCalls), // Configurable concurrent Solana RPC calls

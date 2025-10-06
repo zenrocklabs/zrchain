@@ -77,7 +77,7 @@ var (
 	ZenBTCSolanaProgramID = map[string]string{
 		NetworkLocalnet: "886BBKmJ71jrqWhZBAzqhdNRKk761Mx9WVCPzFkY4uBb",
 		NetworkRegnet:   "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
-		NetworkDevnet:   "2pbhSDGggjXdRxp6qYjyeWLhvv4Ptf2r7QG8tbiBAZHq",
+		NetworkDevnet:   "886BBKmJ71jrqWhZBAzqhdNRKk761Mx9WVCPzFkY4uBb",
 		NetworkTestnet:  "9Gfr1YrMca5hyYRDP2nGxYkBWCSZtBm1oXBZyBdtYgNL",
 		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
