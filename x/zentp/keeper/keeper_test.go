@@ -400,3 +400,60 @@ func (s *IntegrationTestSuite) TestAddFeeToBridgeAmount() {
 		})
 	}
 }
+
+func (s *IntegrationTestSuite) TestCalculateZentpMintFee() {
+
+	tests := []struct {
+		name                string
+		amount              uint64
+		expectedTotalAmount sdkmath.Int
+		expectedTotalFee    sdkmath.Int
+		expectedError       error
+	}{
+		{
+			name:                "1 ROCK + flat fee",
+			amount:              1000000,
+			expectedTotalAmount: sdkmath.NewInt(201005000),
+			expectedTotalFee:    sdkmath.NewInt(200005000),
+			expectedError:       nil,
+		},
+		{
+			name:                "0.0001 ROCK + flat fee",
+			amount:              100,
+			expectedTotalAmount: sdkmath.NewInt(200000100),
+			expectedTotalFee:    sdkmath.NewInt(200000000),
+			expectedError:       nil,
+		},
+		{
+			name:                "large amount",
+			amount:              1000000000000000000,
+			expectedTotalAmount: sdkmath.NewInt(1005000000200000000),
+			expectedTotalFee:    sdkmath.NewInt(5000000200000000),
+			expectedError:       nil,
+		},
+		{
+			name:                "int overflow - very large amount",
+			amount:              18400000000000000000,
+			expectedTotalAmount: sdkmath.Int{},
+			expectedTotalFee:    sdkmath.Int{},
+			expectedError:       fmt.Errorf("total amount %s exceeds max uint64", "18492000000200000000"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+
+			totalAmount, totalFee, err := s.zentpKeeper.CalculateZentpMintFee(s.ctx, tc.amount)
+
+			if tc.expectedError != nil {
+				s.Require().Error(err)
+				s.Require().Equal(tc.expectedError.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedTotalAmount, totalAmount)
+				s.Require().Equal(tc.expectedTotalFee, totalFee)
+			}
+		})
+	}
+}
