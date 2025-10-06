@@ -21,6 +21,7 @@ import (
 func main() {
 	// Parse flags first to determine debug level
 	flags := parseFlags()
+	testReset := flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)")
 
 	// Set up coloured structured logging
 	initLogger(*flags.debug)
@@ -98,6 +99,7 @@ func main() {
 	}
 
 	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *flags.debug, *flags.skipInitialWait)
+	oracle.ForceTestReset = *testReset
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 

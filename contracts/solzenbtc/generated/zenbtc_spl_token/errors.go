@@ -56,16 +56,6 @@ var (
 		msg:  "Burn fee bps too high",
 		name: "BurnFeeBpsTooHigh",
 	}
-	ErrAddressTooLong = &customErrorDef{
-		code: 6008,
-		msg:  "Address too long",
-		name: "AddressTooLong",
-	}
-	ErrInvalidEventStore = &customErrorDef{
-		code: 6009,
-		msg:  "Invalid EventStore program",
-		name: "InvalidEventStore",
-	}
 	Errors = map[int]CustomError{
 		6000: ErrNotAGlobalAuthority,
 		6001: ErrNotAMintAuthority,
@@ -75,8 +65,6 @@ var (
 		6005: ErrFeeAuthorityDoesNotExists,
 		6006: ErrMintAuthorityDoesNotExists,
 		6007: ErrBurnFeeBpsTooHigh,
-		6008: ErrAddressTooLong,
-		6009: ErrInvalidEventStore,
 	}
 )
 

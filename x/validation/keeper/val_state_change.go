@@ -43,12 +43,12 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpda
 	}
 
 	// Provision the AVS staking rewards for the current block
-	if err := k.provisionAVSValidatorRewards(sdkCtx); err != nil {
-		return nil, err
-	}
-	if err := k.provisionAVSDelegatorRewardsAndCommissions(sdkCtx); err != nil {
-		return nil, err
-	}
+	// if err := k.provisionAVSValidatorRewards(sdkCtx); err != nil {
+	// 	return nil, err
+	// }
+	// if err := k.provisionAVSDelegatorRewardsAndCommissions(sdkCtx); err != nil {
+	// 	return nil, err
+	// }
 
 	// unbond all mature validators from the unbonding queue
 	if err = k.UnbondAllMatureValidators(ctx); err != nil {
@@ -304,8 +304,8 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		// If we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators.
 		// This check relies on PotentialConsensusPower using the *native* tokens primarily.
-		// If AVS tokens could make a zero-native-token validator powerful, this check might need adjustment.
-		if validator.PotentialConsensusPower(powerReduction) == 0 && validator.TokensAVS.IsZero() {
+		// Consider bedrock BTC stake as an additional signal.
+		if validator.PotentialConsensusPower(powerReduction) == 0 && k.getBedrockTokenAmount(validator, types.Asset_BTC).IsZero() {
 			break
 		}
 
@@ -335,13 +335,13 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		oldPowerBytes, found := last[valAddrStr]
 
 		// Use the new helper function to calculate power
-		// Pass validator.TokensAVS directly, assuming it corresponds to primaryAVSAssetData (e.g. BTC)
+		// Pass bedrock BTC tokens in place of deprecated TokensAVS
 		finalConsensusPower, nativeValueDecimal, avsValueDecimal := k.calculateValidatorPowerComponents(
 			validator,
 			powerReduction,
 			nativeAssetData,
-			primaryAVSAssetData, // Pass data for the AVS tokens the validator holds
-			validator.TokensAVS, // Pass the amount of those AVS tokens
+			primaryAVSAssetData, // data for BTC asset (price/precision)
+			k.getBedrockTokenAmount(validator, types.Asset_BTC),
 			pricesAreValid,
 		)
 
@@ -356,9 +356,9 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 
 		k.Logger(ctx).Debug(fmt.Sprintf(
-			"\nvalidator: %s | %s\ntoken stake: native_units=%d, avs_raw_units=%s (for %s)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
+			"\nvalidator: %s | %s\ntoken stake: native_units=%d, bedrock_btc_raw_units=%s (for %s)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
-			validator.ConsensusPower(powerReduction), validator.TokensAVS.String(), configuredAVSAssetType,
+			validator.ConsensusPower(powerReduction), k.getBedrockTokenAmount(validator, types.Asset_BTC).String(), configuredAVSAssetType,
 			nativeValueDecimal.String(), avsValueDecimal.String(), finalConsensusPower,
 		))
 
@@ -424,6 +424,16 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 	return updates, nil
 }
 
+// getBedrockTokenAmount extracts the TokensBedrock amount for a given asset from a validator
+func (k Keeper) getBedrockTokenAmount(validator types.ValidatorHV, asset types.Asset) math.Int {
+	for _, td := range validator.TokensBedrock {
+		if td != nil && td.Asset == asset {
+			return td.Amount
+		}
+	}
+	return math.ZeroInt()
+}
+
 func (k Keeper) GetStakeableAssetPrices(ctx context.Context) ([]*types.AssetData, error) {
 	stakeableAssets := k.GetStakeableAssets(ctx)
 
@@ -452,7 +462,7 @@ func (k Keeper) calculateValidatorPowerComponents(
 	powerReduction math.Int,
 	nativeAssetData *types.AssetData,
 	avsAssetData *types.AssetData, // Contains PriceUSD and Precision for the AVS token
-	avsTokens math.Int, // Raw amount of AVS tokens (e.g., satoshis)
+	avsTokens math.Int, // Raw amount of AVS tokens (or bedrock BTC sats in v1)
 	pricesAreValid bool,
 ) (totalConsensusPower int64, nativePowerContribution math.LegacyDec, avsPowerContribution math.LegacyDec) {
 

@@ -328,3 +328,23 @@ func (k Keeper) UpdateZentpFees(ctx context.Context, fees uint64) error {
 
 	return k.ZentpFees.Set(ctx, zentpFees+fees)
 }
+
+func (k Keeper) CalculateZentpMintFee(ctx context.Context, amount uint64) (math.Int, math.Int, error) {
+	baseAmountInt := math.NewIntFromUint64(amount)
+	zentpParams, err := k.ParamStore.Get(ctx)
+	if err != nil {
+		return math.Int{}, math.Int{}, err
+	}
+	feeInt := math.LegacyNewDecFromInt(baseAmountInt).Mul(zentpParams.BridgeFee).TruncateInt()
+	feeIntFlat := math.NewIntFromUint64(zentpParams.FlatFee)
+	totalFeeInt := feeInt.Add(feeIntFlat)
+	totalAmountInt := baseAmountInt.Add(totalFeeInt)
+	if totalAmountInt.IsNegative() {
+		return math.Int{}, math.Int{}, fmt.Errorf("total amount calculation resulted in negative value: %s", totalAmountInt.String())
+	}
+	if !totalAmountInt.IsUint64() {
+		return math.Int{}, math.Int{}, fmt.Errorf("total amount %s exceeds max uint64", totalAmountInt.String())
+	}
+
+	return totalAmountInt, totalFeeInt, nil
+}

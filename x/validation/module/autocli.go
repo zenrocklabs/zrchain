@@ -205,6 +205,22 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "event_type"},
 					},
 				},
+				{
+					RpcMethod: "RequestHeaderBackfill",
+					Use:       "request-header-backfill [height]",
+					Short:     "Request backfill of a specific Bitcoin header height",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "height"},
+					},
+				},
+				{
+					RpcMethod: "ManuallyInputBitcoinHeader",
+					Use:       "manually-input-bitcoin-header [header]",
+					Short:     "Manually inject a Bitcoin block header",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "header"},
+					},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 			EnhanceCustomCommand: true, // use custom commands only until v0.51

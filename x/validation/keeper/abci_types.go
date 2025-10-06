@@ -142,10 +142,10 @@ func VoteExtensionsEnabled(ctx sdk.Context) bool {
 func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 	invalid := false
 
-	if len(ve.EigenDelegationsHash) == 0 {
-		logger.Error("invalid vote extension: EigenDelegationsHash is empty")
-		invalid = true
-	}
+	// if len(ve.EigenDelegationsHash) == 0 {
+	// 	logger.Error("invalid vote extension: EigenDelegationsHash is empty")
+	// 	invalid = true
+	// }
 	if ve.EthBlockHeight == 0 {
 		logger.Error("invalid vote extension: EthBlockHeight is 0")
 		invalid = true

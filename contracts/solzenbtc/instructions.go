@@ -42,10 +42,6 @@ func Wrap(
 	feeWalletAta solana.PublicKey,
 	receiver solana.PublicKey,
 	receiverAta solana.PublicKey,
-	eventStoreProgram solana.PublicKey,
-	eventStoreGlobalConfig solana.PublicKey,
-	callingProgram solana.PublicKey,
-	zenbtcWrapShard solana.PublicKey,
 ) *zenbtc_spl_token.Instruction {
 	zenbtc_spl_token.SetProgramID(programID)
 
@@ -64,10 +60,6 @@ func Wrap(
 		solana.SystemProgramID,
 		solana.TokenProgramID,
 		solana.SPLAssociatedTokenAccountProgramID,
-		eventStoreProgram,
-		eventStoreGlobalConfig,
-		callingProgram,
-		zenbtcWrapShard,
 	).Build()
 
 	return instruction
@@ -80,10 +72,6 @@ func Unwrap(
 	mint solana.PublicKey,
 	multisigKey solana.PublicKey,
 	feeWallet solana.PublicKey,
-	eventStoreProgram solana.PublicKey,
-	eventStoreGlobalConfig solana.PublicKey,
-	callingProgram solana.PublicKey,
-	zenbtcUnwrapShard solana.PublicKey,
 ) *zenbtc_spl_token.Instruction {
 	zenbtc_spl_token.SetProgramID(programID)
 
@@ -103,10 +91,6 @@ func Unwrap(
 		solana.SystemProgramID,
 		solana.TokenProgramID,
 		solana.SPLAssociatedTokenAccountProgramID,
-		eventStoreProgram,
-		eventStoreGlobalConfig,
-		callingProgram,
-		zenbtcUnwrapShard,
 	).Build()
 
 	return instruction

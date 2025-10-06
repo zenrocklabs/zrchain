@@ -49,7 +49,6 @@ var (
 	ValidatorMismatchCounts     = collections.NewPrefix(102)
 	LastCompletedZentpMintIDKey = collections.NewPrefix(103)
 )
-
 var (
 	// Keys for store prefixes
 	// Last* values are constant during a block.

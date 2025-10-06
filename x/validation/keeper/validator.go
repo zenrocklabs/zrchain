@@ -236,7 +236,7 @@ func (k Keeper) RemoveValidator(ctx context.Context, address sdk.ValAddress) err
 		return types.ErrBadRemoveValidator.Wrap("cannot call RemoveValidator on bonded or unbonding validators")
 	}
 
-	if validator.TokensNative.IsPositive() || validator.TokensAVS.IsPositive() {
+	if validator.TokensNative.IsPositive() || k.getBedrockTokenAmount(validator, types.Asset_BTC).IsPositive() {
 		return types.ErrBadRemoveValidator.Wrap("attempting to remove a validator which still contains tokens")
 	}
 
