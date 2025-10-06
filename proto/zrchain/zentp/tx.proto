@@ -25,6 +25,7 @@ service Msg {
   // Burn defines an operation for burning Rock for a module account
   rpc Burn(MsgBurn) returns (MsgBurnResponse);
 
+  // SetSolanaROCKSupply defines an operation for setting the supply of Solana ROCK
   rpc SetSolanaROCKSupply(MsgSetSolanaROCKSupply)
       returns (MsgSetSolanaROCKSupplyResponse);
 }

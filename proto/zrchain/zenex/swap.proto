@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package zrchain.zenex;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types";
+
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/validation/asset_data.proto";
+
+// Swap objects defines a cross-chain swap operation
+message Swap {
+  string creator = 1;
+  uint64 swap_id = 2;
+  SwapStatus status = 3;
+  TradePair pair = 4;
+  SwapData data = 5;
+  uint64 rock_key_id = 6;
+  uint64 btc_key_id = 7;
+  uint64 zenex_pool_key_id = 8;
+  string workspace = 9;
+  uint64 sign_req_id = 10;
+  string source_tx_hash = 11;
+  string reject_reason = 12;
+  repeated bytes unsigned_plus_tx = 13;
+}
+
+// SwapStatus defines the status of the swap.
+enum SwapStatus {
+  // The swap status is unspecified (all swaps will be returned)
+  SWAP_STATUS_UNSPECIFIED = 0;
+  // The swap status is iniated and waiting for the swap request
+  SWAP_STATUS_INITIATED = 1;
+  // The swap status is requested and waiting for confirmation of the bitcoi transaction
+  SWAP_STATUS_REQUESTED = 2;
+  // The swap status is rejected
+  SWAP_STATUS_REJECTED = 3;
+  // The swap status is completed
+  SWAP_STATUS_COMPLETED = 4;
+}
+
+// SwapData defines the data for a swap.
+message SwapData {
+  zrchain.validation.AssetData base_token = 1;
+  zrchain.validation.AssetData quote_token = 2;
+  string price = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  uint64 amount_in = 4;
+  // amount_out will be filled when the Msg is processed
+  uint64 amount_out = 5;
+}
+
+// SwapPair defines the pair of tokens for a swap
+// using validation asset data
+message SwapPair {
+  zrchain.validation.AssetData base_token = 1;
+  zrchain.validation.AssetData quote_token = 2;
+}
+
+// TradePair defines the pair of tokens for a trade.
+enum TradePair {
+  // The trade pair is unspecified (all trade pairs will be returned)
+  TRADE_PAIR_UNSPECIFIED = 0;
+  // The trade pair is ROCK_BTC
+  TRADE_PAIR_ROCK_BTC = 1;
+  // The trade pair is BTC_ROCK
+  TRADE_PAIR_BTC_ROCK = 2;
+}
+
+// InputHashes defines the input hashes for a transfer request.
+message InputHashes {
+  string hash = 1;
+  uint64 key_id = 2;
+}
