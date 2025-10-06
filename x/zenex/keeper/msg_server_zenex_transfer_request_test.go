@@ -134,7 +134,7 @@ func (s *IntegrationTestSuite) TestMsgZenexTransferRequest() {
 		{
 			name: "FAIL: swap status not requested",
 			input: &types.MsgZenexTransferRequest{
-				Creator:        "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Creator:        types.DefaultParams().BtcProxyAddress,
 				SwapId:         zenextestutil.SampleSwap[2].SwapId,
 				UnsignedPlusTx: zenextestutil.Btc_tx[0].UnsignedPlusTx,
 				CacheId:        zenextestutil.Btc_tx[0].CacheId,

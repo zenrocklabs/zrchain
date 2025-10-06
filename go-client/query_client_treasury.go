@@ -325,3 +325,27 @@ func (t *TreasuryQueryClient) GetZenbtcWallets(ctx context.Context, page *PageRe
 
 	return res, nil
 }
+
+// GetKey retrieves details for a specific key by its ID.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - keyId: The unique identifier of the key to query
+//
+// Returns:
+//   - *types.QueryKeyByIDResponse: Contains the key details
+//   - error: An error if the query fails or key is not found
+func (t *TreasuryQueryClient) GetKeyByAddress(ctx context.Context, address string, wallettype types.WalletType, keytype types.KeyType, prefixes []string, keyringaddr string) (*types.QueryKeyByAddressResponse, error) {
+	res, err := t.client.KeyByAddress(ctx, &types.QueryKeyByAddressRequest{
+		Address:     address,
+		WalletType:  wallettype,
+		KeyType:     keytype,
+		Prefixes:    prefixes,
+		KeyringAddr: keyringaddr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

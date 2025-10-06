@@ -25,7 +25,7 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		return nil, err
 	}
 
-	if msg.Creator != k.GetParams(ctx).BtcProxyAddress && msg.Creator != swap.Creator {
+	if msg.Creator != k.GetParams(ctx).BtcProxyAddress {
 		return nil, fmt.Errorf("message creator is not the btc proxy address")
 	}
 
@@ -62,8 +62,15 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		hashes[i] = input.Hash
 	}
 
+	var creator string
+	if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
+		creator = swap.Creator
+	} else {
+		creator = msg.Creator
+	}
+
 	signReq := &treasurytypes.MsgNewSignatureRequest{
-		Creator:        msg.Creator,
+		Creator:        creator,
 		KeyIds:         keyIDs,
 		DataForSigning: strings.Join(hashes, ","), // hex string, each unsigned utxo is separated by comma
 		CacheId:        msg.CacheId,

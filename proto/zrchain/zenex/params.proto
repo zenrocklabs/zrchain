@@ -16,5 +16,7 @@ message Params {
   // the address for the zenex pool
   uint64 zenex_pool_key_id = 2 [(gogoproto.moretags) = "yaml:\"zenexpoolkeyid\""];
   // to prevent dust swaps
-  uint64 minimum_satoshis = 3;
+  uint64 minimum_satoshis = 3 [(gogoproto.moretags) = "yaml:\"minimumsatoshis\""];
+  // zenex workspace address 
+  string zenex_workspace_address = 4 [(gogoproto.moretags) = "yaml:\"zenexworkspaceaddress\""];
 }
