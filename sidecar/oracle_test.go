@@ -32,7 +32,7 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 	solanaClient := rpc.New(cfg.SolanaRPC[cfg.Network])
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	require.NoError(t, err)
-	oracle := NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, true, true)
+	oracle := NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, true, true, false)
 
 	// 2. Simulate pre-existing state
 	preExistingBurnEvent := api.BurnEvent{
