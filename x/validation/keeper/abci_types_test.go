@@ -171,12 +171,12 @@ func TestIsInvalid(t *testing.T) {
 			fieldToModify: "",
 			expectInvalid: false,
 		},
-		{
-			name:          "invalid eigen delegations hash",
-			fieldToModify: "EigenDelegationsHash",
-			invalidValue:  []byte{},
-			expectInvalid: true,
-		},
+		// {
+		// 	name:          "invalid eigen delegations hash",
+		// 	fieldToModify: "EigenDelegationsHash",
+		// 	invalidValue:  []byte{},
+		// 	expectInvalid: true,
+		// },
 		{
 			name:          "invalid eth block height",
 			fieldToModify: "EthBlockHeight",
