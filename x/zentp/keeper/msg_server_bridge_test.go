@@ -59,10 +59,10 @@ func (s *IntegrationTestSuite) TestBridge() {
 
 	// Calculate bridge fee
 	baseAmountInt := math.NewIntFromUint64(msg.Amount)
-	bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
-
+	bridgeFeeAmountRel := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+	bridgeFeeAmount := math.NewIntFromUint64(params.FlatFee).Add(bridgeFeeAmountRel)
 	// Calculate total amount for balance check
-	totalAmountForBalance := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+	totalAmountForBalance := baseAmountInt.Add(bridgeFeeAmount)
 
 	// Mock bank keeper GetBalance
 	s.bankKeeper.EXPECT().GetBalance(
@@ -218,7 +218,7 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 					s.ctx,
 					sdk.MustAccAddressFromBech32(testMsg.Creator),
 					types.ZentpCollectorName,
-					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(5000000000))), // 0.5% of 1T
+					sdk.NewCoins(sdk.NewCoin(testMsg.Denom, math.NewIntFromUint64(params.FlatFee))), // Flat fee
 				).Return(nil).AnyTimes()
 
 				// Mock validation keeper calls
@@ -260,8 +260,9 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 
 				// Calculate total amount including bridge fee and Solana fee for balance check
 				baseAmountInt := math.NewIntFromUint64(testMsg.Amount)
-				bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
-				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+				bridgeFeeAmountRel := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+				bridgeFeeAmount := math.NewIntFromUint64(params.FlatFee).Add(bridgeFeeAmountRel)
+				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount)
 
 				// Mock sufficient balance for this amount
 				s.bankKeeper.EXPECT().GetBalance(
@@ -296,8 +297,9 @@ func (s *IntegrationTestSuite) TestBridgeFailureScenarios() {
 
 				// Calculate total amount including bridge fee and Solana fee for balance check
 				baseAmountInt := math.NewIntFromUint64(testMsg.Amount)
-				bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
-				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+				bridgeFeeAmountRel := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
+				bridgeFeeAmount := math.NewIntFromUint64(params.FlatFee).Add(bridgeFeeAmountRel)
+				totalAmountInt := baseAmountInt.Add(bridgeFeeAmount)
 
 				// Mock sufficient balance so the balance check passes and we hit the supply check
 				s.bankKeeper.EXPECT().GetBalance(
@@ -489,15 +491,15 @@ func (s *IntegrationTestSuite) TestMsgBridgeSupply() {
 
 			// Calculate total amount including bridge fee and Solana fee
 			baseAmountInt := math.NewIntFromUint64(tt.args.msg.Amount)
-			bridgeFeeAmount := math.LegacyNewDecFromInt(baseAmountInt).Mul(params.BridgeFee).TruncateInt()
-			totalAmountInt := baseAmountInt.Add(bridgeFeeAmount).Add(math.NewIntFromUint64(params.Solana.Fee))
+			totalAmount, totalFee, err := s.zentpKeeper.CalculateZentpMintFee(s.ctx, tt.args.msg.Amount)
+			s.Require().NoError(err)
 
 			// Mock bank keeper GetBalance - return enough to cover the total amount
 			s.bankKeeper.EXPECT().GetBalance(
 				s.ctx,
 				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
 				tt.args.msg.Denom,
-			).Return(sdk.NewCoin(tt.args.msg.Denom, totalAmountInt.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
+			).Return(sdk.NewCoin(tt.args.msg.Denom, totalAmount.Add(math.NewIntFromUint64(1000000)))).AnyTimes()
 
 			// Mock bank keeper SendCoinsFromAccountToModule for base amount
 			s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
@@ -512,7 +514,7 @@ func (s *IntegrationTestSuite) TestMsgBridgeSupply() {
 				s.ctx,
 				sdk.MustAccAddressFromBech32(tt.args.msg.Creator),
 				types.ZentpCollectorName,
-				sdk.NewCoins(sdk.NewCoin("urock", bridgeFeeAmount)),
+				sdk.NewCoins(sdk.NewCoin("urock", totalFee)),
 			).Return(nil).AnyTimes()
 
 			// Mock validation keeper SetSolanaRequestedNonce
