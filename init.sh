@@ -182,6 +182,7 @@ if [ "$START_ONLY" = false ]; then
   # Set initial zentp parameters
     jq '.app_state.zentp.params = {
         "bridge_fee": "0.01000000000000000",
+        "flat_fee": 200000000,
         "solana": {
           "signer_key_id": 10,
           "program_id": "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
