@@ -459,12 +459,6 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 	return parentID, nil
 }
 
-// MakeSignTransactionRequest exposes the NewSignTransactionRequest functionality for external modules
-func (k Keeper) MakeSignTransactionRequest(goCtx context.Context, msg *types.MsgNewSignTransactionRequest) (*types.MsgNewSignTransactionRequestResponse, error) {
-	msgServer := NewMsgServerImpl(k, false)
-	return msgServer.NewSignTransactionRequest(goCtx, msg)
-}
-
 func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNewSignTransactionRequest, data []byte) (*types.MsgNewSignTransactionRequestResponse, error) {
 	if data == nil {
 		return nil, fmt.Errorf("data for signing is empty")
