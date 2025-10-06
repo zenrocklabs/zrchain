@@ -9,12 +9,14 @@ import (
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
-	KeyBtcproxyaddress   = []byte("Btcproxyaddress")
-	KeyMinimumSatoshis   = []byte("MinimumSatoshis")
-	KeyZenexBtcPoolKeyId = []byte("ZenexBtcPoolKeyId")
+	KeyBtcproxyaddress       = []byte("Btcproxyaddress")
+	KeyMinimumSatoshis       = []byte("MinimumSatoshis")
+	KeyZenexBtcPoolKeyId     = []byte("ZenexBtcPoolKeyId")
+	KeyZenexWorkspaceAddress = []byte("ZenexWorkspaceAddress")
 	// TODO: Determine the default value
-	DefaultBtcproxyaddress   string = "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
-	DefaultZenexBtcPoolKeyId uint64 = 16
+	DefaultBtcproxyaddress       string = "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
+	DefaultZenexBtcPoolKeyId     uint64 = 16
+	DefaultZenexWorkspaceAddress string = "workspace14a2hpadpsy9h4auve2z8lw"
 )
 
 // ParamKeyTable the param key table for launch module
@@ -27,11 +29,13 @@ func NewParams(
 	btcProxyAddress string,
 	MinimumSatoshis uint64,
 	ZenexBtcPoolKeyId uint64,
+	ZenexWorkspaceAddress string,
 ) Params {
 	return Params{
-		BtcProxyAddress: btcProxyAddress,
-		MinimumSatoshis: MinimumSatoshis,
-		ZenexPoolKeyId:  ZenexBtcPoolKeyId,
+		BtcProxyAddress:       btcProxyAddress,
+		MinimumSatoshis:       MinimumSatoshis,
+		ZenexPoolKeyId:        ZenexBtcPoolKeyId,
+		ZenexWorkspaceAddress: ZenexWorkspaceAddress,
 	}
 }
 
@@ -41,6 +45,7 @@ func DefaultParams() Params {
 		DefaultBtcproxyaddress,
 		1000, // 1000 satoshis = 0.0001 BTC
 		DefaultZenexBtcPoolKeyId,
+		DefaultZenexWorkspaceAddress,
 	)
 }
 

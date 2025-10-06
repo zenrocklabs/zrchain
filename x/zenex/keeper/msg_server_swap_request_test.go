@@ -31,7 +31,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  10000000000,
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -74,7 +74,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_UNSPECIFIED,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  100000,
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -86,11 +86,11 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			expErrMsg:      "pair is unspecified",
 		},
 		{
-			name: "Pass: Proxy address",
+			name: "Fail: Proxy address",
 			input: &types.MsgSwapRequest{
-				Creator:   "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+				Creator:   types.DefaultParams().BtcProxyAddress,
 				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  10000000000, // 10,000,000,000 urock
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -98,42 +98,15 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			assetPrice:     zenextestutil.SampleRockBtcPrice,
 			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
 			assetPriceRock: zenextestutil.SampleRockUSDPrice,
-			expErr:         false,
-			want: &types.MsgSwapRequestResponse{
-				SwapId: 1,
-			},
-			wantSwap: types.Swap{
-				Creator: "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
-				SwapId:  1,
-				Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
-				Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
-				Data: &types.SwapData{
-					BaseToken: &validationtypes.AssetData{
-						Asset:     validationtypes.Asset_ROCK,
-						PriceUSD:  zenextestutil.SampleRockUSDPrice,
-						Precision: 6,
-					},
-					QuoteToken: &validationtypes.AssetData{
-						Asset:     validationtypes.Asset_BTC,
-						PriceUSD:  zenextestutil.SampleBtcUSDPrice,
-						Precision: 8,
-					},
-					Price:     zenextestutil.SampleRockBtcPrice, // 0.00000022727 satoshis per urock
-					AmountIn:  10000000000,                      // 10,000,000,000 urock
-					AmountOut: 2272,                             // 10,000,000,000 * 0.00000022727 = 2272.7 satoshis
-				},
-				RockKeyId:      1,
-				BtcKeyId:       4,
-				ZenexPoolKeyId: 16,
-				Workspace:      "workspace14a2hpadpsy9h4auve2z8lw",
-			},
+			expErr:         true,
+			expErrMsg:      "message creator zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq is not the owner of the workspace",
 		},
 		{
 			name: "FAIL: Invalid creator",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts",
 				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  100000,
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -142,14 +115,14 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
 			assetPriceRock: zenextestutil.SampleRockUSDPrice,
 			expErr:         true,
-			expErrMsg:      "message creator is not the owner of the workspace or the btc proxy address",
+			expErrMsg:      "message creator zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts is not the owner of the workspace",
 		},
 		{
 			name: "Pass: Happy Path btcrock",
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  2000,
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -192,7 +165,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  3000000, // waay too much
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -208,7 +181,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  3000000, // waay too much
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -224,7 +197,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  2000,
 				RockKeyId: 3,
 				BtcKeyId:  4,
@@ -240,7 +213,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  2000,
 				RockKeyId: 1,
 				BtcKeyId:  3,
@@ -256,7 +229,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  2000,
 				RockKeyId: 1,
 				BtcKeyId:  4,
@@ -272,7 +245,7 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			input: &types.MsgSwapRequest{
 				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
 				Pair:      types.TradePair_TRADE_PAIR_BTC_ROCK,
-				Workspace: "workspace14a2hpadpsy9h4auve2z8lw",
+				Workspace: types.DefaultParams().ZenexWorkspaceAddress,
 				AmountIn:  2000,
 				RockKeyId: 5,
 				BtcKeyId:  4,
@@ -282,6 +255,22 @@ func (s *IntegrationTestSuite) TestMsgSwapRequest() {
 			assetPriceRock: zenextestutil.SampleRockUSDPrice,
 			expErr:         true,
 			expErrMsg:      "rock key 5 or btc key 4 is not in the workspace workspace14a2hpadpsy9h4auve2z8lw",
+		},
+		{
+			name: "FAIL: Invalid workspace",
+			input: &types.MsgSwapRequest{
+				Creator:   "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+				Pair:      types.TradePair_TRADE_PAIR_ROCK_BTC,
+				Workspace: "workspace1mphgzyhncnzyggfxmv4nmh",
+				AmountIn:  100000,
+				RockKeyId: 1,
+				BtcKeyId:  4,
+			},
+			assetPrice:     zenextestutil.SampleRockBtcPrice,
+			assetPriceBtc:  zenextestutil.SampleBtcUSDPrice,
+			assetPriceRock: zenextestutil.SampleRockUSDPrice,
+			expErr:         true,
+			expErrMsg:      "workspace1mphgzyhncnzyggfxmv4nmh is not the zenex workspace address",
 		},
 	}
 

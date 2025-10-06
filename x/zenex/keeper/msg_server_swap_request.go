@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -25,8 +24,12 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 		return nil, err
 	}
 
-	if !workspace.IsOwner(msg.Creator) && msg.Creator != k.GetParams(ctx).BtcProxyAddress {
-		return nil, errors.New("message creator is not the owner of the workspace or the btc proxy address")
+	if msg.Workspace != k.GetParams(ctx).ZenexWorkspaceAddress {
+		return nil, fmt.Errorf("%s is not the zenex workspace address", msg.Workspace)
+	}
+
+	if !workspace.IsOwner(msg.Creator) {
+		return nil, fmt.Errorf("message creator %s is not the owner of the workspace", msg.Creator)
 	}
 
 	rockKey, err := k.treasuryKeeper.GetKey(ctx, msg.RockKeyId)
