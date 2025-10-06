@@ -62,15 +62,8 @@ func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZen
 		hashes[i] = input.Hash
 	}
 
-	var creator string
-	if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC {
-		creator = swap.Creator
-	} else {
-		creator = msg.Creator
-	}
-
 	signReq := &treasurytypes.MsgNewSignatureRequest{
-		Creator:        creator,
+		Creator:        swap.Creator,
 		KeyIds:         keyIDs,
 		DataForSigning: strings.Join(hashes, ","), // hex string, each unsigned utxo is separated by comma
 		CacheId:        msg.CacheId,

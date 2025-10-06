@@ -746,7 +746,7 @@ func NewZenrockApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[zenextypes.StoreKey]),
 		logger,
-		authAddr,
+		shared.AdminAuthAddr,
 		app.IdentityKeeper,
 		&app.TreasuryKeeper,
 		app.ValidationKeeper,
