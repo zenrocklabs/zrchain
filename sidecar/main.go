@@ -21,7 +21,6 @@ import (
 func main() {
 	// Parse flags first to determine debug level
 	flags := parseFlags()
-	testReset := flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)")
 
 	// Set up coloured structured logging
 	initLogger(*flags.debug)
@@ -98,8 +97,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *flags.debug, *flags.skipInitialWait)
-	oracle.ForceTestReset = *testReset
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *flags.debug, *flags.skipInitialWait, *flags.testReset)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
@@ -143,6 +141,7 @@ type flagConfig struct {
 	noAVS           *bool
 	skipInitialWait *bool
 	noSolana        *bool
+	testReset       *bool
 }
 
 // parseFlags sets up and parses all command-line flags
@@ -160,6 +159,7 @@ func parseFlags() *flagConfig {
 		noAVS:           flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)"),
 		skipInitialWait: flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately"),
 		noSolana:        flag.Bool("no-solana", false, "Disable Solana functionality for testing"),
+		testReset:       flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)"),
 	}
 
 	if !flag.Parsed() {

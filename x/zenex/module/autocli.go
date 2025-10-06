@@ -47,7 +47,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
 					RpcMethod: "UpdateParams",
-					Skip:      true, // skipped because authority gated
+					Use:       "update-params",
+					Short:     "Update the parameters of the module",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "params"},
+					},
 				},
 				{
 					RpcMethod: "SwapRequest",
