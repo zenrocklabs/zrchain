@@ -80,7 +80,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/zenrocklabs/goem v1.1.0
-	github.com/zenrocklabs/zenbtc v1.19.2
+	github.com/zenrocklabs/zenbtc v1.19.3
 	github.com/zenrocklabs/zenrock-avs v1.7.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
