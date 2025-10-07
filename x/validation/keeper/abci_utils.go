@@ -1499,6 +1499,24 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	return *tokenAccount, nil
 }
 
+// newCreateATAIdempotentInstruction creates an idempotent ATA creation instruction.
+// This instruction will succeed even if the ATA already exists, preventing race conditions.
+// The idempotent version uses instruction data [1] instead of [] (empty bytes).
+func newCreateATAIdempotentInstruction(payer, wallet, mint solana.PublicKey) solana.Instruction {
+	createATAInstruction := ata.NewCreateInstruction(
+		payer,
+		wallet,
+		mint,
+	).Build()
+
+	// Override instruction data with [1] to make it idempotent
+	return solana.NewInstruction(
+		createATAInstruction.ProgramID(),
+		createATAInstruction.Accounts(),
+		[]byte{1},
+	)
+}
+
 type solanaMintTxRequest struct {
 	amount            uint64
 	fee               uint64
@@ -1587,14 +1605,14 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 	if req.fundReceiver {
 		instructions = append(
 			instructions,
-			ata.NewCreateInstruction(
+			newCreateATAIdempotentInstruction(
 				*signerPubKey,
 				recipientPubKey,
 				mintKey,
-			).Build(),
+			),
 		)
 		k.Logger(ctx).Info(
-			"Added ATA creation instruction to tx",
+			"Added idempotent ATA creation instruction to tx",
 			"signer", *signerPubKey,
 			"recipient", recipientPubKey.String(),
 			"mint", mintKey.String(),
