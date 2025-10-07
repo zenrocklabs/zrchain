@@ -1593,11 +1593,13 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 				mintKey,
 			).Build(),
 		)
-		k.Logger(ctx).Info("Added ATA creation instruction to tx",
+		k.Logger(ctx).Info(
+			"Added ATA creation instruction to tx",
 			"signer", *signerPubKey,
-		 "recipient", *recipientPubKey,
-		 "mint", mintKey.String(),
+			"recipient", recipientPubKey.String(),
+			"mint", mintKey.String(),
 		)
+	}
 	if req.rock {
 		instructions = append(instructions, solrock.Wrap(
 			programID,
@@ -1637,9 +1639,9 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			"signerPubKey", *signerPubKey,
 			"mintKey", mintKey.String(),
 			"multisigKey", multiSigKey.String(),
-			"feeKey", req.feeKey.String(),
+			"feeKey", feeKey.String(),
 			"feeWalletAta", feeWalletAta.String(),
-			"recipientWalletPubKey", recipientWalletPubKey.String(),
+			"recipientWalletPubKey", recipientPubKey.String(),
 			"receiverAta", receiverAta.String(),
 		)
 	} else {
