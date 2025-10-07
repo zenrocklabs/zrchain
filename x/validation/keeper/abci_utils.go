@@ -1593,8 +1593,11 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 				mintKey,
 			).Build(),
 		)
-	}
-
+		k.Logger(ctx).Info("Added ATA creation instruction to tx",
+			"signer", *signerPubKey,
+		 "recipient", *recipientPubKey,
+		 "mint", mintKey.String(),
+		)
 	if req.rock {
 		instructions = append(instructions, solrock.Wrap(
 			programID,
@@ -1626,6 +1629,19 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			recipientPubKey,
 			receiverAta,
 		))
+
+		k.Logger(ctx).Info("Added wrap instruction to tx",
+			"programID", programID.String(),
+			"amount", req.amount,
+			"fee", req.fee,
+			"signerPubKey", *signerPubKey,
+			"mintKey", mintKey.String(),
+			"multisigKey", multiSigKey.String(),
+			"feeKey", req.feeKey.String(),
+			"feeWalletAta", feeWalletAta.String(),
+			"recipientWalletPubKey", recipientWalletPubKey.String(),
+			"receiverAta", receiverAta.String(),
+		)
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")
 	}
