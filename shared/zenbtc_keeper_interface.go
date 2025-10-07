@@ -29,6 +29,7 @@ type ZenBTCKeeper interface {
 	SetRedemption(ctx context.Context, id uint64, redemption types.Redemption) error
 	GetRedemption(ctx context.Context, id uint64) (types.Redemption, error)
 	WalkRedemptions(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
+	WalkRedemptionsDescending(ctx context.Context, fn func(id uint64, redemption types.Redemption) (stop bool, err error)) error
 	GetExchangeRate(ctx context.Context) (math.LegacyDec, error)
 	GetBurnEvent(ctx context.Context, id uint64) (types.BurnEvent, error)
 	SetBurnEvent(ctx context.Context, id uint64, burnEvent types.BurnEvent) error
