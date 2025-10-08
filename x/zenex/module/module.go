@@ -185,6 +185,7 @@ type ModuleInputs struct {
 	IdentityKeeper   types.IdentityKeeper
 	TreasuryKeeper   types.TreasuryKeeper
 	ValidationKeeper types.ValidationKeeper
+	ZenbtcKeeper     types.ZenbtcKeeper
 }
 
 type ModuleOutputs struct {
@@ -208,6 +209,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		in.IdentityKeeper,
 		in.TreasuryKeeper,
 		in.ValidationKeeper,
+		in.ZenbtcKeeper,
 		in.BankKeeper,
 		in.AccountKeeper,
 	)

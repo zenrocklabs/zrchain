@@ -19,4 +19,6 @@ message Params {
   uint64 minimum_satoshis = 3 [(gogoproto.moretags) = "yaml:\"minimumsatoshis\""];
   // zenex workspace address 
   string zenex_workspace_address = 4 [(gogoproto.moretags) = "yaml:\"zenexworkspaceaddress\""];
+  // threshold amount where we swap the zenex rock fee pool for btc
+  uint64 swap_threshold_satoshis = 5 [(gogoproto.moretags) = "yaml:\"swapthresholdsatoshis\""];
 }

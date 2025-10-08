@@ -38,6 +38,7 @@ type IntegrationTestSuite struct {
 	identityKeeper   *zenextestutil.MockIdentityKeeper
 	treasuryKeeper   *zenextestutil.MockTreasuryKeeper
 	validationKeeper *zenextestutil.MockValidationKeeper
+	zenbtcKeeper     *zenextestutil.MockZenbtcKeeper
 	bankKeeper       *zenextestutil.MockBankKeeper
 	accountKeeper    *zenextestutil.MockAccountKeeper
 }
@@ -58,6 +59,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	treasuryKeeper := zenextestutil.NewMockTreasuryKeeper(ctrl)
 	identityKeeper := zenextestutil.NewMockIdentityKeeper(ctrl)
 	validationKeeper := zenextestutil.NewMockValidationKeeper(ctrl)
+	zenbtcKeeper := zenextestutil.NewMockZenbtcKeeper(ctrl)
 	bankKeeper := zenextestutil.NewMockBankKeeper(ctrl)
 	accountKeeper := zenextestutil.NewMockAccountKeeper(ctrl)
 
@@ -66,6 +68,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.identityKeeper = identityKeeper
 	s.validationKeeper = validationKeeper
 	s.bankKeeper = bankKeeper
+	s.zenbtcKeeper = zenbtcKeeper
 	s.accountKeeper = accountKeeper
 	s.zenexKeeper = keeper.NewKeeper(
 		encCfg.Codec,
@@ -75,6 +78,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		identityKeeper,
 		treasuryKeeper,
 		validationKeeper,
+		zenbtcKeeper,
 		bankKeeper,
 		accountKeeper,
 	)
@@ -415,6 +419,55 @@ func (s *IntegrationTestSuite) TestCheckRedeemableAsset() {
 				s.Require().Equal(tt.expectedErr.Error(), err.Error())
 			} else {
 				s.Require().NoError(err)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestGetSwapThreshold() {
+	tests := []struct {
+		name          string
+		swapThreshold uint64
+		rockPrice     math.LegacyDec
+		btcPrice      math.LegacyDec
+		expected      uint64
+		expectedErr   error
+	}{
+		{
+			name:          "happy path",
+			swapThreshold: 100000,
+			rockPrice:     zenextestutil.SampleRockBtcPrice,
+			btcPrice:      zenextestutil.SampleBtcRockPrice,
+			expected:      440005280063,
+			expectedErr:   nil,
+		},
+		{
+			name:          "fail: rock price is zero",
+			swapThreshold: 100000,
+			rockPrice:     math.LegacyNewDecFromInt(math.NewInt(0)),
+			btcPrice:      zenextestutil.SampleBtcRockPrice,
+			expected:      0,
+			expectedErr:   fmt.Errorf("rock to btc price must be positive, got: 0.000000000000000000"),
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			s.zenexKeeper.SetParams(s.ctx, types.DefaultParams())
+
+			s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(tt.rockPrice, nil).AnyTimes()
+
+			swapThreshold, err := s.zenexKeeper.GetRequiredRockBalance(s.ctx)
+
+			if tt.expectedErr != nil {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+				s.Require().Equal(tt.expected, swapThreshold)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tt.expected, swapThreshold)
 			}
 		})
 	}

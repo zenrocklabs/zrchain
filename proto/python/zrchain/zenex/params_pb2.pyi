@@ -7,13 +7,15 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Params(_message.Message):
-    __slots__ = ("btc_proxy_address", "zenex_pool_key_id", "minimum_satoshis", "zenex_workspace_address")
+    __slots__ = ("btc_proxy_address", "zenex_pool_key_id", "minimum_satoshis", "zenex_workspace_address", "swap_threshold_satoshis")
     BTC_PROXY_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     ZENEX_POOL_KEY_ID_FIELD_NUMBER: _ClassVar[int]
     MINIMUM_SATOSHIS_FIELD_NUMBER: _ClassVar[int]
     ZENEX_WORKSPACE_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    SWAP_THRESHOLD_SATOSHIS_FIELD_NUMBER: _ClassVar[int]
     btc_proxy_address: str
     zenex_pool_key_id: int
     minimum_satoshis: int
     zenex_workspace_address: str
-    def __init__(self, btc_proxy_address: _Optional[str] = ..., zenex_pool_key_id: _Optional[int] = ..., minimum_satoshis: _Optional[int] = ..., zenex_workspace_address: _Optional[str] = ...) -> None: ...
+    swap_threshold_satoshis: int
+    def __init__(self, btc_proxy_address: _Optional[str] = ..., zenex_pool_key_id: _Optional[int] = ..., minimum_satoshis: _Optional[int] = ..., zenex_workspace_address: _Optional[str] = ..., swap_threshold_satoshis: _Optional[int] = ...) -> None: ...
