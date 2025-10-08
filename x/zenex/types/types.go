@@ -8,7 +8,8 @@ import (
 var ValidPairTypes = []string{TradePair_TRADE_PAIR_ROCK_BTC.String(), TradePair_TRADE_PAIR_BTC_ROCK.String()}
 
 const (
-	ZenexCollectorName = "zenex_collector"
+	ZenexCollectorName    = "zenex_collector"
+	ZenexFeeCollectorName = "zenex_fee_collector"
 )
 
 // ChainFromWalletType returns the corresponding chain configuration parameters based on the provided wallet type.

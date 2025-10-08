@@ -51,6 +51,12 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return nil
 	}
 
+	err = k.DistributeZentpFees(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to distribute zentp fees", "error", err)
+		return nil
+	}
+
 	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
 	if err != nil {
 		k.Logger(ctx).Error("failed to calculate base distribution", "error", err)

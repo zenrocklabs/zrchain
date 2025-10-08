@@ -11,6 +11,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zenextypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -182,6 +183,37 @@ func (k Keeper) ClaimZentpFees(ctx context.Context) (sdk.Coin, error) {
 	)
 
 	return zentpRewards, nil
+}
+
+func (k Keeper) DistributeZentpFees(ctx context.Context) error {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return err
+	}
+	bankKeeper := k.bankKeeper
+	zentpAddr := k.accountKeeper.GetModuleAddress(zentptypes.ZentpCollectorName)
+	zentpRewards := bankKeeper.GetBalance(ctx, zentpAddr, params.MintDenom)
+	err = bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ZentpCollectorName, zenextypes.ZenexFeeCollectorName, sdk.NewCoins(zentpRewards))
+	if err != nil {
+		return err
+	}
+
+	if zentpRewards.Amount.IsPositive() {
+		err = k.zentpKeeper.UpdateZentpFees(ctx, zentpRewards.Amount.Uint64())
+		if err != nil {
+			return err
+		}
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyZentpFees, zentpRewards.String()),
+		),
+	)
+
+	return nil
 }
 
 func (k Keeper) ClaimTxFees(ctx context.Context) (sdk.Coin, error) {
@@ -427,12 +459,7 @@ func (k Keeper) ClaimTotalRewards(ctx context.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 
-	zentpFees, err := k.ClaimZentpFees(ctx)
-	if err != nil {
-		return sdk.Coin{}, err
-	}
-
-	return keyringRewards.Add(feesAmount).Add(zentpFees), nil
+	return keyringRewards.Add(feesAmount), nil
 }
 
 func (k Keeper) GetModuleAccountPerms(ctx context.Context) []string {
