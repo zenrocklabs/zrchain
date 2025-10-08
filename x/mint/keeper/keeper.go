@@ -190,10 +190,11 @@ func (k Keeper) DistributeZentpFees(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	bankKeeper := k.bankKeeper
+
 	zentpAddr := k.accountKeeper.GetModuleAddress(zentptypes.ZentpCollectorName)
-	zentpRewards := bankKeeper.GetBalance(ctx, zentpAddr, params.MintDenom)
-	err = bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ZentpCollectorName, zenextypes.ZenexFeeCollectorName, sdk.NewCoins(zentpRewards))
+	zentpRewards := k.bankKeeper.GetBalance(ctx, zentpAddr, params.MintDenom)
+
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, zentptypes.ZentpCollectorName, zenextypes.ZenexFeeCollectorName, sdk.NewCoins(zentpRewards))
 	if err != nil {
 		return err
 	}
