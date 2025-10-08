@@ -52,7 +52,7 @@ func (k msgServer) ManuallyInputBitcoinHeader(ctx context.Context, msg *types.Ms
 		Version:     msg.Header.Version,
 		PrevBlock:   msg.Header.PrevBlock,
 		MerkleRoot:  msg.Header.MerkleRoot,
-		TimeStamp:   msg.Header.Timestamp,
+		TimeStamp:   msg.Header.TimeStamp,
 		Bits:        msg.Header.Bits,
 		Nonce:       msg.Header.Nonce,
 		BlockHash:   msg.Header.BlockHash,
