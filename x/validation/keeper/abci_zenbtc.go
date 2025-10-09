@@ -382,79 +382,79 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 }
 
 // processZenBTCBurnEvents constructs unstake transactions for BURNED events.
-func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
-	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
-		KeyID:                    k.zenBTCKeeper.GetUnstakerKeyID(ctx),
-		RequestedNonce:           oracleData.RequestedUnstakerNonce,
-		DispatchRequestedChecker: TxDispatchRequestHandler[uint64]{Store: k.EthereumNonceRequested},
-		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-			return k.getPendingBurnEvents(ctx)
-		},
-		DispatchTx: func(be zenbtctypes.BurnEvent) error {
-			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
-				return err
-			}
-			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
-			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", fmt.Sprintf("burn_id: %d", be.Id)); err != nil {
-				return nil
-			}
-			if len(be.DestinationAddr) == 0 {
-				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
-			}
-			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				be.DestinationAddr,
-				be.Amount,
-				oracleData.RequestedUnstakerNonce,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
-			if err != nil {
-				return err
-			}
-			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
-		},
-		OnTxConfirmed: func(be zenbtctypes.BurnEvent) error {
-			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
-			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
-		},
-	})
-}
+// func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
+// 	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
+// 		KeyID:                    k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+// 		RequestedNonce:           oracleData.RequestedUnstakerNonce,
+// 		DispatchRequestedChecker: TxDispatchRequestHandler[uint64]{Store: k.EthereumNonceRequested},
+// 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
+// 			return k.getPendingBurnEvents(ctx)
+// 		},
+// 		DispatchTx: func(be zenbtctypes.BurnEvent) error {
+// 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
+// 				return err
+// 			}
+// 			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+// 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", fmt.Sprintf("burn_id: %d", be.Id)); err != nil {
+// 				return nil
+// 			}
+// 			if len(be.DestinationAddr) == 0 {
+// 				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
+// 			}
+// 			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+// 				ctx,
+// 				getChainIDForEigen(ctx),
+// 				be.DestinationAddr,
+// 				be.Amount,
+// 				oracleData.RequestedUnstakerNonce,
+// 				oracleData.EthBaseFee,
+// 				oracleData.EthTipCap,
+// 			)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
+// 		},
+// 		OnTxConfirmed: func(be zenbtctypes.BurnEvent) error {
+// 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+// 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
+// 		},
+// 	})
+// }
 
-// storeNewZenBTCRedemptions ingests new redemptions and requests completer nonce if needed.
-func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-	if err != nil {
-		return
-	}
-	foundNew := false
-	for _, redemption := range oracleData.Redemptions {
-		if exists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); err != nil || exists {
-			if err != nil {
-				k.Logger(ctx).Error("error checking redemption existence", "id", redemption.Id, "error", err)
-			}
-			continue
-		}
-		foundNew = true
-		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
-		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
-			Data:   zenbtctypes.RedemptionData{Id: redemption.Id, DestinationAddress: redemption.DestinationAddress, Amount: uint64(btcAmount)},
-			Status: zenbtctypes.RedemptionStatus_INITIATED,
-		}); err != nil {
-			k.Logger(ctx).Error("error setting redemption", "id", redemption.Id, "error", err)
-		}
-	}
-	if foundNew {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error("error setting completer nonce requested flag", "error", err)
-		}
-	}
-}
+// // storeNewZenBTCRedemptions ingests new redemptions and requests completer nonce if needed.
+// func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
+// 	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+// 	if err != nil {
+// 		return
+// 	}
+// 	foundNew := false
+// 	for _, redemption := range oracleData.Redemptions {
+// 		if exists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); err != nil || exists {
+// 			if err != nil {
+// 				k.Logger(ctx).Error("error checking redemption existence", "id", redemption.Id, "error", err)
+// 			}
+// 			continue
+// 		}
+// 		foundNew = true
+// 		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
+// 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
+// 			Data:   zenbtctypes.RedemptionData{Id: redemption.Id, DestinationAddress: redemption.DestinationAddress, Amount: uint64(btcAmount)},
+// 			Status: zenbtctypes.RedemptionStatus_INITIATED,
+// 		}); err != nil {
+// 			k.Logger(ctx).Error("error setting redemption", "id", redemption.Id, "error", err)
+// 		}
+// 	}
+// 	if foundNew {
+// 		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
+// 			k.Logger(ctx).Error("error setting completer nonce requested flag", "error", err)
+// 		}
+// 	}
+// }
 
 // checkForRedemptionFulfilment updates supplies when treasury sign requests for redemptions are fulfilled.
 func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
