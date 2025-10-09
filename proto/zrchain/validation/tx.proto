@@ -340,7 +340,7 @@ message BitcoinHeader {
   int64 version = 1;
   string prev_block = 2;
   string merkle_root = 3;
-  int64 timestamp = 4;
+  int64 time_stamp = 4;
   int64 bits = 5;
   int64 nonce = 6;
   string block_hash = 7;
