@@ -739,8 +739,8 @@ func (s *IntegrationTestSuite) TestZentpFeesDistribution() {
 		{
 			name:             "balance is zero",
 			zentpRockBalance: 0,
-			errExpected:      true,
-			expectedErr:      fmt.Errorf("balance is zero"),
+			errExpected:      false,
+			expectedErr:      nil,
 		},
 	}
 
