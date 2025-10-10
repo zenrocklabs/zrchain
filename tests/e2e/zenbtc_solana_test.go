@@ -13,7 +13,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	zentype "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var _ = Describe("ZenBTC Solana flow:", func() {

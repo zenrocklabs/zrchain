@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	math "cosmossdk.io/math"
-	types "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	types "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	gomock "go.uber.org/mock/gomock"
 )
 

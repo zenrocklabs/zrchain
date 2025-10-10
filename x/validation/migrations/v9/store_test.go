@@ -10,7 +10,7 @@ import (
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
