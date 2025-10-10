@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 type ZenBTCKeeper interface {

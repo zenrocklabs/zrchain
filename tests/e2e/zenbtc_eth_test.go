@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/zenrocklabs/zenbtc/bindings"
-	zentype "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
+	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var _ = Describe("ZenBTC ETH flow:", func() {

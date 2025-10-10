@@ -38,11 +38,11 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/zenrocklabs/goem/ethereum"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	bindings "github.com/zenrocklabs/zenbtc/bindings"
+	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {

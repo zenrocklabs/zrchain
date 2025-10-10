@@ -41,8 +41,8 @@ import (
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
-	zenbtc "github.com/zenrocklabs/zenbtc/bindings"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	// Added for bin.Marshal
 )

@@ -7,7 +7,7 @@ import (
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func DefaultGenesis() *validationtypes.GenesisState {

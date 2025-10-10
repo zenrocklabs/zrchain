@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package zrchain.zenbtc;
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
+
+message Supply {
+    uint64 custodiedBTC = 1;
+    uint64 mintedZenBTC = 2;
+    uint64 pendingZenBTC = 3;
+}

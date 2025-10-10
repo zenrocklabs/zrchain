@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func ClearEthereumNonceData(ctx sdk.Context, ethNonceData collections.Map[uint64, zenbtctypes.NonceData]) error {

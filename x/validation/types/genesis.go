@@ -7,7 +7,7 @@ import (
 	sidecarapi "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // NewGenesisState creates a new GenesisState instanc e

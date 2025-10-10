@@ -159,9 +159,9 @@ import (
 	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
-	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtckeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 const appName = "ZenrockApp"
