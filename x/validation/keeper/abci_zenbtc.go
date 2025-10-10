@@ -544,10 +544,10 @@ func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error 
 		return err
 	}
 
-	// If no validators in bedrock set, fall back to default validator
+	// If no validators in bedrock set, log warning and skip
 	if len(bedrockValidators) == 0 {
-		k.Logger(ctx).Warn("no validators in bedrock set, falling back to default validator")
-		return k.adjustSingleValidatorBedrockBTC(ctx, k.GetBedrockDefaultValOperAddr(ctx), delta)
+		k.Logger(ctx).Warn("no validators in bedrock set, skipping bedrock BTC distribution", "delta", delta.String())
+		return nil
 	}
 
 	// If total native stake is zero, distribute equally
@@ -581,15 +581,6 @@ func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error 
 	}
 
 	return nil
-}
-
-// adjustSingleValidatorBedrockBTC adjusts BTC for a single validator (used for backward compatibility)
-func (k *Keeper) adjustSingleValidatorBedrockBTC(ctx sdk.Context, operAddr string, delta sdkmath.Int) error {
-	v, err := k.GetZenrockValidatorFromBech32(ctx, operAddr)
-	if err != nil {
-		return err
-	}
-	return k.adjustValidatorBedrockBTC(ctx, v, delta)
 }
 
 // adjustValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to a validator's TokensBedrock (Asset_BTC)
