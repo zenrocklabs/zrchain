@@ -175,7 +175,10 @@ if [ "$START_ONLY" = false ]; then
         "protocol_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
         "additional_staking_rewards": "0.300000000000000000",
         "additional_mpc_rewards": "0.050000000000000000",
-        "additional_burn_rate": "0.250000000000000000"
+        "additional_burn_rate": "0.250000000000000000",
+        "zenbtc_reward_rate": "0.300000000000000000",
+        "zr_wallet_rate": "0.300000000000000000",
+        "zr_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj"
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
 

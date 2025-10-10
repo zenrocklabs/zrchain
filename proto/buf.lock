@@ -29,8 +29,8 @@ deps:
   - remote: buf.build
     owner: cosmwasm
     repository: wasmd
-    commit: 3c30b822226c4bea96d5fad293a6e010
-    digest: shake256:6c4ea55d553dbad8f7ac9b5d91f2a784742a1d75783e690b69edd5a72bf31abbcbb7556fa4da6f38de22d58f3211e738f9b37bc39fc502d8d8a7b290e3235bb7
+    commit: eba0d83e199b42cfab463d808663201d
+    digest: shake256:0f6a12f906af99f76275225a5038166e30fd6e9f86c114a4375a5177a9532eda3b7985d64345dafea17ae0d99caa7f8e10916ed3d9083ff5f9884e6f60585487
   - remote: buf.build
     owner: googleapis
     repository: googleapis

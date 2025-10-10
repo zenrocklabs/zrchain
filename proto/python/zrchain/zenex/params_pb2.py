@@ -26,7 +26,7 @@ from amino import amino_pb2 as amino_dot_amino__pb2
 from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"\xd8\x02\n\x06Params\x12\x46\n\x11\x62tc_proxy_address\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcProxyAddress\x12\x44\n\x11zenex_pool_key_id\x18\x02 \x01(\x04\x42\x19\xf2\xde\x1f\x15yaml:\"zenexpoolkeyid\"R\x0ezenexPoolKeyId\x12\x45\n\x10minimum_satoshis\x18\x03 \x01(\x04\x42\x1a\xf2\xde\x1f\x16yaml:\"minimumsatoshis\"R\x0fminimumSatoshis\x12X\n\x17zenex_workspace_address\x18\x04 \x01(\tB \xf2\xde\x1f\x1cyaml:\"zenexworkspaceaddress\"R\x15zenexWorkspaceAddress:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1azrchain/zenex/params.proto\x12\rzrchain.zenex\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\"\xb2\x03\n\x06Params\x12\x46\n\x11\x62tc_proxy_address\x18\x01 \x01(\tB\x1a\xf2\xde\x1f\x16yaml:\"btcproxyaddress\"R\x0f\x62tcProxyAddress\x12\x44\n\x11zenex_pool_key_id\x18\x02 \x01(\x04\x42\x19\xf2\xde\x1f\x15yaml:\"zenexpoolkeyid\"R\x0ezenexPoolKeyId\x12\x45\n\x10minimum_satoshis\x18\x03 \x01(\x04\x42\x1a\xf2\xde\x1f\x16yaml:\"minimumsatoshis\"R\x0fminimumSatoshis\x12X\n\x17zenex_workspace_address\x18\x04 \x01(\tB \xf2\xde\x1f\x1cyaml:\"zenexworkspaceaddress\"R\x15zenexWorkspaceAddress\x12X\n\x17swap_threshold_satoshis\x18\x05 \x01(\x04\x42 \xf2\xde\x1f\x1cyaml:\"swapthresholdsatoshis\"R\x15swapThresholdSatoshis:\x1f\xe8\xa0\x1f\x01\x8a\xe7\xb0*\x16zrchain/x/zenex/ParamsB8Z6github.com/Zenrock-Foundation/zrchain/v6/x/zenex/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -42,8 +42,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PARAMS'].fields_by_name['minimum_satoshis']._serialized_options = b'\362\336\037\026yaml:\"minimumsatoshis\"'
   _globals['_PARAMS'].fields_by_name['zenex_workspace_address']._loaded_options = None
   _globals['_PARAMS'].fields_by_name['zenex_workspace_address']._serialized_options = b'\362\336\037\034yaml:\"zenexworkspaceaddress\"'
+  _globals['_PARAMS'].fields_by_name['swap_threshold_satoshis']._loaded_options = None
+  _globals['_PARAMS'].fields_by_name['swap_threshold_satoshis']._serialized_options = b'\362\336\037\034yaml:\"swapthresholdsatoshis\"'
   _globals['_PARAMS']._loaded_options = None
   _globals['_PARAMS']._serialized_options = b'\350\240\037\001\212\347\260*\026zrchain/x/zenex/Params'
   _globals['_PARAMS']._serialized_start=87
-  _globals['_PARAMS']._serialized_end=431
+  _globals['_PARAMS']._serialized_end=521
 # @@protoc_insertion_point(module_scope)

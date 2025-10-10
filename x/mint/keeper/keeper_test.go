@@ -15,6 +15,8 @@ import (
 	minttestutil "github.com/Zenrock-Foundation/zrchain/v6/x/mint/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zenextypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
+	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,12 +54,13 @@ func (s *IntegrationTestSuite) SetupTest() {
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
-	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
+	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
 
 	// Assign the mock keepers to the suite fields
 	s.accountKeeper = accountKeeper
 	s.bankKeeper = bankKeeper
 	s.stakingKeeper = stakingKeeper
+	s.zentpKeeper = zentpKeeper
 	s.mintKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -150,10 +153,10 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 			name: "sufficient balance",
 			setupMocks: func() {
 				moduleAddr := sdk.AccAddress{}
-				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
 				s.bankKeeper.EXPECT().
 					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(1000)))
+					Return(sdk.NewCoin("urock", math.NewInt(1000))).AnyTimes()
 			},
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: false,
@@ -165,7 +168,7 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
 				s.bankKeeper.EXPECT().
 					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(100)))
+					Return(sdk.NewCoin("urock", math.NewInt(100))).AnyTimes()
 			},
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: true,
@@ -392,7 +395,7 @@ func (s *IntegrationTestSuite) TestBaseDistribution() {
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolWalletAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, protocolWalletPortion))).Return(nil)
 
 	// Call the function being tested
-	remainingRewards, err := s.mintKeeper.BaseDistribution(ctx, totalRewards)
+	remainingRewards, err := s.mintKeeper.ZenexFeeProcessing(ctx)
 	s.Require().NoError(err)
 
 	// Check the remaining rewards after distribution
@@ -718,4 +721,47 @@ func (s *IntegrationTestSuite) TestGetMintModuleBalance() {
 
 	// Check that the actual balance matches the expected balance
 	s.Require().Equal(expectedBalance, actualBalance)
+}
+
+func (s *IntegrationTestSuite) TestZentpFeesDistribution() {
+	tests := []struct {
+		name             string
+		zentpRockBalance uint64
+		errExpected      bool
+		expectedErr      error
+	}{
+		{
+			name:             "happy path",
+			zentpRockBalance: 2000,
+			errExpected:      false,
+			expectedErr:      nil,
+		},
+		{
+			name:             "balance is zero",
+			zentpRockBalance: 0,
+			errExpected:      false,
+			expectedErr:      nil,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+
+			s.SetupTest()
+
+			s.accountKeeper.EXPECT().GetModuleAddress(zentptypes.ZentpCollectorName).Return(sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03")).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03"), types.DefaultParams().MintDenom).Return(sdk.NewCoin(types.DefaultParams().MintDenom, math.NewIntFromUint64(tt.zentpRockBalance))).AnyTimes()
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, zentptypes.ZentpCollectorName, zenextypes.ZenexFeeCollectorName, sdk.NewCoins(sdk.NewCoin(types.DefaultParams().MintDenom, math.NewIntFromUint64(tt.zentpRockBalance)))).Return(nil).AnyTimes()
+			s.zentpKeeper.EXPECT().UpdateZentpFees(s.ctx, tt.zentpRockBalance).Return(nil).AnyTimes()
+
+			err := s.mintKeeper.DistributeZentpFeesToZenexFeeCollector(s.ctx)
+
+			if tt.errExpected {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
 }

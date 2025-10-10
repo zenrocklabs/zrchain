@@ -20,4 +20,6 @@ const (
 	AttributeKeyKeyringRewards              = "keyring_rewards"
 	AttributeKeyTxFees                      = "tx_fees"
 	AttributeKeyZentpFees                   = "zentp_fees"
+	AttributeKeyZrWalletPortion             = "zr_wallet_portion"
+	AttributeKeyZenbtcRewardPortion         = "zenbtc_reward_portion"
 )

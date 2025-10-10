@@ -11,7 +11,7 @@ import (
 )
 
 // NewParams returns Params instance with the given values.
-func NewParams(mintDenom, protocolWalletAddress string, inflationRateChange, inflationMax, inflationMin, goalBonded, stakingYield, burnRate, protocolWalletRate, additionalStakingRewards, additionalMpcRewards, additionalBurnRate math.LegacyDec, blocksPerYear uint64) Params {
+func NewParams(mintDenom, protocolWalletAddress, zrWalletAddress string, inflationRateChange, inflationMax, inflationMin, goalBonded, stakingYield, burnRate, protocolWalletRate, additionalStakingRewards, additionalMpcRewards, additionalBurnRate, zenbtcRewardRate, zrWalletRate math.LegacyDec, blocksPerYear uint64) Params {
 	return Params{
 		MintDenom:                mintDenom,
 		InflationRateChange:      inflationRateChange,
@@ -26,6 +26,9 @@ func NewParams(mintDenom, protocolWalletAddress string, inflationRateChange, inf
 		AdditionalMpcRewards:     additionalMpcRewards,
 		AdditionalBurnRate:       additionalBurnRate,
 		ProtocolWalletAddress:    protocolWalletAddress,
+		ZenbtcRewardRate:         zenbtcRewardRate,
+		ZrWalletRate:             zrWalletRate,
+		ZrWalletAddress:          zrWalletAddress,
 	}
 }
 
@@ -45,6 +48,9 @@ func DefaultParams() Params {
 		AdditionalMpcRewards:     math.LegacyNewDecWithPrec(5, 2),
 		AdditionalBurnRate:       math.LegacyNewDecWithPrec(25, 2),
 		ProtocolWalletAddress:    "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
+		ZenbtcRewardRate:         math.LegacyNewDecWithPrec(35, 2),
+		ZrWalletRate:             math.LegacyNewDecWithPrec(35, 2),
+		ZrWalletAddress:          "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
 	}
 }
 

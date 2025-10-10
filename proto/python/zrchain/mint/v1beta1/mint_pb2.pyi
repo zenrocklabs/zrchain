@@ -16,7 +16,7 @@ class Minter(_message.Message):
     def __init__(self, inflation: _Optional[str] = ..., annual_provisions: _Optional[str] = ...) -> None: ...
 
 class Params(_message.Message):
-    __slots__ = ("mint_denom", "inflation_rate_change", "inflation_max", "inflation_min", "goal_bonded", "blocks_per_year", "staking_yield", "burn_rate", "protocol_wallet_rate", "protocol_wallet_address", "additional_staking_rewards", "additional_mpc_rewards", "additional_burn_rate")
+    __slots__ = ("mint_denom", "inflation_rate_change", "inflation_max", "inflation_min", "goal_bonded", "blocks_per_year", "staking_yield", "burn_rate", "protocol_wallet_rate", "protocol_wallet_address", "additional_staking_rewards", "additional_mpc_rewards", "additional_burn_rate", "zr_wallet_address", "zr_wallet_rate", "zenbtc_reward_rate")
     MINT_DENOM_FIELD_NUMBER: _ClassVar[int]
     INFLATION_RATE_CHANGE_FIELD_NUMBER: _ClassVar[int]
     INFLATION_MAX_FIELD_NUMBER: _ClassVar[int]
@@ -30,6 +30,9 @@ class Params(_message.Message):
     ADDITIONAL_STAKING_REWARDS_FIELD_NUMBER: _ClassVar[int]
     ADDITIONAL_MPC_REWARDS_FIELD_NUMBER: _ClassVar[int]
     ADDITIONAL_BURN_RATE_FIELD_NUMBER: _ClassVar[int]
+    ZR_WALLET_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    ZR_WALLET_RATE_FIELD_NUMBER: _ClassVar[int]
+    ZENBTC_REWARD_RATE_FIELD_NUMBER: _ClassVar[int]
     mint_denom: str
     inflation_rate_change: str
     inflation_max: str
@@ -43,4 +46,7 @@ class Params(_message.Message):
     additional_staking_rewards: str
     additional_mpc_rewards: str
     additional_burn_rate: str
-    def __init__(self, mint_denom: _Optional[str] = ..., inflation_rate_change: _Optional[str] = ..., inflation_max: _Optional[str] = ..., inflation_min: _Optional[str] = ..., goal_bonded: _Optional[str] = ..., blocks_per_year: _Optional[int] = ..., staking_yield: _Optional[str] = ..., burn_rate: _Optional[str] = ..., protocol_wallet_rate: _Optional[str] = ..., protocol_wallet_address: _Optional[str] = ..., additional_staking_rewards: _Optional[str] = ..., additional_mpc_rewards: _Optional[str] = ..., additional_burn_rate: _Optional[str] = ...) -> None: ...
+    zr_wallet_address: str
+    zr_wallet_rate: str
+    zenbtc_reward_rate: str
+    def __init__(self, mint_denom: _Optional[str] = ..., inflation_rate_change: _Optional[str] = ..., inflation_max: _Optional[str] = ..., inflation_min: _Optional[str] = ..., goal_bonded: _Optional[str] = ..., blocks_per_year: _Optional[int] = ..., staking_yield: _Optional[str] = ..., burn_rate: _Optional[str] = ..., protocol_wallet_rate: _Optional[str] = ..., protocol_wallet_address: _Optional[str] = ..., additional_staking_rewards: _Optional[str] = ..., additional_mpc_rewards: _Optional[str] = ..., additional_burn_rate: _Optional[str] = ..., zr_wallet_address: _Optional[str] = ..., zr_wallet_rate: _Optional[str] = ..., zenbtc_reward_rate: _Optional[str] = ...) -> None: ...

@@ -108,21 +108,21 @@ func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.Wei
 			},
 		),
 		simulation.NewWeightedProposalMsg(
-	opWeightMsgZenexBitcoinTransfer,
-	defaultWeightMsgZenexBitcoinTransfer,
-	func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
-		zenexsimulation.SimulateMsgZenexBitcoinTransfer(am.accountKeeper, am.bankKeeper, am.keeper)
-		return nil
-	},
-),
-simulation.NewWeightedProposalMsg(
-	opWeightMsgAcknowledgePoolTransfer,
-	defaultWeightMsgAcknowledgePoolTransfer,
-	func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
-		zenexsimulation.SimulateMsgAcknowledgePoolTransfer(am.accountKeeper, am.bankKeeper, am.keeper)
-		return nil
-	},
-),
-// this line is used by starport scaffolding # simapp/module/OpMsg
+			opWeightMsgZenexBitcoinTransfer,
+			defaultWeightMsgZenexBitcoinTransfer,
+			func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
+				zenexsimulation.SimulateMsgZenexBitcoinTransfer(am.accountKeeper, am.bankKeeper, am.keeper)
+				return nil
+			},
+		),
+		simulation.NewWeightedProposalMsg(
+			opWeightMsgAcknowledgePoolTransfer,
+			defaultWeightMsgAcknowledgePoolTransfer,
+			func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
+				zenexsimulation.SimulateMsgAcknowledgePoolTransfer(am.accountKeeper, am.bankKeeper, am.keeper)
+				return nil
+			},
+		),
+		// this line is used by starport scaffolding # simapp/module/OpMsg
 	}
 }
