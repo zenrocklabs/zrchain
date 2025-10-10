@@ -601,19 +601,19 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_QueryParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_GetLockTransactions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "lock_transactions"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_GetLockTransactions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "lock_transactions"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_GetRedemptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "redemptions"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_GetRedemptions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "redemptions"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_QueryPendingMintTransactions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "pending_mint_transactions"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryPendingMintTransactions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "pending_mint_transactions"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_QueryPendingMintTransaction_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"zenbtc", "pending_mint_transaction", "tx_hash"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryPendingMintTransaction_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"zenbtc", "pending_mint_transaction", "tx_hash"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_QuerySupply_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "supply"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QuerySupply_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "supply"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_QueryBurnEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "burn_events"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryBurnEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"zenbtc", "burn_events"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
