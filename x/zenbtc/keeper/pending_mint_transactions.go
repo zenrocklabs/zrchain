@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 
-	types "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	types "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func (k Keeper) CreatePendingMintTransaction(ctx context.Context, mintTransaction *types.PendingMintTransaction) (uint64, error) {

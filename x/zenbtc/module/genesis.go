@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

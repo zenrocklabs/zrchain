@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func SimulateMsgVerifyDepositBlockInclusion(

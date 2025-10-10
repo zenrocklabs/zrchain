@@ -9,11 +9,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/zenrocklabs/zenbtc/internal/chain"
-	"github.com/zenrocklabs/zenbtc/internal/config"
-	"github.com/zenrocklabs/zenbtc/internal/eigenlayer"
-	"github.com/zenrocklabs/zenbtc/internal/thorchain"
-	"github.com/zenrocklabs/zenbtc/internal/weth"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/chain"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/config"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/eigenlayer"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/thorchain"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/weth"
 
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 

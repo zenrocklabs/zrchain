@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

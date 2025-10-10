@@ -18,8 +18,8 @@ import (
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 const consensusVersion = 10

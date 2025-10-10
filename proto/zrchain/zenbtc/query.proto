@@ -10,7 +10,7 @@ import "zrchain/zenbtc/mint.proto";
 import "zrchain/zenbtc/params.proto";
 import "zrchain/zenbtc/redemptions.proto";
 
-option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
 
 // Query defines the gRPC querier service.
 service Query {

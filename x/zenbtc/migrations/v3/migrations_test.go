@@ -7,14 +7,14 @@ import (
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/module"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
-	v3 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v3"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v3"
 
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var (

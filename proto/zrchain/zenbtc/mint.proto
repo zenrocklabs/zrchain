@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package zrchain.zenbtc;
 
-option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
 
 message NonceData {
   uint64 nonce = 1;

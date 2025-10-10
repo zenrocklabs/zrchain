@@ -15,8 +15,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	v6 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v6"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	v6 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v6"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var (

@@ -12,8 +12,8 @@ import (
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/stretchr/testify/require"
 
-	v5 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v5"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	v5 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v5"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // Define expected parameters based on v5/store.go logic

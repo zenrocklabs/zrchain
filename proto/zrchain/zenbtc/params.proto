@@ -4,7 +4,7 @@ package zrchain.zenbtc;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
 
 // Params defines the parameters for the module.
 message Params {

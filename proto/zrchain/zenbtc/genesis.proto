@@ -9,7 +9,7 @@ import "zrchain/zenbtc/redemptions.proto";
 import "zrchain/zenbtc/mint.proto";
 
 
-option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
 
 // GenesisState defines the zenbtc module's genesis state.
 message GenesisState {

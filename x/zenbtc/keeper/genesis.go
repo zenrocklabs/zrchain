@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // this line is used by starport scaffolding # genesis/types/import

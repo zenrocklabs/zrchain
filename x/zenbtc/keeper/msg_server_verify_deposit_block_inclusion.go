@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/rpc"
 
-	"github.com/zenrocklabs/zenbtc/utils"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
@@ -20,7 +20,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types.MsgVerifyDepositBlockInclusion) (*types.MsgVerifyDepositBlockInclusionResponse, error) {

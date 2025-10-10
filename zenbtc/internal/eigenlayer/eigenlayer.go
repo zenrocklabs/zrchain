@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/zenrocklabs/goem/ethereum"
-	"github.com/zenrocklabs/zenbtc/internal/chain"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/chain"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

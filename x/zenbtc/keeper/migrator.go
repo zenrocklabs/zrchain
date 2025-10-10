@@ -2,15 +2,15 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v2 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v2"
-	v3 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v3"
-	v4 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v4"
-	v5 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v5"
-	v6 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v6"
-	v7 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v7"
-	v8 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v8"
-	v9 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v9"
-	v10 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v10"
+	v2 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v2"
+	v3 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v3"
+	v4 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v4"
+	v5 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v5"
+	v6 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v6"
+	v7 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v7"
+	v8 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v8"
+	v9 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v9"
+	v10 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v10"
 )
 
 // Migrator is a struct for handling in-place store migrations.

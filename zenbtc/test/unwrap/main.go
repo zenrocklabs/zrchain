@@ -18,7 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/zenrocklabs/goem/ethereum"
-	bindings "github.com/zenrocklabs/zenbtc/bindings"
+	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
 
 func main() {

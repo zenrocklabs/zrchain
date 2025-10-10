@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func (k Keeper) GetRedemptions(goCtx context.Context, req *types.QueryRedemptionsRequest) (*types.QueryRedemptionsResponse, error) {

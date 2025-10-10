@@ -10,10 +10,10 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	zenbtcsimulation "github.com/zenrocklabs/zenbtc/x/zenbtc/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	zenbtcsimulation "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/simulation"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // avoid unused import issue

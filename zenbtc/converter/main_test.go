@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 
-	"github.com/zenrocklabs/zenbtc/internal/chain"
-	"github.com/zenrocklabs/zenbtc/internal/config"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/chain"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/config"
 
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 )

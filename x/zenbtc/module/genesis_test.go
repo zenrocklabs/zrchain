@@ -8,9 +8,9 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func TestGenesis(t *testing.T) {

@@ -4,7 +4,7 @@ package zrchain.zenbtc;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types";
 
 // Redemption contains the data for a redemption transaction.
 message Redemption {

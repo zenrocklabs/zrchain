@@ -11,8 +11,8 @@ import (
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/stretchr/testify/require"
 
-	v8 "github.com/zenrocklabs/zenbtc/x/zenbtc/migrations/v8"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	v8 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/migrations/v8"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func makeTestEncodingConfig() moduletestutil.TestEncodingConfig {

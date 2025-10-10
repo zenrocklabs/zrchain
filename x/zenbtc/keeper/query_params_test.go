@@ -7,9 +7,9 @@ import (
 
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func TestParamsQuery(t *testing.T) {

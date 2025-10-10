@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"

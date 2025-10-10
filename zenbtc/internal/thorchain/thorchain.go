@@ -14,8 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/zenrocklabs/zenbtc/internal/chain"
-	"github.com/zenrocklabs/zenbtc/internal/contracts"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/chain"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/internal/contracts"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
