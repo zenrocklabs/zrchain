@@ -70,6 +70,16 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.FromString,
                 )
+        self.AddToBedrockValSet = channel.unary_unary(
+                '/zrchain.validation.Msg/AddToBedrockValSet',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.FromString,
+                )
+        self.RemoveFromBedrockValSet = channel.unary_unary(
+                '/zrchain.validation.Msg/RemoveFromBedrockValSet',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -163,6 +173,20 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def AddToBedrockValSet(self, request, context):
+        """AddToBedrockValSet adds a validator to the bedrock validator set.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveFromBedrockValSet(self, request, context):
+        """RemoveFromBedrockValSet removes a validator from the bedrock validator set.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -220,6 +244,16 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.ManuallyInputBitcoinHeader,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.SerializeToString,
+            ),
+            'AddToBedrockValSet': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddToBedrockValSet,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.SerializeToString,
+            ),
+            'RemoveFromBedrockValSet': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveFromBedrockValSet,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -416,5 +450,39 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/ManuallyInputBitcoinHeader',
             zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AddToBedrockValSet(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/AddToBedrockValSet',
+            zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RemoveFromBedrockValSet(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/RemoveFromBedrockValSet',
+            zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

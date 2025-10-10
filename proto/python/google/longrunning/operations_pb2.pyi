@@ -1,5 +1,6 @@
 from google.api import annotations_pb2 as _annotations_pb2
 from google.api import client_pb2 as _client_pb2
+from google.api import field_behavior_pb2 as _field_behavior_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import descriptor_pb2 as _descriptor_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
@@ -35,24 +36,28 @@ class GetOperationRequest(_message.Message):
     def __init__(self, name: _Optional[str] = ...) -> None: ...
 
 class ListOperationsRequest(_message.Message):
-    __slots__ = ("name", "filter", "page_size", "page_token")
+    __slots__ = ("name", "filter", "page_size", "page_token", "return_partial_success")
     NAME_FIELD_NUMBER: _ClassVar[int]
     FILTER_FIELD_NUMBER: _ClassVar[int]
     PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
     PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    RETURN_PARTIAL_SUCCESS_FIELD_NUMBER: _ClassVar[int]
     name: str
     filter: str
     page_size: int
     page_token: str
-    def __init__(self, name: _Optional[str] = ..., filter: _Optional[str] = ..., page_size: _Optional[int] = ..., page_token: _Optional[str] = ...) -> None: ...
+    return_partial_success: bool
+    def __init__(self, name: _Optional[str] = ..., filter: _Optional[str] = ..., page_size: _Optional[int] = ..., page_token: _Optional[str] = ..., return_partial_success: bool = ...) -> None: ...
 
 class ListOperationsResponse(_message.Message):
-    __slots__ = ("operations", "next_page_token")
+    __slots__ = ("operations", "next_page_token", "unreachable")
     OPERATIONS_FIELD_NUMBER: _ClassVar[int]
     NEXT_PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    UNREACHABLE_FIELD_NUMBER: _ClassVar[int]
     operations: _containers.RepeatedCompositeFieldContainer[Operation]
     next_page_token: str
-    def __init__(self, operations: _Optional[_Iterable[_Union[Operation, _Mapping]]] = ..., next_page_token: _Optional[str] = ...) -> None: ...
+    unreachable: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, operations: _Optional[_Iterable[_Union[Operation, _Mapping]]] = ..., next_page_token: _Optional[str] = ..., unreachable: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class CancelOperationRequest(_message.Message):
     __slots__ = ("name",)

@@ -42,12 +42,13 @@ var (
 	// Start new keys from 101 and increment sequentially. This creates a safe separation
 	// from legacy byte slice keys below (e.g., 0x11, 0x12) to prevent storage collisions.
 	//
-	// The next available key currently is 103.
+	// The next available key currently is 105.
 	// ====================================================================================================
 	BackfillRequestsKey         = collections.NewPrefix(100)
 	LatestBtcHeaderHeightKey    = collections.NewPrefix(101)
 	ValidatorMismatchCounts     = collections.NewPrefix(102)
 	LastCompletedZentpMintIDKey = collections.NewPrefix(103)
+	BedrockValidatorSetKey      = collections.NewPrefix(104)
 )
 var (
 	// Keys for store prefixes
@@ -104,6 +105,7 @@ var (
 	LatestBtcHeaderHeightIndex             = "latest_btc_header_height"
 	ValidatorMismatchCountsIndex           = "validator_mismatch_counts"
 	LastCompletedZentpMintIDIndex          = "last_completed_zentp_mint_id"
+	BedrockValidatorSetIndex               = "bedrock_validator_set"
 )
 
 const (

@@ -508,31 +508,192 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 }
 
 // adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to the default validator's TokensBedrock (Asset_BTC)
+// DEPRECATED: This function is kept for backward compatibility. Use distributeBedrockBTC instead.
 func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
-	oper := k.GetBedrockDefaultValOperAddr(ctx)
-	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
+	return k.distributeBedrockBTC(ctx, delta)
+}
+
+// distributeBedrockBTC adds (positive) or subtracts (negative) BTC sats across the bedrock validator set
+// proportional to each validator's native stake (TokensNative)
+func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
+	if delta.IsZero() {
+		return nil
+	}
+
+	// Get all validators in the bedrock set
+	bedrockValidators := make([]types.ValidatorHV, 0)
+	totalNativeStake := sdkmath.ZeroInt()
+
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			k.Logger(ctx).Error("validator in bedrock set not found", "address", valAddr, "error", err)
+			return false, nil
+		}
+
+		bedrockValidators = append(bedrockValidators, validator)
+		totalNativeStake = totalNativeStake.Add(validator.TokensNative)
+		return false, nil
+	})
+
 	if err != nil {
 		return err
 	}
+
+	// If no validators in bedrock set, fall back to default validator
+	if len(bedrockValidators) == 0 {
+		k.Logger(ctx).Warn("no validators in bedrock set, falling back to default validator")
+		return k.adjustSingleValidatorBedrockBTC(ctx, k.GetBedrockDefaultValOperAddr(ctx), delta)
+	}
+
+	// If total native stake is zero, distribute equally
+	if totalNativeStake.IsZero() {
+		k.Logger(ctx).Warn("total native stake is zero, distributing bedrock BTC equally")
+		amountPerValidator := delta.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
+		for _, validator := range bedrockValidators {
+			if err := k.adjustValidatorBedrockBTC(ctx, validator, amountPerValidator); err != nil {
+				k.Logger(ctx).Error("failed to adjust bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+			}
+		}
+		return nil
+	}
+
+	// Distribute proportionally based on native stake
+	remainingDelta := delta
+	for i, validator := range bedrockValidators {
+		var allocation sdkmath.Int
+		if i == len(bedrockValidators)-1 {
+			// Last validator gets the remaining amount to handle rounding
+			allocation = remainingDelta
+		} else {
+			// Calculate proportional allocation: (validator.TokensNative / totalNativeStake) * delta
+			allocation = validator.TokensNative.Mul(delta).Quo(totalNativeStake)
+			remainingDelta = remainingDelta.Sub(allocation)
+		}
+
+		if err := k.adjustValidatorBedrockBTC(ctx, validator, allocation); err != nil {
+			k.Logger(ctx).Error("failed to adjust bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+		}
+	}
+
+	return nil
+}
+
+// adjustSingleValidatorBedrockBTC adjusts BTC for a single validator (used for backward compatibility)
+func (k *Keeper) adjustSingleValidatorBedrockBTC(ctx sdk.Context, operAddr string, delta sdkmath.Int) error {
+	v, err := k.GetZenrockValidatorFromBech32(ctx, operAddr)
+	if err != nil {
+		return err
+	}
+	return k.adjustValidatorBedrockBTC(ctx, v, delta)
+}
+
+// adjustValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to a validator's TokensBedrock (Asset_BTC)
+func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.ValidatorHV, delta sdkmath.Int) error {
 	idx := -1
-	for i, td := range v.TokensBedrock {
+	for i, td := range validator.TokensBedrock {
 		if td != nil && td.Asset == types.Asset_BTC {
 			idx = i
 			break
 		}
 	}
+
 	if idx >= 0 {
-		newAmt := v.TokensBedrock[idx].Amount.Add(delta)
+		newAmt := validator.TokensBedrock[idx].Amount.Add(delta)
 		if newAmt.IsNegative() {
 			newAmt = sdkmath.ZeroInt()
 		}
-		v.TokensBedrock[idx].Amount = newAmt
+		validator.TokensBedrock[idx].Amount = newAmt
 	} else {
 		amt := delta
 		if amt.IsNegative() {
 			amt = sdkmath.ZeroInt()
 		}
-		v.TokensBedrock = append(v.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
+		validator.TokensBedrock = append(validator.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
 	}
-	return k.SetValidator(ctx, v)
+
+	return k.SetValidator(ctx, validator)
+}
+
+// rebalanceBedrockBTC rebalances bedrock BTC across the bedrock validator set
+// to keep proportions aligned with native stake. This is called every block.
+func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
+
+	// Get all validators in the bedrock set
+	bedrockValidators := make([]types.ValidatorHV, 0)
+	totalNativeStake := sdkmath.ZeroInt()
+	totalBedrockBTC := sdkmath.ZeroInt()
+
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			k.Logger(ctx).Error("validator in bedrock set not found during rebalance", "address", valAddr, "error", err)
+			return false, nil
+		}
+
+		// Get current bedrock BTC for this validator
+		currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
+
+		bedrockValidators = append(bedrockValidators, validator)
+		totalNativeStake = totalNativeStake.Add(validator.TokensNative)
+		totalBedrockBTC = totalBedrockBTC.Add(currentBTC)
+		return false, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// If no validators in bedrock set or no BTC to rebalance, skip
+	if len(bedrockValidators) == 0 || totalBedrockBTC.IsZero() {
+		return nil
+	}
+
+	// If total native stake is zero, distribute equally
+	if totalNativeStake.IsZero() {
+		amountPerValidator := totalBedrockBTC.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
+		for _, validator := range bedrockValidators {
+			currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
+			adjustment := amountPerValidator.Sub(currentBTC)
+			if !adjustment.IsZero() {
+				if err := k.adjustValidatorBedrockBTC(ctx, validator, adjustment); err != nil {
+					k.Logger(ctx).Error("failed to rebalance bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+				}
+			}
+		}
+		return nil
+	}
+
+	// Calculate target amounts and adjust
+	remainingBTC := totalBedrockBTC
+	for i, validator := range bedrockValidators {
+		var targetAmount sdkmath.Int
+		if i == len(bedrockValidators)-1 {
+			// Last validator gets the remaining amount to handle rounding
+			targetAmount = remainingBTC
+		} else {
+			// Calculate proportional target: (validator.TokensNative / totalNativeStake) * totalBedrockBTC
+			targetAmount = validator.TokensNative.Mul(totalBedrockBTC).Quo(totalNativeStake)
+			remainingBTC = remainingBTC.Sub(targetAmount)
+		}
+
+		currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
+		adjustment := targetAmount.Sub(currentBTC)
+
+		if !adjustment.IsZero() {
+			if err := k.adjustValidatorBedrockBTC(ctx, validator, adjustment); err != nil {
+				k.Logger(ctx).Error("failed to rebalance bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+			}
+		}
+	}
+
+	return nil
 }
