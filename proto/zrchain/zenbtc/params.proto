@@ -1,0 +1,39 @@
+syntax = "proto3";
+package zrchain.zenbtc;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/zenbtc/Params";
+  option (gogoproto.equal) = true;
+
+  string depositKeyringAddr = 1;
+  uint64 stakerKeyID = 2;
+  uint64 ethMinterKeyID = 3;
+  uint64 unstakerKeyID = 4;
+  uint64 completerKeyID = 5;
+  uint64 rewardsDepositKeyID = 6;
+  repeated uint64 changeAddressKeyIDs = 7;
+  string bitcoinProxyAddress = 8;
+  string ethTokenAddr = 9;
+  string controllerAddr = 10;
+  Solana solana = 11;
+}
+
+message Solana {
+  option (gogoproto.equal) = true;
+  uint64 signer_key_id = 1;
+  string program_id = 2;
+  uint64 nonce_account_key = 3;
+  uint64 nonce_authority_key = 4;
+  string mint_address = 5;
+  string fee_wallet = 6;
+  uint64 fee = 7;
+  string multisig_key_address = 8;
+  int64 btl = 9;
+  string event_store_program_id = 10;
+}

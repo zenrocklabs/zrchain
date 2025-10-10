@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package zrchain.zenbtc;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+
+// Redemption contains the data for a redemption transaction.
+message Redemption {
+  RedemptionData data = 1 [(gogoproto.nullable) = false];
+  RedemptionStatus status = 2;
+}
+
+message RedemptionData {
+  uint64 id = 1;
+  bytes destination_address = 2;
+  uint64 amount = 3;
+  uint64 sign_req_id = 4;
+}
+
+enum RedemptionStatus {
+  UNSPECIFIED = 0;
+  INITIATED = 1; // after BurnStatus.UNSTAKING phase is completed (7 days)
+  UNSTAKED = 2; // after calling unstakeComplete
+  BURNED = 3 [deprecated = true];
+  COMPLETED = 4;
+  AWAITING_SIGN = 5;
+}
+
+message BurnEvent {
+  uint64 id = 1;
+  string txID = 2;
+  uint64 logIndex = 3;
+  string chainID = 4;
+  bytes destinationAddr = 5;
+  uint64 amount = 6;
+  BurnStatus status = 7;
+}
+
+enum BurnStatus {
+  BURN_STATUS_UNSPECIFIED = 0;
+  BURN_STATUS_BURNED = 1;
+  BURN_STATUS_UNSTAKING = 2;
+}

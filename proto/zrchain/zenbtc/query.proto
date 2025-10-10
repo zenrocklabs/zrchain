@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package zrchain.zenbtc;
+
+import "amino/amino.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "zrchain/zenbtc/mint.proto";
+import "zrchain/zenbtc/params.proto";
+import "zrchain/zenbtc/redemptions.proto";
+
+option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/zenbtc/params";
+  }
+
+  // Queries a list of LockTransactions items.
+  rpc GetLockTransactions(QueryLockTransactionsRequest) returns (QueryLockTransactionsResponse) {
+    option (google.api.http).get = "/zenbtc/lock_transactions";
+  }
+
+  // Queries a list of Redemptions items.
+  rpc GetRedemptions(QueryRedemptionsRequest) returns (QueryRedemptionsResponse) {
+    option (google.api.http).get = "/zenbtc/redemptions";
+  }
+
+  // Queries a list of PendingMintTransactions items.
+  rpc QueryPendingMintTransactions(QueryPendingMintTransactionsRequest) returns (QueryPendingMintTransactionsResponse) {
+    option (google.api.http).get = "/zenbtc/pending_mint_transactions";
+  }
+
+  // Queries a list of PendingMintTransactions items.
+  rpc QueryPendingMintTransaction(QueryPendingMintTransactionRequest) returns (QueryPendingMintTransactionResponse) {
+    option (google.api.http).get = "/zenbtc/pending_mint_transaction/{tx_hash}";
+  }
+
+  // Queries the current supply of zenBTC.
+  rpc QuerySupply(QuerySupplyRequest) returns (QuerySupplyResponse) {
+    option (google.api.http).get = "/zenbtc/supply";
+  }
+
+  // Queries a list of BurnEvents items.
+  rpc QueryBurnEvents(QueryBurnEventsRequest) returns (QueryBurnEventsResponse) {
+    option (google.api.http).get = "/zenbtc/burn_events";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+message QueryLockTransactionsRequest {}
+
+message QueryLockTransactionsResponse {
+  repeated LockTransaction lock_transactions = 1;
+}
+
+message QueryRedemptionsRequest {
+  uint64 start_index = 1;
+  RedemptionStatus status = 2;
+}
+
+message QueryRedemptionsResponse {
+  repeated Redemption redemptions = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryPendingMintTransactionsRequest {
+  uint64 start_index = 1;
+  MintTransactionStatus status = 2;
+}
+
+message QueryPendingMintTransactionsResponse {
+  repeated PendingMintTransaction pending_mint_transactions = 1;
+}
+
+message QueryPendingMintTransactionRequest {
+  string tx_hash = 1;
+}
+
+message QueryPendingMintTransactionResponse {
+  PendingMintTransaction pending_mint_transaction = 1;
+}
+
+message QuerySupplyRequest {}
+
+message QuerySupplyResponse {
+  uint64 custodiedBTC = 1;
+  uint64 totalZenBTC = 2;
+  uint64 mintedZenBTC = 3;
+  uint64 pendingZenBTC = 4;
+  string exchangeRate = 5;
+}
+
+message QueryBurnEventsRequest {
+  uint64 start_index = 1;
+  string txID = 2;
+  uint64 logIndex = 3;
+  string caip2chainID = 4;
+  BurnStatus status = 5;
+}
+
+message QueryBurnEventsResponse {
+  repeated BurnEvent burnEvents = 1;
+}

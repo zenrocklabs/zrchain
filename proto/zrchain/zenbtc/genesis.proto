@@ -1,0 +1,62 @@
+syntax = "proto3";
+package zrchain.zenbtc;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/zenbtc/params.proto";
+import "zrchain/zenbtc/supply.proto";
+import "zrchain/zenbtc/redemptions.proto";
+import "zrchain/zenbtc/mint.proto";
+
+
+option go_package = "github.com/zenrocklabs/zenbtc/x/zenbtc/types";
+
+// GenesisState defines the zenbtc module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // lock_transactions defines the lock transactions of the module.
+  map<string, LockTransaction> lock_transactions = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // pending_mint_transactions defines the pending mint transactions of the module.
+  map<uint64, PendingMintTransaction> pending_mint_transactions = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // first_pending_eth_mint_transaction defines the first pending Ethereum mint transaction of the module.
+  uint64 first_pending_eth_mint_transaction = 4;
+  // first_pending_sol_mint_transaction defines the first pending Solana mint transaction of the module.
+  uint64 first_pending_sol_mint_transaction = 5;
+  // pending_mint_transaction_count defines the count of pending mint transactions of the module.
+  uint64 pending_mint_transaction_count = 6;
+  // burn_events defines the burn events of the module.
+  map<uint64, BurnEvent> burn_events = 7 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // first_pending_burn_event defines the first pending burn event of the module.
+  uint64 first_pending_burn_event = 8;
+  // burn_event_count defines the count of burn events of the module.
+  uint64 burn_event_count = 9;
+  // redemptions defines the redemptions of the module.
+  map<uint64, Redemption> redemptions = 10 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // first_pending_redemption defines the first pending redemption of the module.
+  uint64 first_pending_redemption = 11;
+  // first_redemption_awaiting_sign defines the first redemption awaiting sign of the module.
+  uint64 first_redemption_awaiting_sign = 12;
+  // supply defines the supply of the module.
+  Supply supply = 13 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // first_pending_stake_transaction defines the first pending stake transaction of the module.
+  uint64 first_pending_stake_transaction = 14;
+}
