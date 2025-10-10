@@ -223,3 +223,27 @@ class BackfillRequests(_message.Message):
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
     requests: _containers.RepeatedCompositeFieldContainer[MsgTriggerEventBackfill]
     def __init__(self, requests: _Optional[_Iterable[_Union[MsgTriggerEventBackfill, _Mapping]]] = ...) -> None: ...
+
+class MsgAddToBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgAddToBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgRemoveFromBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgRemoveFromBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

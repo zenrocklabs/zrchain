@@ -12,13 +12,10 @@ var (
 	DefaultAVSRewardsRate, _              = math.LegacyNewDecFromStr("0.03") // 0.03 == 3% APR
 	DefaultBlockTime                int64 = 5                                // seconds
 	DefaultPriceRetentionBlockRange int64 = 320                              // blocks
-	DefaultVEJailingEnabled         bool  = false                            // enable VE jailing by default
-	DefaultVEJailDurationMinutes    int64 = 60                               // 60 minutes jail duration
-	DefaultVEWindowSize             int64 = 320                              // 320 blocks window for VE mismatch tracking
-	DefaultVEJailThreshold          int64 = 160                              // 160 mismatches before jailing
-
-	// Default bedrock validator operator address (v1) used for TokensBedrock BTC accounting
-	DefaultBedrockValidatorOperAddr      = "zenvaloper1apxnaymsp7drsjp9dhej05j5yjz8q0zj28z9wm"
+	DefaultVEJailingEnabled      bool  = false // enable VE jailing by default
+	DefaultVEJailDurationMinutes int64 = 60   // 60 minutes jail duration
+	DefaultVEWindowSize          int64 = 320  // 320 blocks window for VE mismatch tracking
+	DefaultVEJailThreshold       int64 = 160  // 160 mismatches before jailing
 
 	DefaultTestnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
