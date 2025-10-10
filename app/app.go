@@ -1366,6 +1366,8 @@ func BlockedAddresses() map[string]bool {
 	// allow the following addresses to receive funds
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	delete(modAccAddrs, authtypes.NewModuleAddress(minttypes.ModuleName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(zenextypes.ZenexFeeCollectorName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(zenextypes.ZenBtcRewardsCollectorName).String())
 
 	return modAccAddrs
 }

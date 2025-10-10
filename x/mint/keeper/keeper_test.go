@@ -54,7 +54,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
-	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{})
+	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
 
 	// Assign the mock keepers to the suite fields
 	s.accountKeeper = accountKeeper
@@ -153,10 +153,10 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 			name: "sufficient balance",
 			setupMocks: func() {
 				moduleAddr := sdk.AccAddress{}
-				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
+				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
 				s.bankKeeper.EXPECT().
 					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(1000)))
+					Return(sdk.NewCoin("urock", math.NewInt(1000))).AnyTimes()
 			},
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: false,
@@ -168,7 +168,7 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
 				s.bankKeeper.EXPECT().
 					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(100)))
+					Return(sdk.NewCoin("urock", math.NewInt(100))).AnyTimes()
 			},
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: true,
@@ -395,7 +395,7 @@ func (s *IntegrationTestSuite) TestBaseDistribution() {
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolWalletAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, protocolWalletPortion))).Return(nil)
 
 	// Call the function being tested
-	remainingRewards, err := s.mintKeeper.BaseDistribution(ctx, totalRewards)
+	remainingRewards, err := s.mintKeeper.ZenexFeeProcessing(ctx)
 	s.Require().NoError(err)
 
 	// Check the remaining rewards after distribution
@@ -754,7 +754,7 @@ func (s *IntegrationTestSuite) TestZentpFeesDistribution() {
 			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, zentptypes.ZentpCollectorName, zenextypes.ZenexFeeCollectorName, sdk.NewCoins(sdk.NewCoin(types.DefaultParams().MintDenom, math.NewIntFromUint64(tt.zentpRockBalance)))).Return(nil).AnyTimes()
 			s.zentpKeeper.EXPECT().UpdateZentpFees(s.ctx, tt.zentpRockBalance).Return(nil).AnyTimes()
 
-			err := s.mintKeeper.DistributeZentpFees(s.ctx)
+			err := s.mintKeeper.DistributeZentpFeesToZenexFeeCollector(s.ctx)
 
 			if tt.errExpected {
 				s.Require().Error(err)

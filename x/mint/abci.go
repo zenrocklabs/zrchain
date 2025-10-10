@@ -45,21 +45,16 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return nil
 	}
 
+	// funds the mint module from keyring fees, tx fees
 	totalRewards, err := k.ClaimTotalRewards(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("failed to claim total rewards", "error", err)
 		return nil
 	}
 
-	err = k.DistributeZentpFees(ctx)
+	err = k.HandleZenTpFees(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("failed to distribute zentp fees", "error", err)
-		return nil
-	}
-
-	totalRewardsRest, err := k.BaseDistribution(ctx, totalRewards)
-	if err != nil {
-		k.Logger(ctx).Error("failed to calculate base distribution", "error", err)
+		k.Logger(ctx).Error("failed to handle zenbtc fees", "error", err)
 		return nil
 	}
 
@@ -75,8 +70,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 		return nil
 	}
 
-	if totalBlockStakingReward.Amount.GT(totalRewardsRest.Amount) {
-		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewardsRest)
+	if totalBlockStakingReward.Amount.GT(totalRewards.Amount) {
+		topUpAmount, err := k.CalculateTopUp(ctx, totalBlockStakingReward, totalRewards)
 		if err != nil {
 			k.Logger(ctx).Error("failed to calculate top up amount", "error", err)
 			return nil
@@ -84,25 +79,26 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 
 		// if totalRewardsRest enough - top up from mint module
 		if !topUpAmount.IsZero() || !mintModuleBalance.IsZero() {
-			totalRewardsRest = totalBlockStakingReward
+			totalRewards = totalBlockStakingReward
 		}
 
 		if err := k.CheckModuleBalance(ctx, totalBlockStakingReward); err != nil {
 			k.Logger(ctx).Error("failed to check module balance", "error", err)
 			return nil
 		}
-	} else {
-		excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, totalRewardsRest)
-		if err != nil {
-			k.Logger(ctx).Error("failed to calculate excess", "error", err)
-			return nil
-		}
-
-		if err := k.ExcessDistribution(ctx, excess); err != nil {
-			k.Logger(ctx).Error("failed during excess distribution", "error", err)
-			return nil
-		}
 	}
+	// else {
+	// 	excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, totalRewards)
+	// 	if err != nil {
+	// 		k.Logger(ctx).Error("failed to calculate excess", "error", err)
+	// 		return nil
+	// 	}
+
+	// 	if err := k.ExcessDistribution(ctx, excess); err != nil {
+	// 		k.Logger(ctx).Error("failed during excess distribution", "error", err)
+	// 		return nil
+	// 	}
+	// }
 
 	if err := k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward)); err != nil {
 		k.Logger(ctx).Error("failed to add collected fees (staking reward)", "error", err)
