@@ -313,12 +313,25 @@ func (k Keeper) GetEthTokenAddr(ctx context.Context, asset dcttypes.Asset) (stri
 	return ap.EthTokenAddr, nil
 }
 
+func (k Keeper) GetDepositKeyringAddr(ctx context.Context, asset dcttypes.Asset) (string, error) {
+	ap, err := k.GetAssetParams(ctx, asset)
+	if err != nil {
+		return "", err
+	}
+	return ap.DepositKeyringAddr, nil
+}
+
 func (k Keeper) GetProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error) {
 	ap, err := k.GetAssetParams(ctx, asset)
 	if err != nil {
 		return "", err
 	}
 	return ap.ProxyAddress, nil
+}
+
+func (k Keeper) GetBitcoinProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error) {
+	// For Bitcoin-fork assets the general proxy address doubles as the asset-specific proxy.
+	return k.GetProxyAddress(ctx, asset)
 }
 
 // --- Lock transactions ---

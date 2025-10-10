@@ -1,16 +1,18 @@
 package keeper
 
 import (
-	"context"
-	"fmt"
+    "context"
+    "fmt"
+    "strings"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+    abci "github.com/cometbft/cometbft/abci/types"
 
-	"cosmossdk.io/math"
+    "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+    sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+    "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+    dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
 // InitGenesis sets the pool and parameters for the provided keeper.  For each
@@ -201,6 +203,28 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 
 	for account, requested := range data.SolanaAccountsRequested {
 		k.SolanaAccountsRequested.Set(ctx, account, requested)
+	}
+
+	for compositeKey, requested := range data.SolanaDctAccountsRequested {
+		parts := strings.SplitN(compositeKey, ":", 2)
+		if len(parts) != 2 {
+			k.Logger(ctx).Error("invalid DCT Solana account key format", "key", compositeKey)
+			continue
+		}
+		assetValue, ok := dcttypes.Asset_value[parts[0]]
+		if !ok {
+			k.Logger(ctx).Error("unknown DCT asset in Solana account request", "asset", parts[0])
+			continue
+		}
+		asset := dcttypes.Asset(assetValue)
+		key, err := k.dctAccountKey(asset, parts[1])
+		if err != nil {
+			k.Logger(ctx).Error("error constructing DCT account key", "asset", asset.String(), "owner", parts[1], "error", err)
+			continue
+		}
+		if err := k.SolanaDCTAccountsRequested.Set(ctx, key, requested); err != nil {
+			k.Logger(ctx).Error("error setting DCT Solana account request", "asset", asset.String(), "owner", parts[1], "error", err)
+		}
 	}
 
 	k.BackfillRequests.Set(ctx, data.BackfillRequest)
@@ -442,6 +466,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	solanaDCTAccountsRequested, err := k.GetSolanaDCTAccountsRequested(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	validatorMismatchCounts, err := k.GetValidatorMismatchCounts(ctx)
 	if err != nil {
 		panic(err)
@@ -477,6 +506,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		SolanaNonceRequested:              solanaNonceRequested,
 		SolanaZentpAccountsRequested:      solanaZenTPAccountsRequested,
 		SolanaAccountsRequested:           solanaAccountsRequested,
+		SolanaDctAccountsRequested:        solanaDCTAccountsRequested,
 		ValidatorMismatchCounts:           validatorMismatchCounts,
 		LastCompletedZentpMintId:          lastCompletedZentpMintID,
 	}

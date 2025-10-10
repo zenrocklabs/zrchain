@@ -11,6 +11,10 @@ import (
 
 // CreatePendingMintTransaction stores a new pending mint transaction for the specified asset.
 func (k Keeper) CreatePendingMintTransaction(ctx context.Context, mintTx *dcttypes.PendingMintTransaction) (uint64, error) {
+	if mintTx.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
+		return 0, dcttypes.ErrUnknownAsset
+	}
+
 	assetKey, err := k.getAssetKey(mintTx.Asset)
 	if err != nil {
 		return 0, err

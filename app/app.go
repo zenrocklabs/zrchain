@@ -65,6 +65,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
+	dctkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
+	dct "github.com/Zenrock-Foundation/zrchain/v6/x/dct/module"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
 	mintkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/mint/keeper"
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
@@ -265,6 +268,7 @@ type ZenrockApp struct {
 	TreasuryKeeper treasurykeeper.Keeper
 	PolicyKeeper   policykeeper.Keeper
 	ZenBTCKeeper   zenbtckeeper.Keeper
+	DCTKeeper      dctkeeper.Keeper
 	ZentpKeeper    zentpkeeper.Keeper
 	ZenexKeeper    zenexkeeper.Keeper
 
@@ -370,6 +374,7 @@ func NewZenrockApp(
 		policytypes.StoreKey,
 		identitytypes.StoreKey,
 		treasurytypes.StoreKey,
+		dcttypes.StoreKey,
 		zenbtctypes.StoreKey,
 		zentptypes.StoreKey,
 		zenextypes.StoreKey,
@@ -471,6 +476,7 @@ func NewZenrockApp(
 		zrConfig,
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
+		&app.DCTKeeper,
 		&app.ZentpKeeper,
 		&app.SlashingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
@@ -725,6 +731,16 @@ func NewZenrockApp(
 	)
 	zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
 
+	app.DCTKeeper = *dctkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[dcttypes.StoreKey]),
+		logger,
+		shared.AdminAuthAddr,
+		app.ValidationKeeper,
+		&app.TreasuryKeeper,
+	)
+	dctModule := dct.NewAppModule(appCodec, app.DCTKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+
 	app.ZentpKeeper = zentpkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zentptypes.StoreKey]),
@@ -891,6 +907,7 @@ func NewZenrockApp(
 		identityModule,
 		treasuryModule,
 		policyModule,
+		dctModule,
 		zenBTCModule,
 		zentpModule,
 		zenexModule,
@@ -942,6 +959,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -964,6 +982,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -995,6 +1014,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -1392,6 +1412,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(policytypes.ModuleName)
 	paramsKeeper.Subspace(identitytypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
+	paramsKeeper.Subspace(dcttypes.ModuleName)
 	paramsKeeper.Subspace(zenbtctypes.ModuleName)
 	paramsKeeper.Subspace(zentptypes.ModuleName)
 	return paramsKeeper

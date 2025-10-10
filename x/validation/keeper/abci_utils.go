@@ -21,6 +21,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -969,6 +970,44 @@ func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.
 	return results, err
 }
 
+func (k *Keeper) getPendingDCTMintTransactions(ctx sdk.Context, asset dcttypes.Asset, status dcttypes.MintTransactionStatus, walletType dcttypes.WalletType) ([]dcttypes.PendingMintTransaction, error) {
+	firstPendingID := uint64(0)
+	var err error
+	if status == dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
+		firstPendingID, err = k.dctKeeper.GetFirstPendingStakeTransaction(ctx, asset)
+	} else if status == dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
+		if walletType == dcttypes.WalletType_WALLET_TYPE_SOLANA {
+			firstPendingID, err = k.dctKeeper.GetFirstPendingSolMintTransaction(ctx, asset)
+		} else if walletType == dcttypes.WalletType_WALLET_TYPE_EVM {
+			firstPendingID, err = k.dctKeeper.GetFirstPendingEthMintTransaction(ctx, asset)
+		}
+	}
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		firstPendingID = 0
+	}
+
+	results := make([]dcttypes.PendingMintTransaction, 0, 2)
+	err = k.dctKeeper.WalkPendingMintTransactions(ctx, asset, func(id uint64, tx dcttypes.PendingMintTransaction) (bool, error) {
+		if id < firstPendingID {
+			return false, nil
+		}
+		if tx.Status == status && tx.ChainType == walletType {
+			results = append(results, tx)
+			if len(results) >= 2 {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 // getPendingBurnEvents retrieves up to 2 pending burn events with status BURNED.
 func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
@@ -1791,6 +1830,46 @@ func (k Keeper) populateAccountsForSolanaMints(
 	return nil
 }
 
+// populateDCTAccountsForAsset collects Solana token accounts for DCT assets scoped by asset identifier.
+func (k Keeper) populateDCTAccountsForAsset(
+	ctx context.Context,
+	asset dcttypes.Asset,
+	mintAddress string,
+	flowDescription string,
+	solAccs map[string]token.Account,
+) error {
+	assetKey := asset.String()
+	rangeForAsset := collections.NewPrefixedPairRange[string, string](assetKey)
+	return k.SolanaDCTAccountsRequested.Walk(ctx, rangeForAsset, func(key collections.Pair[string, string], requested bool) (bool, error) {
+		if !requested {
+			return false, nil
+		}
+		ownerAddressStr := key.K2()
+		ownerPubKey, err := solana.PublicKeyFromBase58(ownerAddressStr)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Invalid owner address for %s", flowDescription), "owner", ownerAddressStr, "error", err)
+			return false, nil
+		}
+		mintPubKey, err := solana.PublicKeyFromBase58(mintAddress)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Invalid %s mint address", flowDescription), "mint", mintAddress, "error", err)
+			return false, nil
+		}
+		ataAddress, _, err := solana.FindAssociatedTokenAddress(ownerPubKey, mintPubKey)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to derive ATA for %s account", flowDescription), "owner", ownerAddressStr, "mint", mintAddress, "error", err)
+			return false, nil
+		}
+
+		acc, err := k.GetSolanaTokenAccount(ctx, ownerAddressStr, mintAddress)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to get Solana token account for %s", flowDescription), "owner", ownerAddressStr, "mint", mintAddress, "ata", ataAddress.String(), "error", err)
+		}
+		solAccs[ataAddress.String()] = acc
+		return false, nil
+	})
+}
+
 // retrieveSolanaAccounts retrieves all requested Solana token accounts.
 // The returned map keys are ATA addresses.
 func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Account, error) {
@@ -1825,6 +1904,27 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 		}
 	}
 
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets for Solana account collection", "error", err)
+		} else {
+			for _, asset := range assets {
+				solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching DCT Solana params", "asset", asset.String(), "error", err)
+					continue
+				}
+				if solParams == nil || solParams.MintAddress == "" {
+					continue
+				}
+				if err := k.populateDCTAccountsForAsset(ctx, asset, solParams.MintAddress, fmt.Sprintf("DCT-%s", asset.String()), solAccs); err != nil {
+					return nil, fmt.Errorf("error processing DCT Solana account requests for asset %s: %w", asset.String(), err)
+				}
+			}
+		}
+	}
+
 	return solAccs, nil
 }
 
@@ -1850,6 +1950,27 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 	if len(pendingsROCK) == 0 {
 		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
 			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
+		}
+	}
+
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets for clearing Solana accounts", "error", err)
+		} else {
+			for _, asset := range assets {
+				pendingDCT, err := k.getPendingDCTMintTransactions(ctx, asset, dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, dcttypes.WalletType_WALLET_TYPE_SOLANA)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching pending DCT Solana mints during cleanup", "asset", asset.String(), "error", err)
+					continue
+				}
+				if len(pendingDCT) == 0 {
+					rangeForAsset := collections.NewPrefixedPairRange[string, string](asset.String())
+					if err := k.SolanaDCTAccountsRequested.Clear(ctx, rangeForAsset); err != nil {
+						k.Logger(ctx).Error("error clearing DCT Solana account requests", "asset", asset.String(), "error", err)
+					}
+				}
+			}
 		}
 	}
 }

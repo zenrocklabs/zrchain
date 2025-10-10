@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -447,6 +448,46 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	for _, tx := range pendingSol {
 		if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 			k.Logger(ctx).Error("error setting Solana requested account flag", "recipient", tx.RecipientAddress, "error", err)
+		}
+	}
+
+	// DCT assets (e.g., zenZEC)
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets", "error", err)
+		} else {
+			for _, asset := range assets {
+				solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
+				if err != nil {
+					k.Logger(ctx).Error("error retrieving DCT Solana params", "asset", asset.String(), "error", err)
+					continue
+				}
+				if solParams == nil {
+					continue
+				}
+				pendingDCTSol, err := k.getPendingDCTMintTransactions(ctx,
+					asset,
+					dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
+					dcttypes.WalletType_WALLET_TYPE_SOLANA,
+				)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching pending DCT Solana mints", "asset", asset.String(), "error", err)
+					continue
+				}
+				if len(pendingDCTSol) == 0 {
+					continue
+				}
+				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+					k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
+					continue
+				}
+				for _, tx := range pendingDCTSol {
+					if err := k.SetSolanaDCTRequestedAccount(ctx, asset, tx.RecipientAddress, true); err != nil {
+						k.Logger(ctx).Error("error setting DCT Solana requested account flag", "asset", asset.String(), "recipient", tx.RecipientAddress, "error", err)
+					}
+				}
+			}
 		}
 	}
 }

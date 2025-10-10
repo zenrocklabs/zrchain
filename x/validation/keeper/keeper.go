@@ -20,6 +20,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
@@ -32,6 +33,7 @@ type Keeper struct {
 	authority             string
 	treasuryKeeper        types.TreasuryKeeper
 	zenBTCKeeper          shared.ZenBTCKeeper
+	dctKeeper             shared.DCTKeeper
 	validatorAddressCodec addresscodec.Codec
 	consensusAddressCodec addresscodec.Codec
 	txDecoder             sdk.TxDecoder
@@ -67,6 +69,7 @@ type Keeper struct {
 	SolanaNonceRequested         collections.Map[uint64, bool]
 	SolanaAccountsRequested      collections.Map[string, bool]
 	SolanaZenTPAccountsRequested collections.Map[string, bool]
+	SolanaDCTAccountsRequested   collections.Map[collections.Pair[string, string], bool]
 	// LastUsedEthereumNonce - map: key ID | value: last used Ethereum nonce data
 	LastUsedEthereumNonce collections.Map[uint64, zenbtctypes.NonceData]
 	LastUsedSolanaNonce   collections.Map[uint64, types.SolanaNonce]
@@ -93,6 +96,7 @@ func NewKeeper(
 	zrConfig *params.ZRConfig,
 	treasuryKeeper types.TreasuryKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
+	dctKeeper shared.DCTKeeper,
 	zentpKeeper types.ZentpKeeper,
 	slashingKeeper types.SlashingKeeper,
 	validatorAddressCodec addresscodec.Codec,
@@ -144,6 +148,7 @@ func NewKeeper(
 		sidecarClient:                     oracleClient,
 		treasuryKeeper:                    treasuryKeeper,
 		zenBTCKeeper:                      zenBTCKeeper,
+		dctKeeper:                         dctKeeper,
 		zentpKeeper:                       zentpKeeper,
 		slashingKeeper:                    slashingKeeper,
 		validatorAddressCodec:             validatorAddressCodec,
@@ -162,6 +167,7 @@ func NewKeeper(
 		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaAccountsRequested:           collections.NewMap(sb, types.SolanaAccountsRequestedKey, types.SolanaAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
 		SolanaZenTPAccountsRequested:      collections.NewMap(sb, types.SolanaZenTPAccountsRequestedKey, types.SolanaZenTPAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
+		SolanaDCTAccountsRequested:        collections.NewMap(sb, types.SolanaDCTAccountsRequestedKey, types.SolanaDCTAccountsRequestedIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), collections.BoolValue),
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
@@ -279,6 +285,14 @@ func (k Keeper) SetSolanaZenTPRequestedAccount(ctx context.Context, ownerAddress
 	return k.SolanaZenTPAccountsRequested.Set(ctx, ownerAddress, state)
 }
 
+func (k Keeper) SetSolanaDCTRequestedAccount(ctx context.Context, asset dcttypes.Asset, ownerAddress string, state bool) error {
+	key, err := k.dctAccountKey(asset, ownerAddress)
+	if err != nil {
+		return err
+	}
+	return k.SolanaDCTAccountsRequested.Set(ctx, key, state)
+}
+
 func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {
 	return k.SolanaNonceRequested.Set(ctx, keyID, state)
 }
@@ -290,6 +304,16 @@ func (k *Keeper) SetSidecarClient(client sidecarClient) {
 
 func (k *Keeper) SetBackfillRequests(ctx context.Context, requests types.BackfillRequests) error {
 	return k.BackfillRequests.Set(ctx, requests)
+}
+
+func (k Keeper) dctAccountKey(asset dcttypes.Asset, ownerAddress string) (collections.Pair[string, string], error) {
+	if asset == dcttypes.Asset_ASSET_UNSPECIFIED {
+		return collections.Pair[string, string]{}, dcttypes.ErrUnknownAsset
+	}
+	if ownerAddress == "" {
+		return collections.Pair[string, string]{}, fmt.Errorf("owner address must be provided")
+	}
+	return collections.Join(asset.String(), ownerAddress), nil
 }
 
 func (k Keeper) GetAssetPrices(ctx context.Context) (map[types.Asset]math.LegacyDec, error) {
@@ -514,6 +538,19 @@ func (k Keeper) GetSolanaZenTPAccountsRequested(ctx context.Context) (map[string
 	}
 
 	return solanaZenTPAccountsRequested, nil
+}
+
+func (k Keeper) GetSolanaDCTAccountsRequested(ctx context.Context) (map[string]bool, error) {
+	requested := make(map[string]bool)
+	err := k.SolanaDCTAccountsRequested.Walk(ctx, nil, func(key collections.Pair[string, string], value bool) (bool, error) {
+		compositeKey := fmt.Sprintf("%s:%s", key.K1(), key.K2())
+		requested[compositeKey] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return requested, nil
 }
 
 func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) (map[string]types.ValidatorMismatchCount, error) {

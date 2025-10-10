@@ -15,10 +15,14 @@ type DCTKeeper interface {
 	GetParams(ctx context.Context) (dcttypes.Params, error)
 	GetAssetParams(ctx context.Context, asset dcttypes.Asset) (dcttypes.AssetParams, error)
 	ListSupportedAssets(ctx context.Context) ([]dcttypes.Asset, error)
-	GetSolanaParams(ctx context.Context, asset dcttypes.Asset) (*dcttypes.SolanaParams, error)
+	GetSolanaParams(ctx context.Context, asset dcttypes.Asset) (*dcttypes.Solana, error)
 
+	GetDepositKeyringAddr(ctx context.Context, asset dcttypes.Asset) (string, error)
 	GetStakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	GetRewardsDepositKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	GetChangeAddressKeyIDs(ctx context.Context, asset dcttypes.Asset) ([]uint64, error)
+	GetProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error)
+	GetBitcoinProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error)
 
 	SetPendingMintTransaction(ctx context.Context, pendingMintTransaction dcttypes.PendingMintTransaction) error
 	WalkPendingMintTransactions(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, pendingMintTransaction dcttypes.PendingMintTransaction) (stop bool, err error)) error
