@@ -280,11 +280,19 @@ func (k msgServer) changeAddressesForAsset(ctx context.Context, asset types.Asse
 
 func WalletTypeFromChainName(msg *types.MsgVerifyDepositBlockInclusion) treasurytypes.WalletType {
 	switch msg.ChainName {
+	// Bitcoin chains
 	case "mainnet":
 		return treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET
 	case "regtest", "regnet":
 		return treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET
 	case "testnet", "testnet3", "testnet4":
+		return treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET
+	// Zcash chains
+	case "zcash-mainnet":
+		return treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET // Zcash uses same wallet type structure
+	case "zcash-regtest", "zcash-regnet":
+		return treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET
+	case "zcash-testnet":
 		return treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET
 	default:
 		return treasurytypes.WalletType_WALLET_TYPE_UNSPECIFIED

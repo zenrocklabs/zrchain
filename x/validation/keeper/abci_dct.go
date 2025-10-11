@@ -88,7 +88,7 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					return fmt.Errorf("no nonce available for DCT solana mint for asset %s", asset.String())
 				}
 
-				coin, ok := dctAssetToCoin(asset)
+				_, ok := dctAssetToCoin(asset)
 				if !ok {
 					return fmt.Errorf("unsupported DCT asset %s for Solana dispatch", asset.String())
 				}
@@ -177,8 +177,24 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					return err
 				}
 
-				solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
+				solNonce := SolanaNonce{Nonce: nonce.Nonce[:]}
 				return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
+			},
+			UpdatePendingTxStatus: func(tx dcttypes.PendingMintTransaction) error {
+				if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
+					k.Logger(ctx).Debug("Skipping Solana DCT mint retry/timeout checks – no consensus on SolanaMintEventsHash", "asset", asset.String(), "tx_id", tx.Id)
+					return nil
+				}
+				if tx.BlockHeight == 0 {
+					return k.dctKeeper.SetPendingMintTransaction(ctx, tx)
+				}
+				if ctx.BlockHeight() > tx.BlockHeight+solParams.Btl {
+					tx = k.processBtlSolanaDCTMint(ctx, tx, oracleData, *solParams, asset)
+				}
+				if tx.AwaitingEventSince > 0 {
+					tx = k.processSecondaryTimeoutSolanaDCTMint(ctx, tx, oracleData, *solParams, asset)
+				}
+				return k.dctKeeper.SetPendingMintTransaction(ctx, tx)
 			},
 		})
 	}
@@ -312,7 +328,10 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 	processedKeys := make(map[string]bool)
 
 	for _, burn := range oracleData.SolanaBurnEvents {
-		asset, ok := coinToDCTAsset(sidecarapitypes.Coin(burn.Coin))
+		if burn.IsZenBTC {
+			continue // Skip zenBTC burns, they're handled separately
+		}
+		asset, ok := coinToDCTAsset(burn.Coin)
 		if !ok {
 			continue
 		}
@@ -337,10 +356,36 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 			Asset:           asset,
 		}
 
-		if _, err := k.dctKeeper.CreateBurnEvent(ctx, asset, &burnEvent); err != nil {
-			k.Logger(ctx).Error("failed to create DCT burn event", "asset", asset.String(), "txID", burn.TxID, "logIndex", burn.LogIndex, "error", err)
+		_, createErr := k.dctKeeper.CreateBurnEvent(ctx, asset, &burnEvent)
+		if createErr != nil {
+			k.Logger(ctx).Error("failed to create DCT burn event", "asset", asset.String(), "txID", burn.TxID, "logIndex", burn.LogIndex, "error", createErr)
 			continue
 		}
+
+		// Create redemption for the burn event
+		nextRedemptionID := uint64(0)
+		if err := k.dctKeeper.WalkRedemptionsDescending(ctx, asset, func(id uint64, _ dcttypes.Redemption) (bool, error) {
+			nextRedemptionID = id + 1
+			return true, nil
+		}); err != nil {
+			k.Logger(ctx).Error("error walking DCT redemptions to find next ID", "asset", asset.String(), "burn_tx", burn.TxID, "error", err)
+			continue
+		}
+
+		if err := k.dctKeeper.SetRedemption(ctx, asset, nextRedemptionID, dcttypes.Redemption{
+			Data: dcttypes.RedemptionData{
+				Id:                 nextRedemptionID,
+				DestinationAddress: burn.DestinationAddr,
+				Amount:             burn.Amount,
+				Asset:              asset,
+			},
+			Status: dcttypes.RedemptionStatus_UNSTAKED,
+		}); err != nil {
+			k.Logger(ctx).Error("error creating DCT redemption from burn event", "asset", asset.String(), "burn_tx", burn.TxID, "error", err)
+			continue
+		}
+
+		k.Logger(ctx).Info("created DCT redemption for burn event", "asset", asset.String(), "redemption_id", nextRedemptionID, "burn_tx", burn.TxID, "amount", burn.Amount)
 	}
 }
 
@@ -369,5 +414,101 @@ func (k *Keeper) advanceDCTFirstPendingSolMintTransaction(ctx sdk.Context, asset
 			return
 		}
 		nextID++
+	}
+}
+
+func (k Keeper) processBtlSolanaDCTMint(ctx sdk.Context, tx dcttypes.PendingMintTransaction, oracleData OracleData, solParams dcttypes.Solana, asset dcttypes.Asset) dcttypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaTransactionBTLTimeout(
+		ctx,
+		tx.Id,
+		tx.BlockHeight,
+		tx.AwaitingEventSince,
+		solParams.NonceAccountKey,
+		oracleData.SolanaMintNonces,
+		"DCT",
+		asset.String(),
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+func (k Keeper) processSecondaryTimeoutSolanaDCTMint(ctx sdk.Context, tx dcttypes.PendingMintTransaction, oracleData OracleData, solParams dcttypes.Solana, asset dcttypes.Asset) dcttypes.PendingMintTransaction {
+	newBlockHeight, newAwaitingEventSince := k.handleSolanaEventArrivalTimeout(
+		ctx,
+		tx.Id,
+		tx.RecipientAddress,
+		tx.Amount,
+		tx.AwaitingEventSince,
+		solParams.NonceAccountKey,
+		oracleData.SolanaMintNonces,
+		"DCT",
+		asset.String(),
+	)
+	tx.BlockHeight = newBlockHeight
+	tx.AwaitingEventSince = newAwaitingEventSince
+	return tx
+}
+
+// checkForDCTRedemptionFulfilment updates supplies when treasury sign requests for DCT redemptions are fulfilled.
+func (k *Keeper) checkForDCTRedemptionFulfilment(ctx sdk.Context) {
+	if k.dctKeeper == nil {
+		return
+	}
+
+	assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to list DCT assets for redemption fulfilment", "error", err)
+		return
+	}
+
+	for _, asset := range assets {
+		startingIndex, _ := k.dctKeeper.GetFirstRedemptionAwaitingSign(ctx, asset)
+		redemptions, err := k.GetDCTRedemptionsByStatus(ctx, asset, dcttypes.RedemptionStatus_AWAITING_SIGN, 0, startingIndex)
+		if err != nil || len(redemptions) == 0 {
+			continue
+		}
+		if err := k.dctKeeper.SetFirstRedemptionAwaitingSign(ctx, asset, redemptions[0].Data.Id); err != nil {
+			k.Logger(ctx).Error("error setting first DCT redemption awaiting sign", "asset", asset.String(), "id", redemptions[0].Data.Id, "error", err)
+		}
+		supply, err := k.dctKeeper.GetSupply(ctx, asset)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Error("failed to get DCT supply for redemption fulfilment", "asset", asset.String(), "error", err)
+			}
+			continue
+		}
+		for _, redemption := range redemptions {
+			signReq, err := k.treasuryKeeper.GetSignRequest(ctx, redemption.Data.SignReqId)
+			if err != nil {
+				continue
+			}
+			if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_PENDING {
+				continue
+			}
+			if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_FULFILLED {
+				exchangeRate, err := k.dctKeeper.GetExchangeRate(ctx, asset)
+				if err != nil {
+					continue
+				}
+				nativeToRelease := uint64(sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Data.Amount)).Quo(exchangeRate).TruncateInt64())
+				if supply.MintedAmount < redemption.Data.Amount || supply.CustodiedAmount < nativeToRelease {
+					continue
+				}
+				supply.MintedAmount -= redemption.Data.Amount
+				supply.CustodiedAmount -= nativeToRelease
+				redemption.Status = dcttypes.RedemptionStatus_COMPLETED
+			}
+			if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
+				redemption.Data.SignReqId = 0
+				redemption.Status = dcttypes.RedemptionStatus_UNSTAKED
+			}
+			if err := k.dctKeeper.SetRedemption(ctx, asset, redemption.Data.Id, redemption); err != nil {
+				k.Logger(ctx).Error("error updating DCT redemption after fulfilment", "asset", asset.String(), "id", redemption.Data.Id, "error", err)
+			}
+		}
+		if err := k.dctKeeper.SetSupply(ctx, supply); err != nil {
+			k.Logger(ctx).Error("error updating DCT supply after redemption fulfilment", "asset", asset.String(), "error", err)
+		}
 	}
 }

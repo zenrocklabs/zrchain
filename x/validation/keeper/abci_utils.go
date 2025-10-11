@@ -1056,6 +1056,27 @@ func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 	return results, err
 }
 
+// GetDCTRedemptionsByStatus retrieves DCT redemptions for a specific asset with the specified status.
+// If limit is 0, all matching redemptions will be returned.
+func (k *Keeper) GetDCTRedemptionsByStatus(ctx sdk.Context, asset dcttypes.Asset, status dcttypes.RedemptionStatus, limit int, startingIndex uint64) ([]dcttypes.Redemption, error) {
+	var results []dcttypes.Redemption
+	err := k.dctKeeper.WalkRedemptions(ctx, asset, func(id uint64, r dcttypes.Redemption) (bool, error) {
+		if id < startingIndex {
+			return false, nil // continue walking
+		}
+
+		if r.Status == status {
+			results = append(results, r)
+			if limit > 0 && len(results) >= limit {
+				return true, nil // stop walking
+			}
+		}
+		return false, nil // continue walking
+	})
+
+	return results, err
+}
+
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, pluralityVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
 	// Compare against the plurality vote extension (most voted values) rather than consensus.
 	// This prevents jailing the entire validator set during prolonged periods without supermajority consensus.

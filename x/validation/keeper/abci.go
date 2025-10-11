@@ -397,6 +397,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
+		k.checkForDCTRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
 
 		// 3. Final cleanup steps for the block
