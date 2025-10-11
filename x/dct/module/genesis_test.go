@@ -8,8 +8,8 @@ import (
 	keepertest "github.com/Zenrock-Foundation/zrchain/v6/testutil/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/nullify"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
-	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
+	dct "github.com/Zenrock-Foundation/zrchain/v6/x/dct/module"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
@@ -20,9 +20,9 @@ func TestGenesis(t *testing.T) {
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
-	k, ctx := keepertest.ZenbtcKeeper(t)
-	zenbtc.InitGenesis(ctx, k, genesisState)
-	got := zenbtc.ExportGenesis(ctx, k)
+	k, ctx := keepertest.DctKeeper(t)
+	dct.InitGenesis(ctx, k, genesisState)
+	got := dct.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)

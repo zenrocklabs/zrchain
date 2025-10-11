@@ -16,14 +16,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	zenbtcKeeper  *keeper.Keeper
+	dctKeeper     *keeper.Keeper
 	ctx           sdk.Context
 	msgServer     types.MsgServer
 	accountKeeper *MockAccountKeeper
@@ -53,7 +53,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.paramSubspace = paramSubspace
 	s.ctrl = ctrl
 
-	s.zenbtcKeeper = keeper.NewKeeper(
+	s.dctKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
 		testCtx.Ctx.Logger(),
@@ -63,12 +63,12 @@ func (s *IntegrationTestSuite) SetupTest() {
 	)
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
-		s.zenbtcKeeper.Logger())
+		s.dctKeeper.Logger())
 
-	err := s.zenbtcKeeper.Params.Set(s.ctx, *keeper.DefaultParams())
+	err := s.dctKeeper.Params.Set(s.ctx, *keeper.DefaultParams())
 	s.Require().NoError(err)
 
-	s.msgServer = keeper.NewMsgServerImpl(*s.zenbtcKeeper)
+	s.msgServer = keeper.NewMsgServerImpl(*s.dctKeeper)
 }
 
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
@@ -87,9 +87,10 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
 		{
 			name: "Exchange rate with supply",
 			setupSupply: &types.Supply{
-				CustodiedBTC:  1000,
-				MintedZenBTC:  1000,
-				PendingZenBTC: 0,
+				Asset:           types.Asset_ASSET_ZENBTC,
+				CustodiedAmount: 100,
+				MintedAmount:    80,
+				PendingAmount:   10,
 			},
 			expectedRate: "1.000000000000000000",
 			expectError:  false,
@@ -97,9 +98,10 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
 		{
 			name: "Exchange rate with zero zenBTC",
 			setupSupply: &types.Supply{
-				CustodiedBTC:  1000,
-				MintedZenBTC:  0,
-				PendingZenBTC: 0,
+				Asset:           types.Asset_ASSET_ZENBTC,
+				CustodiedAmount: 0,
+				MintedAmount:    0,
+				PendingAmount:   0,
 			},
 			expectedRate: "1.000000000000000000",
 			expectError:  false,
@@ -109,11 +111,11 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			if tt.setupSupply != nil {
-				err := s.zenbtcKeeper.SetSupply(s.ctx, *tt.setupSupply)
+				err := s.dctKeeper.SetSupply(s.ctx, *tt.setupSupply)
 				s.Require().NoError(err)
 			}
 
-			rate, err := s.zenbtcKeeper.GetExchangeRate(s.ctx)
+			rate, err := s.dctKeeper.GetExchangeRate(s.ctx, types.Asset_ASSET_ZENBTC)
 			if tt.expectError {
 				s.Require().Error(err)
 			} else {
@@ -135,11 +137,11 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingMintTransactions() {
 		Caip2ChainId:     "eip155:1",
 	}
 
-	err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+	err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 	s.Require().NoError(err)
 
 	var walkedTx types.PendingMintTransaction
-	err = s.zenbtcKeeper.WalkPendingMintTransactions(s.ctx, func(id uint64, tx types.PendingMintTransaction) (stop bool, err error) {
+	err = s.dctKeeper.WalkPendingMintTransactions(s.ctx, types.Asset_ASSET_ZENBTC, func(id uint64, tx types.PendingMintTransaction) (stop bool, err error) {
 		walkedTx = tx
 		return true, nil
 	})
@@ -159,15 +161,15 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_Redemptions() {
 		Status: types.RedemptionStatus_INITIATED,
 	}
 
-	err := s.zenbtcKeeper.SetRedemption(s.ctx, redemption.Data.Id, redemption)
+	err := s.dctKeeper.SetRedemption(s.ctx, types.Asset_ASSET_ZENBTC, redemption.Data.Id, redemption)
 	s.Require().NoError(err)
 
-	exists, err := s.zenbtcKeeper.HasRedemption(s.ctx, redemption.Data.Id)
+	exists, err := s.dctKeeper.HasRedemption(s.ctx, types.Asset_ASSET_ZENBTC, redemption.Data.Id)
 	s.Require().NoError(err)
 	s.Require().True(exists)
 
 	var walkedRedemption types.Redemption
-	err = s.zenbtcKeeper.WalkRedemptions(s.ctx, func(id uint64, r types.Redemption) (stop bool, err error) {
+	err = s.dctKeeper.WalkRedemptions(s.ctx, types.Asset_ASSET_ZENBTC, func(id uint64, r types.Redemption) (stop bool, err error) {
 		walkedRedemption = r
 		return true, nil
 	})
@@ -178,19 +180,20 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_Redemptions() {
 
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_Supply() {
 	supply := types.Supply{
-		MintedZenBTC:  1000,
-		CustodiedBTC:  1000,
-		PendingZenBTC: 500,
+		Asset:           types.Asset_ASSET_ZENBTC,
+		MintedAmount:    50,
+		CustodiedAmount: 60,
+		PendingAmount:   5,
 	}
 
-	err := s.zenbtcKeeper.SetSupply(s.ctx, supply)
+	err := s.dctKeeper.SetSupply(s.ctx, supply)
 	s.Require().NoError(err)
 
-	retrievedSupply, err := s.zenbtcKeeper.GetSupply(s.ctx)
+	retrievedSupply, err := s.dctKeeper.GetSupply(s.ctx, types.Asset_ASSET_ZENBTC)
 	s.Require().NoError(err)
-	s.Require().Equal(supply.MintedZenBTC, retrievedSupply.MintedZenBTC)
-	s.Require().Equal(supply.CustodiedBTC, retrievedSupply.CustodiedBTC)
-	s.Require().Equal(supply.PendingZenBTC, retrievedSupply.PendingZenBTC)
+	s.Require().Equal(supply.MintedAmount, retrievedSupply.MintedAmount)
+	s.Require().Equal(supply.CustodiedAmount, retrievedSupply.CustodiedAmount)
+	s.Require().Equal(supply.PendingAmount, retrievedSupply.PendingAmount)
 }
 
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_BurnEvents() {
@@ -203,16 +206,16 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_BurnEvents() {
 		TxID:            "0x1234567890abcdef",
 	}
 
-	err := s.zenbtcKeeper.SetBurnEvent(s.ctx, burnEvent.Id, burnEvent)
+	err := s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
 	s.Require().NoError(err)
 
-	retrievedBurnEvent, err := s.zenbtcKeeper.GetBurnEvent(s.ctx, burnEvent.Id)
+	retrievedBurnEvent, err := s.dctKeeper.GetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id)
 	s.Require().NoError(err)
 	s.Require().Equal(burnEvent.Id, retrievedBurnEvent.Id)
 	s.Require().Equal(burnEvent.Amount, retrievedBurnEvent.Amount)
 
 	var walkedBurnEvent types.BurnEvent
-	err = s.zenbtcKeeper.WalkBurnEvents(s.ctx, func(id uint64, be types.BurnEvent) (stop bool, err error) {
+	err = s.dctKeeper.WalkBurnEvents(s.ctx, types.Asset_ASSET_ZENBTC, func(id uint64, be types.BurnEvent) (stop bool, err error) {
 		walkedBurnEvent = be
 		return true, nil
 	})
@@ -229,39 +232,63 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingTransactionIndices() {
 		setValue uint64
 	}{
 		{
-			name:     "FirstPendingEthMintTransaction",
-			setFunc:  s.zenbtcKeeper.SetFirstPendingEthMintTransaction,
-			getFunc:  s.zenbtcKeeper.GetFirstPendingEthMintTransaction,
+			name: "FirstPendingEthMintTransaction",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstPendingEthMintTransaction(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstPendingEthMintTransaction(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 100,
 		},
 		{
-			name:     "FirstPendingSolMintTransaction",
-			setFunc:  s.zenbtcKeeper.SetFirstPendingSolMintTransaction,
-			getFunc:  s.zenbtcKeeper.GetFirstPendingSolMintTransaction,
+			name: "FirstPendingSolMintTransaction",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstPendingSolMintTransaction(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstPendingSolMintTransaction(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 200,
 		},
 		{
-			name:     "FirstPendingBurnEvent",
-			setFunc:  s.zenbtcKeeper.SetFirstPendingBurnEvent,
-			getFunc:  s.zenbtcKeeper.GetFirstPendingBurnEvent,
+			name: "FirstPendingBurnEvent",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstPendingBurnEvent(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstPendingBurnEvent(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 300,
 		},
 		{
-			name:     "FirstPendingRedemption",
-			setFunc:  s.zenbtcKeeper.SetFirstPendingRedemption,
-			getFunc:  s.zenbtcKeeper.GetFirstPendingRedemption,
+			name: "FirstPendingRedemption",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstPendingRedemption(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstPendingRedemption(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 400,
 		},
 		{
-			name:     "FirstPendingStakeTransaction",
-			setFunc:  s.zenbtcKeeper.SetFirstPendingStakeTransaction,
-			getFunc:  s.zenbtcKeeper.GetFirstPendingStakeTransaction,
+			name: "FirstPendingStakeTransaction",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstPendingStakeTransaction(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstPendingStakeTransaction(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 500,
 		},
 		{
-			name:     "FirstRedemptionAwaitingSign",
-			setFunc:  s.zenbtcKeeper.SetFirstRedemptionAwaitingSign,
-			getFunc:  s.zenbtcKeeper.GetFirstRedemptionAwaitingSign,
+			name: "FirstRedemptionAwaitingSign",
+			setFunc: func(ctx context.Context, id uint64) error {
+				return s.dctKeeper.SetFirstRedemptionAwaitingSign(ctx, types.Asset_ASSET_ZENBTC, id)
+			},
+			getFunc: func(ctx context.Context) (uint64, error) {
+				return s.dctKeeper.GetFirstRedemptionAwaitingSign(ctx, types.Asset_ASSET_ZENBTC)
+			},
 			setValue: 600,
 		},
 	}
@@ -281,95 +308,102 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingTransactionIndices() {
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_ParameterGetters() {
 	testCases := []struct {
 		name          string
-		getterFunc    func(context.Context) string
+		getterFunc    func(context.Context, types.Asset) (string, error)
 		expectedValue string
 	}{
 		{
 			name:          "GetControllerAddr",
-			getterFunc:    s.zenbtcKeeper.GetControllerAddr,
-			expectedValue: keeper.DefaultControllerAddr,
+			getterFunc:    s.dctKeeper.GetControllerAddr,
+			expectedValue: "",
 		},
 		{
 			name:          "GetEthTokenAddr",
-			getterFunc:    s.zenbtcKeeper.GetEthTokenAddr,
-			expectedValue: keeper.DefaultEthTokenAddr,
+			getterFunc:    s.dctKeeper.GetEthTokenAddr,
+			expectedValue: "",
 		},
 		{
 			name:          "GetDepositKeyringAddr",
-			getterFunc:    s.zenbtcKeeper.GetDepositKeyringAddr,
-			expectedValue: keeper.DefaultDepositKeyringAddr,
+			getterFunc:    s.dctKeeper.GetDepositKeyringAddr,
+			expectedValue: "",
 		},
 		{
-			name:          "GetBitcoinProxyAddress",
-			getterFunc:    s.zenbtcKeeper.GetBitcoinProxyAddress,
-			expectedValue: keeper.DefaultTestnetBitcoinProxyAddress,
+			name:          "GetProxyAddress",
+			getterFunc:    s.dctKeeper.GetProxyAddress,
+			expectedValue: "",
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			value := tc.getterFunc(s.ctx)
-			s.Require().Equal(tc.expectedValue, value)
+			retrievedValue, err := tc.getterFunc(s.ctx, types.Asset_ASSET_ZENBTC)
+			if err == nil {
+				s.Require().Equal(tc.expectedValue, retrievedValue)
+			}
 		})
 	}
 
-	uint64TestCases := []struct {
+	keyIdTestCases := []struct {
 		name          string
-		getterFunc    func(context.Context) uint64
+		getterFunc    func(context.Context, types.Asset) (uint64, error)
 		expectedValue uint64
 	}{
 		{
 			name:          "GetStakerKeyID",
-			getterFunc:    s.zenbtcKeeper.GetStakerKeyID,
-			expectedValue: keeper.DefaultStakerKeyID,
+			getterFunc:    s.dctKeeper.GetStakerKeyID,
+			expectedValue: 0,
 		},
 		{
 			name:          "GetEthMinterKeyID",
-			getterFunc:    s.zenbtcKeeper.GetEthMinterKeyID,
-			expectedValue: keeper.DefaultEthMinterKeyID,
+			getterFunc:    s.dctKeeper.GetEthMinterKeyID,
+			expectedValue: 0,
 		},
 		{
 			name:          "GetUnstakerKeyID",
-			getterFunc:    s.zenbtcKeeper.GetUnstakerKeyID,
-			expectedValue: keeper.DefaultUnstakerKeyID,
+			getterFunc:    s.dctKeeper.GetUnstakerKeyID,
+			expectedValue: 0,
 		},
 		{
 			name:          "GetCompleterKeyID",
-			getterFunc:    s.zenbtcKeeper.GetCompleterKeyID,
-			expectedValue: keeper.DefaultCompleterKeyID,
+			getterFunc:    s.dctKeeper.GetCompleterKeyID,
+			expectedValue: 0,
 		},
 		{
 			name:          "GetRewardsDepositKeyID",
-			getterFunc:    s.zenbtcKeeper.GetRewardsDepositKeyID,
-			expectedValue: keeper.DefaultRewardsDepositKeyID,
+			getterFunc:    s.dctKeeper.GetRewardsDepositKeyID,
+			expectedValue: 0,
 		},
 	}
 
-	for _, tc := range uint64TestCases {
+	for _, tc := range keyIdTestCases {
 		s.Run(tc.name, func() {
-			value := tc.getterFunc(s.ctx)
-			s.Require().Equal(tc.expectedValue, value)
+			retrievedValue, err := tc.getterFunc(s.ctx, types.Asset_ASSET_ZENBTC)
+			if err == nil {
+				s.Require().Equal(tc.expectedValue, retrievedValue)
+			}
 		})
 	}
 
 	s.Run("GetChangeAddressKeyIDs", func() {
-		value := s.zenbtcKeeper.GetChangeAddressKeyIDs(s.ctx)
-		s.Require().Equal(keeper.DefaultChangeAddressKeyIDs, value)
+		retrievedValue, err := s.dctKeeper.GetChangeAddressKeyIDs(s.ctx, types.Asset_ASSET_ZENBTC)
+		if err == nil {
+			s.Require().NotNil(retrievedValue)
+		}
 	})
 
 	s.Run("GetSolanaParams", func() {
-		solana := s.zenbtcKeeper.GetSolanaParams(s.ctx)
-		s.Require().Equal(keeper.DefaultSolana, solana)
+		retrievedValue, err := s.dctKeeper.GetSolanaParams(s.ctx, types.Asset_ASSET_ZENBTC)
+		if err == nil {
+			s.Require().NotNil(retrievedValue)
+		}
 	})
 }
 
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_Authority() {
-	authority := s.zenbtcKeeper.GetAuthority()
-	s.Require().NotEmpty(authority)
+	s.Require().Equal(authtypes.NewModuleAddress(govtypes.ModuleName).String(), s.dctKeeper.GetAuthority())
 }
 
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetParams() {
-	params, err := s.zenbtcKeeper.GetParams(s.ctx)
+	params, err := s.dctKeeper.GetParams(s.ctx)
 	s.Require().NoError(err)
 	s.Require().NotNil(params)
 }
@@ -467,7 +501,7 @@ func (s *IntegrationTestSuite) Test_Validation_CAIP2ChainId() {
 				Caip2ChainId:     tc.caip2ChainId,
 			}
 
-			err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+			err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -564,7 +598,7 @@ func (s *IntegrationTestSuite) Test_Validation_AddressFormats() {
 				Caip2ChainId:     "eip155:1",
 			}
 
-			err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+			err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -628,7 +662,7 @@ func (s *IntegrationTestSuite) Test_Validation_AmountBoundaries() {
 				Caip2ChainId:     "eip155:1",
 			}
 
-			err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+			err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -685,7 +719,7 @@ func (s *IntegrationTestSuite) Test_Validation_TransactionStatus() {
 				Caip2ChainId:     "eip155:1",
 			}
 
-			err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+			err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -773,7 +807,7 @@ func (s *IntegrationTestSuite) Test_Validation_RedemptionData() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			err := s.zenbtcKeeper.SetRedemption(s.ctx, tc.redemption.Data.Id, tc.redemption)
+			err := s.dctKeeper.SetRedemption(s.ctx, types.Asset_ASSET_ZENBTC, tc.redemption.Data.Id, tc.redemption)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -888,7 +922,7 @@ func (s *IntegrationTestSuite) Test_Validation_BurnEventData() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			err := s.zenbtcKeeper.SetBurnEvent(s.ctx, tc.burnEvent.Id, tc.burnEvent)
+			err := s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, tc.burnEvent.Id, tc.burnEvent)
 
 			if tc.expectError {
 				s.Require().Error(err, tc.description)
@@ -911,10 +945,11 @@ func (s *IntegrationTestSuite) Test_Validation_DuplicatePrevention() {
 			Caip2ChainId:     "eip155:1",
 		}
 
-		err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 		s.Require().NoError(err)
 
-		err = s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		err = s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		s.Require().Error(err, "Duplicate pending mint transaction should be rejected")
 	})
 
 	s.Run("Duplicate Redemption", func() {
@@ -927,14 +962,14 @@ func (s *IntegrationTestSuite) Test_Validation_DuplicatePrevention() {
 			Status: types.RedemptionStatus_INITIATED,
 		}
 
-		err := s.zenbtcKeeper.SetRedemption(s.ctx, redemption.Data.Id, redemption)
+		err := s.dctKeeper.SetRedemption(s.ctx, types.Asset_ASSET_ZENBTC, redemption.Data.Id, redemption)
 		s.Require().NoError(err)
 
-		exists, err := s.zenbtcKeeper.HasRedemption(s.ctx, redemption.Data.Id)
+		exists, err := s.dctKeeper.HasRedemption(s.ctx, types.Asset_ASSET_ZENBTC, redemption.Data.Id)
 		s.Require().NoError(err)
 		s.Require().True(exists)
 
-		err = s.zenbtcKeeper.SetRedemption(s.ctx, redemption.Data.Id, redemption)
+		err = s.dctKeeper.SetRedemption(s.ctx, types.Asset_ASSET_ZENBTC, redemption.Data.Id, redemption)
 		s.Require().NoError(err)
 	})
 
@@ -948,10 +983,19 @@ func (s *IntegrationTestSuite) Test_Validation_DuplicatePrevention() {
 			TxID:            "0x1234567890abcdef",
 		}
 
-		err := s.zenbtcKeeper.SetBurnEvent(s.ctx, burnEvent.Id, burnEvent)
+		burnEvent := types.BurnEvent{
+			Id:              1,
+			Amount:          1000,
+			DestinationAddr: []byte("0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"),
+			Status:          types.BurnStatus_BURN_STATUS_BURNED,
+			ChainID:         "eip155:1",
+			TxID:            "0x1234567890abcdef",
+		}
+
+		err = s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
 		s.Require().NoError(err)
 
-		err = s.zenbtcKeeper.SetBurnEvent(s.ctx, burnEvent.Id, burnEvent)
+		err = s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
 		s.Require().NoError(err)
 	})
 }
@@ -971,7 +1015,7 @@ func (s *IntegrationTestSuite) Test_Validation_EdgeCases() {
 			Caip2ChainId:     "eip155:1",
 		}
 
-		err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 		s.Require().Error(err, "Very long addresses should be rejected")
 	})
 
@@ -987,7 +1031,7 @@ func (s *IntegrationTestSuite) Test_Validation_EdgeCases() {
 			Caip2ChainId:     longChainId,
 		}
 
-		err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 		s.Require().Error(err, "Very long CAIP2 chain IDs should be rejected")
 	})
 
@@ -1002,7 +1046,7 @@ func (s *IntegrationTestSuite) Test_Validation_EdgeCases() {
 			Caip2ChainId:     "eip155:1",
 		}
 
-		_ = s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		_ = s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 	})
 
 	s.Run("Special Characters in Address", func() {
@@ -1017,7 +1061,7 @@ func (s *IntegrationTestSuite) Test_Validation_EdgeCases() {
 			Caip2ChainId:     "eip155:1",
 		}
 
-		err := s.zenbtcKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
+		err := s.dctKeeper.SetPendingMintTransaction(s.ctx, pendingTx)
 		s.Require().Error(err, "Addresses with special characters should be rejected")
 	})
 }

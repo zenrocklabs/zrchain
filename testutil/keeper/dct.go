@@ -1,4 +1,4 @@
-package keeper_test
+package keeper
 
 import (
 	"testing"
@@ -51,14 +51,4 @@ func DctKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	}
 
 	return *k, ctx
-}
-
-func TestParamsQuery(t *testing.T) {
-	dctKeeper, ctx := DctKeeper(t)
-	params := keeper.DefaultParams()
-	require.NoError(t, dctKeeper.Params.Set(ctx, *params))
-
-	response, err := dctKeeper.QueryParams(ctx, &types.QueryParamsRequest{})
-	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsResponse{Params: *params}, response)
 }
