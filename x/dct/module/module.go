@@ -18,11 +18,11 @@ import (
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
-const consensusVersion = 10
+const consensusVersion = 1
 
 var (
 	_ module.AppModuleBasic      = (*AppModule)(nil)
@@ -125,42 +125,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
-	m := keeper.NewMigrator(&am.keeper)
-	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 4 to 5: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 5, m.Migrate5to6); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 5 to 6: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 6, m.Migrate6to7); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 6 to 7: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 7, m.Migrate7to8); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 7 to 8: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 8, m.Migrate8to9); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 8 to 9: %v", types.ModuleName, err))
-	}
-
-	if err := cfg.RegisterMigration(types.ModuleName, 9, m.Migrate9to10); err != nil {
-		panic(fmt.Sprintf("failed to migrate x/%s from version 9 to 10: %v", types.ModuleName, err))
-	}
+	// No migrations needed yet - this is a new module (consensus version 1)
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)

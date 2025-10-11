@@ -15,12 +15,12 @@ func (k Keeper) QueryPendingMintTransaction(ctx context.Context, req *types.Quer
 
 	var pendingMintResponse *types.PendingMintTransaction
 
-	if err := k.PendingMintTransactionsMap.Walk(ctx, nil, func(_ uint64, mint types.PendingMintTransaction) (bool, error) {
+	// Search across all assets for the pending mint transaction with matching tx hash
+	if err := k.WalkPendingMintTransactions(ctx, req.Asset, func(_ uint64, mint types.PendingMintTransaction) (bool, error) {
 		if mint.TxHash == req.TxHash {
 			pendingMintResponse = &mint
 			return true, nil
 		}
-
 		return false, nil
 	}); err != nil {
 		return nil, err

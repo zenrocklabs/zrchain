@@ -28,7 +28,7 @@ func (k msgServer) VerifyUnsignedRedemptionTX(ctx sdk.Context, msg *types.MsgSub
 		return fmt.Errorf("failed to check change address: %w", err)
 	}
 
-	if err := k.verifyInputsInRedemption(ctx, msg.Inputs); err != nil {
+	if err := k.verifyInputsInRedemption(ctx, msg); err != nil {
 		return fmt.Errorf("failed to verify input keys: %w", err)
 	}
 
@@ -38,14 +38,14 @@ func (k msgServer) VerifyUnsignedRedemptionTX(ctx sdk.Context, msg *types.MsgSub
 	}
 
 	// Update the redemptions to awaiting signature
-	if err := k.updateRedemptions(ctx, msg.RedemptionIndexes); err != nil {
+	if err := k.updateRedemptions(ctx, msg.Asset, msg.RedemptionIndexes); err != nil {
 		return fmt.Errorf("failed to update redemptions to awaiting signature: %w", err)
 	}
 
 	return nil
 }
 
-func (k msgServer) updateRedemptions(ctx sdk.Context, redemptionIndices []uint64) error {
+func (k msgServer) updateRedemptions(ctx sdk.Context, asset types.Asset, redemptionIndices []uint64) error {
 	if len(redemptionIndices) == 0 {
 		return fmt.Errorf("no redemption indices provided")
 	}
@@ -53,7 +53,7 @@ func (k msgServer) updateRedemptions(ctx sdk.Context, redemptionIndices []uint64
 	// Iterate over the redemption indices, starting from the second element
 	for _, redemptionIndex := range redemptionIndices[1:] {
 		// Retrieve the redemption entry
-		redemption, err := k.Keeper.Redemptions.Get(ctx, redemptionIndex)
+		redemption, err := k.Keeper.GetRedemption(ctx, asset, redemptionIndex)
 		if err != nil {
 			return fmt.Errorf("failed to retrieve redemption at index %d: %w", redemptionIndex, err)
 		}
@@ -62,7 +62,7 @@ func (k msgServer) updateRedemptions(ctx sdk.Context, redemptionIndices []uint64
 		redemption.Status = types.RedemptionStatus_AWAITING_SIGN
 
 		// Save the updated redemption entry
-		if err := k.Keeper.Redemptions.Set(ctx, redemptionIndex, redemption); err != nil {
+		if err := k.Keeper.SetRedemption(ctx, asset, redemptionIndex, redemption); err != nil {
 			return fmt.Errorf("failed to update redemption at index %d: %w", redemptionIndex, err)
 		}
 	}
@@ -71,7 +71,10 @@ func (k msgServer) updateRedemptions(ctx sdk.Context, redemptionIndices []uint64
 }
 
 func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitUnsignedRedemptionTx) (*wire.MsgTx, error) {
-	zenBTCChangeAddressKeyIDs := k.GetChangeAddressKeyIDs(ctx)
+	zenBTCChangeAddressKeyIDs, err := k.GetChangeAddressKeyIDs(ctx, msg.Asset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve change address key IDs: %w", err)
+	}
 	if zenBTCChangeAddressKeyIDs == nil || len(zenBTCChangeAddressKeyIDs) == 0 {
 		return nil, fmt.Errorf("failed to retrieve ZenBTCChangeAddressKeyIDs")
 	}
@@ -119,7 +122,10 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 }
 
 func (k msgServer) checkRedemptionTXCreator(ctx context.Context, msg *types.MsgSubmitUnsignedRedemptionTx) error {
-	bitcoinProxyAddress := k.Keeper.GetBitcoinProxyAddress(ctx)
+	bitcoinProxyAddress, err := k.Keeper.GetBitcoinProxyAddress(ctx, msg.Asset)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve Bitcoin proxy address: %w", err)
+	}
 	if bitcoinProxyAddress == "" {
 		return fmt.Errorf("invalid BitcoinProxyAddress")
 	}
@@ -168,10 +174,13 @@ func (k msgServer) verifyOutputsAgainstRedemptions(ctx context.Context, msg *typ
 	return nil
 }
 
-func (k msgServer) verifyInputsInRedemption(ctx context.Context, inputs []*types.InputHashes) error {
-	changeAddressKeyIDs := k.Keeper.GetChangeAddressKeyIDs(ctx)
+func (k msgServer) verifyInputsInRedemption(ctx context.Context, msg *types.MsgSubmitUnsignedRedemptionTx) error {
+	changeAddressKeyIDs, err := k.Keeper.GetChangeAddressKeyIDs(ctx, msg.Asset)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve change address key IDs: %w", err)
+	}
 
-	for _, input := range inputs {
+	for _, input := range msg.Inputs {
 		// skip validation for change inputs.
 		if ok := slices.Contains(changeAddressKeyIDs, input.Keyid); ok {
 			continue

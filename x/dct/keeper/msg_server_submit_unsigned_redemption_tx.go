@@ -39,14 +39,14 @@ func (k msgServer) SubmitUnsignedRedemptionTx(goCtx context.Context, msg *types.
 	}
 
 	for _, idx := range msg.RedemptionIndexes[1:] {
-		redemption, err := k.Redemptions.Get(ctx, idx)
+		redemption, err := k.GetRedemption(ctx, msg.Asset, idx)
 		if err != nil {
 			return nil, err
 		}
 
 		redemption.Data.SignReqId = resp.SigReqId
 
-		if err := k.Redemptions.Set(ctx, idx, redemption); err != nil {
+		if err := k.SetRedemption(ctx, msg.Asset, idx, redemption); err != nil {
 			return nil, err
 		}
 	}

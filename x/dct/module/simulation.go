@@ -10,15 +10,15 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/testutil/sample"
 
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
-	zenbtcsimulation "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/simulation"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
+	dctsimulation "github.com/Zenrock-Foundation/zrchain/v6/x/dct/simulation"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
 // avoid unused import issue
 var (
-	_ = zenbtcsimulation.FindAccount
+	_ = dctsimulation.FindAccount
 	_ = rand.Rand{}
 	_ = sample.AccAddress
 	_ = sdk.AccAddress{}
@@ -63,10 +63,11 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 			weightMsgVerifyDepositBlockInclusion = defaultWeightMsgVerifyDepositBlockInclusion
 		},
 	)
-	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgVerifyDepositBlockInclusion,
-		zenbtcsimulation.SimulateMsgVerifyDepositBlockInclusion(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
+	// TODO: Implement DCT-specific simulation functions
+	// operations = append(operations, simulation.NewWeightedOperation(
+	// 	weightMsgVerifyDepositBlockInclusion,
+	// 	dctsimulation.SimulateMsgVerifyDepositBlockInclusion(am.accountKeeper, am.bankKeeper, am.keeper),
+	// ))
 
 	// this line is used by starport scaffolding # simapp/module/operation
 
@@ -76,14 +77,15 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 // ProposalMsgs returns msgs used for governance proposals for simulations.
 func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
 	return []simtypes.WeightedProposalMsg{
-		simulation.NewWeightedProposalMsg(
-			opWeightMsgVerifyDepositBlockInclusion,
-			defaultWeightMsgVerifyDepositBlockInclusion,
-			func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
-				zenbtcsimulation.SimulateMsgVerifyDepositBlockInclusion(am.accountKeeper, am.bankKeeper, am.keeper)
-				return nil
-			},
-		),
+		// TODO: Implement DCT-specific simulation functions
+		// simulation.NewWeightedProposalMsg(
+		// 	opWeightMsgVerifyDepositBlockInclusion,
+		// 	defaultWeightMsgVerifyDepositBlockInclusion,
+		// 	func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
+		// 		dctsimulation.SimulateMsgVerifyDepositBlockInclusion(am.accountKeeper, am.bankKeeper, am.keeper)
+		// 		return nil
+		// 	},
+		// ),
 		// this line is used by starport scaffolding # simapp/module/OpMsg
 	}
 }

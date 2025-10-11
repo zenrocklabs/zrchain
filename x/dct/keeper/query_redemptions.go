@@ -19,28 +19,61 @@ func (k Keeper) GetRedemptions(goCtx context.Context, req *types.QueryRedemption
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	redemptions := make([]types.Redemption, 0)
-	var queryRange collections.Range[uint64]
 
-	if err := k.Redemptions.Walk(ctx, queryRange.StartInclusive(req.StartIndex), func(key uint64, redemption types.Redemption) (bool, error) {
-		switch req.Status {
-		case types.RedemptionStatus_INITIATED:
-			if redemption.Status == types.RedemptionStatus_INITIATED {
+	// Walk through all assets if asset is unspecified, otherwise filter by asset
+	asset := req.Asset
+	if asset == types.Asset_ASSET_UNSPECIFIED {
+		// Query all redemptions across all assets
+		if err := k.Redemptions.Walk(ctx, nil, func(key collections.Pair[string, uint64], redemption types.Redemption) (bool, error) {
+			if key.K2() < req.StartIndex {
+				return false, nil
+			}
+			switch req.Status {
+			case types.RedemptionStatus_INITIATED:
+				if redemption.Status == types.RedemptionStatus_INITIATED {
+					redemptions = append(redemptions, redemption)
+				}
+			case types.RedemptionStatus_UNSTAKED:
+				if redemption.Status == types.RedemptionStatus_UNSTAKED {
+					redemptions = append(redemptions, redemption)
+				}
+			case types.RedemptionStatus_COMPLETED:
+				if redemption.Status == types.RedemptionStatus_COMPLETED {
+					redemptions = append(redemptions, redemption)
+				}
+			default: // don't filter
 				redemptions = append(redemptions, redemption)
 			}
-		case types.RedemptionStatus_UNSTAKED:
-			if redemption.Status == types.RedemptionStatus_UNSTAKED {
-				redemptions = append(redemptions, redemption)
-			}
-		case types.RedemptionStatus_COMPLETED:
-			if redemption.Status == types.RedemptionStatus_COMPLETED {
-				redemptions = append(redemptions, redemption)
-			}
-		default: // don't filter
-			redemptions = append(redemptions, redemption)
+			return false, nil
+		}); err != nil {
+			return nil, err
 		}
-		return false, nil
-	}); err != nil {
-		return nil, err
+	} else {
+		// Query redemptions for a specific asset
+		if err := k.WalkRedemptions(ctx, asset, func(id uint64, redemption types.Redemption) (bool, error) {
+			if id < req.StartIndex {
+				return false, nil
+			}
+			switch req.Status {
+			case types.RedemptionStatus_INITIATED:
+				if redemption.Status == types.RedemptionStatus_INITIATED {
+					redemptions = append(redemptions, redemption)
+				}
+			case types.RedemptionStatus_UNSTAKED:
+				if redemption.Status == types.RedemptionStatus_UNSTAKED {
+					redemptions = append(redemptions, redemption)
+				}
+			case types.RedemptionStatus_COMPLETED:
+				if redemption.Status == types.RedemptionStatus_COMPLETED {
+					redemptions = append(redemptions, redemption)
+				}
+			default: // don't filter
+				redemptions = append(redemptions, redemption)
+			}
+			return false, nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	return &types.QueryRedemptionsResponse{Redemptions: redemptions}, nil
