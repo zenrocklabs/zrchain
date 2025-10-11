@@ -30,10 +30,24 @@ type DCTKeeper interface {
 	HasPendingMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) (bool, error)
 	GetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	SetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
+	GetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	SetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
 	GetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	SetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
 
 	GetSupply(ctx context.Context, asset dcttypes.Asset) (dcttypes.Supply, error)
 	SetSupply(ctx context.Context, supply dcttypes.Supply) error
 	GetExchangeRate(ctx context.Context, asset dcttypes.Asset) (math.LegacyDec, error)
+
+	// Burn events
+	CreateBurnEvent(ctx context.Context, asset dcttypes.Asset, burnEvent *dcttypes.BurnEvent) (uint64, error)
+	WalkBurnEvents(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, burnEvent dcttypes.BurnEvent) (stop bool, err error)) error
+
+	// Redemptions
+	SetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64, redemption dcttypes.Redemption) error
+	GetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64) (dcttypes.Redemption, error)
+	WalkRedemptions(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, redemption dcttypes.Redemption) (stop bool, err error)) error
+	WalkRedemptionsDescending(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, redemption dcttypes.Redemption) (stop bool, err error)) error
+	GetFirstRedemptionAwaitingSign(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	SetFirstRedemptionAwaitingSign(ctx context.Context, asset dcttypes.Asset, id uint64) error
 }

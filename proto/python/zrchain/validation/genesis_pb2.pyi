@@ -15,7 +15,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GenesisState(_message.Message):
-    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "HVParams", "asset_prices", "last_valid_ve_height", "slash_events", "slash_event_count", "validation_infos", "btc_block_headers", "last_used_solana_nonce", "backfill_request", "last_used_ethereum_nonce", "requested_historical_bitcoin_headers", "avs_rewards_pool", "ethereum_nonce_requested", "solana_nonce_requested", "solana_zentp_accounts_requested", "solana_accounts_requested", "validator_mismatch_counts", "last_completed_zentp_mint_id", "avs_delegations", "validator_delegations", "latest_btc_header_height")
+    __slots__ = ("params", "last_total_power", "last_validator_powers", "validators", "delegations", "unbonding_delegations", "redelegations", "exported", "HVParams", "asset_prices", "last_valid_ve_height", "slash_events", "slash_event_count", "validation_infos", "btc_block_headers", "last_used_solana_nonce", "backfill_request", "last_used_ethereum_nonce", "requested_historical_bitcoin_headers", "avs_rewards_pool", "ethereum_nonce_requested", "solana_nonce_requested", "solana_zentp_accounts_requested", "solana_accounts_requested", "solana_dct_accounts_requested", "validator_mismatch_counts", "last_completed_zentp_mint_id", "avs_delegations", "validator_delegations", "latest_btc_header_height")
     class AssetPricesEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -93,6 +93,13 @@ class GenesisState(_message.Message):
         key: str
         value: bool
         def __init__(self, key: _Optional[str] = ..., value: bool = ...) -> None: ...
+    class SolanaDctAccountsRequestedEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: bool
+        def __init__(self, key: _Optional[str] = ..., value: bool = ...) -> None: ...
     class ValidatorMismatchCountsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -138,6 +145,7 @@ class GenesisState(_message.Message):
     SOLANA_NONCE_REQUESTED_FIELD_NUMBER: _ClassVar[int]
     SOLANA_ZENTP_ACCOUNTS_REQUESTED_FIELD_NUMBER: _ClassVar[int]
     SOLANA_ACCOUNTS_REQUESTED_FIELD_NUMBER: _ClassVar[int]
+    SOLANA_DCT_ACCOUNTS_REQUESTED_FIELD_NUMBER: _ClassVar[int]
     VALIDATOR_MISMATCH_COUNTS_FIELD_NUMBER: _ClassVar[int]
     LAST_COMPLETED_ZENTP_MINT_ID_FIELD_NUMBER: _ClassVar[int]
     AVS_DELEGATIONS_FIELD_NUMBER: _ClassVar[int]
@@ -167,12 +175,13 @@ class GenesisState(_message.Message):
     solana_nonce_requested: _containers.ScalarMap[int, bool]
     solana_zentp_accounts_requested: _containers.ScalarMap[str, bool]
     solana_accounts_requested: _containers.ScalarMap[str, bool]
+    solana_dct_accounts_requested: _containers.ScalarMap[str, bool]
     validator_mismatch_counts: _containers.MessageMap[str, _hybrid_validation_pb2.ValidatorMismatchCount]
     last_completed_zentp_mint_id: int
     avs_delegations: _containers.ScalarMap[str, bytes]
     validator_delegations: _containers.ScalarMap[str, bytes]
     latest_btc_header_height: int
-    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ..., asset_prices: _Optional[_Mapping[int, bytes]] = ..., last_valid_ve_height: _Optional[int] = ..., slash_events: _Optional[_Mapping[int, _hybrid_validation_pb2.SlashEvent]] = ..., slash_event_count: _Optional[int] = ..., validation_infos: _Optional[_Mapping[int, _hybrid_validation_pb2.ValidationInfo]] = ..., btc_block_headers: _Optional[_Mapping[int, _sidecar_service_pb2.BTCBlockHeader]] = ..., last_used_solana_nonce: _Optional[_Mapping[int, _solana_pb2.SolanaNonce]] = ..., backfill_request: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ..., last_used_ethereum_nonce: _Optional[_Mapping[int, _mint_pb2.NonceData]] = ..., requested_historical_bitcoin_headers: _Optional[_Union[_mint_pb2.RequestedBitcoinHeaders, _Mapping]] = ..., avs_rewards_pool: _Optional[_Mapping[str, bytes]] = ..., ethereum_nonce_requested: _Optional[_Mapping[int, bool]] = ..., solana_nonce_requested: _Optional[_Mapping[int, bool]] = ..., solana_zentp_accounts_requested: _Optional[_Mapping[str, bool]] = ..., solana_accounts_requested: _Optional[_Mapping[str, bool]] = ..., validator_mismatch_counts: _Optional[_Mapping[str, _hybrid_validation_pb2.ValidatorMismatchCount]] = ..., last_completed_zentp_mint_id: _Optional[int] = ..., avs_delegations: _Optional[_Mapping[str, bytes]] = ..., validator_delegations: _Optional[_Mapping[str, bytes]] = ..., latest_btc_header_height: _Optional[int] = ...) -> None: ...
+    def __init__(self, params: _Optional[_Union[_staking_pb2.Params, _Mapping]] = ..., last_total_power: _Optional[bytes] = ..., last_validator_powers: _Optional[_Iterable[_Union[LastValidatorPower, _Mapping]]] = ..., validators: _Optional[_Iterable[_Union[_hybrid_validation_pb2.ValidatorHV, _Mapping]]] = ..., delegations: _Optional[_Iterable[_Union[_staking_pb2.Delegation, _Mapping]]] = ..., unbonding_delegations: _Optional[_Iterable[_Union[_staking_pb2.UnbondingDelegation, _Mapping]]] = ..., redelegations: _Optional[_Iterable[_Union[_staking_pb2.Redelegation, _Mapping]]] = ..., exported: bool = ..., HVParams: _Optional[_Union[_hybrid_validation_pb2.HVParams, _Mapping]] = ..., asset_prices: _Optional[_Mapping[int, bytes]] = ..., last_valid_ve_height: _Optional[int] = ..., slash_events: _Optional[_Mapping[int, _hybrid_validation_pb2.SlashEvent]] = ..., slash_event_count: _Optional[int] = ..., validation_infos: _Optional[_Mapping[int, _hybrid_validation_pb2.ValidationInfo]] = ..., btc_block_headers: _Optional[_Mapping[int, _sidecar_service_pb2.BTCBlockHeader]] = ..., last_used_solana_nonce: _Optional[_Mapping[int, _solana_pb2.SolanaNonce]] = ..., backfill_request: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ..., last_used_ethereum_nonce: _Optional[_Mapping[int, _mint_pb2.NonceData]] = ..., requested_historical_bitcoin_headers: _Optional[_Union[_mint_pb2.RequestedBitcoinHeaders, _Mapping]] = ..., avs_rewards_pool: _Optional[_Mapping[str, bytes]] = ..., ethereum_nonce_requested: _Optional[_Mapping[int, bool]] = ..., solana_nonce_requested: _Optional[_Mapping[int, bool]] = ..., solana_zentp_accounts_requested: _Optional[_Mapping[str, bool]] = ..., solana_accounts_requested: _Optional[_Mapping[str, bool]] = ..., solana_dct_accounts_requested: _Optional[_Mapping[str, bool]] = ..., validator_mismatch_counts: _Optional[_Mapping[str, _hybrid_validation_pb2.ValidatorMismatchCount]] = ..., last_completed_zentp_mint_id: _Optional[int] = ..., avs_delegations: _Optional[_Mapping[str, bytes]] = ..., validator_delegations: _Optional[_Mapping[str, bytes]] = ..., latest_btc_header_height: _Optional[int] = ...) -> None: ...
 
 class LastValidatorPower(_message.Message):
     __slots__ = ("address", "power")

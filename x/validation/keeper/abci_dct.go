@@ -11,6 +11,7 @@ import (
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gagliardetto/solana-go"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
@@ -177,7 +178,7 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					return err
 				}
 
-				solNonce := SolanaNonce{Nonce: nonce.Nonce[:]}
+				solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 				return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 			},
 			UpdatePendingTxStatus: func(tx dcttypes.PendingMintTransaction) error {
@@ -390,13 +391,15 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 }
 
 func (k *Keeper) dctBurnEventExists(ctx sdk.Context, asset dcttypes.Asset, txID string, logIndex uint64) bool {
-	err := k.dctKeeper.WalkBurnEvents(ctx, asset, func(_ uint64, event dcttypes.BurnEvent) (bool, error) {
+	found := false
+	_ = k.dctKeeper.WalkBurnEvents(ctx, asset, func(_ uint64, event dcttypes.BurnEvent) (bool, error) {
 		if event.TxID == txID && event.LogIndex == logIndex {
-			return true, collections.ErrEndIteration
+			found = true
+			return true, nil // stop iteration
 		}
 		return false, nil
 	})
-	return errors.Is(err, collections.ErrEndIteration)
+	return found
 }
 
 func (k *Keeper) advanceDCTFirstPendingSolMintTransaction(ctx sdk.Context, asset dcttypes.Asset, currentID uint64) {
@@ -424,9 +427,8 @@ func (k Keeper) processBtlSolanaDCTMint(ctx sdk.Context, tx dcttypes.PendingMint
 		tx.BlockHeight,
 		tx.AwaitingEventSince,
 		solParams.NonceAccountKey,
-		oracleData.SolanaMintNonces,
-		"DCT",
-		asset.String(),
+		solParams.Btl,
+		oracleData,
 	)
 	tx.BlockHeight = newBlockHeight
 	tx.AwaitingEventSince = newAwaitingEventSince
@@ -440,10 +442,9 @@ func (k Keeper) processSecondaryTimeoutSolanaDCTMint(ctx sdk.Context, tx dcttype
 		tx.RecipientAddress,
 		tx.Amount,
 		tx.AwaitingEventSince,
+		tx.BlockHeight,
 		solParams.NonceAccountKey,
-		oracleData.SolanaMintNonces,
-		"DCT",
-		asset.String(),
+		oracleData,
 	)
 	tx.BlockHeight = newBlockHeight
 	tx.AwaitingEventSince = newAwaitingEventSince
