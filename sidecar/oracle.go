@@ -1263,8 +1263,8 @@ func (o *Oracle) buildFinalState(
 		LastSolRockMintSig:      lastSolRockMintSig,
 		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
 		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
-		LastSolZenZECMintSig:    o.lastSolZenZECMintSigStr,
-		LastSolZenZECBurnSig:    o.lastSolZenZECBurnSigStr,
+		LastSolZenZECMintSig:    lastSolZenZECMintSig,
+		LastSolZenZECBurnSig:    lastSolZenZECBurnSig,
 		LastSolRockBurnSig:      lastSolRockBurnSig,
 		PendingSolanaTxs:        update.pendingTransactions,
 	}
@@ -2692,6 +2692,7 @@ func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionRe
 					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
 				},
 				eventType,
+				api.Coin_ROCK,
 			)
 		}
 	case "Solana zenBTC mint":
@@ -2717,6 +2718,7 @@ func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionRe
 					return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
 				},
 				eventType,
+				api.Coin_ZENBTC,
 			)
 		}
 	case "Solana zenBTC burn":
@@ -2742,7 +2744,7 @@ func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionRe
 					}
 					return eventData.DestAddr[:], eventData.Value, true
 				},
-				eventType, chainID, true,
+				eventType, chainID, true, api.Coin_ZENBTC,
 			)
 		}
 	case "Solana ROCK burn":
@@ -2768,7 +2770,7 @@ func (o *Oracle) processTransactionByEventType(txResult *solrpc.GetTransactionRe
 					}
 					return eventData.DestAddr[:], eventData.Value, true
 				},
-				eventType, chainID, false,
+				eventType, chainID, false, api.Coin_ROCK,
 			)
 		}
 	default:
