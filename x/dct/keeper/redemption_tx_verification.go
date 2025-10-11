@@ -9,11 +9,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
 func (k msgServer) VerifyUnsignedRedemptionTX(ctx sdk.Context, msg *types.MsgSubmitUnsignedRedemptionTx) error {
@@ -75,7 +75,7 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve change address key IDs: %w", err)
 	}
-	if zenBTCChangeAddressKeyIDs == nil || len(zenBTCChangeAddressKeyIDs) == 0 {
+	if len(zenBTCChangeAddressKeyIDs) == 0 {
 		return nil, fmt.Errorf("failed to retrieve ZenBTCChangeAddressKeyIDs")
 	}
 

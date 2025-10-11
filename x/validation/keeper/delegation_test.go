@@ -15,6 +15,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
+var (
+	PKs = simtestutil.CreateTestPubKeys(500)
+)
+
 func createValAddrs(count int) ([]sdk.AccAddress, []sdk.ValAddress) {
 	addrs := simtestutil.CreateIncrementalAccounts(count)
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)

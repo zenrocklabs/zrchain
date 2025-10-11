@@ -983,16 +983,7 @@ func (s *IntegrationTestSuite) Test_Validation_DuplicatePrevention() {
 			TxID:            "0x1234567890abcdef",
 		}
 
-		burnEvent := types.BurnEvent{
-			Id:              1,
-			Amount:          1000,
-			DestinationAddr: []byte("0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"),
-			Status:          types.BurnStatus_BURN_STATUS_BURNED,
-			ChainID:         "eip155:1",
-			TxID:            "0x1234567890abcdef",
-		}
-
-		err = s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
+		err := s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
 		s.Require().NoError(err)
 
 		err = s.dctKeeper.SetBurnEvent(s.ctx, types.Asset_ASSET_ZENBTC, burnEvent.Id, burnEvent)
