@@ -62,6 +62,15 @@ func (m *mockDCTKeeper) GetDepositKeyringAddr(ctx context.Context, asset dcttype
 func (m *mockDCTKeeper) GetStakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
 	return 0, nil
 }
+func (m *mockDCTKeeper) GetEthMinterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetUnstakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetCompleterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
 func (m *mockDCTKeeper) GetRewardsDepositKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
 	return 0, nil
 }
