@@ -30,7 +30,7 @@ from zrchain.dct import redemptions_pb2 as zrchain_dot_dct_dot_redemptions__pb2
 from zrchain.dct import mint_pb2 as zrchain_dot_dct_dot_mint__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/dct/genesis.proto\x12\x0bzrchain.dct\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x18zrchain/dct/params.proto\x1a\x18zrchain/dct/supply.proto\x1a\x1dzrchain/dct/redemptions.proto\x1a\x16zrchain/dct/mint.proto\"~\n\x0cGenesisState\x12\x36\n\x06params\x18\x01 \x01(\x0b\x32\x13.zrchain.dct.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x36\n\x06\x61ssets\x18\x02 \x03(\x0b\x32\x1e.zrchain.dct.AssetGenesisStateR\x06\x61ssets\"\xac\x0b\n\x11\x41ssetGenesisState\x12(\n\x05\x61sset\x18\x01 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset\x12l\n\x11lock_transactions\x18\x02 \x03(\x0b\x32\x34.zrchain.dct.AssetGenesisState.LockTransactionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x10lockTransactions\x12\x82\x01\n\x19pending_mint_transactions\x18\x03 \x03(\x0b\x32;.zrchain.dct.AssetGenesisState.PendingMintTransactionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x17pendingMintTransactions\x12J\n\"first_pending_eth_mint_transaction\x18\x04 \x01(\x04R\x1e\x66irstPendingEthMintTransaction\x12J\n\"first_pending_sol_mint_transaction\x18\x05 \x01(\x04R\x1e\x66irstPendingSolMintTransaction\x12\x43\n\x1epending_mint_transaction_count\x18\x06 \x01(\x04R\x1bpendingMintTransactionCount\x12Z\n\x0b\x62urn_events\x18\x07 \x03(\x0b\x32..zrchain.dct.AssetGenesisState.BurnEventsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nburnEvents\x12\x37\n\x18\x66irst_pending_burn_event\x18\x08 \x01(\x04R\x15\x66irstPendingBurnEvent\x12(\n\x10\x62urn_event_count\x18\t \x01(\x04R\x0e\x62urnEventCount\x12\\\n\x0bredemptions\x18\n \x03(\x0b\x32/.zrchain.dct.AssetGenesisState.RedemptionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0bredemptions\x12\x38\n\x18\x66irst_pending_redemption\x18\x0b \x01(\x04R\x16\x66irstPendingRedemption\x12\x43\n\x1e\x66irst_redemption_awaiting_sign\x18\x0c \x01(\x04R\x1b\x66irstRedemptionAwaitingSign\x12\x36\n\x06supply\x18\r \x01(\x0b\x32\x13.zrchain.dct.SupplyB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06supply\x12\x45\n\x1f\x66irst_pending_stake_transaction\x18\x0e \x01(\x04R\x1c\x66irstPendingStakeTransaction\x1a\x61\n\x15LockTransactionsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x32\n\x05value\x18\x02 \x01(\x0b\x32\x1c.zrchain.dct.LockTransactionR\x05value:\x02\x38\x01\x1ao\n\x1cPendingMintTransactionsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x39\n\x05value\x18\x02 \x01(\x0b\x32#.zrchain.dct.PendingMintTransactionR\x05value:\x02\x38\x01\x1aU\n\x0f\x42urnEventsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x16.zrchain.dct.BurnEventR\x05value:\x02\x38\x01\x1aW\n\x10RedemptionsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12-\n\x05value\x18\x02 \x01(\x0b\x32\x17.zrchain.dct.RedemptionR\x05value:\x02\x38\x01\x42\x36Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19zrchain/dct/genesis.proto\x12\x0bzrchain.dct\x1a\x11\x61mino/amino.proto\x1a\x14gogoproto/gogo.proto\x1a\x18zrchain/dct/params.proto\x1a\x18zrchain/dct/supply.proto\x1a\x1dzrchain/dct/redemptions.proto\x1a\x16zrchain/dct/mint.proto\"\x89\x01\n\x0cGenesisState\x12\x36\n\x06params\x18\x01 \x01(\x0b\x32\x13.zrchain.dct.ParamsB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06params\x12\x41\n\x06\x61ssets\x18\x02 \x03(\x0b\x32\x1e.zrchain.dct.AssetGenesisStateB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06\x61ssets\"\xac\x0b\n\x11\x41ssetGenesisState\x12(\n\x05\x61sset\x18\x01 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset\x12l\n\x11lock_transactions\x18\x02 \x03(\x0b\x32\x34.zrchain.dct.AssetGenesisState.LockTransactionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x10lockTransactions\x12\x82\x01\n\x19pending_mint_transactions\x18\x03 \x03(\x0b\x32;.zrchain.dct.AssetGenesisState.PendingMintTransactionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x17pendingMintTransactions\x12J\n\"first_pending_eth_mint_transaction\x18\x04 \x01(\x04R\x1e\x66irstPendingEthMintTransaction\x12J\n\"first_pending_sol_mint_transaction\x18\x05 \x01(\x04R\x1e\x66irstPendingSolMintTransaction\x12\x43\n\x1epending_mint_transaction_count\x18\x06 \x01(\x04R\x1bpendingMintTransactionCount\x12Z\n\x0b\x62urn_events\x18\x07 \x03(\x0b\x32..zrchain.dct.AssetGenesisState.BurnEventsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\nburnEvents\x12\x37\n\x18\x66irst_pending_burn_event\x18\x08 \x01(\x04R\x15\x66irstPendingBurnEvent\x12(\n\x10\x62urn_event_count\x18\t \x01(\x04R\x0e\x62urnEventCount\x12\\\n\x0bredemptions\x18\n \x03(\x0b\x32/.zrchain.dct.AssetGenesisState.RedemptionsEntryB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x0bredemptions\x12\x38\n\x18\x66irst_pending_redemption\x18\x0b \x01(\x04R\x16\x66irstPendingRedemption\x12\x43\n\x1e\x66irst_redemption_awaiting_sign\x18\x0c \x01(\x04R\x1b\x66irstRedemptionAwaitingSign\x12\x36\n\x06supply\x18\r \x01(\x0b\x32\x13.zrchain.dct.SupplyB\t\xc8\xde\x1f\x00\xa8\xe7\xb0*\x01R\x06supply\x12\x45\n\x1f\x66irst_pending_stake_transaction\x18\x0e \x01(\x04R\x1c\x66irstPendingStakeTransaction\x1a\x61\n\x15LockTransactionsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x32\n\x05value\x18\x02 \x01(\x0b\x32\x1c.zrchain.dct.LockTransactionR\x05value:\x02\x38\x01\x1ao\n\x1cPendingMintTransactionsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12\x39\n\x05value\x18\x02 \x01(\x0b\x32#.zrchain.dct.PendingMintTransactionR\x05value:\x02\x38\x01\x1aU\n\x0f\x42urnEventsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x16.zrchain.dct.BurnEventR\x05value:\x02\x38\x01\x1aW\n\x10RedemptionsEntry\x12\x10\n\x03key\x18\x01 \x01(\x04R\x03key\x12-\n\x05value\x18\x02 \x01(\x0b\x32\x17.zrchain.dct.RedemptionR\x05value:\x02\x38\x01\x42\x36Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -40,6 +40,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/types'
   _globals['_GENESISSTATE'].fields_by_name['params']._loaded_options = None
   _globals['_GENESISSTATE'].fields_by_name['params']._serialized_options = b'\310\336\037\000\250\347\260*\001'
+  _globals['_GENESISSTATE'].fields_by_name['assets']._loaded_options = None
+  _globals['_GENESISSTATE'].fields_by_name['assets']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._loaded_options = None
   _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._serialized_options = b'8\001'
   _globals['_ASSETGENESISSTATE_PENDINGMINTTRANSACTIONSENTRY']._loaded_options = None
@@ -58,16 +60,16 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_ASSETGENESISSTATE'].fields_by_name['redemptions']._serialized_options = b'\310\336\037\000\250\347\260*\001'
   _globals['_ASSETGENESISSTATE'].fields_by_name['supply']._loaded_options = None
   _globals['_ASSETGENESISSTATE'].fields_by_name['supply']._serialized_options = b'\310\336\037\000\250\347\260*\001'
-  _globals['_GENESISSTATE']._serialized_start=190
-  _globals['_GENESISSTATE']._serialized_end=316
-  _globals['_ASSETGENESISSTATE']._serialized_start=319
-  _globals['_ASSETGENESISSTATE']._serialized_end=1771
-  _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._serialized_start=1385
-  _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._serialized_end=1482
-  _globals['_ASSETGENESISSTATE_PENDINGMINTTRANSACTIONSENTRY']._serialized_start=1484
-  _globals['_ASSETGENESISSTATE_PENDINGMINTTRANSACTIONSENTRY']._serialized_end=1595
-  _globals['_ASSETGENESISSTATE_BURNEVENTSENTRY']._serialized_start=1597
-  _globals['_ASSETGENESISSTATE_BURNEVENTSENTRY']._serialized_end=1682
-  _globals['_ASSETGENESISSTATE_REDEMPTIONSENTRY']._serialized_start=1684
-  _globals['_ASSETGENESISSTATE_REDEMPTIONSENTRY']._serialized_end=1771
+  _globals['_GENESISSTATE']._serialized_start=191
+  _globals['_GENESISSTATE']._serialized_end=328
+  _globals['_ASSETGENESISSTATE']._serialized_start=331
+  _globals['_ASSETGENESISSTATE']._serialized_end=1783
+  _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._serialized_start=1397
+  _globals['_ASSETGENESISSTATE_LOCKTRANSACTIONSENTRY']._serialized_end=1494
+  _globals['_ASSETGENESISSTATE_PENDINGMINTTRANSACTIONSENTRY']._serialized_start=1496
+  _globals['_ASSETGENESISSTATE_PENDINGMINTTRANSACTIONSENTRY']._serialized_end=1607
+  _globals['_ASSETGENESISSTATE_BURNEVENTSENTRY']._serialized_start=1609
+  _globals['_ASSETGENESISSTATE_BURNEVENTSENTRY']._serialized_end=1694
+  _globals['_ASSETGENESISSTATE_REDEMPTIONSENTRY']._serialized_start=1696
+  _globals['_ASSETGENESISSTATE_REDEMPTIONSENTRY']._serialized_end=1783
 # @@protoc_insertion_point(module_scope)

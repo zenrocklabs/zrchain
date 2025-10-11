@@ -16,7 +16,10 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  repeated AssetGenesisState assets = 2;
+  repeated AssetGenesisState assets = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 message AssetGenesisState {
