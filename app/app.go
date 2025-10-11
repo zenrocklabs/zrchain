@@ -718,6 +718,8 @@ func NewZenrockApp(
 		app.PolicyKeeper,
 		&app.ZenBTCKeeper,
 		&app.ZentpKeeper,
+		&app.DCTKeeper,
+		&app.ZenexKeeper,
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 

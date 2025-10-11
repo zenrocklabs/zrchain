@@ -19,6 +19,9 @@ type DCTKeeper interface {
 
 	GetDepositKeyringAddr(ctx context.Context, asset dcttypes.Asset) (string, error)
 	GetStakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	GetEthMinterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	GetUnstakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
+	GetCompleterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	GetRewardsDepositKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	GetChangeAddressKeyIDs(ctx context.Context, asset dcttypes.Asset) ([]uint64, error)
 	GetProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error)
