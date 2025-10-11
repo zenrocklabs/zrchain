@@ -60,6 +60,7 @@ func setupTestKeeper(t *testing.T, sdkCtx sdk.Context) (*keeper.Keeper, *testuti
 		nil,                                  // zrConfig
 		mockTreasuryKeeper,                   // treasuryKeeper
 		nil,                                  // zenBTCKeeper
+		nil,                                  // dctKeeper
 		mockZentpKeeper,                      // zentpKeeper
 		mockSlashingKeeper,                   // slashingKeeper
 		address.NewBech32Codec("zenvaloper"), // validatorAddressCodec

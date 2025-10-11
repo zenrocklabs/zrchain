@@ -58,3 +58,7 @@ type ZentpKeeper interface {
 	GetNonceAccountKey(ctx context.Context) uint64
 	GetNonceAuthorityKey(ctx context.Context) uint64
 }
+
+type ZenexKeeper interface {
+	GetZenexPoolKeyId(ctx context.Context) uint64
+}

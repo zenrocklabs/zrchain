@@ -1,0 +1,55 @@
+syntax = "proto3";
+package zrchain.dct;
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "zrchain/dct/params.proto";
+import "zrchain/dct/supply.proto";
+import "zrchain/dct/redemptions.proto";
+import "zrchain/dct/mint.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types";
+
+// GenesisState defines the dct module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  repeated AssetGenesisState assets = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+message AssetGenesisState {
+  Asset asset = 1;
+  map<string, LockTransaction> lock_transactions = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  map<uint64, PendingMintTransaction> pending_mint_transactions = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  uint64 first_pending_eth_mint_transaction = 4;
+  uint64 first_pending_sol_mint_transaction = 5;
+  uint64 pending_mint_transaction_count = 6;
+  map<uint64, BurnEvent> burn_events = 7 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  uint64 first_pending_burn_event = 8;
+  uint64 burn_event_count = 9;
+  map<uint64, Redemption> redemptions = 10 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  uint64 first_pending_redemption = 11;
+  uint64 first_redemption_awaiting_sign = 12;
+  Supply supply = 13 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  uint64 first_pending_stake_transaction = 14;
+}

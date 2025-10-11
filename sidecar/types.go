@@ -61,6 +61,8 @@ type Oracle struct {
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
+	lastSolZenZECMintSigStr string
+	lastSolZenZECBurnSigStr string
 	lastSolRockBurnSigStr   string
 
 	// Performance optimization fields
@@ -70,6 +72,7 @@ type Oracle struct {
 
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaZenZECBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	getSolanaRockBurnEventsFn   func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)

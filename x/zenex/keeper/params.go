@@ -31,3 +31,9 @@ func (k Keeper) SetParams(ctx context.Context, params types.Params) error {
 
 	return nil
 }
+
+// GetZenexPoolKeyId returns the zenex pool key ID from params
+func (k Keeper) GetZenexPoolKeyId(ctx context.Context) uint64 {
+	params := k.GetParams(ctx)
+	return params.GetZenexPoolKeyId()
+}

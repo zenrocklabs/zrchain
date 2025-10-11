@@ -123,6 +123,10 @@ message GenesisState {
   map<string, bool> solana_accounts_requested = 24
       [ (amino.dont_omitempty) = true ];
 
+  // solana_dct_accounts_requested defines the Solana accounts requested for DCT assets at genesis.
+  map<string, bool> solana_dct_accounts_requested = 30
+      [ (amino.dont_omitempty) = true ];
+
   // validator_mismatch_counts defines the validator mismatch counts at genesis.
   map<string, ValidatorMismatchCount> validator_mismatch_counts = 25
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
