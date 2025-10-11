@@ -82,6 +82,14 @@ var (
 		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 
+	ZenZECSolanaProgramID = map[string]string{
+		NetworkLocalnet: "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkRegnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkDevnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkTestnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkMainnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+	}
+
 	SolRockProgramID = map[string]string{
 		NetworkLocalnet: "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkRegnet:   "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
@@ -181,6 +189,8 @@ const (
 	SolRockMint   SolanaEventType = "solRockMint"
 	SolZenBTCMint SolanaEventType = "solZenBTCMint"
 	SolZenBTCBurn SolanaEventType = "solZenBTCBurn"
+	SolZenZECMint SolanaEventType = "solZenZECMint"
+	SolZenZECBurn SolanaEventType = "solZenZECBurn"
 	SolRockBurn   SolanaEventType = "solRockBurn"
 )
 
@@ -213,6 +223,8 @@ type OracleState struct {
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
 	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
+	LastSolZenZECMintSig string `json:"lastSolZenZECMintSig,omitempty"`
+	LastSolZenZECBurnSig string `json:"lastSolZenZECBurnSig,omitempty"`
 	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
 	// Pending transactions that failed processing and need to be retried
 	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`

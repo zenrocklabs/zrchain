@@ -1,18 +1,18 @@
 package keeper
 
 import (
-    "context"
-    "fmt"
-    "strings"
+	"context"
+	"fmt"
+	"strings"
 
-    abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 
-    "cosmossdk.io/math"
+	"cosmossdk.io/math"
 
-    sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-    "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-    dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
 
 // InitGenesis sets the pool and parameters for the provided keeper.  For each

@@ -1,6 +1,5 @@
 syntax = "proto3";
 package zrchain.dct;
-I
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "zrchain/dct/params.proto";

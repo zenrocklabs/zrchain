@@ -156,15 +156,15 @@ import (
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zenbtckeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	zenexkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zenex "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/module"
 	zenextypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
-	zenbtckeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
-	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 const appName = "ZenrockApp"
@@ -476,7 +476,7 @@ func NewZenrockApp(
 		zrConfig,
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
-		&app.DCTKeeper,
+		nil,
 		&app.ZentpKeeper,
 		&app.SlashingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
@@ -740,6 +740,7 @@ func NewZenrockApp(
 		&app.TreasuryKeeper,
 	)
 	dctModule := dct.NewAppModule(appCodec, app.DCTKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+	app.ValidationKeeper.SetDCTKeeper(&app.DCTKeeper)
 
 	app.ZentpKeeper = zentpkeeper.NewKeeper(
 		appCodec,

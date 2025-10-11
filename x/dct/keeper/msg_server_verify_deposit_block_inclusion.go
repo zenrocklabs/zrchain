@@ -123,7 +123,7 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 			return nil, err
 		}
 		supply = types.Supply{
-			Asset:          asset,
+			Asset:           asset,
 			CustodiedAmount: 0,
 			MintedAmount:    0,
 			PendingAmount:   0,
@@ -192,6 +192,19 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 		return nil, err
 	}
 	k.validationKeeper.Logger(ctx).Info("added pending mint transaction", "asset", asset.String(), "tx_id", pendingMint.Id, "recipient", pendingMint.RecipientAddress, "amount", pendingMint.Amount)
+
+	currentFirstStake, err := k.GetFirstPendingStakeTransaction(ctx, asset)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		currentFirstStake = 0
+	}
+	if currentFirstStake == 0 || pendingMint.Id < currentFirstStake {
+		if err := k.SetFirstPendingStakeTransaction(ctx, asset, pendingMint.Id); err != nil {
+			return nil, err
+		}
+	}
 
 	solanaParams, err := k.GetSolanaParams(ctx, asset)
 	if err != nil {

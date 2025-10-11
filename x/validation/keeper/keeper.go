@@ -19,8 +19,8 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
@@ -291,6 +291,10 @@ func (k Keeper) SetSolanaDCTRequestedAccount(ctx context.Context, asset dcttypes
 		return err
 	}
 	return k.SolanaDCTAccountsRequested.Set(ctx, key, state)
+}
+
+func (k *Keeper) SetDCTKeeper(dctKeeper shared.DCTKeeper) {
+	k.dctKeeper = dctKeeper
 }
 
 func (k Keeper) SetSolanaRequestedNonce(ctx context.Context, keyID uint64, state bool) error {

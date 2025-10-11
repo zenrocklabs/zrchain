@@ -59,6 +59,7 @@ message BurnEvent {
   uint64 amount = 5;
   bool IsZenBTC = 6;
   uint64 height = 7;
+  Coin coin = 8;
 }
 
 message SidecarStateRequest {}
@@ -95,6 +96,7 @@ enum Coin {
   UNSPECIFIED = 0;
   ZENBTC = 1;
   ROCK = 2;
+  ZENZEC = 3;
 }
 
 message SolanaMintEvent {

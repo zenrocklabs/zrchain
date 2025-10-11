@@ -15,10 +15,10 @@ import (
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 //
@@ -377,11 +377,13 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 			k.processSolanaZenBTCMintEvents(ctx, oracleData)
 			k.processSolanaROCKMintEvents(ctx, oracleData)
+			k.processSolanaDCTMintEvents(ctx, oracleData)
 		}
 
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
 			k.processSolanaROCKBurnEvents(ctx, oracleData)
+			k.storeNewDCTBurnEvents(ctx, oracleData)
 		}
 
 		// 2. Process pending transaction queues based on the latest state
@@ -391,6 +393,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		// Mint directly on destination chains
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
+		k.processDCTMintsSolana(ctx, oracleData)
 
 		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)

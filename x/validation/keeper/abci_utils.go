@@ -22,6 +22,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -39,7 +40,6 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/zenrocklabs/goem/ethereum"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -1568,6 +1568,7 @@ type solanaMintTxRequest struct {
 	nonceAccountKey   uint64
 	nonceAuthorityKey uint64
 	signerKey         uint64
+	multisigKey       string
 	rock              bool
 	zenbtc            bool
 }
@@ -1672,9 +1673,18 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			receiverAta,
 		))
 	} else if req.zenbtc {
-		multiSigKey, err := solana.PublicKeyFromBase58(k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress)
-		if err != nil {
-			return nil, err
+		var multiSigKey solana.PublicKey
+		if req.multisigKey != "" {
+			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			multiSigKeyAddress := k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress
+			multiSigKey, err = solana.PublicKeyFromBase58(multiSigKeyAddress)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		instructions = append(instructions, solzenbtc.Wrap(
