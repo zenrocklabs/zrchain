@@ -1,11 +1,24 @@
 # ZenZEC (ZCash) Integration Agent Plan
 
+## Architecture Overview
+
+### Module Separation (CRITICAL)
+- **zenBTC module**: Handles ALL Bitcoin deposits and zenBTC minting (v0)
+- **DCT module**: Handles ALL other wrapped assets (zenZEC, future assets) (v1+)
+- **IMPORTANT**: DCT module **REJECTS** ASSET_ZENBTC deposits - they must use zenBTC module endpoint
+
+### Why Two Modules?
+1. zenBTC is the original implementation with its own specialized flow
+2. DCT (Digital Currency Tokens) is the v1+ generalized framework for wrapped assets
+3. Keeping zenBTC separate avoids breaking the existing production system
+4. DCT module is designed to be extensible for future assets
+
 ## Current Status
 The DCT zenZEC minting flow is implemented in the chain code but **NOT fully wired up**. The critical missing piece is ZCash block header tracking in the sidecar oracle.
 
 ## Critical Gap
 When a user deposits ZEC to mint zenZEC, the chain needs to verify the deposit transaction is included in a ZCash block. Currently:
-- ✅ Chain code expects block headers via `k.validationKeeper.BtcBlockHeaders.Get(ctx, msg.BlockHeight)`
+- ✅ Chain code expects block headers via `k.validationKeeper.ZcashBlockHeaders.Get(ctx, msg.BlockHeight)`
 - ✅ Chain code can verify ZCash transactions (same format as Bitcoin)
 - ❌ **Sidecar is NOT fetching ZCash block headers**
 - ❌ **Vote extensions are NOT including ZCash headers**
@@ -115,22 +128,24 @@ When a user deposits ZEC to mint zenZEC, the chain needs to verify the deposit t
 
 ### Phase 4: Deposit Verification Updates ✓ COMPLETE
 
-**Goal**: Use ZCash headers for ZCash deposit verification instead of Bitcoin headers
+**Goal**: Use ZCash headers for ZCash deposit verification and enforce module separation
 
 **Tasks**:
 1. ✅ Update `x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`:
-   - Detect ZCash chains (check asset type == ASSET_ZENZEC)
+   - **REJECT ASSET_ZENBTC deposits** (must use zenBTC module, not DCT)
+   - Detect ZCash deposits (check asset type == ASSET_ZENZEC)
    - Use `k.validationKeeper.ZcashBlockHeaders.Get()` for ZCash
-   - Keep Bitcoin logic for Bitcoin chains (ASSET_ZENBTC)
+   - Add error for future unsupported assets
 
-2. ✅ Ensure proper chain detection:
-   - ZCash chains route to ZcashBlockHeaders
-   - Bitcoin chains route to BtcBlockHeaders
+2. ✅ Ensure proper module separation:
+   - zenBTC module handles BTC deposits (x/zenbtc)
+   - DCT module handles zenZEC deposits (x/dct)
+   - Clear error messages direct users to correct endpoint
 
 **Success Criteria**: ✅
 - ZCash deposits verified using ZCash block headers
-- Bitcoin deposits continue using Bitcoin block headers
-- No cross-chain header confusion
+- Bitcoin deposits rejected with helpful error message
+- Module responsibilities clearly separated
 
 ### Phase 5: Testing & Validation
 
@@ -160,6 +175,20 @@ When a user deposits ZEC to mint zenZEC, the chain needs to verify the deposit t
 
 The ZCash block header tracking system is now **fully implemented** and integrated with the zenZEC minting flow:
 
+### Module Architecture (CRITICAL):
+**zenBTC Module** (`x/zenbtc`):
+- Handles ALL Bitcoin deposits
+- Uses `k.validationKeeper.BtcBlockHeaders` collection
+- Endpoint: `zrchain.zenbtc.Msg/VerifyDepositBlockInclusion`
+- Flow: BTC deposit → Bitcoin headers → zenBTC mint
+
+**DCT Module** (`x/dct`):
+- Handles ALL non-BTC assets (zenZEC, future assets)
+- Uses asset-specific header collections (ZcashBlockHeaders for zenZEC)
+- Endpoint: `zrchain.dct.Msg/VerifyDepositBlockInclusion`
+- **REJECTS ASSET_ZENBTC** with helpful error message
+- Flow: ZEC deposit → ZCash headers → zenZEC mint
+
 ### What Was Built:
 1. **Sidecar ZCash RPC Client** (`sidecar/zcash_client.go`)
    - Fetches block headers from ZCash RPC endpoint
@@ -176,17 +205,26 @@ The ZCash block header tracking system is now **fully implemented** and integrat
    - storeZcashBlockHeaders() function processes consensus headers
 
 4. **Deposit Verification** (`x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`)
+   - **Enforces module separation**: Rejects ASSET_ZENBTC (must use zenBTC module)
    - Detects ZCash deposits via asset type (ASSET_ZENZEC)
    - Uses ZcashBlockHeaders for ZCash verification
-   - Bitcoin deposits continue using BtcBlockHeaders (no changes to existing flow)
+   - Bitcoin deposits handled by separate zenBTC module (no changes needed)
 
 ### How It Works:
+
+**zenBTC Flow (unchanged - x/zenbtc module):**
+1. User deposits BTC to a deposit address
+2. Bitcoin Proxy calls `zrchain.zenbtc.Msg/VerifyDepositBlockInclusion`
+3. Chain verifies deposit using Bitcoin block headers from `BtcBlockHeaders`
+4. zenBTC minted via existing zenBTC flow
+
+**zenZEC Flow (new - x/dct module):**
 1. User deposits ZEC to a deposit address
 2. Sidecar fetches ZCash block header containing the deposit transaction
 3. Validators include ZCash header hash in vote extensions
 4. When 2/3+ validators agree, header is stored in chain state
-5. User submits VerifyDepositBlockInclusion message
-6. Chain verifies deposit using stored ZCash header
+5. ZCash Proxy calls `zrchain.dct.Msg/VerifyDepositBlockInclusion` with `asset=ASSET_ZENZEC`
+6. Chain verifies deposit using stored ZCash header from `ZcashBlockHeaders`
 7. zenZEC minted to recipient address
 
 ### Next Steps (Phase 5 - Testing):

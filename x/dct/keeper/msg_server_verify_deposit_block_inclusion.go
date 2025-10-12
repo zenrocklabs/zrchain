@@ -30,6 +30,13 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 	if asset == types.Asset_ASSET_UNSPECIFIED {
 		return nil, fmt.Errorf("asset must be specified")
 	}
+
+	// IMPORTANT: zenBTC deposits are handled by the zenBTC module, not DCT
+	// DCT module is for v1+ assets only (zenZEC and future wrapped assets)
+	if asset == types.Asset_ASSET_ZENBTC {
+		return nil, fmt.Errorf("zenBTC deposits must use the zenBTC module's VerifyDepositBlockInclusion endpoint, not DCT")
+	}
+
 	if _, err := k.GetAssetParams(ctx, asset); err != nil {
 		return nil, fmt.Errorf("asset configuration error: %w", err)
 	}
@@ -44,11 +51,8 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 			return nil, fmt.Errorf("ZCash block header not found at height %d: %w", msg.BlockHeight, err)
 		}
 	} else {
-		// Use Bitcoin block headers for Bitcoin deposits
-		blockHeader, err = k.validationKeeper.BtcBlockHeaders.Get(ctx, msg.BlockHeight)
-		if err != nil {
-			return nil, fmt.Errorf("Bitcoin block header not found at height %d: %w", msg.BlockHeight, err)
-		}
+		// For future assets, determine the correct block header collection
+		return nil, fmt.Errorf("unsupported asset type %s - block header retrieval not implemented", asset.String())
 	}
 
 	ignoreAddresses, err := k.changeAddressesForAsset(ctx, asset, msg.ChainName)
