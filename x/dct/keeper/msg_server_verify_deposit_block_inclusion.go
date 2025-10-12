@@ -289,11 +289,11 @@ func WalletTypeFromChainName(msg *types.MsgVerifyDepositBlockInclusion) treasury
 		return treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET
 	// Zcash chains
 	case "zcash-mainnet":
-		return treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET // Zcash uses same wallet type structure
+		return treasurytypes.WalletType_WALLET_TYPE_ZCASH_MAINNET
 	case "zcash-regtest", "zcash-regnet":
-		return treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET
+		return treasurytypes.WalletType_WALLET_TYPE_ZCASH_REGNET
 	case "zcash-testnet":
-		return treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET
+		return treasurytypes.WalletType_WALLET_TYPE_ZCASH_TESTNET
 	default:
 		return treasurytypes.WalletType_WALLET_TYPE_UNSPECIFIED
 	}

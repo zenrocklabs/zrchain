@@ -11,9 +11,9 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	validation "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
-	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 )
 
 var (
@@ -37,19 +37,19 @@ type Keeper struct {
 
 	LockTransactions collections.Map[collections.Pair[string, string], dcttypes.LockTransaction]
 
-	PendingMintTransactions collections.Map[collections.Pair[string, uint64], dcttypes.PendingMintTransaction]
-	PendingMintTransactionCount collections.Map[string, uint64]
-	FirstPendingStakeTransaction collections.Map[string, uint64]
+	PendingMintTransactions        collections.Map[collections.Pair[string, uint64], dcttypes.PendingMintTransaction]
+	PendingMintTransactionCount    collections.Map[string, uint64]
+	FirstPendingStakeTransaction   collections.Map[string, uint64]
 	FirstPendingSolMintTransaction collections.Map[string, uint64]
 	FirstPendingEthMintTransaction collections.Map[string, uint64]
 
-	BurnEvents               collections.Map[collections.Pair[string, uint64], dcttypes.BurnEvent]
-	BurnEventCount           collections.Map[string, uint64]
-	FirstPendingBurnEvent    collections.Map[string, uint64]
+	BurnEvents            collections.Map[collections.Pair[string, uint64], dcttypes.BurnEvent]
+	BurnEventCount        collections.Map[string, uint64]
+	FirstPendingBurnEvent collections.Map[string, uint64]
 
-	Redemptions                  collections.Map[collections.Pair[string, uint64], dcttypes.Redemption]
-	FirstPendingRedemption       collections.Map[string, uint64]
-	FirstRedemptionAwaitingSign  collections.Map[string, uint64]
+	Redemptions                 collections.Map[collections.Pair[string, uint64], dcttypes.Redemption]
+	FirstPendingRedemption      collections.Map[string, uint64]
+	FirstRedemptionAwaitingSign collections.Map[string, uint64]
 
 	Supply collections.Map[string, dcttypes.Supply]
 }
@@ -66,14 +66,14 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:                cdc,
-		storeService:       storeService,
-		logger:             logger,
-		validationKeeper:   validationKeeper,
-		treasuryKeeper:     treasuryKeeper,
-		authority:          authority,
-		Params:             collections.NewItem(sb, dcttypes.ParamsKey, dcttypes.ParamsIndex, codec.CollValue[dcttypes.Params](cdc)),
-		LockTransactions:   collections.NewMap(sb, dcttypes.LockTransactionsNewKey, dcttypes.LockTransactionsNewIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[dcttypes.LockTransaction](cdc)),
+		cdc:              cdc,
+		storeService:     storeService,
+		logger:           logger,
+		validationKeeper: validationKeeper,
+		treasuryKeeper:   treasuryKeeper,
+		authority:        authority,
+		Params:           collections.NewItem(sb, dcttypes.ParamsKey, dcttypes.ParamsIndex, codec.CollValue[dcttypes.Params](cdc)),
+		LockTransactions: collections.NewMap(sb, dcttypes.LockTransactionsNewKey, dcttypes.LockTransactionsNewIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[dcttypes.LockTransaction](cdc)),
 		PendingMintTransactions: collections.NewMap(
 			sb,
 			dcttypes.PendingMintTransactionsMapKey,
@@ -346,10 +346,10 @@ func (k Keeper) lockKey(asset dcttypes.Asset, key string) (collections.Pair[stri
 
 func (k Keeper) pendingMintKey(asset dcttypes.Asset, id uint64) (collections.Pair[string, uint64], error) {
 	assetKey, err := k.getAssetKey(asset)
-		if err != nil {
-			return collections.Pair[string, uint64]{}, err
-		}
-		return collections.Join(assetKey, id), nil
+	if err != nil {
+		return collections.Pair[string, uint64]{}, err
+	}
+	return collections.Join(assetKey, id), nil
 }
 
 // --- Pending mint transactions ---
@@ -359,6 +359,16 @@ func (k Keeper) SetPendingMintTransaction(ctx context.Context, tx dcttypes.Pendi
 	if err != nil {
 		return err
 	}
+
+	// Check if transaction already exists
+	exists, err := k.PendingMintTransactions.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return dcttypes.ErrDuplicatePendingMintTransaction
+	}
+
 	return k.PendingMintTransactions.Set(ctx, key, tx)
 }
 

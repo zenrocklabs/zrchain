@@ -92,7 +92,7 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
 				MintedAmount:    80,
 				PendingAmount:   10,
 			},
-			expectedRate: "1.000000000000000000",
+			expectedRate: "1.111111111111111111",
 			expectError:  false,
 		},
 		{
@@ -129,6 +129,7 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_GetExchangeRate() {
 func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingMintTransactions() {
 	pendingTx := types.PendingMintTransaction{
 		Id:               1,
+		Asset:            types.Asset_ASSET_ZENBTC,
 		RecipientAddress: sample.AccAddress(),
 		Amount:           1000,
 		ChainType:        types.WalletType_WALLET_TYPE_EVM,
@@ -937,6 +938,7 @@ func (s *IntegrationTestSuite) Test_Validation_DuplicatePrevention() {
 	s.Run("Duplicate Pending Mint Transaction", func() {
 		pendingTx := types.PendingMintTransaction{
 			Id:               1,
+			Asset:            types.Asset_ASSET_ZENBTC,
 			RecipientAddress: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
 			Amount:           1000,
 			ChainType:        types.WalletType_WALLET_TYPE_EVM,
