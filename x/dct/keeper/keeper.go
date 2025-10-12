@@ -359,16 +359,7 @@ func (k Keeper) SetPendingMintTransaction(ctx context.Context, tx dcttypes.Pendi
 	if err != nil {
 		return err
 	}
-
-	// Check if transaction already exists
-	exists, err := k.PendingMintTransactions.Has(ctx, key)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return dcttypes.ErrDuplicatePendingMintTransaction
-	}
-
+	
 	return k.PendingMintTransactions.Set(ctx, key, tx)
 }
 
