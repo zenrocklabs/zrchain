@@ -17,6 +17,10 @@ message RequestedBitcoinHeaders {
   repeated int64 heights = 1;
 }
 
+message RequestedZcashHeaders {
+  repeated int64 heights = 1;
+}
+
 message LockTransaction {
   string raw_tx = 1;
   uint64 vout = 2;

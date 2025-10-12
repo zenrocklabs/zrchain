@@ -98,6 +98,26 @@ func (k *Keeper) gatherOracleDataForVoteExtension(ctx context.Context, height in
 		}
 	}
 
+	// Fetch ZCash headers
+	latestZcashHeader, requestedZcashHeader, err := k.retrieveZcashHeaders(ctx, 0)
+	if err != nil {
+		// Log error but don't fail - ZCash headers are optional
+		k.Logger(ctx).Error("error retrieving ZCash headers", "error", err)
+	} else {
+		if latestZcashHeader != nil {
+			oracleData.LatestZcashBlockHeight = latestZcashHeader.BlockHeight
+			if latestZcashHeader.BlockHeader != nil {
+				oracleData.LatestZcashBlockHeader = *latestZcashHeader.BlockHeader
+			}
+		}
+		if requestedZcashHeader != nil {
+			oracleData.RequestedZcashBlockHeight = requestedZcashHeader.BlockHeight
+			if requestedZcashHeader.BlockHeader != nil {
+				oracleData.RequestedZcashBlockHeader = *requestedZcashHeader.BlockHeader
+			}
+		}
+	}
+
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -166,6 +186,21 @@ func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
+	// ZCash header hashes
+	latestZcashHeaderHash, err := deriveHash(oracleData.LatestZcashBlockHeader)
+	if err != nil {
+		return VoteExtension{}, err
+	}
+
+	var requestedZcashHeaderHash []byte
+	if oracleData.RequestedZcashBlockHeight > 0 {
+		requestedZcashBlockHeaderHash, err := deriveHash(oracleData.RequestedZcashBlockHeader)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+		requestedZcashHeaderHash = requestedZcashBlockHeaderHash[:]
+	}
+
 	solNonceHash, err := deriveHash(oracleData.SolanaMintNonces)
 	if err != nil {
 		return VoteExtension{}, err
@@ -186,29 +221,33 @@ func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 	}
 
 	voteExt := VoteExtension{
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		BTCUSDPrice:             oracleData.BTCUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		EigenDelegationsHash:    avsDelegationsHash[:],
-		EthBurnEventsHash:       ethBurnEventsHash[:],
-		RedemptionsHash:         redemptionsHash[:],
-		RequestedBtcBlockHeight: oracleData.RequestedBtcBlockHeight,
-		RequestedBtcHeaderHash:  requestedBtcHeaderHash,
-		LatestBtcBlockHeight:    oracleData.LatestBtcBlockHeight,
-		LatestBtcHeaderHash:     latestBitcoinHeaderHash[:],
-		EthBlockHeight:          oracleData.EthBlockHeight,
-		EthGasLimit:             oracleData.EthGasLimit,
-		EthBaseFee:              oracleData.EthBaseFee,
-		EthTipCap:               oracleData.EthTipCap,
-		RequestedStakerNonce:    oracleData.RequestedStakerNonce,
-		RequestedEthMinterNonce: oracleData.RequestedEthMinterNonce,
-		RequestedUnstakerNonce:  oracleData.RequestedUnstakerNonce,
-		RequestedCompleterNonce: oracleData.RequestedCompleterNonce,
-		SolanaMintNoncesHash:    solNonceHash[:],
-		SolanaAccountsHash:      solAccsHash[:],
-		SolanaMintEventsHash:    solanaMintEventsHash[:],
-		SolanaBurnEventsHash:    solanaBurnEventsHash[:],
-		SidecarVersionName:      oracleData.SidecarVersionName,
+		ROCKUSDPrice:              oracleData.ROCKUSDPrice,
+		BTCUSDPrice:               oracleData.BTCUSDPrice,
+		ETHUSDPrice:               oracleData.ETHUSDPrice,
+		EigenDelegationsHash:      avsDelegationsHash[:],
+		EthBurnEventsHash:         ethBurnEventsHash[:],
+		RedemptionsHash:           redemptionsHash[:],
+		RequestedBtcBlockHeight:   oracleData.RequestedBtcBlockHeight,
+		RequestedBtcHeaderHash:    requestedBtcHeaderHash,
+		LatestBtcBlockHeight:      oracleData.LatestBtcBlockHeight,
+		LatestBtcHeaderHash:       latestBitcoinHeaderHash[:],
+		RequestedZcashBlockHeight: oracleData.RequestedZcashBlockHeight,
+		RequestedZcashHeaderHash:  requestedZcashHeaderHash,
+		LatestZcashBlockHeight:    oracleData.LatestZcashBlockHeight,
+		LatestZcashHeaderHash:     latestZcashHeaderHash[:],
+		EthBlockHeight:            oracleData.EthBlockHeight,
+		EthGasLimit:               oracleData.EthGasLimit,
+		EthBaseFee:                oracleData.EthBaseFee,
+		EthTipCap:                 oracleData.EthTipCap,
+		RequestedStakerNonce:      oracleData.RequestedStakerNonce,
+		RequestedEthMinterNonce:   oracleData.RequestedEthMinterNonce,
+		RequestedUnstakerNonce:    oracleData.RequestedUnstakerNonce,
+		RequestedCompleterNonce:   oracleData.RequestedCompleterNonce,
+		SolanaMintNoncesHash:      solNonceHash[:],
+		SolanaAccountsHash:        solAccsHash[:],
+		SolanaMintEventsHash:      solanaMintEventsHash[:],
+		SolanaBurnEventsHash:      solanaBurnEventsHash[:],
+		SidecarVersionName:        oracleData.SidecarVersionName,
 	}
 
 	return voteExt, nil

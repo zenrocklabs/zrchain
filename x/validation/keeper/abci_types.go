@@ -57,7 +57,12 @@ type (
 		ETHUSDPrice             string
 		LatestBtcBlockHeight    int64
 		LatestBtcHeaderHash     []byte
-		SidecarVersionName      string
+		// ZCash block headers
+		RequestedZcashBlockHeight int64
+		RequestedZcashHeaderHash  []byte
+		LatestZcashBlockHeight    int64
+		LatestZcashHeaderHash     []byte
+		SidecarVersionName        string
 	}
 
 	VEWithVotePower struct {
@@ -72,27 +77,32 @@ type (
 		RequestedBtcBlockHeader sidecar.BTCBlockHeader
 		LatestBtcBlockHeight    int64
 		LatestBtcBlockHeader    sidecar.BTCBlockHeader
-		EthBlockHeight          uint64
-		EthGasLimit             uint64
-		EthBaseFee              uint64
-		EthTipCap               uint64
-		RequestedStakerNonce    uint64
-		RequestedEthMinterNonce uint64
-		RequestedUnstakerNonce  uint64
-		RequestedCompleterNonce uint64
-		SolanaMintNonces        map[uint64]*solSystem.NonceAccount
-		SolanaAccounts          map[string]solToken.Account
-		SolanaMintEvents        []api.SolanaMintEvent
-		SolanaZenBTCMintEvents  []api.SolanaMintEvent
-		EthBurnEvents           []api.BurnEvent
-		SolanaBurnEvents        []api.BurnEvent
-		Redemptions             []api.Redemption
-		ROCKUSDPrice            string
-		BTCUSDPrice             string
-		ETHUSDPrice             string
-		ConsensusData           abci.ExtendedCommitInfo
-		FieldVotePowers         map[VoteExtensionField]int64 // Track which fields reached consensus
-		SidecarVersionName      string
+		// ZCash block headers
+		RequestedZcashBlockHeight int64
+		RequestedZcashBlockHeader sidecar.BTCBlockHeader
+		LatestZcashBlockHeight    int64
+		LatestZcashBlockHeader    sidecar.BTCBlockHeader
+		EthBlockHeight            uint64
+		EthGasLimit               uint64
+		EthBaseFee                uint64
+		EthTipCap                 uint64
+		RequestedStakerNonce      uint64
+		RequestedEthMinterNonce   uint64
+		RequestedUnstakerNonce    uint64
+		RequestedCompleterNonce   uint64
+		SolanaMintNonces          map[uint64]*solSystem.NonceAccount
+		SolanaAccounts            map[string]solToken.Account
+		SolanaMintEvents          []api.SolanaMintEvent
+		SolanaZenBTCMintEvents    []api.SolanaMintEvent
+		EthBurnEvents             []api.BurnEvent
+		SolanaBurnEvents          []api.BurnEvent
+		Redemptions               []api.Redemption
+		ROCKUSDPrice              string
+		BTCUSDPrice               string
+		ETHUSDPrice               string
+		ConsensusData             abci.ExtendedCommitInfo
+		FieldVotePowers           map[VoteExtensionField]int64 // Track which fields reached consensus
+		SidecarVersionName        string
 	}
 
 	ValidatorDelegations struct {
@@ -105,6 +115,8 @@ type (
 		GetSidecarStateByEthHeight(ctx context.Context, req *sidecar.SidecarStateByEthHeightRequest, opts ...grpc.CallOption) (*sidecar.SidecarStateResponse, error)
 		GetBitcoinBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestBitcoinBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
+		GetZcashBlockHeaderByHeight(ctx context.Context, in *sidecar.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
+		GetLatestZcashBlockHeader(ctx context.Context, in *sidecar.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*sidecar.BitcoinBlockHeaderResponse, error)
 		GetLatestEthereumNonceForAccount(ctx context.Context, in *sidecar.LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*sidecar.LatestEthereumNonceForAccountResponse, error)
 		GetSolanaAccountInfo(ctx context.Context, in *sidecar.SolanaAccountInfoRequest, opts ...grpc.CallOption) (*sidecar.SolanaAccountInfoResponse, error)
 	}
@@ -291,6 +303,11 @@ const (
 	VEFieldSolanaMintNoncesHash
 	VEFieldSolanaAccountsHash
 	VEFieldSolanaMintEventsHash
+	// ZCash fields
+	VEFieldRequestedZcashBlockHeight
+	VEFieldRequestedZcashHeaderHash
+	VEFieldLatestZcashBlockHeight
+	VEFieldLatestZcashHeaderHash
 )
 
 // FieldHandler defines operations for processing a specific vote extension field
@@ -373,6 +390,14 @@ func (f VoteExtensionField) String() string {
 		return "SolanaAccountsHash"
 	case VEFieldSolanaMintEventsHash:
 		return "SolanaMintEventsHash"
+	case VEFieldRequestedZcashBlockHeight:
+		return "RequestedZcashBlockHeight"
+	case VEFieldRequestedZcashHeaderHash:
+		return "RequestedZcashHeaderHash"
+	case VEFieldLatestZcashBlockHeight:
+		return "LatestZcashBlockHeight"
+	case VEFieldLatestZcashHeaderHash:
+		return "LatestZcashHeaderHash"
 	default:
 		return "Unknown"
 	}
@@ -495,6 +520,28 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
 			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
+		},
+
+		// ZCash fields
+		{
+			Field:    VEFieldRequestedZcashBlockHeight,
+			GetValue: func(ve VoteExtension) any { return ve.RequestedZcashBlockHeight },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedZcashBlockHeight = v.(int64) },
+		},
+		{
+			Field:    VEFieldRequestedZcashHeaderHash,
+			GetValue: func(ve VoteExtension) any { return ve.RequestedZcashHeaderHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.RequestedZcashHeaderHash = v.([]byte) },
+		},
+		{
+			Field:    VEFieldLatestZcashBlockHeight,
+			GetValue: func(ve VoteExtension) any { return ve.LatestZcashBlockHeight },
+			SetValue: func(v any, ve *VoteExtension) { ve.LatestZcashBlockHeight = v.(int64) },
+		},
+		{
+			Field:    VEFieldLatestZcashHeaderHash,
+			GetValue: func(ve VoteExtension) any { return ve.LatestZcashHeaderHash },
+			SetValue: func(v any, ve *VoteExtension) { ve.LatestZcashHeaderHash = v.([]byte) },
 		},
 	}
 }

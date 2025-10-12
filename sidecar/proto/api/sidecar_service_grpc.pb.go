@@ -23,6 +23,8 @@ const (
 	SidecarService_GetSidecarStateByEthHeight_FullMethodName       = "/api.SidecarService/GetSidecarStateByEthHeight"
 	SidecarService_GetBitcoinBlockHeaderByHeight_FullMethodName    = "/api.SidecarService/GetBitcoinBlockHeaderByHeight"
 	SidecarService_GetLatestBitcoinBlockHeader_FullMethodName      = "/api.SidecarService/GetLatestBitcoinBlockHeader"
+	SidecarService_GetZcashBlockHeaderByHeight_FullMethodName      = "/api.SidecarService/GetZcashBlockHeaderByHeight"
+	SidecarService_GetLatestZcashBlockHeader_FullMethodName        = "/api.SidecarService/GetLatestZcashBlockHeader"
 	SidecarService_GetLatestEthereumNonceForAccount_FullMethodName = "/api.SidecarService/GetLatestEthereumNonceForAccount"
 	SidecarService_GetSolanaAccountInfo_FullMethodName             = "/api.SidecarService/GetSolanaAccountInfo"
 )
@@ -35,6 +37,8 @@ type SidecarServiceClient interface {
 	GetSidecarStateByEthHeight(ctx context.Context, in *SidecarStateByEthHeightRequest, opts ...grpc.CallOption) (*SidecarStateResponse, error)
 	GetBitcoinBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
+	GetZcashBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
+	GetLatestZcashBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error)
 	GetSolanaAccountInfo(ctx context.Context, in *SolanaAccountInfoRequest, opts ...grpc.CallOption) (*SolanaAccountInfoResponse, error)
 }
@@ -87,6 +91,26 @@ func (c *sidecarServiceClient) GetLatestBitcoinBlockHeader(ctx context.Context, 
 	return out, nil
 }
 
+func (c *sidecarServiceClient) GetZcashBlockHeaderByHeight(ctx context.Context, in *BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BitcoinBlockHeaderResponse)
+	err := c.cc.Invoke(ctx, SidecarService_GetZcashBlockHeaderByHeight_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sidecarServiceClient) GetLatestZcashBlockHeader(ctx context.Context, in *LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*BitcoinBlockHeaderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BitcoinBlockHeaderResponse)
+	err := c.cc.Invoke(ctx, SidecarService_GetLatestZcashBlockHeader_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *sidecarServiceClient) GetLatestEthereumNonceForAccount(ctx context.Context, in *LatestEthereumNonceForAccountRequest, opts ...grpc.CallOption) (*LatestEthereumNonceForAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LatestEthereumNonceForAccountResponse)
@@ -115,6 +139,8 @@ type SidecarServiceServer interface {
 	GetSidecarStateByEthHeight(context.Context, *SidecarStateByEthHeightRequest) (*SidecarStateResponse, error)
 	GetBitcoinBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error)
+	GetZcashBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error)
+	GetLatestZcashBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error)
 	GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error)
 	GetSolanaAccountInfo(context.Context, *SolanaAccountInfoRequest) (*SolanaAccountInfoResponse, error)
 	mustEmbedUnimplementedSidecarServiceServer()
@@ -138,6 +164,12 @@ func (UnimplementedSidecarServiceServer) GetBitcoinBlockHeaderByHeight(context.C
 }
 func (UnimplementedSidecarServiceServer) GetLatestBitcoinBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestBitcoinBlockHeader not implemented")
+}
+func (UnimplementedSidecarServiceServer) GetZcashBlockHeaderByHeight(context.Context, *BitcoinBlockHeaderByHeightRequest) (*BitcoinBlockHeaderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetZcashBlockHeaderByHeight not implemented")
+}
+func (UnimplementedSidecarServiceServer) GetLatestZcashBlockHeader(context.Context, *LatestBitcoinBlockHeaderRequest) (*BitcoinBlockHeaderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLatestZcashBlockHeader not implemented")
 }
 func (UnimplementedSidecarServiceServer) GetLatestEthereumNonceForAccount(context.Context, *LatestEthereumNonceForAccountRequest) (*LatestEthereumNonceForAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestEthereumNonceForAccount not implemented")
@@ -238,6 +270,42 @@ func _SidecarService_GetLatestBitcoinBlockHeader_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SidecarService_GetZcashBlockHeaderByHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BitcoinBlockHeaderByHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SidecarServiceServer).GetZcashBlockHeaderByHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SidecarService_GetZcashBlockHeaderByHeight_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SidecarServiceServer).GetZcashBlockHeaderByHeight(ctx, req.(*BitcoinBlockHeaderByHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SidecarService_GetLatestZcashBlockHeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LatestBitcoinBlockHeaderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SidecarServiceServer).GetLatestZcashBlockHeader(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SidecarService_GetLatestZcashBlockHeader_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SidecarServiceServer).GetLatestZcashBlockHeader(ctx, req.(*LatestBitcoinBlockHeaderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SidecarService_GetLatestEthereumNonceForAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LatestEthereumNonceForAccountRequest)
 	if err := dec(in); err != nil {
@@ -296,6 +364,14 @@ var SidecarService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestBitcoinBlockHeader",
 			Handler:    _SidecarService_GetLatestBitcoinBlockHeader_Handler,
+		},
+		{
+			MethodName: "GetZcashBlockHeaderByHeight",
+			Handler:    _SidecarService_GetZcashBlockHeaderByHeight_Handler,
+		},
+		{
+			MethodName: "GetLatestZcashBlockHeader",
+			Handler:    _SidecarService_GetLatestZcashBlockHeader_Handler,
 		},
 		{
 			MethodName: "GetLatestEthereumNonceForAccount",

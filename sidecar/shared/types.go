@@ -220,9 +220,9 @@ type OracleState struct {
 	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
 	// ZCash block headers
-	LatestZcashBlockHeight    int64              `json:"latestZcashBlockHeight,omitempty"`
+	LatestZcashBlockHeight    int64               `json:"latestZcashBlockHeight,omitempty"`
 	LatestZcashBlockHeader    *api.BTCBlockHeader `json:"latestZcashBlockHeader,omitempty"`
-	RequestedZcashBlockHeight int64              `json:"requestedZcashBlockHeight,omitempty"`
+	RequestedZcashBlockHeight int64               `json:"requestedZcashBlockHeight,omitempty"`
 	RequestedZcashBlockHeader *api.BTCBlockHeader `json:"requestedZcashBlockHeader,omitempty"`
 	// Fields for watermarking Solana events
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`

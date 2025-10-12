@@ -239,11 +239,11 @@ func validateZcashClient(cfg sidecartypes.Config) (*ZcashClient, error) {
 
 	// Create ZCash client
 	zcashClient := NewZcashClient(zcashEndpoint, true)
-	
+
 	// Test connectivity
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	blockCount, err := zcashClient.GetBlockCount(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ZCash client connectivity: %w", err)

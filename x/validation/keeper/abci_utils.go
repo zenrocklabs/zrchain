@@ -706,6 +706,55 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context, requestedBtcHeaderH
 	return latest, nil, nil
 }
 
+// retrieveZcashHeaders retrieves the latest and optionally a requested ZCash block header from the sidecar
+func (k *Keeper) retrieveZcashHeaders(ctx context.Context, requestedZcashHeaderHeight int64) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
+	// Always get the latest ZCash header
+	latest, err := k.sidecarClient.GetLatestZcashBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
+		ChainName: "", // ZCash doesn't use chain name like Bitcoin (no regnet/testnet/mainnet distinction in same way)
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get latest ZCash header: %w", err)
+	}
+
+	// Check if there are requested historical headers
+	requestedZcashHeaders, err := k.RequestedHistoricalZcashHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, nil, err
+		}
+		requestedZcashHeaders = dcttypes.RequestedZcashHeaders{}
+		if err = k.RequestedHistoricalZcashHeaders.Set(ctx, requestedZcashHeaders); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// If a consensus-selected requested height is provided, fetch exactly that
+	if requestedZcashHeaderHeight > 0 {
+		requested, err := k.sidecarClient.GetZcashBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   "",
+			BlockHeight: requestedZcashHeaderHeight,
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested ZCash header at height %d: %w", requestedZcashHeaderHeight, err)
+		}
+		return latest, requested, nil
+	}
+
+	// Otherwise fall back to the first pending requested height if any
+	if len(requestedZcashHeaders.Heights) > 0 {
+		requested, err := k.sidecarClient.GetZcashBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   "",
+			BlockHeight: requestedZcashHeaders.Heights[0],
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested ZCash header at height %d: %w", requestedZcashHeaders.Heights[0], err)
+		}
+		return latest, requested, nil
+	}
+
+	return latest, nil, nil
+}
+
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
 	oracleDataBz, err := json.Marshal(oracleData)
 	if err != nil {

@@ -61,8 +61,12 @@ type Keeper struct {
 	ValidationInfos collections.Map[int64, types.ValidationInfo]
 	// BitcoinMerkleRoots - key: block height | value: merkle root of Bitcoin block
 	BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
+	// ZcashBlockHeaders - key: block height | value: ZCash block header
+	ZcashBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
 	// LatestBtcHeaderHeight - value: height of the latest btc header stored
 	LatestBtcHeaderHeight collections.Item[int64]
+	// LatestZcashHeaderHeight - value: height of the latest zcash header stored
+	LatestZcashHeaderHeight collections.Item[int64]
 	// EthereumNonceRequested - key: key ID | value: bool (is requested)
 	EthereumNonceRequested collections.Map[uint64, bool]
 	// SolanaNonceRequested - key: key ID | value: bool (is requested)
@@ -75,6 +79,8 @@ type Keeper struct {
 	LastUsedSolanaNonce   collections.Map[uint64, types.SolanaNonce]
 	// RequestedHistoricalBitcoinHeaders - keys: block height
 	RequestedHistoricalBitcoinHeaders collections.Item[zenbtctypes.RequestedBitcoinHeaders]
+	// RequestedHistoricalZcashHeaders - keys: block height
+	RequestedHistoricalZcashHeaders collections.Item[dcttypes.RequestedZcashHeaders]
 	// BackfillRequests - key: tx hash | value: bool (is requested)
 	BackfillRequests collections.Item[types.BackfillRequests]
 	// ValidatorMismatchCounts - key: validator hex address | value: mismatch count data
@@ -162,7 +168,9 @@ func NewKeeper(
 		HVParams:                          collections.NewItem(sb, types.HVParamsKey, types.HVParamsIndex, codec.CollValue[types.HVParams](cdc)),
 		ValidationInfos:                   collections.NewMap(sb, types.ValidationInfosKey, types.ValidationInfosIndex, collections.Int64Key, codec.CollValue[types.ValidationInfo](cdc)),
 		BtcBlockHeaders:                   collections.NewMap(sb, types.BtcBlockHeadersKey, types.BtcBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
+		ZcashBlockHeaders:                 collections.NewMap(sb, types.ZcashBlockHeadersKey, types.ZcashBlockHeadersIndex, collections.Int64Key, codec.CollValue[sidecar.BTCBlockHeader](cdc)),
 		LatestBtcHeaderHeight:             collections.NewItem(sb, types.LatestBtcHeaderHeightKey, types.LatestBtcHeaderHeightIndex, collections.Int64Value),
+		LatestZcashHeaderHeight:           collections.NewItem(sb, types.LatestZcashHeaderHeightKey, types.LatestZcashHeaderHeightIndex, collections.Int64Value),
 		EthereumNonceRequested:            collections.NewMap(sb, types.EthereumNonceRequestedKey, types.EthereumNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaNonceRequested:              collections.NewMap(sb, types.SolanaNonceRequestedKey, types.SolanaNonceRequestedIndex, collections.Uint64Key, collections.BoolValue),
 		SolanaAccountsRequested:           collections.NewMap(sb, types.SolanaAccountsRequestedKey, types.SolanaAccountsRequestedIndex, collections.StringKey, collections.BoolValue),
@@ -171,6 +179,7 @@ func NewKeeper(
 		LastUsedEthereumNonce:             collections.NewMap(sb, types.LastUsedEthereumNonceKey, types.LastUsedEthereumNonceIndex, collections.Uint64Key, codec.CollValue[zenbtctypes.NonceData](cdc)),
 		LastUsedSolanaNonce:               collections.NewMap(sb, types.LastUsedSolanaNonceKey, types.LastUsedSolanaNonceIndex, collections.Uint64Key, codec.CollValue[types.SolanaNonce](cdc)),
 		RequestedHistoricalBitcoinHeaders: collections.NewItem(sb, types.RequestedHistoricalBitcoinHeadersKey, types.RequestedHistoricalBitcoinHeadersIndex, codec.CollValue[zenbtctypes.RequestedBitcoinHeaders](cdc)),
+		RequestedHistoricalZcashHeaders:   collections.NewItem(sb, types.RequestedHistoricalZcashHeadersKey, types.RequestedHistoricalZcashHeadersIndex, codec.CollValue[dcttypes.RequestedZcashHeaders](cdc)),
 		LastValidVEHeight:                 collections.NewItem(sb, types.LastValidVEHeightKey, types.LastValidVEHeightIndex, collections.Int64Value),
 		BackfillRequests:                  collections.NewItem(sb, types.BackfillRequestsKey, types.BackfillRequestsIndex, codec.CollValue[types.BackfillRequests](cdc)),
 		ValidatorMismatchCounts:           collections.NewMap(sb, types.ValidatorMismatchCounts, types.ValidatorMismatchCountsIndex, collections.StringKey, codec.CollValue[types.ValidatorMismatchCount](cdc)),
