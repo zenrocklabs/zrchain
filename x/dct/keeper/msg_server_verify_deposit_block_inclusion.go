@@ -34,9 +34,21 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 		return nil, fmt.Errorf("asset configuration error: %w", err)
 	}
 
-	blockHeader, err := k.validationKeeper.BtcBlockHeaders.Get(ctx, msg.BlockHeight)
-	if err != nil {
-		return nil, err
+	// Fetch the appropriate block header based on asset type
+	var blockHeader api.BTCBlockHeader
+	var err error
+	if asset == types.Asset_ASSET_ZENZEC {
+		// Use ZCash block headers for ZCash deposits
+		blockHeader, err = k.validationKeeper.ZcashBlockHeaders.Get(ctx, msg.BlockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("ZCash block header not found at height %d: %w", msg.BlockHeight, err)
+		}
+	} else {
+		// Use Bitcoin block headers for Bitcoin deposits
+		blockHeader, err = k.validationKeeper.BtcBlockHeaders.Get(ctx, msg.BlockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("Bitcoin block header not found at height %d: %w", msg.BlockHeight, err)
+		}
 	}
 
 	ignoreAddresses, err := k.changeAddressesForAsset(ctx, asset, msg.ChainName)
