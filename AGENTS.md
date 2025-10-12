@@ -1,234 +1,234 @@
-# ZenZEC (ZCash) Integration Agent Plan
+# ZrChain Agent Guide
 
-## Architecture Overview
+## Repository Structure
 
-### Module Separation (CRITICAL)
-- **zenBTC module**: Handles ALL Bitcoin deposits and zenBTC minting (v0)
-- **DCT module**: Handles ALL other wrapped assets (zenZEC, future assets) (v1+)
-- **IMPORTANT**: DCT module **REJECTS** ASSET_ZENBTC deposits - they must use zenBTC module endpoint
+### Core Modules
+```
+x/
+├── zenbtc/          # Bitcoin-specific wrapped asset (v0 - production)
+│   ├── keeper/      # Business logic
+│   └── types/       # Proto-generated types
+├── dct/             # Digital Currency Tokens (v1+ - generalized framework)
+│   ├── keeper/      # Handles zenZEC and future wrapped assets
+│   └── types/       # Proto-generated types
+├── validation/      # ABCI logic, vote extensions, oracle consensus
+│   └── keeper/
+│       ├── abci.go           # Main PreBlocker flow
+│       ├── abci_zenbtc.go    # zenBTC mint/burn/redemption
+│       ├── abci_dct.go       # DCT mint/burn/redemption
+│       ├── abci_types.go     # Vote extension definitions
+│       └── abci_utils.go     # Helper functions
+├── treasury/        # Key management, signature requests
+└── identity/        # Keyrings and workspaces
+```
 
-### Why Two Modules?
-1. zenBTC is the original implementation with its own specialized flow
-2. DCT (Digital Currency Tokens) is the v1+ generalized framework for wrapped assets
-3. Keeping zenBTC separate avoids breaking the existing production system
-4. DCT module is designed to be extensible for future assets
+### Sidecar Oracle
+```
+sidecar/
+├── main.go                   # Initialization
+├── oracle.go                 # Core oracle logic
+├── server.go                 # gRPC endpoints
+├── types.go                  # Oracle struct
+├── shared/types.go           # Config and OracleState
+├── bitcoin_client.go         # Bitcoin RPC client
+├── zcash_client.go           # ZCash RPC client (NEW)
+└── proto/api/                # gRPC service definitions
+```
 
-## Current Status
-The DCT zenZEC minting flow is implemented in the chain code but **NOT fully wired up**. The critical missing piece is ZCash block header tracking in the sidecar oracle.
+### Protobuf Definitions
+```
+proto/zrchain/
+├── dct/                      # DCT messages
+├── zenbtc/                   # zenBTC messages
+└── validation/               # Validation module messages
+```
 
-## Critical Gap
-When a user deposits ZEC to mint zenZEC, the chain needs to verify the deposit transaction is included in a ZCash block. Currently:
-- ✅ Chain code expects block headers via `k.validationKeeper.ZcashBlockHeaders.Get(ctx, msg.BlockHeight)`
-- ✅ Chain code can verify ZCash transactions (same format as Bitcoin)
-- ❌ **Sidecar is NOT fetching ZCash block headers**
-- ❌ **Vote extensions are NOT including ZCash headers**
+## Module Architecture (CRITICAL)
 
-## Architecture Decision
-**NOT using SPV node** - Instead using RPC endpoint to fetch ZCash headers on-demand.
+### zenBTC Module (`x/zenbtc`)
+- **Purpose**: Handles ALL Bitcoin deposits (legacy v0 system)
+- **Endpoint**: `zrchain.zenbtc.Msg/VerifyDepositBlockInclusion`
+- **Headers**: Uses `BtcBlockHeaders` collection
+- **Flow**: BTC deposit → Bitcoin headers → zenBTC mint → Solana/EVM
+- **Status**: Production, DO NOT break
 
-## Implementation Plan for ZCash Block Header Tracking
+### DCT Module (`x/dct`)
+- **Purpose**: Handles ALL non-BTC wrapped assets (v1+ extensible)
+- **Endpoint**: `zrchain.dct.Msg/VerifyDepositBlockInclusion`
+- **Assets**: zenZEC (ASSET_ZENZEC), future assets
+- **REJECTS**: ASSET_ZENBTC deposits with clear error message
+- **Headers**: Asset-specific (ZcashBlockHeaders for zenZEC)
+- **Flow**: ZEC deposit → ZCash headers → zenZEC mint → Solana/EVM
 
-### Phase 1: Sidecar Configuration & RPC Client ✓ COMPLETE
+### Why Separate Modules?
+1. zenBTC is battle-tested production code
+2. DCT is generalized framework for new assets
+3. Keeps changes isolated to prevent breaking zenBTC
+4. Clear separation of concerns
 
-**Goal**: Add ZCash RPC client to sidecar for fetching block headers
+## Complete Wrapped Asset Flow (zenZEC Example)
 
-**Tasks**:
-1. ✅ Create `sidecar/zcash_client.go` with RPC methods:
-   - `NewZcashClient(rpcURL string, enabled bool) *ZcashClient`
-   - `GetBlockCount(ctx) (int64, error)`
-   - `GetBlockHash(ctx, height) (string, error)`
-   - `GetBlockHeader(ctx, hash) (*api.BTCBlockHeader, error)`
-   - `GetBlockHeaderByHeight(ctx, height) (*api.BTCBlockHeader, error)`
-   - `GetLatestBlockHeader(ctx) (*api.BTCBlockHeader, int64, error)`
+### 1. Deposit & Verification
+**Files**: `x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`
 
-2. ✅ Update `sidecar/types.go`:
-   - Add `zcashClient *ZcashClient` field to Oracle struct
-   - Add `lastZcashHeaderHeight int64` tracking field
+1. User deposits ZEC to deposit address
+2. ZCash Proxy detects deposit, generates Merkle proof
+3. Proxy calls `MsgVerifyDepositBlockInclusion` with:
+   - `asset = ASSET_ZENZEC`
+   - `chain_name = "zcash-testnet"` (or mainnet/regtest)
+   - `raw_tx`, `proof`, `block_height`
+4. Chain fetches ZCash header: `k.validationKeeper.ZcashBlockHeaders.Get(ctx, block_height)`
+5. Verifies Merkle proof using `bitcoin.VerifyBTCLockTransaction()`
+6. Creates `PendingMintTransaction` with status DEPOSITED
+7. Updates supply: `CustodiedAmount += deposit`, `PendingAmount += wrapped_amount`
+8. Requests Solana nonce and account via validation keeper
 
-3. ✅ Update `sidecar/shared/types.go`:
-   - Add ZCash header fields to `OracleState`:
-     - `LatestZcashBlockHeight int64`
-     - `LatestZcashBlockHeader *api.BTCBlockHeader`
-     - `RequestedZcashBlockHeight int64`
-     - `RequestedZcashBlockHeader *api.BTCBlockHeader`
-   - Add `ZcashRPC map[string]string` to Config struct
+### 2. Mint Processing
+**Files**: `x/validation/keeper/abci_dct.go:processDCTMintsSolana()`
 
-4. ✅ Update `sidecar/config.yaml.example`:
-   - Add `zcash_rpc` section with devnet/testnet/mainnet endpoints
+1. PreBlocker detects pending mint (status = DEPOSITED)
+2. Validates consensus on required fields (nonce, BTC/USD price, accounts)
+3. Calculates fee using `CalculateFlatZenBTCMintFee()`
+4. Prepares Solana mint transaction via `PrepareSolanaMintTx()`
+5. Submits for MPC signing via `submitSolanaTransaction()`
+6. Updates status to STAKED, stores `ZrchainTxId` and `BlockHeight`
 
-5. ✅ Update `sidecar/main.go`:
-   - Add `validateZcashClient()` function (similar to validateSolanaClient)
-   - Initialize ZCash client and pass to NewOracle()
+### 3. Mint Confirmation
+**Files**: `x/validation/keeper/abci_dct.go:processSolanaDCTMintEvents()`
 
-6. ✅ Update `sidecar/oracle.go`:
-   - Add `zcashClient *ZcashClient` parameter to NewOracle()
-   - Initialize oracle.zcashClient field
+1. Sidecar detects Solana mint event via `SolanaMintEvents`
+2. Validators include event hash in vote extensions
+3. PreBlocker matches event signature hash to pending mint
+4. Updates supply: `PendingAmount -= amount`, `MintedAmount += amount`
+5. Updates transaction status to MINTED
+6. User receives zenZEC on Solana
 
-7. ✅ Update `sidecar/server.go`:
-   - Add gRPC methods: `GetZcashBlockHeaderByHeight()`, `GetLatestZcashBlockHeader()`
+### 4. Burn Detection
+**Files**: `x/validation/keeper/abci_dct.go:storeNewDCTBurnEvents()`
 
-**Success Criteria**: ✅
-- Sidecar successfully connects to ZCash RPC endpoint
-- Can fetch latest ZCash block header via RPC
-- ZCash client properly initialized in Oracle struct
+1. User burns zenZEC on Solana
+2. Sidecar detects burn event via `SolanaBurnEvents`
+3. PreBlocker creates `BurnEvent` (status = BURNED)
+4. Creates `Redemption` (status = UNSTAKED) with destination address
 
-### Phase 2: Vote Extension Integration ✓ COMPLETE
+### 5. Redemption (Withdrawal)
+**Files**: `x/dct/keeper/msg_server_submit_unsigned_redemption_tx.go`
 
-**Goal**: Include ZCash headers in vote extensions for validator consensus
+1. ZCash Proxy polls for UNSTAKED redemptions
+2. Proxy constructs unsigned ZCash transaction
+3. Calls `MsgSubmitUnsignedRedemptionTx` with unsigned tx
+4. Chain verifies outputs in `VerifyUnsignedRedemptionTX()`
+5. Updates redemption status to AWAITING_SIGN
+6. Creates signature request for MPC
 
-**Tasks**:
-1. ✅ Update `x/validation/keeper/abci_types.go`:
-   - Add ZCash fields to `VoteExtension` struct (4 new fields)
-   - Add ZCash fields to `OracleData` struct (4 new fields)
-   - Add ZCash field enum constants
-   - Add ZCash field handlers to `initializeFieldHandlers()`
-   - Add ZCash methods to `sidecarClient` interface
+### 6. Withdrawal Confirmation
+**Files**: `x/validation/keeper/abci_dct.go:checkForDCTRedemptionFulfilment()`
 
-2. ✅ Update `proto/zrchain/dct/mint.proto`:
-   - Add `RequestedZcashHeaders` message
+1. MPC signs the ZCash transaction
+2. PreBlocker detects fulfilled signature request
+3. Calculates native amount to release using exchange rate
+4. Updates supply: `MintedAmount -= amount`, `CustodiedAmount -= native_amount`
+5. Updates redemption status to COMPLETED
+6. Proxy broadcasts signed transaction to ZCash network
 
-3. ✅ Update `x/validation/keeper/keeper.go`:
-   - Add `RequestedHistoricalZcashHeaders` collection
+## Vote Extensions & Oracle Consensus
 
-4. ✅ Update `x/validation/types/keys.go`:
-   - Add `RequestedHistoricalZcashHeadersKey` and index
+### ZCash Header Tracking
+**Files**: 
+- `x/validation/keeper/abci_types.go` - Vote extension fields
+- `x/validation/keeper/abci.go` - Vote extension construction
+- `x/validation/keeper/abci_utils.go` - Header retrieval
 
-5. ✅ Update `x/validation/keeper/abci_utils.go`:
-   - Add `retrieveZcashHeaders()` function
+**Vote Extension Fields for ZCash**:
+- `RequestedZcashBlockHeight` - Specific header height requested
+- `RequestedZcashHeaderHash` - Hash of requested header
+- `LatestZcashBlockHeight` - Latest known ZCash height
+- `LatestZcashHeaderHash` - Hash of latest header
 
-6. ✅ Update `x/validation/keeper/abci.go`:
-   - Update `gatherOracleDataForVoteExtension()` to fetch ZCash headers
-   - Update `ConstructVoteExtension()` to hash and include ZCash headers
+**Consensus Flow**:
+1. `gatherOracleDataForVoteExtension()` calls sidecar for ZCash headers
+2. `ConstructVoteExtension()` hashes headers and includes in vote
+3. Validators reach 2/3+ consensus on header hashes
+4. `PreBlocker` calls `storeZcashBlockHeaders()` to persist to chain state
+5. Headers stored in `ZcashBlockHeaders` collection for deposit verification
 
-7. ✅ Update `sidecar/proto/api/sidecar_service.proto`:
-   - Add ZCash gRPC methods
+### Collections (State Storage)
+**File**: `x/validation/keeper/keeper.go`
 
-8. ✅ Regenerate protobuf files (chain + sidecar)
+```go
+// Bitcoin headers (zenBTC module)
+BtcBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
+LatestBtcHeaderHeight collections.Item[int64]
 
-**Success Criteria**: ✅
-- Vote extensions include ZCash header hashes
-- Validators can reach consensus on ZCash block headers
-- ZCash headers transmitted efficiently in vote extensions
+// ZCash headers (DCT module)
+ZcashBlockHeaders collections.Map[int64, sidecar.BTCBlockHeader]
+LatestZcashHeaderHeight collections.Item[int64]
+```
 
-### Phase 3: Chain State Storage ✓ COMPLETE
+## Key Configuration
 
-**Goal**: Store ZCash headers that reach consensus in chain state
+### Sidecar Config
+**File**: `sidecar/config.yaml`
 
-**Tasks**:
-1. ✅ Add `ZcashBlockHeaders` collection to validation keeper (similar to `BtcBlockHeaders`)
-2. ✅ Add `LatestZcashHeaderHeight` tracking
-3. ✅ Update PreBlocker to store ZCash headers when they reach consensus
-4. ✅ Add `storeZcashBlockHeaders()` function similar to `storeBitcoinHeaders()`
-5. ✅ Update PreBlocker to call storeZcashBlockHeaders with consensus check
+```yaml
+zcash_rpc:
+  devnet: "http://zcash-node:8232"
+  testnet: "http://zcash-testnet:8232"
+  mainnet: "http://zcash-mainnet:8232"
+```
 
-**Success Criteria**: ✅
-- ZCash headers stored in chain state after reaching consensus
-- Can query stored ZCash headers by height
-- Latest ZCash header height tracked correctly
+### Chain Params (per asset)
+**File**: `x/dct/types/params.proto`
 
-### Phase 4: Deposit Verification Updates ✓ COMPLETE
+```protobuf
+message AssetParams {
+  Asset asset = 1;                              // ASSET_ZENZEC
+  string deposit_keyring_addr = 2;              // Keyring for deposits
+  repeated uint64 change_address_key_ids = 8;   // Change addresses
+  string proxy_address = 9;                     // Authorized proxy
+  Solana solana = 12;                           // Solana-specific params
+}
+```
 
-**Goal**: Use ZCash headers for ZCash deposit verification and enforce module separation
+## Testing End-to-End
 
-**Tasks**:
-1. ✅ Update `x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`:
-   - **REJECT ASSET_ZENBTC deposits** (must use zenBTC module, not DCT)
-   - Detect ZCash deposits (check asset type == ASSET_ZENZEC)
-   - Use `k.validationKeeper.ZcashBlockHeaders.Get()` for ZCash
-   - Add error for future unsupported assets
+### Phase 5 Checklist (PENDING)
+1. Configure ZCash RPC in `sidecar/config.yaml`
+2. Start sidecar and verify ZCash client initialization
+3. Trigger ZCash header request via vote extension
+4. Verify headers stored: query `ZcashBlockHeaders` collection
+5. Test deposit: Call DCT `VerifyDepositBlockInclusion` with ASSET_ZENZEC
+6. Verify mint: Check Solana for zenZEC receipt
+7. Test burn: Burn zenZEC on Solana
+8. Verify redemption: Check ZCash transaction broadcast
+9. Regression: Ensure zenBTC flow still works (separate module)
 
-2. ✅ Ensure proper module separation:
-   - zenBTC module handles BTC deposits (x/zenbtc)
-   - DCT module handles zenZEC deposits (x/dct)
-   - Clear error messages direct users to correct endpoint
+## Common Pitfalls
 
-**Success Criteria**: ✅
-- ZCash deposits verified using ZCash block headers
-- Bitcoin deposits rejected with helpful error message
-- Module responsibilities clearly separated
+### Module Confusion
+❌ **Wrong**: Calling zenBTC endpoint for zenZEC deposits
+✅ **Right**: zenBTC module for BTC, DCT module for zenZEC
 
-### Phase 5: Testing & Validation
+### Header Collections
+❌ **Wrong**: Using `BtcBlockHeaders` for zenZEC verification
+✅ **Right**: Using `ZcashBlockHeaders` for zenZEC, `BtcBlockHeaders` for zenBTC
 
-**Goal**: Ensure end-to-end ZCash minting flow works correctly
+### Chain Names
+- Bitcoin: `"mainnet"`, `"testnet"`, `"regtest"`
+- ZCash: `"zcash-mainnet"`, `"zcash-testnet"`, `"zcash-regtest"`
 
-**Tasks**:
-1. Test ZCash header fetching from sidecar RPC
-2. Verify vote extensions include ZCash headers
-3. Test ZCash header storage in chain state
-4. Test zenZEC deposit verification with ZCash headers
-5. Perform full zenZEC minting flow test
+### Wallet Types
+**File**: `x/dct/keeper/msg_server_verify_deposit_block_inclusion.go:WalletTypeFromChainName()`
+- Maps chain names to wallet types
+- Critical for treasury key lookups
 
-**Success Criteria**:
-- ZCash headers fetched and stored successfully
-- zenZEC minting works end-to-end with ZCash deposits
-- No errors in deposit verification
+## Adding New Wrapped Assets
 
-## Current Implementation Status
-
-✅ **Phase 1 COMPLETE**: Sidecar RPC client and configuration
-✅ **Phase 2 COMPLETE**: Vote extension integration
-✅ **Phase 3 COMPLETE**: Chain state storage
-✅ **Phase 4 COMPLETE**: Deposit verification updates
-⏳ **Phase 5 PENDING**: Testing & validation
-
-## Summary of Implementation
-
-The ZCash block header tracking system is now **fully implemented** and integrated with the zenZEC minting flow:
-
-### Module Architecture (CRITICAL):
-**zenBTC Module** (`x/zenbtc`):
-- Handles ALL Bitcoin deposits
-- Uses `k.validationKeeper.BtcBlockHeaders` collection
-- Endpoint: `zrchain.zenbtc.Msg/VerifyDepositBlockInclusion`
-- Flow: BTC deposit → Bitcoin headers → zenBTC mint
-
-**DCT Module** (`x/dct`):
-- Handles ALL non-BTC assets (zenZEC, future assets)
-- Uses asset-specific header collections (ZcashBlockHeaders for zenZEC)
-- Endpoint: `zrchain.dct.Msg/VerifyDepositBlockInclusion`
-- **REJECTS ASSET_ZENBTC** with helpful error message
-- Flow: ZEC deposit → ZCash headers → zenZEC mint
-
-### What Was Built:
-1. **Sidecar ZCash RPC Client** (`sidecar/zcash_client.go`)
-   - Fetches block headers from ZCash RPC endpoint
-   - Methods: GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderByHeight, GetLatestBlockHeader
-
-2. **Vote Extension Integration** (`x/validation/keeper/abci_types.go`, `abci.go`)
-   - ZCash headers included in validator vote extensions
-   - Consensus mechanism ensures validators agree on ZCash block headers
-   - 4 new fields: RequestedZcashBlockHeight, RequestedZcashHeaderHash, LatestZcashBlockHeight, LatestZcashHeaderHash
-
-3. **Chain State Storage** (`x/validation/keeper/keeper.go`)
-   - ZcashBlockHeaders collection stores verified headers
-   - LatestZcashHeaderHeight tracks chain tip
-   - storeZcashBlockHeaders() function processes consensus headers
-
-4. **Deposit Verification** (`x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`)
-   - **Enforces module separation**: Rejects ASSET_ZENBTC (must use zenBTC module)
-   - Detects ZCash deposits via asset type (ASSET_ZENZEC)
-   - Uses ZcashBlockHeaders for ZCash verification
-   - Bitcoin deposits handled by separate zenBTC module (no changes needed)
-
-### How It Works:
-
-**zenBTC Flow (unchanged - x/zenbtc module):**
-1. User deposits BTC to a deposit address
-2. Bitcoin Proxy calls `zrchain.zenbtc.Msg/VerifyDepositBlockInclusion`
-3. Chain verifies deposit using Bitcoin block headers from `BtcBlockHeaders`
-4. zenBTC minted via existing zenBTC flow
-
-**zenZEC Flow (new - x/dct module):**
-1. User deposits ZEC to a deposit address
-2. Sidecar fetches ZCash block header containing the deposit transaction
-3. Validators include ZCash header hash in vote extensions
-4. When 2/3+ validators agree, header is stored in chain state
-5. ZCash Proxy calls `zrchain.dct.Msg/VerifyDepositBlockInclusion` with `asset=ASSET_ZENZEC`
-6. Chain verifies deposit using stored ZCash header from `ZcashBlockHeaders`
-7. zenZEC minted to recipient address
-
-### Next Steps (Phase 5 - Testing):
-- Configure ZCash RPC endpoint in sidecar config
-- Test header fetching and storage
-- Perform end-to-end zenZEC mint test
-- Verify cross-chain separation (BTC vs ZEC)
+1. **Add to Asset enum**: `proto/zrchain/dct/params.proto`
+2. **Implement header fetching**: Add RPC client in sidecar (if new chain)
+3. **Add vote extension fields**: `x/validation/keeper/abci_types.go`
+4. **Add header storage**: `x/validation/keeper/keeper.go` (new collection)
+5. **Update deposit verification**: `x/dct/keeper/msg_server_verify_deposit_block_inclusion.go`
+6. **Add chain name mapping**: `WalletTypeFromChainName()`
+7. **Configure asset params**: Chain governance or genesis
+8. **Test end-to-end**: Follow Phase 5 checklist

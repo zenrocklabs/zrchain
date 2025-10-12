@@ -229,6 +229,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
+			tickCancel()
 			return nil
 		case tickTime := <-o.mainLoopTicker.C:
 			// Cancel the previous tick's processing context. This signals the previous
