@@ -359,7 +359,7 @@ func (k Keeper) SetPendingMintTransaction(ctx context.Context, tx dcttypes.Pendi
 	if err != nil {
 		return err
 	}
-	
+
 	return k.PendingMintTransactions.Set(ctx, key, tx)
 }
 

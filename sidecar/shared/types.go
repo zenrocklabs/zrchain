@@ -219,6 +219,11 @@ type OracleState struct {
 	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
 	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
+	// ZCash block headers
+	LatestZcashBlockHeight    int64              `json:"latestZcashBlockHeight,omitempty"`
+	LatestZcashBlockHeader    *api.BTCBlockHeader `json:"latestZcashBlockHeader,omitempty"`
+	RequestedZcashBlockHeight int64              `json:"requestedZcashBlockHeight,omitempty"`
+	RequestedZcashBlockHeader *api.BTCBlockHeader `json:"requestedZcashBlockHeader,omitempty"`
 	// Fields for watermarking Solana events
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
@@ -239,6 +244,7 @@ type Config struct {
 	Network                string            `yaml:"network"`
 	EthRPC                 map[string]string `yaml:"eth_rpc"`
 	SolanaRPC              map[string]string `yaml:"solana_rpc"`
+	ZcashRPC               map[string]string `yaml:"zcash_rpc"`
 	ProxyRPC               ProxyRPCConfig    `yaml:"proxy_rpc"`
 	Neutrino               NeutrinoConfig    `yaml:"neutrino"`
 	E2ETestsTickerInterval int               `yaml:"e2e_tests_ticker_interval"`

@@ -46,6 +46,7 @@ type Oracle struct {
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
 	neutrinoServer     *neutrino.NeutrinoServer
+	zcashClient        *ZcashClient
 	solanaClient       *solana.Client
 	zrChainQueryClient *client.QueryClient
 	mainLoopTicker     *time.Ticker
@@ -64,6 +65,9 @@ type Oracle struct {
 	lastSolZenZECMintSigStr string
 	lastSolZenZECBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// ZCash header tracking
+	lastZcashHeaderHeight int64
 
 	// Performance optimization fields
 	solanaRateLimiter     chan struct{}              // Semaphore for Solana RPC rate limiting
