@@ -218,8 +218,64 @@ class MsgManuallyInputBitcoinHeaderResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class MsgManuallyInputZcashHeader(_message.Message):
+    __slots__ = ("authority", "header")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    HEADER_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    header: ZcashHeader
+    def __init__(self, authority: _Optional[str] = ..., header: _Optional[_Union[ZcashHeader, _Mapping]] = ...) -> None: ...
+
+class ZcashHeader(_message.Message):
+    __slots__ = ("version", "prev_block", "merkle_root", "time_stamp", "bits", "nonce", "block_hash", "block_height")
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    PREV_BLOCK_FIELD_NUMBER: _ClassVar[int]
+    MERKLE_ROOT_FIELD_NUMBER: _ClassVar[int]
+    TIME_STAMP_FIELD_NUMBER: _ClassVar[int]
+    BITS_FIELD_NUMBER: _ClassVar[int]
+    NONCE_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    version: int
+    prev_block: str
+    merkle_root: str
+    time_stamp: int
+    bits: int
+    nonce: int
+    block_hash: str
+    block_height: int
+    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., time_stamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
+
+class MsgManuallyInputZcashHeaderResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class BackfillRequests(_message.Message):
     __slots__ = ("requests",)
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
     requests: _containers.RepeatedCompositeFieldContainer[MsgTriggerEventBackfill]
     def __init__(self, requests: _Optional[_Iterable[_Union[MsgTriggerEventBackfill, _Mapping]]] = ...) -> None: ...
+
+class MsgAddToBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgAddToBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgRemoveFromBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgRemoveFromBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

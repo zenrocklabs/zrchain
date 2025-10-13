@@ -1,0 +1,126 @@
+package v5
+
+import (
+	"strings"
+
+	"cosmossdk.io/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
+)
+
+func UpdateParams(ctx sdk.Context, params collections.Item[types.Params]) error {
+	paramsMap := map[string]types.Params{
+		"zenrock": { // local
+			DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+			StakerKeyID:         1,
+			EthMinterKeyID:      2,
+			UnstakerKeyID:       3,
+			CompleterKeyID:      4,
+			RewardsDepositKeyID: 5,
+			ChangeAddressKeyIDs: []uint64{6},
+			BitcoinProxyAddress: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+			EthTokenAddr:        "0x7692E9a796001FeE9023853f490A692bAB2E4834",
+			ControllerAddr:      "0x2844bd31B68AE5a0335c672e6251e99324441B73",
+			Solana: &types.Solana{
+				SignerKeyId:        7,
+				ProgramId:          "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+				NonceAuthorityKey:  8,
+				NonceAccountKey:    9,
+				MintAddress:        "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+				FeeWallet:          "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+				Fee:                0,
+				MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
+				Btl:                20,
+			},
+		},
+		"amber": { // devnet
+			DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+			StakerKeyID:         1,
+			EthMinterKeyID:      2,
+			UnstakerKeyID:       3,
+			CompleterKeyID:      4,
+			RewardsDepositKeyID: 5,
+			ChangeAddressKeyIDs: []uint64{6},
+			BitcoinProxyAddress: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+			EthTokenAddr:        "0x7692E9a796001FeE9023853f490A692bAB2E4834",
+			ControllerAddr:      "0x2844bd31B68AE5a0335c672e6251e99324441B73",
+			Solana: &types.Solana{
+				SignerKeyId:        7,
+				ProgramId:          "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+				NonceAuthorityKey:  8,
+				NonceAccountKey:    9,
+				MintAddress:        "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+				FeeWallet:          "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+				Fee:                0,
+				MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
+				Btl:                20,
+			},
+		},
+		"gardia": { // testnet
+			DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+			StakerKeyID:         1,
+			EthMinterKeyID:      2,
+			UnstakerKeyID:       3,
+			CompleterKeyID:      4,
+			RewardsDepositKeyID: 5,
+			ChangeAddressKeyIDs: []uint64{6},
+			BitcoinProxyAddress: "zen13y3tm68gmu9kntcxwvmue82p6akacnpt2v7nty",
+			EthTokenAddr:        "0xfA32a2D7546f8C7c229F94E693422A786DaE5E18",
+			ControllerAddr:      "0xaCE3634AAd9bCC48ef6A194f360F7ACe51F7d9f1",
+			Solana: &types.Solana{
+				SignerKeyId:        7,
+				ProgramId:          "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+				NonceAuthorityKey:  8,
+				NonceAccountKey:    9,
+				MintAddress:        "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+				FeeWallet:          "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+				Fee:                0,
+				MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
+				Btl:                20,
+			},
+		},
+		"diamond": { // mainnet
+			DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+			StakerKeyID:         24,
+			EthMinterKeyID:      17,
+			UnstakerKeyID:       19,
+			CompleterKeyID:      28,
+			RewardsDepositKeyID: 20,
+			ChangeAddressKeyIDs: []uint64{18},
+			BitcoinProxyAddress: "zen1mgl98jt30nemuqtt5asldk49ju9lnx0pfke79q",
+			EthTokenAddr:        "0x2fE9754d5D28bac0ea8971C0Ca59428b8644C776",
+			ControllerAddr:      "0xa87bE298115bE701A12F34F9B4585586dF052008",
+			Solana: &types.Solana{
+				SignerKeyId:        7,
+				ProgramId:          "3jo4mdc6QbGRigia2jvmKShbmz3aWq4Y8bgUXfur5StT",
+				NonceAuthorityKey:  8,
+				NonceAccountKey:    9,
+				MintAddress:        "9oBkgQUkq8jvzK98D7Uib6GYSZZmjnZ6QEGJRrAeKnDj",
+				FeeWallet:          "FzqGcRG98v1KhKxatX2Abb2z1aJ2rViQwBK5GHByKCAd",
+				Fee:                0,
+				MultisigKeyAddress: "8cmZY2id22vxpXs2H3YYQNARuPHNuYwa7jipW1q1v9Fy",
+				Btl:                20,
+			},
+		},
+	}
+
+	chainID := ctx.ChainID()
+	if chainID == "" {
+		chainID = "zenrock"
+	}
+
+	newParams := types.Params{}
+
+	for prefix, paramSet := range paramsMap {
+		if strings.HasPrefix(chainID, prefix) {
+			newParams = paramSet
+			break
+		}
+	}
+
+	if err := params.Set(ctx, newParams); err != nil {
+		return err
+	}
+
+	return nil
+}

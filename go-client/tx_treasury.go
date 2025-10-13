@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	cosmos_types "github.com/cosmos/cosmos-sdk/codec/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -59,7 +60,8 @@ func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, 
 	return hash, nil
 }
 
-// NewZenBTCKeyRequest creates a new key request specifically for ZenBTC operations.
+// NewZenBTCKeyRequest creates a new key request specifically for ZenBTC/DCT operations.
+// Despite the name, this function is used for all DCT assets (zenBTC, zenZEC, etc.).
 //
 // Parameters:
 //   - ctx: Context for the request
@@ -70,18 +72,20 @@ func (c *TreasuryTxClient) NewKeyRequest(ctx context.Context, workspace string, 
 //   - chain_type: The type of blockchain
 //   - caip_chain_id: The chain identifier in CAIP-2 format
 //   - return_address: The return address
+//   - asset: The asset type (ASSET_ZENBTC, ASSET_ZENZEC, etc.)
 //
 // Returns:
 //   - string: The transaction hash if successful
 //   - error: An error if the request fails
 func (c *TreasuryTxClient) NewZenBTCKeyRequest(ctx context.Context, workspace string, keyring string, keyType string,
-	recipient_addr string, chain_type types.WalletType, caip_chain_id string, return_address string) (string, error) {
+	recipient_addr string, chain_type types.WalletType, caip_chain_id string, return_address string, asset dcttypes.Asset) (string, error) {
 
 	metadata := &types.ZenBTCMetadata{
 		RecipientAddr: recipient_addr,
 		ChainType:     chain_type,
 		Caip2ChainId:  caip_chain_id,
 		ReturnAddress: return_address,
+		Asset:         asset,
 	}
 
 	msg := &types.MsgNewKeyRequest{

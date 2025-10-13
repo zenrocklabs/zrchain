@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package zrchain.dct;
+
+import "zrchain/dct/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types";
+
+message Supply {
+  Asset asset = 1;
+  uint64 custodied_amount = 2;
+  uint64 minted_amount = 3;
+  uint64 pending_amount = 4;
+}

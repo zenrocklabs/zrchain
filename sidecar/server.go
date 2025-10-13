@@ -142,6 +142,45 @@ func (s *oracleService) GetLatestBitcoinBlockHeader(ctx context.Context, req *ap
 	}, nil
 }
 
+func (s *oracleService) GetZcashBlockHeaderByHeight(ctx context.Context, req *api.BitcoinBlockHeaderByHeightRequest) (*api.BitcoinBlockHeaderResponse, error) {
+	if s.oracle.zcashClient == nil {
+		return nil, fmt.Errorf("ZCash client not initialized")
+	}
+
+	blockHeader, err := s.oracle.zcashClient.GetBlockHeaderByHeight(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetZcashBlockHeaderByHeight: %w", err)
+	}
+
+	tipHeight, err := s.oracle.zcashClient.GetBlockCount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ZCash tip height: %w", err)
+	}
+
+	return &api.BitcoinBlockHeaderResponse{
+		BlockHeader: blockHeader,
+		BlockHeight: req.BlockHeight,
+		TipHeight:   tipHeight,
+	}, nil
+}
+
+func (s *oracleService) GetLatestZcashBlockHeader(ctx context.Context, req *api.LatestBitcoinBlockHeaderRequest) (*api.BitcoinBlockHeaderResponse, error) {
+	if s.oracle.zcashClient == nil {
+		return nil, fmt.Errorf("ZCash client not initialized")
+	}
+
+	blockHeader, tipHeight, err := s.oracle.zcashClient.GetLatestBlockHeader(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetLatestZcashBlockHeader: %w", err)
+	}
+
+	return &api.BitcoinBlockHeaderResponse{
+		BlockHeader: blockHeader,
+		BlockHeight: blockHeader.BlockHeight,
+		TipHeight:   tipHeight,
+	}, nil
+}
+
 func (s *oracleService) GetLatestEthereumNonceForAccount(ctx context.Context, req *api.LatestEthereumNonceForAccountRequest) (*api.LatestEthereumNonceForAccountResponse, error) {
 	nonce, err := s.oracle.EthClient.NonceAt(ctx, common.HexToAddress(req.Address), nil)
 	if err != nil {

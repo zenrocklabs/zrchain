@@ -27,9 +27,11 @@ import (
 var (
 	DefaultGasLimit      = uint64(300000)
 	ZenBTCGasLimit       = uint64(8000000)
+	DCTGasLimit          = uint64(8000000)
 	InjectHeaderGasLimit = uint64(20000000)
 	DefaultFees          = types.NewCoins(types.NewCoin("urock", math.NewInt(750000)))
 	ZenBTCDefaultFees    = types.NewCoins(types.NewCoin("urock", math.NewInt(20000000)))
+	DCTDefaultFees       = types.NewCoins(types.NewCoin("urock", math.NewInt(20000000)))
 
 	queryTimeout = 250 * time.Millisecond
 )

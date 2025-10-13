@@ -46,6 +46,7 @@ type Oracle struct {
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
 	neutrinoServer     *neutrino.NeutrinoServer
+	zcashClient        *ZcashClient
 	solanaClient       *solana.Client
 	zrChainQueryClient *client.QueryClient
 	mainLoopTicker     *time.Ticker
@@ -61,7 +62,12 @@ type Oracle struct {
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
+	lastSolZenZECMintSigStr string
+	lastSolZenZECBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// ZCash header tracking
+	lastZcashHeaderHeight int64
 
 	// Performance optimization fields
 	solanaRateLimiter     chan struct{}              // Semaphore for Solana RPC rate limiting
@@ -70,6 +76,7 @@ type Oracle struct {
 
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaZenZECBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	getSolanaRockBurnEventsFn   func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)

@@ -65,6 +65,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
+	dctkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/dct/keeper"
+	dct "github.com/Zenrock-Foundation/zrchain/v6/x/dct/module"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/mint"
 	mintkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/mint/keeper"
 	minttypes "github.com/Zenrock-Foundation/zrchain/v6/x/mint/types"
@@ -153,15 +156,15 @@ import (
 	treasurykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/keeper"
 	treasury "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/module"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zenbtckeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/keeper"
+	zenbtc "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/module"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	zenexkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zenex "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/module"
 	zenextypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
 	zentpkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/keeper"
 	zentp "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/module"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
-	zenbtckeeper "github.com/zenrocklabs/zenbtc/x/zenbtc/keeper"
-	zenbtc "github.com/zenrocklabs/zenbtc/x/zenbtc/module"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 const appName = "ZenrockApp"
@@ -265,6 +268,7 @@ type ZenrockApp struct {
 	TreasuryKeeper treasurykeeper.Keeper
 	PolicyKeeper   policykeeper.Keeper
 	ZenBTCKeeper   zenbtckeeper.Keeper
+	DCTKeeper      dctkeeper.Keeper
 	ZentpKeeper    zentpkeeper.Keeper
 	ZenexKeeper    zenexkeeper.Keeper
 
@@ -370,6 +374,7 @@ func NewZenrockApp(
 		policytypes.StoreKey,
 		identitytypes.StoreKey,
 		treasurytypes.StoreKey,
+		dcttypes.StoreKey,
 		zenbtctypes.StoreKey,
 		zentptypes.StoreKey,
 		zenextypes.StoreKey,
@@ -471,6 +476,7 @@ func NewZenrockApp(
 		zrConfig,
 		&app.TreasuryKeeper,
 		&app.ZenBTCKeeper,
+		nil,
 		&app.ZentpKeeper,
 		&app.SlashingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
@@ -712,6 +718,8 @@ func NewZenrockApp(
 		app.PolicyKeeper,
 		&app.ZenBTCKeeper,
 		&app.ZentpKeeper,
+		&app.DCTKeeper,
+		&app.ZenexKeeper,
 	)
 	treasuryModule := treasury.NewAppModule(appCodec, app.TreasuryKeeper, app.AccountKeeper, app.BankKeeper, app.IdentityKeeper, app.PolicyKeeper)
 
@@ -724,6 +732,17 @@ func NewZenrockApp(
 		&app.TreasuryKeeper,
 	)
 	zenBTCModule := zenbtc.NewAppModule(appCodec, app.ZenBTCKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+
+	app.DCTKeeper = *dctkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[dcttypes.StoreKey]),
+		logger,
+		shared.AdminAuthAddr,
+		app.ValidationKeeper,
+		&app.TreasuryKeeper,
+	)
+	dctModule := dct.NewAppModule(appCodec, app.DCTKeeper, app.AccountKeeper, app.BankKeeper, *app.ValidationKeeper, app.TreasuryKeeper)
+	app.ValidationKeeper.SetDCTKeeper(&app.DCTKeeper)
 
 	app.ZentpKeeper = zentpkeeper.NewKeeper(
 		appCodec,
@@ -891,6 +910,7 @@ func NewZenrockApp(
 		identityModule,
 		treasuryModule,
 		policyModule,
+		dctModule,
 		zenBTCModule,
 		zentpModule,
 		zenexModule,
@@ -942,6 +962,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -964,6 +985,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -995,6 +1017,7 @@ func NewZenrockApp(
 		policytypes.ModuleName,
 		identitytypes.ModuleName,
 		treasurytypes.ModuleName,
+		dcttypes.ModuleName,
 		zenbtctypes.ModuleName,
 		zentptypes.ModuleName,
 		zenextypes.ModuleName,
@@ -1392,6 +1415,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(policytypes.ModuleName)
 	paramsKeeper.Subspace(identitytypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
+	paramsKeeper.Subspace(dcttypes.ModuleName)
 	paramsKeeper.Subspace(zenbtctypes.ModuleName)
 	paramsKeeper.Subspace(zentptypes.ModuleName)
 	return paramsKeeper

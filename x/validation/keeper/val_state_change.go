@@ -86,6 +86,12 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpda
 		)
 	}
 
+	// Rebalance bedrock BTC across validator set to keep proportions aligned with native stake
+	if err := k.rebalanceBedrockBTC(sdkCtx); err != nil {
+		k.Logger(ctx).Error("failed to rebalance bedrock BTC", "error", err)
+		// Don't return error here to avoid halting the chain
+	}
+
 	// Remove all mature redelegations from the red queue.
 	matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, sdkCtx.BlockHeader().Time)
 	if err != nil {

@@ -148,6 +148,11 @@ message GenesisState {
   // latest_btc_header_height defines the latest Bitcoin header height at genesis.
   int64 latest_btc_header_height = 29
       [ (amino.dont_omitempty) = true ];    
+
+  // solana_dct_accounts_requested defines the Solana accounts requested for DCT assets at genesis.
+  map<string, bool> solana_dct_accounts_requested = 30
+      [ (amino.dont_omitempty) = true ];
+
 }
 
 // LastValidatorPower required for validator set update logic.
