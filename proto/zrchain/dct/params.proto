@@ -1,0 +1,52 @@
+syntax = "proto3";
+package zrchain.dct;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types";
+
+enum Asset {
+  ASSET_UNSPECIFIED = 0;
+  ASSET_ZENBTC = 1;
+  ASSET_ZENZEC = 2;
+}
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "zrchain/x/dct/Params";
+  option (gogoproto.equal) = true;
+
+  repeated AssetParams assets = 1 [(gogoproto.nullable) = false];
+}
+
+message AssetParams {
+  option (gogoproto.equal) = true;
+
+  Asset asset = 1;
+  string deposit_keyring_addr = 2;
+  uint64 staker_key_id = 3;
+  uint64 eth_minter_key_id = 4;
+  uint64 unstaker_key_id = 5;
+  uint64 completer_key_id = 6;
+  uint64 rewards_deposit_key_id = 7;
+  repeated uint64 change_address_key_ids = 8;
+  string proxy_address = 9;
+  string eth_token_addr = 10;
+  string controller_addr = 11;
+  Solana solana = 12;
+}
+
+message Solana {
+  option (gogoproto.equal) = true;
+  uint64 signer_key_id = 1;
+  string program_id = 2;
+  uint64 nonce_account_key = 3;
+  uint64 nonce_authority_key = 4;
+  string mint_address = 5;
+  string fee_wallet = 6;
+  uint64 fee = 7;
+  string multisig_key_address = 8;
+  int64 btl = 9;
+  string event_store_program_id = 10;
+}

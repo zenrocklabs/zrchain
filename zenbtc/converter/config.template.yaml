@@ -1,0 +1,19 @@
+eth_config:
+  mnemonic: "...insert mnemonic..."
+  derivation_path: "m/44'/60'/0'/0/0"
+  
+  # hoodi, only for claiming and unwrapping
+  weth_address: 0x962EE10D3F66D8fB020e8d0eD0aa36367d25626F 
+  rpc_url: https://ethereum-hoodi-rpc.publicnode.com
+  operators:
+    - ...
+  
+  # mainnet
+  # weth_address: 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+  # rpc_url: https://ethereum-rpc.publicnode.com
+  # operators:
+  #   - ...
+
+swap_config:
+  thor_node_url: https://thornode.ninerealms.com
+  btc_destination_address: bc1qmcjah4uhwnqwmjj20cagxhq3a0gdefv2t82zym

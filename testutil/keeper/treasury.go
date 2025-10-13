@@ -44,8 +44,10 @@ func TreasuryKeeper(t testing.TB, policyKeeper *policykeeper.Keeper, identityKee
 		bankKeeper,
 		*identityKeeper,
 		*policyKeeper,
-		nil,
+		nil, // zenBTCKeeper
 		mockZentpKeeper,
+		nil, // dctKeeper
+		nil, // zenexKeeper
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

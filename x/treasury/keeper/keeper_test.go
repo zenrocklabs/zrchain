@@ -71,8 +71,10 @@ func (s *IntegrationTestSuite) SetupTest() {
 		bankKeeper,
 		identityKeeper,
 		policyKeeper,
-		nil, // zenBTCKeeper - using nil for now
+		nil, // zenBTCKeeper
 		zentpKeeper,
+		nil, // dctKeeper
+		nil, // zenexKeeper
 	)
 
 	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName),
