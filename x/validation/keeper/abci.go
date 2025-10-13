@@ -13,11 +13,12 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 //
@@ -97,6 +98,26 @@ func (k *Keeper) gatherOracleDataForVoteExtension(ctx context.Context, height in
 		}
 	}
 
+	// Fetch ZCash headers
+	latestZcashHeader, requestedZcashHeader, err := k.retrieveZcashHeaders(ctx, 0)
+	if err != nil {
+		// Log error but don't fail - ZCash headers are optional
+		k.Logger(ctx).Error("error retrieving ZCash headers", "error", err)
+	} else {
+		if latestZcashHeader != nil {
+			oracleData.LatestZcashBlockHeight = latestZcashHeader.BlockHeight
+			if latestZcashHeader.BlockHeader != nil {
+				oracleData.LatestZcashBlockHeader = *latestZcashHeader.BlockHeader
+			}
+		}
+		if requestedZcashHeader != nil {
+			oracleData.RequestedZcashBlockHeight = requestedZcashHeader.BlockHeight
+			if requestedZcashHeader.BlockHeader != nil {
+				oracleData.RequestedZcashBlockHeader = *requestedZcashHeader.BlockHeader
+			}
+		}
+	}
+
 	nonces := make(map[uint64]uint64)
 	for _, key := range k.getZenBTCKeyIDs(ctx) {
 		requested, err := k.EthereumNonceRequested.Get(ctx, key)
@@ -165,6 +186,21 @@ func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 		requestedBtcHeaderHash = requestedBitcoinHeaderHash[:]
 	}
 
+	// ZCash header hashes
+	latestZcashHeaderHash, err := deriveHash(oracleData.LatestZcashBlockHeader)
+	if err != nil {
+		return VoteExtension{}, err
+	}
+
+	var requestedZcashHeaderHash []byte
+	if oracleData.RequestedZcashBlockHeight > 0 {
+		requestedZcashBlockHeaderHash, err := deriveHash(oracleData.RequestedZcashBlockHeader)
+		if err != nil {
+			return VoteExtension{}, err
+		}
+		requestedZcashHeaderHash = requestedZcashBlockHeaderHash[:]
+	}
+
 	solNonceHash, err := deriveHash(oracleData.SolanaMintNonces)
 	if err != nil {
 		return VoteExtension{}, err
@@ -185,29 +221,33 @@ func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 	}
 
 	voteExt := VoteExtension{
-		ROCKUSDPrice:            oracleData.ROCKUSDPrice,
-		BTCUSDPrice:             oracleData.BTCUSDPrice,
-		ETHUSDPrice:             oracleData.ETHUSDPrice,
-		EigenDelegationsHash:    avsDelegationsHash[:],
-		EthBurnEventsHash:       ethBurnEventsHash[:],
-		RedemptionsHash:         redemptionsHash[:],
-		RequestedBtcBlockHeight: oracleData.RequestedBtcBlockHeight,
-		RequestedBtcHeaderHash:  requestedBtcHeaderHash,
-		LatestBtcBlockHeight:    oracleData.LatestBtcBlockHeight,
-		LatestBtcHeaderHash:     latestBitcoinHeaderHash[:],
-		EthBlockHeight:          oracleData.EthBlockHeight,
-		EthGasLimit:             oracleData.EthGasLimit,
-		EthBaseFee:              oracleData.EthBaseFee,
-		EthTipCap:               oracleData.EthTipCap,
-		RequestedStakerNonce:    oracleData.RequestedStakerNonce,
-		RequestedEthMinterNonce: oracleData.RequestedEthMinterNonce,
-		RequestedUnstakerNonce:  oracleData.RequestedUnstakerNonce,
-		RequestedCompleterNonce: oracleData.RequestedCompleterNonce,
-		SolanaMintNoncesHash:    solNonceHash[:],
-		SolanaAccountsHash:      solAccsHash[:],
-		SolanaMintEventsHash:    solanaMintEventsHash[:],
-		SolanaBurnEventsHash:    solanaBurnEventsHash[:],
-		SidecarVersionName:      oracleData.SidecarVersionName,
+		ROCKUSDPrice:              oracleData.ROCKUSDPrice,
+		BTCUSDPrice:               oracleData.BTCUSDPrice,
+		ETHUSDPrice:               oracleData.ETHUSDPrice,
+		EigenDelegationsHash:      avsDelegationsHash[:],
+		EthBurnEventsHash:         ethBurnEventsHash[:],
+		RedemptionsHash:           redemptionsHash[:],
+		RequestedBtcBlockHeight:   oracleData.RequestedBtcBlockHeight,
+		RequestedBtcHeaderHash:    requestedBtcHeaderHash,
+		LatestBtcBlockHeight:      oracleData.LatestBtcBlockHeight,
+		LatestBtcHeaderHash:       latestBitcoinHeaderHash[:],
+		RequestedZcashBlockHeight: oracleData.RequestedZcashBlockHeight,
+		RequestedZcashHeaderHash:  requestedZcashHeaderHash,
+		LatestZcashBlockHeight:    oracleData.LatestZcashBlockHeight,
+		LatestZcashHeaderHash:     latestZcashHeaderHash[:],
+		EthBlockHeight:            oracleData.EthBlockHeight,
+		EthGasLimit:               oracleData.EthGasLimit,
+		EthBaseFee:                oracleData.EthBaseFee,
+		EthTipCap:                 oracleData.EthTipCap,
+		RequestedStakerNonce:      oracleData.RequestedStakerNonce,
+		RequestedEthMinterNonce:   oracleData.RequestedEthMinterNonce,
+		RequestedUnstakerNonce:    oracleData.RequestedUnstakerNonce,
+		RequestedCompleterNonce:   oracleData.RequestedCompleterNonce,
+		SolanaMintNoncesHash:      solNonceHash[:],
+		SolanaAccountsHash:        solAccsHash[:],
+		SolanaMintEventsHash:      solanaMintEventsHash[:],
+		SolanaBurnEventsHash:      solanaBurnEventsHash[:],
+		SidecarVersionName:        oracleData.SidecarVersionName,
 	}
 
 	return voteExt, nil
@@ -351,6 +391,14 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		}
 	}
 
+	// ZCash header processing - only if ZCash header fields have consensus
+	zcashHeaderFields := []VoteExtensionField{VEFieldLatestZcashHeaderHash, VEFieldRequestedZcashHeaderHash}
+	if anyFieldHasConsensus(oracleData.FieldVotePowers, zcashHeaderFields) {
+		if err := k.storeZcashBlockHeaders(ctx, oracleData); err != nil {
+			k.Logger(ctx).Error("error storing ZCash headers", "error", err)
+		}
+	}
+
 	if ctx.BlockHeight()%2 == 0 { // TODO: is this needed?
 
 		// 1. Update on-chain state based on oracle data that has reached consensus
@@ -376,11 +424,13 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 			k.processSolanaZenBTCMintEvents(ctx, oracleData)
 			k.processSolanaROCKMintEvents(ctx, oracleData)
+			k.processSolanaDCTMintEvents(ctx, oracleData)
 		}
 
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaBurnEventsHash) {
 			k.storeNewZenBTCBurnEventsSolana(ctx, oracleData)
 			k.processSolanaROCKBurnEvents(ctx, oracleData)
+			k.storeNewDCTBurnEvents(ctx, oracleData)
 		}
 
 		// 2. Process pending transaction queues based on the latest state
@@ -390,9 +440,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		// Mint directly on destination chains
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
+		k.processDCTMintsSolana(ctx, oracleData)
 
 		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
+		k.checkForDCTRedemptionFulfilment(ctx)
 		k.processSolanaROCKMints(ctx, oracleData)
 
 		// 3. Final cleanup steps for the block
@@ -447,6 +499,46 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	for _, tx := range pendingSol {
 		if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
 			k.Logger(ctx).Error("error setting Solana requested account flag", "recipient", tx.RecipientAddress, "error", err)
+		}
+	}
+
+	// DCT assets (e.g., zenZEC)
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets", "error", err)
+		} else {
+			for _, asset := range assets {
+				solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
+				if err != nil {
+					k.Logger(ctx).Error("error retrieving DCT Solana params", "asset", asset.String(), "error", err)
+					continue
+				}
+				if solParams == nil {
+					continue
+				}
+				pendingDCTSol, err := k.getPendingDCTMintTransactions(ctx,
+					asset,
+					dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
+					dcttypes.WalletType_WALLET_TYPE_SOLANA,
+				)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching pending DCT Solana mints", "asset", asset.String(), "error", err)
+					continue
+				}
+				if len(pendingDCTSol) == 0 {
+					continue
+				}
+				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+					k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
+					continue
+				}
+				for _, tx := range pendingDCTSol {
+					if err := k.SetSolanaDCTRequestedAccount(ctx, asset, tx.RecipientAddress, true); err != nil {
+						k.Logger(ctx).Error("error setting DCT Solana requested account flag", "asset", asset.String(), "recipient", tx.RecipientAddress, "error", err)
+					}
+				}
+			}
 		}
 	}
 }
@@ -866,6 +958,108 @@ func (k *Keeper) checkForBitcoinReorg(ctx sdk.Context, newHeaderHeight, latestSt
 
 	requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
 	k.Logger(ctx).Info("requested headers after reorg check", "new_requests", requestedHeaders.Heights)
+}
+
+// storeZcashBlockHeaders stores ZCash block headers that have reached consensus.
+func (k *Keeper) storeZcashBlockHeaders(ctx sdk.Context, oracleData OracleData) error {
+	latestZcashHeaderHeight, err := k.LatestZcashHeaderHeight.Get(ctx)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		return fmt.Errorf("error getting latest ZCash header height: %w", err)
+	}
+
+	// Get requested headers from state
+	requestedHeaders, err := k.RequestedHistoricalZcashHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return err
+		}
+		requestedHeaders = dcttypes.RequestedZcashHeaders{}
+	}
+
+	// Process latest header - this is the most common path and should be checked first.
+	// Most blocks have no requested headers, and when they do exist, they're usually older than the latest.
+	if newHeight, updated := k.processAndStoreZcashHeader(ctx, oracleData.LatestZcashBlockHeight, &oracleData.LatestZcashBlockHeader, latestZcashHeaderHeight, &requestedHeaders, "latest"); updated {
+		latestZcashHeaderHeight = newHeight
+	}
+
+	// Process requested header only if it's different from the latest one to avoid redundant processing
+	if oracleData.RequestedZcashBlockHeight != oracleData.LatestZcashBlockHeight {
+		k.processAndStoreZcashHeader(ctx, oracleData.RequestedZcashBlockHeight, &oracleData.RequestedZcashBlockHeader, latestZcashHeaderHeight, &requestedHeaders, "requested")
+	}
+
+	// Clean up the list of requested headers by removing any that have now been stored.
+	if len(requestedHeaders.Heights) > 0 {
+		requestedHeaders.Heights = slices.DeleteFunc(requestedHeaders.Heights, func(height int64) bool {
+			has, _ := k.ZcashBlockHeaders.Has(ctx, height)
+			return has
+		})
+	}
+
+	// Persist the updated list of requested headers
+	if err := k.RequestedHistoricalZcashHeaders.Set(ctx, requestedHeaders); err != nil {
+		k.Logger(ctx).Error("error updating requested historical ZCash headers", "error", err)
+	}
+
+	return nil
+}
+
+// processAndStoreZcashHeader processes and stores a ZCash block header.
+func (k *Keeper) processAndStoreZcashHeader(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestZcashHeaderHeight int64,
+	requestedHeaders *dcttypes.RequestedZcashHeaders,
+	headerType string,
+) (int64, bool) {
+	if headerHeight <= 0 || header == nil || header.MerkleRoot == "" {
+		return latestZcashHeaderHeight, false
+	}
+
+	// Check if header already exists by comparing hashes
+	existingHeader, err := k.ZcashBlockHeaders.Get(ctx, headerHeight)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Error("error checking if zcash header exists", "type", headerType, "height", headerHeight, "error", err)
+		return latestZcashHeaderHeight, false
+	}
+
+	// If header exists, compare hashes to see if it's different
+	if err == nil {
+		existingHash, err := deriveHash(existingHeader)
+		if err != nil {
+			k.Logger(ctx).Error("error deriving hash for existing zcash header", "type", headerType, "height", headerHeight, "error", err)
+			return latestZcashHeaderHeight, false
+		}
+
+		newHash, err := deriveHash(*header)
+		if err != nil {
+			k.Logger(ctx).Error("error deriving hash for new zcash header", "type", headerType, "height", headerHeight, "error", err)
+			return latestZcashHeaderHeight, false
+		}
+
+		if bytes.Equal(existingHash[:], newHash[:]) {
+			return latestZcashHeaderHeight, false
+		}
+	}
+
+	// Store the new header (either no header existed or hash is different)
+	if err := k.ZcashBlockHeaders.Set(ctx, headerHeight, *header); err != nil {
+		k.Logger(ctx).Error("error storing zcash header", "type", headerType, "height", headerHeight, "error", err)
+		return latestZcashHeaderHeight, false
+	}
+
+	k.Logger(ctx).Info("stored new zcash header", "type", headerType, "height", headerHeight)
+
+	// Update the latest height if this header is newer than what we had before
+	if headerHeight > latestZcashHeaderHeight {
+		if err := k.LatestZcashHeaderHeight.Set(ctx, headerHeight); err != nil {
+			k.Logger(ctx).Error("error setting latest ZCash header height", "error", err)
+		}
+		return headerHeight, true
+	}
+
+	// Header was stored but it's not newer than our current latest height
+	return latestZcashHeaderHeight, false
 }
 
 //

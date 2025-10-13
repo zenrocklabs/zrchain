@@ -82,6 +82,14 @@ var (
 		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 
+	ZenZECSolanaProgramID = map[string]string{
+		NetworkLocalnet: "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkRegnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkDevnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkTestnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkMainnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+	}
+
 	SolRockProgramID = map[string]string{
 		NetworkLocalnet: "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkRegnet:   "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",
@@ -181,6 +189,8 @@ const (
 	SolRockMint   SolanaEventType = "solRockMint"
 	SolZenBTCMint SolanaEventType = "solZenBTCMint"
 	SolZenBTCBurn SolanaEventType = "solZenBTCBurn"
+	SolZenZECMint SolanaEventType = "solZenZECMint"
+	SolZenZECBurn SolanaEventType = "solZenZECBurn"
 	SolRockBurn   SolanaEventType = "solRockBurn"
 )
 
@@ -209,10 +219,17 @@ type OracleState struct {
 	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
 	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
+	// ZCash block headers
+	LatestZcashBlockHeight    int64               `json:"latestZcashBlockHeight,omitempty"`
+	LatestZcashBlockHeader    *api.BTCBlockHeader `json:"latestZcashBlockHeader,omitempty"`
+	RequestedZcashBlockHeight int64               `json:"requestedZcashBlockHeight,omitempty"`
+	RequestedZcashBlockHeader *api.BTCBlockHeader `json:"requestedZcashBlockHeader,omitempty"`
 	// Fields for watermarking Solana events
 	LastSolRockMintSig   string `json:"lastSolRockMintSig,omitempty"`
 	LastSolZenBTCMintSig string `json:"lastSolZenBTCMintSig,omitempty"`
 	LastSolZenBTCBurnSig string `json:"lastSolZenBTCBurnSig,omitempty"`
+	LastSolZenZECMintSig string `json:"lastSolZenZECMintSig,omitempty"`
+	LastSolZenZECBurnSig string `json:"lastSolZenZECBurnSig,omitempty"`
 	LastSolRockBurnSig   string `json:"lastSolRockBurnSig,omitempty"`
 	// Pending transactions that failed processing and need to be retried
 	PendingSolanaTxs map[string]PendingTxInfo `json:"pendingSolanaTxs,omitempty"`
@@ -227,6 +244,7 @@ type Config struct {
 	Network                string            `yaml:"network"`
 	EthRPC                 map[string]string `yaml:"eth_rpc"`
 	SolanaRPC              map[string]string `yaml:"solana_rpc"`
+	ZcashRPC               map[string]string `yaml:"zcash_rpc"`
 	ProxyRPC               ProxyRPCConfig    `yaml:"proxy_rpc"`
 	Neutrino               NeutrinoConfig    `yaml:"neutrino"`
 	E2ETestsTickerInterval int               `yaml:"e2e_tests_ticker_interval"`

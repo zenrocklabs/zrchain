@@ -63,6 +63,10 @@ service Msg {
   rpc ManuallyInputBitcoinHeader(MsgManuallyInputBitcoinHeader)
       returns (MsgManuallyInputBitcoinHeaderResponse);
 
+  // ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+  rpc ManuallyInputZcashHeader(MsgManuallyInputZcashHeader)
+      returns (MsgManuallyInputZcashHeaderResponse);
+
   // AddToBedrockValSet adds a validator to the bedrock validator set.
   rpc AddToBedrockValSet(MsgAddToBedrockValSet)
       returns (MsgAddToBedrockValSetResponse);
@@ -358,6 +362,37 @@ message BitcoinHeader {
 // MsgManuallyInputBitcoinHeaderResponse defines the response structure for
 // a manually provided Bitcoin header.
 message MsgManuallyInputBitcoinHeaderResponse {}
+
+// MsgManuallyInputZcashHeader allows an authorized account to provide all
+// fields of a Zcash block header manually.
+message MsgManuallyInputZcashHeader {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgManuallyInputZcashHeader";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // header contains the Zcash block header data to store.
+  ZcashHeader header = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// ZcashHeader mirrors the fields required for a Zcash block header.
+message ZcashHeader {
+  int64 version = 1;
+  string prev_block = 2;
+  string merkle_root = 3;
+  int64 time_stamp = 4;
+  int64 bits = 5;
+  int64 nonce = 6;
+  string block_hash = 7;
+  int64 block_height = 8;
+}
+
+// MsgManuallyInputZcashHeaderResponse defines the response structure for
+// a manually provided Zcash header.
+message MsgManuallyInputZcashHeaderResponse {}
 
 // EventType enumerates the possible event types for backfill requests.
 enum EventType {

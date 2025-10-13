@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -14,16 +15,17 @@ import (
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtestutil "github.com/Zenrock-Foundation/zrchain/v6/x/validation/testutil"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -31,14 +33,117 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var (
-	bondedAcc    = authtypes.NewEmptyModuleAccount(stakingtypes.BondedPoolName)
-	notBondedAcc = authtypes.NewEmptyModuleAccount(stakingtypes.NotBondedPoolName)
-	PKs          = simtestutil.CreateTestPubKeys(500)
+	bondedAcc    = authtypes.NewEmptyModuleAccount(validationtypes.BondedPoolName)
+	notBondedAcc = authtypes.NewEmptyModuleAccount(validationtypes.NotBondedPoolName)
 )
+
+// mockDCTKeeper is a simple mock implementation of the DCTKeeper interface
+type mockDCTKeeper struct{}
+
+func (m *mockDCTKeeper) GetAuthority() string { return "" }
+func (m *mockDCTKeeper) GetParams(ctx context.Context) (dcttypes.Params, error) {
+	return dcttypes.Params{}, nil
+}
+func (m *mockDCTKeeper) GetAssetParams(ctx context.Context, asset dcttypes.Asset) (dcttypes.AssetParams, error) {
+	return dcttypes.AssetParams{}, nil
+}
+func (m *mockDCTKeeper) ListSupportedAssets(ctx context.Context) ([]dcttypes.Asset, error) {
+	return []dcttypes.Asset{}, nil
+}
+func (m *mockDCTKeeper) GetSolanaParams(ctx context.Context, asset dcttypes.Asset) (*dcttypes.Solana, error) {
+	return &dcttypes.Solana{}, nil
+}
+func (m *mockDCTKeeper) GetDepositKeyringAddr(ctx context.Context, asset dcttypes.Asset) (string, error) {
+	return "", nil
+}
+func (m *mockDCTKeeper) GetStakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetEthMinterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetUnstakerKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetCompleterKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetRewardsDepositKeyID(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) GetChangeAddressKeyIDs(ctx context.Context, asset dcttypes.Asset) ([]uint64, error) {
+	return []uint64{}, nil
+}
+func (m *mockDCTKeeper) GetProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error) {
+	return "", nil
+}
+func (m *mockDCTKeeper) GetBitcoinProxyAddress(ctx context.Context, asset dcttypes.Asset) (string, error) {
+	return "", nil
+}
+func (m *mockDCTKeeper) SetPendingMintTransaction(ctx context.Context, pendingMintTransaction dcttypes.PendingMintTransaction) error {
+	return nil
+}
+func (m *mockDCTKeeper) WalkPendingMintTransactions(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, pendingMintTransaction dcttypes.PendingMintTransaction) (stop bool, err error)) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetPendingMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) (dcttypes.PendingMintTransaction, error) {
+	return dcttypes.PendingMintTransaction{}, nil
+}
+func (m *mockDCTKeeper) HasPendingMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) (bool, error) {
+	return false, nil
+}
+func (m *mockDCTKeeper) GetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) SetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) SetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) SetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetSupply(ctx context.Context, asset dcttypes.Asset) (dcttypes.Supply, error) {
+	return dcttypes.Supply{}, nil
+}
+func (m *mockDCTKeeper) SetSupply(ctx context.Context, supply dcttypes.Supply) error { return nil }
+func (m *mockDCTKeeper) GetExchangeRate(ctx context.Context, asset dcttypes.Asset) (math.LegacyDec, error) {
+	return math.LegacyNewDec(1), nil
+}
+func (m *mockDCTKeeper) CreateBurnEvent(ctx context.Context, asset dcttypes.Asset, burnEvent *dcttypes.BurnEvent) (uint64, error) {
+	return 1, nil
+}
+func (m *mockDCTKeeper) WalkBurnEvents(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, burnEvent dcttypes.BurnEvent) (stop bool, err error)) error {
+	return nil
+}
+func (m *mockDCTKeeper) SetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64, redemption dcttypes.Redemption) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64) (dcttypes.Redemption, error) {
+	return dcttypes.Redemption{}, nil
+}
+func (m *mockDCTKeeper) WalkRedemptions(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, redemption dcttypes.Redemption) (stop bool, err error)) error {
+	return nil
+}
+func (m *mockDCTKeeper) WalkRedemptionsDescending(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, redemption dcttypes.Redemption) (stop bool, err error)) error {
+	return nil
+}
+func (m *mockDCTKeeper) GetFirstRedemptionAwaitingSign(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
+	return 0, nil
+}
+func (m *mockDCTKeeper) SetFirstRedemptionAwaitingSign(ctx context.Context, asset dcttypes.Asset, id uint64) error {
+	return nil
+}
 
 type KeeperTestSuite struct {
 	suite.Suite
@@ -156,6 +261,9 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 
 	newctrl := ubermock.NewController(s.T())
 	zenBTCKeeper := validationtestutil.NewMockZenBTCKeeper(newctrl)
+
+	// Create a simple DCT keeper mock
+	dctKeeper := &mockDCTKeeper{}
 	// Set up expectations for key ID methods that are called by getZenBTCKeyIDs
 	zenBTCKeeper.EXPECT().GetStakerKeyID(ubermock.Any()).Return(uint64(1)).AnyTimes()
 	zenBTCKeeper.EXPECT().GetEthMinterKeyID(ubermock.Any()).Return(uint64(2)).AnyTimes()
@@ -212,6 +320,7 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 		zrConfig,
 		treasuryKeeper,
 		zenBTCKeeper,
+		dctKeeper,
 		zentpKeeper,
 		slashingKeeper,
 		address.NewBech32Codec("zenvaloper"),

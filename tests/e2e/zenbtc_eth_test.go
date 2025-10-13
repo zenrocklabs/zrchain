@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -68,6 +69,7 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 			types.WalletType_WALLET_TYPE_EVM,
 			"eip155:560048",
 			"",
+			dcttypes.Asset_ASSET_ZENBTC,
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())

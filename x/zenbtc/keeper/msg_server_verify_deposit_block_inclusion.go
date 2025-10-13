@@ -18,6 +18,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
@@ -84,6 +85,11 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 	metaData := q.Response.Key.ZenbtcMetadata
 	if metaData == nil || metaData.RecipientAddr == "" || metaData.Caip2ChainId == "" {
 		return nil, errors.New("lock tx - Key Metadata is invalid")
+	}
+
+	// Verify asset type matches (ASSET_UNSPECIFIED is allowed for backwards compatibility)
+	if metaData.Asset != dcttypes.Asset_ASSET_UNSPECIFIED && metaData.Asset != dcttypes.Asset_ASSET_ZENBTC {
+		return nil, fmt.Errorf("key metadata asset type mismatch: expected ASSET_ZENBTC or ASSET_UNSPECIFIED, got %s", metaData.Asset.String())
 	}
 
 	found = false
