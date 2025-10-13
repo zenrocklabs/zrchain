@@ -105,7 +105,7 @@ message QuerySupplyResponse {
 }
 
 message QueryBurnEventsRequest {
-  uint64 start_index = 1;
+  uint64 startIndex = 1;
   string txID = 2;
   uint64 logIndex = 3;
   string caip2chainID = 4;

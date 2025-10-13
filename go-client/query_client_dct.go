@@ -90,14 +90,13 @@ func (c *DCTQueryClient) Params(ctx context.Context) (*types.QueryParamsResponse
 // Returns:
 //   - *types.QueryBurnEventsResponse: Contains the list of burn events
 //   - error: An error if the query fails
-func (c *DCTQueryClient) BurnEvents(ctx context.Context, asset types.Asset, startIndex uint64, txID string, logIndex uint64, chainID string, status types.BurnStatus) (*types.QueryBurnEventsResponse, error) {
+func (c *DCTQueryClient) BurnEvents(ctx context.Context, asset types.Asset, startIndex uint64, txID string, logIndex uint64, chainID string) (*types.QueryBurnEventsResponse, error) {
 	return c.client.QueryBurnEvents(ctx, &types.QueryBurnEventsRequest{
-		Asset:         asset,
-		StartIndex:    startIndex,
-		TxID:          txID,
-		LogIndex:      logIndex,
-		Caip2ChainID:  chainID,
-		Status:        status,
+		Asset:        asset,
+		StartIndex:   startIndex,
+		TxID:         txID,
+		LogIndex:     logIndex,
+		Caip2ChainID: chainID,
 	})
 }
 

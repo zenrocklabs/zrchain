@@ -353,7 +353,6 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 			ChainID:         burn.ChainID,
 			DestinationAddr: burn.DestinationAddr,
 			Amount:          burn.Amount,
-			Status:          dcttypes.BurnStatus_BURN_STATUS_BURNED,
 			Asset:           asset,
 		}
 
@@ -380,7 +379,7 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 				Amount:             burn.Amount,
 				Asset:              asset,
 			},
-			Status: dcttypes.RedemptionStatus_UNSTAKED,
+			Status: dcttypes.RedemptionStatus_INITIATED,
 		}); err != nil {
 			k.Logger(ctx).Error("error creating DCT redemption from burn event", "asset", asset.String(), "burn_tx", burn.TxID, "error", err)
 			continue
@@ -502,7 +501,7 @@ func (k *Keeper) checkForDCTRedemptionFulfilment(ctx sdk.Context) {
 			}
 			if signReq.Status == treasurytypes.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED {
 				redemption.Data.SignReqId = 0
-				redemption.Status = dcttypes.RedemptionStatus_UNSTAKED
+				redemption.Status = dcttypes.RedemptionStatus_INITIATED
 			}
 			if err := k.dctKeeper.SetRedemption(ctx, asset, redemption.Data.Id, redemption); err != nil {
 				k.Logger(ctx).Error("error updating DCT redemption after fulfilment", "asset", asset.String(), "id", redemption.Data.Id, "error", err)

@@ -33,20 +33,18 @@ message LockTransaction {
 
 // PendingMintTransaction is the metadata for a pending zenBTC mint transaction.
 message PendingMintTransaction {
-  uint64 chain_id = 1 [deprecated=true];
-  WalletType chain_type = 2;
-  string recipient_address = 3;
-  uint64 amount = 4;
-  string creator = 5;
-  uint64 key_id = 6 [deprecated=true];
-  string caip2_chain_id = 7;
-  uint64 id = 8;
-  MintTransactionStatus status = 9;
-  uint64 zrchain_tx_id = 10;
-  int64 block_height = 11;
-  int64 awaiting_event_since = 12;
-  string tx_hash = 13;
-  Asset asset = 14;
+  WalletType chain_type = 1;
+  string recipient_address = 2;
+  uint64 amount = 3;
+  string creator = 4;
+  string caip2_chain_id = 5;
+  uint64 id = 6;
+  MintTransactionStatus status = 7;
+  uint64 zrchain_tx_id = 8;
+  int64 block_height = 9;
+  int64 awaiting_event_since = 10;
+  string tx_hash = 11;
+  Asset asset = 12;
 }
 
 enum MintTransactionStatus {
@@ -54,12 +52,6 @@ enum MintTransactionStatus {
   MINT_TRANSACTION_STATUS_DEPOSITED = 1;
   MINT_TRANSACTION_STATUS_STAKED = 2;
   MINT_TRANSACTION_STATUS_MINTED = 3;
-}
-
-// Deprecated: This message is deprecated and should no longer be used.
-message PendingMintTransactions {
-  option deprecated = true;
-  repeated PendingMintTransaction txs = 1;
 }
 
 // WalletType specifies the Layer 1 blockchain that this wallet will be used

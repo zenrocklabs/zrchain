@@ -102,20 +102,18 @@ class QuerySupplyResponse(_message.Message):
     def __init__(self, supplies: _Optional[_Iterable[_Union[AssetSupply, _Mapping]]] = ...) -> None: ...
 
 class QueryBurnEventsRequest(_message.Message):
-    __slots__ = ("start_index", "txID", "logIndex", "caip2chainID", "status", "asset")
-    START_INDEX_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("startIndex", "txID", "logIndex", "caip2chainID", "asset")
+    STARTINDEX_FIELD_NUMBER: _ClassVar[int]
     TXID_FIELD_NUMBER: _ClassVar[int]
     LOGINDEX_FIELD_NUMBER: _ClassVar[int]
     CAIP2CHAINID_FIELD_NUMBER: _ClassVar[int]
-    STATUS_FIELD_NUMBER: _ClassVar[int]
     ASSET_FIELD_NUMBER: _ClassVar[int]
-    start_index: int
+    startIndex: int
     txID: str
     logIndex: int
     caip2chainID: str
-    status: _redemptions_pb2.BurnStatus
     asset: _params_pb2.Asset
-    def __init__(self, start_index: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., caip2chainID: _Optional[str] = ..., status: _Optional[_Union[_redemptions_pb2.BurnStatus, str]] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ...) -> None: ...
+    def __init__(self, startIndex: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., caip2chainID: _Optional[str] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ...) -> None: ...
 
 class QueryBurnEventsResponse(_message.Message):
     __slots__ = ("burnEvents",)

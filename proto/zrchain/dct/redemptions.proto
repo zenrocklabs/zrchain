@@ -23,11 +23,9 @@ message RedemptionData {
 
 enum RedemptionStatus {
   UNSPECIFIED = 0;
-  INITIATED = 1; // after BurnStatus.UNSTAKING phase is completed (7 days)
-  UNSTAKED = 2; // after calling unstakeComplete
-  BURNED = 3 [deprecated = true];
-  COMPLETED = 4;
-  AWAITING_SIGN = 5;
+  INITIATED = 1;
+  AWAITING_SIGN = 2;
+  COMPLETED = 3;
 }
 
 message BurnEvent {
@@ -37,12 +35,6 @@ message BurnEvent {
   string chainID = 4;
   bytes destinationAddr = 5;
   uint64 amount = 6;
-  BurnStatus status = 7;
-  Asset asset = 8;
+  Asset asset = 7;
 }
 
-enum BurnStatus {
-  BURN_STATUS_UNSPECIFIED = 0;
-  BURN_STATUS_BURNED = 1;
-  BURN_STATUS_UNSTAKING = 2;
-}

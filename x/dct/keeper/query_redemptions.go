@@ -33,8 +33,8 @@ func (k Keeper) GetRedemptions(goCtx context.Context, req *types.QueryRedemption
 				if redemption.Status == types.RedemptionStatus_INITIATED {
 					redemptions = append(redemptions, redemption)
 				}
-			case types.RedemptionStatus_UNSTAKED:
-				if redemption.Status == types.RedemptionStatus_UNSTAKED {
+			case types.RedemptionStatus_AWAITING_SIGN:
+				if redemption.Status == types.RedemptionStatus_AWAITING_SIGN {
 					redemptions = append(redemptions, redemption)
 				}
 			case types.RedemptionStatus_COMPLETED:
@@ -59,8 +59,8 @@ func (k Keeper) GetRedemptions(goCtx context.Context, req *types.QueryRedemption
 				if redemption.Status == types.RedemptionStatus_INITIATED {
 					redemptions = append(redemptions, redemption)
 				}
-			case types.RedemptionStatus_UNSTAKED:
-				if redemption.Status == types.RedemptionStatus_UNSTAKED {
+			case types.RedemptionStatus_AWAITING_SIGN:
+				if redemption.Status == types.RedemptionStatus_AWAITING_SIGN {
 					redemptions = append(redemptions, redemption)
 				}
 			case types.RedemptionStatus_COMPLETED:

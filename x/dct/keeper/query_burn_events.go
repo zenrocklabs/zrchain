@@ -26,8 +26,7 @@ func (k Keeper) QueryBurnEvents(ctx context.Context, req *types.QueryBurnEventsR
 			}
 			if (req.TxID == "" || burnEvent.TxID == req.TxID) &&
 				(req.LogIndex == 0 || burnEvent.LogIndex == req.LogIndex) &&
-				(req.Caip2ChainID == "" || burnEvent.ChainID == req.Caip2ChainID) &&
-				(req.Status == types.BurnStatus_BURN_STATUS_UNSPECIFIED || burnEvent.Status == req.Status) {
+				(req.Caip2ChainID == "" || burnEvent.ChainID == req.Caip2ChainID) {
 
 				matchingBurnEvents = append(matchingBurnEvents, &burnEvent)
 			}
@@ -43,8 +42,7 @@ func (k Keeper) QueryBurnEvents(ctx context.Context, req *types.QueryBurnEventsR
 			}
 			if (req.TxID == "" || burnEvent.TxID == req.TxID) &&
 				(req.LogIndex == 0 || burnEvent.LogIndex == req.LogIndex) &&
-				(req.Caip2ChainID == "" || burnEvent.ChainID == req.Caip2ChainID) &&
-				(req.Status == types.BurnStatus_BURN_STATUS_UNSPECIFIED || burnEvent.Status == req.Status) {
+				(req.Caip2ChainID == "" || burnEvent.ChainID == req.Caip2ChainID) {
 
 				matchingBurnEvents = append(matchingBurnEvents, &burnEvent)
 			}

@@ -140,7 +140,7 @@ func (k msgServer) verifyOutputsAgainstRedemptions(ctx context.Context, msg *typ
 	chaincfg := utils.ChainFromString(msg.ChainName)
 	req := &types.QueryRedemptionsRequest{
 		StartIndex: 0,
-		Status:     types.RedemptionStatus_UNSTAKED,
+		Status:     types.RedemptionStatus_INITIATED,
 	}
 
 	redemptions, err := k.Keeper.GetRedemptions(ctx, req)

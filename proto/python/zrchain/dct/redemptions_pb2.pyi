@@ -11,25 +11,12 @@ class RedemptionStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     UNSPECIFIED: _ClassVar[RedemptionStatus]
     INITIATED: _ClassVar[RedemptionStatus]
-    UNSTAKED: _ClassVar[RedemptionStatus]
-    BURNED: _ClassVar[RedemptionStatus]
-    COMPLETED: _ClassVar[RedemptionStatus]
     AWAITING_SIGN: _ClassVar[RedemptionStatus]
-
-class BurnStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
-    BURN_STATUS_UNSPECIFIED: _ClassVar[BurnStatus]
-    BURN_STATUS_BURNED: _ClassVar[BurnStatus]
-    BURN_STATUS_UNSTAKING: _ClassVar[BurnStatus]
+    COMPLETED: _ClassVar[RedemptionStatus]
 UNSPECIFIED: RedemptionStatus
 INITIATED: RedemptionStatus
-UNSTAKED: RedemptionStatus
-BURNED: RedemptionStatus
-COMPLETED: RedemptionStatus
 AWAITING_SIGN: RedemptionStatus
-BURN_STATUS_UNSPECIFIED: BurnStatus
-BURN_STATUS_BURNED: BurnStatus
-BURN_STATUS_UNSTAKING: BurnStatus
+COMPLETED: RedemptionStatus
 
 class Redemption(_message.Message):
     __slots__ = ("data", "status")
@@ -54,14 +41,13 @@ class RedemptionData(_message.Message):
     def __init__(self, id: _Optional[int] = ..., destination_address: _Optional[bytes] = ..., amount: _Optional[int] = ..., sign_req_id: _Optional[int] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ...) -> None: ...
 
 class BurnEvent(_message.Message):
-    __slots__ = ("id", "txID", "logIndex", "chainID", "destinationAddr", "amount", "status", "asset")
+    __slots__ = ("id", "txID", "logIndex", "chainID", "destinationAddr", "amount", "asset")
     ID_FIELD_NUMBER: _ClassVar[int]
     TXID_FIELD_NUMBER: _ClassVar[int]
     LOGINDEX_FIELD_NUMBER: _ClassVar[int]
     CHAINID_FIELD_NUMBER: _ClassVar[int]
     DESTINATIONADDR_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    STATUS_FIELD_NUMBER: _ClassVar[int]
     ASSET_FIELD_NUMBER: _ClassVar[int]
     id: int
     txID: str
@@ -69,6 +55,5 @@ class BurnEvent(_message.Message):
     chainID: str
     destinationAddr: bytes
     amount: int
-    status: BurnStatus
     asset: _params_pb2.Asset
-    def __init__(self, id: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., chainID: _Optional[str] = ..., destinationAddr: _Optional[bytes] = ..., amount: _Optional[int] = ..., status: _Optional[_Union[BurnStatus, str]] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., chainID: _Optional[str] = ..., destinationAddr: _Optional[bytes] = ..., amount: _Optional[int] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ...) -> None: ...

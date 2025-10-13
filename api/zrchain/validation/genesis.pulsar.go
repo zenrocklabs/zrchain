@@ -1215,88 +1215,6 @@ func (x *_GenesisState_24_map) IsValid() bool {
 	return x.m != nil
 }
 
-var _ protoreflect.Map = (*_GenesisState_30_map)(nil)
-
-type _GenesisState_30_map struct {
-	m *map[string]bool
-}
-
-func (x *_GenesisState_30_map) Len() int {
-	if x.m == nil {
-		return 0
-	}
-	return len(*x.m)
-}
-
-func (x *_GenesisState_30_map) Range(f func(protoreflect.MapKey, protoreflect.Value) bool) {
-	if x.m == nil {
-		return
-	}
-	for k, v := range *x.m {
-		mapKey := (protoreflect.MapKey)(protoreflect.ValueOfString(k))
-		mapValue := protoreflect.ValueOfBool(v)
-		if !f(mapKey, mapValue) {
-			break
-		}
-	}
-}
-
-func (x *_GenesisState_30_map) Has(key protoreflect.MapKey) bool {
-	if x.m == nil {
-		return false
-	}
-	keyUnwrapped := key.String()
-	concreteValue := keyUnwrapped
-	_, ok := (*x.m)[concreteValue]
-	return ok
-}
-
-func (x *_GenesisState_30_map) Clear(key protoreflect.MapKey) {
-	if x.m == nil {
-		return
-	}
-	keyUnwrapped := key.String()
-	concreteKey := keyUnwrapped
-	delete(*x.m, concreteKey)
-}
-
-func (x *_GenesisState_30_map) Get(key protoreflect.MapKey) protoreflect.Value {
-	if x.m == nil {
-		return protoreflect.Value{}
-	}
-	keyUnwrapped := key.String()
-	concreteKey := keyUnwrapped
-	v, ok := (*x.m)[concreteKey]
-	if !ok {
-		return protoreflect.Value{}
-	}
-	return protoreflect.ValueOfBool(v)
-}
-
-func (x *_GenesisState_30_map) Set(key protoreflect.MapKey, value protoreflect.Value) {
-	if !key.IsValid() || !value.IsValid() {
-		panic("invalid key or value provided")
-	}
-	keyUnwrapped := key.String()
-	concreteKey := keyUnwrapped
-	valueUnwrapped := value.Bool()
-	concreteValue := valueUnwrapped
-	(*x.m)[concreteKey] = concreteValue
-}
-
-func (x *_GenesisState_30_map) Mutable(key protoreflect.MapKey) protoreflect.Value {
-	panic("should not call Mutable on protoreflect.Map whose value is not of type protoreflect.Message")
-}
-
-func (x *_GenesisState_30_map) NewValue() protoreflect.Value {
-	v := false
-	return protoreflect.ValueOfBool(v)
-}
-
-func (x *_GenesisState_30_map) IsValid() bool {
-	return x.m != nil
-}
-
 var _ protoreflect.Map = (*_GenesisState_25_map)(nil)
 
 type _GenesisState_25_map struct {
@@ -1551,6 +1469,88 @@ func (x *_GenesisState_28_map) IsValid() bool {
 	return x.m != nil
 }
 
+var _ protoreflect.Map = (*_GenesisState_30_map)(nil)
+
+type _GenesisState_30_map struct {
+	m *map[string]bool
+}
+
+func (x *_GenesisState_30_map) Len() int {
+	if x.m == nil {
+		return 0
+	}
+	return len(*x.m)
+}
+
+func (x *_GenesisState_30_map) Range(f func(protoreflect.MapKey, protoreflect.Value) bool) {
+	if x.m == nil {
+		return
+	}
+	for k, v := range *x.m {
+		mapKey := (protoreflect.MapKey)(protoreflect.ValueOfString(k))
+		mapValue := protoreflect.ValueOfBool(v)
+		if !f(mapKey, mapValue) {
+			break
+		}
+	}
+}
+
+func (x *_GenesisState_30_map) Has(key protoreflect.MapKey) bool {
+	if x.m == nil {
+		return false
+	}
+	keyUnwrapped := key.String()
+	concreteValue := keyUnwrapped
+	_, ok := (*x.m)[concreteValue]
+	return ok
+}
+
+func (x *_GenesisState_30_map) Clear(key protoreflect.MapKey) {
+	if x.m == nil {
+		return
+	}
+	keyUnwrapped := key.String()
+	concreteKey := keyUnwrapped
+	delete(*x.m, concreteKey)
+}
+
+func (x *_GenesisState_30_map) Get(key protoreflect.MapKey) protoreflect.Value {
+	if x.m == nil {
+		return protoreflect.Value{}
+	}
+	keyUnwrapped := key.String()
+	concreteKey := keyUnwrapped
+	v, ok := (*x.m)[concreteKey]
+	if !ok {
+		return protoreflect.Value{}
+	}
+	return protoreflect.ValueOfBool(v)
+}
+
+func (x *_GenesisState_30_map) Set(key protoreflect.MapKey, value protoreflect.Value) {
+	if !key.IsValid() || !value.IsValid() {
+		panic("invalid key or value provided")
+	}
+	keyUnwrapped := key.String()
+	concreteKey := keyUnwrapped
+	valueUnwrapped := value.Bool()
+	concreteValue := valueUnwrapped
+	(*x.m)[concreteKey] = concreteValue
+}
+
+func (x *_GenesisState_30_map) Mutable(key protoreflect.MapKey) protoreflect.Value {
+	panic("should not call Mutable on protoreflect.Map whose value is not of type protoreflect.Message")
+}
+
+func (x *_GenesisState_30_map) NewValue() protoreflect.Value {
+	v := false
+	return protoreflect.ValueOfBool(v)
+}
+
+func (x *_GenesisState_30_map) IsValid() bool {
+	return x.m != nil
+}
+
 var (
 	md_GenesisState                                      protoreflect.MessageDescriptor
 	fd_GenesisState_params                               protoreflect.FieldDescriptor
@@ -1577,12 +1577,12 @@ var (
 	fd_GenesisState_solana_nonce_requested               protoreflect.FieldDescriptor
 	fd_GenesisState_solana_zentp_accounts_requested      protoreflect.FieldDescriptor
 	fd_GenesisState_solana_accounts_requested            protoreflect.FieldDescriptor
-	fd_GenesisState_solana_dct_accounts_requested        protoreflect.FieldDescriptor
 	fd_GenesisState_validator_mismatch_counts            protoreflect.FieldDescriptor
 	fd_GenesisState_last_completed_zentp_mint_id         protoreflect.FieldDescriptor
 	fd_GenesisState_avs_delegations                      protoreflect.FieldDescriptor
 	fd_GenesisState_validator_delegations                protoreflect.FieldDescriptor
 	fd_GenesisState_latest_btc_header_height             protoreflect.FieldDescriptor
+	fd_GenesisState_solana_dct_accounts_requested        protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -1612,12 +1612,12 @@ func init() {
 	fd_GenesisState_solana_nonce_requested = md_GenesisState.Fields().ByName("solana_nonce_requested")
 	fd_GenesisState_solana_zentp_accounts_requested = md_GenesisState.Fields().ByName("solana_zentp_accounts_requested")
 	fd_GenesisState_solana_accounts_requested = md_GenesisState.Fields().ByName("solana_accounts_requested")
-	fd_GenesisState_solana_dct_accounts_requested = md_GenesisState.Fields().ByName("solana_dct_accounts_requested")
 	fd_GenesisState_validator_mismatch_counts = md_GenesisState.Fields().ByName("validator_mismatch_counts")
 	fd_GenesisState_last_completed_zentp_mint_id = md_GenesisState.Fields().ByName("last_completed_zentp_mint_id")
 	fd_GenesisState_avs_delegations = md_GenesisState.Fields().ByName("avs_delegations")
 	fd_GenesisState_validator_delegations = md_GenesisState.Fields().ByName("validator_delegations")
 	fd_GenesisState_latest_btc_header_height = md_GenesisState.Fields().ByName("latest_btc_header_height")
+	fd_GenesisState_solana_dct_accounts_requested = md_GenesisState.Fields().ByName("solana_dct_accounts_requested")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -1829,12 +1829,6 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
-	if len(x.SolanaDctAccountsRequested) != 0 {
-		value := protoreflect.ValueOfMap(&_GenesisState_30_map{m: &x.SolanaDctAccountsRequested})
-		if !f(fd_GenesisState_solana_dct_accounts_requested, value) {
-			return
-		}
-	}
 	if len(x.ValidatorMismatchCounts) != 0 {
 		value := protoreflect.ValueOfMap(&_GenesisState_25_map{m: &x.ValidatorMismatchCounts})
 		if !f(fd_GenesisState_validator_mismatch_counts, value) {
@@ -1862,6 +1856,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 	if x.LatestBtcHeaderHeight != int64(0) {
 		value := protoreflect.ValueOfInt64(x.LatestBtcHeaderHeight)
 		if !f(fd_GenesisState_latest_btc_header_height, value) {
+			return
+		}
+	}
+	if len(x.SolanaDctAccountsRequested) != 0 {
+		value := protoreflect.ValueOfMap(&_GenesisState_30_map{m: &x.SolanaDctAccountsRequested})
+		if !f(fd_GenesisState_solana_dct_accounts_requested, value) {
 			return
 		}
 	}
@@ -1928,8 +1928,6 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.SolanaZentpAccountsRequested) != 0
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		return len(x.SolanaAccountsRequested) != 0
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		return len(x.SolanaDctAccountsRequested) != 0
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		return len(x.ValidatorMismatchCounts) != 0
 	case "zrchain.validation.GenesisState.last_completed_zentp_mint_id":
@@ -1940,6 +1938,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.ValidatorDelegations) != 0
 	case "zrchain.validation.GenesisState.latest_btc_header_height":
 		return x.LatestBtcHeaderHeight != int64(0)
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		return len(x.SolanaDctAccountsRequested) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -2004,8 +2004,6 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.SolanaZentpAccountsRequested = nil
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		x.SolanaAccountsRequested = nil
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		x.SolanaDctAccountsRequested = nil
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		x.ValidatorMismatchCounts = nil
 	case "zrchain.validation.GenesisState.last_completed_zentp_mint_id":
@@ -2016,6 +2014,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.ValidatorDelegations = nil
 	case "zrchain.validation.GenesisState.latest_btc_header_height":
 		x.LatestBtcHeaderHeight = int64(0)
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		x.SolanaDctAccountsRequested = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -2152,12 +2152,6 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		}
 		mapValue := &_GenesisState_24_map{m: &x.SolanaAccountsRequested}
 		return protoreflect.ValueOfMap(mapValue)
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		if len(x.SolanaDctAccountsRequested) == 0 {
-			return protoreflect.ValueOfMap(&_GenesisState_30_map{})
-		}
-		mapValue := &_GenesisState_30_map{m: &x.SolanaDctAccountsRequested}
-		return protoreflect.ValueOfMap(mapValue)
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		if len(x.ValidatorMismatchCounts) == 0 {
 			return protoreflect.ValueOfMap(&_GenesisState_25_map{})
@@ -2182,6 +2176,12 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	case "zrchain.validation.GenesisState.latest_btc_header_height":
 		value := x.LatestBtcHeaderHeight
 		return protoreflect.ValueOfInt64(value)
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		if len(x.SolanaDctAccountsRequested) == 0 {
+			return protoreflect.ValueOfMap(&_GenesisState_30_map{})
+		}
+		mapValue := &_GenesisState_30_map{m: &x.SolanaDctAccountsRequested}
+		return protoreflect.ValueOfMap(mapValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -2282,10 +2282,6 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		mv := value.Map()
 		cmv := mv.(*_GenesisState_24_map)
 		x.SolanaAccountsRequested = *cmv.m
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		mv := value.Map()
-		cmv := mv.(*_GenesisState_30_map)
-		x.SolanaDctAccountsRequested = *cmv.m
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		mv := value.Map()
 		cmv := mv.(*_GenesisState_25_map)
@@ -2302,6 +2298,10 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		x.ValidatorDelegations = *cmv.m
 	case "zrchain.validation.GenesisState.latest_btc_header_height":
 		x.LatestBtcHeaderHeight = value.Int()
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		mv := value.Map()
+		cmv := mv.(*_GenesisState_30_map)
+		x.SolanaDctAccountsRequested = *cmv.m
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -2438,12 +2438,6 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_24_map{m: &x.SolanaAccountsRequested}
 		return protoreflect.ValueOfMap(value)
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		if x.SolanaDctAccountsRequested == nil {
-			x.SolanaDctAccountsRequested = make(map[string]bool)
-		}
-		value := &_GenesisState_30_map{m: &x.SolanaDctAccountsRequested}
-		return protoreflect.ValueOfMap(value)
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		if x.ValidatorMismatchCounts == nil {
 			x.ValidatorMismatchCounts = make(map[string]*ValidatorMismatchCount)
@@ -2461,6 +2455,12 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 			x.ValidatorDelegations = make(map[string][]byte)
 		}
 		value := &_GenesisState_28_map{m: &x.ValidatorDelegations}
+		return protoreflect.ValueOfMap(value)
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		if x.SolanaDctAccountsRequested == nil {
+			x.SolanaDctAccountsRequested = make(map[string]bool)
+		}
+		value := &_GenesisState_30_map{m: &x.SolanaDctAccountsRequested}
 		return protoreflect.ValueOfMap(value)
 	case "zrchain.validation.GenesisState.last_total_power":
 		panic(fmt.Errorf("field last_total_power of message zrchain.validation.GenesisState is not mutable"))
@@ -2555,9 +2555,6 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "zrchain.validation.GenesisState.solana_accounts_requested":
 		m := make(map[string]bool)
 		return protoreflect.ValueOfMap(&_GenesisState_24_map{m: &m})
-	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
-		m := make(map[string]bool)
-		return protoreflect.ValueOfMap(&_GenesisState_30_map{m: &m})
 	case "zrchain.validation.GenesisState.validator_mismatch_counts":
 		m := make(map[string]*ValidatorMismatchCount)
 		return protoreflect.ValueOfMap(&_GenesisState_25_map{m: &m})
@@ -2571,6 +2568,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 		return protoreflect.ValueOfMap(&_GenesisState_28_map{m: &m})
 	case "zrchain.validation.GenesisState.latest_btc_header_height":
 		return protoreflect.ValueOfInt64(int64(0))
+	case "zrchain.validation.GenesisState.solana_dct_accounts_requested":
+		m := make(map[string]bool)
+		return protoreflect.ValueOfMap(&_GenesisState_30_map{m: &m})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.validation.GenesisState"))
@@ -2973,27 +2973,6 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				}
 			}
 		}
-		if len(x.SolanaDctAccountsRequested) > 0 {
-			SiZeMaP := func(k string, v bool) {
-				mapEntrySize := 1 + len(k) + runtime.Sov(uint64(len(k))) + 1 + 1
-				n += mapEntrySize + 2 + runtime.Sov(uint64(mapEntrySize))
-			}
-			if options.Deterministic {
-				sortme := make([]string, 0, len(x.SolanaDctAccountsRequested))
-				for k := range x.SolanaDctAccountsRequested {
-					sortme = append(sortme, k)
-				}
-				sort.Strings(sortme)
-				for _, k := range sortme {
-					v := x.SolanaDctAccountsRequested[k]
-					SiZeMaP(k, v)
-				}
-			} else {
-				for k, v := range x.SolanaDctAccountsRequested {
-					SiZeMaP(k, v)
-				}
-			}
-		}
 		if len(x.ValidatorMismatchCounts) > 0 {
 			SiZeMaP := func(k string, v *ValidatorMismatchCount) {
 				l := 0
@@ -3069,6 +3048,27 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		}
 		if x.LatestBtcHeaderHeight != 0 {
 			n += 2 + runtime.Sov(uint64(x.LatestBtcHeaderHeight))
+		}
+		if len(x.SolanaDctAccountsRequested) > 0 {
+			SiZeMaP := func(k string, v bool) {
+				mapEntrySize := 1 + len(k) + runtime.Sov(uint64(len(k))) + 1 + 1
+				n += mapEntrySize + 2 + runtime.Sov(uint64(mapEntrySize))
+			}
+			if options.Deterministic {
+				sortme := make([]string, 0, len(x.SolanaDctAccountsRequested))
+				for k := range x.SolanaDctAccountsRequested {
+					sortme = append(sortme, k)
+				}
+				sort.Strings(sortme)
+				for _, k := range sortme {
+					v := x.SolanaDctAccountsRequested[k]
+					SiZeMaP(k, v)
+				}
+			} else {
+				for k, v := range x.SolanaDctAccountsRequested {
+					SiZeMaP(k, v)
+				}
+			}
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -5692,121 +5692,6 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				}
 				x.SolanaAccountsRequested[mapkey] = mapvalue
 				iNdEx = postIndex
-			case 30:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SolanaDctAccountsRequested", wireType)
-				}
-				var msglen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					msglen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if msglen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + msglen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				if x.SolanaDctAccountsRequested == nil {
-					x.SolanaDctAccountsRequested = make(map[string]bool)
-				}
-				var mapkey string
-				var mapvalue bool
-				for iNdEx < postIndex {
-					entryPreIndex := iNdEx
-					var wire uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						wire |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					fieldNum := int32(wire >> 3)
-					if fieldNum == 1 {
-						var stringLenmapkey uint64
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							stringLenmapkey |= uint64(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						intStringLenmapkey := int(stringLenmapkey)
-						if intStringLenmapkey < 0 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-						}
-						postStringIndexmapkey := iNdEx + intStringLenmapkey
-						if postStringIndexmapkey < 0 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-						}
-						if postStringIndexmapkey > l {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-						iNdEx = postStringIndexmapkey
-					} else if fieldNum == 2 {
-						var mapvaluetemp int
-						for shift := uint(0); ; shift += 7 {
-							if shift >= 64 {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-							}
-							if iNdEx >= l {
-								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-							}
-							b := dAtA[iNdEx]
-							iNdEx++
-							mapvaluetemp |= int(b&0x7F) << shift
-							if b < 0x80 {
-								break
-							}
-						}
-						mapvalue = bool(mapvaluetemp != 0)
-					} else {
-						iNdEx = entryPreIndex
-						skippy, err := runtime.Skip(dAtA[iNdEx:])
-						if err != nil {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-						}
-						if (skippy < 0) || (iNdEx+skippy) < 0 {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-						}
-						if (iNdEx + skippy) > postIndex {
-							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-						}
-						iNdEx += skippy
-					}
-				}
-				x.SolanaDctAccountsRequested[mapkey] = mapvalue
-				iNdEx = postIndex
 			case 25:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValidatorMismatchCounts", wireType)
@@ -6230,6 +6115,121 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
+			case 30:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SolanaDctAccountsRequested", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.SolanaDctAccountsRequested == nil {
+					x.SolanaDctAccountsRequested = make(map[string]bool)
+				}
+				var mapkey string
+				var mapvalue bool
+				for iNdEx < postIndex {
+					entryPreIndex := iNdEx
+					var wire uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						wire |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					fieldNum := int32(wire >> 3)
+					if fieldNum == 1 {
+						var stringLenmapkey uint64
+						for shift := uint(0); ; shift += 7 {
+							if shift >= 64 {
+								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+							}
+							if iNdEx >= l {
+								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+							}
+							b := dAtA[iNdEx]
+							iNdEx++
+							stringLenmapkey |= uint64(b&0x7F) << shift
+							if b < 0x80 {
+								break
+							}
+						}
+						intStringLenmapkey := int(stringLenmapkey)
+						if intStringLenmapkey < 0 {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+						}
+						postStringIndexmapkey := iNdEx + intStringLenmapkey
+						if postStringIndexmapkey < 0 {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+						}
+						if postStringIndexmapkey > l {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+						}
+						mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+						iNdEx = postStringIndexmapkey
+					} else if fieldNum == 2 {
+						var mapvaluetemp int
+						for shift := uint(0); ; shift += 7 {
+							if shift >= 64 {
+								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+							}
+							if iNdEx >= l {
+								return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+							}
+							b := dAtA[iNdEx]
+							iNdEx++
+							mapvaluetemp |= int(b&0x7F) << shift
+							if b < 0x80 {
+								break
+							}
+						}
+						mapvalue = bool(mapvaluetemp != 0)
+					} else {
+						iNdEx = entryPreIndex
+						skippy, err := runtime.Skip(dAtA[iNdEx:])
+						if err != nil {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+						}
+						if (skippy < 0) || (iNdEx+skippy) < 0 {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+						}
+						if (iNdEx + skippy) > postIndex {
+							return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+						}
+						iNdEx += skippy
+					}
+				}
+				x.SolanaDctAccountsRequested[mapkey] = mapvalue
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -6803,8 +6803,6 @@ type GenesisState struct {
 	SolanaZentpAccountsRequested map[string]bool `protobuf:"bytes,23,rep,name=solana_zentp_accounts_requested,json=solanaZentpAccountsRequested,proto3" json:"solana_zentp_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// solana_accounts_requested defines the Solana accounts requested at genesis.
 	SolanaAccountsRequested map[string]bool `protobuf:"bytes,24,rep,name=solana_accounts_requested,json=solanaAccountsRequested,proto3" json:"solana_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
-	// solana_dct_accounts_requested defines the Solana accounts requested for DCT assets at genesis.
-	SolanaDctAccountsRequested map[string]bool `protobuf:"bytes,30,rep,name=solana_dct_accounts_requested,json=solanaDctAccountsRequested,proto3" json:"solana_dct_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// validator_mismatch_counts defines the validator mismatch counts at genesis.
 	ValidatorMismatchCounts map[string]*ValidatorMismatchCount `protobuf:"bytes,25,rep,name=validator_mismatch_counts,json=validatorMismatchCounts,proto3" json:"validator_mismatch_counts,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// last_completed_zentp_mint_id defines the last completed Zentp mint id at genesis.
@@ -6815,6 +6813,8 @@ type GenesisState struct {
 	ValidatorDelegations map[string][]byte `protobuf:"bytes,28,rep,name=validator_delegations,json=validatorDelegations,proto3" json:"validator_delegations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// latest_btc_header_height defines the latest Bitcoin header height at genesis.
 	LatestBtcHeaderHeight int64 `protobuf:"varint,29,opt,name=latest_btc_header_height,json=latestBtcHeaderHeight,proto3" json:"latest_btc_header_height,omitempty"`
+	// solana_dct_accounts_requested defines the Solana accounts requested for DCT assets at genesis.
+	SolanaDctAccountsRequested map[string]bool `protobuf:"bytes,30,rep,name=solana_dct_accounts_requested,json=solanaDctAccountsRequested,proto3" json:"solana_dct_accounts_requested,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
 func (x *GenesisState) Reset() {
@@ -7005,13 +7005,6 @@ func (x *GenesisState) GetSolanaAccountsRequested() map[string]bool {
 	return nil
 }
 
-func (x *GenesisState) GetSolanaDctAccountsRequested() map[string]bool {
-	if x != nil {
-		return x.SolanaDctAccountsRequested
-	}
-	return nil
-}
-
 func (x *GenesisState) GetValidatorMismatchCounts() map[string]*ValidatorMismatchCount {
 	if x != nil {
 		return x.ValidatorMismatchCounts
@@ -7045,6 +7038,13 @@ func (x *GenesisState) GetLatestBtcHeaderHeight() int64 {
 		return x.LatestBtcHeaderHeight
 	}
 	return 0
+}
+
+func (x *GenesisState) GetSolanaDctAccountsRequested() map[string]bool {
+	if x != nil {
+		return x.SolanaDctAccountsRequested
+	}
+	return nil
 }
 
 // LastValidatorPower required for validator set update logic.
@@ -7267,52 +7267,52 @@ var file_zrchain_validation_genesis_proto_rawDesc = []byte{
 	0x6c, 0x61, 0x6e, 0x61, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x65, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a,
 	0x01, 0x52, 0x17, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x12, 0x8a, 0x01, 0x0a, 0x1d, 0x73,
-	0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x5f, 0x64, 0x63, 0x74, 0x5f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e,
-	0x74, 0x73, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x18, 0x1e, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x40, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x12, 0x84, 0x01, 0x0a, 0x19, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63,
+	0x68, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x18, 0x19, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3d,
+	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65,
+	0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74,
+	0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x09, 0xc8,
+	0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x17, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74,
+	0x73, 0x12, 0x45, 0x0a, 0x1c, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x63, 0x6f, 0x6d, 0x70, 0x6c, 0x65,
+	0x74, 0x65, 0x64, 0x5f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x5f, 0x6d, 0x69, 0x6e, 0x74, 0x5f, 0x69,
+	0x64, 0x18, 0x1a, 0x20, 0x01, 0x28, 0x04, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x18,
+	0x6c, 0x61, 0x73, 0x74, 0x43, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x5a, 0x65, 0x6e,
+	0x74, 0x70, 0x4d, 0x69, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x8f, 0x01, 0x0a, 0x0f, 0x61, 0x76, 0x73,
+	0x5f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x1b, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x34, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53,
-	0x74, 0x61, 0x74, 0x65, 0x2e, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x44, 0x63, 0x74, 0x41, 0x63,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x45,
-	0x6e, 0x74, 0x72, 0x79, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x1a, 0x73, 0x6f, 0x6c,
-	0x61, 0x6e, 0x61, 0x44, 0x63, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x12, 0x84, 0x01, 0x0a, 0x19, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x6d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x73, 0x18, 0x19, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3d, 0x2e, 0x7a, 0x72,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x2e, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x56, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43,
-	0x6f, 0x75, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x09, 0xc8, 0xde, 0x1f, 0x00,
-	0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x17, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
-	0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x12, 0x45,
-	0x0a, 0x1c, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x63, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64,
-	0x5f, 0x7a, 0x65, 0x6e, 0x74, 0x70, 0x5f, 0x6d, 0x69, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x1a,
-	0x20, 0x01, 0x28, 0x04, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x18, 0x6c, 0x61, 0x73,
-	0x74, 0x43, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x5a, 0x65, 0x6e, 0x74, 0x70, 0x4d,
-	0x69, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x8f, 0x01, 0x0a, 0x0f, 0x61, 0x76, 0x73, 0x5f, 0x64, 0x65,
-	0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x1b, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x34, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74,
-	0x65, 0x2e, 0x41, 0x76, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68,
-	0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49,
-	0x6e, 0x74, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0e, 0x61, 0x76, 0x73, 0x44, 0x65, 0x6c, 0x65,
-	0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0xa1, 0x01, 0x0a, 0x15, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x18, 0x1c, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3a, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
-	0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x6e,
-	0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x6f, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e,
-	0x74, 0x72, 0x79, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15, 0x63, 0x6f, 0x73,
-	0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x68, 0x2e, 0x49,
-	0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74,
-	0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x14, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72,
-	0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x3e, 0x0a, 0x18, 0x6c,
-	0x61, 0x74, 0x65, 0x73, 0x74, 0x5f, 0x62, 0x74, 0x63, 0x5f, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72,
-	0x5f, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x1d, 0x20, 0x01, 0x28, 0x03, 0x42, 0x05, 0xa8,
-	0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x15, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x42, 0x74, 0x63, 0x48,
-	0x65, 0x61, 0x64, 0x65, 0x72, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x1a, 0x3e, 0x0a, 0x10, 0x41,
+	0x74, 0x61, 0x74, 0x65, 0x2e, 0x41, 0x76, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde,
+	0x1f, 0x15, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d,
+	0x61, 0x74, 0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
+	0x73, 0x2e, 0x49, 0x6e, 0x74, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x0e, 0x61, 0x76, 0x73, 0x44,
+	0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0xa1, 0x01, 0x0a, 0x15, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x1c, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3a, 0x2e, 0x7a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x30, 0xc8, 0xde, 0x1f, 0x00, 0xda, 0xde, 0x1f, 0x15,
+	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x6d, 0x61, 0x74,
+	0x68, 0x2e, 0x49, 0x6e, 0x74, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x49, 0x6e, 0x74, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x14, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x3e,
+	0x0a, 0x18, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x5f, 0x62, 0x74, 0x63, 0x5f, 0x68, 0x65, 0x61,
+	0x64, 0x65, 0x72, 0x5f, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x1d, 0x20, 0x01, 0x28, 0x03,
+	0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x15, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x42,
+	0x74, 0x63, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x8a,
+	0x01, 0x0a, 0x1d, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x5f, 0x64, 0x63, 0x74, 0x5f, 0x61, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64,
+	0x18, 0x1e, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x40, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x6e, 0x65,
+	0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x44,
+	0x63, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x65, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x42, 0x05, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52,
+	0x1a, 0x73, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x44, 0x63, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e,
+	0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x1a, 0x3e, 0x0a, 0x10, 0x41,
 	0x73, 0x73, 0x65, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
 	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x6b, 0x65,
 	0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c,
@@ -7370,28 +7370,28 @@ var file_zrchain_validation_genesis_proto_rawDesc = []byte{
 	0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x45, 0x6e, 0x74,
 	0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x4d,
-	0x0a, 0x1f, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x44, 0x63, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64, 0x45, 0x6e, 0x74, 0x72,
-	0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
-	0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x76, 0x0a,
-	0x1c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61, 0x74,
-	0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
+	0x01, 0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x76,
+	0x0a, 0x1c, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73, 0x6d, 0x61,
+	0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x40, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x2a, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69,
+	0x73, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x41, 0x0a, 0x13, 0x41, 0x76, 0x73, 0x44, 0x65, 0x6c,
+	0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
 	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
-	0x40, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x4d, 0x69, 0x73,
-	0x6d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
-	0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x41, 0x0a, 0x13, 0x41, 0x76, 0x73, 0x44, 0x65, 0x6c, 0x65,
-	0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
-	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14,
-	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x47, 0x0a, 0x19, 0x56, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x47, 0x0a, 0x19, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02,
+	0x38, 0x01, 0x1a, 0x4d, 0x0a, 0x1f, 0x53, 0x6f, 0x6c, 0x61, 0x6e, 0x61, 0x44, 0x63, 0x74, 0x41,
+	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x64,
 	0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38,
 	0x01, 0x22, 0x68, 0x0a, 0x12, 0x4c, 0x61, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
 	0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x32, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65,
 	0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f,
@@ -7442,10 +7442,10 @@ var file_zrchain_validation_genesis_proto_goTypes = []interface{}{
 	nil,                                    // 10: zrchain.validation.GenesisState.SolanaNonceRequestedEntry
 	nil,                                    // 11: zrchain.validation.GenesisState.SolanaZentpAccountsRequestedEntry
 	nil,                                    // 12: zrchain.validation.GenesisState.SolanaAccountsRequestedEntry
-	nil,                                    // 13: zrchain.validation.GenesisState.SolanaDctAccountsRequestedEntry
-	nil,                                    // 14: zrchain.validation.GenesisState.ValidatorMismatchCountsEntry
-	nil,                                    // 15: zrchain.validation.GenesisState.AvsDelegationsEntry
-	nil,                                    // 16: zrchain.validation.GenesisState.ValidatorDelegationsEntry
+	nil,                                    // 13: zrchain.validation.GenesisState.ValidatorMismatchCountsEntry
+	nil,                                    // 14: zrchain.validation.GenesisState.AvsDelegationsEntry
+	nil,                                    // 15: zrchain.validation.GenesisState.ValidatorDelegationsEntry
+	nil,                                    // 16: zrchain.validation.GenesisState.SolanaDctAccountsRequestedEntry
 	(*Params)(nil),                         // 17: zrchain.validation.Params
 	(*ValidatorHV)(nil),                    // 18: zrchain.validation.ValidatorHV
 	(*Delegation)(nil),                     // 19: zrchain.validation.Delegation
@@ -7482,10 +7482,10 @@ var file_zrchain_validation_genesis_proto_depIdxs = []int32{
 	10, // 17: zrchain.validation.GenesisState.solana_nonce_requested:type_name -> zrchain.validation.GenesisState.SolanaNonceRequestedEntry
 	11, // 18: zrchain.validation.GenesisState.solana_zentp_accounts_requested:type_name -> zrchain.validation.GenesisState.SolanaZentpAccountsRequestedEntry
 	12, // 19: zrchain.validation.GenesisState.solana_accounts_requested:type_name -> zrchain.validation.GenesisState.SolanaAccountsRequestedEntry
-	13, // 20: zrchain.validation.GenesisState.solana_dct_accounts_requested:type_name -> zrchain.validation.GenesisState.SolanaDctAccountsRequestedEntry
-	14, // 21: zrchain.validation.GenesisState.validator_mismatch_counts:type_name -> zrchain.validation.GenesisState.ValidatorMismatchCountsEntry
-	15, // 22: zrchain.validation.GenesisState.avs_delegations:type_name -> zrchain.validation.GenesisState.AvsDelegationsEntry
-	16, // 23: zrchain.validation.GenesisState.validator_delegations:type_name -> zrchain.validation.GenesisState.ValidatorDelegationsEntry
+	13, // 20: zrchain.validation.GenesisState.validator_mismatch_counts:type_name -> zrchain.validation.GenesisState.ValidatorMismatchCountsEntry
+	14, // 21: zrchain.validation.GenesisState.avs_delegations:type_name -> zrchain.validation.GenesisState.AvsDelegationsEntry
+	15, // 22: zrchain.validation.GenesisState.validator_delegations:type_name -> zrchain.validation.GenesisState.ValidatorDelegationsEntry
+	16, // 23: zrchain.validation.GenesisState.solana_dct_accounts_requested:type_name -> zrchain.validation.GenesisState.SolanaDctAccountsRequestedEntry
 	25, // 24: zrchain.validation.GenesisState.SlashEventsEntry.value:type_name -> zrchain.validation.SlashEvent
 	26, // 25: zrchain.validation.GenesisState.ValidationInfosEntry.value:type_name -> zrchain.validation.ValidationInfo
 	27, // 26: zrchain.validation.GenesisState.BtcBlockHeadersEntry.value:type_name -> api.BTCBlockHeader
