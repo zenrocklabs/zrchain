@@ -99,6 +99,12 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 		return nil, errors.New("lock tx - key metadata is invalid")
 	}
 
+	// Verify asset type matches the expected asset
+	// ASSET_UNSPECIFIED is allowed for backwards compatibility
+	if metaData.Asset != types.Asset_ASSET_UNSPECIFIED && metaData.Asset != asset {
+		return nil, fmt.Errorf("key metadata asset type mismatch: expected %s or ASSET_UNSPECIFIED, got %s", asset.String(), metaData.Asset.String())
+	}
+
 	var walletFound bool
 	for _, wallet := range queryResp.Response.Wallets {
 		if wallet.Address == msg.DepositAddr {

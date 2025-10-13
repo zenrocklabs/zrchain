@@ -191,7 +191,7 @@ func (k msgServer) verifyInputsInRedemption(ctx context.Context, msg *types.MsgS
 			return err
 		}
 
-		// verify that input key is a zenBTC key
+		// verify that input key has DCT metadata
 		if inputKey.ZenbtcMetadata == nil {
 			return fmt.Errorf("input key is missing zenbtc_metadata: %d", input.Keyid)
 		}
@@ -199,6 +199,12 @@ func (k msgServer) verifyInputsInRedemption(ctx context.Context, msg *types.MsgS
 		// ensure that key does not contain empty "ZenbtcMetadata" structure
 		if inputKey.ZenbtcMetadata.RecipientAddr == "" {
 			return fmt.Errorf("input key is missing zenbtc_metadata recipient: %d", input.Keyid)
+		}
+
+		// Verify asset type matches the expected asset
+		// ASSET_UNSPECIFIED is allowed for backwards compatibility
+		if inputKey.ZenbtcMetadata.Asset != types.Asset_ASSET_UNSPECIFIED && inputKey.ZenbtcMetadata.Asset != msg.Asset {
+			return fmt.Errorf("input key %d has wrong asset type: expected %s or ASSET_UNSPECIFIED, got %s", input.Keyid, msg.Asset.String(), inputKey.ZenbtcMetadata.Asset.String())
 		}
 	}
 

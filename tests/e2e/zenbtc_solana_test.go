@@ -10,6 +10,7 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -67,6 +68,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 			types.WalletType_WALLET_TYPE_SOLANA,
 			"solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD",
 			"",
+			dcttypes.Asset_ASSET_ZENBTC,
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(hash).ToNot(BeEmpty())

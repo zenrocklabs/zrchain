@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
@@ -190,6 +191,11 @@ func (k msgServer) verifyInputsInRedemption(ctx context.Context, inputs []*types
 		// ensure that key does not contain empty "ZenbtcMetadata" structure
 		if inputKey.ZenbtcMetadata.RecipientAddr == "" {
 			return fmt.Errorf("input key is missing zenbtc_metadata recipient: %d", input.Keyid)
+		}
+
+		// Verify asset type matches (ASSET_UNSPECIFIED is allowed for backwards compatibility)
+		if inputKey.ZenbtcMetadata.Asset != dcttypes.Asset_ASSET_UNSPECIFIED && inputKey.ZenbtcMetadata.Asset != dcttypes.Asset_ASSET_ZENBTC {
+			return fmt.Errorf("input key %d has wrong asset type: expected ASSET_ZENBTC or ASSET_UNSPECIFIED, got %s", input.Keyid, inputKey.ZenbtcMetadata.Asset.String())
 		}
 	}
 
