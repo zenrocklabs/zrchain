@@ -30,6 +30,7 @@ const (
 	Msg_TriggerEventBackfill_FullMethodName       = "/zrchain.validation.Msg/TriggerEventBackfill"
 	Msg_RequestHeaderBackfill_FullMethodName      = "/zrchain.validation.Msg/RequestHeaderBackfill"
 	Msg_ManuallyInputBitcoinHeader_FullMethodName = "/zrchain.validation.Msg/ManuallyInputBitcoinHeader"
+	Msg_ManuallyInputZcashHeader_FullMethodName   = "/zrchain.validation.Msg/ManuallyInputZcashHeader"
 	Msg_AddToBedrockValSet_FullMethodName         = "/zrchain.validation.Msg/AddToBedrockValSet"
 	Msg_RemoveFromBedrockValSet_FullMethodName    = "/zrchain.validation.Msg/RemoveFromBedrockValSet"
 )
@@ -69,6 +70,8 @@ type MsgClient interface {
 	RequestHeaderBackfill(ctx context.Context, in *MsgRequestHeaderBackfill, opts ...grpc.CallOption) (*MsgRequestHeaderBackfillResponse, error)
 	// ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
 	ManuallyInputBitcoinHeader(ctx context.Context, in *MsgManuallyInputBitcoinHeader, opts ...grpc.CallOption) (*MsgManuallyInputBitcoinHeaderResponse, error)
+	// ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+	ManuallyInputZcashHeader(ctx context.Context, in *MsgManuallyInputZcashHeader, opts ...grpc.CallOption) (*MsgManuallyInputZcashHeaderResponse, error)
 	// AddToBedrockValSet adds a validator to the bedrock validator set.
 	AddToBedrockValSet(ctx context.Context, in *MsgAddToBedrockValSet, opts ...grpc.CallOption) (*MsgAddToBedrockValSetResponse, error)
 	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
@@ -193,6 +196,16 @@ func (c *msgClient) ManuallyInputBitcoinHeader(ctx context.Context, in *MsgManua
 	return out, nil
 }
 
+func (c *msgClient) ManuallyInputZcashHeader(ctx context.Context, in *MsgManuallyInputZcashHeader, opts ...grpc.CallOption) (*MsgManuallyInputZcashHeaderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgManuallyInputZcashHeaderResponse)
+	err := c.cc.Invoke(ctx, Msg_ManuallyInputZcashHeader_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) AddToBedrockValSet(ctx context.Context, in *MsgAddToBedrockValSet, opts ...grpc.CallOption) (*MsgAddToBedrockValSetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MsgAddToBedrockValSetResponse)
@@ -248,6 +261,8 @@ type MsgServer interface {
 	RequestHeaderBackfill(context.Context, *MsgRequestHeaderBackfill) (*MsgRequestHeaderBackfillResponse, error)
 	// ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
 	ManuallyInputBitcoinHeader(context.Context, *MsgManuallyInputBitcoinHeader) (*MsgManuallyInputBitcoinHeaderResponse, error)
+	// ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+	ManuallyInputZcashHeader(context.Context, *MsgManuallyInputZcashHeader) (*MsgManuallyInputZcashHeaderResponse, error)
 	// AddToBedrockValSet adds a validator to the bedrock validator set.
 	AddToBedrockValSet(context.Context, *MsgAddToBedrockValSet) (*MsgAddToBedrockValSetResponse, error)
 	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
@@ -294,6 +309,9 @@ func (UnimplementedMsgServer) RequestHeaderBackfill(context.Context, *MsgRequest
 }
 func (UnimplementedMsgServer) ManuallyInputBitcoinHeader(context.Context, *MsgManuallyInputBitcoinHeader) (*MsgManuallyInputBitcoinHeaderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ManuallyInputBitcoinHeader not implemented")
+}
+func (UnimplementedMsgServer) ManuallyInputZcashHeader(context.Context, *MsgManuallyInputZcashHeader) (*MsgManuallyInputZcashHeaderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ManuallyInputZcashHeader not implemented")
 }
 func (UnimplementedMsgServer) AddToBedrockValSet(context.Context, *MsgAddToBedrockValSet) (*MsgAddToBedrockValSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddToBedrockValSet not implemented")
@@ -520,6 +538,24 @@ func _Msg_ManuallyInputBitcoinHeader_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ManuallyInputZcashHeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgManuallyInputZcashHeader)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ManuallyInputZcashHeader(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_ManuallyInputZcashHeader_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ManuallyInputZcashHeader(ctx, req.(*MsgManuallyInputZcashHeader))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_AddToBedrockValSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgAddToBedrockValSet)
 	if err := dec(in); err != nil {
@@ -606,6 +642,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ManuallyInputBitcoinHeader",
 			Handler:    _Msg_ManuallyInputBitcoinHeader_Handler,
+		},
+		{
+			MethodName: "ManuallyInputZcashHeader",
+			Handler:    _Msg_ManuallyInputZcashHeader_Handler,
 		},
 		{
 			MethodName: "AddToBedrockValSet",
