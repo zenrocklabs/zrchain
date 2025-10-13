@@ -9,10 +9,10 @@ import (
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solana "github.com/gagliardetto/solana-go"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 // =========================
@@ -191,6 +191,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				nonceAccountKey:   solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
 				signerKey:         solParams.SignerKeyId,
+				multisigKey:       solParams.MultisigKeyAddress,
 				zenbtc:            true,
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)

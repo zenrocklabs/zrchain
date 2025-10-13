@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // TxDispatchRequestHandlerInterface defines an explicit controller to check and clear

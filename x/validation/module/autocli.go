@@ -221,6 +221,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "header"},
 					},
 				},
+				{
+					RpcMethod: "ManuallyInputZcashHeader",
+					Use:       "manually-input-zcash-header [header]",
+					Short:     "Manually inject a Zcash block header",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "header"},
+					},
+				},
 				// this line is used by ignite scaffolding # autocli/tx
 			},
 			EnhanceCustomCommand: true, // use custom commands only until v0.51

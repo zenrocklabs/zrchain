@@ -102,6 +102,26 @@ func (mr *MocksidecarClientMockRecorder) GetLatestEthereumNonceForAccount(ctx, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestEthereumNonceForAccount", reflect.TypeOf((*MocksidecarClient)(nil).GetLatestEthereumNonceForAccount), varargs...)
 }
 
+// GetLatestZcashBlockHeader mocks base method.
+func (m *MocksidecarClient) GetLatestZcashBlockHeader(ctx context.Context, in *api.LatestBitcoinBlockHeaderRequest, opts ...grpc.CallOption) (*api.BitcoinBlockHeaderResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetLatestZcashBlockHeader", varargs...)
+	ret0, _ := ret[0].(*api.BitcoinBlockHeaderResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLatestZcashBlockHeader indicates an expected call of GetLatestZcashBlockHeader.
+func (mr *MocksidecarClientMockRecorder) GetLatestZcashBlockHeader(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestZcashBlockHeader", reflect.TypeOf((*MocksidecarClient)(nil).GetLatestZcashBlockHeader), varargs...)
+}
+
 // GetSidecarState mocks base method.
 func (m *MocksidecarClient) GetSidecarState(ctx context.Context, arg1 *api.SidecarStateRequest, opts ...grpc.CallOption) (*api.SidecarStateResponse, error) {
 	m.ctrl.T.Helper()
@@ -160,4 +180,24 @@ func (mr *MocksidecarClientMockRecorder) GetSolanaAccountInfo(ctx, in any, opts 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSolanaAccountInfo", reflect.TypeOf((*MocksidecarClient)(nil).GetSolanaAccountInfo), varargs...)
+}
+
+// GetZcashBlockHeaderByHeight mocks base method.
+func (m *MocksidecarClient) GetZcashBlockHeaderByHeight(ctx context.Context, in *api.BitcoinBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*api.BitcoinBlockHeaderResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetZcashBlockHeaderByHeight", varargs...)
+	ret0, _ := ret[0].(*api.BitcoinBlockHeaderResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetZcashBlockHeaderByHeight indicates an expected call of GetZcashBlockHeaderByHeight.
+func (mr *MocksidecarClientMockRecorder) GetZcashBlockHeaderByHeight(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZcashBlockHeaderByHeight", reflect.TypeOf((*MocksidecarClient)(nil).GetZcashBlockHeaderByHeight), varargs...)
 }

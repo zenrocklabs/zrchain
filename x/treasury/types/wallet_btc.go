@@ -177,7 +177,7 @@ func VerifyBitcoinSigHashes(dataForSigning [][]byte, tx []byte) (status Verifica
 		if err != nil {
 			return Verification_NotVerified, fmt.Errorf("error CalcWitnessSigHash: %w", err)
 		}
-		if bytes.Compare(hash, dataForSigning[index]) != 0 {
+		if bytes.Equal(hash, dataForSigning[index]) {
 			return Verification_Failed, fmt.Errorf("hash index %d is invalid", index)
 		}
 	}

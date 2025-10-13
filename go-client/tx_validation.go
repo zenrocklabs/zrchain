@@ -60,3 +60,28 @@ func (c *ValidationTxClient) ManuallyInputBitcoinHeader(ctx context.Context, hea
 
 	return c.c.SendWaitTx(ctx, txBytes)
 }
+
+// ManuallyInputZcashHeader injects the provided Zcash header directly into consensus state.
+func (c *ValidationTxClient) ManuallyInputZcashHeader(ctx context.Context, header types.ZcashHeader) (string, error) {
+	if header.BlockHeight <= 0 {
+		return "", fmt.Errorf("header block height must be greater than zero")
+	}
+	if header.MerkleRoot == "" {
+		return "", fmt.Errorf("header merkle root must be provided")
+	}
+	if header.BlockHash == "" {
+		return "", fmt.Errorf("header block hash must be provided")
+	}
+
+	msg := &types.MsgManuallyInputZcashHeader{
+		Authority: c.c.Identity.Address.String(),
+		Header:    header,
+	}
+
+	txBytes, err := c.c.BuildAndSignTx(ctx, InjectHeaderGasLimit, DefaultFees, msg)
+	if err != nil {
+		return "", err
+	}
+
+	return c.c.SendWaitTx(ctx, txBytes)
+}

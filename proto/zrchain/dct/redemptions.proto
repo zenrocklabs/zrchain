@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package zrchain.dct;
+
+import "gogoproto/gogo.proto";
+import "zrchain/dct/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types";
+
+// Redemption contains the data for a redemption transaction.
+message Redemption {
+  RedemptionData data = 1 [(gogoproto.nullable) = false];
+  RedemptionStatus status = 2;
+}
+
+message RedemptionData {
+  uint64 id = 1;
+  bytes destination_address = 2;
+  uint64 amount = 3;
+  uint64 sign_req_id = 4;
+  Asset asset = 5;
+}
+
+enum RedemptionStatus {
+  UNSPECIFIED = 0;
+  INITIATED = 1;
+  AWAITING_SIGN = 2;
+  COMPLETED = 3;
+}
+
+message BurnEvent {
+  uint64 id = 1;
+  string txID = 2;
+  uint64 logIndex = 3;
+  string chainID = 4;
+  bytes destinationAddr = 5;
+  uint64 amount = 6;
+  Asset asset = 7;
+}
+

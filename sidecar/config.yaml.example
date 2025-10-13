@@ -14,6 +14,10 @@ solana_rpc:
   devnet: ""
   testnet: ""
   mainnet: ""
+zcash_rpc:
+  devnet: "http://127.0.0.1:18232"
+  testnet: "http://127.0.0.1:18232"
+  mainnet: "http://127.0.0.1:8232"
 neutrino:
   path: "./neutrino"
 
