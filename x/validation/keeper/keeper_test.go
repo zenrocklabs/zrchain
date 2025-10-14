@@ -336,6 +336,8 @@ func (s *ValidationKeeperTestSuite) ValidationKeeperSetupTest() (*validationkeep
 	mockSidecarClient.EXPECT().GetSidecarStateByEthHeight(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleSidecarState, nil).AnyTimes()
 	mockSidecarClient.EXPECT().GetBitcoinBlockHeaderByHeight(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
 	mockSidecarClient.EXPECT().GetLatestBitcoinBlockHeader(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetZcashBlockHeaderByHeight(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
+	mockSidecarClient.EXPECT().GetLatestZcashBlockHeader(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleBtcHeader, nil).AnyTimes()
 
 	mockSidecarClient.EXPECT().GetLatestEthereumNonceForAccount(ubermock.Any(), ubermock.Any()).Return(validationtestutil.SampleNonceResponse, nil).AnyTimes()
 

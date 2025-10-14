@@ -630,6 +630,34 @@ func (k *Keeper) GetValidatedOracleData(ctx sdk.Context, voteExt VoteExtension, 
 		oracleData.RequestedBtcBlockHeader = *requestedHeader.BlockHeader
 	}
 
+	// Prefer the consensus-selected requested height for ZCash headers (if present) to avoid drift
+	var requestedZcashHeaderHeight int64
+	if fieldHasConsensus(fieldVotePowers, VEFieldRequestedZcashBlockHeight) &&
+		fieldHasConsensus(fieldVotePowers, VEFieldRequestedZcashHeaderHash) {
+		requestedZcashHeaderHeight = voteExt.RequestedZcashBlockHeight
+	}
+	latestZcashHeader, requestedZcashHeader, err := k.retrieveZcashHeaders(ctx, requestedZcashHeaderHeight)
+	if err != nil {
+		// ZCash headers are optional, just log the error
+		k.Logger(ctx).Error("error fetching zcash headers in GetValidatedOracleData", "error", err)
+	} else {
+		// Copy latest ZCash header data if we have consensus on both height and hash fields
+		if fieldHasConsensus(fieldVotePowers, VEFieldLatestZcashBlockHeight) &&
+			fieldHasConsensus(fieldVotePowers, VEFieldLatestZcashHeaderHash) &&
+			latestZcashHeader != nil {
+			oracleData.LatestZcashBlockHeight = latestZcashHeader.BlockHeight
+			oracleData.LatestZcashBlockHeader = *latestZcashHeader.BlockHeader
+		}
+
+		// Copy requested ZCash header data if we have consensus on both height and hash fields
+		if fieldHasConsensus(fieldVotePowers, VEFieldRequestedZcashBlockHeight) &&
+			fieldHasConsensus(fieldVotePowers, VEFieldRequestedZcashHeaderHash) &&
+			requestedZcashHeader != nil {
+			oracleData.RequestedZcashBlockHeight = requestedZcashHeader.BlockHeight
+			oracleData.RequestedZcashBlockHeader = *requestedZcashHeader.BlockHeader
+		}
+	}
+
 	// Verify nonce fields and copy them if they have consensus
 	nonceFields := []struct {
 		field       VoteExtensionField
@@ -1003,7 +1031,9 @@ func (k *Keeper) storeZcashBlockHeaders(ctx sdk.Context, oracleData OracleData) 
 	return nil
 }
 
-// processAndStoreZcashHeader processes and stores a ZCash block header.
+// processAndStoreZcashHeader checks if a given ZCash header is new, stores it,
+// and triggers a reorg check if it's a new high-water mark.
+// It returns the updated latestZcashHeaderHeight and a boolean indicating if it was updated.
 func (k *Keeper) processAndStoreZcashHeader(
 	ctx sdk.Context,
 	headerHeight int64,
@@ -1011,6 +1041,30 @@ func (k *Keeper) processAndStoreZcashHeader(
 	latestZcashHeaderHeight int64,
 	requestedHeaders *dcttypes.RequestedZcashHeaders,
 	headerType string,
+) (int64, bool) {
+	return k.processAndStoreZcashHeaderInternal(ctx, headerHeight, header, latestZcashHeaderHeight, requestedHeaders, headerType, true)
+}
+
+// processAndStoreZcashHeaderManual processes a manually input ZCash header without triggering reorg checks.
+// It returns the updated latestZcashHeaderHeight and a boolean indicating if it was updated.
+func (k *Keeper) processAndStoreZcashHeaderManual(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestZcashHeaderHeight int64,
+) (int64, bool) {
+	return k.processAndStoreZcashHeaderInternal(ctx, headerHeight, header, latestZcashHeaderHeight, nil, "manual", false)
+}
+
+// processAndStoreZcashHeaderInternal is the internal implementation for processing ZCash headers.
+func (k *Keeper) processAndStoreZcashHeaderInternal(
+	ctx sdk.Context,
+	headerHeight int64,
+	header *sidecarapitypes.BTCBlockHeader,
+	latestZcashHeaderHeight int64,
+	requestedHeaders *dcttypes.RequestedZcashHeaders,
+	headerType string,
+	performReorgCheck bool,
 ) (int64, bool) {
 	if headerHeight <= 0 || header == nil || header.MerkleRoot == "" {
 		return latestZcashHeaderHeight, false
@@ -1050,6 +1104,11 @@ func (k *Keeper) processAndStoreZcashHeader(
 
 	k.Logger(ctx).Info("stored new zcash header", "type", headerType, "height", headerHeight)
 
+	// Perform reorg/gap check only if requested (not for manual headers)
+	if performReorgCheck && requestedHeaders != nil {
+		k.checkForZcashReorg(ctx, headerHeight, latestZcashHeaderHeight, requestedHeaders)
+	}
+
 	// Update the latest height if this header is newer than what we had before
 	if headerHeight > latestZcashHeaderHeight {
 		if err := k.LatestZcashHeaderHeight.Set(ctx, headerHeight); err != nil {
@@ -1060,6 +1119,45 @@ func (k *Keeper) processAndStoreZcashHeader(
 
 	// Header was stored but it's not newer than our current latest height
 	return latestZcashHeaderHeight, false
+}
+
+// checkForZcashReorg checks for gaps and requests previous headers for reorg detection.
+// This function does NOT modify the LatestZcashHeaderHeight state.
+func (k *Keeper) checkForZcashReorg(ctx sdk.Context, newHeaderHeight, latestStoredHeight int64, requestedHeaders *dcttypes.RequestedZcashHeaders) {
+	var numHistoricalHeadersToRequest int64 = 20
+	if strings.HasPrefix(ctx.ChainID(), "diamond") {
+		numHistoricalHeadersToRequest = 6
+	}
+
+	// Only run when we advance the latest stored height; skip for historical/non-advancing headers
+	if newHeaderHeight <= latestStoredHeight {
+		k.Logger(ctx).Debug("skipping reorg check for non-advancing or historical zcash header",
+			"new_height", newHeaderHeight,
+			"latest_stored_height", latestStoredHeight,
+		)
+		return
+	}
+
+	// Check for gaps between the latest stored header and the new header.
+	// Only run the check if we have a previously stored height (i.e., it's not the first run).
+	if latestStoredHeight > 0 {
+		for i := latestStoredHeight + 1; i < newHeaderHeight; i++ {
+			requestedHeaders.Heights = append(requestedHeaders.Heights, i)
+		}
+	}
+
+	// Request N previous headers from the new tip for reorg validation.
+	prevHeights := make([]int64, 0, numHistoricalHeadersToRequest)
+	for i := int64(1); i <= numHistoricalHeadersToRequest; i++ {
+		prevHeight := newHeaderHeight - i
+		if prevHeight <= 0 {
+			break
+		}
+		prevHeights = append(prevHeights, prevHeight)
+	}
+
+	requestedHeaders.Heights = append(requestedHeaders.Heights, prevHeights...)
+	k.Logger(ctx).Info("requested zcash headers after reorg check", "new_requests", requestedHeaders.Heights)
 }
 
 //

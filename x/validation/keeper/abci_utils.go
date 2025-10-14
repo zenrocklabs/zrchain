@@ -129,7 +129,7 @@ func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeigh
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
 	// Initialize maps for each field type
-	for i := VEFieldEigenDelegationsHash; i <= VEFieldSolanaMintEventsHash; i++ {
+	for i := VEFieldEigenDelegationsHash; i <= VEFieldLatestZcashHeaderHash; i++ {
 		fieldVotes[i] = make(map[string]fieldVote)
 	}
 
@@ -278,7 +278,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldEigenDelegationsHash; field <= VEFieldSolanaMintEventsHash; field++ {
+	for field := VEFieldEigenDelegationsHash; field <= VEFieldLatestZcashHeaderHash; field++ {
 		_, hasConsensus := fieldVotePowers[field]
 		if hasConsensus {
 			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
