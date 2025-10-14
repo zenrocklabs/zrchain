@@ -430,6 +430,20 @@ func (k Keeper) GetBtcBlockHeaders(ctx context.Context) (map[int64]sidecar.BTCBl
 	return btcBlockHeaders, nil
 }
 
+func (k Keeper) GetZcashBlockHeaders(ctx context.Context) (map[int64]sidecar.BTCBlockHeader, error) {
+	zcashBlockHeaders := make(map[int64]sidecar.BTCBlockHeader)
+
+	err := k.ZcashBlockHeaders.Walk(ctx, nil, func(key int64, value sidecar.BTCBlockHeader) (stop bool, err error) {
+		zcashBlockHeaders[key] = value
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return zcashBlockHeaders, nil
+}
+
 func (k Keeper) GetLastUsedSolanaNonce(ctx context.Context) (map[uint64]types.SolanaNonce, error) {
 	lastUsedSolanaNonce := make(map[uint64]types.SolanaNonce)
 
@@ -481,6 +495,18 @@ func (k Keeper) GetRequestedHistoricalBitcoinHeaders(ctx context.Context) (zenbt
 	}
 
 	return requestedHistoricalBitcoinHeaders, nil
+}
+
+func (k Keeper) GetRequestedHistoricalZcashHeaders(ctx context.Context) (dcttypes.RequestedZcashHeaders, error) {
+	requestedHistoricalZcashHeaders, err := k.RequestedHistoricalZcashHeaders.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return dcttypes.RequestedZcashHeaders{}, nil
+		}
+		return dcttypes.RequestedZcashHeaders{}, err
+	}
+
+	return requestedHistoricalZcashHeaders, nil
 }
 
 func (k Keeper) GetAvsRewardsPool(ctx context.Context) (map[string]math.Int, error) {
