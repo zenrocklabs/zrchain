@@ -107,85 +107,70 @@ func (s *IntegrationTestSuite) TestAliasFunctions() {
 }
 
 func (s *IntegrationTestSuite) TestClaimKeyringFees() {
-	// Setup test parameters
-	params := types.DefaultParams()
-	err := s.mintKeeper.Params.Set(s.ctx, params)
-	s.Require().NoError(err)
+	tests := []struct {
+		name            string
+		keyringBalance  uint64
+		expectedRewards uint64
+		expectError     bool
+	}{
+		{
+			name:            "successful claim",
+			keyringBalance:  1000000,
+			expectedRewards: 1000000,
+			expectError:     false,
+		},
+	}
 
-	// Setup expected keyring rewards
-	expectedRewards := sdk.NewCoin(params.MintDenom, math.NewInt(1000000))
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.SetupTest()
 
-	// Mock getting the module account address
-	moduleAddr := sdk.AccAddress{}
-	s.accountKeeper.EXPECT().
-		GetModuleAddress(treasurytypes.KeyringCollectorName).
-		Return(moduleAddr)
+			// Setup test parameters
+			params := types.DefaultParams()
+			s.Require().NoError(s.mintKeeper.Params.Set(s.ctx, params))
 
-	// Mock the GetBalance call with the module account address
-	s.bankKeeper.EXPECT().
-		GetBalance(s.ctx, moduleAddr, params.MintDenom).
-		Return(expectedRewards)
+			s.accountKeeper.EXPECT().GetModuleAddress(treasurytypes.KeyringCollectorName).Return(sdk.MustAccAddressFromBech32("zen1a2q8gs3x4c0q9a99hapl8p9tyhxhhwvetrvure")).AnyTimes()
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
 
-	// Mock the SendCoinsFromModuleToModule call
-	s.bankKeeper.EXPECT().
-		SendCoinsFromModuleToModule(
-			s.ctx,
-			treasurytypes.KeyringCollectorName,
-			types.ModuleName,
-			sdk.NewCoins(expectedRewards),
-		).
-		Return(nil)
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1a2q8gs3x4c0q9a99hapl8p9tyhxhhwvetrvure"), params.MintDenom).Return(sdk.NewCoin(params.MintDenom, math.NewIntFromUint64(tt.keyringBalance)))
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, treasurytypes.KeyringCollectorName, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, math.NewIntFromUint64(tt.keyringBalance)))).Return(nil)
 
-	// Call the function being tested
-	actualRewards, err := s.mintKeeper.ClaimKeyringFees(s.ctx)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedRewards, actualRewards)
+			// Call the function being tested
+			actualRewards, err := s.mintKeeper.ClaimKeyringFees(s.ctx)
+			if tt.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(sdk.NewCoin(params.MintDenom, math.NewIntFromUint64(tt.expectedRewards)), actualRewards)
+			}
+		})
+	}
 }
 
 func (s *IntegrationTestSuite) TestCheckModuleBalance() {
+
 	testCases := []struct {
 		name        string
-		setupMocks  func()
 		reward      sdk.Coin
 		expectError bool
 	}{
 		{
-			name: "sufficient balance",
-			setupMocks: func() {
-				moduleAddr := sdk.AccAddress{}
-				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr).AnyTimes()
-				s.bankKeeper.EXPECT().
-					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(1000))).AnyTimes()
-			},
+			name:        "sufficient balance",
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: false,
 		},
 		{
-			name: "insufficient balance",
-			setupMocks: func() {
-				moduleAddr := sdk.AccAddress{}
-				s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(moduleAddr)
-				s.bankKeeper.EXPECT().
-					GetBalance(s.ctx, moduleAddr, "urock").
-					Return(sdk.NewCoin("urock", math.NewInt(100))).AnyTimes()
-			},
+			name:        "insufficient balance",
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: true,
 		},
 		{
 			name:        "zero reward amount",
-			setupMocks:  func() {},
 			reward:      sdk.NewCoin("urock", math.NewInt(0)),
 			expectError: true,
 		},
 		{
-			name: "module address not found",
-			setupMocks: func() {
-				s.accountKeeper.EXPECT().
-					GetModuleAddress(types.ModuleName).
-					Return(nil)
-			},
+			name:        "module address not found",
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
 			expectError: true,
 		},
@@ -193,8 +178,9 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
+			s.SetupTest()
+
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
 
 			// Execute the method
 			err := s.mintKeeper.CheckModuleBalance(s.ctx, tc.reward)
