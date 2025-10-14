@@ -87,18 +87,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 			return nil
 		}
 	}
-	// else {
-	// 	excess, err := k.CalculateExcess(ctx, totalBlockStakingReward, totalRewards)
-	// 	if err != nil {
-	// 		k.Logger(ctx).Error("failed to calculate excess", "error", err)
-	// 		return nil
-	// 	}
-
-	// 	if err := k.ExcessDistribution(ctx, excess); err != nil {
-	// 		k.Logger(ctx).Error("failed during excess distribution", "error", err)
-	// 		return nil
-	// 	}
-	// }
 
 	if err := k.AddCollectedFees(ctx, sdk.NewCoins(totalBlockStakingReward)); err != nil {
 		k.Logger(ctx).Error("failed to add collected fees (staking reward)", "error", err)
@@ -129,6 +117,11 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper, ic types.InflationCalcul
 
 	if mintedCoin.Amount.IsInt64() {
 		defer telemetry.ModuleSetGauge(types.ModuleName, float32(mintedCoin.Amount.Int64()), "minted_tokens")
+	}
+
+	if err := k.CheckZenBtcSwapThreshold(ctx); err != nil {
+		k.Logger(ctx).Error("failed to check zenbtc swap threshold", "error", err)
+		return nil
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)

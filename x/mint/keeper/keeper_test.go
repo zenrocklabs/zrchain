@@ -34,6 +34,7 @@ type IntegrationTestSuite struct {
 	bankKeeper    *minttestutil.MockBankKeeper
 	accountKeeper *minttestutil.MockAccountKeeper
 	zentpKeeper   *minttestutil.MockZentpKeeper
+	zenexKeeper   *minttestutil.MockZenexKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -53,6 +54,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
+	zenexKeeper := minttestutil.NewMockZenexKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
 
 	// Assign the mock keepers to the suite fields
@@ -60,6 +62,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.bankKeeper = bankKeeper
 	s.stakingKeeper = stakingKeeper
 	s.zentpKeeper = zentpKeeper
+	s.zenexKeeper = zenexKeeper
 	s.mintKeeper = keeper.NewKeeper(
 		encCfg.Codec,
 		storeService,
@@ -67,6 +70,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 		accountKeeper,
 		bankKeeper,
 		zentpKeeper,
+		zenexKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -717,6 +721,52 @@ func (s *IntegrationTestSuite) TestZentpFeesDistribution() {
 
 			err := s.mintKeeper.DistributeZentpFeesToZenexFeeCollector(s.ctx)
 
+			if tt.errExpected {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestCheckZenBtcSwapThreshold() {
+	tests := []struct {
+		name                string
+		requiredRockBalance uint64
+		rockFeePoolBalance  uint64
+		errExpected         bool
+		expectedErr         error
+	}{
+		{
+			name:                "happy path",
+			requiredRockBalance: 1000000,
+			rockFeePoolBalance:  1200000,
+			errExpected:         false,
+			expectedErr:         nil,
+		},
+		{
+			name:                "balance is lower than required",
+			requiredRockBalance: 1000000,
+			rockFeePoolBalance:  800000,
+			errExpected:         false,
+			expectedErr:         nil,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			s.zenexKeeper.EXPECT().GetRequiredRockBalance(s.ctx).Return(tt.requiredRockBalance, nil).AnyTimes()
+			s.zenexKeeper.EXPECT().GetRockFeePoolBalance(s.ctx).Return(tt.rockFeePoolBalance).AnyTimes()
+
+			if !tt.errExpected {
+				s.zenexKeeper.EXPECT().CreateRockBtcSwap(s.ctx, tt.rockFeePoolBalance).Return(nil).AnyTimes()
+			}
+
+			err := s.mintKeeper.CheckZenBtcSwapThreshold(s.ctx)
 			if tt.errExpected {
 				s.Require().Error(err)
 				s.Require().Equal(tt.expectedErr.Error(), err.Error())

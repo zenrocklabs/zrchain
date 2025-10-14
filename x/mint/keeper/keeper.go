@@ -26,6 +26,7 @@ type Keeper struct {
 	bankKeeper    types.BankKeeper
 	accountKeeper types.AccountKeeper
 	zentpKeeper   types.ZentpKeeper
+	zenexKeeper   types.ZenexKeeper
 
 	feeCollectorName string
 
@@ -46,6 +47,7 @@ func NewKeeper(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	zk types.ZentpKeeper,
+	zxk types.ZenexKeeper,
 	feeCollectorName string,
 	authority string,
 ) Keeper {
@@ -62,6 +64,7 @@ func NewKeeper(
 		accountKeeper:    ak,
 		bankKeeper:       bk,
 		zentpKeeper:      zk,
+		zenexKeeper:      zxk,
 		feeCollectorName: feeCollectorName,
 		authority:        authority,
 		Params:           collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
@@ -504,6 +507,34 @@ func (k Keeper) HandleZenTpFees(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// swaps ROCK for BTC and funds the zenbtc reward address with BTC
+// if the rock fee pool balance is greater than the required rock balance
+func (k Keeper) CheckZenBtcSwapThreshold(goctx context.Context) error {
+
+	ctx := sdk.UnwrapSDKContext(goctx)
+	requiredRockBalance, err := k.zenexKeeper.GetRequiredRockBalance(ctx)
+	if err != nil {
+		return err
+	}
+
+	rockFeePoolBalance := k.zenexKeeper.GetRockFeePoolBalance(ctx)
+	if rockFeePoolBalance >= requiredRockBalance {
+		err = k.zenexKeeper.CreateRockBtcSwap(ctx, rockFeePoolBalance)
+		if err != nil {
+			return err
+		}
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMint,
+			sdk.NewAttribute(types.AttributeKeyRockSwapForZenBtcRewardsInitiated, fmt.Sprintf("Emitted Rock Swap for ZenBtc Rewards for %d ROCK", rockFeePoolBalance)),
+		),
+	)
 
 	return nil
 }

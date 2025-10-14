@@ -486,6 +486,7 @@ func NewZenrockApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		&app.ZentpKeeper,
+		&app.ZenexKeeper,
 		authtypes.FeeCollectorName,
 		authAddr,
 	)
@@ -1399,6 +1400,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
 	paramsKeeper.Subspace(zenbtctypes.ModuleName)
 	paramsKeeper.Subspace(zentptypes.ModuleName)
+	paramsKeeper.Subspace(zenextypes.ModuleName)
 	return paramsKeeper
 }
 

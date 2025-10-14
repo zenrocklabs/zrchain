@@ -13,11 +13,13 @@ var (
 	KeyMinimumSatoshis       = []byte("MinimumSatoshis")
 	KeyZenexBtcPoolKeyId     = []byte("ZenexBtcPoolKeyId")
 	KeyZenexWorkspaceAddress = []byte("ZenexWorkspaceAddress")
+	KeySwapThresholdSatoshis = []byte("SwapThresholdSatoshis")
 	// TODO: Determine the default value
 	DefaultBtcproxyaddress       string = "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq"
+	DefaultMinimumSatoshis       uint64 = 1000
 	DefaultZenexBtcPoolKeyId     uint64 = 16
 	DefaultZenexWorkspaceAddress string = "workspace14a2hpadpsy9h4auve2z8lw"
-	DefaultSwapThresholdSatoshis uint64 = 100000
+	DefaultSwapThresholdSatoshis uint64 = 6100
 )
 
 // ParamKeyTable the param key table for launch module
@@ -59,6 +61,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyBtcproxyaddress, &p.BtcProxyAddress, validateBtcproxyaddress),
 		paramtypes.NewParamSetPair(KeyMinimumSatoshis, &p.MinimumSatoshis, validateMinimumSatoshis),
 		paramtypes.NewParamSetPair(KeyZenexBtcPoolKeyId, &p.ZenexPoolKeyId, validateZenexBtcPoolKeyId),
+		paramtypes.NewParamSetPair(KeyZenexWorkspaceAddress, &p.ZenexWorkspaceAddress, validateZenexWorkspaceAddress),
+		paramtypes.NewParamSetPair(KeySwapThresholdSatoshis, &p.SwapThresholdSatoshis, validateSwapThresholdSatoshis),
 	}
 }
 
@@ -71,6 +75,12 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateZenexBtcPoolKeyId(p.ZenexPoolKeyId); err != nil {
+		return err
+	}
+	if err := validateZenexWorkspaceAddress(p.ZenexWorkspaceAddress); err != nil {
+		return err
+	}
+	if err := validateSwapThresholdSatoshis(p.SwapThresholdSatoshis); err != nil {
 		return err
 	}
 
@@ -109,6 +119,30 @@ func validateZenexBtcPoolKeyId(v interface{}) error {
 	_, ok := v.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", v)
+	}
+
+	return nil
+}
+
+// validateZenexWorkspaceAddress validates the ZenexWorkspaceAddress param
+func validateZenexWorkspaceAddress(v interface{}) error {
+	_, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", v)
+	}
+
+	return nil
+}
+
+// validateSwapThresholdSatoshis validates the SwapThresholdSatoshis param
+func validateSwapThresholdSatoshis(v interface{}) error {
+	swapThresholdSatoshis, ok := v.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", v)
+	}
+
+	if swapThresholdSatoshis < 1000 {
+		return fmt.Errorf("swap threshold satoshis cannot be smaller than 1000")
 	}
 
 	return nil
