@@ -184,12 +184,14 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 
 	// Convert ZCash header to BTCBlockHeader format (they're compatible)
 	return &api.BTCBlockHeader{
-		Version:    header.Version,
-		PrevBlock:  header.PreviousBlockHash,
-		MerkleRoot: header.MerkleRoot,
-		TimeStamp:  header.Time,
-		Bits:       parseBits(header.Bits),
-		Nonce:      parseNonce(header.Nonce),
+		Version:     header.Version,
+		PrevBlock:   header.PreviousBlockHash,
+		MerkleRoot:  header.MerkleRoot,
+		TimeStamp:   header.Time,
+		Bits:        parseBits(header.Bits),
+		Nonce:       parseNonce(header.Nonce),
+		BlockHash:   hash,
+		BlockHeight: height,
 	}, nil
 }
 
@@ -209,6 +211,7 @@ func (zc *ZcashClient) GetLatestBlockHeader(ctx context.Context) (*api.BTCBlockH
 		return nil, 0, fmt.Errorf("failed to get latest block header: %w", err)
 	}
 
+	// BlockHash and BlockHeight are already set by GetBlockHeaderByHeight
 	return header, height, nil
 }
 

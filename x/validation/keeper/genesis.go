@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -194,6 +196,12 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 		}
 	}
 
+	for _, zcashBlockHeader := range data.ZcashBlockHeaders {
+		if err := k.ZcashBlockHeaders.Set(ctx, zcashBlockHeader.BlockHeight, zcashBlockHeader); err != nil {
+			panic(err)
+		}
+	}
+
 	// TODO: check if this is correct
 	k.SetSolanaRequestedNonce(ctx, k.zentpKeeper.GetSolanaParams(ctx).NonceAccountKey, true)
 
@@ -234,6 +242,20 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) (res 
 	}
 
 	k.RequestedHistoricalBitcoinHeaders.Set(ctx, data.RequestedHistoricalBitcoinHeaders)
+
+	k.RequestedHistoricalZcashHeaders.Set(ctx, data.RequestedHistoricalZcashHeaders)
+
+	if data.LatestBtcHeaderHeight > 0 {
+		if err := k.LatestBtcHeaderHeight.Set(ctx, data.LatestBtcHeaderHeight); err != nil {
+			panic(err)
+		}
+	}
+
+	if data.LatestZcashHeaderHeight > 0 {
+		if err := k.LatestZcashHeaderHeight.Set(ctx, data.LatestZcashHeaderHeight); err != nil {
+			panic(err)
+		}
+	}
 
 	for address, amount := range data.AvsRewardsPool {
 		k.AVSRewardsPool.Set(ctx, address, amount)
@@ -421,6 +443,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(err)
 	}
 
+	zcashBlockHeaders, err := k.GetZcashBlockHeaders(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	lastUsedSolanaNonce, err := k.GetLastUsedSolanaNonce(ctx)
 	if err != nil {
 		panic(err)
@@ -438,6 +465,21 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 
 	requestedHistoricalBitcoinHeaders, err := k.GetRequestedHistoricalBitcoinHeaders(ctx)
 	if err != nil {
+		panic(err)
+	}
+
+	requestedHistoricalZcashHeaders, err := k.GetRequestedHistoricalZcashHeaders(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	latestBtcHeaderHeight, err := k.LatestBtcHeaderHeight.Get(ctx)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		panic(err)
+	}
+
+	latestZcashHeaderHeight, err := k.LatestZcashHeaderHeight.Get(ctx)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
 		panic(err)
 	}
 
@@ -497,10 +539,14 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		SlashEventCount:                   slashEventCount,
 		ValidationInfos:                   validationInfos,
 		BtcBlockHeaders:                   btcBlockHeaders,
+		ZcashBlockHeaders:                 zcashBlockHeaders,
 		LastUsedSolanaNonce:               lastUsedSolanaNonce,
 		BackfillRequest:                   backfillRequest,
 		LastUsedEthereumNonce:             lastUsedEthereumNonce,
 		RequestedHistoricalBitcoinHeaders: requestedHistoricalBitcoinHeaders,
+		RequestedHistoricalZcashHeaders:   requestedHistoricalZcashHeaders,
+		LatestBtcHeaderHeight:             latestBtcHeaderHeight,
+		LatestZcashHeaderHeight:           latestZcashHeaderHeight,
 		AvsRewardsPool:                    avsRewardsPool,
 		EthereumNonceRequested:            ethereumNonceRequested,
 		SolanaNonceRequested:              solanaNonceRequested,

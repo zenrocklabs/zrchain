@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -78,62 +77,4 @@ func (k msgServer) ManuallyInputZcashHeader(ctx context.Context, msg *types.MsgM
 	}
 
 	return &types.MsgManuallyInputZcashHeaderResponse{}, nil
-}
-
-// processAndStoreZcashHeaderManual processes a manually input Zcash header without triggering reorg checks.
-// It returns the updated latestZcashHeaderHeight and a boolean indicating if it was updated.
-func (k *Keeper) processAndStoreZcashHeaderManual(
-	ctx sdk.Context,
-	headerHeight int64,
-	header *sidecarapitypes.BTCBlockHeader,
-	latestZcashHeaderHeight int64,
-) (int64, bool) {
-	if headerHeight <= 0 || header == nil || header.MerkleRoot == "" {
-		return latestZcashHeaderHeight, false
-	}
-
-	// Check if header already exists by comparing hashes
-	existingHeader, err := k.ZcashBlockHeaders.Get(ctx, headerHeight)
-	if err != nil && !errors.Is(err, collections.ErrNotFound) {
-		k.Logger(ctx).Error("error checking if zcash header exists", "type", "manual", "height", headerHeight, "error", err)
-		return latestZcashHeaderHeight, false
-	}
-
-	// If header exists, compare hashes to see if it's different
-	if err == nil {
-		existingHash, err := deriveHash(existingHeader)
-		if err != nil {
-			k.Logger(ctx).Error("error deriving hash for existing zcash header", "type", "manual", "height", headerHeight, "error", err)
-			return latestZcashHeaderHeight, false
-		}
-
-		newHash, err := deriveHash(*header)
-		if err != nil {
-			k.Logger(ctx).Error("error deriving hash for new zcash header", "type", "manual", "height", headerHeight, "error", err)
-			return latestZcashHeaderHeight, false
-		}
-
-		if bytes.Equal(existingHash[:], newHash[:]) {
-			return latestZcashHeaderHeight, false
-		}
-	}
-
-	// Store the new header (either no header existed or hash is different)
-	if err := k.ZcashBlockHeaders.Set(ctx, headerHeight, *header); err != nil {
-		k.Logger(ctx).Error("error storing zcash header", "type", "manual", "height", headerHeight, "error", err)
-		return latestZcashHeaderHeight, false
-	}
-
-	k.Logger(ctx).Info("stored new zcash header", "type", "manual", "height", headerHeight)
-
-	// Update the latest height if this header is newer than what we had before
-	if headerHeight > latestZcashHeaderHeight {
-		if err := k.LatestZcashHeaderHeight.Set(ctx, headerHeight); err != nil {
-			k.Logger(ctx).Error("error setting latest ZCash header height", "error", err)
-		}
-		return headerHeight, true
-	}
-
-	// Header was stored but it's not newer than our current latest height
-	return latestZcashHeaderHeight, false
 }
