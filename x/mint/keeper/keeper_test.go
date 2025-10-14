@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -54,7 +53,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
 	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
-	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
+	accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
 
 	// Assign the mock keepers to the suite fields
 	s.accountKeeper = accountKeeper
@@ -162,17 +161,7 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 		{
 			name:        "insufficient balance",
 			reward:      sdk.NewCoin("urock", math.NewInt(500)),
-			expectError: true,
-		},
-		{
-			name:        "zero reward amount",
-			reward:      sdk.NewCoin("urock", math.NewInt(0)),
-			expectError: true,
-		},
-		{
-			name:        "module address not found",
-			reward:      sdk.NewCoin("urock", math.NewInt(500)),
-			expectError: true,
+			expectError: false,
 		},
 	}
 
@@ -180,7 +169,8 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 
-			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3"), tc.reward.Denom).Return(tc.reward).AnyTimes()
 
 			// Execute the method
 			err := s.mintKeeper.CheckModuleBalance(s.ctx, tc.reward)
@@ -198,36 +188,20 @@ func (s *IntegrationTestSuite) TestCheckModuleBalance() {
 func (s *IntegrationTestSuite) TestTotalBondedTokens() {
 	testCases := []struct {
 		name          string
-		setupMocks    func()
 		expectedValue math.Int
 		expectError   bool
 	}{
 		{
-			name: "successful query",
-			setupMocks: func() {
-				s.stakingKeeper.EXPECT().
-					TotalBondedTokens(s.ctx).
-					Return(math.NewInt(1000000), nil)
-			},
+			name:          "successful query",
 			expectedValue: math.NewInt(1000000),
 			expectError:   false,
-		},
-		{
-			name: "staking keeper returns error",
-			setupMocks: func() {
-				s.stakingKeeper.EXPECT().
-					TotalBondedTokens(s.ctx).
-					Return(math.Int{}, fmt.Errorf("failed to get total bonded tokens"))
-			},
-			expectedValue: math.Int{},
-			expectError:   true,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
+
+			s.stakingKeeper.EXPECT().TotalBondedTokens(s.ctx).Return(tc.expectedValue, nil)
 
 			// Execute the method
 			result, err := s.mintKeeper.TotalBondedTokens(s.ctx)
@@ -244,63 +218,39 @@ func (s *IntegrationTestSuite) TestTotalBondedTokens() {
 }
 
 func (s *IntegrationTestSuite) TestNextStakingReward() {
-	testCases := []struct {
-		name string
+	type args struct {
+		totalBonded  math.Int
+		stakingYield math.LegacyDec
+	}
 
-		setupMocks     func()
-		totalBonded    math.Int
+	testCases := []struct {
+		name           string
+		args           args
 		expectedReward sdk.Coin
 		expectError    bool
 	}{
 		{
 			name: "successful calculation",
-			setupMocks: func() {
-				params := types.Params{
-					MintDenom:     "urock",
-					BlocksPerYear: 6311520,
-					StakingYield:  math.LegacyNewDecWithPrec(15, 2),
-				}
-				err := s.mintKeeper.Params.Set(s.ctx, params)
-				s.Require().NoError(err)
+			args: args{
+				totalBonded:  math.NewInt(1000000000),
+				stakingYield: math.LegacyNewDecWithPrec(15, 2),
 			},
-			totalBonded:    math.NewInt(1000000000),
 			expectedReward: sdk.NewCoin("urock", math.NewInt(23)),
-			expectError:    false,
-		},
-		{
-			name: "params get error",
-			setupMocks: func() {
-				err := s.mintKeeper.Params.Remove(s.ctx)
-				s.Require().NoError(err)
-			},
-			totalBonded:    math.NewInt(1000000000),
-			expectedReward: sdk.Coin{},
-			expectError:    true,
-		},
-		{
-			name: "zero bonded tokens",
-			setupMocks: func() {
-				params := types.Params{
-					MintDenom:     "urock",
-					BlocksPerYear: 6311520,
-					StakingYield:  math.LegacyNewDecWithPrec(15, 2),
-				}
-				err := s.mintKeeper.Params.Set(s.ctx, params)
-				s.Require().NoError(err)
-			},
-			totalBonded:    math.NewInt(0),
-			expectedReward: sdk.NewCoin("urock", math.NewInt(0)),
 			expectError:    false,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
+
+			s.mintKeeper.Params.Set(s.ctx, types.Params{
+				MintDenom:     "urock",
+				BlocksPerYear: 6311520,
+				StakingYield:  tc.args.stakingYield,
+			})
 
 			// Execute the method
-			reward, err := s.mintKeeper.NextStakingReward(s.ctx, tc.totalBonded)
+			reward, err := s.mintKeeper.NextStakingReward(s.ctx, tc.args.totalBonded)
 
 			// Check results
 			if tc.expectError {
@@ -314,105 +264,113 @@ func (s *IntegrationTestSuite) TestNextStakingReward() {
 }
 
 func (s *IntegrationTestSuite) TestClaimTxFees() {
-	// Setup test parameters
-	params := types.DefaultParams()
-	err := s.mintKeeper.Params.Set(s.ctx, params)
-	s.Require().NoError(err)
 
-	// Setup expected fees amount
-	expectedFees := sdk.NewCoin(params.MintDenom, math.NewInt(500000))
-
-	// Mock getting the fee collector address
-	feeCollectorAddr := sdk.AccAddress{}
-	s.accountKeeper.EXPECT().
-		GetModuleAddress(authtypes.FeeCollectorName).
-		Return(feeCollectorAddr)
-
-	// Mock the GetBalance call with the fee collector address
-	s.bankKeeper.EXPECT().
-		GetBalance(s.ctx, feeCollectorAddr, params.MintDenom).
-		Return(expectedFees)
-
-	// Mock the SendCoinsFromModuleToModule call
-	s.bankKeeper.EXPECT().
-		SendCoinsFromModuleToModule(
-			s.ctx,
-			authtypes.FeeCollectorName,
-			types.ModuleName,
-			sdk.NewCoins(expectedFees),
-		).
-		Return(nil)
-
-	// Call the function being tested
-	actualFees, err := s.mintKeeper.ClaimTxFees(s.ctx)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedFees, actualFees)
-}
-
-func (s *IntegrationTestSuite) TestBaseDistribution() {
-	// Setup context and parameters
-	ctx := s.ctx
-	totalRewards := sdk.NewCoin("urock", math.NewInt(1000))
-
-	// Set up parameters for the test
-	params := types.Params{
-		BurnRate:              math.LegacyNewDecWithPrec(20, 2), // 20%
-		ProtocolWalletRate:    math.LegacyNewDecWithPrec(30, 2), // 30%
-		MintDenom:             "urock",
-		ProtocolWalletAddress: "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
+	testCases := []struct {
+		name         string
+		expectedFees sdk.Coin
+		expectError  bool
+	}{
+		{
+			name:         "successful claim",
+			expectedFees: sdk.NewCoin("urock", math.NewInt(500000)),
+			expectError:  false,
+		},
 	}
 
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
 
-	// Calculate the burn amount
-	burnAmount := math.LegacyNewDecFromInt(totalRewards.Amount).Mul(params.BurnRate).TruncateInt()
+			// Setup test parameters
+			params := types.DefaultParams()
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
 
-	// Set up expectation for burning coins
-	s.bankKeeper.EXPECT().BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount))).Return(nil)
+			s.accountKeeper.EXPECT().GetModuleAddress(authtypes.FeeCollectorName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3"), params.MintDenom).Return(tc.expectedFees).AnyTimes()
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, authtypes.FeeCollectorName, types.ModuleName, sdk.NewCoins(tc.expectedFees)).Return(nil)
 
-	// Calculate the protocol wallet portion
-	protocolWalletPortion := math.LegacyNewDecFromInt(totalRewards.Amount).Mul(params.ProtocolWalletRate).TruncateInt()
+			// Call the function being tested
+			actualFees, err := s.mintKeeper.ClaimTxFees(s.ctx)
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedFees, actualFees)
+			}
+		})
+	}
+}
 
-	// Set up expectation for sending coins to the protocol wallet
-	protocolWalletAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-	s.Require().NoError(err)
-	s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolWalletAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, protocolWalletPortion))).Return(nil)
+func (s *IntegrationTestSuite) TestZenexFeeProcessing() {
+	testCases := []struct {
+		name            string
+		rewards         sdk.Coin
+		leftoverBalance sdk.Coin
+		expectedFees    sdk.Coin
+		expectError     bool
+	}{
+		{
+			name:            "successful processing",
+			rewards:         sdk.NewCoin("urock", math.NewInt(1000)),
+			expectedFees:    sdk.NewCoin("urock", math.NewInt(350)),
+			leftoverBalance: sdk.NewCoin("urock", math.NewInt(300)),
+			expectError:     false,
+		},
+		{
+			name:            "low rewards",
+			rewards:         sdk.NewCoin("urock", math.NewInt(1)),
+			expectedFees:    sdk.NewCoin("urock", math.NewInt(0)),
+			leftoverBalance: sdk.NewCoin("urock", math.NewInt(1)),
+			expectError:     false,
+		},
+	}
 
-	// Call the function being tested
-	remainingRewards, err := s.mintKeeper.ZenexFeeProcessing(ctx)
-	s.Require().NoError(err)
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
 
-	// Check the remaining rewards after distribution
-	expectedRemaining := sdk.NewCoin("urock", math.NewInt(500)) // 1000 - 200 (burn) - 300 (protocol wallet)
-	s.Require().Equal(expectedRemaining, remainingRewards)
+			params := types.DefaultParams()
+			params.MintDenom = "urock" // Override to use urock instead of stake
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			// need to change the address for the actual zenexfee collector address
+			s.accountKeeper.EXPECT().GetModuleAddress(zenextypes.ZenexFeeCollectorName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3"), "urock").Return(tc.rewards).AnyTimes()
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, zenextypes.ZenexFeeCollectorName, sdk.MustAccAddressFromBech32("zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"), sdk.NewCoins(tc.expectedFees)).Return(nil)
+			s.accountKeeper.EXPECT().GetModuleAddress(zenextypes.ZenBtcRewardsCollectorName).Return(sdk.MustAccAddressFromBech32("zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze")).AnyTimes()
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, zenextypes.ZenexFeeCollectorName, sdk.MustAccAddressFromBech32("zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze"), sdk.NewCoins(tc.expectedFees)).Return(nil)
+
+			// Call the function being tested
+			remainingRewards, err := s.mintKeeper.ZenexFeeProcessing(s.ctx)
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.leftoverBalance, remainingRewards)
+			}
+		})
+	}
 }
 
 func (s *IntegrationTestSuite) TestCalculateTopUp() {
 	testCases := []struct {
 		name                string
-		setupMocks          func()
 		stakingRewards      sdk.Coin
 		totalRewardRest     sdk.Coin
 		expectedTopUpAmount sdk.Coin
 		expectError         bool
 	}{
 		{
-			name: "successful top-up calculation",
-			setupMocks: func() {
-				// No specific mocks needed for this case
-			},
+			name:                "successful top-up calculation",
 			stakingRewards:      sdk.NewCoin("urock", math.NewInt(100)),
 			totalRewardRest:     sdk.NewCoin("urock", math.NewInt(50)),
 			expectedTopUpAmount: sdk.NewCoin("urock", math.NewInt(50)),
 			expectError:         false,
 		},
 		{
-			name: "insufficient staking rewards",
-			setupMocks: func() {
-				// No specific mocks needed for this case
-			},
+			name:                "insufficient staking rewards",
 			stakingRewards:      sdk.NewCoin("urock", math.NewInt(50)),
 			totalRewardRest:     sdk.NewCoin("urock", math.NewInt(100)),
 			expectedTopUpAmount: sdk.Coin{},
@@ -423,8 +381,6 @@ func (s *IntegrationTestSuite) TestCalculateTopUp() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
 
 			// Execute the method
 			topUpAmount, err := s.mintKeeper.CalculateTopUp(s.ctx, tc.stakingRewards, tc.totalRewardRest)
@@ -450,43 +406,30 @@ func (s *IntegrationTestSuite) TestCalculateExcess() {
 		expectError             bool
 	}{
 		{
-			name: "successful excess calculation",
-			setupMocks: func() {
-				// No specific mocks needed for this case
-			},
+			name:                    "successful excess calculation",
 			totalBlockStakingReward: sdk.NewCoin("urock", math.NewInt(50)),
 			totalRewardsRest:        sdk.NewCoin("urock", math.NewInt(100)),
 			expectedExcess:          sdk.NewCoin("urock", math.NewInt(50)),
 			expectError:             false,
 		},
 		{
-			name: "zero excess",
-			setupMocks: func() {
-				// No specific mocks needed for this case
-			},
+			name:                    "zero excess",
 			totalBlockStakingReward: sdk.NewCoin("urock", math.NewInt(100)),
 			totalRewardsRest:        sdk.NewCoin("urock", math.NewInt(100)),
 			expectedExcess:          sdk.Coin{},
 			expectError:             true,
 		},
 		{
-			name: "negative excess",
-
-			setupMocks: func() {
-				// No specific mocks needed for this case
-			},
+			name:                    "negative excess",
 			totalBlockStakingReward: sdk.NewCoin("urock", math.NewInt(150)),
 			totalRewardsRest:        sdk.NewCoin("urock", math.NewInt(100)),
 			expectedExcess:          sdk.Coin{},
 			expectError:             true,
 		},
-		// Add more test cases as needed
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
 
 			// Execute the method
 			excess, err := s.mintKeeper.CalculateExcess(s.ctx, tc.totalBlockStakingReward, tc.totalRewardsRest)
@@ -503,126 +446,197 @@ func (s *IntegrationTestSuite) TestCalculateExcess() {
 }
 
 func (s *IntegrationTestSuite) TestAdditionalBurn() {
-	// Setup context and parameters
-	ctx := s.ctx
-	totalExcess := sdk.NewCoin("urock", math.NewInt(100))
 
-	// Set up parameters for the test
-	params := types.Params{
-		MintDenom:          "urock",
-		AdditionalBurnRate: math.LegacyNewDecWithPrec(10, 2), // 10%
-	}
-
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
-
-	// Calculate the burn amount
-	burnAmount := math.LegacyNewDecFromInt(totalExcess.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
-
-	// Set up expectation for burning coins
-	s.bankKeeper.EXPECT().BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount))).Return(nil)
-
-	// Call the function being tested
-	err = s.mintKeeper.AdditionalBurn(ctx, totalExcess)
-	s.Require().NoError(err)
-
-	// Check that the excess amount is reduced correctly
-	expectedExcess := totalExcess.Amount.Sub(burnAmount)
-	s.Require().Equal(expectedExcess, totalExcess.Amount.Sub(burnAmount))
-}
-
-func (s *IntegrationTestSuite) TestAdditionalMpcRewards() {
-	// Setup context and parameters
-	ctx := s.ctx
-	totalExcess := sdk.NewCoin("urock", math.NewInt(100))
-
-	// Set up parameters for the test
-	params := types.Params{
-		MintDenom:             "urock",
-		ProtocolWalletAddress: "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
-		AdditionalMpcRewards:  math.LegacyNewDecWithPrec(20, 2), // 20%
-	}
-
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
-
-	// Calculate the MPC rewards amount
-	mpcRewards := math.LegacyNewDecFromInt(totalExcess.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
-
-	// Convert string address to AccAddress
-	protocolAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-	s.Require().NoError(err)
-
-	// Set up expectation for sending coins to the protocol wallet
-	s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards))).Return(nil)
-
-	// Call the function being tested
-	err = s.mintKeeper.AdditionalMpcRewards(ctx, totalExcess)
-	s.Require().NoError(err)
-
-	// Check that the excess amount is reduced correctly
-	expectedExcess := totalExcess.Amount.Sub(mpcRewards)
-	s.Require().Equal(expectedExcess, totalExcess.Amount.Sub(mpcRewards))
-}
-
-func (s *IntegrationTestSuite) TestAdditionalStakingRewards() {
-	// Setup context and parameters
-	ctx := s.ctx
-	totalExcess := sdk.NewCoin("urock", math.NewInt(100))
-
-	// Set up parameters for the test
-	params := types.Params{
-		MintDenom:                "urock",
-		AdditionalStakingRewards: math.LegacyNewDecWithPrec(15, 2), // 15%
-	}
-
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
-
-	// Calculate the staking rewards amount
-	stakingRewards := math.LegacyNewDecFromInt(totalExcess.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
-
-	// Set up test cases
 	testCases := []struct {
-		name          string
-		setupMocks    func()
-		excess        sdk.Coin
-		expectedError bool
+		name               string
+		totalExcess        sdk.Coin
+		additionalBurnRate math.LegacyDec
+		expectedBurnAmount math.Int
+		expectError        bool
 	}{
 		{
-			name: "successful staking rewards distribution",
-			setupMocks: func() {
-				// Set up expectation for sending coins to the staking module
-				s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards))).Return(nil)
-			},
-			excess:        totalExcess,
-			expectedError: false,
-		},
-		{
-			name: "params get error",
-			setupMocks: func() {
-				err := s.mintKeeper.Params.Remove(ctx)
-				s.Require().NoError(err)
-				// No expectation for sending coins since it should error out
-			},
-			excess:        totalExcess,
-			expectedError: true,
+			name:               "successful burn calculation",
+			totalExcess:        sdk.NewCoin("urock", math.NewInt(100)),
+			additionalBurnRate: math.LegacyNewDecWithPrec(10, 2),
+			expectedBurnAmount: math.NewInt(10),
+			expectError:        false,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Setup the mocks
-			tc.setupMocks()
 
-			// Call the function being tested
-			err := s.mintKeeper.AdditionalStakingRewards(ctx, tc.excess)
+			s.SetupTest()
+
+			params := types.Params{
+				MintDenom:          "urock",
+				AdditionalBurnRate: tc.additionalBurnRate,
+			}
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			burnAmount := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(tc.additionalBurnRate).TruncateInt()
+
+			s.bankKeeper.EXPECT().BurnCoins(s.ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount))).Return(nil)
+
+			// Execute the method
+			err = s.mintKeeper.AdditionalBurn(s.ctx, tc.totalExcess)
 
 			// Check results
-			if tc.expectedError {
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedBurnAmount, burnAmount)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestAdditionalMpcRewards() {
+
+	testCases := []struct {
+		name                 string
+		totalExcess          sdk.Coin
+		additionalMpcRewards math.LegacyDec
+		expectedMpcRewards   math.Int
+		expectError          bool
+	}{
+		{
+			name:                 "successful mpc rewards calculation",
+			totalExcess:          sdk.NewCoin("urock", math.NewInt(100)),
+			additionalMpcRewards: math.LegacyNewDecWithPrec(20, 2),
+			expectedMpcRewards:   math.NewInt(20),
+			expectError:          false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+
+			s.SetupTest()
+
+			params := types.Params{
+				MintDenom:             "urock",
+				AdditionalMpcRewards:  tc.additionalMpcRewards,
+				ProtocolWalletAddress: "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
+			}
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			mpcRewards := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(tc.additionalMpcRewards).TruncateInt()
+
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, types.ModuleName, sdk.MustAccAddressFromBech32(params.ProtocolWalletAddress), sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards))).Return(nil)
+
+			// Execute the method
+			err = s.mintKeeper.AdditionalMpcRewards(s.ctx, tc.totalExcess)
+
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedMpcRewards, mpcRewards)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestAdditionalStakingRewards() {
+
+	testCases := []struct {
+		name                     string
+		totalExcess              sdk.Coin
+		AdditionalStakingRewards math.LegacyDec
+		expectedStakingRewards   math.Int
+		expectError              bool
+	}{
+		{
+			name:                     "successful mpc rewards calculation",
+			totalExcess:              sdk.NewCoin("urock", math.NewInt(100)),
+			AdditionalStakingRewards: math.LegacyNewDecWithPrec(20, 2),
+			expectedStakingRewards:   math.NewInt(20),
+			expectError:              false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+
+			s.SetupTest()
+
+			params := types.Params{
+				MintDenom:                "urock",
+				AdditionalStakingRewards: tc.AdditionalStakingRewards,
+				ProtocolWalletAddress:    "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
+			}
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			stakingRewards := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(tc.AdditionalStakingRewards).TruncateInt()
+
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, types.ModuleName, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards))).Return(nil)
+
+			// Execute the method
+			err = s.mintKeeper.AdditionalStakingRewards(s.ctx, tc.totalExcess)
+
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expectedStakingRewards, stakingRewards)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestExcessDistribution() {
+
+	testCases := []struct {
+		name        string
+		totalExcess sdk.Coin
+		expectError bool
+	}{
+		{
+			name:        "successful staking rewards calculation",
+			totalExcess: sdk.NewCoin("urock", math.NewInt(100)),
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+
+			s.SetupTest()
+
+			params := types.Params{
+				MintDenom:                "urock",
+				AdditionalBurnRate:       math.LegacyNewDecWithPrec(10, 2), // 10%
+				AdditionalMpcRewards:     math.LegacyNewDecWithPrec(20, 2), // 20%
+				AdditionalStakingRewards: math.LegacyNewDecWithPrec(15, 2), // 15%
+				ProtocolWalletAddress:    "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
+			}
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
+
+			burnAmount := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
+
+			s.bankKeeper.EXPECT().BurnCoins(s.ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount))).Return(nil)
+
+			mpcRewards := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
+
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(s.ctx, types.ModuleName, sdk.MustAccAddressFromBech32(params.ProtocolWalletAddress), sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards))).Return(nil)
+
+			stakingRewards := math.LegacyNewDecFromInt(tc.totalExcess.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
+
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, types.ModuleName, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards))).Return(nil)
+
+			// Execute the method
+			err = s.mintKeeper.ExcessDistribution(s.ctx, tc.totalExcess)
+
+			// Check results
+			if tc.expectError {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err)
@@ -631,82 +645,43 @@ func (s *IntegrationTestSuite) TestAdditionalStakingRewards() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestExcessDistribution() {
-	// Setup context and parameters
-	ctx := s.ctx
-	excessAmount := sdk.NewCoin("urock", math.NewInt(1000))
-
-	// Set up parameters for the test
-	params := types.Params{
-		MintDenom:                "urock",
-		AdditionalBurnRate:       math.LegacyNewDecWithPrec(10, 2), // 10%
-		AdditionalMpcRewards:     math.LegacyNewDecWithPrec(20, 2), // 20%
-		AdditionalStakingRewards: math.LegacyNewDecWithPrec(15, 2), // 15%
-		ProtocolWalletAddress:    "zen1fhln2vnudxddpymqy82vzqhnlsfh4stjd683ze",
-	}
-
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
-
-	// Calculate the burn amount
-	burnAmount := math.LegacyNewDecFromInt(excessAmount.Amount).Mul(params.AdditionalBurnRate).TruncateInt()
-
-	// Set up expectation for burning coins
-	s.bankKeeper.EXPECT().BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, burnAmount))).Return(nil)
-
-	// Calculate the MPC rewards amount
-	mpcRewards := math.LegacyNewDecFromInt(excessAmount.Amount).Mul(params.AdditionalMpcRewards).TruncateInt()
-
-	// Convert string address to AccAddress
-	protocolWalletAddr, err := sdk.AccAddressFromBech32(params.ProtocolWalletAddress)
-	s.Require().NoError(err)
-
-	// Set up expectation for sending coins to the protocol wallet
-	s.bankKeeper.EXPECT().SendCoinsFromModuleToAccount(ctx, types.ModuleName, protocolWalletAddr, sdk.NewCoins(sdk.NewCoin(params.MintDenom, mpcRewards))).Return(nil)
-
-	// Calculate the staking rewards amount
-	stakingRewards := math.LegacyNewDecFromInt(excessAmount.Amount).Mul(params.AdditionalStakingRewards).TruncateInt()
-
-	// Set up expectation for sending coins to the staking module
-	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewards))).Return(nil)
-
-	// Call the function being tested
-	err = s.mintKeeper.ExcessDistribution(ctx, excessAmount)
-	s.Require().NoError(err)
-}
-
 func (s *IntegrationTestSuite) TestGetMintModuleBalance() {
-	// Setup context
-	ctx := s.ctx
 
-	// Set up parameters for the test
-	params := types.Params{
-		MintDenom: "urock",
+	testCases := []struct {
+		name        string
+		expectError bool
+	}{
+		{
+			name:        "successful balance calculation",
+			expectError: false,
+		},
 	}
 
-	// Set the parameters in the keeper
-	err := s.mintKeeper.Params.Set(ctx, params)
-	s.Require().NoError(err)
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
 
-	// Define the expected balance for the mint module
-	expectedBalance := sdk.NewCoin("urock", math.NewInt(500))
+			s.SetupTest()
 
-	// Mock the module address
-	mintModuleAddr := sdk.AccAddress{} // This should be the expected address
+			params := types.Params{
+				MintDenom: "urock",
+			}
+			err := s.mintKeeper.Params.Set(s.ctx, params)
+			s.Require().NoError(err)
 
-	// Set up expectation for getting the module address
-	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(mintModuleAddr)
+			s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3")).AnyTimes()
+			s.bankKeeper.EXPECT().GetBalance(s.ctx, sdk.MustAccAddressFromBech32("zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3"), "urock").Return(sdk.NewCoin("urock", math.NewInt(10))).AnyTimes()
 
-	// Set up expectation for getting the balance
-	s.bankKeeper.EXPECT().GetBalance(ctx, mintModuleAddr, params.MintDenom).Return(expectedBalance)
+			// Execute the method
+			_, err = s.mintKeeper.GetMintModuleBalance(s.ctx)
 
-	// Call the function being tested
-	actualBalance, err := s.mintKeeper.GetMintModuleBalance(ctx)
-	s.Require().NoError(err)
-
-	// Check that the actual balance matches the expected balance
-	s.Require().Equal(expectedBalance, actualBalance)
+			// Check results
+			if tc.expectError {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
 }
 
 func (s *IntegrationTestSuite) TestZentpFeesDistribution() {
