@@ -56,6 +56,38 @@ It can be broken down in the following way:
 * The newly added mint module params are defining the income distribution ratios for base distribution and surplus distribution.
 * Further, new events are emitted to track the total distribution on staking rewards as well as the burned amount in the base distribution.
 
+### Fee Processing Logic
+
+#### Claim Tx and Keyring Fees Flow
+
+```
+KeyringCollector     Mint Module      FeeCollector
+(Treasury Fees)  ──▶ (Accumulates) ◀── (Transaction Fees)
+                        │
+                        ▼
+                   FeeCollector
+                 (Final Destination) ──▶ Staking Distribution
+```
+
+#### ZenTP Fees Flow
+
+```
+ZentpCollector  ──▶  ZenexFeeCollector
+(ZenTP Fees)         (Accumulates)
+                        │
+                        ▼
+                   ZR Wallet
+                (External Account)
+                        │
+                        ▼
+                ZenBtcRewardsCollector 
+                   (For BTC Swaps)  ──▶ Swap for BTC and fund BTC Reward Address
+                        │
+                        ▼
+                   Mint Module
+                 (Leftover Funds)
+```
+
 ## State
 
 ### Minter

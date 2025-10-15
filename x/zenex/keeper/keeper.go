@@ -245,14 +245,6 @@ func (k Keeper) CheckRedeemableAsset(ctx sdk.Context, amountOut uint64, price ma
 
 func (k Keeper) GetRequiredRockBalance(ctx sdk.Context) (uint64, error) {
 
-	params := k.GetParams(ctx)
-
-	fmt.Println("params btc proxy address", params.BtcProxyAddress)
-	fmt.Println("params swap threshold satoshis", params.SwapThresholdSatoshis)
-	fmt.Println("params zenex pool key id", params.ZenexPoolKeyId)
-	fmt.Println("params zenex workspace address", params.ZenexWorkspaceAddress)
-	fmt.Println("params minimum satoshis", params.MinimumSatoshis)
-
 	rockBtcPrice, err := k.validationKeeper.GetRockBtcPrice(ctx)
 	if err != nil {
 		return 0, err
@@ -294,7 +286,7 @@ func (k Keeper) CreateRockBtcSwap(ctx sdk.Context, amountIn uint64) error {
 		return err
 	}
 
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ZenexFeeCollectorName, types.ZenBtcRewardsCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amountIn))))
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ZenBtcRewardsCollectorName, types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amountIn))))
 	if err != nil {
 		return err
 	}
