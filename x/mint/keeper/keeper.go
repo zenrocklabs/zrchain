@@ -521,9 +521,9 @@ func (k Keeper) CheckZenBtcSwapThreshold(goctx context.Context) error {
 		return err
 	}
 
-	rockFeePoolBalance := k.zenexKeeper.GetRockFeePoolBalance(ctx)
-	if rockFeePoolBalance >= requiredRockBalance {
-		err = k.zenexKeeper.CreateRockBtcSwap(ctx, rockFeePoolBalance)
+	zenbtcRewardsCollectorBalance := k.zenexKeeper.GetZenBtcRewardsCollectorBalance(ctx)
+	if zenbtcRewardsCollectorBalance >= requiredRockBalance {
+		err = k.zenexKeeper.CreateRockBtcSwap(ctx, zenbtcRewardsCollectorBalance)
 		if err != nil {
 			return err
 		}
@@ -532,7 +532,7 @@ func (k Keeper) CheckZenBtcSwapThreshold(goctx context.Context) error {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMint,
-			sdk.NewAttribute(types.AttributeKeyRockSwapForZenBtcRewardsInitiated, fmt.Sprintf("Emitted Rock Swap for ZenBtc Rewards for %d ROCK", rockFeePoolBalance)),
+			sdk.NewAttribute(types.AttributeKeyRockSwapForZenBtcRewardsInitiated, fmt.Sprintf("Emitted Rock Swap for ZenBtc Rewards for %d ROCK", zenbtcRewardsCollectorBalance)),
 		),
 	)
 

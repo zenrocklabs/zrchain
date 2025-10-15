@@ -760,7 +760,7 @@ func (s *IntegrationTestSuite) TestCheckZenBtcSwapThreshold() {
 			s.SetupTest()
 
 			s.zenexKeeper.EXPECT().GetRequiredRockBalance(s.ctx).Return(tt.requiredRockBalance, nil).AnyTimes()
-			s.zenexKeeper.EXPECT().GetRockFeePoolBalance(s.ctx).Return(tt.rockFeePoolBalance).AnyTimes()
+			s.zenexKeeper.EXPECT().GetZenBtcRewardsCollectorBalance(s.ctx).Return(tt.rockFeePoolBalance).AnyTimes()
 
 			if !tt.errExpected {
 				s.zenexKeeper.EXPECT().CreateRockBtcSwap(s.ctx, tt.rockFeePoolBalance).Return(nil).AnyTimes()

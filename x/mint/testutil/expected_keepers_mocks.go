@@ -350,16 +350,16 @@ func (mr *MockZenexKeeperMockRecorder) GetRequiredRockBalance(ctx any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRequiredRockBalance", reflect.TypeOf((*MockZenexKeeper)(nil).GetRequiredRockBalance), ctx)
 }
 
-// GetRockFeePoolBalance mocks base method.
-func (m *MockZenexKeeper) GetRockFeePoolBalance(ctx types.Context) uint64 {
+// GetZenBtcRewardsCollectorBalance mocks base method.
+func (m *MockZenexKeeper) GetZenBtcRewardsCollectorBalance(ctx types.Context) uint64 {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRockFeePoolBalance", ctx)
+	ret := m.ctrl.Call(m, "GetZenBtcRewardsCollectorBalance", ctx)
 	ret0, _ := ret[0].(uint64)
 	return ret0
 }
 
-// GetRockFeePoolBalance indicates an expected call of GetRockFeePoolBalance.
-func (mr *MockZenexKeeperMockRecorder) GetRockFeePoolBalance(ctx any) *gomock.Call {
+// GetZenBtcRewardsCollectorBalance indicates an expected call of GetZenBtcRewardsCollectorBalance.
+func (mr *MockZenexKeeperMockRecorder) GetZenBtcRewardsCollectorBalance(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRockFeePoolBalance", reflect.TypeOf((*MockZenexKeeper)(nil).GetRockFeePoolBalance), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZenBtcRewardsCollectorBalance", reflect.TypeOf((*MockZenexKeeper)(nil).GetZenBtcRewardsCollectorBalance), ctx)
 }

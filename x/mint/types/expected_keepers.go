@@ -42,6 +42,6 @@ type ZentpKeeper interface {
 
 type ZenexKeeper interface {
 	GetRequiredRockBalance(ctx sdk.Context) (uint64, error)
-	GetRockFeePoolBalance(ctx sdk.Context) uint64
+	GetZenBtcRewardsCollectorBalance(ctx sdk.Context) uint64
 	CreateRockBtcSwap(ctx sdk.Context, amountIn uint64) error
 }

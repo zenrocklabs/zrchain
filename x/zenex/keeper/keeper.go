@@ -277,7 +277,7 @@ func (k Keeper) GetRequiredRockBalance(ctx sdk.Context) (uint64, error) {
 }
 
 // Returns the balance of the zenbtc rewards collector
-func (k Keeper) GetRockFeePoolBalance(ctx sdk.Context) uint64 {
+func (k Keeper) GetZenBtcRewardsCollectorBalance(ctx sdk.Context) uint64 {
 	balance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ZenBtcRewardsCollectorName), params.BondDenom)
 	return balance.Amount.Uint64()
 }
