@@ -256,6 +256,203 @@ func TestVoteExtensionStructCompleteness(t *testing.T) {
 		t.Logf("VoteExtension struct has %d fields", veType.NumField())
 		t.Logf("initializeFieldHandlers returns %d handlers", len(handlers))
 	})
+
+	t.Run("all_struct_fields_are_handled_or_explicitly_excluded", func(t *testing.T) {
+		var ve VoteExtension
+		veType := reflect.TypeOf(ve)
+
+		// Fields that are informational/metadata and don't require consensus voting
+		excludedFields := map[string]string{
+			"SidecarVersionName": "Informational field that doesn't require consensus",
+		}
+
+		// Build a map of struct field names that have handlers
+		handlerFieldNames := make(map[string]bool)
+		for _, handler := range handlers {
+			// Get the actual struct field name by using GetValue on a zero VoteExtension
+			// and checking which field it accesses
+			fieldName := getStructFieldNameForHandler(handler)
+			if fieldName != "" {
+				handlerFieldNames[fieldName] = true
+			}
+		}
+
+		// Check every struct field
+		var uncoveredFields []string
+		for i := 0; i < veType.NumField(); i++ {
+			field := veType.Field(i)
+			fieldName := field.Name
+
+			// Skip if it's explicitly excluded
+			if reason, excluded := excludedFields[fieldName]; excluded {
+				t.Logf("Field %s is excluded: %s", fieldName, reason)
+				continue
+			}
+
+			// Check if it has a handler
+			if !handlerFieldNames[fieldName] {
+				uncoveredFields = append(uncoveredFields, fieldName)
+			}
+		}
+
+		require.Empty(t, uncoveredFields,
+			"The following struct fields are neither handled nor explicitly excluded: %v. "+
+				"Either add handlers for them or add them to the excludedFields map with a reason.",
+			uncoveredFields)
+
+		// Calculate expected counts
+		totalStructFields := veType.NumField()
+		excludedCount := len(excludedFields)
+		expectedHandlers := totalStructFields - excludedCount
+
+		t.Logf("VoteExtension struct: %d total fields", totalStructFields)
+		t.Logf("Excluded fields: %d", excludedCount)
+		t.Logf("Expected handlers: %d", expectedHandlers)
+		t.Logf("Actual handlers: %d", len(handlers))
+
+		require.Equal(t, expectedHandlers, len(handlers),
+			"Number of handlers (%d) should equal total struct fields (%d) minus excluded fields (%d) = %d",
+			len(handlers), totalStructFields, excludedCount, expectedHandlers)
+	})
+}
+
+// getStructFieldNameForHandler attempts to determine the struct field name for a handler
+func getStructFieldNameForHandler(handler FieldHandler) string {
+	// Map of VoteExtensionField enum to struct field name
+	fieldMap := map[VoteExtensionField]string{
+		VEFieldEigenDelegationsHash:       "EigenDelegationsHash",
+		VEFieldEthBurnEventsHash:          "EthBurnEventsHash",
+		VEFieldSolanaBurnEventsHash:       "SolanaBurnEventsHash",
+		VEFieldRedemptionsHash:            "RedemptionsHash",
+		VEFieldRequestedBtcHeaderHash:     "RequestedBtcHeaderHash",
+		VEFieldRequestedBtcBlockHeight:    "RequestedBtcBlockHeight",
+		VEFieldEthBlockHeight:             "EthBlockHeight",
+		VEFieldEthGasLimit:                "EthGasLimit",
+		VEFieldEthBaseFee:                 "EthBaseFee",
+		VEFieldEthTipCap:                  "EthTipCap",
+		VEFieldRequestedStakerNonce:       "RequestedStakerNonce",
+		VEFieldRequestedEthMinterNonce:    "RequestedEthMinterNonce",
+		VEFieldRequestedUnstakerNonce:     "RequestedUnstakerNonce",
+		VEFieldRequestedCompleterNonce:    "RequestedCompleterNonce",
+		VEFieldSolanaMintNoncesHash:       "SolanaMintNoncesHash",
+		VEFieldSolanaAccountsHash:         "SolanaAccountsHash",
+		VEFieldSolanaMintEventsHash:       "SolanaMintEventsHash",
+		VEFieldROCKUSDPrice:               "ROCKUSDPrice",
+		VEFieldBTCUSDPrice:                "BTCUSDPrice",
+		VEFieldETHUSDPrice:                "ETHUSDPrice",
+		VEFieldLatestBtcBlockHeight:       "LatestBtcBlockHeight",
+		VEFieldLatestBtcHeaderHash:        "LatestBtcHeaderHash",
+		VEFieldRequestedZcashBlockHeight:  "RequestedZcashBlockHeight",
+		VEFieldRequestedZcashHeaderHash:   "RequestedZcashHeaderHash",
+		VEFieldLatestZcashBlockHeight:     "LatestZcashBlockHeight",
+		VEFieldLatestZcashHeaderHash:      "LatestZcashHeaderHash",
+	}
+
+	return fieldMap[handler.Field]
+}
+
+// TestEnumConstantCountMatchesHandlers ensures the number of VoteExtensionField enum constants
+// matches the number of handlers exactly. This prevents someone from adding an enum constant
+// but forgetting to add the corresponding handler.
+func TestEnumConstantCountMatchesHandlers(t *testing.T) {
+	handlers := initializeFieldHandlers()
+
+	// All VoteExtensionField enum constants - this list MUST be updated when new fields are added
+	allEnumConstants := []VoteExtensionField{
+		VEFieldEigenDelegationsHash,
+		VEFieldEthBurnEventsHash,
+		VEFieldSolanaBurnEventsHash,
+		VEFieldRedemptionsHash,
+		VEFieldRequestedBtcHeaderHash,
+		VEFieldRequestedBtcBlockHeight,
+		VEFieldEthBlockHeight,
+		VEFieldEthGasLimit,
+		VEFieldEthBaseFee,
+		VEFieldEthTipCap,
+		VEFieldRequestedStakerNonce,
+		VEFieldRequestedEthMinterNonce,
+		VEFieldRequestedUnstakerNonce,
+		VEFieldRequestedCompleterNonce,
+		VEFieldROCKUSDPrice,
+		VEFieldBTCUSDPrice,
+		VEFieldETHUSDPrice,
+		VEFieldLatestBtcBlockHeight,
+		VEFieldLatestBtcHeaderHash,
+		VEFieldSolanaMintNoncesHash,
+		VEFieldSolanaAccountsHash,
+		VEFieldSolanaMintEventsHash,
+		VEFieldRequestedZcashBlockHeight,
+		VEFieldRequestedZcashHeaderHash,
+		VEFieldLatestZcashBlockHeight,
+		VEFieldLatestZcashHeaderHash,
+	}
+
+	t.Run("enum_count_equals_handler_count", func(t *testing.T) {
+		require.Equal(t, len(allEnumConstants), len(handlers),
+			"Number of enum constants (%d) must equal number of handlers (%d). "+
+				"If you added a new enum constant, you must also add it to initializeFieldHandlers() "+
+				"and update the allEnumConstants list in this test.",
+			len(allEnumConstants), len(handlers))
+	})
+
+	t.Run("every_enum_constant_has_handler", func(t *testing.T) {
+		handlerFields := make(map[VoteExtensionField]bool)
+		for _, handler := range handlers {
+			handlerFields[handler.Field] = true
+		}
+
+		var missingHandlers []VoteExtensionField
+		for _, enumConstant := range allEnumConstants {
+			if !handlerFields[enumConstant] {
+				missingHandlers = append(missingHandlers, enumConstant)
+			}
+		}
+
+		require.Empty(t, missingHandlers,
+			"The following enum constants do not have handlers: %v. "+
+				"Add them to initializeFieldHandlers().",
+			missingHandlers)
+	})
+
+	t.Run("every_handler_has_enum_constant", func(t *testing.T) {
+		enumConstants := make(map[VoteExtensionField]bool)
+		for _, constant := range allEnumConstants {
+			enumConstants[constant] = true
+		}
+
+		var unknownHandlers []VoteExtensionField
+		for _, handler := range handlers {
+			if !enumConstants[handler.Field] {
+				unknownHandlers = append(unknownHandlers, handler.Field)
+			}
+		}
+
+		require.Empty(t, unknownHandlers,
+			"The following handlers reference enum constants not in allEnumConstants list: %v. "+
+				"Add them to the allEnumConstants list in this test.",
+			unknownHandlers)
+	})
+
+	t.Run("all_enum_constants_are_unique", func(t *testing.T) {
+		seen := make(map[VoteExtensionField]bool)
+		var duplicates []VoteExtensionField
+
+		for _, constant := range allEnumConstants {
+			if seen[constant] {
+				duplicates = append(duplicates, constant)
+			}
+			seen[constant] = true
+		}
+
+		require.Empty(t, duplicates,
+			"Duplicate enum constants found in allEnumConstants list: %v",
+			duplicates)
+	})
+
+	t.Logf("✅ Validation complete:")
+	t.Logf("  - Enum constants: %d", len(allEnumConstants))
+	t.Logf("  - Handlers: %d", len(handlers))
+	t.Logf("  - All counts match and align perfectly")
 }
 
 // TestGenericGetKeyConsistency ensures the genericGetKey function is consistent
@@ -309,6 +506,241 @@ func TestGenericGetKeyConsistency(t *testing.T) {
 			require.Equal(t, key1, key3, "genericGetKey is not consistent")
 		})
 	}
+}
+
+// TestCompleteThreeWayAlignment is the ultimate validation that ensures:
+// 1. Every VoteExtension struct field (except excluded ones) has an enum constant
+// 2. Every enum constant has a handler
+// 3. Every handler references a valid struct field
+// This test ensures perfect alignment across all three components.
+func TestCompleteThreeWayAlignment(t *testing.T) {
+	var ve VoteExtension
+	veType := reflect.TypeOf(ve)
+	handlers := initializeFieldHandlers()
+
+	// Fields that don't participate in consensus voting
+	excludedStructFields := map[string]string{
+		"SidecarVersionName": "Informational field - no consensus required",
+	}
+
+	// All enum constants
+	allEnumConstants := []VoteExtensionField{
+		VEFieldEigenDelegationsHash,
+		VEFieldEthBurnEventsHash,
+		VEFieldSolanaBurnEventsHash,
+		VEFieldRedemptionsHash,
+		VEFieldRequestedBtcHeaderHash,
+		VEFieldRequestedBtcBlockHeight,
+		VEFieldEthBlockHeight,
+		VEFieldEthGasLimit,
+		VEFieldEthBaseFee,
+		VEFieldEthTipCap,
+		VEFieldRequestedStakerNonce,
+		VEFieldRequestedEthMinterNonce,
+		VEFieldRequestedUnstakerNonce,
+		VEFieldRequestedCompleterNonce,
+		VEFieldROCKUSDPrice,
+		VEFieldBTCUSDPrice,
+		VEFieldETHUSDPrice,
+		VEFieldLatestBtcBlockHeight,
+		VEFieldLatestBtcHeaderHash,
+		VEFieldSolanaMintNoncesHash,
+		VEFieldSolanaAccountsHash,
+		VEFieldSolanaMintEventsHash,
+		VEFieldRequestedZcashBlockHeight,
+		VEFieldRequestedZcashHeaderHash,
+		VEFieldLatestZcashBlockHeight,
+		VEFieldLatestZcashHeaderHash,
+	}
+
+	// Enum to struct field mapping
+	enumToStructField := map[VoteExtensionField]string{
+		VEFieldEigenDelegationsHash:       "EigenDelegationsHash",
+		VEFieldEthBurnEventsHash:          "EthBurnEventsHash",
+		VEFieldSolanaBurnEventsHash:       "SolanaBurnEventsHash",
+		VEFieldRedemptionsHash:            "RedemptionsHash",
+		VEFieldRequestedBtcHeaderHash:     "RequestedBtcHeaderHash",
+		VEFieldRequestedBtcBlockHeight:    "RequestedBtcBlockHeight",
+		VEFieldEthBlockHeight:             "EthBlockHeight",
+		VEFieldEthGasLimit:                "EthGasLimit",
+		VEFieldEthBaseFee:                 "EthBaseFee",
+		VEFieldEthTipCap:                  "EthTipCap",
+		VEFieldRequestedStakerNonce:       "RequestedStakerNonce",
+		VEFieldRequestedEthMinterNonce:    "RequestedEthMinterNonce",
+		VEFieldRequestedUnstakerNonce:     "RequestedUnstakerNonce",
+		VEFieldRequestedCompleterNonce:    "RequestedCompleterNonce",
+		VEFieldSolanaMintNoncesHash:       "SolanaMintNoncesHash",
+		VEFieldSolanaAccountsHash:         "SolanaAccountsHash",
+		VEFieldSolanaMintEventsHash:       "SolanaMintEventsHash",
+		VEFieldROCKUSDPrice:               "ROCKUSDPrice",
+		VEFieldBTCUSDPrice:                "BTCUSDPrice",
+		VEFieldETHUSDPrice:                "ETHUSDPrice",
+		VEFieldLatestBtcBlockHeight:       "LatestBtcBlockHeight",
+		VEFieldLatestBtcHeaderHash:        "LatestBtcHeaderHash",
+		VEFieldRequestedZcashBlockHeight:  "RequestedZcashBlockHeight",
+		VEFieldRequestedZcashHeaderHash:   "RequestedZcashHeaderHash",
+		VEFieldLatestZcashBlockHeight:     "LatestZcashBlockHeight",
+		VEFieldLatestZcashHeaderHash:      "LatestZcashHeaderHash",
+	}
+
+	t.Run("counts_align_perfectly", func(t *testing.T) {
+		totalStructFields := veType.NumField()
+		excludedCount := len(excludedStructFields)
+		enumCount := len(allEnumConstants)
+		handlerCount := len(handlers)
+		expectedCount := totalStructFields - excludedCount
+
+		t.Logf("📊 Alignment Analysis:")
+		t.Logf("  Total VoteExtension struct fields: %d", totalStructFields)
+		t.Logf("  Excluded fields (no consensus): %d", excludedCount)
+		t.Logf("  Fields requiring handlers: %d", expectedCount)
+		t.Logf("  Enum constants defined: %d", enumCount)
+		t.Logf("  Handlers initialized: %d", handlerCount)
+
+		require.Equal(t, expectedCount, enumCount,
+			"Enum count (%d) should equal struct fields (%d) minus excluded (%d) = %d",
+			enumCount, totalStructFields, excludedCount, expectedCount)
+
+		require.Equal(t, expectedCount, handlerCount,
+			"Handler count (%d) should equal struct fields (%d) minus excluded (%d) = %d",
+			handlerCount, totalStructFields, excludedCount, expectedCount)
+
+		require.Equal(t, enumCount, handlerCount,
+			"Enum count (%d) must equal handler count (%d)",
+			enumCount, handlerCount)
+	})
+
+	t.Run("every_non_excluded_struct_field_has_enum_and_handler", func(t *testing.T) {
+		// Build reverse map: struct field name -> enum constant
+		structFieldToEnum := make(map[string]VoteExtensionField)
+		for enum, fieldName := range enumToStructField {
+			structFieldToEnum[fieldName] = enum
+		}
+
+		// Build map: enum constant -> has handler
+		enumHasHandler := make(map[VoteExtensionField]bool)
+		for _, handler := range handlers {
+			enumHasHandler[handler.Field] = true
+		}
+
+		var missingEnum []string
+		var missingHandler []string
+
+		for i := 0; i < veType.NumField(); i++ {
+			field := veType.Field(i)
+			fieldName := field.Name
+
+			// Skip excluded fields
+			if _, excluded := excludedStructFields[fieldName]; excluded {
+				continue
+			}
+
+			// Check if struct field has enum constant
+			enumConstant, hasEnum := structFieldToEnum[fieldName]
+			if !hasEnum {
+				missingEnum = append(missingEnum, fieldName)
+				continue
+			}
+
+			// Check if enum constant has handler
+			if !enumHasHandler[enumConstant] {
+				missingHandler = append(missingHandler, fieldName)
+			}
+		}
+
+		require.Empty(t, missingEnum,
+			"Struct fields without enum constants: %v. Add enum constants in VoteExtensionField.",
+			missingEnum)
+
+		require.Empty(t, missingHandler,
+			"Struct fields with enum but no handler: %v. Add handlers in initializeFieldHandlers().",
+			missingHandler)
+	})
+
+	t.Run("every_enum_has_struct_field_and_handler", func(t *testing.T) {
+		// Build map: enum -> has handler
+		enumHasHandler := make(map[VoteExtensionField]bool)
+		for _, handler := range handlers {
+			enumHasHandler[handler.Field] = true
+		}
+
+		var missingStructField []VoteExtensionField
+		var missingHandler []VoteExtensionField
+
+		for _, enumConstant := range allEnumConstants {
+			// Check if enum has struct field mapping
+			structFieldName, hasStructField := enumToStructField[enumConstant]
+			if !hasStructField {
+				missingStructField = append(missingStructField, enumConstant)
+				continue
+			}
+
+			// Verify struct field actually exists
+			_, found := veType.FieldByName(structFieldName)
+			if !found {
+				missingStructField = append(missingStructField, enumConstant)
+				continue
+			}
+
+			// Check if enum has handler
+			if !enumHasHandler[enumConstant] {
+				missingHandler = append(missingHandler, enumConstant)
+			}
+		}
+
+		require.Empty(t, missingStructField,
+			"Enum constants without valid struct fields: %v. "+
+				"Add struct fields to VoteExtension or fix enumToStructField mapping.",
+			missingStructField)
+
+		require.Empty(t, missingHandler,
+			"Enum constants without handlers: %v. Add handlers in initializeFieldHandlers().",
+			missingHandler)
+	})
+
+	t.Run("every_handler_has_enum_and_struct_field", func(t *testing.T) {
+		var invalidHandlers []VoteExtensionField
+
+		for _, handler := range handlers {
+			// Check if handler's field is in enum constants
+			enumFound := false
+			for _, enumConstant := range allEnumConstants {
+				if handler.Field == enumConstant {
+					enumFound = true
+					break
+				}
+			}
+
+			if !enumFound {
+				invalidHandlers = append(invalidHandlers, handler.Field)
+				continue
+			}
+
+			// Check if enum maps to a struct field
+			structFieldName, hasMaping := enumToStructField[handler.Field]
+			if !hasMaping {
+				invalidHandlers = append(invalidHandlers, handler.Field)
+				continue
+			}
+
+			// Verify struct field exists
+			_, found := veType.FieldByName(structFieldName)
+			if !found {
+				invalidHandlers = append(invalidHandlers, handler.Field)
+			}
+		}
+
+		require.Empty(t, invalidHandlers,
+			"Handlers with invalid enum or struct field mappings: %v",
+			invalidHandlers)
+	})
+
+	t.Logf("✅ PERFECT ALIGNMENT VERIFIED:")
+	t.Logf("  ✓ All non-excluded struct fields have enum constants and handlers")
+	t.Logf("  ✓ All enum constants have struct fields and handlers")
+	t.Logf("  ✓ All handlers reference valid enum constants and struct fields")
+	t.Logf("  ✓ All counts match: %d fields = %d enums = %d handlers",
+		veType.NumField()-len(excludedStructFields), len(allEnumConstants), len(handlers))
 }
 
 // TestFieldVoteMapNoNilPanic is a regression test specifically for the nil map panic
