@@ -48,20 +48,14 @@ func Test_ZCashAddressFormats(t *testing.T) {
 		{
 			name:         "ZCash Mainnet",
 			walletType:   WalletType_WALLET_TYPE_ZCASH_MAINNET,
-			expectPrefix: "u1",
+			expectPrefix: "t1",
 			network:      "mainnet",
 		},
 		{
 			name:         "ZCash Testnet",
 			walletType:   WalletType_WALLET_TYPE_ZCASH_TESTNET,
-			expectPrefix: "utest1",
+			expectPrefix: "tm",
 			network:      "testnet",
-		},
-		{
-			name:         "ZCash Regtest",
-			walletType:   WalletType_WALLET_TYPE_ZCASH_REGNET,
-			expectPrefix: "uregtest1",
-			network:      "regtest",
 		},
 	}
 
@@ -83,21 +77,24 @@ func Test_ZCashAddressFormats(t *testing.T) {
 				tt.expectPrefix,
 			)
 
-			// Additional validation: address should be bech32m encoded
-			// Bech32 alphabet: qpzry9x8gf2tvdw0s3jn54khce6mua7l (plus uppercase)
-			bech32Charset := "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-			for _, char := range strings.ToLower(address) {
-				// Allow separator '1' and alphanumeric characters from bech32 charset
-				if char != '1' && !strings.ContainsRune(bech32Charset, char) {
+			// Additional validation: address should be base58 encoded
+			// Base58 alphabet: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+			// (excludes 0, O, I, l to avoid confusion)
+			base58Charset := "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+			for _, char := range address {
+				if !strings.ContainsRune(base58Charset, char) {
 					require.Fail(
 						t,
-						"Address contains invalid bech32 character",
+						"Address contains invalid base58 character",
 						"Character: %c in address: %s",
 						char,
 						address,
 					)
 				}
 			}
+
+			// Transparent addresses should be 35 characters long (22 bytes encoded in base58)
+			require.Equal(t, 35, len(address), "Transparent address should be 35 characters")
 
 			t.Logf("Generated %s address: %s", tt.network, address)
 		})
@@ -130,7 +127,6 @@ func Test_ZCashAddressUniqueness(t *testing.T) {
 	walletTypes := []WalletType{
 		WalletType_WALLET_TYPE_ZCASH_MAINNET,
 		WalletType_WALLET_TYPE_ZCASH_TESTNET,
-		WalletType_WALLET_TYPE_ZCASH_REGNET,
 	}
 
 	for _, walletType := range walletTypes {

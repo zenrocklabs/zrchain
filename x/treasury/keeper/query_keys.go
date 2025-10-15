@@ -40,8 +40,6 @@ func (k Keeper) Keys(
 			case types.WalletType_WALLET_TYPE_ZCASH_MAINNET:
 				fallthrough
 			case types.WalletType_WALLET_TYPE_ZCASH_TESTNET:
-				fallthrough
-			case types.WalletType_WALLET_TYPE_ZCASH_REGNET:
 				keyType = types.KeyType_KEY_TYPE_BITCOIN_SECP256K1
 			}
 
@@ -144,13 +142,6 @@ func processWallets(
 					&types.WalletResponse{Address: address, Type: walletType.String()},
 				)
 			}
-		case types.WalletType_WALLET_TYPE_ZCASH_REGNET:
-			if address, err := types.ZcashAddress(&key, "regtest"); err == nil {
-				wallets = append(
-					wallets,
-					&types.WalletResponse{Address: address, Type: walletType.String()},
-				)
-			}
 		}
 	}
 
@@ -175,8 +166,6 @@ func deriveWalletTypes(walletType types.WalletType) []types.WalletType {
 		return []types.WalletType{types.WalletType_WALLET_TYPE_ZCASH_MAINNET}
 	case types.WalletType_WALLET_TYPE_ZCASH_TESTNET:
 		return []types.WalletType{types.WalletType_WALLET_TYPE_ZCASH_TESTNET}
-	case types.WalletType_WALLET_TYPE_ZCASH_REGNET:
-		return []types.WalletType{types.WalletType_WALLET_TYPE_ZCASH_REGNET}
 	case types.WalletType_WALLET_TYPE_UNSPECIFIED:
 		return []types.WalletType{
 			types.WalletType_WALLET_TYPE_NATIVE,
@@ -187,7 +176,6 @@ func deriveWalletTypes(walletType types.WalletType) []types.WalletType {
 			types.WalletType_WALLET_TYPE_SOLANA,
 			types.WalletType_WALLET_TYPE_ZCASH_MAINNET,
 			types.WalletType_WALLET_TYPE_ZCASH_TESTNET,
-			types.WalletType_WALLET_TYPE_ZCASH_REGNET,
 		}
 	default:
 		return []types.WalletType{}

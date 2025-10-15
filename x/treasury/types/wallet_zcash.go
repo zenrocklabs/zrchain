@@ -2,10 +2,11 @@ package types
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/btcutil/bech32"
+	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -17,14 +18,12 @@ type ZCashWallet struct {
 
 var _ Wallet = &ZCashWallet{}
 
-// ZCash unified address HRPs (Human-Readable Parts) for Bech32m encoding
+// Zcash transparent address P2PKH version bytes (2 bytes, unlike Bitcoin's 1 byte)
 var (
-	// Mainnet unified address prefix "u1"
-	zcashMainnetHRP = "u"
-	// Testnet unified address prefix "utest1"
-	zcashTestnetHRP = "utest"
-	// Regtest unified address prefix "uregtest1"
-	zcashRegtestHRP = "uregtest"
+	// Mainnet P2PKH version bytes [0x1C, 0xB8] - produces "t1" prefix
+	zcashMainnetP2PKHVersionBytes = []byte{0x1C, 0xB8}
+	// Testnet P2PKH version bytes [0x1D, 0x25] - produces "tm" prefix (also used for Regtest)
+	zcashTestnetP2PKHVersionBytes = []byte{0x1D, 0x25}
 )
 
 func NewZCashWallet(k *Key, network string) (*ZCashWallet, error) {
@@ -43,43 +42,46 @@ func (w *ZCashWallet) Address() string {
 		return ""
 	}
 
-	// Generate P2PKH address from the public key
+	// Generate P2PKH transparent address from the public key
 	pubKeyHash := btcutil.Hash160(publicKey.SerializeCompressed())
 
-	// Select the appropriate HRP based on network
-	var hrp string
+	// Select the appropriate version bytes based on network
+	var versionBytes []byte
 	switch w.network {
 	case "mainnet":
-		hrp = zcashMainnetHRP
-	case "testnet":
-		hrp = zcashTestnetHRP
-	case "regtest":
-		hrp = zcashRegtestHRP
+		versionBytes = zcashMainnetP2PKHVersionBytes
+	case "testnet", "regtest":
+		versionBytes = zcashTestnetP2PKHVersionBytes
 	default:
 		return ""
 	}
 
-	// Encode the address using Bech32m encoding (used for unified addresses)
-	address, err := encodeZCashUnifiedAddress(hrp, pubKeyHash)
-	if err != nil {
-		return ""
-	}
+	// Encode the address using Base58Check with Zcash's 2-byte version prefix
+	address := encodeZCashBase58Check(versionBytes, pubKeyHash)
 	return address
 }
 
-// encodeZCashUnifiedAddress creates a ZCash unified address using Bech32m encoding
-func encodeZCashUnifiedAddress(hrp string, payload []byte) (string, error) {
-	// Convert payload to 5-bit groups for Bech32m encoding
-	converted, err := bech32.ConvertBits(payload, 8, 5, true)
-	if err != nil {
-		return "", err
-	}
+// encodeZCashBase58Check encodes a Zcash transparent address using Base58Check
+// with a 2-byte version prefix (unlike Bitcoin which uses 1 byte)
+func encodeZCashBase58Check(versionBytes []byte, payload []byte) string {
+	// Combine version bytes and payload
+	b := make([]byte, 0, len(versionBytes)+len(payload)+4)
+	b = append(b, versionBytes...)
+	b = append(b, payload...)
 
-	// Encode using Bech32m (version 1) which is used for unified addresses
-	encoded, err := bech32.EncodeM(hrp, converted)
-	if err != nil {
-		return "", err
-	}
+	// Calculate checksum: first 4 bytes of double SHA256
+	checksum := doubleSHA256(b)[:4]
 
-	return encoded, nil
+	// Append checksum
+	b = append(b, checksum...)
+
+	// Base58 encode
+	return base58.Encode(b)
+}
+
+// doubleSHA256 calculates SHA256(SHA256(data))
+func doubleSHA256(data []byte) []byte {
+	first := sha256.Sum256(data)
+	second := sha256.Sum256(first[:])
+	return second[:]
 }
