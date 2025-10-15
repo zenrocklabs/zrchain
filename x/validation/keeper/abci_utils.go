@@ -125,12 +125,15 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 // of the values. This ensures all validators will select the same consensus value regardless
 // of iteration order.
 func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, VoteExtension, map[VoteExtensionField]int64, error) {
+	// Get field handlers first
+	fieldHandlers := initializeFieldHandlers()
+
 	// Use a generic map to store votes for all fields
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
-	// Initialize maps for each field type
-	for i := VEFieldEigenDelegationsHash; i <= VEFieldLatestZcashHeaderHash; i++ {
-		fieldVotes[i] = make(map[string]fieldVote)
+	// Initialize maps for each field handler to ensure all fields have a map
+	for _, handler := range fieldHandlers {
+		fieldVotes[handler.Field] = make(map[string]fieldVote)
 	}
 
 	var totalVotePower int64
@@ -138,9 +141,6 @@ func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeigh
 
 	// Track informational fields that don't require consensus
 	var firstSidecarVersionName string
-
-	// Get field handlers
-	fieldHandlers := initializeFieldHandlers()
 
 	// Process all votes
 	for _, vote := range extCommit.Votes {
