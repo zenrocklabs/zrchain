@@ -214,6 +214,7 @@ type ModuleInputs struct {
 	BankKeeper    types.BankKeeper
 	StakingKeeper types.StakingKeeper
 	ZentpKeeper   types.ZentpKeeper
+	ZenexKeeper   types.ZenexKeeper
 }
 
 type ModuleOutputs struct {
@@ -242,6 +243,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 		in.AccountKeeper,
 		in.BankKeeper,
 		in.ZentpKeeper,
+		in.ZenexKeeper,
 		feeCollectorName,
 		authority.String(),
 	)

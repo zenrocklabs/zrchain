@@ -8,6 +8,7 @@ import (
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 type IdentityKeeper interface {
@@ -38,6 +39,7 @@ type BankKeeper interface {
 	SpendableCoins(context.Context, sdk.AccAddress) sdk.Coins
 	SendCoinsFromAccountToModule(context.Context, sdk.AccAddress, string, sdk.Coins) error
 	SendCoinsFromModuleToAccount(context.Context, string, sdk.AccAddress, sdk.Coins) error
+	SendCoinsFromModuleToModule(context.Context, string, string, sdk.Coins) error
 	GetBalance(context.Context, sdk.AccAddress, string) sdk.Coin
 	// Methods imported from bank should be defined here
 }
@@ -46,4 +48,8 @@ type BankKeeper interface {
 type ParamSubspace interface {
 	Get(context.Context, []byte, interface{})
 	Set(context.Context, []byte, interface{})
+}
+
+type ZenbtcKeeper interface {
+	GetParams(ctx context.Context) (zenbtctypes.Params, error)
 }

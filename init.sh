@@ -175,7 +175,10 @@ if [ "$START_ONLY" = false ]; then
         "protocol_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj",
         "additional_staking_rewards": "0.300000000000000000",
         "additional_mpc_rewards": "0.050000000000000000",
-        "additional_burn_rate": "0.250000000000000000"
+        "additional_burn_rate": "0.250000000000000000",
+        "zenbtc_reward_rate": "0.300000000000000000",
+        "zr_wallet_rate": "0.300000000000000000",
+        "zr_wallet_address": "zen1vh2gdma746t88y7745qawy32m0qxx60gjw27jj"
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
 
 
@@ -194,6 +197,15 @@ if [ "$START_ONLY" = false ]; then
           "btl": 20
         }
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
+    jq '.app_state.zenex.params = {
+        "btc_proxy_address": "zen126hek6zagmp3jqf97x7pq7c0j9jqs0ndxeaqhq",
+        "zenex_pool_key_id": 16,
+        "zenex_workspace_address": "workspace14a2hpadpsy9h4auve2z8lw",
+        "minimum_satoshis": 1000,
+        "swap_threshold_satoshis": 1100
+    }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
+
     function ssed {
         if [[ "$OSTYPE" == "darwin"* ]]; then
             gsed "$@"
@@ -212,6 +224,10 @@ if [ "$START_ONLY" = false ]; then
             # Add funds for mint module - not a validator
             zenrockd genesis add-genesis-account zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR --module-name mint
             zenrockd genesis add-genesis-account zen1a0hfnvaslygrauq8k8weu5fjsnawlu37wvdpfl 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zentp
+            # # Add zenex module accounts
+            zenrockd genesis add-genesis-account zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zenex_collector
+            zenrockd genesis add-genesis-account zen1fpq2t9ygrst5lp5hl9d7fylppljp3xhhu37n4c 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zenex_fee_collector
+            zenrockd genesis add-genesis-account zen14l8vvehfy0af0djxjx0uug0ladm57r6plfntx6 0urock --keyring-backend $KEYRING --home $HOME_DIR --module-name zenex_btc_rewards_collector
             # Add funds for other accounts
             zenrockd genesis add-genesis-account zen10kmgv5gzygnecf46x092ecfe5xcvvv9rdaxmts 200000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
             zenrockd genesis add-genesis-account zen1zpmqphp46nsn097ysltk4j5wmpjn9gd5gwyfnq 100000000000000urock --keyring-backend $KEYRING --home $HOME_DIR
