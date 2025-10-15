@@ -89,3 +89,11 @@ func SolanaPubkey(key *Key) (*solana.PublicKey, error) {
 	pk := solana.PublicKeyFromBytes(key.PublicKey)
 	return &pk, nil
 }
+
+func ZcashAddress(key *Key, network string) (string, error) {
+	wallet, err := NewZCashWallet(key, network)
+	if err != nil {
+		return "", err
+	}
+	return wallet.Address(), nil
+}
