@@ -442,6 +442,14 @@ func (s *IntegrationTestSuite) TestGetSwapThreshold() {
 			expectedErr:   nil,
 		},
 		{
+			name:          "happy path with default swap threshold",
+			swapThreshold: 6100,
+			rockPrice:     zenextestutil.SampleRockBtcPrice,
+			btcPrice:      zenextestutil.SampleBtcRockPrice,
+			expected:      26840322083,
+			expectedErr:   nil,
+		},
+		{
 			name:          "fail: rock price is zero",
 			swapThreshold: 100000,
 			rockPrice:     math.LegacyNewDecFromInt(math.NewInt(0)),
@@ -455,7 +463,9 @@ func (s *IntegrationTestSuite) TestGetSwapThreshold() {
 		s.Run(tt.name, func() {
 			s.SetupTest()
 
-			s.zenexKeeper.SetParams(s.ctx, types.DefaultParams())
+			params := types.DefaultParams()
+			params.SwapThresholdSatoshis = tt.swapThreshold
+			s.zenexKeeper.SetParams(s.ctx, params)
 
 			s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(tt.rockPrice, nil).AnyTimes()
 
