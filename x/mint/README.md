@@ -60,7 +60,7 @@ It can be broken down in the following way:
 
 #### Claim Tx and Keyring Fees Flow
 
-```
+```text
 KeyringCollector     Mint Module      FeeCollector
 (Treasury Fees)  ──▶ (Accumulates) ◀── (Transaction Fees)
                         │
@@ -71,7 +71,7 @@ KeyringCollector     Mint Module      FeeCollector
 
 #### ZenTP Fees Flow
 
-```
+```text
 ZentpCollector  ──▶  ZenexFeeCollector
 (ZenTP Fees)         (Accumulates)
                         │
