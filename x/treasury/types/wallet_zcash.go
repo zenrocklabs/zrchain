@@ -2,16 +2,12 @@ package types
 
 import (
 	"crypto/ecdsa"
-	"encoding/hex"
-	"fmt"
-	"strings"
 
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/ethereum/go-ethereum/crypto"
-	"golang.org/x/crypto/ripemd160"
 )
 
 type ZCashWallet struct {
@@ -20,7 +16,6 @@ type ZCashWallet struct {
 }
 
 var _ Wallet = &ZCashWallet{}
-var _ TxParser = &ZCashWallet{}
 
 // ZCash unified address HRPs (Human-Readable Parts) for Bech32m encoding
 var (
@@ -87,63 +82,4 @@ func encodeZCashUnifiedAddress(hrp string, payload []byte) (string, error) {
 	}
 
 	return encoded, nil
-}
-
-// ParseTx implements TxParser for ZCash transactions
-func (w *ZCashWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
-	// ZCash transactions are similar to Bitcoin in structure
-	// We need to calculate the signature hashes
-	hashes, err := w.SigHashes(b)
-	if err != nil {
-		return Transfer{}, err
-	}
-
-	var dataForSigning []string
-	for _, hash := range hashes {
-		dataForSigning = append(dataForSigning, hex.EncodeToString(hash))
-	}
-
-	return Transfer{
-		SigHashes:      hashes,
-		DataForSigning: []byte(strings.Join(dataForSigning, ",")),
-	}, nil
-}
-
-func (w *ZCashWallet) SigHashes(b []byte) (hashes [][]byte, err error) {
-	// For ZCash, we can reuse the Bitcoin transaction deserialization
-	// as ZCash v5 transactions are compatible with Bitcoin serialization
-	msgTx, err := DeserializeTransaction(b)
-	if err != nil {
-		return nil, err
-	}
-
-	// Calculate signature hashes for each input
-	// ZCash uses a similar signing mechanism to Bitcoin
-	for i := range msgTx.TxIn {
-		// For each input, we need to calculate the signature hash
-		// This is a simplified version - in production, you'd want to handle
-		// different signature hash types and ZCash-specific fields
-
-		// Get the witness data if available
-		if len(msgTx.TxIn[i].Witness) > 0 {
-			// Extract the signature hash from witness data
-			// The actual implementation depends on ZCash's specific witness structure
-			witnessData := msgTx.TxIn[i].Witness[0]
-			hashes = append(hashes, witnessData)
-		} else {
-			// Fallback: create a basic signature hash
-			// In a real implementation, this would follow ZCash's signature hash algorithm
-			return nil, fmt.Errorf("zcash transaction must have witness data")
-		}
-	}
-
-	return hashes, nil
-}
-
-// Helper function to hash160 (RIPEMD160(SHA256(data)))
-func hash160(data []byte) []byte {
-	sha := crypto.Keccak256(data)
-	ripemd := ripemd160.New()
-	ripemd.Write(sha)
-	return ripemd.Sum(nil)
 }
