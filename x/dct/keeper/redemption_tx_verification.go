@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"slices"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -112,8 +113,8 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 		if msg.Asset == types.Asset_ASSET_ZENZEC {
 			// Extract network from chainName (e.g., "zcash-mainnet" -> "mainnet")
 			network := msg.ChainName
-			if len(msg.ChainName) > 6 && msg.ChainName[:6] == "zcash-" {
-				network = msg.ChainName[6:] // Remove "zcash-" prefix
+			if strings.HasPrefix(msg.ChainName, "zcash-") {
+				network = strings.TrimPrefix(msg.ChainName, "zcash-")
 			}
 			address, err = treasurytypes.ZcashAddress(&key, network)
 		} else {

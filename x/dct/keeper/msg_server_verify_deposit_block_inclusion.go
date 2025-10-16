@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/rpc"
+	"strings"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
 
@@ -290,8 +291,8 @@ func (k msgServer) changeAddressesForAsset(ctx context.Context, asset types.Asse
 	if asset == types.Asset_ASSET_ZENZEC {
 		// Extract network from chainName (e.g., "zcash-mainnet" -> "mainnet")
 		network := chainName
-		if len(chainName) > 6 && chainName[:6] == "zcash-" {
-			network = chainName[6:] // Remove "zcash-" prefix
+		if strings.HasPrefix(chainName, "zcash-") {
+			network = strings.TrimPrefix(chainName, "zcash-")
 		}
 
 		for _, keyID := range keyIDs {
