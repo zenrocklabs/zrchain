@@ -94,7 +94,18 @@ func CheckBlockHeader(b *api.BTCBlockHeader) error {
 }
 
 func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
-	buf := make([]byte, 80) // Bitcoin block headers are always 80 bytes
+	// Check if this is a Zcash header (has NonceHex populated)
+	isZcash := b.NonceHex != ""
+
+	var buf []byte
+	if isZcash {
+		// Zcash block headers are 140 bytes
+		buf = make([]byte, 140)
+	} else {
+		// Bitcoin block headers are 80 bytes
+		buf = make([]byte, 80)
+	}
+
 	version := b.Version
 	prevBlock, err := hex.DecodeString(ReverseHex(b.PrevBlock))
 	if err != nil {
@@ -109,12 +120,34 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	binary.LittleEndian.PutUint32(buf[0:4], uint32(version))
 	copy(buf[4:36], prevBlock)
 	copy(buf[36:68], merkleRoot)
-	binary.LittleEndian.PutUint32(buf[68:72], uint32(b.TimeStamp))
-	copy(buf[72:76], bits)
-	binary.LittleEndian.PutUint32(buf[76:80], uint32(b.Nonce))
+
+	if isZcash {
+		// Zcash has a 32-byte reserved field (hashFinalSaplingRoot) after merkleRoot
+		// For now, we'll leave it as zeros since it's not provided in the header
+		// This field is at bytes 68-100
+
+		binary.LittleEndian.PutUint32(buf[100:104], uint32(b.TimeStamp))
+		copy(buf[104:108], bits)
+
+		// Zcash uses a 256-bit (32-byte) nonce
+		nonceBytes, err := hex.DecodeString(b.NonceHex)
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash nonce: %w", err)
+		}
+		if len(nonceBytes) != 32 {
+			return false, fmt.Errorf("invalid Zcash nonce length: expected 32 bytes, got %d", len(nonceBytes))
+		}
+		copy(buf[108:140], nonceBytes)
+	} else {
+		// Bitcoin format
+		binary.LittleEndian.PutUint32(buf[68:72], uint32(b.TimeStamp))
+		copy(buf[72:76], bits)
+		binary.LittleEndian.PutUint32(buf[76:80], uint32(b.Nonce))
+	}
 
 	//hash := doubleSha256(serializedHeader)
 	first := sha256.Sum256(buf)

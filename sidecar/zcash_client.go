@@ -182,14 +182,15 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 		return nil, fmt.Errorf("failed to get block header for hash %s: %w", hash, err)
 	}
 
-	// Convert ZCash header to BTCBlockHeader format (they're compatible)
+	// Convert ZCash header to BTCBlockHeader format
+	// For Zcash, we only use NonceHex (256-bit nonce), not the Nonce field (which is for Bitcoin's 32-bit nonce)
 	return &api.BTCBlockHeader{
 		Version:     header.Version,
 		PrevBlock:   header.PreviousBlockHash,
 		MerkleRoot:  header.MerkleRoot,
 		TimeStamp:   header.Time,
 		Bits:        parseBits(header.Bits),
-		Nonce:       parseNonce(header.Nonce),
+		NonceHex:    header.Nonce, // Zcash uses 256-bit nonce stored as hex string
 		BlockHash:   hash,
 		BlockHeight: height,
 	}, nil
