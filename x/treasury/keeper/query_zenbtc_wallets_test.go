@@ -201,6 +201,8 @@ func TestKeeper_ZenBTCMetadata(t *testing.T) {
 							{Address: "tb1qtun7x3s2ywksa32nl38d3fuuv8nk5angr0m8zv", Type: types.WalletType_WALLET_TYPE_BTC_TESTNET.String()},
 							{Address: "bc1qtun7x3s2ywksa32nl38d3fuuv8nk5angffq5el", Type: types.WalletType_WALLET_TYPE_BTC_MAINNET.String()},
 							{Address: "bcrt1qtun7x3s2ywksa32nl38d3fuuv8nk5angpxz249", Type: types.WalletType_WALLET_TYPE_BTC_REGNET.String()},
+							{Address: "t1SYjz1d2wbX4ewWT87UMkhjzhZ9c5GFevn", Type: types.WalletType_WALLET_TYPE_ZCASH_MAINNET.String()},
+							{Address: "tmJPVJr7SLG2ZoBhtnqn6cNQkJYERbWSo2J", Type: types.WalletType_WALLET_TYPE_ZCASH_TESTNET.String()},
 						},
 					},
 				},
