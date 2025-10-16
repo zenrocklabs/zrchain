@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/rpc"
+	"strings"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
 
@@ -284,19 +285,43 @@ func (k msgServer) changeAddressesForAsset(ctx context.Context, asset types.Asse
 		return nil, fmt.Errorf("no change key IDs configured for asset %s", asset.String())
 	}
 
-	chaincfg := utils.ChainFromString(chainName)
 	result := make([]string, 0, len(keyIDs))
-	for _, keyID := range keyIDs {
-		key, err := k.Keeper.treasuryKeeper.KeyStore.Get(ctx, keyID)
-		if err != nil {
-			return nil, err
+
+	// Zcash assets require different address generation than Bitcoin
+	if asset == types.Asset_ASSET_ZENZEC {
+		// Extract network from chainName (e.g., "zcash-mainnet" -> "mainnet")
+		network := chainName
+		if strings.HasPrefix(chainName, "zcash-") {
+			network = strings.TrimPrefix(chainName, "zcash-")
 		}
-		address, err := treasurytypes.BitcoinP2WPKH(&key, chaincfg)
-		if err != nil {
-			return nil, err
+
+		for _, keyID := range keyIDs {
+			key, err := k.Keeper.treasuryKeeper.KeyStore.Get(ctx, keyID)
+			if err != nil {
+				return nil, err
+			}
+			address, err := treasurytypes.ZcashAddress(&key, network)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, address)
 		}
-		result = append(result, address)
+	} else {
+		// Bitcoin and other Bitcoin-based assets use P2WPKH
+		chaincfg := utils.ChainFromString(chainName)
+		for _, keyID := range keyIDs {
+			key, err := k.Keeper.treasuryKeeper.KeyStore.Get(ctx, keyID)
+			if err != nil {
+				return nil, err
+			}
+			address, err := treasurytypes.BitcoinP2WPKH(&key, chaincfg)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, address)
+		}
 	}
+
 	return result, nil
 }
 
