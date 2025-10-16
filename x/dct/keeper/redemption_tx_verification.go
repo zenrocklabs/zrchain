@@ -106,7 +106,20 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving change addresses for keyID %d: %w", keyID, err)
 		}
-		address, err := treasurytypes.BitcoinP2WPKH(&key, chaincfg)
+
+		var address string
+		// Zcash assets require different address generation than Bitcoin
+		if msg.Asset == types.Asset_ASSET_ZENZEC {
+			// Extract network from chainName (e.g., "zcash-mainnet" -> "mainnet")
+			network := msg.ChainName
+			if len(msg.ChainName) > 6 && msg.ChainName[:6] == "zcash-" {
+				network = msg.ChainName[6:] // Remove "zcash-" prefix
+			}
+			address, err = treasurytypes.ZcashAddress(&key, network)
+		} else {
+			// Bitcoin and other Bitcoin-based assets use P2WPKH
+			address, err = treasurytypes.BitcoinP2WPKH(&key, chaincfg)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("error generating change address from keyID %d: %w", keyID, err)
 		}
