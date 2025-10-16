@@ -32,8 +32,6 @@ func NewWallet(k *Key, w WalletType) (Wallet, error) {
 		return NewZCashWallet(k, "mainnet")
 	case WalletType_WALLET_TYPE_ZCASH_TESTNET:
 		return NewZCashWallet(k, "testnet")
-	case WalletType_WALLET_TYPE_ZCASH_REGNET:
-		return NewZCashWallet(k, "regtest")
 	}
 	return nil, ErrUnknownWalletType
 }

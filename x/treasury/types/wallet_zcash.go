@@ -2,16 +2,13 @@ package types
 
 import (
 	"crypto/ecdsa"
-	"encoding/hex"
-	"fmt"
-	"strings"
+	"crypto/sha256"
 
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/btcutil/bech32"
+	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/ethereum/go-ethereum/crypto"
-	"golang.org/x/crypto/ripemd160"
 )
 
 type ZCashWallet struct {
@@ -20,16 +17,13 @@ type ZCashWallet struct {
 }
 
 var _ Wallet = &ZCashWallet{}
-var _ TxParser = &ZCashWallet{}
 
-// ZCash unified address HRPs (Human-Readable Parts) for Bech32m encoding
+// Zcash transparent address P2PKH version bytes (2 bytes, unlike Bitcoin's 1 byte)
 var (
-	// Mainnet unified address prefix "u1"
-	zcashMainnetHRP = "u"
-	// Testnet unified address prefix "utest1"
-	zcashTestnetHRP = "utest"
-	// Regtest unified address prefix "uregtest1"
-	zcashRegtestHRP = "uregtest"
+	// Mainnet P2PKH version bytes [0x1C, 0xB8] - produces "t1" prefix
+	zcashMainnetP2PKHVersionBytes = []byte{0x1C, 0xB8}
+	// Testnet P2PKH version bytes [0x1D, 0x25] - produces "tm" prefix (also used for Regtest)
+	zcashTestnetP2PKHVersionBytes = []byte{0x1D, 0x25}
 )
 
 func NewZCashWallet(k *Key, network string) (*ZCashWallet, error) {
@@ -48,102 +42,46 @@ func (w *ZCashWallet) Address() string {
 		return ""
 	}
 
-	// Generate P2PKH address from the public key
+	// Generate P2PKH transparent address from the public key
 	pubKeyHash := btcutil.Hash160(publicKey.SerializeCompressed())
 
-	// Select the appropriate HRP based on network
-	var hrp string
+	// Select the appropriate version bytes based on network
+	var versionBytes []byte
 	switch w.network {
 	case "mainnet":
-		hrp = zcashMainnetHRP
-	case "testnet":
-		hrp = zcashTestnetHRP
-	case "regtest":
-		hrp = zcashRegtestHRP
+		versionBytes = zcashMainnetP2PKHVersionBytes
+	case "testnet", "regtest":
+		versionBytes = zcashTestnetP2PKHVersionBytes
 	default:
 		return ""
 	}
 
-	// Encode the address using Bech32m encoding (used for unified addresses)
-	address, err := encodeZCashUnifiedAddress(hrp, pubKeyHash)
-	if err != nil {
-		return ""
-	}
+	// Encode the address using Base58Check with Zcash's 2-byte version prefix
+	address := encodeZCashBase58Check(versionBytes, pubKeyHash)
 	return address
 }
 
-// encodeZCashUnifiedAddress creates a ZCash unified address using Bech32m encoding
-func encodeZCashUnifiedAddress(hrp string, payload []byte) (string, error) {
-	// Convert payload to 5-bit groups for Bech32m encoding
-	converted, err := bech32.ConvertBits(payload, 8, 5, true)
-	if err != nil {
-		return "", err
-	}
+// encodeZCashBase58Check encodes a Zcash transparent address using Base58Check
+// with a 2-byte version prefix (unlike Bitcoin which uses 1 byte)
+func encodeZCashBase58Check(versionBytes []byte, payload []byte) string {
+	// Combine version bytes and payload
+	b := make([]byte, 0, len(versionBytes)+len(payload)+4)
+	b = append(b, versionBytes...)
+	b = append(b, payload...)
 
-	// Encode using Bech32m (version 1) which is used for unified addresses
-	encoded, err := bech32.EncodeM(hrp, converted)
-	if err != nil {
-		return "", err
-	}
+	// Calculate checksum: first 4 bytes of double SHA256
+	checksum := doubleSHA256(b)[:4]
 
-	return encoded, nil
+	// Append checksum
+	b = append(b, checksum...)
+
+	// Base58 encode
+	return base58.Encode(b)
 }
 
-// ParseTx implements TxParser for ZCash transactions
-func (w *ZCashWallet) ParseTx(b []byte, m Metadata) (Transfer, error) {
-	// ZCash transactions are similar to Bitcoin in structure
-	// We need to calculate the signature hashes
-	hashes, err := w.SigHashes(b)
-	if err != nil {
-		return Transfer{}, err
-	}
-
-	var dataForSigning []string
-	for _, hash := range hashes {
-		dataForSigning = append(dataForSigning, hex.EncodeToString(hash))
-	}
-
-	return Transfer{
-		SigHashes:      hashes,
-		DataForSigning: []byte(strings.Join(dataForSigning, ",")),
-	}, nil
-}
-
-func (w *ZCashWallet) SigHashes(b []byte) (hashes [][]byte, err error) {
-	// For ZCash, we can reuse the Bitcoin transaction deserialization
-	// as ZCash v5 transactions are compatible with Bitcoin serialization
-	msgTx, err := DeserializeTransaction(b)
-	if err != nil {
-		return nil, err
-	}
-
-	// Calculate signature hashes for each input
-	// ZCash uses a similar signing mechanism to Bitcoin
-	for i := range msgTx.TxIn {
-		// For each input, we need to calculate the signature hash
-		// This is a simplified version - in production, you'd want to handle
-		// different signature hash types and ZCash-specific fields
-
-		// Get the witness data if available
-		if len(msgTx.TxIn[i].Witness) > 0 {
-			// Extract the signature hash from witness data
-			// The actual implementation depends on ZCash's specific witness structure
-			witnessData := msgTx.TxIn[i].Witness[0]
-			hashes = append(hashes, witnessData)
-		} else {
-			// Fallback: create a basic signature hash
-			// In a real implementation, this would follow ZCash's signature hash algorithm
-			return nil, fmt.Errorf("zcash transaction must have witness data")
-		}
-	}
-
-	return hashes, nil
-}
-
-// Helper function to hash160 (RIPEMD160(SHA256(data)))
-func hash160(data []byte) []byte {
-	sha := crypto.Keccak256(data)
-	ripemd := ripemd160.New()
-	ripemd.Write(sha)
-	return ripemd.Sum(nil)
+// doubleSHA256 calculates SHA256(SHA256(data))
+func doubleSHA256(data []byte) []byte {
+	first := sha256.Sum256(data)
+	second := sha256.Sum256(first[:])
+	return second[:]
 }

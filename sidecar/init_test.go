@@ -39,12 +39,19 @@ func initTestOracle() *sidecar.Oracle {
 
 	solanaClient := solanarpc.New(cfg.SolanaRPC[cfg.Network])
 
+	// Initialize ZCash client if configured
+	var zcashClient *sidecar.ZcashClient
+	if zcashEndpoint, ok := cfg.ZcashRPC[cfg.Network]; ok && zcashEndpoint != "" {
+		zcashClient = sidecar.NewZcashClient(zcashEndpoint, true)
+		log.Printf("Initialized ZCash client with endpoint: %s", zcashEndpoint)
+	}
+
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, nil, zrChainQueryClient, true, true, false)
+	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zcashClient, zrChainQueryClient, true, true, false)
 }
 
 func TestGetSidecarStateByEthHeight(t *testing.T) {
@@ -202,4 +209,33 @@ func TestGetSolanaAccountInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetLatestZcashBlockHeader(t *testing.T) {
+	t.Skip("Skipping test on CI")
+
+	oracle := initTestOracle()
+	service := sidecar.NewOracleService(oracle)
+	require.NotNil(t, service)
+
+	req := &api.LatestBitcoinBlockHeaderRequest{
+		ChainName: "zcash",
+	}
+	resp, err := service.GetLatestZcashBlockHeader(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.BlockHeader)
+
+	fmt.Printf("\n=== Latest ZCash Block Header ===\n")
+	fmt.Printf("Block Height: %d\n", resp.BlockHeight)
+	fmt.Printf("Tip Height: %d\n", resp.TipHeight)
+	fmt.Printf("Block Hash: %s\n", resp.BlockHeader.BlockHash)
+	fmt.Printf("Previous Block: %s\n", resp.BlockHeader.PrevBlock)
+	fmt.Printf("Merkle Root: %s\n", resp.BlockHeader.MerkleRoot)
+	fmt.Printf("Timestamp: %d\n", resp.BlockHeader.TimeStamp)
+	fmt.Printf("Version: %d\n", resp.BlockHeader.Version)
+	fmt.Printf("Bits: %d\n", resp.BlockHeader.Bits)
+	fmt.Printf("Nonce: %d\n", resp.BlockHeader.Nonce)
+	fmt.Printf("================================\n\n")
 }

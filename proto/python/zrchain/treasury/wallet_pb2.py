@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/treasury/wallet.proto\x12\x10zrchain.treasury*\xa0\x02\n\nWalletType\x12\x1b\n\x17WALLET_TYPE_UNSPECIFIED\x10\x00\x12\x16\n\x12WALLET_TYPE_NATIVE\x10\x01\x12\x13\n\x0fWALLET_TYPE_EVM\x10\x02\x12\x1b\n\x17WALLET_TYPE_BTC_TESTNET\x10\x03\x12\x1b\n\x17WALLET_TYPE_BTC_MAINNET\x10\x04\x12\x1a\n\x16WALLET_TYPE_BTC_REGNET\x10\x05\x12\x16\n\x12WALLET_TYPE_SOLANA\x10\x06\x12\x1d\n\x19WALLET_TYPE_ZCASH_MAINNET\x10\x07\x12\x1d\n\x19WALLET_TYPE_ZCASH_TESTNET\x10\x08\x12\x1c\n\x18WALLET_TYPE_ZCASH_REGNET\x10\tB;Z9github.com/Zenrock-Foundation/zrchain/v6/x/treasury/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/treasury/wallet.proto\x12\x10zrchain.treasury*\x82\x02\n\nWalletType\x12\x1b\n\x17WALLET_TYPE_UNSPECIFIED\x10\x00\x12\x16\n\x12WALLET_TYPE_NATIVE\x10\x01\x12\x13\n\x0fWALLET_TYPE_EVM\x10\x02\x12\x1b\n\x17WALLET_TYPE_BTC_TESTNET\x10\x03\x12\x1b\n\x17WALLET_TYPE_BTC_MAINNET\x10\x04\x12\x1a\n\x16WALLET_TYPE_BTC_REGNET\x10\x05\x12\x16\n\x12WALLET_TYPE_SOLANA\x10\x06\x12\x1d\n\x19WALLET_TYPE_ZCASH_MAINNET\x10\x07\x12\x1d\n\x19WALLET_TYPE_ZCASH_TESTNET\x10\x08\x42;Z9github.com/Zenrock-Foundation/zrchain/v6/x/treasury/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,5 +33,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z9github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types'
   _globals['_WALLETTYPE']._serialized_start=52
-  _globals['_WALLETTYPE']._serialized_end=340
+  _globals['_WALLETTYPE']._serialized_end=310
 # @@protoc_insertion_point(module_scope)
