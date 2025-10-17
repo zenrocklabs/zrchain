@@ -12,6 +12,13 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 )
 
+const (
+	// zcashHeaderSize is the size of a Zcash block header in bytes (140 bytes)
+	zcashHeaderSize = 140
+	// zcashHeaderHexSize is the size of a Zcash block header in hex string (280 chars = 140 bytes * 2)
+	zcashHeaderHexSize = zcashHeaderSize * 2
+)
+
 // ZcashClient handles communication with ZCash RPC node
 type ZcashClient struct {
 	rpcURL     string
@@ -195,11 +202,11 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 		return nil, fmt.Errorf("failed to parse raw block header: %w", err)
 	}
 
-	// Extract the solution from raw header (starts after byte 140, which is position 280 in hex string)
+	// Extract the solution from raw header (starts after the header)
 	// The solution includes the varint length prefix
 	var solution string
-	if len(rawHeader) > 280 {
-		solution = rawHeader[280:] // Everything after the 140-byte header
+	if len(rawHeader) > zcashHeaderHexSize {
+		solution = rawHeader[zcashHeaderHexSize:]
 	}
 
 	// Convert ZCash header to BTCBlockHeader format

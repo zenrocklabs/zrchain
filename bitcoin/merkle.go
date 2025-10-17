@@ -127,7 +127,7 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 
 	if isZcash {
 		// Zcash has a 32-byte block commitments field (hashReserved) after merkleRoot
-		// Note: BlockCommitments is already in little-endian from RPC, so we reverse it for the header
+		// BlockCommitments from RPC is in big-endian (display order), reverse to little-endian for header
 		blockCommitments, err := hex.DecodeString(ReverseHex(b.BlockCommitments))
 		if err != nil {
 			return false, fmt.Errorf("failed to decode Zcash BlockCommitments: %w", err)

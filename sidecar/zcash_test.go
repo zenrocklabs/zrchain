@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
@@ -34,18 +33,6 @@ func TestGetZcashBlockHeaderByHeight(t *testing.T) {
 	require.NotNil(t, resp.BlockHeader)
 	require.Equal(t, testHeight, resp.BlockHeight)
 	require.Equal(t, expectedBlockHash, resp.BlockHeader.BlockHash)
-
-	fmt.Printf("\n=== ZCash Block Header at Height %d ===\n", testHeight)
-	fmt.Printf("Block Hash: %s\n", resp.BlockHeader.BlockHash)
-	fmt.Printf("Previous Block: %s\n", resp.BlockHeader.PrevBlock)
-	fmt.Printf("Merkle Root: %s\n", resp.BlockHeader.MerkleRoot)
-	fmt.Printf("Block Commitments: %s\n", resp.BlockHeader.BlockCommitments)
-	fmt.Printf("Timestamp: %d\n", resp.BlockHeader.TimeStamp)
-	fmt.Printf("Version: %d\n", resp.BlockHeader.Version)
-	fmt.Printf("Bits: %d\n", resp.BlockHeader.Bits)
-	fmt.Printf("Nonce (int64): %d\n", resp.BlockHeader.Nonce)
-	fmt.Printf("NonceHex: %s\n", resp.BlockHeader.NonceHex)
-	fmt.Printf("========================================\n\n")
 }
 
 // TestVerifyZcashBlockHeader tests that the Zcash block header hash verification works correctly
@@ -75,12 +62,6 @@ func TestVerifyZcashBlockHeader(t *testing.T) {
 
 	// Verify the block hash matches expected
 	require.Equal(t, expectedBlockHash, resp.BlockHeader.BlockHash)
-
-	fmt.Printf("\n=== Zcash Block Header Verification ===\n")
-	fmt.Printf("Block Height: %d\n", testHeight)
-	fmt.Printf("Block Hash: %s\n", resp.BlockHeader.BlockHash)
-	fmt.Printf("Verification: ✓ PASSED\n")
-	fmt.Printf("=====================================\n\n")
 }
 
 // TestVerifyZcashDepositBlockInclusion tests the full deposit verification flow
@@ -130,14 +111,4 @@ func TestVerifyZcashDepositBlockInclusion(t *testing.T) {
 	require.NoError(t, err, "Deposit verification should succeed")
 	require.NotNil(t, outputs, "Should return transaction outputs")
 	require.Equal(t, testTxID, calculatedTxID, "Calculated TXID should match expected")
-
-	fmt.Printf("\n=== Zcash Deposit Verification Test ===\n")
-	fmt.Printf("Block Height: %d\n", testHeight)
-	fmt.Printf("Transaction ID: %s\n", testTxID)
-	fmt.Printf("Calculated TXID: %s\n", calculatedTxID)
-	fmt.Printf("Number of outputs: %d\n", len(outputs))
-	fmt.Printf("Block Header Hash: %s\n", headerResp.BlockHeader.BlockHash)
-	fmt.Printf("Block Header Verification: ✓ PASSED\n")
-	fmt.Printf("Merkle Proof Verification: ✓ PASSED\n")
-	fmt.Printf("======================================\n\n")
 }
