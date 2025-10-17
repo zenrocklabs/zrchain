@@ -126,21 +126,23 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	copy(buf[36:68], merkleRoot)
 
 	if isZcash {
-		// Zcash has a 32-byte hashFinalSaplingRoot field after merkleRoot
-		finalSaplingRoot, err := hex.DecodeString(ReverseHex(b.FinalSaplingRoot))
+		// Zcash has a 32-byte block commitments field (hashReserved) after merkleRoot
+		// Note: BlockCommitments is already in little-endian from RPC, so we reverse it for the header
+		blockCommitments, err := hex.DecodeString(ReverseHex(b.BlockCommitments))
 		if err != nil {
-			return false, fmt.Errorf("failed to decode Zcash FinalSaplingRoot: %w", err)
+			return false, fmt.Errorf("failed to decode Zcash BlockCommitments: %w", err)
 		}
-		if len(finalSaplingRoot) != 32 {
-			return false, fmt.Errorf("invalid Zcash FinalSaplingRoot length: expected 32 bytes, got %d", len(finalSaplingRoot))
+		if len(blockCommitments) != 32 {
+			return false, fmt.Errorf("invalid Zcash BlockCommitments length: expected 32 bytes, got %d", len(blockCommitments))
 		}
-		copy(buf[68:100], finalSaplingRoot)
+		copy(buf[68:100], blockCommitments)
 
 		binary.LittleEndian.PutUint32(buf[100:104], uint32(b.TimeStamp))
 		copy(buf[104:108], bits)
 
 		// Zcash uses a 256-bit (32-byte) nonce
-		nonceBytes, err := hex.DecodeString(b.NonceHex)
+		// The nonce from RPC needs to be reversed for the header
+		nonceBytes, err := hex.DecodeString(ReverseHex(b.NonceHex))
 		if err != nil {
 			return false, fmt.Errorf("failed to decode Zcash nonce: %w", err)
 		}
@@ -156,13 +158,36 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	}
 
 	//hash := doubleSha256(serializedHeader)
-	first := sha256.Sum256(buf)
+	// For Zcash, include the solution in the hash calculation
+	var hashInput []byte
+	if isZcash && b.Solution != "" {
+		// Decode the solution and append it to the header
+		solutionBytes, err := hex.DecodeString(b.Solution)
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash solution: %w", err)
+		}
+		hashInput = append(buf, solutionBytes...)
+	} else {
+		hashInput = buf
+	}
+
+	first := sha256.Sum256(hashInput)
 	second := sha256.Sum256(first[:])
 
-	for i, j := 0, len(second)-1; i < j; i, j = i+1, j-1 {
-		second[i], second[j] = second[j], second[i]
+	// Reverse the hash to convert from big-endian (SHA256 output) to little-endian (block hash)
+	// Note: For Zcash with solution, the hash is already in the correct byte order
+	var blockHash *chainhash.Hash
+	if isZcash && b.Solution != "" {
+		// For Zcash, use the hash directly (don't reverse)
+		blockHash, err = chainhash.NewHash(second[:])
+	} else {
+		// For Bitcoin, reverse the hash
+		reversedHash := make([]byte, len(second))
+		for i := range second {
+			reversedHash[i] = second[len(second)-1-i]
+		}
+		blockHash, err = chainhash.NewHash(reversedHash)
 	}
-	blockHash, err := chainhash.NewHash(ReverseBytes(second[:]))
 	if err != nil {
 		return false, err
 	}

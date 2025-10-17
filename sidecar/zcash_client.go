@@ -44,7 +44,7 @@ type ZCashBlockHeader struct {
 	Height            int64   `json:"height"`
 	Version           int64   `json:"version"`
 	MerkleRoot        string  `json:"merkleroot"`
-	FinalSaplingRoot  string  `json:"finalsaplingroot"` // Zcash Sapling root hash
+	BlockCommitments  string  `json:"blockcommitments"` // Zcash block commitments (hashReserved in header)
 	Time              int64   `json:"time"`
 	Nonce             string  `json:"nonce"` // ZCash uses string for nonce in some versions
 	Bits              string  `json:"bits"`
@@ -183,16 +183,36 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 		return nil, fmt.Errorf("failed to get block header for hash %s: %w", hash, err)
 	}
 
+	// Get the raw header to extract the solution
+	// verbose=false returns the raw header as hex string
+	rawResult, err := zc.call(ctx, "getblockheader", []interface{}{hash, false})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get raw block header for hash %s: %w", hash, err)
+	}
+
+	var rawHeader string
+	if err := json.Unmarshal(rawResult, &rawHeader); err != nil {
+		return nil, fmt.Errorf("failed to parse raw block header: %w", err)
+	}
+
+	// Extract the solution from raw header (starts after byte 140, which is position 280 in hex string)
+	// The solution includes the varint length prefix
+	var solution string
+	if len(rawHeader) > 280 {
+		solution = rawHeader[280:] // Everything after the 140-byte header
+	}
+
 	// Convert ZCash header to BTCBlockHeader format
 	// For Zcash, we only use NonceHex (256-bit nonce), not the Nonce field (which is for Bitcoin's 32-bit nonce)
 	return &api.BTCBlockHeader{
 		Version:          header.Version,
 		PrevBlock:        header.PreviousBlockHash,
 		MerkleRoot:       header.MerkleRoot,
-		FinalSaplingRoot: header.FinalSaplingRoot, // Zcash Sapling root hash
+		BlockCommitments: header.BlockCommitments, // Zcash block commitments (hashReserved in header)
 		TimeStamp:        header.Time,
 		Bits:             parseBits(header.Bits),
 		NonceHex:         header.Nonce, // Zcash uses 256-bit nonce stored as hex string
+		Solution:         solution,     // Equihash solution for block hash calculation
 		BlockHash:        hash,
 		BlockHeight:      height,
 	}, nil
