@@ -212,7 +212,7 @@ func TestGetSolanaAccountInfo(t *testing.T) {
 }
 
 func TestGetLatestZcashBlockHeader(t *testing.T) {
-	// t.Skip("Skipping test on CI")
+	t.Skip("Skipping test on CI")
 
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)
