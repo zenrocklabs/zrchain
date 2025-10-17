@@ -100,9 +100,7 @@ func DecodeOutputs(rawTx string, chainName string) ([]TXOutputs, error) {
 	}
 
 	// Check if this is a Zcash transaction
-	isZcash := strings.Contains(strings.ToLower(chainName), "zcash")
-
-	if isZcash {
+	if isZcashChain(chainName) {
 		// For Zcash v5 transactions, use custom parsing
 		return decodeZcashOutputs(rawTxBytes, chainName)
 	}

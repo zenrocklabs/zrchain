@@ -32,7 +32,10 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 	}
 	i := index
 	for _, sibling := range proof {
-		siblingHash, _ := chainhash.NewHashFromStr(sibling)
+		siblingHash, err := chainhash.NewHashFromStr(sibling)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse sibling hash: %w", err)
+		}
 		if i%2 == 0 {
 			targetHash = MergeHashes(targetHash, siblingHash)
 		} else {
