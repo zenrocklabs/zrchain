@@ -47,6 +47,7 @@ message BTCBlockHeader {
   int64 Nonce = 6;
   string BlockHash = 7;
   int64 BlockHeight = 8;
+  string NonceHex = 9; // For Zcash 256-bit nonce (32 bytes as hex string)
 }
 
 message Redemption {
