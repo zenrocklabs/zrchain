@@ -161,15 +161,18 @@ func Test_VerboseVerifyBTCLockTransaction(t *testing.T) {
 	_ = blockHeader
 
 	//Check The Transaction ID is correctly derived
-	calculatedTxID := CalculateTXID(rawTX)
+	calculatedTxID, err := CalculateTXID(rawTX, "testnet")
+	require.NoError(t, err)
 	calculatedIDString := ReverseHex(calculatedTxID.String())
-	require.True(t, calculatedIDString == txid, "txid should be equal")
+	require.Equal(t, txid, calculatedIDString, "txid should be equal")
 
 	//Check the Merkle Proof, derive the merkle root using the proof and compare to the actual MerkleRoot
-	targetHash, _ := chainhash.NewHashFromStr(txid)
+	targetHash, err := chainhash.NewHashFromStr(calculatedIDString)
+	require.NoError(t, err)
 	i := index
 	for _, sibling := range proof {
-		siblingHash, _ := chainhash.NewHashFromStr(sibling)
+		siblingHash, err := chainhash.NewHashFromStr(sibling)
+		require.NoError(t, err)
 		if i%2 == 0 {
 			targetHash = MergeHashes(targetHash, siblingHash)
 		} else {
@@ -177,7 +180,8 @@ func Test_VerboseVerifyBTCLockTransaction(t *testing.T) {
 		}
 		i /= 2
 	}
-	merkleRootBytes, _ := chainhash.NewHashFromStr(blockHeader.MerkleRoot)
+	merkleRootBytes, err := chainhash.NewHashFromStr(blockHeader.MerkleRoot)
+	require.NoError(t, err)
 	require.True(t, targetHash.IsEqual(merkleRootBytes), "merkle root should be equal")
 
 	//TODO Check the Block Hash by rehashing the block
