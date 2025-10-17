@@ -185,7 +185,7 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 
 	// Get the raw header to extract the solution
 	// verbose=false returns the raw header as hex string
-	rawResult, err := zc.call(ctx, "getblockheader", []interface{}{hash, false})
+	rawResult, err := zc.call(ctx, "getblockheader", []any{hash, false})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get raw block header for hash %s: %w", hash, err)
 	}
@@ -243,16 +243,4 @@ func parseBits(bitsHex string) int64 {
 	var bits int64
 	fmt.Sscanf(bitsHex, "%x", &bits)
 	return bits
-}
-
-// parseNonce converts nonce string to int64
-// ZCash may return nonce as hex string or decimal
-func parseNonce(nonceStr string) int64 {
-	var nonce int64
-	// Try parsing as hex first
-	if _, err := fmt.Sscanf(nonceStr, "%x", &nonce); err != nil {
-		// Try parsing as decimal
-		fmt.Sscanf(nonceStr, "%d", &nonce)
-	}
-	return nonce
 }
