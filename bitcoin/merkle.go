@@ -20,10 +20,16 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 
 	merkleRootBytes, err := hex.DecodeString(blockHeader.MerkleRoot)
 	merkleRootBytes = ReverseBytes(merkleRootBytes)
-	calculatedTxID := CalculateTXID(rawTX)
+	calculatedTxID, err := CalculateTXID(rawTX, chainName)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to calculate txid: %w", err)
+	}
 	calculatedIDString := ReverseHex(calculatedTxID.String())
 
-	targetHash, _ := chainhash.NewHashFromStr(calculatedIDString)
+	targetHash, err := chainhash.NewHashFromStr(calculatedIDString)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to parse tx hash: %w", err)
+	}
 	i := index
 	for _, sibling := range proof {
 		siblingHash, _ := chainhash.NewHashFromStr(sibling)
