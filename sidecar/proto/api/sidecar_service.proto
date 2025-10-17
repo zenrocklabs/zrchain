@@ -48,6 +48,7 @@ message BTCBlockHeader {
   string BlockHash = 7;
   int64 BlockHeight = 8;
   string NonceHex = 9; // For Zcash 256-bit nonce (32 bytes as hex string)
+  string FinalSaplingRoot = 10; // For Zcash Sapling root hash (32 bytes as hex string)
 }
 
 message Redemption {

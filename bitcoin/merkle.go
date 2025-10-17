@@ -126,9 +126,15 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	copy(buf[36:68], merkleRoot)
 
 	if isZcash {
-		// Zcash has a 32-byte reserved field (hashFinalSaplingRoot) after merkleRoot
-		// For now, we'll leave it as zeros since it's not provided in the header
-		// This field is at bytes 68-100
+		// Zcash has a 32-byte hashFinalSaplingRoot field after merkleRoot
+		finalSaplingRoot, err := hex.DecodeString(ReverseHex(b.FinalSaplingRoot))
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash FinalSaplingRoot: %w", err)
+		}
+		if len(finalSaplingRoot) != 32 {
+			return false, fmt.Errorf("invalid Zcash FinalSaplingRoot length: expected 32 bytes, got %d", len(finalSaplingRoot))
+		}
+		copy(buf[68:100], finalSaplingRoot)
 
 		binary.LittleEndian.PutUint32(buf[100:104], uint32(b.TimeStamp))
 		copy(buf[104:108], bits)

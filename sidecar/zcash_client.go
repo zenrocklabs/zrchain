@@ -44,6 +44,7 @@ type ZCashBlockHeader struct {
 	Height            int64   `json:"height"`
 	Version           int64   `json:"version"`
 	MerkleRoot        string  `json:"merkleroot"`
+	FinalSaplingRoot  string  `json:"finalsaplingroot"` // Zcash Sapling root hash
 	Time              int64   `json:"time"`
 	Nonce             string  `json:"nonce"` // ZCash uses string for nonce in some versions
 	Bits              string  `json:"bits"`
@@ -185,14 +186,15 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 	// Convert ZCash header to BTCBlockHeader format
 	// For Zcash, we only use NonceHex (256-bit nonce), not the Nonce field (which is for Bitcoin's 32-bit nonce)
 	return &api.BTCBlockHeader{
-		Version:     header.Version,
-		PrevBlock:   header.PreviousBlockHash,
-		MerkleRoot:  header.MerkleRoot,
-		TimeStamp:   header.Time,
-		Bits:        parseBits(header.Bits),
-		NonceHex:    header.Nonce, // Zcash uses 256-bit nonce stored as hex string
-		BlockHash:   hash,
-		BlockHeight: height,
+		Version:          header.Version,
+		PrevBlock:        header.PreviousBlockHash,
+		MerkleRoot:       header.MerkleRoot,
+		FinalSaplingRoot: header.FinalSaplingRoot, // Zcash Sapling root hash
+		TimeStamp:        header.Time,
+		Bits:             parseBits(header.Bits),
+		NonceHex:         header.Nonce, // Zcash uses 256-bit nonce stored as hex string
+		BlockHash:        hash,
+		BlockHeight:      height,
 	}, nil
 }
 
