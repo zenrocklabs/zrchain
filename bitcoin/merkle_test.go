@@ -167,7 +167,7 @@ func Test_VerboseVerifyBTCLockTransaction(t *testing.T) {
 	require.Equal(t, txid, calculatedIDString, "txid should be equal")
 
 	//Check the Merkle Proof, derive the merkle root using the proof and compare to the actual MerkleRoot
-	targetHash, err := chainhash.NewHashFromStr(txid)
+	targetHash, err := chainhash.NewHashFromStr(calculatedIDString)
 	require.NoError(t, err)
 	i := index
 	for _, sibling := range proof {

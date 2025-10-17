@@ -3,8 +3,10 @@ package bitcoin
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"math/big"
 	"strings"
 
@@ -26,7 +28,7 @@ func CalculateTXID(rawtx string, chainName string) (*chainhash.Hash, error) {
 	}
 
 	if isZcashChain(chainName) {
-		return hashSerializedTransaction(rawTxBytes)
+		return calculateZcashTxID(rawTxBytes)
 	}
 
 	reader := bytes.NewReader(rawTxBytes)
@@ -336,6 +338,264 @@ func readVarInt(data []byte) (uint64, int) {
 	}
 	return uint64(data[1]) | uint64(data[2])<<8 | uint64(data[3])<<16 | uint64(data[4])<<24 |
 		uint64(data[5])<<32 | uint64(data[6])<<40 | uint64(data[7])<<48 | uint64(data[8])<<56, 9
+}
+
+func calculateZcashTxID(raw []byte) (*chainhash.Hash, error) {
+	if len(raw) < 20 {
+		return nil, fmt.Errorf("zcash transaction too short")
+	}
+
+	offset := 0
+
+	versionBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	version := binary.LittleEndian.Uint32(versionBytes)
+	effectiveVersion := version & 0x7fffffff
+
+	// Versions prior to 5 use legacy txid calculation.
+	if effectiveVersion < 5 {
+		return hashSerializedTransaction(raw)
+	}
+	if effectiveVersion != 5 {
+		return nil, fmt.Errorf("unsupported zcash transaction version %d", effectiveVersion)
+	}
+
+	versionGroupIDBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	branchIDBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	lockTimeBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	expiryHeightBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+
+	headerDigest, err := blake2bHashPersonalString(
+		"ZTxIdHeadersHash",
+		versionBytes,
+		versionGroupIDBytes,
+		branchIDBytes,
+		lockTimeBytes,
+		expiryHeightBytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	prevoutsBuf := bytes.Buffer{}
+	sequenceBuf := bytes.Buffer{}
+	txInCount, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	for i := uint64(0); i < txInCount; i++ {
+		outpoint, err := readBytes(raw, &offset, 36)
+		if err != nil {
+			return nil, err
+		}
+		prevoutsBuf.Write(outpoint)
+
+		scriptLen, _, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		if scriptLen > uint64(len(raw)-offset) {
+			return nil, io.ErrUnexpectedEOF
+		}
+		if scriptLen > 0 {
+			if _, err := readBytes(raw, &offset, int(scriptLen)); err != nil {
+				return nil, err
+			}
+		}
+
+		sequence, err := readBytes(raw, &offset, 4)
+		if err != nil {
+			return nil, err
+		}
+		sequenceBuf.Write(sequence)
+	}
+
+	outputsBuf := bytes.Buffer{}
+	txOutCount, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	for i := uint64(0); i < txOutCount; i++ {
+		amountBytes, err := readBytes(raw, &offset, 8)
+		if err != nil {
+			return nil, err
+		}
+		outputsBuf.Write(amountBytes)
+
+		scriptLen, scriptLenBytes, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		outputsBuf.Write(scriptLenBytes)
+		if scriptLen > uint64(len(raw)-offset) {
+			return nil, io.ErrUnexpectedEOF
+		}
+		if scriptLen > 0 {
+			scriptBytes, err := readBytes(raw, &offset, int(scriptLen))
+			if err != nil {
+				return nil, err
+			}
+			outputsBuf.Write(scriptBytes)
+		}
+	}
+
+	nSpendsSapling, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	nOutputsSapling, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	if nSpendsSapling != 0 || nOutputsSapling != 0 {
+		return nil, fmt.Errorf("sapling components are not supported")
+	}
+
+	nActionsOrchard, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	if nActionsOrchard != 0 {
+		return nil, fmt.Errorf("orchard components are not supported")
+	}
+
+	// After Sapling/Orchard counts, the transaction may optionally include
+	// binding signatures when the corresponding component counts are non-zero.
+	// Since we currently only handle purely transparent transactions, the
+	// stream should be fully consumed at this point.
+	if offset != len(raw) {
+		return nil, fmt.Errorf("unexpected extra data (%d bytes) in zcash transaction", len(raw)-offset)
+	}
+
+	prevoutsDigest, err := digestWithEmptyFallback("ZTxIdPrevoutHash", prevoutsBuf.Bytes(), txInCount > 0)
+	if err != nil {
+		return nil, err
+	}
+	sequenceDigest, err := digestWithEmptyFallback("ZTxIdSequencHash", sequenceBuf.Bytes(), txInCount > 0)
+	if err != nil {
+		return nil, err
+	}
+	outputsDigest, err := digestWithEmptyFallback("ZTxIdOutputsHash", outputsBuf.Bytes(), txOutCount > 0)
+	if err != nil {
+		return nil, err
+	}
+
+	transparentDigest, err := blake2bHashPersonalString(
+		"ZTxIdTranspaHash",
+		prevoutsDigest,
+		sequenceDigest,
+		outputsDigest,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	saplingDigest, err := blake2bHashPersonalString("ZTxIdSaplingHash")
+	if err != nil {
+		return nil, err
+	}
+	orchardDigest, err := blake2bHashPersonalString("ZTxIdOrchardHash")
+	if err != nil {
+		return nil, err
+	}
+
+	topPersonal := make([]byte, 0, 16)
+	topPersonal = append(topPersonal, []byte("ZcashTxHash_")...)
+	topPersonal = append(topPersonal, branchIDBytes...)
+
+	txidDigest, err := blake2bHashPersonal(
+		topPersonal,
+		headerDigest,
+		transparentDigest,
+		saplingDigest,
+		orchardDigest,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	txidLittleEndian := ReverseBytes(txidDigest)
+	return chainhash.NewHash(txidLittleEndian)
+}
+
+func digestWithEmptyFallback(personal string, data []byte, hasData bool) ([]byte, error) {
+	if hasData && len(data) > 0 {
+		return blake2bHashPersonalString(personal, data)
+	}
+	return blake2bHashPersonalString(personal)
+}
+
+func blake2bHashPersonalString(personal string, parts ...[]byte) ([]byte, error) {
+	return blake2bHashPersonal([]byte(personal), parts...)
+}
+
+func blake2bHashPersonal(personal []byte, parts ...[]byte) ([]byte, error) {
+	if len(personal) != 16 {
+		return nil, fmt.Errorf("invalid personalization length %d", len(personal))
+	}
+	return blake2bPersonalHash(personal, parts...)
+}
+
+func readBytes(data []byte, offset *int, length int) ([]byte, error) {
+	if length < 0 {
+		return nil, fmt.Errorf("negative length requested")
+	}
+	if *offset+length > len(data) {
+		return nil, io.ErrUnexpectedEOF
+	}
+	bytes := data[*offset : *offset+length]
+	*offset += length
+	return bytes, nil
+}
+
+func readCompactSize(data []byte, offset *int) (uint64, []byte, error) {
+	if *offset >= len(data) {
+		return 0, nil, io.ErrUnexpectedEOF
+	}
+
+	start := *offset
+	prefix := data[*offset]
+	*offset++
+
+	switch prefix {
+	case 0xfd:
+		if *offset+2 > len(data) {
+			return 0, nil, io.ErrUnexpectedEOF
+		}
+		value := binary.LittleEndian.Uint16(data[*offset : *offset+2])
+		*offset += 2
+		return uint64(value), data[start:*offset], nil
+	case 0xfe:
+		if *offset+4 > len(data) {
+			return 0, nil, io.ErrUnexpectedEOF
+		}
+		value := binary.LittleEndian.Uint32(data[*offset : *offset+4])
+		*offset += 4
+		return uint64(value), data[start:*offset], nil
+	case 0xff:
+		if *offset+8 > len(data) {
+			return 0, nil, io.ErrUnexpectedEOF
+		}
+		value := binary.LittleEndian.Uint64(data[*offset : *offset+8])
+		*offset += 8
+		return value, data[start:*offset], nil
+	default:
+		return uint64(prefix), data[start:*offset], nil
+	}
 }
 
 func hashSerializedTransaction(serialized []byte) (*chainhash.Hash, error) {
