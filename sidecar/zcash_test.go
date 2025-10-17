@@ -12,7 +12,7 @@ import (
 
 // TestGetZcashBlockHeaderByHeight tests fetching a specific Zcash block header by height
 func TestGetZcashBlockHeaderByHeight(t *testing.T) {
-	// t.Skip("Skipping test on CI")
+	t.Skip("Skipping on CI - requires Zcash RPC endpoint")
 
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)
@@ -37,7 +37,7 @@ func TestGetZcashBlockHeaderByHeight(t *testing.T) {
 
 // TestVerifyZcashBlockHeader tests that the Zcash block header hash verification works correctly
 func TestVerifyZcashBlockHeader(t *testing.T) {
-	// t.Skip("Skipping test on CI")
+	t.Skip("Skipping on CI - requires Zcash RPC endpoint")
 
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)
@@ -66,7 +66,7 @@ func TestVerifyZcashBlockHeader(t *testing.T) {
 
 // TestVerifyZcashDepositBlockInclusion tests the full deposit verification flow
 func TestVerifyZcashDepositBlockInclusion(t *testing.T) {
-	// t.Skip("Skipping test on CI")
+	t.Skip("Skipping on CI - requires Zcash RPC endpoint")
 
 	oracle := initTestOracle()
 	service := sidecar.NewOracleService(oracle)

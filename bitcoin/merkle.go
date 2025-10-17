@@ -174,20 +174,10 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	first := sha256.Sum256(hashInput)
 	second := sha256.Sum256(first[:])
 
-	// Reverse the hash to convert from big-endian (SHA256 output) to little-endian (block hash)
-	// Note: For Zcash with solution, the hash is already in the correct byte order
-	var blockHash *chainhash.Hash
-	if isZcash && b.Solution != "" {
-		// For Zcash, use the hash directly (don't reverse)
-		blockHash, err = chainhash.NewHash(second[:])
-	} else {
-		// For Bitcoin, reverse the hash
-		reversedHash := make([]byte, len(second))
-		for i := range second {
-			reversedHash[i] = second[len(second)-1-i]
-		}
-		blockHash, err = chainhash.NewHash(reversedHash)
-	}
+	// For both Bitcoin and Zcash, use the hash directly
+	// chainhash.NewHash expects bytes in internal format (little-endian for block hashes)
+	// SHA256 outputs big-endian, so we don't reverse
+	blockHash, err := chainhash.NewHash(second[:])
 	if err != nil {
 		return false, err
 	}
