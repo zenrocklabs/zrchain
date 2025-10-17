@@ -12,6 +12,13 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 )
 
+const (
+	// zcashHeaderSize is the size of a Zcash block header in bytes (140 bytes)
+	zcashHeaderSize = 140
+	// zcashHeaderHexSize is the size of a Zcash block header in hex string (280 chars = 140 bytes * 2)
+	zcashHeaderHexSize = zcashHeaderSize * 2
+)
+
 // ZcashClient handles communication with ZCash RPC node
 type ZcashClient struct {
 	rpcURL     string
@@ -44,6 +51,7 @@ type ZCashBlockHeader struct {
 	Height            int64   `json:"height"`
 	Version           int64   `json:"version"`
 	MerkleRoot        string  `json:"merkleroot"`
+	BlockCommitments  string  `json:"blockcommitments"` // Zcash block commitments (hashReserved in header)
 	Time              int64   `json:"time"`
 	Nonce             string  `json:"nonce"` // ZCash uses string for nonce in some versions
 	Bits              string  `json:"bits"`
@@ -182,17 +190,38 @@ func (zc *ZcashClient) GetBlockHeaderByHeight(ctx context.Context, height int64)
 		return nil, fmt.Errorf("failed to get block header for hash %s: %w", hash, err)
 	}
 
+	// Get the raw header to extract the solution
+	// verbose=false returns the raw header as hex string
+	rawResult, err := zc.call(ctx, "getblockheader", []any{hash, false})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get raw block header for hash %s: %w", hash, err)
+	}
+
+	var rawHeader string
+	if err := json.Unmarshal(rawResult, &rawHeader); err != nil {
+		return nil, fmt.Errorf("failed to parse raw block header: %w", err)
+	}
+
+	// Extract the solution from raw header (starts after the header)
+	// The solution includes the varint length prefix
+	var solution string
+	if len(rawHeader) > zcashHeaderHexSize {
+		solution = rawHeader[zcashHeaderHexSize:]
+	}
+
 	// Convert ZCash header to BTCBlockHeader format
 	// For Zcash, we only use NonceHex (256-bit nonce), not the Nonce field (which is for Bitcoin's 32-bit nonce)
 	return &api.BTCBlockHeader{
-		Version:     header.Version,
-		PrevBlock:   header.PreviousBlockHash,
-		MerkleRoot:  header.MerkleRoot,
-		TimeStamp:   header.Time,
-		Bits:        parseBits(header.Bits),
-		NonceHex:    header.Nonce, // Zcash uses 256-bit nonce stored as hex string
-		BlockHash:   hash,
-		BlockHeight: height,
+		Version:          header.Version,
+		PrevBlock:        header.PreviousBlockHash,
+		MerkleRoot:       header.MerkleRoot,
+		BlockCommitments: header.BlockCommitments, // Zcash block commitments (hashReserved in header)
+		TimeStamp:        header.Time,
+		Bits:             parseBits(header.Bits),
+		NonceHex:         header.Nonce, // Zcash uses 256-bit nonce stored as hex string
+		Solution:         solution,     // Equihash solution for block hash calculation
+		BlockHash:        hash,
+		BlockHeight:      height,
 	}, nil
 }
 
@@ -221,16 +250,4 @@ func parseBits(bitsHex string) int64 {
 	var bits int64
 	fmt.Sscanf(bitsHex, "%x", &bits)
 	return bits
-}
-
-// parseNonce converts nonce string to int64
-// ZCash may return nonce as hex string or decimal
-func parseNonce(nonceStr string) int64 {
-	var nonce int64
-	// Try parsing as hex first
-	if _, err := fmt.Sscanf(nonceStr, "%x", &nonce); err != nil {
-		// Try parsing as decimal
-		fmt.Sscanf(nonceStr, "%d", &nonce)
-	}
-	return nonce
 }
