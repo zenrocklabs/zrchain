@@ -12,9 +12,9 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var _ = Describe("ZenBTC Solana flow:", func() {
@@ -139,14 +139,14 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 		var lastCount int
 		var err error
 		// Initial count of pending mint transactions
-		initialResp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
+		initialResp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 0)
 		Expect(err).ToNot(HaveOccurred())
 		lastCount = len(initialResp.PendingMintTransactions)
 
 		var newTx zentype.PendingMintTransaction
 
 		Eventually(func() (int, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
+			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 0)
 			if err != nil {
 				return 0, err
 			}
@@ -164,7 +164,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 	It("mint gets staked", func() {
 		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
+			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 0)
 			if err != nil {
 				return 0, err
 			}
@@ -180,7 +180,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 	It("mint gets minted", func() {
 		Eventually(func() (zentype.MintTransactionStatus, error) {
-			resp, err := env.Query.PendingMintTransactions(env.Ctx, 0)
+			resp, err := env.Query.ZenBTCQueryClient.PendingMintTransactions(env.Ctx, 0)
 			if err != nil {
 				return 0, err
 			}
@@ -264,7 +264,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(func() bool {
-			resp, err := env.Query.BurnEvents(env.Ctx, 0, burnTxHash.String(), 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")
+			resp, err := env.Query.ZenBTCQueryClient.BurnEvents(env.Ctx, 0, burnTxHash.String(), 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")
 			Expect(err).ToNot(HaveOccurred())
 			if len(resp.BurnEvents) > 0 {
 				burnTx = *resp.BurnEvents[0]
@@ -274,14 +274,14 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 			return false
 		}, "120s", "5s").Should(BeTrue())
 		GinkgoWriter.Printf("Burn tx created: %v\n", burnTx)
-		respRedemptions, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
+		respRedemptions, err := env.Query.ZenBTCQueryClient.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
 		Expect(err).ToNot(HaveOccurred())
 		initialRedemptions = len(respRedemptions.Redemptions)
 	})
 
 	It("burn status moves to UNSTAKING", func() {
 		Eventually(func() (zentype.BurnStatus, error) {
-			resp, err := env.Query.BurnEvents(env.Ctx, 0, burnTxHash.String(), 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")
+			resp, err := env.Query.ZenBTCQueryClient.BurnEvents(env.Ctx, 0, burnTxHash.String(), 0, "solana:HK8b7Skns2TX3FvXQxm2mPQbY2nVY8GD")
 			if err != nil {
 				return 0, err
 			}
@@ -304,7 +304,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 	It("redemption is created", func() {
 		var redemption zentype.Redemption
 		Eventually(func() bool {
-			resp, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
+			resp, err := env.Query.ZenBTCQueryClient.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
 			Expect(err).ToNot(HaveOccurred())
 			if len(resp.Redemptions) <= int(initialRedemptions) {
 				return false
@@ -336,7 +336,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 	It("redemption is completed", func() {
 		var redemption zentype.Redemption
 		Eventually(func() bool {
-			resp, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
+			resp, err := env.Query.ZenBTCQueryClient.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
 			Expect(err).ToNot(HaveOccurred())
 			if len(resp.Redemptions) <= int(initialRedemptions) {
 				return false

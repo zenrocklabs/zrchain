@@ -27,6 +27,7 @@ type QueryClient struct {
 	*ZenBTCQueryClient                      // For querying ZenBTC-related data
 	*ZenTPQueryClient                       // For querying ZenTP-related data
 	*ZenexQueryClient                       // For querying ZenEX-related data
+	*DCTQueryClient                         // For querying DCT-related data
 	conn                   *grpc.ClientConn // The underlying gRPC connection
 }
 
@@ -122,6 +123,7 @@ func NewQueryClientWithConn(conn *grpc.ClientConn) *QueryClient {
 		ZenBTCQueryClient:     NewZenBTCQueryClient(conn),
 		ZenTPQueryClient:      NewZenTPQueryClient(conn),
 		ZenexQueryClient:      NewZenexQueryClient(conn),
+		DCTQueryClient:        NewDCTQueryClient(conn),
 		conn:                  conn,
 	}
 }
