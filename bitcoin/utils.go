@@ -22,6 +22,14 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// Zcash encrypted ciphertext boundaries (ZIP-244)
+// encCiphertext is structured as: [compact (52 bytes)][memo (512 bytes)][non-compact (remainder)]
+const (
+	encCiphertextCompactSize    = 52  // Size of compact encrypted data
+	encCiphertextMemoSize       = 512 // Size of memo field
+	encCiphertextNonCompactStart = encCiphertextCompactSize + encCiphertextMemoSize // 564: start of non-compact data
+)
+
 type saplingSpend struct {
 	cv        []byte
 	nullifier []byte
@@ -753,10 +761,9 @@ func computeSaplingDigest(
 	}
 
 	spendNonCompactBuf := bytes.Buffer{}
-	anchorData := anchorSapling
 	for _, spend := range spends {
 		spendNonCompactBuf.Write(spend.cv)
-		spendNonCompactBuf.Write(anchorData)
+		spendNonCompactBuf.Write(anchorSapling)
 		spendNonCompactBuf.Write(spend.rk)
 	}
 	spendNonCompactDigest, err := digestWithEmptyFallback("ZTxIdSSpendNHash", spendNonCompactBuf.Bytes(), len(spends) > 0)
@@ -787,12 +794,12 @@ func computeSaplingDigest(
 	for _, output := range outputs {
 		outputCompactBuf.Write(output.cmu)
 		outputCompactBuf.Write(output.ephemeralKey)
-		outputCompactBuf.Write(output.encCiphertext[:52])
+		outputCompactBuf.Write(output.encCiphertext[:encCiphertextCompactSize])
 
-		outputMemosBuf.Write(output.encCiphertext[52:564])
+		outputMemosBuf.Write(output.encCiphertext[encCiphertextCompactSize:encCiphertextNonCompactStart])
 
 		outputNonCompactBuf.Write(output.cv)
-		outputNonCompactBuf.Write(output.encCiphertext[564:])
+		outputNonCompactBuf.Write(output.encCiphertext[encCiphertextNonCompactStart:])
 		outputNonCompactBuf.Write(output.outCiphertext)
 	}
 
@@ -856,13 +863,13 @@ func computeOrchardDigest(
 		compactBuf.Write(action.nullifier)
 		compactBuf.Write(action.cmx)
 		compactBuf.Write(action.ephemeralKey)
-		compactBuf.Write(action.encCiphertext[:52])
+		compactBuf.Write(action.encCiphertext[:encCiphertextCompactSize])
 
-		memosBuf.Write(action.encCiphertext[52:564])
+		memosBuf.Write(action.encCiphertext[encCiphertextCompactSize:encCiphertextNonCompactStart])
 
 		nonCompactBuf.Write(action.cv)
 		nonCompactBuf.Write(action.rk)
-		nonCompactBuf.Write(action.encCiphertext[564:])
+		nonCompactBuf.Write(action.encCiphertext[encCiphertextNonCompactStart:])
 		nonCompactBuf.Write(action.outCiphertext)
 	}
 
