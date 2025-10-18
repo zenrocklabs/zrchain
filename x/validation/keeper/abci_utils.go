@@ -1890,24 +1890,54 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 
 	// Retrieve nonce accounts for all DCT assets (zenZEC, etc.)
 	if k.dctKeeper != nil {
+		k.Logger(ctx).Info("retrieveSolanaNonces: processing DCT assets")
+
 		assets, err := k.dctKeeper.ListSupportedAssets(goCtx)
 		if err != nil {
+			k.Logger(ctx).Error("retrieveSolanaNonces: FAILED to list DCT assets", "error", err)
 			return nil, fmt.Errorf("failed to list DCT assets: %w", err)
 		}
 
-		for _, asset := range assets {
+		k.Logger(ctx).Info("retrieveSolanaNonces: DCT assets listed",
+			"num_assets", len(assets),
+			"assets", fmt.Sprintf("%v", assets),
+		)
+
+		for i, asset := range assets {
+			k.Logger(ctx).Info("retrieveSolanaNonces: processing DCT asset",
+				"index", i,
+				"asset", asset.String(),
+				"asset_value", asset,
+			)
+
 			dctSolParams, err := k.dctKeeper.GetSolanaParams(goCtx, asset)
 			if err != nil {
-				// Skip assets without Solana params
-				k.Logger(ctx).Info("retrieveSolanaNonces: skipping asset due to solana params error",
+				k.Logger(ctx).Info("retrieveSolanaNonces: ERROR getting Solana params for DCT asset",
 					"asset", asset.String(),
-					"error", err,
+					"error", err.Error(),
 				)
 				continue
 			}
 			if dctSolParams == nil {
-				k.Logger(ctx).Info("retrieveSolanaNonces: asset has no Solana params",
+				k.Logger(ctx).Info("retrieveSolanaNonces: Solana params are NIL for DCT asset",
 					"asset", asset.String(),
+				)
+				continue
+			}
+
+			k.Logger(ctx).Info("retrieveSolanaNonces: got Solana params for DCT asset",
+				"asset", asset.String(),
+				"nonce_account_key", dctSolParams.NonceAccountKey,
+				"signer_key_id", dctSolParams.SignerKeyId,
+				"program_id", dctSolParams.ProgramId,
+			)
+
+			// Check if already in map (from zenTP or zenBTC)
+			if existingNonce, exists := nonces[dctSolParams.NonceAccountKey]; exists {
+				k.Logger(ctx).Info("retrieveSolanaNonces: nonce key already in map (duplicate)",
+					"asset", asset.String(),
+					"nonce_account_key", dctSolParams.NonceAccountKey,
+					"existing_nonce_value", existingNonce.Nonce.String(),
 				)
 				continue
 			}
@@ -1915,29 +1945,58 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 			dctNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, dctSolParams.NonceAccountKey)
 			if err != nil {
 				if !errors.Is(err, collections.ErrNotFound) {
+					k.Logger(ctx).Error("retrieveSolanaNonces: ERROR checking nonce request flag",
+						"asset", asset.String(),
+						"nonce_account_key", dctSolParams.NonceAccountKey,
+						"error", err.Error(),
+					)
 					return nil, fmt.Errorf("failed to check nonce request for asset %s: %w", asset.String(), err)
 				}
+				k.Logger(ctx).Info("retrieveSolanaNonces: nonce request flag not found in store",
+					"asset", asset.String(),
+					"nonce_account_key", dctSolParams.NonceAccountKey,
+				)
 				dctNonceRequested = false
 			}
 
+			k.Logger(ctx).Info("retrieveSolanaNonces: nonce request flag status",
+				"asset", asset.String(),
+				"nonce_account_key", dctSolParams.NonceAccountKey,
+				"requested", dctNonceRequested,
+			)
+
 			if dctNonceRequested {
+				k.Logger(ctx).Info("retrieveSolanaNonces: calling GetSolanaNonceAccount for DCT asset",
+					"asset", asset.String(),
+					"nonce_account_key", dctSolParams.NonceAccountKey,
+				)
+
 				nonceAcc, err := k.GetSolanaNonceAccount(goCtx, dctSolParams.NonceAccountKey)
 				if err != nil {
+					k.Logger(ctx).Error("retrieveSolanaNonces: FAILED to get nonce account from sidecar",
+						"asset", asset.String(),
+						"nonce_account_key", dctSolParams.NonceAccountKey,
+						"error", err.Error(),
+					)
 					return nil, fmt.Errorf("failed to get nonce account for asset %s (key %d): %w", asset.String(), dctSolParams.NonceAccountKey, err)
 				}
+
 				nonces[dctSolParams.NonceAccountKey] = &nonceAcc
-				k.Logger(ctx).Info("retrieveSolanaNonces: populated DCT nonce",
+				k.Logger(ctx).Info("retrieveSolanaNonces: SUCCESS - populated DCT nonce in map",
 					"asset", asset.String(),
 					"nonce_account_key", dctSolParams.NonceAccountKey,
 					"nonce_value", nonceAcc.Nonce.String(),
+					"lamports_per_signature", nonceAcc.FeeCalculator.LamportsPerSignature,
 				)
 			} else {
-				k.Logger(ctx).Info("retrieveSolanaNonces: DCT nonce not requested",
+				k.Logger(ctx).Info("retrieveSolanaNonces: SKIPPING - DCT nonce not requested (flag is false)",
 					"asset", asset.String(),
 					"nonce_account_key", dctSolParams.NonceAccountKey,
 				)
 			}
 		}
+	} else {
+		k.Logger(ctx).Info("retrieveSolanaNonces: dctKeeper is NIL, skipping DCT assets")
 	}
 
 	k.Logger(ctx).Info("retrieveSolanaNonces: completed",
