@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
@@ -213,6 +214,10 @@ func (k Keeper) ListSupportedAssets(ctx context.Context) ([]dcttypes.Asset, erro
 	for asset := range assetsMap {
 		assets = append(assets, asset)
 	}
+
+	// Sort to ensure deterministic ordering
+	slices.Sort(assets)
+
 	return assets, nil
 }
 
