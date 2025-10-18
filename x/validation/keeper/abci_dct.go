@@ -14,6 +14,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
 )
 
@@ -56,10 +57,48 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 			continue
 		}
 
+		nonceHashConsensus := fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintNoncesHash)
+		k.Logger(ctx).Info("processDCTMintsSolana: evaluating asset",
+			"asset", asset.String(),
+			"nonce_account_key", solParams.NonceAccountKey,
+			"nonce_hash_consensus", nonceHashConsensus,
+			"available_nonces", len(oracleData.SolanaMintNonces),
+		)
+
 		nonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
 		if nonceAccount == nil {
-			k.Logger(ctx).Error("missing nonce account for asset", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey)
-			continue
+			requested, err := isNonceRequested(ctx, k.SolanaNonceRequested, solParams.NonceAccountKey)
+			if err != nil {
+				k.Logger(ctx).Error("error checking DCT nonce request", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey, "error", err)
+				continue
+			}
+
+			k.Logger(ctx).Info("processDCTMintsSolana: nonce missing from oracle data",
+				"asset", asset.String(),
+				"nonce_account_key", solParams.NonceAccountKey,
+				"requested_flag", requested,
+			)
+
+			if requested {
+				fetchedNonce, err := k.GetSolanaNonceAccount(sdk.WrapSDKContext(ctx), solParams.NonceAccountKey)
+				if err != nil {
+					k.Logger(ctx).Error("failed to fetch nonce account from sidecar", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey, "error", err)
+					continue
+				}
+				if oracleData.SolanaMintNonces == nil {
+					oracleData.SolanaMintNonces = make(map[uint64]*system.NonceAccount)
+				}
+				nonceAccount = &fetchedNonce
+				oracleData.SolanaMintNonces[solParams.NonceAccountKey] = nonceAccount
+				k.Logger(ctx).Info("processDCTMintsSolana: hydrated nonce account from sidecar",
+					"asset", asset.String(),
+					"nonce_account_key", solParams.NonceAccountKey,
+					"nonce_value", fetchedNonce.Nonce.String(),
+				)
+			} else {
+				k.Logger(ctx).Error("missing nonce account for asset", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey)
+				continue
+			}
 		}
 
 		processSolanaTxQueue(k, ctx, SolanaTxQueueArgs[dcttypes.PendingMintTransaction]{

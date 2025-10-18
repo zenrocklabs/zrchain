@@ -1541,12 +1541,23 @@ func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs
 
 func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (system.NonceAccount, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Info("GetSolanaNonceAccount: fetching",
+		"key_id", keyID,
+	)
 	key, err := k.treasuryKeeper.GetKey(ctx, keyID)
 	if err != nil {
+		k.Logger(ctx).Error("GetSolanaNonceAccount: treasury key lookup failed",
+			"key_id", keyID,
+			"error", err,
+		)
 		return system.NonceAccount{}, err
 	}
 	publicKey, err := treasurytypes.SolanaPubkey(key)
 	if err != nil {
+		k.Logger(ctx).Error("GetSolanaNonceAccount: solana pubkey derivation failed",
+			"key_id", keyID,
+			"error", err,
+		)
 		return system.NonceAccount{}, err
 	}
 	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
@@ -1559,6 +1570,10 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (syst
 	nonceAccount := system.NonceAccount{}
 
 	if len(resp.Account) == 0 {
+		k.Logger(ctx).Info("GetSolanaNonceAccount: sidecar returned empty account",
+			"key_id", keyID,
+			"pubkey", publicKey.String(),
+		)
 		return nonceAccount, fmt.Errorf("nonce account %s is likely not a valid nonce account.", publicKey.String())
 	}
 
@@ -1567,6 +1582,12 @@ func (k Keeper) GetSolanaNonceAccount(goCtx context.Context, keyID uint64) (syst
 	if err = nonceAccount.UnmarshalWithDecoder(decoder); err != nil {
 		return nonceAccount, fmt.Errorf("failed to unmarshal nonce account: %w (data length: %d)", err, len(resp.Account))
 	}
+	k.Logger(ctx).Info("GetSolanaNonceAccount: success",
+		"key_id", keyID,
+		"pubkey", publicKey.String(),
+		"nonce_value", nonceAccount.Nonce.String(),
+		"lamports_per_signature", nonceAccount.FeeCalculator.LamportsPerSignature,
+	)
 	return nonceAccount, err
 }
 
@@ -1801,7 +1822,11 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 }
 
 func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	nonces := map[uint64]*system.NonceAccount{}
+	k.Logger(ctx).Info("retrieveSolanaNonces: start",
+		"block_height", ctx.BlockHeight(),
+	)
 	//pendingSolROCKMints, err := k.zentpKeeper.GetMintsWithStatus(goCtx, zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING)
 	//if err != nil {
 	//	return nil, err
@@ -1820,6 +1845,14 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 		if err != nil {
 			return nil, err
 		}
+		k.Logger(ctx).Info("retrieveSolanaNonces: populated ZenTP nonce",
+			"nonce_account_key", solParams.NonceAccountKey,
+			"nonce_value", n.Nonce.String(),
+		)
+	} else {
+		k.Logger(ctx).Info("retrieveSolanaNonces: ZenTP nonce not requested",
+			"nonce_account_key", solParams.NonceAccountKey,
+		)
 	}
 	//}
 
@@ -1844,6 +1877,14 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 			return nil, err
 		}
 		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
+		k.Logger(ctx).Info("retrieveSolanaNonces: populated zenBTC nonce",
+			"nonce_account_key", zenBTCsolParams.NonceAccountKey,
+			"nonce_value", nonceAcc.Nonce.String(),
+		)
+	} else {
+		k.Logger(ctx).Info("retrieveSolanaNonces: zenBTC nonce not requested",
+			"nonce_account_key", zenBTCsolParams.NonceAccountKey,
+		)
 	}
 	//}
 
@@ -1858,9 +1899,16 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 			dctSolParams, err := k.dctKeeper.GetSolanaParams(goCtx, asset)
 			if err != nil {
 				// Skip assets without Solana params
+				k.Logger(ctx).Info("retrieveSolanaNonces: skipping asset due to solana params error",
+					"asset", asset.String(),
+					"error", err,
+				)
 				continue
 			}
 			if dctSolParams == nil {
+				k.Logger(ctx).Info("retrieveSolanaNonces: asset has no Solana params",
+					"asset", asset.String(),
+				)
 				continue
 			}
 
@@ -1878,10 +1926,23 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 					return nil, fmt.Errorf("failed to get nonce account for asset %s (key %d): %w", asset.String(), dctSolParams.NonceAccountKey, err)
 				}
 				nonces[dctSolParams.NonceAccountKey] = &nonceAcc
+				k.Logger(ctx).Info("retrieveSolanaNonces: populated DCT nonce",
+					"asset", asset.String(),
+					"nonce_account_key", dctSolParams.NonceAccountKey,
+					"nonce_value", nonceAcc.Nonce.String(),
+				)
+			} else {
+				k.Logger(ctx).Info("retrieveSolanaNonces: DCT nonce not requested",
+					"asset", asset.String(),
+					"nonce_account_key", dctSolParams.NonceAccountKey,
+				)
 			}
 		}
 	}
 
+	k.Logger(ctx).Info("retrieveSolanaNonces: completed",
+		"nonces_found", len(nonces),
+	)
 	return nonces, nil
 }
 

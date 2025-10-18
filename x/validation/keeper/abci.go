@@ -475,6 +475,9 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	if err != nil {
 		k.Logger(ctx).Error("error fetching pending EVM zenBTC mints", "error", err)
 	} else if len(pendingEVM) > 0 {
+		k.Logger(ctx).Info("requestMintDispatches: pending zenBTC EVM mints detected",
+			"count", len(pendingEVM),
+		)
 		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetEthMinterKeyID(ctx), true); err != nil {
 			k.Logger(ctx).Error("error setting Ethereum nonce requested flag for minter", "error", err)
 		}
@@ -490,8 +493,12 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 		return
 	}
 	if len(pendingSol) == 0 {
+		k.Logger(ctx).Info("requestMintDispatches: no pending zenBTC Solana mints")
 		return
 	}
+	k.Logger(ctx).Info("requestMintDispatches: pending zenBTC Solana mints detected",
+		"count", len(pendingSol),
+	)
 	solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
 	if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
 		k.Logger(ctx).Error("error setting Solana nonce requested flag", "error", err)
@@ -529,6 +536,11 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 				if len(pendingDCTSol) == 0 {
 					continue
 				}
+				k.Logger(ctx).Info("requestMintDispatches: pending DCT Solana mints detected",
+					"asset", asset.String(),
+					"count", len(pendingDCTSol),
+					"nonce_account_key", solParams.NonceAccountKey,
+				)
 				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
 					k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
 					continue
