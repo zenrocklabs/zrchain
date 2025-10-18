@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 	"strings"
 
@@ -20,6 +21,38 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
+
+// Zcash encrypted ciphertext boundaries (ZIP-244)
+// encCiphertext is structured as: [compact (52 bytes)][memo (512 bytes)][non-compact (remainder)]
+const (
+	encCiphertextCompactSize    = 52  // Size of compact encrypted data
+	encCiphertextMemoSize       = 512 // Size of memo field
+	encCiphertextNonCompactStart = encCiphertextCompactSize + encCiphertextMemoSize // 564: start of non-compact data
+)
+
+type saplingSpend struct {
+	cv        []byte
+	nullifier []byte
+	rk        []byte
+}
+
+type saplingOutput struct {
+	cv            []byte
+	cmu           []byte
+	ephemeralKey  []byte
+	encCiphertext []byte
+	outCiphertext []byte
+}
+
+type orchardAction struct {
+	cv            []byte
+	nullifier     []byte
+	rk            []byte
+	cmx           []byte
+	ephemeralKey  []byte
+	encCiphertext []byte
+	outCiphertext []byte
+}
 
 func CalculateTXID(rawtx string, chainName string) (*chainhash.Hash, error) {
 	rawTxBytes, err := hex.DecodeString(rawtx)
@@ -459,22 +492,187 @@ func calculateZcashTxID(raw []byte) (*chainhash.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	if nSpendsSapling != 0 || nOutputsSapling != 0 {
-		return nil, fmt.Errorf("sapling components are not supported")
+
+	saplingSpends := make([]saplingSpend, nSpendsSapling)
+	for i := uint64(0); i < nSpendsSapling; i++ {
+		cv, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		nullifier, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		rk, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		saplingSpends[i] = saplingSpend{
+			cv:        append([]byte(nil), cv...),
+			nullifier: append([]byte(nil), nullifier...),
+			rk:        append([]byte(nil), rk...),
+		}
+	}
+
+	saplingOutputs := make([]saplingOutput, nOutputsSapling)
+	for i := uint64(0); i < nOutputsSapling; i++ {
+		cv, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		cmu, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		ephemeralKey, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		encCiphertext, err := readBytes(raw, &offset, 580)
+		if err != nil {
+			return nil, err
+		}
+		outCiphertext, err := readBytes(raw, &offset, 80)
+		if err != nil {
+			return nil, err
+		}
+		saplingOutputs[i] = saplingOutput{
+			cv:            append([]byte(nil), cv...),
+			cmu:           append([]byte(nil), cmu...),
+			ephemeralKey:  append([]byte(nil), ephemeralKey...),
+			encCiphertext: append([]byte(nil), encCiphertext...),
+			outCiphertext: append([]byte(nil), outCiphertext...),
+		}
+	}
+
+	saplingPresent := nSpendsSapling > 0 || nOutputsSapling > 0
+
+	var valueBalanceSaplingBytes []byte
+	if saplingPresent {
+		valueBalanceSaplingBytes, err = readBytes(raw, &offset, 8)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var anchorSapling []byte
+	if nSpendsSapling > 0 {
+		anchorSapling, err = readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if nSpendsSapling > 0 {
+		if err := skipBytes(raw, &offset, 192, nSpendsSapling); err != nil {
+			return nil, err
+		}
+		if err := skipBytes(raw, &offset, 64, nSpendsSapling); err != nil {
+			return nil, err
+		}
+	}
+
+	if nOutputsSapling > 0 {
+		if err := skipBytes(raw, &offset, 192, nOutputsSapling); err != nil {
+			return nil, err
+		}
+	}
+
+	if saplingPresent {
+		if _, err := readBytes(raw, &offset, 64); err != nil {
+			return nil, err
+		}
 	}
 
 	nActionsOrchard, _, err := readCompactSize(raw, &offset)
 	if err != nil {
 		return nil, err
 	}
-	if nActionsOrchard != 0 {
-		return nil, fmt.Errorf("orchard components are not supported")
+
+	orchardActions := make([]orchardAction, nActionsOrchard)
+	for i := uint64(0); i < nActionsOrchard; i++ {
+		cv, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		nullifier, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		rk, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		cmx, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		ephemeralKey, err := readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+		encCiphertext, err := readBytes(raw, &offset, 580)
+		if err != nil {
+			return nil, err
+		}
+		outCiphertext, err := readBytes(raw, &offset, 80)
+		if err != nil {
+			return nil, err
+		}
+		orchardActions[i] = orchardAction{
+			cv:            append([]byte(nil), cv...),
+			nullifier:     append([]byte(nil), nullifier...),
+			rk:            append([]byte(nil), rk...),
+			cmx:           append([]byte(nil), cmx...),
+			ephemeralKey:  append([]byte(nil), ephemeralKey...),
+			encCiphertext: append([]byte(nil), encCiphertext...),
+			outCiphertext: append([]byte(nil), outCiphertext...),
+		}
 	}
 
-	// After Sapling/Orchard counts, the transaction may optionally include
-	// binding signatures when the corresponding component counts are non-zero.
-	// Since we currently only handle purely transparent transactions, the
-	// stream should be fully consumed at this point.
+	var (
+		flagsOrchard             byte
+		valueBalanceOrchardBytes []byte
+		anchorOrchard            []byte
+	)
+
+	if nActionsOrchard > 0 {
+		flags, err := readBytes(raw, &offset, 1)
+		if err != nil {
+			return nil, err
+		}
+		flagsOrchard = flags[0]
+
+		valueBalanceOrchardBytes, err = readBytes(raw, &offset, 8)
+		if err != nil {
+			return nil, err
+		}
+
+		anchorOrchard, err = readBytes(raw, &offset, 32)
+		if err != nil {
+			return nil, err
+		}
+
+		sizeProofs, _, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		if sizeProofs > 0 {
+			if err := skipBytes(raw, &offset, 1, sizeProofs); err != nil {
+				return nil, err
+			}
+		}
+
+		if err := skipBytes(raw, &offset, 64, nActionsOrchard); err != nil {
+			return nil, err
+		}
+
+		if _, err := readBytes(raw, &offset, 64); err != nil {
+			return nil, err
+		}
+	}
+
+	// After Sapling/Orchard components, no further fields should remain.
 	if offset != len(raw) {
 		return nil, fmt.Errorf("unexpected extra data (%d bytes) in zcash transaction", len(raw)-offset)
 	}
@@ -502,11 +700,12 @@ func calculateZcashTxID(raw []byte) (*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	saplingDigest, err := blake2bHashPersonalString("ZTxIdSaplingHash")
+	saplingDigest, err := computeSaplingDigest(saplingSpends, saplingOutputs, anchorSapling, valueBalanceSaplingBytes)
 	if err != nil {
 		return nil, err
 	}
-	orchardDigest, err := blake2bHashPersonalString("ZTxIdOrchardHash")
+
+	orchardDigest, err := computeOrchardDigest(orchardActions, flagsOrchard, valueBalanceOrchardBytes, anchorOrchard)
 	if err != nil {
 		return nil, err
 	}
@@ -537,6 +736,174 @@ func digestWithEmptyFallback(personal string, data []byte, hasData bool) ([]byte
 	return blake2bHashPersonalString(personal)
 }
 
+func computeSaplingDigest(
+	spends []saplingSpend,
+	outputs []saplingOutput,
+	anchorSapling []byte,
+	valueBalanceBytes []byte,
+) ([]byte, error) {
+	saplingPresent := len(spends) > 0 || len(outputs) > 0
+	if !saplingPresent {
+		return blake2bHashPersonalString("ZTxIdSaplingHash")
+	}
+
+	spendCompactBuf := bytes.Buffer{}
+	for _, spend := range spends {
+		spendCompactBuf.Write(spend.nullifier)
+	}
+	spendCompactDigest, err := digestWithEmptyFallback("ZTxIdSSpendCHash", spendCompactBuf.Bytes(), len(spends) > 0)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(spends) > 0 && len(anchorSapling) != 32 {
+		return nil, fmt.Errorf("invalid sapling anchor length %d", len(anchorSapling))
+	}
+
+	spendNonCompactBuf := bytes.Buffer{}
+	for _, spend := range spends {
+		spendNonCompactBuf.Write(spend.cv)
+		spendNonCompactBuf.Write(anchorSapling)
+		spendNonCompactBuf.Write(spend.rk)
+	}
+	spendNonCompactDigest, err := digestWithEmptyFallback("ZTxIdSSpendNHash", spendNonCompactBuf.Bytes(), len(spends) > 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var spendDigest []byte
+	if len(spends) > 0 {
+		spendDigest, err = blake2bHashPersonalString(
+			"ZTxIdSSpendsHash",
+			spendCompactDigest,
+			spendNonCompactDigest,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		spendDigest, err = blake2bHashPersonalString("ZTxIdSSpendsHash")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	outputCompactBuf := bytes.Buffer{}
+	outputMemosBuf := bytes.Buffer{}
+	outputNonCompactBuf := bytes.Buffer{}
+	for _, output := range outputs {
+		outputCompactBuf.Write(output.cmu)
+		outputCompactBuf.Write(output.ephemeralKey)
+		outputCompactBuf.Write(output.encCiphertext[:encCiphertextCompactSize])
+
+		outputMemosBuf.Write(output.encCiphertext[encCiphertextCompactSize:encCiphertextNonCompactStart])
+
+		outputNonCompactBuf.Write(output.cv)
+		outputNonCompactBuf.Write(output.encCiphertext[encCiphertextNonCompactStart:])
+		outputNonCompactBuf.Write(output.outCiphertext)
+	}
+
+	outputCompactDigest, err := digestWithEmptyFallback("ZTxIdSOutC__Hash", outputCompactBuf.Bytes(), len(outputs) > 0)
+	if err != nil {
+		return nil, err
+	}
+	outputMemosDigest, err := digestWithEmptyFallback("ZTxIdSOutM__Hash", outputMemosBuf.Bytes(), len(outputs) > 0)
+	if err != nil {
+		return nil, err
+	}
+	outputNonCompactDigest, err := digestWithEmptyFallback("ZTxIdSOutN__Hash", outputNonCompactBuf.Bytes(), len(outputs) > 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var outputDigest []byte
+	if len(outputs) > 0 {
+		outputDigest, err = blake2bHashPersonalString(
+			"ZTxIdSOutputHash",
+			outputCompactDigest,
+			outputMemosDigest,
+			outputNonCompactDigest,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		outputDigest, err = blake2bHashPersonalString("ZTxIdSOutputHash")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(valueBalanceBytes) != 8 {
+		return nil, fmt.Errorf("invalid sapling value balance length %d", len(valueBalanceBytes))
+	}
+
+	return blake2bHashPersonalString(
+		"ZTxIdSaplingHash",
+		spendDigest,
+		outputDigest,
+		valueBalanceBytes,
+	)
+}
+
+func computeOrchardDigest(
+	actions []orchardAction,
+	flags byte,
+	valueBalanceBytes []byte,
+	anchor []byte,
+) ([]byte, error) {
+	if len(actions) == 0 {
+		return blake2bHashPersonalString("ZTxIdOrchardHash")
+	}
+
+	compactBuf := bytes.Buffer{}
+	memosBuf := bytes.Buffer{}
+	nonCompactBuf := bytes.Buffer{}
+	for _, action := range actions {
+		compactBuf.Write(action.nullifier)
+		compactBuf.Write(action.cmx)
+		compactBuf.Write(action.ephemeralKey)
+		compactBuf.Write(action.encCiphertext[:encCiphertextCompactSize])
+
+		memosBuf.Write(action.encCiphertext[encCiphertextCompactSize:encCiphertextNonCompactStart])
+
+		nonCompactBuf.Write(action.cv)
+		nonCompactBuf.Write(action.rk)
+		nonCompactBuf.Write(action.encCiphertext[encCiphertextNonCompactStart:])
+		nonCompactBuf.Write(action.outCiphertext)
+	}
+
+	compactDigest, err := blake2bHashPersonalString("ZTxIdOrcActCHash", compactBuf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	memosDigest, err := blake2bHashPersonalString("ZTxIdOrcActMHash", memosBuf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	nonCompactDigest, err := blake2bHashPersonalString("ZTxIdOrcActNHash", nonCompactBuf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(valueBalanceBytes) != 8 {
+		return nil, fmt.Errorf("invalid orchard value balance length %d", len(valueBalanceBytes))
+	}
+	if len(anchor) != 32 {
+		return nil, fmt.Errorf("invalid orchard anchor length %d", len(anchor))
+	}
+
+	return blake2bHashPersonalString(
+		"ZTxIdOrchardHash",
+		compactDigest,
+		memosDigest,
+		nonCompactDigest,
+		[]byte{flags},
+		valueBalanceBytes,
+		anchor,
+	)
+}
+
 func blake2bHashPersonalString(personal string, parts ...[]byte) ([]byte, error) {
 	return blake2bHashPersonal([]byte(personal), parts...)
 }
@@ -558,6 +925,21 @@ func readBytes(data []byte, offset *int, length int) ([]byte, error) {
 	bytes := data[*offset : *offset+length]
 	*offset += length
 	return bytes, nil
+}
+
+func skipBytes(data []byte, offset *int, elementSize int, count uint64) error {
+	if count == 0 {
+		return nil
+	}
+	if elementSize <= 0 {
+		return fmt.Errorf("invalid element size %d", elementSize)
+	}
+	if count > uint64(math.MaxInt/elementSize) {
+		return fmt.Errorf("element count too large")
+	}
+	total := int(count) * elementSize
+	_, err := readBytes(data, offset, total)
+	return err
 }
 
 func readCompactSize(data []byte, offset *int) (uint64, []byte, error) {
