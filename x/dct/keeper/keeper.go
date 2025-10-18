@@ -191,18 +191,27 @@ func (k Keeper) SetParams(ctx context.Context, params dcttypes.Params) error {
 }
 
 // ListSupportedAssets returns all assets that have configuration.
+// Always includes ASSET_ZENZEC to ensure nonce account retrieval works.
 func (k Keeper) ListSupportedAssets(ctx context.Context) ([]dcttypes.Asset, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	assets := make([]dcttypes.Asset, 0, len(params.Assets))
+	assetsMap := make(map[dcttypes.Asset]bool)
 	for _, ap := range params.Assets {
 		if ap.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
 			continue
 		}
-		assets = append(assets, ap.Asset)
+		assetsMap[ap.Asset] = true
+	}
+
+	// Always ensure zenZEC is included, even if params are empty or misconfigured
+	assetsMap[dcttypes.Asset_ASSET_ZENZEC] = true
+
+	assets := make([]dcttypes.Asset, 0, len(assetsMap))
+	for asset := range assetsMap {
+		assets = append(assets, asset)
 	}
 	return assets, nil
 }

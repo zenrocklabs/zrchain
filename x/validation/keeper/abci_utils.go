@@ -1847,6 +1847,41 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 	}
 	//}
 
+	// Retrieve nonce accounts for all DCT assets (zenZEC, etc.)
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(goCtx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list DCT assets: %w", err)
+		}
+
+		for _, asset := range assets {
+			dctSolParams, err := k.dctKeeper.GetSolanaParams(goCtx, asset)
+			if err != nil {
+				// Skip assets without Solana params
+				continue
+			}
+			if dctSolParams == nil {
+				continue
+			}
+
+			dctNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, dctSolParams.NonceAccountKey)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return nil, fmt.Errorf("failed to check nonce request for asset %s: %w", asset.String(), err)
+				}
+				dctNonceRequested = false
+			}
+
+			if dctNonceRequested {
+				nonceAcc, err := k.GetSolanaNonceAccount(goCtx, dctSolParams.NonceAccountKey)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get nonce account for asset %s (key %d): %w", asset.String(), dctSolParams.NonceAccountKey, err)
+				}
+				nonces[dctSolParams.NonceAccountKey] = &nonceAcc
+			}
+		}
+	}
+
 	return nonces, nil
 }
 
