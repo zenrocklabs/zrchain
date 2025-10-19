@@ -179,23 +179,23 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 	}
 	k.validationKeeper.Logger(ctx).Warn("added pending mint transaction", "tx", fmt.Sprintf("%+v", tx))
 
-// Request appropriate nonces to trigger minting on destination chains (no EigenLayer staking)
-chainType := types.WalletType(q.Response.Key.ZenbtcMetadata.ChainType)
-if chainType == types.WalletType_WALLET_TYPE_SOLANA {
-	solParams := k.GetSolanaParams(ctx)
-	if err := k.validationKeeper.SetSolanaRequestedNonce(ctx, solParams.NonceAccountKey, true); err != nil {
-		return nil, err
+	// Request appropriate nonces to trigger minting on destination chains (no EigenLayer staking)
+	chainType := types.WalletType(q.Response.Key.ZenbtcMetadata.ChainType)
+	if chainType == types.WalletType_WALLET_TYPE_SOLANA {
+		solParams := k.GetSolanaParams(ctx)
+		if err := k.validationKeeper.SetSolanaRequestedNonce(ctx, solParams.NonceAccountKey, true); err != nil {
+			return nil, err
+		}
+		if err := k.validationKeeper.SetSolanaZenBTCRequestedAccount(ctx, q.Response.Key.ZenbtcMetadata.RecipientAddr, true); err != nil {
+			return nil, err
+		}
+	} else if chainType == types.WalletType_WALLET_TYPE_EVM {
+		if err := k.validationKeeper.EthereumNonceRequested.Set(ctx, k.GetEthMinterKeyID(ctx), true); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("unsupported destination chain type: %v", chainType)
 	}
-	if err := k.validationKeeper.SetSolanaZenBTCRequestedAccount(ctx, q.Response.Key.ZenbtcMetadata.RecipientAddr, true); err != nil {
-		return nil, err
-	}
-} else if chainType == types.WalletType_WALLET_TYPE_EVM {
-	if err := k.validationKeeper.EthereumNonceRequested.Set(ctx, k.GetEthMinterKeyID(ctx), true); err != nil {
-		return nil, err
-	}
-} else {
-	return nil, fmt.Errorf("unsupported destination chain type: %v", chainType)
-}
 
 	return &types.MsgVerifyDepositBlockInclusionResponse{}, nil
 }

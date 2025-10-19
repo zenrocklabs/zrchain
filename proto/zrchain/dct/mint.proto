@@ -50,8 +50,7 @@ message PendingMintTransaction {
 enum MintTransactionStatus {
   MINT_TRANSACTION_STATUS_UNSPECIFIED = 0;
   MINT_TRANSACTION_STATUS_DEPOSITED = 1;
-  MINT_TRANSACTION_STATUS_STAKED = 2;
-  MINT_TRANSACTION_STATUS_MINTED = 3;
+  MINT_TRANSACTION_STATUS_MINTED = 2;
 }
 
 // WalletType specifies the Layer 1 blockchain that this wallet will be used

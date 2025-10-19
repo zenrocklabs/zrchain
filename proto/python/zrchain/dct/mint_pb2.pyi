@@ -11,7 +11,6 @@ class MintTransactionStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     MINT_TRANSACTION_STATUS_UNSPECIFIED: _ClassVar[MintTransactionStatus]
     MINT_TRANSACTION_STATUS_DEPOSITED: _ClassVar[MintTransactionStatus]
-    MINT_TRANSACTION_STATUS_STAKED: _ClassVar[MintTransactionStatus]
     MINT_TRANSACTION_STATUS_MINTED: _ClassVar[MintTransactionStatus]
 
 class WalletType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
@@ -25,7 +24,6 @@ class WalletType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     WALLET_TYPE_SOLANA: _ClassVar[WalletType]
 MINT_TRANSACTION_STATUS_UNSPECIFIED: MintTransactionStatus
 MINT_TRANSACTION_STATUS_DEPOSITED: MintTransactionStatus
-MINT_TRANSACTION_STATUS_STAKED: MintTransactionStatus
 MINT_TRANSACTION_STATUS_MINTED: MintTransactionStatus
 WALLET_TYPE_UNSPECIFIED: WalletType
 WALLET_TYPE_NATIVE: WalletType

@@ -46,13 +46,18 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 		return
 	}
 
+	k.Logger(ctx).Info("processDCTMintsSolana: starting DCT Solana mint processing", "assets", fmt.Sprint(assets))
+
 	for _, asset := range assets {
+		k.Logger(ctx).Info("processDCTMintsSolana: fetching DCT Solana params", "asset", asset.String())
+
 		solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch DCT Solana params", "asset", asset.String(), "error", err)
 			continue
 		}
 		if solParams == nil {
+			k.Logger(ctx).Info("no Solana params for DCT asset, skipping", "asset", asset.String())
 			continue
 		}
 
@@ -69,11 +74,14 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 				Store: k.SolanaNonceRequested,
 			},
 			GetPendingTxs: func(ctx sdk.Context) ([]dcttypes.PendingMintTransaction, error) {
-				return k.getPendingDCTMintTransactions(ctx,
+				pending, err := k.getPendingDCTMintTransactions(
+					ctx,
 					asset,
 					dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 					dcttypes.WalletType_WALLET_TYPE_SOLANA,
 				)
+				k.Logger(ctx).Info("processDCTMintsSolana: fetched pending DCT mint transactions", "asset", asset.String(), "pending", fmt.Sprint(pending))
+				return pending, err
 			},
 			DispatchTx: func(tx dcttypes.PendingMintTransaction) error {
 				if tx.BlockHeight > 0 {
@@ -84,13 +92,19 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 				if err := k.dctKeeper.SetFirstPendingSolMintTransaction(ctx, asset, tx.Id); err != nil {
 					return err
 				}
+				k.Logger(ctx).Info("processDCTMintsSolana: set first pending Sol mint transaction",
+					"asset", asset.String(),
+					"tx_id", tx.Id,
+				)
 
 				if len(oracleData.SolanaMintNonces) == 0 {
+					k.Logger(ctx).Info("processDCTMintsSolana: no Solana nonces available for asset", "asset", asset.String())
 					return fmt.Errorf("no nonce available for DCT solana mint for asset %s", asset.String())
 				}
 
 				_, ok := dctAssetToCoin(asset)
 				if !ok {
+					k.Logger(ctx).Info("processDCTMintsSolana: unsupported DCT asset for Solana dispatch", "asset", asset.String())
 					return fmt.Errorf("unsupported DCT asset %s for Solana dispatch", asset.String())
 				}
 
@@ -101,19 +115,19 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					return err
 				}
 
-				btcUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
-				if err != nil || btcUSDPrice.IsNil() || btcUSDPrice.IsZero() {
-					k.Logger(ctx).Error("invalid BTC/USD price for DCT mint", "asset", asset.String(), "error", err)
-					return nil
-				}
+				// btcUSDPrice, err := sdkmath.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
+				// if err != nil || btcUSDPrice.IsNil() || btcUSDPrice.IsZero() {
+				// 	k.Logger(ctx).Error("invalid BTC/USD price for DCT mint", "asset", asset.String(), "error", err)
+				// 	return nil
+				// }
 
-				exchangeRate, err := k.dctKeeper.GetExchangeRate(ctx, asset)
-				if err != nil {
-					return err
-				}
+				// exchangeRate, err := k.dctKeeper.GetExchangeRate(ctx, asset)
+				// if err != nil {
+				// 	return err
+				// }
 
-				fee := k.CalculateFlatZenBTCMintFee(btcUSDPrice, exchangeRate)
-				fee = min(fee, tx.Amount)
+				// fee := k.CalculateFlatZenBTCMintFee(btcUSDPrice, exchangeRate)
+				// fee = min(fee, tx.Amount)
 
 				recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
 				if err != nil {
@@ -139,8 +153,9 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 				}
 
 				txPrepReq := &solanaMintTxRequest{
-					amount:            tx.Amount,
-					fee:               fee,
+					amount: tx.Amount,
+					// fee:               fee,
+					fee:               0,
 					recipient:         tx.RecipientAddress,
 					nonce:             nonce,
 					fundReceiver:      fundReceiver,
@@ -156,8 +171,20 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 
 				transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 				if err != nil {
+					k.Logger(ctx).Info("processDCTMintsSolana: PrepareSolanaMintTx failed",
+						"asset", asset.String(),
+						"tx_id", tx.Id,
+						"error", err,
+					)
 					return fmt.Errorf("prepareSolanaMintTx (%s): %w", asset.String(), err)
 				}
+				k.Logger(ctx).Info("processDCTMintsSolana: prepared Solana mint transaction",
+					"asset", asset.String(),
+					"tx_id", tx.Id,
+					"recipient", tx.RecipientAddress,
+					"amount", tx.Amount,
+					// "fee", fee,
+				)
 
 				txID, err := k.submitSolanaTransaction(
 					ctx,
@@ -168,22 +195,32 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					transaction,
 				)
 				if err != nil {
+					k.Logger(ctx).Info("processDCTMintsSolana: submitSolanaTransaction failed",
+						"asset", asset.String(),
+						"tx_id", tx.Id,
+						"error", err,
+					)
 					return err
 				}
 
 				tx.ZrchainTxId = txID
 				tx.BlockHeight = ctx.BlockHeight()
-				tx.Status = dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED
 				if err := k.dctKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 					return err
 				}
+				k.Logger(ctx).Info("processDCTMintsSolana: dispatched Solana mint transaction",
+					"asset", asset.String(),
+					"tx_id", tx.Id,
+					"zrchain_tx_id", txID,
+					"block_height", tx.BlockHeight,
+				)
 
 				solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 				return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 			},
 			UpdatePendingTxStatus: func(tx dcttypes.PendingMintTransaction) error {
 				if !fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
-					k.Logger(ctx).Debug("Skipping Solana DCT mint retry/timeout checks – no consensus on SolanaMintEventsHash", "asset", asset.String(), "tx_id", tx.Id)
+					k.Logger(ctx).Info("Skipping Solana DCT mint retry/timeout checks – no consensus on SolanaMintEventsHash", "asset", asset.String(), "tx_id", tx.Id)
 					return nil
 				}
 				if tx.BlockHeight == 0 {
@@ -226,6 +263,7 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 		if firstPendingID == 0 {
+			k.Logger(ctx).Info("processSolanaDCTMintEvents: no pending Solana mint id set", "asset", asset.String())
 			continue
 		}
 
@@ -235,6 +273,7 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 		if pendingMint.ZrchainTxId == 0 {
+			k.Logger(ctx).Info("processSolanaDCTMintEvents: pending mint missing zrchain tx id", "asset", asset.String(), "tx_id", pendingMint.Id)
 			continue
 		}
 
@@ -283,6 +322,7 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			}
 		}
 		if matchedEvent == nil {
+			k.Logger(ctx).Info("processSolanaDCTMintEvents: no matching Solana mint event yet", "asset", asset.String(), "tx_id", pendingMint.Id)
 			continue
 		}
 

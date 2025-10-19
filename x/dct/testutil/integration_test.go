@@ -272,16 +272,6 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingTransactionIndices() {
 			setValue: 400,
 		},
 		{
-			name: "FirstPendingStakeTransaction",
-			setFunc: func(ctx context.Context, id uint64) error {
-				return s.dctKeeper.SetFirstPendingStakeTransaction(ctx, types.Asset_ASSET_ZENBTC, id)
-			},
-			getFunc: func(ctx context.Context) (uint64, error) {
-				return s.dctKeeper.GetFirstPendingStakeTransaction(ctx, types.Asset_ASSET_ZENBTC)
-			},
-			setValue: 500,
-		},
-		{
 			name: "FirstRedemptionAwaitingSign",
 			setFunc: func(ctx context.Context, id uint64) error {
 				return s.dctKeeper.SetFirstRedemptionAwaitingSign(ctx, types.Asset_ASSET_ZENBTC, id)
@@ -289,7 +279,7 @@ func (s *IntegrationTestSuite) Test_ZenbtcKeeper_PendingTransactionIndices() {
 			getFunc: func(ctx context.Context) (uint64, error) {
 				return s.dctKeeper.GetFirstRedemptionAwaitingSign(ctx, types.Asset_ASSET_ZENBTC)
 			},
-			setValue: 600,
+			setValue: 500,
 		},
 	}
 
@@ -686,12 +676,6 @@ func (s *IntegrationTestSuite) Test_Validation_TransactionStatus() {
 			status:      types.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 			expectError: false,
 			description: "Valid deposited status",
-		},
-		{
-			name:        "Valid Staked Status",
-			status:      types.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED,
-			expectError: false,
-			description: "Valid staked status",
 		},
 		{
 			name:        "Valid Minted Status",
