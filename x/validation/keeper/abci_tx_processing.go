@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"cosmossdk.io/collections"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solSystem "github.com/gagliardetto/solana-go/programs/system"
-	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // TxDispatchRequestHandlerInterface defines an explicit controller to check and clear
@@ -138,6 +138,7 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		return
 	}
 	if !requested {
+		k.Logger(ctx).Info("SolanaTxProcessor: dispatch not requested", "nonce_account_key", r.NonceAccountKey)
 		return
 	}
 
@@ -146,10 +147,12 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 		k.Logger(ctx).Error("error getting pending transactions", "error", err)
 		return
 	}
+	k.Logger(ctx).Info("SolanaTxProcessor: fetched pending transactions", "nonce_account_key", r.NonceAccountKey, "count", len(items))
 	if len(items) == 0 {
 		if err := r.TxDispatchRequestHandler.ClearTxDispatchRequest(ctx, r.NonceAccountKey); err != nil {
 			k.Logger(ctx).Error("error clearing solana dispatch request", "nonce_account_key", r.NonceAccountKey, "error", err)
 		}
+		k.Logger(ctx).Info("SolanaTxProcessor: no pending transactions, cleared dispatch request", "nonce_account_key", r.NonceAccountKey)
 		return
 	}
 
@@ -164,6 +167,7 @@ func (r SolanaTxProcessor[T]) ProcessTxs(ctx sdk.Context) {
 			return
 		}
 	}
+	k.Logger(ctx).Info("SolanaTxProcessor: dispatching transaction", "nonce_account_key", r.NonceAccountKey)
 	if err := r.TxQueueProcessor.DispatchTx(items[0]); err != nil {
 		k.Logger(ctx).Error("tx dispatch callback error", "nonce_account_key", r.NonceAccountKey, "error", err)
 	}
@@ -217,26 +221,6 @@ func processSolanaTxQueue[T any](k *Keeper, ctx sdk.Context, args SolanaTxQueueA
 		},
 		Keeper: k,
 	}).ProcessTxs(ctx)
-}
-
-// getPendingTransactions is a generic helper that walks a store with key type uint64
-// and returns a slice of items of type T that satisfy the provided predicate, up to a given limit.
-// If limit is 0, all matching items will be returned.
-func getPendingTransactions[T any](ctx sdk.Context, store interface {
-	Walk(ctx sdk.Context, rng *collections.Range[uint64], fn func(key uint64, value T) (bool, error)) error
-}, predicate func(T) bool, firstPendingID uint64, limit int) ([]T, error) {
-	var results []T
-	queryRange := &collections.Range[uint64]{}
-	err := store.Walk(ctx, queryRange.StartInclusive(firstPendingID), func(key uint64, value T) (bool, error) {
-		if predicate(value) {
-			results = append(results, value)
-			if limit > 0 && len(results) >= limit {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-	return results, err
 }
 
 // getNonceDataWithInit gets the nonce data for a key, initializing it if it doesn't exist
@@ -336,10 +320,4 @@ func (k *Keeper) updateNonces(ctx sdk.Context, oracleData OracleData) {
 			k.Logger(ctx).Error("error updating nonce state", "keyID", key, "error", err)
 		}
 	}
-}
-
-// clearNonceRequest resets the nonce-request flag for a given key.
-func (k *Keeper) clearNonceRequest(ctx sdk.Context, store collections.Map[uint64, bool], keyID uint64) error {
-	k.Logger(ctx).Warn("set requested nonce state to false", "keyID", keyID)
-	return store.Set(ctx, keyID, false)
 }

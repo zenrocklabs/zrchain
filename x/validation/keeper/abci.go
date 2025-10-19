@@ -439,8 +439,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 
 		// Mint directly on destination chains
 		k.processZenBTCMintsEthereum(ctx, oracleData)
-		k.processZenBTCMintsSolana(ctx, oracleData)
 		k.processDCTMintsSolana(ctx, oracleData)
+		k.processZenBTCMintsSolana(ctx, oracleData)
 
 		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
