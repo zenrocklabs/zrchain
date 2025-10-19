@@ -521,6 +521,7 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 			continue
 		}
 		if solParams == nil {
+			k.Logger(ctx).Info("requestMintDispatches: skipping DCT asset with no Solana params", "asset", asset.String())
 			continue
 		}
 		pendingDCTSol, err := k.getPendingDCTMintTransactions(
@@ -534,12 +535,14 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 			continue
 		}
 		if len(pendingDCTSol) == 0 {
+			k.Logger(ctx).Info("requestMintDispatches: no pending DCT Solana mints", "asset", asset.String())
 			continue
 		}
 		if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
 			k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
 			continue
 		}
+		k.Logger(ctx).Info("requestMintDispatches: requested Solana nonce for DCT asset", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey, "pending_count", len(pendingDCTSol))
 		for _, tx := range pendingDCTSol {
 			if err := k.SetSolanaDCTRequestedAccount(ctx, asset, tx.RecipientAddress, true); err != nil {
 				k.Logger(ctx).Error("error setting DCT Solana requested account flag", "asset", asset.String(), "recipient", tx.RecipientAddress, "error", err)

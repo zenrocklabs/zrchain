@@ -1023,8 +1023,6 @@ func (k *Keeper) getPendingDCTMintTransactions(ctx sdk.Context, asset dcttypes.A
 	firstPendingID := uint64(0)
 	var err error
 	if status == dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
-		firstPendingID, err = k.dctKeeper.GetFirstPendingStakeTransaction(ctx, asset)
-	} else if status == dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
 		if walletType == dcttypes.WalletType_WALLET_TYPE_SOLANA {
 			firstPendingID, err = k.dctKeeper.GetFirstPendingSolMintTransaction(ctx, asset)
 		} else if walletType == dcttypes.WalletType_WALLET_TYPE_EVM {
@@ -2074,7 +2072,7 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 			k.Logger(ctx).Error("error listing DCT assets for clearing Solana accounts", "error", err)
 		} else {
 			for _, asset := range assets {
-				pendingDCT, err := k.getPendingDCTMintTransactions(ctx, asset, dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED, dcttypes.WalletType_WALLET_TYPE_SOLANA)
+				pendingDCT, err := k.getPendingDCTMintTransactions(ctx, asset, dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, dcttypes.WalletType_WALLET_TYPE_SOLANA)
 				if err != nil {
 					k.Logger(ctx).Error("error fetching pending DCT Solana mints during cleanup", "asset", asset.String(), "error", err)
 					continue
