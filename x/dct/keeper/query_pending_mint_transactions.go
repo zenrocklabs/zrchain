@@ -29,10 +29,6 @@ func (k Keeper) QueryPendingMintTransactions(ctx context.Context, req *types.Que
 				if mint.Status == types.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
 					pendingMintResponses = append(pendingMintResponses, &mint)
 				}
-			case types.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED:
-				if mint.Status == types.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
-					pendingMintResponses = append(pendingMintResponses, &mint)
-				}
 			case types.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED:
 				if mint.Status == types.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED {
 					pendingMintResponses = append(pendingMintResponses, &mint)
@@ -53,10 +49,6 @@ func (k Keeper) QueryPendingMintTransactions(ctx context.Context, req *types.Que
 			switch req.Status {
 			case types.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED:
 				if mint.Status == types.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
-					pendingMintResponses = append(pendingMintResponses, &mint)
-				}
-			case types.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED:
-				if mint.Status == types.MintTransactionStatus_MINT_TRANSACTION_STATUS_STAKED {
 					pendingMintResponses = append(pendingMintResponses, &mint)
 				}
 			case types.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED:
