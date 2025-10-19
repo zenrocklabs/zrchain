@@ -35,8 +35,6 @@ type DCTKeeper interface {
 	SetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
 	GetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error)
 	SetFirstPendingEthMintTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
-	GetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error)
-	SetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error
 
 	GetSupply(ctx context.Context, asset dcttypes.Asset) (dcttypes.Supply, error)
 	SetSupply(ctx context.Context, supply dcttypes.Supply) error

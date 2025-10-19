@@ -422,22 +422,6 @@ func (k Keeper) SetPendingMintTransactionCount(ctx context.Context, asset dcttyp
 	return k.PendingMintTransactionCount.Set(ctx, assetKey, count)
 }
 
-func (k Keeper) GetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
-	assetKey, err := k.getAssetKey(asset)
-	if err != nil {
-		return 0, err
-	}
-	return k.FirstPendingStakeTransaction.Get(ctx, assetKey)
-}
-
-func (k Keeper) SetFirstPendingStakeTransaction(ctx context.Context, asset dcttypes.Asset, id uint64) error {
-	assetKey, err := k.getAssetKey(asset)
-	if err != nil {
-		return err
-	}
-	return k.FirstPendingStakeTransaction.Set(ctx, assetKey, id)
-}
-
 func (k Keeper) GetFirstPendingSolMintTransaction(ctx context.Context, asset dcttypes.Asset) (uint64, error) {
 	assetKey, err := k.getAssetKey(asset)
 	if err != nil {
