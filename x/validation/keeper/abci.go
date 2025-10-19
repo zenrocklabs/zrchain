@@ -468,7 +468,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 // by setting the appropriate flags. All errors are logged and do not abort the block.
 func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	// Ethereum
-	pendingEVM, err := k.getPendingMintTransactions(ctx,
+	pendingEVM, err := k.getPendingMintTransactions(
+		ctx,
 		zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 		zenbtctypes.WalletType_WALLET_TYPE_EVM,
 	)
@@ -481,7 +482,8 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	}
 
 	// Solana
-	pendingSol, err := k.getPendingMintTransactions(ctx,
+	pendingSol, err := k.getPendingMintTransactions(
+		ctx,
 		zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
 		zenbtctypes.WalletType_WALLET_TYPE_SOLANA,
 	)
@@ -502,41 +504,45 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 	}
 
 	// DCT assets (e.g., zenZEC)
-	if k.dctKeeper != nil {
-		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if k.dctKeeper == nil {
+		return
+	}
+
+	assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error listing DCT assets", "error", err)
+		return
+	}
+
+	for _, asset := range assets {
+		solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
 		if err != nil {
-			k.Logger(ctx).Error("error listing DCT assets", "error", err)
-		} else {
-			for _, asset := range assets {
-				solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
-				if err != nil {
-					k.Logger(ctx).Error("error retrieving DCT Solana params", "asset", asset.String(), "error", err)
-					continue
-				}
-				if solParams == nil {
-					continue
-				}
-				pendingDCTSol, err := k.getPendingDCTMintTransactions(ctx,
-					asset,
-					dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
-					dcttypes.WalletType_WALLET_TYPE_SOLANA,
-				)
-				if err != nil {
-					k.Logger(ctx).Error("error fetching pending DCT Solana mints", "asset", asset.String(), "error", err)
-					continue
-				}
-				if len(pendingDCTSol) == 0 {
-					continue
-				}
-				if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
-					k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
-					continue
-				}
-				for _, tx := range pendingDCTSol {
-					if err := k.SetSolanaDCTRequestedAccount(ctx, asset, tx.RecipientAddress, true); err != nil {
-						k.Logger(ctx).Error("error setting DCT Solana requested account flag", "asset", asset.String(), "recipient", tx.RecipientAddress, "error", err)
-					}
-				}
+			k.Logger(ctx).Error("error retrieving DCT Solana params", "asset", asset.String(), "error", err)
+			continue
+		}
+		if solParams == nil {
+			continue
+		}
+		pendingDCTSol, err := k.getPendingDCTMintTransactions(
+			ctx,
+			asset,
+			dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED,
+			dcttypes.WalletType_WALLET_TYPE_SOLANA,
+		)
+		if err != nil {
+			k.Logger(ctx).Error("error fetching pending DCT Solana mints", "asset", asset.String(), "error", err)
+			continue
+		}
+		if len(pendingDCTSol) == 0 {
+			continue
+		}
+		if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+			k.Logger(ctx).Error("error setting Solana nonce requested flag for DCT asset", "asset", asset.String(), "error", err)
+			continue
+		}
+		for _, tx := range pendingDCTSol {
+			if err := k.SetSolanaDCTRequestedAccount(ctx, asset, tx.RecipientAddress, true); err != nil {
+				k.Logger(ctx).Error("error setting DCT Solana requested account flag", "asset", asset.String(), "recipient", tx.RecipientAddress, "error", err)
 			}
 		}
 	}
