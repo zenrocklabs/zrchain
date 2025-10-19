@@ -489,16 +489,15 @@ func (k *Keeper) requestMintDispatches(ctx sdk.Context) {
 		k.Logger(ctx).Error("error fetching pending Solana zenBTC mints", "error", err)
 		return
 	}
-	if len(pendingSol) == 0 {
-		return
-	}
-	solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
-	if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
-		k.Logger(ctx).Error("error setting Solana nonce requested flag", "error", err)
-	}
-	for _, tx := range pendingSol {
-		if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
-			k.Logger(ctx).Error("error setting Solana requested account flag", "recipient", tx.RecipientAddress, "error", err)
+	if len(pendingSol) > 0 {
+		solParams := k.zenBTCKeeper.GetSolanaParams(ctx)
+		if err := k.SolanaNonceRequested.Set(ctx, solParams.NonceAccountKey, true); err != nil {
+			k.Logger(ctx).Error("error setting Solana nonce requested flag", "error", err)
+		}
+		for _, tx := range pendingSol {
+			if err := k.SetSolanaZenBTCRequestedAccount(ctx, tx.RecipientAddress, true); err != nil {
+				k.Logger(ctx).Error("error setting Solana requested account flag", "recipient", tx.RecipientAddress, "error", err)
+			}
 		}
 	}
 
