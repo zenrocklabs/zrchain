@@ -207,6 +207,7 @@ func (k Keeper) ListSupportedAssets(ctx context.Context) ([]dcttypes.Asset, erro
 		assetsMap[ap.Asset] = true
 	}
 
+	// TODO: remove this
 	// Always ensure zenZEC is included, even if params are empty or misconfigured
 	assetsMap[dcttypes.Asset_ASSET_ZENZEC] = true
 
