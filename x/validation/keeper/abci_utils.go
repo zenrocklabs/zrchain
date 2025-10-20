@@ -1873,7 +1873,13 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 			if dctNonceRequested {
 				nonceAcc, err := k.GetSolanaNonceAccount(goCtx, dctSolParams.NonceAccountKey)
 				if err != nil {
-					return nil, fmt.Errorf("failed to get nonce account for asset %s (key %d): %w", asset.String(), dctSolParams.NonceAccountKey, err)
+					// Log the error but don't fail the entire vote extension process
+					// This allows ZCash headers to be stored even if DCT nonce accounts are missing
+					k.Logger(goCtx).Error("failed to get nonce account for DCT asset, skipping",
+						"asset", asset.String(),
+						"key", dctSolParams.NonceAccountKey,
+						"error", err)
+					continue
 				}
 				nonces[dctSolParams.NonceAccountKey] = &nonceAcc
 			}
