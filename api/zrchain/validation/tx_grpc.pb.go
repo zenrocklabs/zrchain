@@ -33,6 +33,7 @@ const (
 	Msg_ManuallyInputZcashHeader_FullMethodName   = "/zrchain.validation.Msg/ManuallyInputZcashHeader"
 	Msg_AddToBedrockValSet_FullMethodName         = "/zrchain.validation.Msg/AddToBedrockValSet"
 	Msg_RemoveFromBedrockValSet_FullMethodName    = "/zrchain.validation.Msg/RemoveFromBedrockValSet"
+	Msg_AdvanceSolanaNonce_FullMethodName         = "/zrchain.validation.Msg/AdvanceSolanaNonce"
 )
 
 // MsgClient is the client API for Msg service.
@@ -76,6 +77,10 @@ type MsgClient interface {
 	AddToBedrockValSet(ctx context.Context, in *MsgAddToBedrockValSet, opts ...grpc.CallOption) (*MsgAddToBedrockValSetResponse, error)
 	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
 	RemoveFromBedrockValSet(ctx context.Context, in *MsgRemoveFromBedrockValSet, opts ...grpc.CallOption) (*MsgRemoveFromBedrockValSetResponse, error)
+	// AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+	// advances a configured Solana durable nonce account using a supplied recent
+	// blockhash.
+	AdvanceSolanaNonce(ctx context.Context, in *MsgAdvanceSolanaNonce, opts ...grpc.CallOption) (*MsgAdvanceSolanaNonceResponse, error)
 }
 
 type msgClient struct {
@@ -226,6 +231,16 @@ func (c *msgClient) RemoveFromBedrockValSet(ctx context.Context, in *MsgRemoveFr
 	return out, nil
 }
 
+func (c *msgClient) AdvanceSolanaNonce(ctx context.Context, in *MsgAdvanceSolanaNonce, opts ...grpc.CallOption) (*MsgAdvanceSolanaNonceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgAdvanceSolanaNonceResponse)
+	err := c.cc.Invoke(ctx, Msg_AdvanceSolanaNonce_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -267,6 +282,10 @@ type MsgServer interface {
 	AddToBedrockValSet(context.Context, *MsgAddToBedrockValSet) (*MsgAddToBedrockValSetResponse, error)
 	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
 	RemoveFromBedrockValSet(context.Context, *MsgRemoveFromBedrockValSet) (*MsgRemoveFromBedrockValSetResponse, error)
+	// AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+	// advances a configured Solana durable nonce account using a supplied recent
+	// blockhash.
+	AdvanceSolanaNonce(context.Context, *MsgAdvanceSolanaNonce) (*MsgAdvanceSolanaNonceResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -318,6 +337,9 @@ func (UnimplementedMsgServer) AddToBedrockValSet(context.Context, *MsgAddToBedro
 }
 func (UnimplementedMsgServer) RemoveFromBedrockValSet(context.Context, *MsgRemoveFromBedrockValSet) (*MsgRemoveFromBedrockValSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromBedrockValSet not implemented")
+}
+func (UnimplementedMsgServer) AdvanceSolanaNonce(context.Context, *MsgAdvanceSolanaNonce) (*MsgAdvanceSolanaNonceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdvanceSolanaNonce not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -592,6 +614,24 @@ func _Msg_RemoveFromBedrockValSet_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_AdvanceSolanaNonce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAdvanceSolanaNonce)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AdvanceSolanaNonce(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AdvanceSolanaNonce_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AdvanceSolanaNonce(ctx, req.(*MsgAdvanceSolanaNonce))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -654,6 +694,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveFromBedrockValSet",
 			Handler:    _Msg_RemoveFromBedrockValSet_Handler,
+		},
+		{
+			MethodName: "AdvanceSolanaNonce",
+			Handler:    _Msg_AdvanceSolanaNonce_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -394,38 +394,16 @@ func (k *Keeper) storeNewDCTBurnEvents(ctx sdk.Context, oracleData OracleData) {
 			DestinationAddr: burn.DestinationAddr,
 			Amount:          burn.Amount,
 			Asset:           asset,
+			Status:          dcttypes.BurnStatus_BURN_STATUS_UNSTAKING,
+			MaturityHeight:  k.calculateRedemptionMaturityHeight(ctx),
 		}
 
-		_, createErr := k.dctKeeper.CreateBurnEvent(ctx, asset, &burnEvent)
-		if createErr != nil {
+		if _, createErr := k.dctKeeper.CreateBurnEvent(ctx, asset, &burnEvent); createErr != nil {
 			k.Logger(ctx).Error("failed to create DCT burn event", "asset", asset.String(), "txID", burn.TxID, "logIndex", burn.LogIndex, "error", createErr)
 			continue
 		}
 
-		// Create redemption for the burn event
-		nextRedemptionID := uint64(0)
-		if err := k.dctKeeper.WalkRedemptionsDescending(ctx, asset, func(id uint64, _ dcttypes.Redemption) (bool, error) {
-			nextRedemptionID = id + 1
-			return true, nil
-		}); err != nil {
-			k.Logger(ctx).Error("error walking DCT redemptions to find next ID", "asset", asset.String(), "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		if err := k.dctKeeper.SetRedemption(ctx, asset, nextRedemptionID, dcttypes.Redemption{
-			Data: dcttypes.RedemptionData{
-				Id:                 nextRedemptionID,
-				DestinationAddress: burn.DestinationAddr,
-				Amount:             burn.Amount,
-				Asset:              asset,
-			},
-			Status: dcttypes.RedemptionStatus_INITIATED,
-		}); err != nil {
-			k.Logger(ctx).Error("error creating DCT redemption from burn event", "asset", asset.String(), "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		k.Logger(ctx).Info("created DCT redemption for burn event", "asset", asset.String(), "redemption_id", nextRedemptionID, "burn_tx", burn.TxID, "amount", burn.Amount)
+		k.Logger(ctx).Info("recorded DCT burn awaiting maturity", "asset", asset.String(), "burn_id", burnEvent.Id, "burn_tx", burn.TxID, "amount", burn.Amount, "maturity_height", burnEvent.MaturityHeight)
 	}
 }
 

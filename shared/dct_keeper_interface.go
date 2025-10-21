@@ -42,7 +42,9 @@ type DCTKeeper interface {
 
 	// Burn events
 	CreateBurnEvent(ctx context.Context, asset dcttypes.Asset, burnEvent *dcttypes.BurnEvent) (uint64, error)
+	SetBurnEvent(ctx context.Context, asset dcttypes.Asset, id uint64, burnEvent dcttypes.BurnEvent) error
 	WalkBurnEvents(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, burnEvent dcttypes.BurnEvent) (stop bool, err error)) error
+	SetFirstPendingBurnEvent(ctx context.Context, asset dcttypes.Asset, id uint64) error
 
 	// Redemptions
 	SetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64, redemption dcttypes.Redemption) error

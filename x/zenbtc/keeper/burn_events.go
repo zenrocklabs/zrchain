@@ -14,14 +14,15 @@ func (k Keeper) CreateBurnEvent(ctx context.Context, burnEvent *types.BurnEvent)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return 0, err
-		} else {
-			burnEvent.Id = 1
 		}
+		burnEvent.Id = 1
 	} else {
 		burnEvent.Id = count + 1
 	}
 
-	burnEvent.Status = types.BurnStatus_BURN_STATUS_BURNED
+	if burnEvent.Status == types.BurnStatus_BURN_STATUS_UNSPECIFIED {
+		burnEvent.Status = types.BurnStatus_BURN_STATUS_UNSTAKING
+	}
 
 	if err := k.BurnEvents.Set(ctx, burnEvent.Id, *burnEvent); err != nil {
 		return 0, err

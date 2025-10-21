@@ -9,6 +9,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
+import "zrchain/dct/params.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "zrchain/validation/staking.proto";
 
@@ -74,6 +75,12 @@ service Msg {
   // RemoveFromBedrockValSet removes a validator from the bedrock validator set.
   rpc RemoveFromBedrockValSet(MsgRemoveFromBedrockValSet)
       returns (MsgRemoveFromBedrockValSetResponse);
+
+  // AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+  // advances a configured Solana durable nonce account using a supplied recent
+  // blockhash.
+  rpc AdvanceSolanaNonce(MsgAdvanceSolanaNonce)
+      returns (MsgAdvanceSolanaNonceResponse);
 }
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
@@ -450,3 +457,18 @@ message MsgRemoveFromBedrockValSet {
 // MsgRemoveFromBedrockValSetResponse defines the response structure for
 // MsgRemoveFromBedrockValSet.
 message MsgRemoveFromBedrockValSetResponse {}
+
+// MsgAdvanceSolanaNonce submits a request to advance a Solana durable nonce
+// account using a provided recent blockhash.
+message MsgAdvanceSolanaNonce {
+  option (cosmos.msg.v1.signer) = "authority";
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // If true, the zenBTC Solana nonce account will be advanced. If false, a DCT
+  // asset must be provided.
+  bool zenbtc = 2;
+  zrchain.dct.Asset asset = 3;
+  string recent_blockhash = 4;
+  string caip2_chain_id = 5;
+}
+
+message MsgAdvanceSolanaNonceResponse {}
