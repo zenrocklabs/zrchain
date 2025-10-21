@@ -35,6 +35,7 @@ func main() {
 		configDir         string
 		networkOverride   string
 		solanaRPCOverride string
+		nodeOverride      string
 		cosmosChainID     string
 		solanaCAIP2       string
 		assetFlag         string
@@ -50,8 +51,9 @@ func main() {
 	)
 
 	flag.StringVar(&configFile, "config", "", "Path to sidecar config file (overrides autodetect)")
-	flag.StringVar(&configDir, "config-dir", "", "Directory containing sidecar config file")
+	flag.StringVar(&configDir, "config-dir", "../..", "Directory containing sidecar config file")
 	flag.StringVar(&networkOverride, "network", "", "Override network value from config (optional)")
+	flag.StringVar(&nodeOverride, "node", "grpc.dev.zenrock.tech:443", "Override ZRChain gRPC endpoint")
 	flag.StringVar(&solanaRPCOverride, "solana-rpc", "", "Override Solana RPC endpoint (optional)")
 	flag.StringVar(&cosmosChainID, "chain-id", "amber-1", "Cosmos SDK chain ID")
 	flag.StringVar(&solanaCAIP2, "solana-caip2", "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", "Solana CAIP-2 identifier (defaults per network)")
@@ -63,7 +65,7 @@ func main() {
 	flag.StringVar(&keyringBackend, "keyring-backend", "file", "Keyring backend to use (os|file|test)")
 	flag.StringVar(&keyringHome, "home", filepath.Join(os.Getenv("HOME"), ".zenrockd"), "Keyring home directory")
 	flag.StringVar(&exportPass, "key-passphrase", "", "Passphrase to encrypt the exported key (optional; prompt if empty)")
-	flag.BoolVar(&insecureGRPC, "grpc-insecure", true, "Use insecure gRPC connection")
+	flag.BoolVar(&insecureGRPC, "grpc-insecure", false, "Use insecure gRPC connection")
 	flag.DurationVar(&timeout, "timeout", 30*time.Second, "Overall timeout for the operation")
 	flag.Parse()
 
@@ -79,6 +81,11 @@ func main() {
 	network := cfg.Network
 	if networkOverride != "" {
 		network = networkOverride
+	}
+
+	node := nodeOverride
+	if node == "" {
+		node = cfg.ZRChainRPC
 	}
 
 	solanaRPC := solanaRPCOverride
@@ -144,7 +151,7 @@ func main() {
 		identity = id
 	}
 
-	grpcConn, err := client.NewClientConn(cfg.ZRChainRPC, insecureGRPC)
+	grpcConn, err := client.NewClientConn(node, insecureGRPC)
 	if err != nil {
 		log.Fatalf("failed to create gRPC connection: %v", err)
 	}
