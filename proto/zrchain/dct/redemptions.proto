@@ -36,5 +36,12 @@ message BurnEvent {
   bytes destinationAddr = 5;
   uint64 amount = 6;
   Asset asset = 7;
+  BurnStatus status = 8;
+  int64 maturity_height = 9;
 }
 
+enum BurnStatus {
+  BURN_STATUS_UNSPECIFIED = 0;
+  BURN_STATUS_UNSTAKING = 1;
+  BURN_STATUS_UNSTAKED = 2;
+}

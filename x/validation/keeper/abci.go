@@ -433,6 +433,9 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 			k.storeNewDCTBurnEvents(ctx, oracleData)
 		}
 
+		k.processMatureZenBTCBurns(ctx)
+		k.processMatureDCTBurns(ctx)
+
 		// 2. Process pending transaction queues based on the latest state
 		// Request nonces/accounts for direct minting (no EigenLayer staking)
 		k.requestMintDispatches(ctx)

@@ -570,6 +570,9 @@ func (k Keeper) CreateBurnEvent(ctx context.Context, asset dcttypes.Asset, burnE
 	nextID := count + 1
 	burnEvent.Id = nextID
 	burnEvent.Asset = asset
+	if burnEvent.Status == dcttypes.BurnStatus_BURN_STATUS_UNSPECIFIED {
+		burnEvent.Status = dcttypes.BurnStatus_BURN_STATUS_UNSTAKING
+	}
 	if err := k.SetBurnEvent(ctx, asset, nextID, *burnEvent); err != nil {
 		return 0, err
 	}

@@ -31,7 +31,7 @@ func RemoveBurnedEvents(
 
 	// First pass: find the minimum BURNED ID
 	if err := burnEvents.Walk(ctx, nil, func(key uint64, value types.BurnEvent) (stop bool, err error) {
-		if value.Status == types.BurnStatus_BURN_STATUS_BURNED {
+	if value.Status == types.BurnStatus_BURN_STATUS_UNSTAKING {
 			if minBurnedID == nil || key < *minBurnedID {
 				minBurnedID = &key
 			}
@@ -43,7 +43,7 @@ func RemoveBurnedEvents(
 
 	// Second pass: collect BURNED events to remove and find the last non-BURNED event before the first BURNED one
 	if err := burnEvents.Walk(ctx, nil, func(key uint64, value types.BurnEvent) (stop bool, err error) {
-		if value.Status == types.BurnStatus_BURN_STATUS_BURNED {
+	if value.Status == types.BurnStatus_BURN_STATUS_UNSTAKING {
 			keysToRemove = append(keysToRemove, key)
 		} else {
 			// Track the maximum non-BURNED ID that comes before the first BURNED event

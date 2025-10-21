@@ -36,10 +36,10 @@ func TestRemoveBurnedEvents(t *testing.T) {
 	// Sample burn event data with mixed statuses
 	testData := []types.BurnEvent{
 		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 100},
-		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 200},
-		{Id: 3, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 300},
+		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 200},
+		{Id: 3, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 300},
 		{Id: 4, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 400},
-		{Id: 5, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 500},
+		{Id: 5, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 500},
 	}
 
 	for _, item := range testData {
@@ -102,8 +102,8 @@ func TestRemoveBurnedEvents_PointerAfterBurnedEvents(t *testing.T) {
 
 	// Events with BURNED at the beginning
 	testData := []types.BurnEvent{
-		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 100},
-		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 200},
+		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 100},
+		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 200},
 		{Id: 3, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 300},
 		{Id: 4, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 400},
 	}
@@ -202,8 +202,8 @@ func TestRemoveBurnedEvents_AllBurned(t *testing.T) {
 
 	// All events are BURNED
 	testData := []types.BurnEvent{
-		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 100},
-		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 200},
+		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 100},
+		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 200},
 	}
 
 	for _, item := range testData {
@@ -248,8 +248,8 @@ func TestRemoveBurnedEvents_NonAmberChain(t *testing.T) {
 
 	// Sample BURNED events
 	testData := []types.BurnEvent{
-		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 100},
-		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_BURNED, Amount: 200},
+		{Id: 1, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 100},
+		{Id: 2, ChainID: "chain-1", Status: types.BurnStatus_BURN_STATUS_UNSTAKING, Amount: 200},
 	}
 
 	for _, item := range testData {
