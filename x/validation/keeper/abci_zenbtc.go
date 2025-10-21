@@ -345,38 +345,15 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			ChainID:         burn.ChainID,
 			DestinationAddr: burn.DestinationAddr,
 			Amount:          burn.Amount,
-			Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
+			Status:          zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING,
+			MaturityHeight:  k.calculateRedemptionMaturityHeight(ctx),
 		}
-		_, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
-		if createErr != nil {
+		if _, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn); createErr != nil {
 			k.Logger(ctx).Error("error creating burn event", "burn_tx", burn.TxID, "chain_id", burn.ChainID, "error", createErr)
 			continue
 		}
 
-		// Get next redemption ID by finding the highest existing ID + 1
-		// Walk in descending order and stop after first item (highest ID)
-		nextRedemptionID := uint64(0)
-		if err := k.zenBTCKeeper.WalkRedemptionsDescending(ctx, func(id uint64, _ zenbtctypes.Redemption) (bool, error) {
-			nextRedemptionID = id + 1
-			return true, nil // stop after first (highest) ID
-		}); err != nil {
-			k.Logger(ctx).Error("error walking redemptions to find next ID", "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		if err := k.zenBTCKeeper.SetRedemption(ctx, nextRedemptionID, zenbtctypes.Redemption{
-			Data: zenbtctypes.RedemptionData{
-				Id:                 nextRedemptionID,
-				DestinationAddress: burn.DestinationAddr,
-				Amount:             burn.Amount,
-			},
-			Status: zenbtctypes.RedemptionStatus_UNSTAKED,
-		}); err != nil {
-			k.Logger(ctx).Error("error creating redemption from burn event", "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		k.Logger(ctx).Info("created redemption for burn event", "redemption_id", nextRedemptionID, "burn_tx", burn.TxID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+		k.Logger(ctx).Info("recorded zenBTC burn awaiting maturity", "burn_id", newBurn.Id, "burn_tx", burn.TxID, "amount", burn.Amount, "maturity_height", newBurn.MaturityHeight, "destination", hex.EncodeToString(burn.DestinationAddr))
 		processedTxHashes[burn.TxID] = true
 	}
 	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)

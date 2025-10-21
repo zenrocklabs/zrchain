@@ -5,6 +5,7 @@ from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
+from zrchain.dct import params_pb2 as _params_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
 from google.protobuf.internal import containers as _containers
@@ -277,5 +278,23 @@ class MsgRemoveFromBedrockValSet(_message.Message):
     def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
 
 class MsgRemoveFromBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgAdvanceSolanaNonce(_message.Message):
+    __slots__ = ("authority", "zenbtc", "asset", "recent_blockhash", "caip2_chain_id")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    ZENBTC_FIELD_NUMBER: _ClassVar[int]
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    RECENT_BLOCKHASH_FIELD_NUMBER: _ClassVar[int]
+    CAIP2_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    zenbtc: bool
+    asset: _params_pb2.Asset
+    recent_blockhash: str
+    caip2_chain_id: str
+    def __init__(self, authority: _Optional[str] = ..., zenbtc: bool = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ..., recent_blockhash: _Optional[str] = ..., caip2_chain_id: _Optional[str] = ...) -> None: ...
+
+class MsgAdvanceSolanaNonceResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

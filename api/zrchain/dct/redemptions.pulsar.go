@@ -1119,6 +1119,8 @@ var (
 	fd_BurnEvent_destinationAddr protoreflect.FieldDescriptor
 	fd_BurnEvent_amount          protoreflect.FieldDescriptor
 	fd_BurnEvent_asset           protoreflect.FieldDescriptor
+	fd_BurnEvent_status          protoreflect.FieldDescriptor
+	fd_BurnEvent_maturity_height protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -1131,6 +1133,8 @@ func init() {
 	fd_BurnEvent_destinationAddr = md_BurnEvent.Fields().ByName("destinationAddr")
 	fd_BurnEvent_amount = md_BurnEvent.Fields().ByName("amount")
 	fd_BurnEvent_asset = md_BurnEvent.Fields().ByName("asset")
+	fd_BurnEvent_status = md_BurnEvent.Fields().ByName("status")
+	fd_BurnEvent_maturity_height = md_BurnEvent.Fields().ByName("maturity_height")
 }
 
 var _ protoreflect.Message = (*fastReflection_BurnEvent)(nil)
@@ -1240,6 +1244,18 @@ func (x *fastReflection_BurnEvent) Range(f func(protoreflect.FieldDescriptor, pr
 			return
 		}
 	}
+	if x.Status != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Status))
+		if !f(fd_BurnEvent_status, value) {
+			return
+		}
+	}
+	if x.MaturityHeight != int64(0) {
+		value := protoreflect.ValueOfInt64(x.MaturityHeight)
+		if !f(fd_BurnEvent_maturity_height, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -1269,6 +1285,10 @@ func (x *fastReflection_BurnEvent) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.Amount != uint64(0)
 	case "zrchain.dct.BurnEvent.asset":
 		return x.Asset != 0
+	case "zrchain.dct.BurnEvent.status":
+		return x.Status != 0
+	case "zrchain.dct.BurnEvent.maturity_height":
+		return x.MaturityHeight != int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1299,6 +1319,10 @@ func (x *fastReflection_BurnEvent) Clear(fd protoreflect.FieldDescriptor) {
 		x.Amount = uint64(0)
 	case "zrchain.dct.BurnEvent.asset":
 		x.Asset = 0
+	case "zrchain.dct.BurnEvent.status":
+		x.Status = 0
+	case "zrchain.dct.BurnEvent.maturity_height":
+		x.MaturityHeight = int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1336,6 +1360,12 @@ func (x *fastReflection_BurnEvent) Get(descriptor protoreflect.FieldDescriptor) 
 	case "zrchain.dct.BurnEvent.asset":
 		value := x.Asset
 		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	case "zrchain.dct.BurnEvent.status":
+		value := x.Status
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	case "zrchain.dct.BurnEvent.maturity_height":
+		value := x.MaturityHeight
+		return protoreflect.ValueOfInt64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1370,6 +1400,10 @@ func (x *fastReflection_BurnEvent) Set(fd protoreflect.FieldDescriptor, value pr
 		x.Amount = value.Uint()
 	case "zrchain.dct.BurnEvent.asset":
 		x.Asset = (Asset)(value.Enum())
+	case "zrchain.dct.BurnEvent.status":
+		x.Status = (BurnStatus)(value.Enum())
+	case "zrchain.dct.BurnEvent.maturity_height":
+		x.MaturityHeight = value.Int()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1404,6 +1438,10 @@ func (x *fastReflection_BurnEvent) Mutable(fd protoreflect.FieldDescriptor) prot
 		panic(fmt.Errorf("field amount of message zrchain.dct.BurnEvent is not mutable"))
 	case "zrchain.dct.BurnEvent.asset":
 		panic(fmt.Errorf("field asset of message zrchain.dct.BurnEvent is not mutable"))
+	case "zrchain.dct.BurnEvent.status":
+		panic(fmt.Errorf("field status of message zrchain.dct.BurnEvent is not mutable"))
+	case "zrchain.dct.BurnEvent.maturity_height":
+		panic(fmt.Errorf("field maturity_height of message zrchain.dct.BurnEvent is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1431,6 +1469,10 @@ func (x *fastReflection_BurnEvent) NewField(fd protoreflect.FieldDescriptor) pro
 		return protoreflect.ValueOfUint64(uint64(0))
 	case "zrchain.dct.BurnEvent.asset":
 		return protoreflect.ValueOfEnum(0)
+	case "zrchain.dct.BurnEvent.status":
+		return protoreflect.ValueOfEnum(0)
+	case "zrchain.dct.BurnEvent.maturity_height":
+		return protoreflect.ValueOfInt64(int64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: zrchain.dct.BurnEvent"))
@@ -1524,6 +1566,12 @@ func (x *fastReflection_BurnEvent) ProtoMethods() *protoiface.Methods {
 		if x.Asset != 0 {
 			n += 1 + runtime.Sov(uint64(x.Asset))
 		}
+		if x.Status != 0 {
+			n += 1 + runtime.Sov(uint64(x.Status))
+		}
+		if x.MaturityHeight != 0 {
+			n += 1 + runtime.Sov(uint64(x.MaturityHeight))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1552,6 +1600,16 @@ func (x *fastReflection_BurnEvent) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.MaturityHeight != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MaturityHeight))
+			i--
+			dAtA[i] = 0x48
+		}
+		if x.Status != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Status))
+			i--
+			dAtA[i] = 0x40
 		}
 		if x.Asset != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.Asset))
@@ -1817,6 +1875,44 @@ func (x *fastReflection_BurnEvent) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
+			case 8:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+				}
+				x.Status = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Status |= BurnStatus(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 9:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MaturityHeight", wireType)
+				}
+				x.MaturityHeight = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.MaturityHeight |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1915,6 +2011,55 @@ func (x RedemptionStatus) Number() protoreflect.EnumNumber {
 // Deprecated: Use RedemptionStatus.Descriptor instead.
 func (RedemptionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_zrchain_dct_redemptions_proto_rawDescGZIP(), []int{0}
+}
+
+type BurnStatus int32
+
+const (
+	BurnStatus_BURN_STATUS_UNSPECIFIED BurnStatus = 0
+	BurnStatus_BURN_STATUS_UNSTAKING   BurnStatus = 1
+	BurnStatus_BURN_STATUS_UNSTAKED    BurnStatus = 2
+)
+
+// Enum value maps for BurnStatus.
+var (
+	BurnStatus_name = map[int32]string{
+		0: "BURN_STATUS_UNSPECIFIED",
+		1: "BURN_STATUS_UNSTAKING",
+		2: "BURN_STATUS_UNSTAKED",
+	}
+	BurnStatus_value = map[string]int32{
+		"BURN_STATUS_UNSPECIFIED": 0,
+		"BURN_STATUS_UNSTAKING":   1,
+		"BURN_STATUS_UNSTAKED":    2,
+	}
+)
+
+func (x BurnStatus) Enum() *BurnStatus {
+	p := new(BurnStatus)
+	*p = x
+	return p
+}
+
+func (x BurnStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BurnStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_zrchain_dct_redemptions_proto_enumTypes[1].Descriptor()
+}
+
+func (BurnStatus) Type() protoreflect.EnumType {
+	return &file_zrchain_dct_redemptions_proto_enumTypes[1]
+}
+
+func (x BurnStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BurnStatus.Descriptor instead.
+func (BurnStatus) EnumDescriptor() ([]byte, []int) {
+	return file_zrchain_dct_redemptions_proto_rawDescGZIP(), []int{1}
 }
 
 // Redemption contains the data for a redemption transaction.
@@ -2033,13 +2178,15 @@ type BurnEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	TxID            string `protobuf:"bytes,2,opt,name=txID,proto3" json:"txID,omitempty"`
-	LogIndex        uint64 `protobuf:"varint,3,opt,name=logIndex,proto3" json:"logIndex,omitempty"`
-	ChainID         string `protobuf:"bytes,4,opt,name=chainID,proto3" json:"chainID,omitempty"`
-	DestinationAddr []byte `protobuf:"bytes,5,opt,name=destinationAddr,proto3" json:"destinationAddr,omitempty"`
-	Amount          uint64 `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
-	Asset           Asset  `protobuf:"varint,7,opt,name=asset,proto3,enum=zrchain.dct.Asset" json:"asset,omitempty"`
+	Id              uint64     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TxID            string     `protobuf:"bytes,2,opt,name=txID,proto3" json:"txID,omitempty"`
+	LogIndex        uint64     `protobuf:"varint,3,opt,name=logIndex,proto3" json:"logIndex,omitempty"`
+	ChainID         string     `protobuf:"bytes,4,opt,name=chainID,proto3" json:"chainID,omitempty"`
+	DestinationAddr []byte     `protobuf:"bytes,5,opt,name=destinationAddr,proto3" json:"destinationAddr,omitempty"`
+	Amount          uint64     `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
+	Asset           Asset      `protobuf:"varint,7,opt,name=asset,proto3,enum=zrchain.dct.Asset" json:"asset,omitempty"`
+	Status          BurnStatus `protobuf:"varint,8,opt,name=status,proto3,enum=zrchain.dct.BurnStatus" json:"status,omitempty"`
+	MaturityHeight  int64      `protobuf:"varint,9,opt,name=maturity_height,json=maturityHeight,proto3" json:"maturity_height,omitempty"`
 }
 
 func (x *BurnEvent) Reset() {
@@ -2111,6 +2258,20 @@ func (x *BurnEvent) GetAsset() Asset {
 	return Asset_ASSET_UNSPECIFIED
 }
 
+func (x *BurnEvent) GetStatus() BurnStatus {
+	if x != nil {
+		return x.Status
+	}
+	return BurnStatus_BURN_STATUS_UNSPECIFIED
+}
+
+func (x *BurnEvent) GetMaturityHeight() int64 {
+	if x != nil {
+		return x.MaturityHeight
+	}
+	return 0
+}
+
 var File_zrchain_dct_redemptions_proto protoreflect.FileDescriptor
 
 var file_zrchain_dct_redemptions_proto_rawDesc = []byte{
@@ -2138,8 +2299,8 @@ var file_zrchain_dct_redemptions_proto_rawDesc = []byte{
 	0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x52,
 	0x65, 0x71, 0x49, 0x64, 0x12, 0x28, 0x0a, 0x05, 0x61, 0x73, 0x73, 0x65, 0x74, 0x18, 0x05, 0x20,
 	0x01, 0x28, 0x0e, 0x32, 0x12, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x64, 0x63,
-	0x74, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x05, 0x61, 0x73, 0x73, 0x65, 0x74, 0x22, 0xd1,
-	0x01, 0x0a, 0x09, 0x42, 0x75, 0x72, 0x6e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02,
+	0x74, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x05, 0x61, 0x73, 0x73, 0x65, 0x74, 0x22, 0xab,
+	0x02, 0x0a, 0x09, 0x42, 0x75, 0x72, 0x6e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02,
 	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04,
 	0x74, 0x78, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x78, 0x49, 0x44,
 	0x12, 0x1a, 0x0a, 0x08, 0x6c, 0x6f, 0x67, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x03, 0x20, 0x01,
@@ -2152,23 +2313,35 @@ var file_zrchain_dct_redemptions_proto_rawDesc = []byte{
 	0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x28, 0x0a, 0x05, 0x61, 0x73, 0x73, 0x65,
 	0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x12, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
 	0x6e, 0x2e, 0x64, 0x63, 0x74, 0x2e, 0x41, 0x73, 0x73, 0x65, 0x74, 0x52, 0x05, 0x61, 0x73, 0x73,
-	0x65, 0x74, 0x2a, 0x54, 0x0a, 0x10, 0x52, 0x65, 0x64, 0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0f, 0x0a, 0x0b, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43,
-	0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x49, 0x4e, 0x49, 0x54, 0x49,
-	0x41, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x11, 0x0a, 0x0d, 0x41, 0x57, 0x41, 0x49, 0x54, 0x49,
-	0x4e, 0x47, 0x5f, 0x53, 0x49, 0x47, 0x4e, 0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09, 0x43, 0x4f, 0x4d,
-	0x50, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x10, 0x03, 0x42, 0xaa, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d,
-	0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x64, 0x63, 0x74, 0x42, 0x10, 0x52, 0x65,
-	0x64, 0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x38, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x5a, 0x65, 0x6e,
-	0x72, 0x6f, 0x63, 0x6b, 0x2d, 0x46, 0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f,
-	0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x76, 0x36, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x64, 0x63, 0x74, 0xa2, 0x02, 0x03, 0x5a, 0x44, 0x58,
-	0xaa, 0x02, 0x0b, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x44, 0x63, 0x74, 0xca, 0x02,
-	0x0b, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x44, 0x63, 0x74, 0xe2, 0x02, 0x17, 0x5a,
-	0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5c, 0x44, 0x63, 0x74, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0c, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
-	0x3a, 0x3a, 0x44, 0x63, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x74, 0x12, 0x2f, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x08, 0x20, 0x01,
+	0x28, 0x0e, 0x32, 0x17, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x64, 0x63, 0x74,
+	0x2e, 0x42, 0x75, 0x72, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x12, 0x27, 0x0a, 0x0f, 0x6d, 0x61, 0x74, 0x75, 0x72, 0x69, 0x74, 0x79, 0x5f,
+	0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0e, 0x6d, 0x61,
+	0x74, 0x75, 0x72, 0x69, 0x74, 0x79, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x2a, 0x54, 0x0a, 0x10,
+	0x52, 0x65, 0x64, 0x65, 0x6d, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x0f, 0x0a, 0x0b, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x0d, 0x0a, 0x09, 0x49, 0x4e, 0x49, 0x54, 0x49, 0x41, 0x54, 0x45, 0x44, 0x10, 0x01,
+	0x12, 0x11, 0x0a, 0x0d, 0x41, 0x57, 0x41, 0x49, 0x54, 0x49, 0x4e, 0x47, 0x5f, 0x53, 0x49, 0x47,
+	0x4e, 0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09, 0x43, 0x4f, 0x4d, 0x50, 0x4c, 0x45, 0x54, 0x45, 0x44,
+	0x10, 0x03, 0x2a, 0x5e, 0x0a, 0x0a, 0x42, 0x75, 0x72, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x1b, 0x0a, 0x17, 0x42, 0x55, 0x52, 0x4e, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f,
+	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x19, 0x0a,
+	0x15, 0x42, 0x55, 0x52, 0x4e, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53,
+	0x54, 0x41, 0x4b, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x18, 0x0a, 0x14, 0x42, 0x55, 0x52, 0x4e,
+	0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x54, 0x41, 0x4b, 0x45, 0x44,
+	0x10, 0x02, 0x42, 0xaa, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x7a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x2e, 0x64, 0x63, 0x74, 0x42, 0x10, 0x52, 0x65, 0x64, 0x65, 0x6d, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x38, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x5a, 0x65, 0x6e, 0x72, 0x6f, 0x63, 0x6b, 0x2d, 0x46,
+	0x6f, 0x75, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x2f, 0x76, 0x36, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x7a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x2f, 0x64, 0x63, 0x74, 0xa2, 0x02, 0x03, 0x5a, 0x44, 0x58, 0xaa, 0x02, 0x0b, 0x5a, 0x72, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x2e, 0x44, 0x63, 0x74, 0xca, 0x02, 0x0b, 0x5a, 0x72, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x5c, 0x44, 0x63, 0x74, 0xe2, 0x02, 0x17, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e,
+	0x5c, 0x44, 0x63, 0x74, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0xea, 0x02, 0x0c, 0x5a, 0x72, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x3a, 0x3a, 0x44, 0x63, 0x74, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2183,25 +2356,27 @@ func file_zrchain_dct_redemptions_proto_rawDescGZIP() []byte {
 	return file_zrchain_dct_redemptions_proto_rawDescData
 }
 
-var file_zrchain_dct_redemptions_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_zrchain_dct_redemptions_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_zrchain_dct_redemptions_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_zrchain_dct_redemptions_proto_goTypes = []interface{}{
 	(RedemptionStatus)(0),  // 0: zrchain.dct.RedemptionStatus
-	(*Redemption)(nil),     // 1: zrchain.dct.Redemption
-	(*RedemptionData)(nil), // 2: zrchain.dct.RedemptionData
-	(*BurnEvent)(nil),      // 3: zrchain.dct.BurnEvent
-	(Asset)(0),             // 4: zrchain.dct.Asset
+	(BurnStatus)(0),        // 1: zrchain.dct.BurnStatus
+	(*Redemption)(nil),     // 2: zrchain.dct.Redemption
+	(*RedemptionData)(nil), // 3: zrchain.dct.RedemptionData
+	(*BurnEvent)(nil),      // 4: zrchain.dct.BurnEvent
+	(Asset)(0),             // 5: zrchain.dct.Asset
 }
 var file_zrchain_dct_redemptions_proto_depIdxs = []int32{
-	2, // 0: zrchain.dct.Redemption.data:type_name -> zrchain.dct.RedemptionData
+	3, // 0: zrchain.dct.Redemption.data:type_name -> zrchain.dct.RedemptionData
 	0, // 1: zrchain.dct.Redemption.status:type_name -> zrchain.dct.RedemptionStatus
-	4, // 2: zrchain.dct.RedemptionData.asset:type_name -> zrchain.dct.Asset
-	4, // 3: zrchain.dct.BurnEvent.asset:type_name -> zrchain.dct.Asset
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5, // 2: zrchain.dct.RedemptionData.asset:type_name -> zrchain.dct.Asset
+	5, // 3: zrchain.dct.BurnEvent.asset:type_name -> zrchain.dct.Asset
+	1, // 4: zrchain.dct.BurnEvent.status:type_name -> zrchain.dct.BurnStatus
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_zrchain_dct_redemptions_proto_init() }
@@ -2253,7 +2428,7 @@ func file_zrchain_dct_redemptions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zrchain_dct_redemptions_proto_rawDesc,
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,

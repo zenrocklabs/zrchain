@@ -46,6 +46,8 @@ import (
 	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
 
+const redemptionDelaySeconds int64 = 7 * 24 * 60 * 60
+
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
 	resp, err := k.sidecarClient.GetSidecarState(ctx, &sidecar.SidecarStateRequest{})
 	if err != nil {
@@ -1055,7 +1057,7 @@ func (k *Keeper) getPendingDCTMintTransactions(ctx sdk.Context, asset dcttypes.A
 	return results, nil
 }
 
-// getPendingBurnEvents retrieves up to 2 pending burn events with status BURNED.
+// getPendingBurnEvents retrieves up to 2 pending burn events with status UNSTAKING.
 func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
 	if err != nil {
@@ -1070,7 +1072,7 @@ func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent,
 			return false, nil // continue walking
 		}
 
-		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_BURNED {
+		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
 			results = append(results, event)
 			if len(results) >= 2 {
 				return true, nil // stop walking
@@ -1122,6 +1124,200 @@ func (k *Keeper) GetDCTRedemptionsByStatus(ctx sdk.Context, asset dcttypes.Asset
 	})
 
 	return results, err
+}
+
+func (k Keeper) calculateRedemptionDelayBlocks(ctx sdk.Context) int64 {
+	blockTime := k.GetBlockTime(ctx)
+	if blockTime <= 0 {
+		blockTime = types.DefaultBlockTime
+	}
+	delay := redemptionDelaySeconds / blockTime
+	if redemptionDelaySeconds%blockTime != 0 {
+		delay++
+	}
+	if delay <= 0 {
+		delay = 1
+	}
+	return delay
+}
+
+func (k Keeper) calculateRedemptionMaturityHeight(ctx sdk.Context) int64 {
+	delay := k.calculateRedemptionDelayBlocks(ctx)
+	return ctx.BlockHeight() + delay
+}
+
+func (k *Keeper) processMatureZenBTCBurns(ctx sdk.Context) {
+	currentHeight := ctx.BlockHeight()
+	err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, burn zenbtctypes.BurnEvent) (bool, error) {
+		if burn.Status != zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			return false, nil
+		}
+		if burn.MaturityHeight == 0 {
+			burn.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKED
+			burn.MaturityHeight = currentHeight
+			if err := k.zenBTCKeeper.SetBurnEvent(ctx, id, burn); err != nil {
+				k.Logger(ctx).Error("error updating legacy zenBTC burn event", "burn_id", id, "error", err)
+			}
+			return false, nil
+		}
+		if burn.MaturityHeight > 0 && burn.MaturityHeight > currentHeight {
+			return false, nil
+		}
+		if err := k.createZenBTCRedemptionFromBurn(ctx, id, burn); err != nil {
+			k.Logger(ctx).Error("error maturing zenBTC burn event", "burn_id", id, "error", err)
+		}
+		return false, nil
+	})
+	if err != nil {
+		k.Logger(ctx).Error("error scanning zenBTC burn events for maturity", "error", err)
+	}
+	if err := k.updateFirstPendingZenBTCBurn(ctx); err != nil {
+		k.Logger(ctx).Error("error updating zenBTC first pending burn pointer", "error", err)
+	}
+}
+
+func (k *Keeper) createZenBTCRedemptionFromBurn(ctx sdk.Context, burnID uint64, burn zenbtctypes.BurnEvent) error {
+	nextRedemptionID := uint64(0)
+	if err := k.zenBTCKeeper.WalkRedemptionsDescending(ctx, func(id uint64, _ zenbtctypes.Redemption) (bool, error) {
+		nextRedemptionID = id + 1
+		return true, nil
+	}); err != nil {
+		return err
+	}
+	if nextRedemptionID == 0 {
+		nextRedemptionID = 1
+	}
+
+	if err := k.zenBTCKeeper.SetRedemption(ctx, nextRedemptionID, zenbtctypes.Redemption{
+		Data: zenbtctypes.RedemptionData{
+			Id:                 nextRedemptionID,
+			DestinationAddress: burn.DestinationAddr,
+			Amount:             burn.Amount,
+		},
+		Status: zenbtctypes.RedemptionStatus_UNSTAKED,
+	}); err != nil {
+		return err
+	}
+
+	burn.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKED
+	if burn.MaturityHeight == 0 {
+		burn.MaturityHeight = ctx.BlockHeight()
+	}
+	if err := k.zenBTCKeeper.SetBurnEvent(ctx, burnID, burn); err != nil {
+		return err
+	}
+
+	k.Logger(ctx).Info("matured zenBTC burn event", "burn_id", burnID, "redemption_id", nextRedemptionID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+	return nil
+}
+
+func (k *Keeper) updateFirstPendingZenBTCBurn(ctx sdk.Context) error {
+	var nextPending uint64
+	err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, burn zenbtctypes.BurnEvent) (bool, error) {
+		if burn.Status == zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			nextPending = id
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	return k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, nextPending)
+}
+
+func (k *Keeper) processMatureDCTBurns(ctx sdk.Context) {
+	if k.dctKeeper == nil {
+		return
+	}
+
+	assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error listing DCT assets for burn maturity processing", "error", err)
+		return
+	}
+
+	for _, asset := range assets {
+		err := k.dctKeeper.WalkBurnEvents(ctx, asset, func(id uint64, burn dcttypes.BurnEvent) (bool, error) {
+			if burn.Status != dcttypes.BurnStatus_BURN_STATUS_UNSTAKING {
+				return false, nil
+			}
+			if burn.MaturityHeight == 0 {
+				burn.Status = dcttypes.BurnStatus_BURN_STATUS_UNSTAKED
+				burn.MaturityHeight = ctx.BlockHeight()
+				if err := k.dctKeeper.SetBurnEvent(ctx, asset, id, burn); err != nil {
+					k.Logger(ctx).Error("error updating legacy DCT burn event", "asset", asset.String(), "burn_id", id, "error", err)
+				}
+				return false, nil
+			}
+			if burn.MaturityHeight > 0 && burn.MaturityHeight > ctx.BlockHeight() {
+				return false, nil
+			}
+			if err := k.createDCTRedemptionFromBurn(ctx, asset, id, burn); err != nil {
+				k.Logger(ctx).Error("error maturing DCT burn event", "asset", asset.String(), "burn_id", id, "error", err)
+			}
+			return false, nil
+		})
+		if err != nil {
+			k.Logger(ctx).Error("error scanning DCT burn events for maturity", "asset", asset.String(), "error", err)
+			continue
+		}
+
+		if err := k.updateFirstPendingDCTBurn(ctx, asset); err != nil {
+			k.Logger(ctx).Error("error updating DCT first pending burn pointer", "asset", asset.String(), "error", err)
+		}
+	}
+}
+
+func (k *Keeper) createDCTRedemptionFromBurn(ctx sdk.Context, asset dcttypes.Asset, burnID uint64, burn dcttypes.BurnEvent) error {
+	nextRedemptionID := uint64(0)
+	if err := k.dctKeeper.WalkRedemptionsDescending(ctx, asset, func(id uint64, _ dcttypes.Redemption) (bool, error) {
+		nextRedemptionID = id + 1
+		return true, nil
+	}); err != nil {
+		return err
+	}
+	if nextRedemptionID == 0 {
+		nextRedemptionID = 1
+	}
+
+	if err := k.dctKeeper.SetRedemption(ctx, asset, nextRedemptionID, dcttypes.Redemption{
+		Data: dcttypes.RedemptionData{
+			Id:                 nextRedemptionID,
+			DestinationAddress: burn.DestinationAddr,
+			Amount:             burn.Amount,
+			Asset:              asset,
+		},
+		Status: dcttypes.RedemptionStatus_INITIATED,
+	}); err != nil {
+		return err
+	}
+
+	burn.Status = dcttypes.BurnStatus_BURN_STATUS_UNSTAKED
+	if burn.MaturityHeight == 0 {
+		burn.MaturityHeight = ctx.BlockHeight()
+	}
+	if err := k.dctKeeper.SetBurnEvent(ctx, asset, burnID, burn); err != nil {
+		return err
+	}
+
+	k.Logger(ctx).Info("matured DCT burn event", "asset", asset.String(), "burn_id", burnID, "redemption_id", nextRedemptionID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+	return nil
+}
+
+func (k *Keeper) updateFirstPendingDCTBurn(ctx sdk.Context, asset dcttypes.Asset) error {
+	var nextPending uint64
+	err := k.dctKeeper.WalkBurnEvents(ctx, asset, func(id uint64, burn dcttypes.BurnEvent) (bool, error) {
+		if burn.Status == dcttypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			nextPending = id
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	return k.dctKeeper.SetFirstPendingBurnEvent(ctx, asset, nextPending)
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, pluralityVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
@@ -1512,10 +1708,10 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 	return err
 }
 
-// Helper function to submit Ethereum transactions
+// Helper function to submit Solana transactions
 func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
-		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+		Network: zentptypes.Caip2ToSolanaNetwork(chainID)})
 	if err != nil {
 		return 0, err
 	}

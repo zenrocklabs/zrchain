@@ -123,7 +123,13 @@ func (m *mockDCTKeeper) GetExchangeRate(ctx context.Context, asset dcttypes.Asse
 func (m *mockDCTKeeper) CreateBurnEvent(ctx context.Context, asset dcttypes.Asset, burnEvent *dcttypes.BurnEvent) (uint64, error) {
 	return 1, nil
 }
+func (m *mockDCTKeeper) SetBurnEvent(ctx context.Context, asset dcttypes.Asset, id uint64, burnEvent dcttypes.BurnEvent) error {
+	return nil
+}
 func (m *mockDCTKeeper) WalkBurnEvents(ctx context.Context, asset dcttypes.Asset, fn func(id uint64, burnEvent dcttypes.BurnEvent) (stop bool, err error)) error {
+	return nil
+}
+func (m *mockDCTKeeper) SetFirstPendingBurnEvent(ctx context.Context, asset dcttypes.Asset, id uint64) error {
 	return nil
 }
 func (m *mockDCTKeeper) SetRedemption(ctx context.Context, asset dcttypes.Asset, id uint64, redemption dcttypes.Redemption) error {

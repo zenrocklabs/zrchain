@@ -18,8 +18,8 @@ class RedemptionStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 class BurnStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     BURN_STATUS_UNSPECIFIED: _ClassVar[BurnStatus]
-    BURN_STATUS_BURNED: _ClassVar[BurnStatus]
     BURN_STATUS_UNSTAKING: _ClassVar[BurnStatus]
+    BURN_STATUS_UNSTAKED: _ClassVar[BurnStatus]
 UNSPECIFIED: RedemptionStatus
 INITIATED: RedemptionStatus
 UNSTAKED: RedemptionStatus
@@ -27,8 +27,8 @@ BURNED: RedemptionStatus
 COMPLETED: RedemptionStatus
 AWAITING_SIGN: RedemptionStatus
 BURN_STATUS_UNSPECIFIED: BurnStatus
-BURN_STATUS_BURNED: BurnStatus
 BURN_STATUS_UNSTAKING: BurnStatus
+BURN_STATUS_UNSTAKED: BurnStatus
 
 class Redemption(_message.Message):
     __slots__ = ("data", "status")
@@ -51,7 +51,7 @@ class RedemptionData(_message.Message):
     def __init__(self, id: _Optional[int] = ..., destination_address: _Optional[bytes] = ..., amount: _Optional[int] = ..., sign_req_id: _Optional[int] = ...) -> None: ...
 
 class BurnEvent(_message.Message):
-    __slots__ = ("id", "txID", "logIndex", "chainID", "destinationAddr", "amount", "status")
+    __slots__ = ("id", "txID", "logIndex", "chainID", "destinationAddr", "amount", "status", "maturity_height")
     ID_FIELD_NUMBER: _ClassVar[int]
     TXID_FIELD_NUMBER: _ClassVar[int]
     LOGINDEX_FIELD_NUMBER: _ClassVar[int]
@@ -59,6 +59,7 @@ class BurnEvent(_message.Message):
     DESTINATIONADDR_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
+    MATURITY_HEIGHT_FIELD_NUMBER: _ClassVar[int]
     id: int
     txID: str
     logIndex: int
@@ -66,4 +67,5 @@ class BurnEvent(_message.Message):
     destinationAddr: bytes
     amount: int
     status: BurnStatus
-    def __init__(self, id: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., chainID: _Optional[str] = ..., destinationAddr: _Optional[bytes] = ..., amount: _Optional[int] = ..., status: _Optional[_Union[BurnStatus, str]] = ...) -> None: ...
+    maturity_height: int
+    def __init__(self, id: _Optional[int] = ..., txID: _Optional[str] = ..., logIndex: _Optional[int] = ..., chainID: _Optional[str] = ..., destinationAddr: _Optional[bytes] = ..., amount: _Optional[int] = ..., status: _Optional[_Union[BurnStatus, str]] = ..., maturity_height: _Optional[int] = ...) -> None: ...

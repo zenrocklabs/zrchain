@@ -26,7 +26,7 @@ from gogoproto import gogo_pb2 as gogoproto_dot_gogo__pb2
 from zrchain.dct import params_pb2 as zrchain_dot_dct_dot_params__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/dct/redemptions.proto\x12\x0bzrchain.dct\x1a\x14gogoproto/gogo.proto\x1a\x18zrchain/dct/params.proto\"z\n\nRedemption\x12\x35\n\x04\x64\x61ta\x18\x01 \x01(\x0b\x32\x1b.zrchain.dct.RedemptionDataB\x04\xc8\xde\x1f\x00R\x04\x64\x61ta\x12\x35\n\x06status\x18\x02 \x01(\x0e\x32\x1d.zrchain.dct.RedemptionStatusR\x06status\"\xb3\x01\n\x0eRedemptionData\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12/\n\x13\x64\x65stination_address\x18\x02 \x01(\x0cR\x12\x64\x65stinationAddress\x12\x16\n\x06\x61mount\x18\x03 \x01(\x04R\x06\x61mount\x12\x1e\n\x0bsign_req_id\x18\x04 \x01(\x04R\tsignReqId\x12(\n\x05\x61sset\x18\x05 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset\"\xd1\x01\n\tBurnEvent\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n\x04txID\x18\x02 \x01(\tR\x04txID\x12\x1a\n\x08logIndex\x18\x03 \x01(\x04R\x08logIndex\x12\x18\n\x07\x63hainID\x18\x04 \x01(\tR\x07\x63hainID\x12(\n\x0f\x64\x65stinationAddr\x18\x05 \x01(\x0cR\x0f\x64\x65stinationAddr\x12\x16\n\x06\x61mount\x18\x06 \x01(\x04R\x06\x61mount\x12(\n\x05\x61sset\x18\x07 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset*T\n\x10RedemptionStatus\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\r\n\tINITIATED\x10\x01\x12\x11\n\rAWAITING_SIGN\x10\x02\x12\r\n\tCOMPLETED\x10\x03\x42\x36Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1dzrchain/dct/redemptions.proto\x12\x0bzrchain.dct\x1a\x14gogoproto/gogo.proto\x1a\x18zrchain/dct/params.proto\"z\n\nRedemption\x12\x35\n\x04\x64\x61ta\x18\x01 \x01(\x0b\x32\x1b.zrchain.dct.RedemptionDataB\x04\xc8\xde\x1f\x00R\x04\x64\x61ta\x12\x35\n\x06status\x18\x02 \x01(\x0e\x32\x1d.zrchain.dct.RedemptionStatusR\x06status\"\xb3\x01\n\x0eRedemptionData\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12/\n\x13\x64\x65stination_address\x18\x02 \x01(\x0cR\x12\x64\x65stinationAddress\x12\x16\n\x06\x61mount\x18\x03 \x01(\x04R\x06\x61mount\x12\x1e\n\x0bsign_req_id\x18\x04 \x01(\x04R\tsignReqId\x12(\n\x05\x61sset\x18\x05 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset\"\xab\x02\n\tBurnEvent\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n\x04txID\x18\x02 \x01(\tR\x04txID\x12\x1a\n\x08logIndex\x18\x03 \x01(\x04R\x08logIndex\x12\x18\n\x07\x63hainID\x18\x04 \x01(\tR\x07\x63hainID\x12(\n\x0f\x64\x65stinationAddr\x18\x05 \x01(\x0cR\x0f\x64\x65stinationAddr\x12\x16\n\x06\x61mount\x18\x06 \x01(\x04R\x06\x61mount\x12(\n\x05\x61sset\x18\x07 \x01(\x0e\x32\x12.zrchain.dct.AssetR\x05\x61sset\x12/\n\x06status\x18\x08 \x01(\x0e\x32\x17.zrchain.dct.BurnStatusR\x06status\x12\'\n\x0fmaturity_height\x18\t \x01(\x03R\x0ematurityHeight*T\n\x10RedemptionStatus\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\r\n\tINITIATED\x10\x01\x12\x11\n\rAWAITING_SIGN\x10\x02\x12\r\n\tCOMPLETED\x10\x03*^\n\nBurnStatus\x12\x1b\n\x17\x42URN_STATUS_UNSPECIFIED\x10\x00\x12\x19\n\x15\x42URN_STATUS_UNSTAKING\x10\x01\x12\x18\n\x14\x42URN_STATUS_UNSTAKED\x10\x02\x42\x36Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,12 +36,14 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z4github.com/Zenrock-Foundation/zrchain/v6/x/dct/types'
   _globals['_REDEMPTION'].fields_by_name['data']._loaded_options = None
   _globals['_REDEMPTION'].fields_by_name['data']._serialized_options = b'\310\336\037\000'
-  _globals['_REDEMPTIONSTATUS']._serialized_start=612
-  _globals['_REDEMPTIONSTATUS']._serialized_end=696
+  _globals['_REDEMPTIONSTATUS']._serialized_start=702
+  _globals['_REDEMPTIONSTATUS']._serialized_end=786
+  _globals['_BURNSTATUS']._serialized_start=788
+  _globals['_BURNSTATUS']._serialized_end=882
   _globals['_REDEMPTION']._serialized_start=94
   _globals['_REDEMPTION']._serialized_end=216
   _globals['_REDEMPTIONDATA']._serialized_start=219
   _globals['_REDEMPTIONDATA']._serialized_end=398
   _globals['_BURNEVENT']._serialized_start=401
-  _globals['_BURNEVENT']._serialized_end=610
+  _globals['_BURNEVENT']._serialized_end=700
 # @@protoc_insertion_point(module_scope)

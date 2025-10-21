@@ -2,7 +2,7 @@ package types
 
 import treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 
-func Caip2ToSolananNetwork(caip string) treasurytypes.SolanaNetworkType {
+func Caip2ToSolanaNetwork(caip string) treasurytypes.SolanaNetworkType {
 	switch caip {
 	case "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp":
 		return treasurytypes.SolanaNetworkType_MAINNET
