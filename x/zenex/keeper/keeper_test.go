@@ -22,6 +22,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	ubermock "go.uber.org/mock/gomock"
 )
 
@@ -478,6 +479,63 @@ func (s *IntegrationTestSuite) TestGetSwapThreshold() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(tt.expected, swapThreshold)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestCreateRockBtcSwap() {
+	tests := []struct {
+		name        string
+		amountIn    uint64
+		rockPrice   math.LegacyDec
+		btcPrice    math.LegacyDec
+		expectedErr error
+	}{
+		{
+			name:        "happy path",
+			amountIn:    10000000000,
+			rockPrice:   zenextestutil.SampleRockBtcPrice,
+			btcPrice:    zenextestutil.SampleBtcRockPrice,
+			expectedErr: nil,
+		},
+		{
+			name:        "asset prices are zero",
+			amountIn:    10000000000,
+			rockPrice:   math.LegacyNewDecFromInt(math.NewInt(0)),
+			btcPrice:    math.LegacyNewDecFromInt(math.NewInt(0)),
+			expectedErr: fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=0.000000000000000000, BTC=0.000000000000000000"),
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			params := types.DefaultParams()
+			s.zenexKeeper.SetParams(s.ctx, params)
+
+			err := s.zenexKeeper.SwapsCount.Set(s.ctx, 0)
+			if err != nil {
+				s.T().Fatalf("failed to set swaps count: %v", err)
+			}
+
+			s.validationKeeper.EXPECT().GetRockBtcPrice(s.ctx).Return(tt.rockPrice, nil).AnyTimes()
+			s.validationKeeper.EXPECT().GetBtcRockPrice(s.ctx).Return(tt.btcPrice, nil).AnyTimes()
+			s.validationKeeper.EXPECT().GetAssetPrices(s.ctx).Return(map[validationtypes.Asset]math.LegacyDec{
+				validationtypes.Asset_ROCK: tt.rockPrice,
+				validationtypes.Asset_BTC:  tt.btcPrice,
+			}, nil).AnyTimes()
+			s.zenbtcKeeper.EXPECT().GetParams(s.ctx).Return(zenbtctypes.Params{RewardsDepositKeyID: 1}, nil).AnyTimes()
+			s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(s.ctx, types.ZenBtcRewardsCollectorName, types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, math.NewIntFromUint64(tt.amountIn)))).Return(nil).AnyTimes()
+
+			err = s.zenexKeeper.CreateRockBtcSwap(s.ctx, tt.amountIn)
+
+			if tt.expectedErr != nil {
+				s.Require().Error(err)
+				s.Require().Equal(tt.expectedErr.Error(), err.Error())
+			} else {
+				s.Require().NoError(err)
 			}
 		})
 	}
