@@ -83,11 +83,11 @@ var (
 	}
 
 	ZenZECSolanaProgramID = map[string]string{
-		NetworkLocalnet: "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
-		NetworkRegnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
-		NetworkDevnet:   "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
-		NetworkTestnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
-		NetworkMainnet:  "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		NetworkLocalnet: "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkRegnet:   "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkDevnet:   "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkTestnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkMainnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
 	}
 
 	SolRockProgramID = map[string]string{
