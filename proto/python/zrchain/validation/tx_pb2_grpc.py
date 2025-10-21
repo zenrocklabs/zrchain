@@ -85,6 +85,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
                 )
+        self.AdvanceSolanaNonce = channel.unary_unary(
+                '/zrchain.validation.Msg/AdvanceSolanaNonce',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -199,6 +204,15 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def AdvanceSolanaNonce(self, request, context):
+        """AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+        advances a configured Solana durable nonce account using a supplied recent
+        blockhash.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -271,6 +285,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.RemoveFromBedrockValSet,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.SerializeToString,
+            ),
+            'AdvanceSolanaNonce': grpc.unary_unary_rpc_method_handler(
+                    servicer.AdvanceSolanaNonce,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -518,5 +537,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/RemoveFromBedrockValSet',
             zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AdvanceSolanaNonce(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/AdvanceSolanaNonce',
+            zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
