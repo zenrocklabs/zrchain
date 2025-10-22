@@ -3,10 +3,13 @@ package keeper
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
@@ -494,6 +497,101 @@ func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath
 // distributeBedrockBTC adds (positive) or subtracts (negative) BTC sats across the bedrock validator set
 // proportional to each validator's native stake (TokensNative)
 func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
+	return k.distributeBedrockTokens(ctx, types.Asset_BTC, delta)
+}
+
+// adjustValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to a validator's TokensBedrock (Asset_BTC)
+func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.ValidatorHV, delta sdkmath.Int) error {
+	return k.adjustValidatorBedrockToken(ctx, validator, types.Asset_BTC, delta)
+}
+
+// reconcileBedrockTokens reconciles the total bedrock tokens held by validators
+// with the actual supply in the module stores. This ensures validators have the
+// correct total amount of bedrock tokens matching custodied supplies.
+func (k *Keeper) reconcileBedrockTokens(ctx sdk.Context) error {
+	// Reconcile BTC (zenBTC)
+	if err := k.reconcileBedrockAsset(ctx, types.Asset_BTC); err != nil {
+		k.Logger(ctx).Error("failed to reconcile bedrock BTC", "error", err)
+		// Don't return error to avoid halting the chain
+	}
+
+	// Reconcile ZEC (zenZEC via DCT module)
+	if err := k.reconcileBedrockAsset(ctx, types.Asset_ZEC); err != nil {
+		k.Logger(ctx).Error("failed to reconcile bedrock ZEC", "error", err)
+		// Don't return error to avoid halting the chain
+	}
+
+	return nil
+}
+
+// reconcileBedrockAsset reconciles a specific asset type between supply and validator holdings
+func (k *Keeper) reconcileBedrockAsset(ctx sdk.Context, asset types.Asset) error {
+	// Get total supply for this asset
+	var totalSupply sdkmath.Int
+	switch asset {
+	case types.Asset_BTC:
+		if k.zenBTCKeeper == nil {
+			return nil
+		}
+		supply, err := k.zenBTCKeeper.GetSupply(ctx)
+		if err != nil {
+			return err
+		}
+		totalSupply = sdkmath.NewIntFromUint64(supply.CustodiedBTC)
+	case types.Asset_ZEC:
+		if k.dctKeeper == nil {
+			return nil
+		}
+		supply, err := k.dctKeeper.GetSupply(ctx, dcttypes.Asset_ASSET_ZENZEC)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				totalSupply = sdkmath.ZeroInt()
+			} else {
+				return err
+			}
+		} else {
+			totalSupply = sdkmath.NewIntFromUint64(supply.CustodiedAmount)
+		}
+	default:
+		return nil
+	}
+
+	// Sum up all validator holdings for this asset
+	totalValidatorHoldings := sdkmath.ZeroInt()
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			return false, nil
+		}
+		totalValidatorHoldings = totalValidatorHoldings.Add(k.getBedrockTokenAmount(validator, asset))
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Calculate delta and distribute if needed
+	delta := totalSupply.Sub(totalValidatorHoldings)
+	if !delta.IsZero() {
+		k.Logger(ctx).Info("reconciling bedrock tokens",
+			"asset", asset.String(),
+			"total_supply", totalSupply.String(),
+			"total_validator_holdings", totalValidatorHoldings.String(),
+			"delta", delta.String(),
+		)
+		if err := k.distributeBedrockTokens(ctx, asset, delta); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// distributeBedrockTokens distributes tokens of a specific asset across the bedrock validator set
+func (k *Keeper) distributeBedrockTokens(ctx sdk.Context, asset types.Asset, delta sdkmath.Int) error {
 	if delta.IsZero() {
 		return nil
 	}
@@ -524,17 +622,17 @@ func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error 
 
 	// If no validators in bedrock set, log warning and skip
 	if len(bedrockValidators) == 0 {
-		k.Logger(ctx).Warn("no validators in bedrock set, skipping bedrock BTC distribution", "delta", delta.String())
+		k.Logger(ctx).Warn("no validators in bedrock set, skipping bedrock token distribution", "asset", asset.String(), "delta", delta.String())
 		return nil
 	}
 
 	// If total native stake is zero, distribute equally
 	if totalNativeStake.IsZero() {
-		k.Logger(ctx).Warn("total native stake is zero, distributing bedrock BTC equally")
+		k.Logger(ctx).Warn("total native stake is zero, distributing bedrock tokens equally", "asset", asset.String())
 		amountPerValidator := delta.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
 		for _, validator := range bedrockValidators {
-			if err := k.adjustValidatorBedrockBTC(ctx, validator, amountPerValidator); err != nil {
-				k.Logger(ctx).Error("failed to adjust bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+			if err := k.adjustValidatorBedrockToken(ctx, validator, asset, amountPerValidator); err != nil {
+				k.Logger(ctx).Error("failed to adjust bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
 			}
 		}
 		return nil
@@ -553,19 +651,19 @@ func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error 
 			remainingDelta = remainingDelta.Sub(allocation)
 		}
 
-		if err := k.adjustValidatorBedrockBTC(ctx, validator, allocation); err != nil {
-			k.Logger(ctx).Error("failed to adjust bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+		if err := k.adjustValidatorBedrockToken(ctx, validator, asset, allocation); err != nil {
+			k.Logger(ctx).Error("failed to adjust bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
 		}
 	}
 
 	return nil
 }
 
-// adjustValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to a validator's TokensBedrock (Asset_BTC)
-func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.ValidatorHV, delta sdkmath.Int) error {
+// adjustValidatorBedrockToken adds (positive) or subtracts (negative) tokens of a specific asset to a validator's TokensBedrock
+func (k *Keeper) adjustValidatorBedrockToken(ctx sdk.Context, validator types.ValidatorHV, asset types.Asset, delta sdkmath.Int) error {
 	idx := -1
 	for i, td := range validator.TokensBedrock {
-		if td != nil && td.Asset == types.Asset_BTC {
+		if td != nil && td.Asset == asset {
 			idx = i
 			break
 		}
@@ -582,7 +680,7 @@ func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.Vali
 		if amt.IsNegative() {
 			amt = sdkmath.ZeroInt()
 		}
-		validator.TokensBedrock = append(validator.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
+		validator.TokensBedrock = append(validator.TokensBedrock, &types.TokenData{Asset: asset, Amount: amt})
 	}
 
 	return k.SetValidator(ctx, validator)
@@ -591,11 +689,16 @@ func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.Vali
 // rebalanceBedrockBTC rebalances bedrock BTC across the bedrock validator set
 // to keep proportions aligned with native stake. This is called every block.
 func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
+	return k.rebalanceBedrockAsset(ctx, types.Asset_BTC)
+}
 
+// rebalanceBedrockAsset rebalances a specific bedrock asset across the bedrock validator set
+// to keep proportions aligned with native stake.
+func (k *Keeper) rebalanceBedrockAsset(ctx sdk.Context, asset types.Asset) error {
 	// Get all validators in the bedrock set
 	bedrockValidators := make([]types.ValidatorHV, 0)
 	totalNativeStake := sdkmath.ZeroInt()
-	totalBedrockBTC := sdkmath.ZeroInt()
+	totalBedrockTokens := sdkmath.ZeroInt()
 
 	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
 		if !inSet {
@@ -608,12 +711,12 @@ func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
 			return false, nil
 		}
 
-		// Get current bedrock BTC for this validator
-		currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
+		// Get current bedrock tokens for this validator
+		currentTokens := k.getBedrockTokenAmount(validator, asset)
 
 		bedrockValidators = append(bedrockValidators, validator)
 		totalNativeStake = totalNativeStake.Add(validator.TokensNative)
-		totalBedrockBTC = totalBedrockBTC.Add(currentBTC)
+		totalBedrockTokens = totalBedrockTokens.Add(currentTokens)
 		return false, nil
 	})
 
@@ -621,20 +724,20 @@ func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
 		return err
 	}
 
-	// If no validators in bedrock set or no BTC to rebalance, skip
-	if len(bedrockValidators) == 0 || totalBedrockBTC.IsZero() {
+	// If no validators in bedrock set or no tokens to rebalance, skip
+	if len(bedrockValidators) == 0 || totalBedrockTokens.IsZero() {
 		return nil
 	}
 
 	// If total native stake is zero, distribute equally
 	if totalNativeStake.IsZero() {
-		amountPerValidator := totalBedrockBTC.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
+		amountPerValidator := totalBedrockTokens.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
 		for _, validator := range bedrockValidators {
-			currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
-			adjustment := amountPerValidator.Sub(currentBTC)
+			currentTokens := k.getBedrockTokenAmount(validator, asset)
+			adjustment := amountPerValidator.Sub(currentTokens)
 			if !adjustment.IsZero() {
-				if err := k.adjustValidatorBedrockBTC(ctx, validator, adjustment); err != nil {
-					k.Logger(ctx).Error("failed to rebalance bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+				if err := k.adjustValidatorBedrockToken(ctx, validator, asset, adjustment); err != nil {
+					k.Logger(ctx).Error("failed to rebalance bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
 				}
 			}
 		}
@@ -642,24 +745,24 @@ func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
 	}
 
 	// Calculate target amounts and adjust
-	remainingBTC := totalBedrockBTC
+	remainingTokens := totalBedrockTokens
 	for i, validator := range bedrockValidators {
 		var targetAmount sdkmath.Int
 		if i == len(bedrockValidators)-1 {
 			// Last validator gets the remaining amount to handle rounding
-			targetAmount = remainingBTC
+			targetAmount = remainingTokens
 		} else {
-			// Calculate proportional target: (validator.TokensNative / totalNativeStake) * totalBedrockBTC
-			targetAmount = validator.TokensNative.Mul(totalBedrockBTC).Quo(totalNativeStake)
-			remainingBTC = remainingBTC.Sub(targetAmount)
+			// Calculate proportional target: (validator.TokensNative / totalNativeStake) * totalBedrockTokens
+			targetAmount = validator.TokensNative.Mul(totalBedrockTokens).Quo(totalNativeStake)
+			remainingTokens = remainingTokens.Sub(targetAmount)
 		}
 
-		currentBTC := k.getBedrockTokenAmount(validator, types.Asset_BTC)
-		adjustment := targetAmount.Sub(currentBTC)
+		currentTokens := k.getBedrockTokenAmount(validator, asset)
+		adjustment := targetAmount.Sub(currentTokens)
 
 		if !adjustment.IsZero() {
-			if err := k.adjustValidatorBedrockBTC(ctx, validator, adjustment); err != nil {
-				k.Logger(ctx).Error("failed to rebalance bedrock BTC for validator", "validator", validator.OperatorAddress, "error", err)
+			if err := k.adjustValidatorBedrockToken(ctx, validator, asset, adjustment); err != nil {
+				k.Logger(ctx).Error("failed to rebalance bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
 			}
 		}
 	}

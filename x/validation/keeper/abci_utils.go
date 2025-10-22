@@ -90,6 +90,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ROCKUSDPrice:         resp.ROCKUSDPrice,
 		BTCUSDPrice:          resp.BTCUSDPrice,
 		ETHUSDPrice:          resp.ETHUSDPrice,
+		ZECUSDPrice:          resp.ZECUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaBurnEvents:     resp.SolanaBurnEvents,
 		SolanaMintEvents:     resp.SolanaMintEvents,
@@ -790,14 +791,16 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	rockPrice, rockPriceErr := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
 	btcPrice, btcPriceErr := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
 	ethPrice, ethPriceErr := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+	zecPrice, zecPriceErr := math.LegacyNewDecFromStr(oracleData.ZECUSDPrice)
 
 	// Check if prices are valid
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" ||
-		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil ||
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" || oracleData.ZECUSDPrice == "" ||
+		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil || zecPriceErr != nil ||
 		rockPrice.IsNil() || rockPrice.IsZero() ||
 		btcPrice.IsNil() || btcPrice.IsZero() ||
-		ethPrice.IsNil() || ethPrice.IsZero() {
+		ethPrice.IsNil() || ethPrice.IsZero() ||
+		zecPrice.IsNil() || zecPrice.IsZero() {
 		pricesAreValid = false
 	}
 
@@ -846,6 +849,10 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 
 	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetPrices.Set(ctx, types.Asset_ZEC, zecPrice); err != nil {
+		k.Logger(ctx).Error("error setting ZEC price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
 
@@ -1644,6 +1651,11 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 	if fieldHasConsensus(fieldVotePowers, VEFieldETHUSDPrice) {
 		if voteExt.ETHUSDPrice != oracleData.ETHUSDPrice {
 			recordMismatch(VEFieldETHUSDPrice, voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
+		}
+	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldZECUSDPrice) {
+		if voteExt.ZECUSDPrice != oracleData.ZECUSDPrice {
+			recordMismatch(VEFieldZECUSDPrice, voteExt.ZECUSDPrice, oracleData.ZECUSDPrice)
 		}
 	}
 

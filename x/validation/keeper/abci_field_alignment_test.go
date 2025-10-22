@@ -70,6 +70,7 @@ func TestFieldHandlerAlignment(t *testing.T) {
 			VEFieldROCKUSDPrice,
 			VEFieldBTCUSDPrice,
 			VEFieldETHUSDPrice,
+			VEFieldZECUSDPrice,
 			VEFieldLatestBtcBlockHeight,
 			VEFieldLatestBtcHeaderHash,
 			VEFieldSolanaMintNoncesHash,
@@ -120,6 +121,7 @@ func TestHandlerGetSetSymmetry(t *testing.T) {
 		VEFieldROCKUSDPrice:               "1.25",
 		VEFieldBTCUSDPrice:                "45000.00",
 		VEFieldETHUSDPrice:                "2800.00",
+		VEFieldZECUSDPrice:                "262.65",
 		VEFieldRequestedZcashBlockHeight:  int64(1000000),
 		VEFieldRequestedZcashHeaderHash:   []byte("zcash_hash_1"),
 		VEFieldLatestZcashBlockHeight:     int64(2000000),
@@ -241,7 +243,7 @@ func TestVoteExtensionStructCompleteness(t *testing.T) {
 					VEFieldRequestedStakerNonce, VEFieldRequestedEthMinterNonce,
 					VEFieldRequestedUnstakerNonce, VEFieldRequestedCompleterNonce:
 					handler.SetValue(uint64(456), &ve)
-				case VEFieldROCKUSDPrice, VEFieldBTCUSDPrice, VEFieldETHUSDPrice:
+				case VEFieldROCKUSDPrice, VEFieldBTCUSDPrice, VEFieldETHUSDPrice, VEFieldZECUSDPrice:
 					handler.SetValue("1.23", &ve)
 				}
 			}, "SetValue panicked for field %s", handler.Field.String())
@@ -340,6 +342,7 @@ func getStructFieldNameForHandler(handler FieldHandler) string {
 		VEFieldROCKUSDPrice:               "ROCKUSDPrice",
 		VEFieldBTCUSDPrice:                "BTCUSDPrice",
 		VEFieldETHUSDPrice:                "ETHUSDPrice",
+		VEFieldZECUSDPrice:                "ZECUSDPrice",
 		VEFieldLatestBtcBlockHeight:       "LatestBtcBlockHeight",
 		VEFieldLatestBtcHeaderHash:        "LatestBtcHeaderHash",
 		VEFieldRequestedZcashBlockHeight:  "RequestedZcashBlockHeight",
@@ -376,6 +379,7 @@ func TestEnumConstantCountMatchesHandlers(t *testing.T) {
 		VEFieldROCKUSDPrice,
 		VEFieldBTCUSDPrice,
 		VEFieldETHUSDPrice,
+		VEFieldZECUSDPrice,
 		VEFieldLatestBtcBlockHeight,
 		VEFieldLatestBtcHeaderHash,
 		VEFieldSolanaMintNoncesHash,
@@ -542,6 +546,7 @@ func TestCompleteThreeWayAlignment(t *testing.T) {
 		VEFieldROCKUSDPrice,
 		VEFieldBTCUSDPrice,
 		VEFieldETHUSDPrice,
+		VEFieldZECUSDPrice,
 		VEFieldLatestBtcBlockHeight,
 		VEFieldLatestBtcHeaderHash,
 		VEFieldSolanaMintNoncesHash,
@@ -575,6 +580,7 @@ func TestCompleteThreeWayAlignment(t *testing.T) {
 		VEFieldROCKUSDPrice:               "ROCKUSDPrice",
 		VEFieldBTCUSDPrice:                "BTCUSDPrice",
 		VEFieldETHUSDPrice:                "ETHUSDPrice",
+		VEFieldZECUSDPrice:                "ZECUSDPrice",
 		VEFieldLatestBtcBlockHeight:       "LatestBtcBlockHeight",
 		VEFieldLatestBtcHeaderHash:        "LatestBtcHeaderHash",
 		VEFieldRequestedZcashBlockHeight:  "RequestedZcashBlockHeight",

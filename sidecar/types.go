@@ -102,6 +102,7 @@ type oracleStateUpdate struct {
 	ROCKUSDPrice            math.LegacyDec
 	BTCUSDPrice             math.LegacyDec
 	ETHUSDPrice             math.LegacyDec
+	ZECUSDPrice             math.LegacyDec
 	SolanaMintEvents        []api.SolanaMintEvent
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature

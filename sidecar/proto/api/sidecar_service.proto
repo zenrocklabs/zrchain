@@ -83,6 +83,7 @@ message SidecarStateResponse {
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
+  string ZECUSDPrice = 15;
   repeated SolanaMintEvent SolanaMintEvents = 12
       [ (gogoproto.nullable) = false ];
   repeated BurnEvent SolanaBurnEvents = 13 [ (gogoproto.nullable) = false ];
