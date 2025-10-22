@@ -248,6 +248,7 @@ type Config struct {
 	ProxyRPC               ProxyRPCConfig    `yaml:"proxy_rpc"`
 	Neutrino               NeutrinoConfig    `yaml:"neutrino"`
 	E2ETestsTickerInterval int               `yaml:"e2e_tests_ticker_interval"`
+	DebugMode              bool              `yaml:"debug_mode"`
 }
 
 type ProxyRPCConfig struct {

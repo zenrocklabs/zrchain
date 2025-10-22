@@ -90,7 +90,10 @@ message ValidatorHV {
   // validator
   repeated uint64 unbonding_ids = 14;
 
-  repeated TokenData tokens_bedrock = 15;
+  repeated TokenData tokens_bedrock = 15 [
+    (amino.dont_omitempty) = true,
+    (gogoproto.jsontag) = "tokens_bedrock"
+  ];
 }
 
 message TokenData {
