@@ -206,3 +206,30 @@ sidecar: build-sidecar run-sidecar
 alt-sidecar: build-sidecar run-alt-sidecar
 
 .PHONY: build-sidecar run-sidecar sidecar alt-sidecar run-alt-sidecar
+
+###############################################################################
+###                                 Tests                                   ###
+###############################################################################
+
+# Run all tests except e2e tests (only show failures)
+test tests:
+	@echo "Running all tests except e2e..."
+	@go test $(shell go list ./... | grep -v '/tests/e2e')
+
+# Run all tests except e2e with coverage
+test-coverage:
+	@echo "Running all tests except e2e with coverage..."
+	@go test -coverprofile=coverage.out $(shell go list ./... | grep -v '/tests/e2e')
+	@go tool cover -html=coverage.out -o coverage.html
+
+# Run only e2e tests (only show failures)
+test-e2e:
+	@echo "Running e2e tests..."
+	@go test ./tests/e2e/...
+
+# Run all tests including e2e (only show failures)
+test-all:
+	@echo "Running all tests including e2e..."
+	@go test ./...
+
+.PHONY: test tests test-coverage test-e2e test-all
