@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
 
 	"cosmossdk.io/math"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
@@ -23,13 +26,13 @@ func (o *Oracle) initPriceFeed() (*ethclient.Client, *aggregatorv3.AggregatorV3I
 	btcPriceFeedAddr := common.HexToAddress(sidecartypes.PriceFeedAddresses.BTC)
 	btcPriceFeed, err := aggregatorv3.NewAggregatorV3Interface(btcPriceFeedAddr, mainnetEthClient)
 	if err != nil {
-		log.Fatalf("Failed to create Chainlink price feed instance: %v", err)
+		log.Fatalf("Failed to create BTC Chainlink price feed instance: %v", err)
 	}
 
 	ethPriceFeedAddr := common.HexToAddress(sidecartypes.PriceFeedAddresses.ETH)
 	ethPriceFeed, err := aggregatorv3.NewAggregatorV3Interface(ethPriceFeedAddr, mainnetEthClient)
 	if err != nil {
-		log.Fatalf("Failed to create Chainlink price feed instance: %v", err)
+		log.Fatalf("Failed to create ETH Chainlink price feed instance: %v", err)
 	}
 
 	return mainnetEthClient, btcPriceFeed, ethPriceFeed
@@ -54,4 +57,51 @@ func (o *Oracle) fetchPrice(priceFeed *aggregatorv3.AggregatorV3Interface, block
 	result := price.Quo(divisorDec)
 
 	return result, nil
+}
+
+// CoinGeckoResponse represents the response from CoinGecko API
+type CoinGeckoResponse struct {
+	Zcash struct {
+		USD float64 `json:"usd"`
+	} `json:"zcash"`
+}
+
+// fetchZECPrice fetches the ZEC/USD price from CoinGecko API
+func (o *Oracle) fetchZECPrice(ctx context.Context) (math.LegacyDec, error) {
+	httpClient := &http.Client{
+		Timeout: sidecartypes.DefaultHTTPTimeout,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", sidecartypes.ZECUSDPriceURL, nil)
+	if err != nil {
+		return math.LegacyZeroDec(), fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return math.LegacyZeroDec(), fmt.Errorf("failed to fetch ZEC price from CoinGecko: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return math.LegacyZeroDec(), fmt.Errorf("CoinGecko API returned status %d", resp.StatusCode)
+	}
+
+	var result CoinGeckoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return math.LegacyZeroDec(), fmt.Errorf("failed to decode CoinGecko response: %w", err)
+	}
+
+	if result.Zcash.USD == 0 {
+		return math.LegacyZeroDec(), fmt.Errorf("ZEC price is zero or missing from CoinGecko response")
+	}
+
+	// Convert float64 to LegacyDec
+	priceStr := fmt.Sprintf("%.2f", result.Zcash.USD)
+	price, err := math.LegacyNewDecFromStr(priceStr)
+	if err != nil {
+		return math.LegacyZeroDec(), fmt.Errorf("failed to convert ZEC price to decimal: %w", err)
+	}
+
+	return price, nil
 }

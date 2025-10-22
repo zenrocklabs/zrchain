@@ -13,6 +13,7 @@ enum Asset {
   ROCK = 1;
   BTC = 2;
   ETH = 3;
+  ZEC = 4;
 }
 
 // AssetData is a struct that contains the price in USD + decimals of precision

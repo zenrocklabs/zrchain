@@ -30,11 +30,14 @@ var (
 		NetworkMainnet:  "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
 	}
 
-	// PriceFeedAddresses contains addresses for different price feed contracts
+	// PriceFeedAddresses contains addresses for different price feed contracts on Ethereum mainnet
 	PriceFeedAddresses = PriceFeed{
-		BTC: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c",
-		ETH: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+		BTC: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c", // BTC/USD Chainlink feed
+		ETH: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", // ETH/USD Chainlink feed
 	}
+
+	// ZEC Price URL from CoinGecko
+	ZECUSDPriceURL = "https://api.coingecko.com/api/v3/simple/price?ids=zcash&vs_currencies=usd"
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{
@@ -217,6 +220,7 @@ type OracleState struct {
 	ROCKUSDPrice            math.LegacyDec                 `json:"rockUSDPrice"`
 	BTCUSDPrice             math.LegacyDec                 `json:"btcUSDPrice"`
 	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
+	ZECUSDPrice             math.LegacyDec                 `json:"zecUSDPrice"`
 	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
 	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
 	// ZCash block headers
@@ -248,6 +252,7 @@ type Config struct {
 	ProxyRPC               ProxyRPCConfig    `yaml:"proxy_rpc"`
 	Neutrino               NeutrinoConfig    `yaml:"neutrino"`
 	E2ETestsTickerInterval int               `yaml:"e2e_tests_ticker_interval"`
+	DebugMode              bool              `yaml:"debug_mode"`
 }
 
 type ProxyRPCConfig struct {
