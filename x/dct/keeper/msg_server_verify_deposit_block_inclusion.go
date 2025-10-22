@@ -27,30 +27,27 @@ import (
 func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types.MsgVerifyDepositBlockInclusion) (*types.MsgVerifyDepositBlockInclusionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Verify that the message creator is the BitcoinProxyAddress from module params
-	params := k.GetParams(ctx)
-	if msg.Creator != params.BitcoinProxyAddress {
-		return nil, fmt.Errorf("unauthorized: only the BitcoinProxyAddress (%s) can verify deposit block inclusion, got %s", params.BitcoinProxyAddress, msg.Creator)
-	}
-
 	asset := msg.Asset
 	if asset == types.Asset_ASSET_UNSPECIFIED {
 		return nil, fmt.Errorf("asset must be specified")
 	}
-
 	// IMPORTANT: zenBTC deposits are handled by the zenBTC module, not DCT
 	// DCT module is for v1+ assets only (zenZEC and future wrapped assets)
 	if asset == types.Asset_ASSET_ZENBTC {
 		return nil, fmt.Errorf("zenBTC deposits must use the zenBTC module's VerifyDepositBlockInclusion endpoint, not DCT")
 	}
 
-	if _, err := k.GetAssetParams(ctx, asset); err != nil {
-		return nil, fmt.Errorf("asset configuration error: %w", err)
+	// Verify that the message creator is the BitcoinProxyAddress from module params
+	params, err := k.GetAssetParams(ctx, asset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get module params: %w", err)
+	}
+	if msg.Creator != params.ProxyAddress {
+		return nil, fmt.Errorf("unauthorized: only the BitcoinProxyAddress (%s) can verify deposit block inclusion, got %s", params.ProxyAddress, msg.Creator)
 	}
 
 	// Fetch the appropriate block header based on asset type
 	var blockHeader api.BTCBlockHeader
-	var err error
 	if asset == types.Asset_ASSET_ZENZEC {
 		// Use ZCash block headers for ZCash deposits
 		blockHeader, err = k.validationKeeper.ZcashBlockHeaders.Get(ctx, msg.BlockHeight)

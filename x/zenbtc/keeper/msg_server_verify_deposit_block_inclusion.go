@@ -28,9 +28,12 @@ func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Verify that the message creator is the BitcoinProxyAddress from module params
-	params := k.GetParams(ctx)
-	if msg.Creator != params.BitcoinProxyAddress {
-		return nil, fmt.Errorf("unauthorized: only the BitcoinProxyAddress (%s) can verify deposit block inclusion, got %s", params.BitcoinProxyAddress, msg.Creator)
+	moduleParams, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get module params: %w", err)
+	}
+	if msg.Creator != moduleParams.BitcoinProxyAddress {
+		return nil, fmt.Errorf("unauthorized: only the BitcoinProxyAddress (%s) can verify deposit block inclusion, got %s", moduleParams.BitcoinProxyAddress, msg.Creator)
 	}
 
 	blockHeader, err := k.validationKeeper.BtcBlockHeaders.Get(ctx, msg.BlockHeight)
