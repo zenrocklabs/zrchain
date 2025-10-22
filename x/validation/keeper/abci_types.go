@@ -196,6 +196,10 @@ func (ve VoteExtension) IsInvalid(logger log.Logger) bool {
 		logger.Error("invalid vote extension: ETHUSDPrice is empty")
 		invalid = true
 	}
+	if ve.ZECUSDPrice == "" {
+		logger.Error("invalid vote extension: ZECUSDPrice is empty")
+		invalid = true
+	}
 	if ve.LatestBtcBlockHeight == 0 {
 		logger.Error("invalid vote extension: LatestBtcBlockHeight is 0")
 		invalid = true

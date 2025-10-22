@@ -382,6 +382,7 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 		ROCKUSDPrice:            math.LegacyZeroDec(),
 		BTCUSDPrice:             math.LegacyZeroDec(),
 		ETHUSDPrice:             math.LegacyZeroDec(),
+		ZECUSDPrice:             math.LegacyZeroDec(),
 		ethBurnEvents:           make([]api.BurnEvent, 0),
 		cleanedEthBurnEvents:    make(map[string]bool),
 		solanaBurnEvents:        make([]api.BurnEvent, 0),

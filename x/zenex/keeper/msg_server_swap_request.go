@@ -11,6 +11,8 @@ import (
 )
 
 func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest) (*types.MsgSwapRequestResponse, error) {
+	return nil, fmt.Errorf("zenex module is currently disabled")
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {
