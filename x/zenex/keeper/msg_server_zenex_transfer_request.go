@@ -14,6 +14,8 @@ import (
 )
 
 func (k msgServer) ZenexTransferRequest(goCtx context.Context, msg *types.MsgZenexTransferRequest) (*types.MsgZenexTransferRequestResponse, error) {
+	return nil, fmt.Errorf("zenex module is currently disabled")
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {

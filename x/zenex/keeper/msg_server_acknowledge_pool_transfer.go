@@ -12,6 +12,8 @@ import (
 )
 
 func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.MsgAcknowledgePoolTransfer) (*types.MsgAcknowledgePoolTransferResponse, error) {
+	return nil, fmt.Errorf("zenex module is currently disabled")
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {

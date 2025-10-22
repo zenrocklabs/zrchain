@@ -122,6 +122,7 @@ func TestExtendVoteHandler(t *testing.T) {
 			require.Equal(t, "1.25", voteExt.ROCKUSDPrice)
 			require.Equal(t, "45000.00", voteExt.BTCUSDPrice)
 			require.Equal(t, "2800.00", voteExt.ETHUSDPrice)
+			require.Equal(t, "35.00", voteExt.ZECUSDPrice)
 			require.Equal(t, int64(750000), voteExt.LatestBtcBlockHeight)
 			require.NotEmpty(t, voteExt.LatestBtcHeaderHash)
 			require.Equal(t, "test", voteExt.SidecarVersionName)

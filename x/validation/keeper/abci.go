@@ -379,10 +379,10 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	k.updateAssetPrices(ctx, oracleData)
 
 	// Validator updates - only if EigenDelegationsHash has consensus
-	if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
-		k.UpdateValidatorStakes(ctx, oracleData)
-		k.updateAVSDelegationStore(ctx, oracleData)
-	}
+	// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
+	// 	k.UpdateValidatorStakes(ctx, oracleData)
+	// 	k.updateAVSDelegationStore(ctx, oracleData)
+	// }
 
 	// Bitcoin header processing - only if BTC header fields have consensus
 	btcHeaderFields := []VoteExtensionField{VEFieldLatestBtcHeaderHash, VEFieldRequestedBtcHeaderHash}
@@ -445,11 +445,11 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCMintsEthereum(ctx, oracleData)
 		k.processDCTMintsSolana(ctx, oracleData)
 		k.processZenBTCMintsSolana(ctx, oracleData)
+		k.processSolanaROCKMints(ctx, oracleData)
 
 		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
 		k.checkForDCTRedemptionFulfilment(ctx)
-		k.processSolanaROCKMints(ctx, oracleData)
 
 		// 3. Final cleanup steps for the block
 		k.clearSolanaAccounts(ctx)

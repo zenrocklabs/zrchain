@@ -44,6 +44,7 @@ var defaultVe = VoteExtension{
 	ROCKUSDPrice:            "1000000000",
 	BTCUSDPrice:             "1000000000",
 	ETHUSDPrice:             "1000000000",
+	ZECUSDPrice:             "1000000000",
 	LatestBtcBlockHeight:    100000,
 	LatestBtcHeaderHash:     []byte("randomhash"),
 	SidecarVersionName:      sidecartypes.SidecarVersionName,
