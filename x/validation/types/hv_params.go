@@ -25,7 +25,7 @@ var (
 	DefaultMainnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
 		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
-		{Asset: Asset_ZEC, Precision: 18, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_ZEC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
 	}
 )
 
