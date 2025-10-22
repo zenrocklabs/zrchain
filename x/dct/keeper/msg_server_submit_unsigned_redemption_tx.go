@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,6 +13,8 @@ import (
 )
 
 func (k msgServer) SubmitUnsignedRedemptionTx(goCtx context.Context, msg *types.MsgSubmitUnsignedRedemptionTx) (*types.MsgSubmitUnsignedRedemptionTxResponse, error) {
+	return nil, fmt.Errorf("dct redemptions are currently disabled")
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := k.VerifyUnsignedRedemptionTX(ctx, msg)
 	if err != nil {

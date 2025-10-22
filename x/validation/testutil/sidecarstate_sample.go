@@ -22,6 +22,7 @@ var SampleSidecarState = &sidecar.SidecarStateResponse{
 	ROCKUSDPrice:       "1.25",
 	BTCUSDPrice:        "45000.00",
 	ETHUSDPrice:        "2800.00",
+	ZECUSDPrice:        "35.00",
 	SolanaBurnEvents:   []sidecar.BurnEvent{},
 	SolanaMintEvents:   []sidecar.SolanaMintEvent{},
 	SidecarVersionName: "test",
@@ -51,6 +52,7 @@ var SampleOracleData = keeper.OracleData{
 	ROCKUSDPrice:            "1.25",
 	BTCUSDPrice:             "45000.00",
 	ETHUSDPrice:             "2800.00",
+	ZECUSDPrice:             "35.00",
 	LatestBtcBlockHeight:    750000,
 	LatestBtcBlockHeader: sidecar.BTCBlockHeader{
 		Version:     0x20000000,

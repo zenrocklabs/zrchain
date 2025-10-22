@@ -60,6 +60,7 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ROCKUSDPrice:       currentState.ROCKUSDPrice.String(),
 		BTCUSDPrice:        currentState.BTCUSDPrice.String(),
 		ETHUSDPrice:        currentState.ETHUSDPrice.String(),
+		ZECUSDPrice:        currentState.ZECUSDPrice.String(),
 		SolanaBurnEvents:   currentState.SolanaBurnEvents,
 		SolanaMintEvents:   currentState.SolanaMintEvents,
 		SidecarVersionName: sidecartypes.SidecarVersionName,

@@ -1294,12 +1294,12 @@ func (o *Oracle) buildFinalState(
 		"finalPendingSolanaTxs", len(newState.PendingSolanaTxs))
 
 	if o.DebugMode {
-		jsonData, err := json.MarshalIndent(newState, "", "  ")
+		slog.Info("State fetched (pre-update send)")
+		stateJSON, err := json.MarshalIndent(newState, "", "  ")
 		if err != nil {
-			slog.Error("Error marshalling state to JSON for logging", "error", err)
-			slog.Info("State fetched (pre-update send - fallback)", "state", newState)
+			fmt.Printf("Error marshaling state: %v\n", err)
 		} else {
-			slog.Info("State fetched (pre-update send)", "state", string(jsonData))
+			fmt.Println(string(stateJSON))
 		}
 	}
 
