@@ -271,7 +271,7 @@ func (o *Oracle) processOracleTick(
 	// have their own watermark protection to prevent event loss
 	slog.Info("Applying state update for tick", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
 	slog.Info("Received AVS contract state for", "network", sidecartypes.NetworkNames[o.Config.Network], "block", newState.EthBlockHeight)
-	slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice)
+	slog.Info("Received prices", "ROCK/USD", newState.ROCKUSDPrice, "BTC/USD", newState.BTCUSDPrice, "ETH/USD", newState.ETHUSDPrice, "ZEC/USD", newState.ZECUSDPrice)
 
 	o.applyStateUpdate(newState)
 }
@@ -723,6 +723,19 @@ func (o *Oracle) fetchPriceData(
 		},
 		update,
 		"failed to fetch crypto prices",
+	)
+
+	// Fetches the latest ZEC/USD price from CoinGecko API.
+	fetchAndUpdateState(
+		ctx, wg, errChan, updateMutex,
+		func(ctx context.Context) (math.LegacyDec, error) {
+			return o.fetchZECPrice(ctx)
+		},
+		func(result math.LegacyDec, update *oracleStateUpdate) {
+			update.ZECUSDPrice = result
+		},
+		update,
+		"failed to fetch ZEC price",
 	)
 }
 
@@ -1263,6 +1276,7 @@ func (o *Oracle) buildFinalState(
 		ROCKUSDPrice:            update.ROCKUSDPrice,
 		BTCUSDPrice:             update.BTCUSDPrice,
 		ETHUSDPrice:             update.ETHUSDPrice,
+		ZECUSDPrice:             update.ZECUSDPrice,
 		LastSolRockMintSig:      lastSolRockMintSig,
 		LastSolZenBTCMintSig:    lastSolZenBTCMintSig,
 		LastSolZenBTCBurnSig:    lastSolZenBTCBurnSig,
@@ -1309,6 +1323,10 @@ func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecar
 	if update.ETHUSDPrice.IsNil() {
 		update.ETHUSDPrice = currentState.ETHUSDPrice
 		slog.Warn("ETHUSDPrice was nil, using last known state value")
+	}
+	if update.ZECUSDPrice.IsNil() {
+		update.ZECUSDPrice = currentState.ZECUSDPrice
+		slog.Warn("ZECUSDPrice was nil, using last known state value")
 	}
 	if update.estimatedGas == 0 {
 		update.estimatedGas = currentState.EthGasLimit
@@ -3055,10 +3073,11 @@ type pendingTransactionStats struct {
 	successfulTxs  []string
 }
 
-// cryptoPrices holds both BTC and ETH price data
+// cryptoPrices holds BTC, ETH, and ZEC price data
 type cryptoPrices struct {
 	BTCUSDPrice math.LegacyDec
 	ETHUSDPrice math.LegacyDec
+	ZECUSDPrice math.LegacyDec
 }
 
 // burnEventResult holds the result of processing burn events

@@ -27,6 +27,12 @@ import (
 func (k msgServer) VerifyDepositBlockInclusion(goCtx context.Context, msg *types.MsgVerifyDepositBlockInclusion) (*types.MsgVerifyDepositBlockInclusionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Verify that the message creator is the BitcoinProxyAddress from module params
+	params := k.GetParams(ctx)
+	if msg.Creator != params.BitcoinProxyAddress {
+		return nil, fmt.Errorf("unauthorized: only the BitcoinProxyAddress (%s) can verify deposit block inclusion, got %s", params.BitcoinProxyAddress, msg.Creator)
+	}
+
 	asset := msg.Asset
 	if asset == types.Asset_ASSET_UNSPECIFIED {
 		return nil, fmt.Errorf("asset must be specified")

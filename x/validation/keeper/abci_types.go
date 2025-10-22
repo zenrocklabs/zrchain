@@ -55,6 +55,7 @@ type (
 		ROCKUSDPrice            string
 		BTCUSDPrice             string
 		ETHUSDPrice             string
+		ZECUSDPrice             string
 		LatestBtcBlockHeight    int64
 		LatestBtcHeaderHash     []byte
 		// ZCash block headers
@@ -100,6 +101,7 @@ type (
 		ROCKUSDPrice              string
 		BTCUSDPrice               string
 		ETHUSDPrice               string
+		ZECUSDPrice               string
 		ConsensusData             abci.ExtendedCommitInfo
 		FieldVotePowers           map[VoteExtensionField]int64 // Track which fields reached consensus
 		SidecarVersionName        string
@@ -298,6 +300,7 @@ const (
 	VEFieldROCKUSDPrice
 	VEFieldBTCUSDPrice
 	VEFieldETHUSDPrice
+	VEFieldZECUSDPrice
 	VEFieldLatestBtcBlockHeight
 	VEFieldLatestBtcHeaderHash
 	VEFieldSolanaMintNoncesHash
@@ -380,6 +383,8 @@ func (f VoteExtensionField) String() string {
 		return "BTCUSDPrice"
 	case VEFieldETHUSDPrice:
 		return "ETHUSDPrice"
+	case VEFieldZECUSDPrice:
+		return "ZECUSDPrice"
 	case VEFieldLatestBtcBlockHeight:
 		return "LatestBtcBlockHeight"
 	case VEFieldLatestBtcHeaderHash:
@@ -520,6 +525,11 @@ func initializeFieldHandlers() []FieldHandler {
 			Field:    VEFieldETHUSDPrice,
 			GetValue: func(ve VoteExtension) any { return ve.ETHUSDPrice },
 			SetValue: func(v any, ve *VoteExtension) { ve.ETHUSDPrice = v.(string) },
+		},
+		{
+			Field:    VEFieldZECUSDPrice,
+			GetValue: func(ve VoteExtension) any { return ve.ZECUSDPrice },
+			SetValue: func(v any, ve *VoteExtension) { ve.ZECUSDPrice = v.(string) },
 		},
 
 		// ZCash fields

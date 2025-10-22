@@ -224,6 +224,7 @@ func ConstructVoteExtension(oracleData *OracleData) (VoteExtension, error) {
 		ROCKUSDPrice:              oracleData.ROCKUSDPrice,
 		BTCUSDPrice:               oracleData.BTCUSDPrice,
 		ETHUSDPrice:               oracleData.ETHUSDPrice,
+		ZECUSDPrice:               oracleData.ZECUSDPrice,
 		EigenDelegationsHash:      avsDelegationsHash[:],
 		EthBurnEventsHash:         ethBurnEventsHash[:],
 		RedemptionsHash:           redemptionsHash[:],
