@@ -30,7 +30,7 @@ const (
 	ROCK_UNWRAP_SHARD_SEED   = "rock_unwrap"
 
 	// Default EventStore program ID
-	DEFAULT_PROGRAM_ID = "4KFjSTnBjbJbWXAiwpWjBCCfAKhjqMp3yfXYpoR3eVis"
+	DEFAULT_PROGRAM_ID = "2BZ3Vi9BurkVJv5wX8H9QSxQasDJ42FVFRNS4vXSYf22"
 )
 
 // FlexibleAddress represents a variable-length Bitcoin address
