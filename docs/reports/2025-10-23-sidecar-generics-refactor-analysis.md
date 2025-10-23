@@ -26,7 +26,7 @@
 
 Audited the sidecar’s Solana event pipeline and documented a generics-based refactor plan. The current implementation leans heavily on `[]any` slices and reflection, which hurts readability and performance. The proposed design introduces typed adapters and generic helpers so we can remove most dynamic typing while keeping event decoding flexible.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -36,7 +36,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Highlighted the reflection hot paths inside `processMintTransaction` and `processBurnTransaction`.
 - Outlined a type-safe alternative that uses Go generics and generated adapters to convert SPL binding structs into API events without `reflect`.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -46,7 +46,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Quantified risks: runtime panics, extra allocations, maintenance overhead.
 - Proposed a staged migration strategy to typed event envelopes and generic processing.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -124,7 +124,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 
 - Update pending transaction storage to keep typed payloads, removing reflective reprocessing.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -134,7 +134,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - [`sidecar/oracle_test.go`](../../sidecar/oracle_test.go) – Test helpers returning `[]any` (`235-236`).
 - [`sidecar/utils.go`](../../sidecar/utils.go) – Event merge logic keyed by `any`-derived hashes (`314-356`).
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -146,7 +146,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 
 **Solution**: Generate small adapters for each SPL contract and wire them into generic helpers. This keeps the call sites generic without sacrificing static typing.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -155,7 +155,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Favor generics over reflection to improve performance and safety in hot paths.
 - Stage the migration: prototype zenBTC mint path first, then extend to burns and zenZEC once metrics confirm parity.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -171,7 +171,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 | --------- | ------------------------- | --------------------------------| ------------------- |
 | 1         | Debt assessment           | Catalogued `any`/`reflect` usage| Refactor plan ready |
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -184,7 +184,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Capture baseline allocations (`b.ReportAllocs()`) to validate the generics path actually reduces heap pressure.
 - Prioritize benchmark coverage for the desync remediation work first; generics optimization should not delay the gossip and watermark fixes already identified in [`docs/reports/2025-10-23-sidecar-desync-analysis.md`](../../docs/reports/2025-10-23-sidecar-desync-analysis.md).
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -192,7 +192,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 
 - No module or chain state changes; documentation-only assessment.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -201,7 +201,7 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Removing reflection reduces the chance of runtime panics that could desync validators’ sidecars, indirectly strengthening oracle availability.
 - Typed event handling lowers the risk of malformed data leaking into vote extensions.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -211,4 +211,4 @@ Audited the sidecar’s Solana event pipeline and documented a generics-based re
 - Extend adapters to zenZEC and burn flows once performance gains are confirmed.
 - Update pending transaction persistence to store typed payloads and remove the remaining `any` helpers.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)

@@ -26,7 +26,7 @@ Sidecars are desyncing in testnet, with validators failing to reach consensus on
 
 The primary suspected cause is Solana RPC rate limiting, which could cause different sidecars to receive partial or inconsistent data when querying for events. This report analyzes the event fetching architecture and proposes multiple theories for why desync occurs.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -36,7 +36,7 @@ The sidecar oracle is responsible for fetching off-chain data (including Solana 
 
 **Problem**: Validators are not reaching consensus on `SolanaMintEventsHash` and `SolanaBurnEventsHash`, suggesting different sidecars are seeing different pending events.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -89,7 +89,7 @@ SolanaMaxBackfillPages      = 10          // Max pages to backfill
 SolanaEventFetchBatchSize   = 10          // Transactions per batch
 ```
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -152,7 +152,7 @@ SolanaEventFetchBatchSize   = 10          // Transactions per batch
 
 **Plausible.** The sidecar still advances Solana watermarks whenever it observes a newer signature, even if some transactions only make it into the local pending queue (`sidecar/oracle.go:965-986`, `sidecar/oracle.go:3160-3212`, `sidecar/oracle.go:3466-3492`). Because batch and fallback processing respond to RPC errors independently on every validator, the pending sets diverge while the shared watermark moves forward, reproducing the observed hash mismatches.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -281,7 +281,7 @@ if batchErr == nil {
 
 **Assessment**: Plausible. The batch executor aborts on the first error (`sidecar/oracle.go:2880-2932`) and pushes any remaining failures into the fallback path, which marks those signatures pending (`sidecar/oracle.go:3160-3212`); the exact failure position varies per validator, feeding the divergence described in Theories 1 and 5.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -296,7 +296,7 @@ if batchErr == nil {
 
 Therefore the sidecar hashes full event objects for consensus *and* retains them for downstream processing; fetching only signatures would lose critical information.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -332,7 +332,7 @@ Therefore the sidecar hashes full event objects for consensus *and* retains them
 - [`x/validation/keeper/abci_utils.go`](../../x/validation/keeper/abci_utils.go) - Validation logic
   - Lines 1566-1575: Hash validation for Solana events
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -366,7 +366,7 @@ Result:
 Hash mismatch!
 ```
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -426,7 +426,7 @@ Hash mismatch!
     - All validators advance watermark atomically during PreBlocker
     - Sidecars fetch events relative to on-chain watermark
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -438,7 +438,7 @@ Hash mismatch!
 - **Divergence Handling**: If a peer advertises a higher watermark or conflicting hash, we back off and rescan from the minimum advertised signature, preventing the optimistic watermark advancement noted in `sidecar/oracle.go:965-986`.
 - **Integration Path**: Start as an optional “warn-only” daemon that logs mismatches. Once stable, feed the lowest observed watermark back into `getSolanaEvents` to ensure every sidecar processes the same signature range before constructing the vote extension.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -487,7 +487,7 @@ Hash mismatch!
 - **Monitoring**: No desync incidents for 7 consecutive days in testnet
 - **Rollback Plan**: If desync persists, revert to simpler watermark management (single event type per tick)
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -509,7 +509,7 @@ Hash mismatch!
 
 - **No Trusted Bridge**: Event verification relies on cryptographic proofs and consensus, not a single oracle. Desync does not compromise this property, but delays event processing.
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
 
 ---
 
@@ -533,4 +533,4 @@ Hash mismatch!
 - **Logging Storage**: Enhanced logging may increase disk I/O and storage requirements
 - **Alert Configuration**: Set up alerts for watermark divergence and hash mismatch events
 
-[🔝 back to top](#table-of-contents)
+[Back to top](#table-of-contents)
