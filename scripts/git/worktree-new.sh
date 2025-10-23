@@ -22,11 +22,10 @@ original_branch=$(git branch --show-current)
 
 # Fetch latest branches
 echo "Fetching branches..."
-git fetch --all --prune
+git fetch
 
-# Get current branch as default base
-current_branch=$(git branch --show-current)
-default_base="$current_branch"
+# Get current branch as base
+base_branch=$(git branch --show-current)
 
 # Ask for new branch name
 echo ""
@@ -50,26 +49,7 @@ fi
 
 echo ""
 echo "New branch: $new_branch"
-
-# Get list of branches to base the new branch off
-branches=$(git branch -a | \
-    sed 's/^\*//' | \
-    sed 's/^[[:space:]]*//' | \
-    sed 's/remotes\/origin\///' | \
-    grep -v 'HEAD ->' | \
-    sort -u)
-
-# Use gum filter for base branch selection
-echo ""
-base_branch=$(echo "$branches" | go tool gum filter --placeholder "Select base branch (default: $default_base)..." --height 20)
-
-# If no selection, use current branch
-if [ -z "$base_branch" ]; then
-    base_branch="$default_base"
-    echo "Using default base branch: $base_branch"
-else
-    echo "Using base branch: $base_branch"
-fi
+echo "Base branch: $base_branch"
 
 # Create worktree directory name (sanitize branch name for filesystem)
 worktree_name=$(echo "$new_branch" | sed 's/\//-/g')
