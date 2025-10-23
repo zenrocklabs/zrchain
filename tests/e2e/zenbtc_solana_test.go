@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"errors"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -12,9 +13,9 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var _ = Describe("ZenBTC Solana flow:", func() {
@@ -219,23 +220,27 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 		Expect(err).ToNot(HaveOccurred())
 		multisigAddress, err := solana.PublicKeyFromBase58(SOLANA_ZENBTC_MULTISIG)
 		Expect(err).ToNot(HaveOccurred())
+		eventStoreProgramId, err := solana.PublicKeyFromBase58(SOLANA_EVENTSTORE_PROGRAM_ID)
+		Expect(err).ToNot(HaveOccurred())
 
 		latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
 		Expect(err).ToNot(HaveOccurred())
-		tx, err := solana.NewTransaction(
-			[]solana.Instruction{
-				solzenbtc.Unwrap(
-					programId,
-					zenbtc_spl_token.UnwrapArgs{
-						Value:    uint64(1000000),
-						DestAddr: []byte(randomBTCAddress),
-					},
-					signer,
-					mintAddress,
-					multisigAddress,
-					feeWallet,
-				),
+		unwrapInstruction, err := solzenbtc.Unwrap(
+			programId,
+			eventStoreProgramId,
+			big.NewInt(1),
+			zenbtc_spl_token.UnwrapArgs{
+				Value:    uint64(1000000),
+				DestAddr: []byte(randomBTCAddress),
 			},
+			signer,
+			mintAddress,
+			multisigAddress,
+			feeWallet,
+		)
+		Expect(err).ToNot(HaveOccurred())
+		tx, err := solana.NewTransaction(
+			[]solana.Instruction{unwrapInstruction},
 			latest.Value.Blockhash,
 			solana.TransactionPayer(signer),
 		)
