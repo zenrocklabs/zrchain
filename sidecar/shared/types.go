@@ -101,6 +101,14 @@ var (
 		NetworkMainnet:  "7zecEvtStreProg11111111111111111111111111111",
 	}
 
+	ZenZECMintAddress = map[string]string{
+		NetworkLocalnet: "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkRegnet:   "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkDevnet:   "4q9DEzEHLqNG637jsGMYSg8E56SbotNcGeH3GjtaYYJT",
+		NetworkTestnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkMainnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+	}
+
 	SolRockProgramID = map[string]string{
 		NetworkLocalnet: "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkRegnet:   "9CNTbJY29vHPThkMXCVNozdhXtWrWHyxVy39EhpRtiXe",

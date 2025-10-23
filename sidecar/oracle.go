@@ -31,7 +31,7 @@ import (
 	"github.com/beevik/ntp"
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
-	eventstore "github.com/yourorg/eventstore-sdk"
+    "github.com/Zenrock-Foundation/zrchain/v6/sidecar/eventstore"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -165,15 +165,6 @@ func NewOracle(
 	o.scheduleNextReset(time.Now().UTC(), time.Duration(sidecartypes.OracleStateResetIntervalHours)*time.Hour)
 
 	return o
-}
-
-const (
-	dctEventStorePrefix = uint64(0x444354) // "DCT"
-	zenZECAssetID       = uint64(2)
-)
-
-func zenZECEventStorePrefix() uint64 {
-	return (dctEventStorePrefix << 32) | zenZECAssetID
 }
 
 func isHexString(s string) bool {
@@ -1756,6 +1747,18 @@ func (o *Oracle) getSolZenZECMints(ctx context.Context, eventStoreProgramID stri
 
 	client := eventstore.NewClient(o.solanaClient, &programKey)
 
+	mintFilter := sidecartypes.ZenZECMintAddress[o.Config.Network]
+	var mintFilterPub solana.PublicKey
+	hasMintFilter := false
+	if mintFilter != "" {
+		pk, err := solana.PublicKeyFromBase58(mintFilter)
+		if err != nil {
+			return nil, lastCursor, fmt.Errorf("%s: invalid mint address configured: %w", eventTypeName, err)
+		}
+		mintFilterPub = pk
+		hasMintFilter = true
+	}
+
 	events, err := client.GetZenbtcWrapEvents(ctx)
 	if err != nil {
 		return nil, lastCursor, fmt.Errorf("%s: failed to fetch events from event store: %w", eventTypeName, err)
@@ -1768,16 +1771,17 @@ func (o *Oracle) getSolZenZECMints(ctx context.Context, eventStoreProgramID stri
 		prevIDBytes = [16]byte{}
 	}
 
-	targetPrefix := zenZECEventStorePrefix()
 	newEvents := make([]api.SolanaMintEvent, 0, len(events))
 	highestValue := new(big.Int).Set(lastValue)
 	highestID := prevIDBytes
 	haveNewCursor := false
 
 	for _, evt := range events {
-		eventPrefix := binary.LittleEndian.Uint64(evt.ID[8:])
-		if eventPrefix != targetPrefix {
-			continue
+		if hasMintFilter {
+			eventMint := solana.PublicKeyFromBytes(evt.Mint[:])
+			if eventMint != mintFilterPub {
+				continue
+			}
 		}
 
 		eventValue := eventStoreIDToBigInt(evt.ID)

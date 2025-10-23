@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -32,13 +31,6 @@ func dctAssetToCoin(asset dcttypes.Asset) (sidecarapitypes.Coin, bool) {
 	default:
 		return sidecarapitypes.Coin_UNSPECIFIED, false
 	}
-}
-
-const dctEventStorePrefix uint64 = 0x444354
-
-func composeDCTEventStoreID(asset dcttypes.Asset, txID uint64) [16]byte {
-	prefix := (dctEventStorePrefix << 32) | uint64(asset)
-	return newEventStoreEventID(prefix, txID)
 }
 
 func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
@@ -175,14 +167,6 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					zenbtc:            true,
 				}
 
-				if solParams.EventStoreProgramId != "" {
-					txPrepReq.eventStore = &eventStoreRequest{
-						ProgramID: solParams.EventStoreProgramId,
-						WrapType:  eventStoreWrapTypeZenbtc,
-						EventID:   composeDCTEventStoreID(asset, tx.Id),
-					}
-				}
-
 				transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 				if err != nil {
 					k.Logger(ctx).Info("processDCTMintsSolana: PrepareSolanaMintTx failed",
@@ -269,6 +253,16 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch DCT Solana params for event processing", "asset", asset.String(), "error", err)
+			continue
+		}
+		if solParams == nil {
+			k.Logger(ctx).Info("no Solana params for DCT asset during event processing, skipping", "asset", asset.String())
+			continue
+		}
+
 		firstPendingID, err := k.dctKeeper.GetFirstPendingSolMintTransaction(ctx, asset)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -317,19 +311,32 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		expectedEventID := composeDCTEventStoreID(asset, pendingMint.Id)
-		expectedEventIDHex := hex.EncodeToString(expectedEventID[:])
-
 		var matchedEvent *sidecarapitypes.SolanaMintEvent
 		for _, event := range oracleData.SolanaMintEvents {
 			if event.Coint != coin {
 				continue
 			}
-			if event.TxSig == expectedEventIDHex {
-				evtCopy := event
-				matchedEvent = &evtCopy
-				break
+			if len(event.Recipient) == 0 || len(event.Mint) == 0 {
+				continue
 			}
+
+			recipientPub := solana.PublicKeyFromBytes(event.Recipient)
+			if recipientPub.String() != pendingMint.RecipientAddress {
+				continue
+			}
+
+			mintPub := solana.PublicKeyFromBytes(event.Mint)
+			if mintPub.String() != solParams.MintAddress {
+				continue
+			}
+
+			if event.Value != pendingMint.Amount {
+				continue
+			}
+
+			evtCopy := event
+			matchedEvent = &evtCopy
+			break
 		}
 		if matchedEvent == nil {
 			k.Logger(ctx).Info("processSolanaDCTMintEvents: no matching Solana mint event yet", "asset", asset.String(), "tx_id", pendingMint.Id)
