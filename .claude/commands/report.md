@@ -43,7 +43,7 @@ You are tasked with creating a comprehensive report from the current chat conver
 
    [Brief summary of what was accomplished in this conversation]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -51,7 +51,7 @@ You are tasked with creating a comprehensive report from the current chat conver
 
    [Bullet list of main achievements]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -65,7 +65,7 @@ You are tasked with creating a comprehensive report from the current chat conver
 
    [Details of changes]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -80,7 +80,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - [`proto/zrchain/dct/params.proto`](../../proto/zrchain/dct/params.proto) - Added new asset type enum
    - [`sidecar/zcash_client.go`](../../sidecar/zcash_client.go) - Implemented ZCash RPC client
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -91,7 +91,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    **Problem**: [Description]
    **Solution**: [How it was resolved]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -99,7 +99,7 @@ You are tasked with creating a comprehensive report from the current chat conver
 
    [List of key decisions and rationale]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -132,7 +132,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - Coverage metrics: [If applicable, e.g., line coverage %, test count]
    - Gaps identified: [Any areas that need more testing]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -184,7 +184,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - Added `storeZcashBlockHeaders()` function in validation keeper
    - Validators must upgrade sidecar to support ZCash RPC
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -217,7 +217,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - **State Breaking**: Modified `PendingMintTransaction` schema to include `asset_type` field
      - Migration: Requires chain upgrade with state migration handler
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -255,7 +255,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - **Validator Requirements**: Changes may require validators to run additional RPC nodes (e.g., ZCash)
      - Impact: Increases validator operational complexity but maintains security properties
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -299,7 +299,7 @@ You are tasked with creating a comprehensive report from the current chat conver
    - Alert validators to monitor for unusual vote extension behavior
    - Track oracle consensus metrics (header agreement percentage)
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
 
    ---
 
@@ -307,7 +307,7 @@ You are tasked with creating a comprehensive report from the current chat conver
 
    [Suggested next actions or improvements]
 
-   [🔝 back to top](#table-of-contents)
+   [Back to top](#table-of-contents)
    ```
 
 3. **Save the Report**
