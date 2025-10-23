@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -33,6 +32,13 @@ func dctAssetToCoin(asset dcttypes.Asset) (sidecarapitypes.Coin, bool) {
 	default:
 		return sidecarapitypes.Coin_UNSPECIFIED, false
 	}
+}
+
+const dctEventStorePrefix uint64 = 0x444354
+
+func composeDCTEventStoreID(asset dcttypes.Asset, txID uint64) [16]byte {
+	prefix := (dctEventStorePrefix << 32) | uint64(asset)
+	return newEventStoreEventID(prefix, txID)
 }
 
 func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
@@ -169,6 +175,14 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					zenbtc:            true,
 				}
 
+				if solParams.EventStoreProgramId != "" {
+					txPrepReq.eventStore = &eventStoreRequest{
+						ProgramID: solParams.EventStoreProgramId,
+						WrapType:  eventStoreWrapTypeZenbtc,
+						EventID:   composeDCTEventStoreID(asset, tx.Id),
+					}
+				}
+
 				transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 				if err != nil {
 					k.Logger(ctx).Info("processDCTMintsSolana: PrepareSolanaMintTx failed",
@@ -303,19 +317,15 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
-		concatenated := make([]byte, 0)
-		for _, s := range signatures {
-			concatenated = append(concatenated, s...)
-		}
-		sigHash := sha256.Sum256(concatenated)
-		expectedSig := hex.EncodeToString(sigHash[:])
+		expectedEventID := composeDCTEventStoreID(asset, pendingMint.Id)
+		expectedEventIDHex := hex.EncodeToString(expectedEventID[:])
 
 		var matchedEvent *sidecarapitypes.SolanaMintEvent
 		for _, event := range oracleData.SolanaMintEvents {
 			if event.Coint != coin {
 				continue
 			}
-			if hex.EncodeToString(event.SigHash) == expectedSig {
+			if event.TxSig == expectedEventIDHex {
 				evtCopy := event
 				matchedEvent = &evtCopy
 				break

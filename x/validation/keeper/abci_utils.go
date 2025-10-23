@@ -1847,6 +1847,7 @@ type solanaMintTxRequest struct {
 	multisigKey       string
 	rock              bool
 	zenbtc            bool
+	eventStore        *eventStoreRequest
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
@@ -1989,6 +1990,21 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		)
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")
+	}
+
+	if req.eventStore != nil {
+		eventStoreIx, err := k.buildEventStoreWrapInstruction(
+			ctx,
+			req,
+			req.eventStore,
+			*signerPubKey,
+			mintKey,
+			recipientPubKey,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("building event store instruction: %w", err)
+		}
+		instructions = append(instructions, eventStoreIx)
 	}
 
 	tx, err := solana.NewTransaction(
