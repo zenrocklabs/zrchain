@@ -182,21 +182,42 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			if !ok {
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for nonce account key: %d", solParams.NonceAccountKey)
 			}
+
+			// Get current Solana counters for zenBTC from chain state
+			assetKey := "ZENBTC"
+			counters, err := k.SolanaCounters.Get(ctx, assetKey)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Initialize counters if not found
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					return fmt.Errorf("failed to get Solana counters for zenBTC: %w", err)
+				}
+			}
+			nextMintCounter := counters.MintCounter + 1
+			k.Logger(ctx).Info("Read Solana mint counter from chain state",
+				"asset", assetKey,
+				"current_mint_counter", counters.MintCounter,
+				"next_mint_counter", nextMintCounter,
+			)
+
 			txPrepReq := &solanaMintTxRequest{
-				amount:             tx.Amount,
-				fee:                feeZenBTC,
-				recipient:          tx.RecipientAddress,
-				nonce:              nonce,
-				fundReceiver:       fundReceiver,
-				programID:          solParams.ProgramId,
-				mintAddress:        solParams.MintAddress,
-				feeWallet:          solParams.FeeWallet,
-				nonceAccountKey:    solParams.NonceAccountKey,
-				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:          solParams.SignerKeyId,
-				multisigKey:        solParams.MultisigKeyAddress,
-				zenbtc:             true,
+				amount:              tx.Amount,
+				fee:                 feeZenBTC,
+				recipient:           tx.RecipientAddress,
+				nonce:               nonce,
+				fundReceiver:        fundReceiver,
+				programID:           solParams.ProgramId,
+				mintAddress:         solParams.MintAddress,
+				feeWallet:           solParams.FeeWallet,
+				nonceAccountKey:     solParams.NonceAccountKey,
+				nonceAuthorityKey:   solParams.NonceAuthorityKey,
+				signerKey:           solParams.SignerKeyId,
+				multisigKey:         solParams.MultisigKeyAddress,
+				zenbtc:              true,
 				eventStoreProgramID: solParams.EventStoreProgramId,
+				mintCounter:         nextMintCounter,
+				assetName:           "ZENBTC", // ZENBTC uses legacy bindings without event store
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
@@ -218,6 +239,14 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
+
+			k.Logger(ctx).Info("Dispatched Solana zenBTC mint transaction",
+				"tx_id", tx.Id,
+				"zrchain_tx_id", txID,
+				"mint_counter_used", nextMintCounter,
+			)
+
+			// Counter will be incremented in processSolanaZenBTCMintEvents when mint is confirmed successful
 			solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 		},
@@ -298,6 +327,28 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 				k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
 			}
+
+			// Increment mint counter after confirmed successful mint
+			assetKey := "ZENBTC"
+			counters, err := k.SolanaCounters.Get(ctx, assetKey)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					k.Logger(ctx).Error("failed to get Solana counters after successful mint", "asset", assetKey, "error", err)
+				}
+			}
+			counters.MintCounter++
+			if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
+				k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)
+			} else {
+				k.Logger(ctx).Info("Incremented Solana mint counter after confirmed successful mint",
+					"asset", assetKey,
+					"new_mint_counter", counters.MintCounter,
+					"tx_id", pendingMint.Id,
+				)
+			}
+
 			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
 				k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
 			}
