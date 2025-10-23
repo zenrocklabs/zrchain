@@ -195,10 +195,17 @@ if [ "$START_ONLY" = false ]; then
         }
     }' $HOME_DIR/config/genesis.json > tmp_genesis.json && mv tmp_genesis.json $HOME_DIR/config/genesis.json
     function ssed {
-        if [[ "$OSTYPE" == "darwin"* ]]; then
+        if command -v gsed &> /dev/null; then
             gsed "$@"
         else
-            sed "$@"
+            # BSD sed (macOS) requires an extension argument after -i
+            # Convert 'sed -i' to 'sed -i ""' for BSD compatibility
+            if [[ "$1" == "-i" ]]; then
+                shift
+                sed -i '' "$@"
+            else
+                sed "$@"
+            fi
         fi
     }
 
