@@ -1814,6 +1814,37 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	return *tokenAccount, nil
 }
 
+func (k Keeper) GetZenbtcGlobalConfigAccount(goCtx context.Context, programID string) (*zenbtc_spl_token.GlobalConfigAccount, solana.PublicKey, error) {
+	programPubKey, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	globalConfigPDA, err := solzenbtc.GetGlobalConfigPDA(programPubKey)
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: globalConfigPDA.String(),
+	})
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	if resp.Account == nil {
+		return nil, globalConfigPDA, fmt.Errorf("global config account %s is empty", globalConfigPDA.String())
+	}
+
+	decoder := bin.NewBorshDecoder(resp.Account)
+	account := new(zenbtc_spl_token.GlobalConfigAccount)
+	if err := account.UnmarshalWithDecoder(decoder); err != nil {
+		return nil, globalConfigPDA, fmt.Errorf("failed to unmarshal zenbtc global config: %w", err)
+	}
+
+	return account, globalConfigPDA, nil
+}
+
 // newCreateATAIdempotentInstruction creates an idempotent ATA creation instruction.
 // This instruction will succeed even if the ATA already exists, preventing race conditions.
 // The idempotent version uses instruction data [1] instead of [] (empty bytes).
@@ -1847,6 +1878,7 @@ type solanaMintTxRequest struct {
 	multisigKey       string
 	rock              bool
 	zenbtc            bool
+	eventStoreProgramID string
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
@@ -1949,6 +1981,21 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			receiverAta,
 		))
 	} else if req.zenbtc {
+		if req.eventStoreProgramID == "" {
+			return nil, fmt.Errorf("event store program id not provided for zenbtc mint")
+		}
+
+		globalConfigAccount, _, err := k.GetZenbtcGlobalConfigAccount(goCtx, req.programID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load zenbtc global config: %w", err)
+		}
+		eventID := new(big.Int).Add(globalConfigAccount.MintCounter.BigInt(), big.NewInt(1))
+
+		eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
+		if err != nil {
+			return nil, err
+		}
+
 		var multiSigKey solana.PublicKey
 		if req.multisigKey != "" {
 			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
@@ -1963,8 +2010,10 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			}
 		}
 
-		instructions = append(instructions, solzenbtc.Wrap(
+		wrapInstruction, err := solzenbtc.Wrap(
 			programID,
+			eventStoreProgramPub,
+			eventID,
 			zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
 			*signerPubKey,
 			mintKey,
@@ -1973,7 +2022,12 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			feeWalletAta,
 			recipientPubKey,
 			receiverAta,
-		))
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		instructions = append(instructions, wrapInstruction)
 
 		k.Logger(ctx).Info("Added wrap instruction to tx",
 			"programID", programID.String(),
