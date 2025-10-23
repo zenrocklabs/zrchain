@@ -27,7 +27,7 @@ worktree_list=$(git worktree list --porcelain | awk '
             print path "|" branch
         }
     }
-' | grep -v "^$REPO_ROOT|")
+' | grep -v "^$REPO_ROOT|" || true)
 
 # Check if there are any worktrees to clean up
 if [ -z "$worktree_list" ]; then
