@@ -183,19 +183,20 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for nonce account key: %d", solParams.NonceAccountKey)
 			}
 			txPrepReq := &solanaMintTxRequest{
-				amount:            tx.Amount,
-				fee:               feeZenBTC,
-				recipient:         tx.RecipientAddress,
-				nonce:             nonce,
-				fundReceiver:      fundReceiver,
-				programID:         solParams.ProgramId,
-				mintAddress:       solParams.MintAddress,
-				feeWallet:         solParams.FeeWallet,
-				nonceAccountKey:   solParams.NonceAccountKey,
+				amount:             tx.Amount,
+				fee:                feeZenBTC,
+				recipient:          tx.RecipientAddress,
+				nonce:              nonce,
+				fundReceiver:       fundReceiver,
+				programID:          solParams.ProgramId,
+				mintAddress:        solParams.MintAddress,
+				feeWallet:          solParams.FeeWallet,
+				nonceAccountKey:    solParams.NonceAccountKey,
 				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:         solParams.SignerKeyId,
-				multisigKey:       solParams.MultisigKeyAddress,
-				zenbtc:            true,
+				signerKey:          solParams.SignerKeyId,
+				multisigKey:        solParams.MultisigKeyAddress,
+				zenbtc:             true,
+				eventStoreProgramID: solParams.EventStoreProgramId,
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {

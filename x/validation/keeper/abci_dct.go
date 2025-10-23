@@ -151,20 +151,21 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 				}
 
 				txPrepReq := &solanaMintTxRequest{
-					amount: tx.Amount,
+					amount:             tx.Amount,
 					// fee:               fee,
-					fee:               0,
-					recipient:         tx.RecipientAddress,
-					nonce:             nonce,
-					fundReceiver:      fundReceiver,
-					programID:         solParams.ProgramId,
-					mintAddress:       solParams.MintAddress,
-					feeWallet:         solParams.FeeWallet,
-					nonceAccountKey:   solParams.NonceAccountKey,
-					nonceAuthorityKey: solParams.NonceAuthorityKey,
-					signerKey:         solParams.SignerKeyId,
-					multisigKey:       solParams.MultisigKeyAddress,
-					zenbtc:            true,
+					fee:                0,
+					recipient:          tx.RecipientAddress,
+					nonce:              nonce,
+					fundReceiver:       fundReceiver,
+					programID:          solParams.ProgramId,
+					mintAddress:        solParams.MintAddress,
+					feeWallet:          solParams.FeeWallet,
+					nonceAccountKey:    solParams.NonceAccountKey,
+					nonceAuthorityKey:  solParams.NonceAuthorityKey,
+					signerKey:          solParams.SignerKeyId,
+					multisigKey:        solParams.MultisigKeyAddress,
+					zenbtc:             true,
+					eventStoreProgramID: solParams.EventStoreProgramId,
 				}
 
 				transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
