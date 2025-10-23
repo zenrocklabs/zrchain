@@ -20,6 +20,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtclegacy"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
@@ -2000,7 +2001,7 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		// ZENZEC (and other DCT assets) use event store, ZENBTC does not
 		useEventStore := req.assetName != "" && req.assetName != "ZENBTC"
 
-		var wrapInstruction *zenbtc_spl_token.Instruction
+		var wrapInstruction solana.Instruction
 
 		if useEventStore {
 			// ZENZEC and other DCT assets: use new bindings WITH event store
@@ -2038,21 +2039,17 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 				return nil, err
 			}
 		} else {
-			// ZENBTC: don't use event store (pass empty program ID and zero event ID)
-			k.Logger(ctx).Info("Not using event store for ZENBTC",
+			k.Logger(ctx).Info("Using legacy zenBTC wrap instruction without event store",
 				"asset", "ZENBTC",
 				"programID", req.programID,
 			)
 
-			// Use empty public key for event store program (ZENBTC doesn't use it)
-			emptyEventStoreProgramID := solana.PublicKey{}
-			eventID := big.NewInt(0)
-
-			wrapInstruction, err = solzenbtc.Wrap(
+			wrapInstruction, err = solzenbtclegacy.Wrap(
 				programID,
-				emptyEventStoreProgramID,
-				eventID,
-				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				solzenbtclegacy.WrapArgs{
+					Value: req.amount,
+					Fee:   req.fee,
+				},
 				*signerPubKey,
 				mintKey,
 				multiSigKey,
