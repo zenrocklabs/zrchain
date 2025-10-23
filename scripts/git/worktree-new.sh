@@ -27,40 +27,6 @@ git fetch
 # Get current branch as base
 base_branch=$(git branch --show-current)
 
-# Ask for new branch name
-echo ""
-new_branch=$(go tool gum input --placeholder "Enter new branch name (e.g., feature/my-feature)")
-
-if [ -z "$new_branch" ]; then
-    echo "No branch name provided. Exiting."
-    exit 0
-fi
-
-# Validate branch name doesn't already exist
-if git show-ref --verify --quiet "refs/heads/$new_branch"; then
-    echo "Error: Branch '$new_branch' already exists locally."
-    exit 1
-fi
-
-if git show-ref --verify --quiet "refs/remotes/origin/$new_branch"; then
-    echo "Error: Branch '$new_branch' already exists on remote."
-    exit 1
-fi
-
-echo ""
-echo "New branch: $new_branch"
-echo "Base branch: $base_branch"
-
-# Create worktree directory name (sanitize branch name for filesystem)
-worktree_name=$(echo "$new_branch" | sed 's/\//-/g')
-worktree_path=$(cd "$REPO_ROOT/.." && pwd)/"$worktree_name"
-
-# Check if worktree path already exists
-if [ -d "$worktree_path" ]; then
-    echo "Error: Directory already exists at $worktree_path"
-    exit 1
-fi
-
 # Decide whether to use Graphite (if available)
 use_graphite=0
 if [ "$GT_AVAILABLE" -eq 1 ]; then
@@ -98,33 +64,31 @@ if [ "$use_graphite" -eq 1 ]; then
         git checkout "$base_branch"
     fi
 
-    default_message="chore: start ${new_branch}"
     echo ""
-    graphite_message=$(go tool gum input --placeholder "Initial commit message for gt create" --value "$default_message")
+    graphite_message=$(go tool gum input --placeholder "Commit message (e.g., 'fix: update something')")
     if [ -z "$graphite_message" ]; then
-        graphite_message="$default_message"
+        echo "No commit message provided. Exiting."
+        exit 0
     fi
 
-    gt create "$new_branch" -m "$graphite_message"
+    # Let Graphite auto-generate branch name from commit message
+    gt create -m "$graphite_message"
 
     created_branch=$(git branch --show-current)
     if [ -z "$created_branch" ]; then
-        created_branch="$new_branch"
+        echo "Error: Failed to get created branch name."
+        exit 1
     fi
-    if [ "$created_branch" != "$new_branch" ]; then
-        echo "Graphite created branch '$created_branch' (requested '$new_branch')."
-
-        # Adjust worktree name/path if Graphite chose a different branch name
-        adjusted_worktree_name=$(echo "$created_branch" | sed 's/\//-/g')
-        if [ "$adjusted_worktree_name" != "$worktree_name" ]; then
-            worktree_name="$adjusted_worktree_name"
-            worktree_path=$(cd "$REPO_ROOT/.." && pwd)/"$worktree_name"
-            if [ -d "$worktree_path" ]; then
-                echo "Error: Directory already exists at $worktree_path"
-                echo "Cannot create worktree for Graphite branch '$created_branch'. Exiting."
-                exit 1
-            fi
-        fi
+    
+    echo "Graphite created branch: $created_branch"
+    
+    # Create worktree path from generated branch name
+    worktree_name=$(echo "$created_branch" | sed 's/\//-/g')
+    worktree_path=$(cd "$REPO_ROOT/.." && pwd)/"$worktree_name"
+    
+    if [ -d "$worktree_path" ]; then
+        echo "Error: Directory already exists at $worktree_path"
+        exit 1
     fi
 
     echo "Switching back to base branch ($base_branch)..."
@@ -146,6 +110,39 @@ if [ "$use_graphite" -eq 1 ]; then
     fi
 else
     # Create the worktree with new branch via plain git
+    echo ""
+    new_branch=$(go tool gum input --placeholder "Enter new branch name (e.g., feature/my-feature)")
+    
+    if [ -z "$new_branch" ]; then
+        echo "No branch name provided. Exiting."
+        exit 0
+    fi
+    
+    # Validate branch name doesn't already exist
+    if git show-ref --verify --quiet "refs/heads/$new_branch"; then
+        echo "Error: Branch '$new_branch' already exists locally."
+        exit 1
+    fi
+    
+    if git show-ref --verify --quiet "refs/remotes/origin/$new_branch"; then
+        echo "Error: Branch '$new_branch' already exists on remote."
+        exit 1
+    fi
+    
+    echo ""
+    echo "New branch: $new_branch"
+    echo "Base branch: $base_branch"
+    
+    # Create worktree directory name (sanitize branch name for filesystem)
+    worktree_name=$(echo "$new_branch" | sed 's/\//-/g')
+    worktree_path=$(cd "$REPO_ROOT/.." && pwd)/"$worktree_name"
+    
+    # Check if worktree path already exists
+    if [ -d "$worktree_path" ]; then
+        echo "Error: Directory already exists at $worktree_path"
+        exit 1
+    fi
+    
     echo ""
     echo "Creating new branch and worktree..."
     git worktree add -b "$new_branch" "$worktree_path" "$base_branch"
@@ -169,24 +166,14 @@ fi
 # Build IDE options dynamically
 ide_options=()
 
-# Check for Claude Code options
-if command -v claude &> /dev/null; then
-    if command -v wezterm &> /dev/null; then
-        ide_options+=("Claude Code in Wezterm")
-    fi
-    if command -v code &> /dev/null; then
-        ide_options+=("Claude Code in VSCode")
-    fi
+# Check for Claude Code in Wezterm
+if command -v claude &> /dev/null && command -v wezterm &> /dev/null; then
+    ide_options+=("Claude Code in Wezterm")
 fi
 
-# Check for Codex options
-if command -v codex &> /dev/null; then
-    if command -v wezterm &> /dev/null; then
-        ide_options+=("Codex in Wezterm")
-    fi
-    if command -v code &> /dev/null; then
-        ide_options+=("Codex in VSCode")
-    fi
+# Check for Codex in Wezterm
+if command -v codex &> /dev/null && command -v wezterm &> /dev/null; then
+    ide_options+=("Codex in Wezterm")
 fi
 
 # Standard Cursor/VSCode options
@@ -221,21 +208,9 @@ case "$selected_ide" in
         echo "Launching Claude Code in Wezterm..."
         wezterm start --cwd "$worktree_path" -- claude "$worktree_path" &
         ;;
-    "Claude Code in VSCode")
-        echo "Launching Claude Code in VSCode..."
-        code "$worktree_path"
-        sleep 1
-        claude "$worktree_path" &
-        ;;
     "Codex in Wezterm")
         echo "Launching Codex in Wezterm..."
         wezterm start --cwd "$worktree_path" -- codex "$worktree_path" &
-        ;;
-    "Codex in VSCode")
-        echo "Launching Codex in VSCode..."
-        code "$worktree_path"
-        sleep 1
-        codex "$worktree_path" &
         ;;
     "Cursor")
         echo "Opening in Cursor..."
