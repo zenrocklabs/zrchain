@@ -7,15 +7,15 @@ import (
 var (
 	defaultZenZECSolana = &types.Solana{
 		SignerKeyId:         17,
-		ProgramId:           "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
+		ProgramId:           "Ney4F3GUe5BhPP1cFEmXRVWtzSUGhG4DrRkfERRYedh",
 		NonceAccountKey:     19,
 		NonceAuthorityKey:   18,
-		MintAddress:         "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
-		FeeWallet:           "FvzecFee1YdzWm7Nzvy2Kc7CquBrEPNvkMRPQHrfeee",
+		MintAddress:         "4q9DEzEHLqNG637jsGMYSg8E56SbotNcGeH3GjtaYYJT",
+		FeeWallet:           "4GCX9fgq9gzBH282tVMnwebAW6gW8QX4N7JzGD1djYWT",
 		Fee:                 0,
-		MultisigKeyAddress:  "7ZeCmxg9APm9wJgZtPy1X6Qt23afVqzVrqVZC9HexbBP",
+		MultisigKeyAddress:  "F35sSPrvaKioWbr4dhrPti2KqqA3hkrJjN9nxLoUgLZ6",
 		Btl:                 20,
-		EventStoreProgramId: "7zecEvtStreProg11111111111111111111111111111",
+		EventStoreProgramId: "HbUWCsvZzkQtHakTX6QovPKcaCeP1Pf34W9Bpw6j18J8",
 	}
 
 	defaultZenZECCfg = types.AssetParams{

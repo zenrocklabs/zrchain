@@ -107,6 +107,7 @@ type oracleStateUpdate struct {
 	SolanaMintEvents        []api.SolanaMintEvent
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
+	latestEventStoreCursors map[sidecartypes.SolanaEventType]string
 	pendingTransactions     map[string]sidecartypes.PendingTxInfo
 }
 

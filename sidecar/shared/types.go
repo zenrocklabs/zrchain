@@ -88,9 +88,25 @@ var (
 	ZenZECSolanaProgramID = map[string]string{
 		NetworkLocalnet: "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
 		NetworkRegnet:   "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
-		NetworkDevnet:   "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkDevnet:   "Ney4F3GUe5BhPP1cFEmXRVWtzSUGhG4DrRkfERRYedh",
 		NetworkTestnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
 		NetworkMainnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+	}
+
+	ZenZECEventStoreProgramID = map[string]string{
+		NetworkLocalnet: "7zecEvtStreProg11111111111111111111111111111",
+		NetworkRegnet:   "7zecEvtStreProg11111111111111111111111111111",
+		NetworkDevnet:   "HbUWCsvZzkQtHakTX6QovPKcaCeP1Pf34W9Bpw6j18J8",
+		NetworkTestnet:  "7zecEvtStreProg11111111111111111111111111111",
+		NetworkMainnet:  "7zecEvtStreProg11111111111111111111111111111",
+	}
+
+	ZenZECMintAddress = map[string]string{
+		NetworkLocalnet: "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkRegnet:   "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkDevnet:   "4q9DEzEHLqNG637jsGMYSg8E56SbotNcGeH3GjtaYYJT",
+		NetworkTestnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkMainnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
 	}
 
 	SolRockProgramID = map[string]string{
