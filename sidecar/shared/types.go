@@ -36,8 +36,8 @@ var (
 		ETH: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", // ETH/USD Chainlink feed
 	}
 
-	// ZEC Price URL from CoinGecko
-	ZECUSDPriceURL = "https://api.coingecko.com/api/v3/simple/price?ids=zcash&vs_currencies=usd"
+	// ZEC Price URL from Binance
+	ZECUSDPriceURL = "https://api.binance.com/api/v3/ticker/price?symbol=ZECUSDT"
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{

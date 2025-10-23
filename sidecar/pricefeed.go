@@ -59,14 +59,13 @@ func (o *Oracle) fetchPrice(priceFeed *aggregatorv3.AggregatorV3Interface, block
 	return result, nil
 }
 
-// CoinGeckoResponse represents the response from CoinGecko API
-type CoinGeckoResponse struct {
-	Zcash struct {
-		USD float64 `json:"usd"`
-	} `json:"zcash"`
+// BinanceResponse represents the response from Binance API
+type BinanceResponse struct {
+	Symbol string `json:"symbol"`
+	Price  string `json:"price"`
 }
 
-// fetchZECPrice fetches the ZEC/USD price from CoinGecko API
+// fetchZECPrice fetches the ZEC/USD price from Binance API
 func (o *Oracle) fetchZECPrice(ctx context.Context) (math.LegacyDec, error) {
 	httpClient := &http.Client{
 		Timeout: sidecartypes.DefaultHTTPTimeout,
@@ -79,26 +78,25 @@ func (o *Oracle) fetchZECPrice(ctx context.Context) (math.LegacyDec, error) {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return math.LegacyZeroDec(), fmt.Errorf("failed to fetch ZEC price from CoinGecko: %w", err)
+		return math.LegacyZeroDec(), fmt.Errorf("failed to fetch ZEC price from Binance: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return math.LegacyZeroDec(), fmt.Errorf("CoinGecko API returned status %d", resp.StatusCode)
+		return math.LegacyZeroDec(), fmt.Errorf("Binance API returned status %d", resp.StatusCode)
 	}
 
-	var result CoinGeckoResponse
+	var result BinanceResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return math.LegacyZeroDec(), fmt.Errorf("failed to decode CoinGecko response: %w", err)
+		return math.LegacyZeroDec(), fmt.Errorf("failed to decode Binance response: %w", err)
 	}
 
-	if result.Zcash.USD == 0 {
-		return math.LegacyZeroDec(), fmt.Errorf("ZEC price is zero or missing from CoinGecko response")
+	if result.Price == "" {
+		return math.LegacyZeroDec(), fmt.Errorf("ZEC price is missing from Binance response")
 	}
 
-	// Convert float64 to LegacyDec
-	priceStr := fmt.Sprintf("%.2f", result.Zcash.USD)
-	price, err := math.LegacyNewDecFromStr(priceStr)
+	// Convert string to LegacyDec
+	price, err := math.LegacyNewDecFromStr(result.Price)
 	if err != nil {
 		return math.LegacyZeroDec(), fmt.Errorf("failed to convert ZEC price to decimal: %w", err)
 	}
