@@ -285,6 +285,21 @@ if batchErr == nil {
 
 ---
 
+## Why `getTransaction` Calls Are Required
+
+`getSignaturesForAddress` gives us ordered signatures and slots, but it omits the data required by the bridge pipeline:
+
+- **Per-Event Data**: Sidecars must know recipient, amount, fee, mint, and log index to populate `api.SolanaMintEvent`/`api.BurnEvent`. These fields are decoded from the transaction logs in `processMintTransaction` and `processBurnTransaction` (`sidecar/oracle.go:3594-3619`, `sidecar/oracle.go:2652-2721`).
+- **Multiple Events per Signature**: One Solana transaction can emit several mint/burn events. Hashing the signature alone would collapse distinct `SigHash` values and break the dedup logic in `mergeNewMintEvents` (`sidecar/utils.go:314-356`).
+- **Bridge Reconciliation**: The validation module later consumes the full event payload to credit mint amounts and complete redemptions (`x/validation/keeper/abci_dct.go:processDCTMintsSolana`, `x/validation/keeper/abci_dct.go:processSolanaDCTMintEvents`). Signatures alone cannot drive those state updates.
+- **Failure Classification**: `getTransaction` tells us whether the transaction actually emitted the expected program logs. Without it, pending retries (`sidecar/oracle.go:2213-2242`) could never confirm completion.
+
+Therefore the sidecar hashes full event objects for consensus *and* retains them for downstream processing; fetching only signatures would lose critical information.
+
+[🔝 back to top](#table-of-contents)
+
+---
+
 ## Code References
 
 ### Sidecar Oracle Files
@@ -380,10 +395,10 @@ Hash mismatch!
 
 ### Medium-Term Fixes (Medium Priority)
 
-5. **Introduce Consensus Round for Events**
-   - Before constructing vote extension, sidecars gossip their watermark positions
-   - Validators agree on a common watermark range to fetch
-   - This ensures all sidecars process the same signature set
+5. **Introduce Gossip-Based Consensus Round for Events**
+   - Stand up a lightweight libp2p-style mesh where each sidecar publishes its `latestSolanaSigs` and pending signature digest (`sidecar/oracle.go:889-939`, `sidecar/oracle.go:3466-3492`)
+   - Require signed gossip frames so peers can reject tampered data and converge on the minimum watermark before vote extension construction
+   - Use the mesh for early divergence alerts while zrChain remains the canonical decision point in PreBlocker
 
 6. **Implement Event Snapshot Synchronization**
    - Periodically (e.g., every 10 minutes), sidecars exchange pending event lists
@@ -410,6 +425,18 @@ Hash mismatch!
     - Store watermarks on-chain as part of validation module state
     - All validators advance watermark atomically during PreBlocker
     - Sidecars fetch events relative to on-chain watermark
+
+[🔝 back to top](#table-of-contents)
+
+---
+
+## Proposed Sidecar Gossip Network
+
+- **Purpose**: Give validators rapid, off-chain visibility into each peer’s Solana watermarks and pending signature queue so the group can clamp to the lowest shared position before hashing events. This supplements the existing vote extension without requiring an immediate zrChain upgrade.
+- **Protocol Shape**: Reuse the existing oracle state update machinery (`sidecar/oracle.go:352-942`) to emit compact frames containing: event type, watermark signature, count of pending retries, and a hash of `SolanaMintEvents`/`solanaBurnEvents`. Peers sign each frame with their validator key so recipients can drop unauthenticated data.
+- **Network Layer**: A libp2p (or quic-go) mesh keyed by validator identities. Bootstrapping peers from zrChain validator metadata keeps discovery simple, while gossipsub topics per asset (`sol-zenbtc-mint`, `sol-zenzec-burn`, etc.) cap noise.
+- **Divergence Handling**: If a peer advertises a higher watermark or conflicting hash, we back off and rescan from the minimum advertised signature, preventing the optimistic watermark advancement noted in `sidecar/oracle.go:965-986`.
+- **Integration Path**: Start as an optional “warn-only” daemon that logs mismatches. Once stable, feed the lowest observed watermark back into `getSolanaEvents` to ensure every sidecar processes the same signature range before constructing the vote extension.
 
 [🔝 back to top](#table-of-contents)
 
