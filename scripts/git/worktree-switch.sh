@@ -7,6 +7,12 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
+# Detect if Graphite CLI is available
+GT_AVAILABLE=0
+if command -v gt &> /dev/null; then
+    GT_AVAILABLE=1
+fi
+
 # Get the repository root
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
@@ -14,6 +20,15 @@ cd "$REPO_ROOT"
 # Fetch latest branches
 echo "Fetching branches..."
 git fetch --all --prune
+
+# Decide whether to use Graphite helpers
+use_graphite=0
+if [ "$GT_AVAILABLE" -eq 1 ]; then
+    echo ""
+    if go tool gum confirm --default "Use Graphite CLI while switching?"; then
+        use_graphite=1
+    fi
+fi
 
 # Get list of branches (remote and local, cleaned up and deduplicated)
 branches=$(git branch -a | \
@@ -37,6 +52,29 @@ echo "Selected: $selected_branch"
 worktree_name=$(echo "$selected_branch" | sed 's/\//-/g')
 worktree_path=$(cd "$REPO_ROOT/.." && pwd)/"$worktree_name"
 
+starting_branch=$(git branch --show-current)
+
+if [ "$use_graphite" -eq 1 ]; then
+    echo ""
+    echo "Syncing branch via Graphite..."
+    set +e
+    if ! gt get "$selected_branch" >/dev/null 2>&1; then
+        echo "Graphite sync failed or branch not tracked yet; continuing with git data."
+    fi
+    set -e
+
+    echo "Ensuring Graphite metadata for '$selected_branch'..."
+    set +e
+    if gt checkout "$selected_branch" >/dev/null 2>&1; then
+        if [ -n "$starting_branch" ] && [ "$starting_branch" != "$selected_branch" ]; then
+            gt checkout "$starting_branch" >/dev/null 2>&1 || git checkout "$starting_branch"
+        fi
+    else
+        echo "Graphite checkout failed; branch may be untracked. You can run 'gt track $selected_branch' later."
+    fi
+    set -e
+fi
+
 # Check if worktree already exists
 if [ -d "$worktree_path" ]; then
     echo "Worktree already exists at $worktree_path"
@@ -54,6 +92,19 @@ else
     echo "Creating worktree at $worktree_path for branch $selected_branch..."
     git worktree add "$worktree_path" "$selected_branch"
     echo "✓ Worktree created successfully!"
+
+    if [ "$use_graphite" -eq 0 ] && [ "$GT_AVAILABLE" -eq 1 ]; then
+        echo ""
+        echo "Tracking branch with Graphite metadata..."
+        set +e
+        if ! gt track "$selected_branch" >/dev/null 2>&1; then
+            echo "Graphite tracking failed (branch may already be tracked)."
+            echo "Run 'gt track $selected_branch' manually if you want Graphite visibility."
+        else
+            echo "✓ Branch registered with Graphite."
+        fi
+        set -e
+    fi
 fi
 
 # Build IDE options dynamically
@@ -140,4 +191,3 @@ case "$selected_ide" in
 esac
 
 echo "✓ Done!"
-
