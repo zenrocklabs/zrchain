@@ -69,6 +69,7 @@ require (
 	github.com/lightninglabs/neutrino v0.16.0
 	github.com/lmittmann/tint v1.1.2
 	github.com/mr-tron/base58 v1.2.0
+	github.com/near/borsh-go v0.3.1
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/pkg/errors v0.9.1
@@ -83,6 +84,7 @@ require (
 	github.com/zenrocklabs/zenrock-avs v1.7.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
+	golang.org/x/term v0.30.0
 	golang.org/x/tools v0.31.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463
 	google.golang.org/grpc v1.73.0
@@ -343,7 +345,6 @@ require (
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/api v0.204.0 // indirect
