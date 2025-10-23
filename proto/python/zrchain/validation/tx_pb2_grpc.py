@@ -90,6 +90,11 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
                 )
+        self.SetSolanaCounters = channel.unary_unary(
+                '/zrchain.validation.Msg/SetSolanaCounters',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -213,6 +218,14 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetSolanaCounters(self, request, context):
+        """SetSolanaCounters allows an authorized account to set the mint and redemption
+        counters for a specific Solana asset and global config PDA.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -290,6 +303,11 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.AdvanceSolanaNonce,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.SerializeToString,
+            ),
+            'SetSolanaCounters': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetSolanaCounters,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -554,5 +572,22 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/AdvanceSolanaNonce',
             zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetSolanaCounters(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/SetSolanaCounters',
+            zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

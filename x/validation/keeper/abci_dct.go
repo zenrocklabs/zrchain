@@ -150,22 +150,42 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for key: %d", solParams.NonceAccountKey)
 				}
 
+				// Get current Solana counters for this asset from chain state
+				assetKey := asset.String()
+				counters, err := k.SolanaCounters.Get(ctx, assetKey)
+				if err != nil {
+					if errors.Is(err, collections.ErrNotFound) {
+						// Initialize counters if not found
+						counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+					} else {
+						return fmt.Errorf("failed to get Solana counters for %s: %w", assetKey, err)
+					}
+				}
+				nextMintCounter := counters.MintCounter + 1
+				k.Logger(ctx).Info("Read Solana mint counter from chain state",
+					"asset", assetKey,
+					"current_mint_counter", counters.MintCounter,
+					"next_mint_counter", nextMintCounter,
+				)
+
 				txPrepReq := &solanaMintTxRequest{
-					amount:             tx.Amount,
+					amount:              tx.Amount,
 					// fee:               fee,
-					fee:                0,
-					recipient:          tx.RecipientAddress,
-					nonce:              nonce,
-					fundReceiver:       fundReceiver,
-					programID:          solParams.ProgramId,
-					mintAddress:        solParams.MintAddress,
-					feeWallet:          solParams.FeeWallet,
-					nonceAccountKey:    solParams.NonceAccountKey,
-					nonceAuthorityKey:  solParams.NonceAuthorityKey,
-					signerKey:          solParams.SignerKeyId,
-					multisigKey:        solParams.MultisigKeyAddress,
-					zenbtc:             true,
+					fee:                 0,
+					recipient:           tx.RecipientAddress,
+					nonce:               nonce,
+					fundReceiver:        fundReceiver,
+					programID:           solParams.ProgramId,
+					mintAddress:         solParams.MintAddress,
+					feeWallet:           solParams.FeeWallet,
+					nonceAccountKey:     solParams.NonceAccountKey,
+					nonceAuthorityKey:   solParams.NonceAuthorityKey,
+					signerKey:           solParams.SignerKeyId,
+					multisigKey:         solParams.MultisigKeyAddress,
+					zenbtc:              true,
 					eventStoreProgramID: solParams.EventStoreProgramId,
+					mintCounter:         nextMintCounter,
+					assetName:           asset.String(), // Pass asset name to determine event store usage
 				}
 
 				transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
@@ -212,8 +232,10 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					"tx_id", tx.Id,
 					"zrchain_tx_id", txID,
 					"block_height", tx.BlockHeight,
+					"mint_counter_used", nextMintCounter,
 				)
 
+				// Counter will be incremented in processSolanaDCTMintEvents when mint is confirmed successful
 				solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 				return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 			},
@@ -371,6 +393,27 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 		if err := k.dctKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
 			k.Logger(ctx).Error("failed to update DCT pending mint transaction", "asset", asset.String(), "tx_id", pendingMint.Id, "error", err)
 			continue
+		}
+
+		// Increment mint counter after confirmed successful mint
+		assetKey := asset.String()
+		counters, err := k.SolanaCounters.Get(ctx, assetKey)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+			} else {
+				k.Logger(ctx).Error("failed to get Solana counters after successful mint", "asset", assetKey, "error", err)
+			}
+		}
+		counters.MintCounter++
+		if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
+			k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)
+		} else {
+			k.Logger(ctx).Info("Incremented Solana mint counter after confirmed successful mint",
+				"asset", assetKey,
+				"new_mint_counter", counters.MintCounter,
+				"tx_id", pendingMint.Id,
+			)
 		}
 
 		k.advanceDCTFirstPendingSolMintTransaction(ctx, asset, pendingMint.Id)

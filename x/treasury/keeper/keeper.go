@@ -469,6 +469,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	if data == nil {
 		return nil, fmt.Errorf("data for signing is empty")
 	}
+	if len(msg.KeyIds) == 0 {
+		return nil, fmt.Errorf("no key ids provided for sign transaction request")
+	}
 
 	dataForSigning, err := dataForSigning(string(data))
 	if err != nil {
@@ -490,6 +493,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		for i := 1; i < keys; i++ {
 			dataForSigning = append(dataForSigning, dataForSigning[0])
 		}
+	}
+	if len(dataForSigning) != keys {
+		return nil, fmt.Errorf("sign request payload mismatch: %d data blobs for %d keys", len(dataForSigning), keys)
 	}
 	id, err := k.processSignatureRequests(
 		ctx,

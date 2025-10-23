@@ -1864,21 +1864,23 @@ func newCreateATAIdempotentInstruction(payer, wallet, mint solana.PublicKey) sol
 }
 
 type solanaMintTxRequest struct {
-	amount            uint64
-	fee               uint64
-	recipient         string
-	nonce             *system.NonceAccount
-	fundReceiver      bool
-	programID         string
-	mintAddress       string
-	feeWallet         string
-	nonceAccountKey   uint64
-	nonceAuthorityKey uint64
-	signerKey         uint64
-	multisigKey       string
-	rock              bool
-	zenbtc            bool
+	amount              uint64
+	fee                 uint64
+	recipient           string
+	nonce               *system.NonceAccount
+	fundReceiver        bool
+	programID           string
+	mintAddress         string
+	feeWallet           string
+	nonceAccountKey     uint64
+	nonceAuthorityKey   uint64
+	signerKey           uint64
+	multisigKey         string
+	rock                bool
+	zenbtc              bool
 	eventStoreProgramID string
+	mintCounter         uint64
+	assetName           string // "ZENBTC", "ASSET_ZENZEC", etc. - used to determine if event store should be used
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
@@ -1981,21 +1983,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			receiverAta,
 		))
 	} else if req.zenbtc {
-		if req.eventStoreProgramID == "" {
-			return nil, fmt.Errorf("event store program id not provided for zenbtc mint")
-		}
-
-		globalConfigAccount, _, err := k.GetZenbtcGlobalConfigAccount(goCtx, req.programID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load zenbtc global config: %w", err)
-		}
-		eventID := new(big.Int).Add(globalConfigAccount.MintCounter.BigInt(), big.NewInt(1))
-
-		eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
-		if err != nil {
-			return nil, err
-		}
-
 		var multiSigKey solana.PublicKey
 		if req.multisigKey != "" {
 			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
@@ -2010,26 +1997,80 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			}
 		}
 
-		wrapInstruction, err := solzenbtc.Wrap(
-			programID,
-			eventStoreProgramPub,
-			eventID,
-			zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
-			*signerPubKey,
-			mintKey,
-			multiSigKey,
-			feeKey,
-			feeWalletAta,
-			recipientPubKey,
-			receiverAta,
-		)
-		if err != nil {
-			return nil, err
+		// ZENZEC (and other DCT assets) use event store, ZENBTC does not
+		useEventStore := req.assetName != "" && req.assetName != "ZENBTC"
+
+		var wrapInstruction *zenbtc_spl_token.Instruction
+
+		if useEventStore {
+			// ZENZEC and other DCT assets: use new bindings WITH event store
+			if req.eventStoreProgramID == "" {
+				return nil, fmt.Errorf("event store program id not provided for %s mint", req.assetName)
+			}
+
+			eventID := new(big.Int).SetUint64(req.mintCounter)
+			k.Logger(ctx).Info("Using Solana mint counter from chain state with event store",
+				"asset", req.assetName,
+				"programID", req.programID,
+				"mint_counter", req.mintCounter,
+				"event_id", eventID.String(),
+			)
+
+			eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
+			if err != nil {
+				return nil, err
+			}
+
+			wrapInstruction, err = solzenbtc.Wrap(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// ZENBTC: don't use event store (pass empty program ID and zero event ID)
+			k.Logger(ctx).Info("Not using event store for ZENBTC",
+				"asset", "ZENBTC",
+				"programID", req.programID,
+			)
+
+			// Use empty public key for event store program (ZENBTC doesn't use it)
+			emptyEventStoreProgramID := solana.PublicKey{}
+			eventID := big.NewInt(0)
+
+			wrapInstruction, err = solzenbtc.Wrap(
+				programID,
+				emptyEventStoreProgramID,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		instructions = append(instructions, wrapInstruction)
 
 		k.Logger(ctx).Info("Added wrap instruction to tx",
+			"asset", req.assetName,
+			"use_event_store", useEventStore,
 			"programID", programID.String(),
 			"amount", req.amount,
 			"fee", req.fee,

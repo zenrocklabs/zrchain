@@ -298,3 +298,19 @@ class MsgAdvanceSolanaNonce(_message.Message):
 class MsgAdvanceSolanaNonceResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class MsgSetSolanaCounters(_message.Message):
+    __slots__ = ("authority", "asset", "mint_counter", "redemption_counter")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    MINT_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    REDEMPTION_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    asset: _params_pb2.Asset
+    mint_counter: int
+    redemption_counter: int
+    def __init__(self, authority: _Optional[str] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ..., mint_counter: _Optional[int] = ..., redemption_counter: _Optional[int] = ...) -> None: ...
+
+class MsgSetSolanaCountersResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

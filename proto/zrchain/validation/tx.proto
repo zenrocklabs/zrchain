@@ -81,6 +81,11 @@ service Msg {
   // blockhash.
   rpc AdvanceSolanaNonce(MsgAdvanceSolanaNonce)
       returns (MsgAdvanceSolanaNonceResponse);
+
+  // SetSolanaCounters allows an authorized account to set the mint and redemption
+  // counters for a specific Solana asset and global config PDA.
+  rpc SetSolanaCounters(MsgSetSolanaCounters)
+      returns (MsgSetSolanaCountersResponse);
 }
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
@@ -472,3 +477,27 @@ message MsgAdvanceSolanaNonce {
 }
 
 message MsgAdvanceSolanaNonceResponse {}
+
+// MsgSetSolanaCounters allows an authorized account to manually set the mint
+// and redemption counters for a specific Solana asset.
+message MsgSetSolanaCounters {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgSetSolanaCounters";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset is the DCT asset for which to set the counters (e.g., ASSET_ZENBTC).
+  zrchain.dct.Asset asset = 2;
+
+  // mint_counter is the new mint counter value to set.
+  uint64 mint_counter = 3;
+
+  // redemption_counter is the new redemption counter value to set.
+  uint64 redemption_counter = 4;
+}
+
+// MsgSetSolanaCountersResponse defines the response structure for
+// MsgSetSolanaCounters.
+message MsgSetSolanaCountersResponse {}
