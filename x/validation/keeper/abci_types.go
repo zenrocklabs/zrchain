@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	VoteExtBytesLimit = 1280
+	VoteExtBytesLimit = 1600
 )
 
 var (
