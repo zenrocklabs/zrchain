@@ -253,6 +253,57 @@ install_docker() {
     esac
 }
 
+# Install Go tools for protobuf generation
+install_go_tools() {
+    if ! command_exists go; then
+        log_error "Go is not installed. Please run install_go first."
+        exit 1
+    fi
+    
+    log_info "Installing Go tools for protobuf generation..."
+    
+    # Array of tools to install - these match the tools declared in tools/tools.go
+    # Format: "binary_name|package_path"
+    local tools=(
+        "buf|github.com/bufbuild/buf/cmd/buf@latest"
+        "protoc-gen-go-pulsar|github.com/cosmos/cosmos-proto/cmd/protoc-gen-go-pulsar@latest"
+        "protoc-gen-gocosmos|github.com/cosmos/gogoproto/protoc-gen-gocosmos@latest"
+        "protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@latest"
+        "protoc-gen-openapiv2|github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest"
+        "goimports|golang.org/x/tools/cmd/goimports@latest"
+        "protoc-gen-go-grpc|google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
+        "protoc-gen-go|google.golang.org/protobuf/cmd/protoc-gen-go@latest"
+    )
+    
+    for tool_entry in "${tools[@]}"; do
+        local tool_name="${tool_entry%%|*}"
+        local tool_package="${tool_entry##*|}"
+        
+        if command_exists "$tool_name"; then
+            log_info "$tool_name is already installed"
+        else
+            log_info "Installing $tool_name..."
+            go install "$tool_package"
+            if [ $? -eq 0 ]; then
+                log_info "$tool_name installed successfully"
+            else
+                log_error "Failed to install $tool_name"
+                exit 1
+            fi
+        fi
+    done
+    
+    # Verify GOPATH/bin is in PATH
+    local gopath_bin="${GOPATH:-$HOME/go}/bin"
+    if [[ ":$PATH:" != *":$gopath_bin:"* ]]; then
+        log_warn "Warning: $gopath_bin is not in your PATH"
+        log_warn "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
+        echo "  export PATH=\"\$PATH:$gopath_bin\""
+    fi
+    
+    log_info "All Go tools installed successfully"
+}
+
 # Install build essentials (gcc, make, git)
 install_build_essentials() {
     log_info "Installing build essentials..."
@@ -330,6 +381,9 @@ main() {
     install_go
     echo
     
+    install_go_tools
+    echo
+    
     install_uv
     echo
     
@@ -341,8 +395,9 @@ main() {
     log_info "Next steps:"
     echo "  1. If you installed Docker on Linux, log out and back in for group permissions"
     echo "  2. Verify installation: go version && docker --version && uv --version"
-    echo "  3. Run 'make proto-all' to generate Protobuf files (uses Docker)"
-    echo "  4. Run 'make build' to build the project"
+    echo "  3. Verify Go tools: buf --version && protoc-gen-gocosmos --version"
+    echo "  4. Run 'make proto-all' to generate Protobuf files"
+    echo "  5. Run 'make build' to build the project"
     echo
     log_info "For more information, see the README.md and CLAUDE.md files"
 }
