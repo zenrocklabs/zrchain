@@ -8,3 +8,9 @@ option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types
 message SolanaNonce {
   bytes nonce = 1;
 }
+
+// SolanaCounters stores the mint and redemption counters for a Solana asset.
+message SolanaCounters {
+  uint64 mint_counter = 1;
+  uint64 redemption_counter = 2;
+}

@@ -9,3 +9,11 @@ class SolanaNonce(_message.Message):
     NONCE_FIELD_NUMBER: _ClassVar[int]
     nonce: bytes
     def __init__(self, nonce: _Optional[bytes] = ...) -> None: ...
+
+class SolanaCounters(_message.Message):
+    __slots__ = ("mint_counter", "redemption_counter")
+    MINT_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    REDEMPTION_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    mint_counter: int
+    redemption_counter: int
+    def __init__(self, mint_counter: _Optional[int] = ..., redemption_counter: _Optional[int] = ...) -> None: ...

@@ -13,10 +13,12 @@ class Asset(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     ROCK: _ClassVar[Asset]
     BTC: _ClassVar[Asset]
     ETH: _ClassVar[Asset]
+    ZEC: _ClassVar[Asset]
 UNSPECIFIED: Asset
 ROCK: Asset
 BTC: Asset
 ETH: Asset
+ZEC: Asset
 
 class AssetData(_message.Message):
     __slots__ = ("asset", "priceUSD", "precision")

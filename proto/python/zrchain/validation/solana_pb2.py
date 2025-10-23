@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fzrchain/validation/solana.proto\x12\x12zrchain.validation\"#\n\x0bSolanaNonce\x12\x14\n\x05nonce\x18\x01 \x01(\x0cR\x05nonceB=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fzrchain/validation/solana.proto\x12\x12zrchain.validation\"#\n\x0bSolanaNonce\x12\x14\n\x05nonce\x18\x01 \x01(\x0cR\x05nonce\"b\n\x0eSolanaCounters\x12!\n\x0cmint_counter\x18\x01 \x01(\x04R\x0bmintCounter\x12-\n\x12redemption_counter\x18\x02 \x01(\x04R\x11redemptionCounterB=Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/typesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,4 +34,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z;github.com/Zenrock-Foundation/zrchain/v6/x/validation/types'
   _globals['_SOLANANONCE']._serialized_start=55
   _globals['_SOLANANONCE']._serialized_end=90
+  _globals['_SOLANACOUNTERS']._serialized_start=92
+  _globals['_SOLANACOUNTERS']._serialized_end=190
 # @@protoc_insertion_point(module_scope)
