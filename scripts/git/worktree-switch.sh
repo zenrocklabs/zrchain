@@ -110,24 +110,14 @@ fi
 # Build IDE options dynamically
 ide_options=()
 
-# Check for Claude Code options
-if command -v claude &> /dev/null; then
-    if command -v wezterm &> /dev/null; then
-        ide_options+=("Claude Code in Wezterm")
-    fi
-    if command -v code &> /dev/null; then
-        ide_options+=("Claude Code in VSCode")
-    fi
+# Check for Claude Code in Wezterm
+if command -v claude &> /dev/null && command -v wezterm &> /dev/null; then
+    ide_options+=("Claude Code in Wezterm")
 fi
 
-# Check for Codex options
-if command -v codex &> /dev/null; then
-    if command -v wezterm &> /dev/null; then
-        ide_options+=("Codex in Wezterm")
-    fi
-    if command -v code &> /dev/null; then
-        ide_options+=("Codex in VSCode")
-    fi
+# Check for Codex in Wezterm
+if command -v codex &> /dev/null && command -v wezterm &> /dev/null; then
+    ide_options+=("Codex in Wezterm")
 fi
 
 # Standard Cursor/VSCode options
@@ -161,21 +151,9 @@ case "$selected_ide" in
         echo "Launching Claude Code in Wezterm..."
         wezterm start --cwd "$worktree_path" -- claude "$worktree_path" &
         ;;
-    "Claude Code in VSCode")
-        echo "Launching Claude Code in VSCode..."
-        code "$worktree_path"
-        sleep 1
-        claude "$worktree_path" &
-        ;;
     "Codex in Wezterm")
         echo "Launching Codex in Wezterm..."
         wezterm start --cwd "$worktree_path" -- codex "$worktree_path" &
-        ;;
-    "Codex in VSCode")
-        echo "Launching Codex in VSCode..."
-        code "$worktree_path"
-        sleep 1
-        codex "$worktree_path" &
         ;;
     "Cursor")
         echo "Opening in Cursor..."
