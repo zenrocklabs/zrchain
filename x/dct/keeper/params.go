@@ -6,10 +6,10 @@ import (
 
 var (
 	defaultZenZECSolana = &types.Solana{
-		SignerKeyId:         17,
+		SignerKeyId:         7,
 		ProgramId:           "7q3u7bL1nKzftYFbwUE8yuzhzbQxFwM7xyMh1cZFzenZ",
-		NonceAccountKey:     19,
-		NonceAuthorityKey:   18,
+		NonceAccountKey:     9,
+		NonceAuthorityKey:   8,
 		MintAddress:         "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
 		FeeWallet:           "FvzecFee1YdzWm7Nzvy2Kc7CquBrEPNvkMRPQHrfeee",
 		Fee:                 0,
@@ -20,7 +20,7 @@ var (
 
 	defaultZenZECCfg = types.AssetParams{
 		Asset:               types.Asset_ASSET_ZENZEC,
-		DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+		DepositKeyringAddr:  "keyring1pfnq7r04rept47gaf5cpdew2",
 		StakerKeyId:         6,
 		EthMinterKeyId:      2,
 		UnstakerKeyId:       4,
