@@ -91,7 +91,7 @@ var (
 	ZenZECSolanaProgramID = map[string]string{
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
-		NetworkDevnet:   "HcN9Pve4mszb5ictmwTEyhjCMqQMzn4LkBtzx8xEGJ1E",
+		NetworkDevnet:   "24v76b4g13Rhmh2BdJbEMMBRHzCU6V4wiZk64cJCm8op",
 		NetworkTestnet:  "",
 		NetworkMainnet:  "",
 	}
@@ -99,7 +99,7 @@ var (
 	ZenZECEventStoreProgramID = map[string]string{
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
-		NetworkDevnet:   "DqhdKEQ3Go45RjXWjBtTPATp57j6LgZ2naPoxyiR6fL2",
+		NetworkDevnet:   "6pNtZ4JwYtbpgUCkabc7GVGtr5trBYcb5PMh1KtPbihm",
 		NetworkTestnet:  "",
 		NetworkMainnet:  "",
 	}
@@ -107,7 +107,7 @@ var (
 	ZenZECMintAddress = map[string]string{
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
-		NetworkDevnet:   "Dqj6hHmWGC9gtBHfxSTRSxtxfGMi33hAiwdb4Yyute5V",
+		NetworkDevnet:   "9mAUXtr4Pnh2iDD2qNivxWW3z5b8FNBQ2GrT2AfYYqm5",
 		NetworkTestnet:  "",
 		NetworkMainnet:  "",
 	}
