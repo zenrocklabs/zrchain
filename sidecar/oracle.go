@@ -28,6 +28,7 @@ import (
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
+	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	"github.com/beevik/ntp"
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
@@ -293,7 +294,7 @@ func (o *Oracle) processOracleTick(
 ) {
 	// Perform scheduled reset if due (evaluated using the tick's aligned time)
 	o.maybePerformScheduledReset(tickTime.UTC())
-	newState, err := o.fetchAndProcessState(tickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, nil, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
@@ -382,12 +383,13 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 			"rockBurn", o.lastSolRockBurnSigStr)
 	}
 
-	o.CacheState()
+	o.appendStateToCache()
 }
 
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
-	zenBTCController *zenbtc.ZenBTController,
+	_ *middleware.ContractZrServiceManager,
+	_ *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
@@ -3786,31 +3788,41 @@ func (o *Oracle) reconcileBurnEventsWithZRChain(
 
 // maybePerformScheduledReset checks if a full state reset is due at the provided UTC time.
 // It is safe to call on every tick; internal locking ensures idempotence per boundary.
+// Uses double-checked locking for performance - fast path with RLock for the common case.
 func (o *Oracle) maybePerformScheduledReset(nowUTC time.Time) {
-	o.resetMutex.Lock()
-	defer o.resetMutex.Unlock()
-
 	// Derive interval dynamically (test flag overrides).
 	interval := sidecartypes.OracleStateResetInterval
 	if o.ForceTestReset {
 		interval = 2 * time.Minute
 	}
+	if interval <= 0 {
+		interval = 24 * time.Hour
+	}
+	isShortInterval := interval < time.Hour
 
-	// If nextScheduledReset not set OR we switched into a shorter test interval, (re)compute it.
-	if o.nextScheduledReset.IsZero() || (interval < time.Hour && o.nextScheduledReset.Sub(nowUTC) > interval) {
-		o.scheduleNextReset(nowUTC, interval)
+	// Fast path: Check if reset is needed with RLock (common case - no reset needed)
+	o.stateCacheMutex.RLock()
+	nextReset := o.nextScheduledReset
+	o.stateCacheMutex.RUnlock()
+	needsResetTimeSet := nextReset.IsZero() || (isShortInterval && nextReset.Sub(nowUTC) > interval)
+	needsReset := !nextReset.IsZero() && !nowUTC.Before(nextReset)
+
+	if needsResetTimeSet {
+		o.stateCacheMutex.Lock()
+		// Double-check: another goroutine might have initialized while we waited for Lock
+		if o.nextScheduledReset.IsZero() || (isShortInterval && o.nextScheduledReset.Sub(nowUTC) > interval) {
+			o.scheduleNextReset(nowUTC, interval)
+		}
+		o.stateCacheMutex.Unlock()
+		return
 	}
 
-	if !o.nextScheduledReset.IsZero() &&
-		(nowUTC.Equal(o.nextScheduledReset) || nowUTC.After(o.nextScheduledReset)) {
+	if needsReset {
 		log.Printf("Performing scheduled oracle state reset at %s (nextScheduledReset=%s, interval=%s)",
 			nowUTC.Format(time.RFC3339), o.nextScheduledReset.Format(time.RFC3339), interval)
 
-		o.performFullStateResetLocked()
-
-		// Schedule the next reset strictly after 'nowUTC'
-		o.scheduleNextReset(nowUTC.Add(time.Second), interval)
-		log.Printf("Next scheduled oracle state reset at %s", o.nextScheduledReset.Format(time.RFC3339))
+		// performFullStateReset acquires its own lock
+		o.performFullStateReset(nowUTC, interval)
 	}
 }
 
@@ -3843,9 +3855,12 @@ func (o *Oracle) scheduleNextReset(nowUTC time.Time, interval time.Duration) {
 	}
 }
 
-// performFullStateResetLocked clears in-memory caches and deletes the on-disk state file.
-// Caller must hold o.resetMutex.
-func (o *Oracle) performFullStateResetLocked() {
+// performFullStateReset clears in-memory caches and deletes the on-disk state file.
+// Also schedules the next reset. Acquires stateCacheMutex internally.
+func (o *Oracle) performFullStateReset(nowUTC time.Time, interval time.Duration) {
+	o.stateCacheMutex.Lock()
+	defer o.stateCacheMutex.Unlock()
+
 	// Clear oracle runtime state
 	o.stateCache = []sidecartypes.OracleState{EmptyOracleState}
 	o.currentState.Store(&EmptyOracleState)
@@ -3864,9 +3879,14 @@ func (o *Oracle) performFullStateResetLocked() {
 	}
 
 	// Persist fresh empty state (recreates file)
-	if err := o.SaveToFile(o.Config.StateFile); err != nil {
+	// We hold stateCacheMutex, so we can pass stateCache directly
+	if err := saveStatesToFile(o.Config.StateFile, o.stateCache); err != nil {
 		log.Printf("Warning: failed to write fresh state file after reset (%s): %v", o.Config.StateFile, err)
 	} else {
 		log.Printf("State file reinitialized after scheduled reset: %s", o.Config.StateFile)
 	}
+
+	// Schedule the next reset strictly after 'nowUTC'
+	o.scheduleNextReset(nowUTC.Add(time.Second), interval)
+	log.Printf("Next scheduled oracle state reset at %s", o.nextScheduledReset.Format(time.RFC3339))
 }
