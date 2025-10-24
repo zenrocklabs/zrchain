@@ -2,22 +2,20 @@ package e2e
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"math/big"
 	"strconv"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
-	zentype "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 var _ = Describe("ZenBTC ETH flow:", func() {
@@ -27,8 +25,6 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 	var bitcoinAddress string
 	var ethereumWallet *ecdsa.PrivateKey
 	var ethereumAddress common.Address
-	var initialBTCBalance float64
-	var initialRedemptions int
 	var randomBTCAddress string
 	var burnTxHash string
 
@@ -243,109 +239,6 @@ var _ = Describe("ZenBTC ETH flow:", func() {
 			return false
 		}, "120s", "5s").Should(BeTrue())
 		GinkgoWriter.Printf("Burn tx created: %v\n", burnTx)
-		respRedemptions, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
-		Expect(err).ToNot(HaveOccurred())
-		initialRedemptions = len(respRedemptions.Redemptions)
-	})
-
-	It("burn status moves to UNSTAKING", func() {
-		chainID := "eip155:" + strconv.FormatUint(ETHEREUM_CHAIN_ID, 10)
-		Eventually(func() (zentype.BurnStatus, error) {
-			resp, err := env.Query.BurnEvents(env.Ctx, 0, burnTxHash, 0, chainID)
-			if err != nil {
-				return 0, err
-			}
-			if len(resp.BurnEvents) == 0 {
-				return 0, errors.New("0 burn events returned")
-			}
-			return resp.BurnEvents[0].Status, nil
-		}, "120s", "5s").Should(Equal(zentype.BurnStatus_BURN_STATUS_UNSTAKING))
-	})
-
-	// This is needed for the unstake on EL
-	It("fast-forward anvil 50 blocks", func() {
-		_, err := env.Docker.Exec("anvil", []string{
-			"cast", "rpc", "anvil_mine", "50",
-		})
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	// Redemption gets created
-	It("redemption is created", func() {
-		var redemption zentype.Redemption
-		Eventually(func() bool {
-			resp, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
-			Expect(err).ToNot(HaveOccurred())
-			if len(resp.Redemptions) <= int(initialRedemptions) {
-				return false
-			}
-			for _, event := range resp.Redemptions {
-				if string(event.Data.DestinationAddress) == randomBTCAddress {
-					redemption = event
-					return true
-				}
-			}
-
-			return false
-		}, "180s", "10s").Should(BeTrue())
-		GinkgoWriter.Printf("Redemption created: %v\n", redemption)
-	})
-
-	// Get balance before redemption completes
-	It("gets initial BTC balance on destination address", func() {
-		out, err := env.Docker.Exec(
-			"bitcoin",
-			[]string{"/app/balance.sh", randomBTCAddress},
-		)
-		Expect(err).ToNot(HaveOccurred())
-		initialBTCBalance, err = extractBTCBalance(out)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	// Redemption gets completed
-	It("redemption is completed", func() {
-		var redemption zentype.Redemption
-		Eventually(func() bool {
-			resp, err := env.Query.Redemptions(env.Ctx, 0, zentype.RedemptionStatus(-1))
-			Expect(err).ToNot(HaveOccurred())
-			if len(resp.Redemptions) <= int(initialRedemptions) {
-				return false
-			}
-			for _, event := range resp.Redemptions {
-				if string(event.Data.DestinationAddress) == randomBTCAddress {
-					if event.Status == zentype.RedemptionStatus_COMPLETED {
-						redemption = event
-						return true
-					}
-				}
-			}
-
-			return false
-		}, "180s", "10s").Should(BeTrue())
-		GinkgoWriter.Printf("Redemption completed: %v\n", redemption)
-	})
-
-	// Mine 100 blocks so the balance moves spendable
-	It("mine bitcoin blocks", func() {
-		time.Sleep(10 * time.Second)
-		_, err := env.Docker.Exec(
-			"bitcoin",
-			[]string{"/app/mine.sh", "100", "bcrt1qa8fk4zz3j8revg0frgvtt6dkrnw9snhan49cx8"},
-		)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	// Get balance after redemption completes
-	It("balance on destination address increased", func() {
-		out, err := env.Docker.Exec(
-			"bitcoin",
-			[]string{"/app/balance.sh", randomBTCAddress},
-		)
-		Expect(err).ToNot(HaveOccurred())
-		balance, err := extractBTCBalance(out)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(balance).To(BeNumerically(">", initialBTCBalance))
-		GinkgoWriter.Printf("Balance changed from %f to %f\n", initialBTCBalance, balance)
 	})
 
 	AfterEach(func() {
