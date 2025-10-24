@@ -406,7 +406,7 @@ func (o *Oracle) fetchAndProcessState(
 	var wg sync.WaitGroup
 
 	// Log initial state at beginning of tick
-	initialState := o.currentState.Load().(*sidecartypes.OracleState)
+	initialState := o.currentState.Load()
 	slog.Info("TICK START STATE SNAPSHOT",
 		"solanaMintEvents", len(initialState.SolanaMintEvents),
 		"cleanedSolanaMintEvents", len(initialState.CleanedSolanaMintEvents),
@@ -797,7 +797,7 @@ func (o *Oracle) fetchEthereumBurnEvents(
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (burnEventResult, error) {
-			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			currentState := o.currentState.Load()
 
 			fromBlock := new(big.Int).Sub(latestHeader.Number, big.NewInt(int64(sidecartypes.EthBurnEventsBlockRange)))
 			toBlock := latestHeader.Number
@@ -838,7 +838,7 @@ func (o *Oracle) processSolanaMintEvents(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		currentState := o.currentState.Load()
 
 		// Parallel fetch of ROCK, zenBTC, and zenZEC mint events
 		var rockEvents, zenbtcEvents, zenzecEvents []api.SolanaMintEvent
@@ -1181,7 +1181,7 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		})
 
 		// Get current state to merge with new burn events
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		currentState := o.currentState.Load()
 
 		// Reconcile with zrChain to see which of the pending events have been processed.
 		remainingEvents, cleanedEvents := o.reconcileBurnEventsWithZRChain(ctx, currentState.SolanaBurnEvents, currentState.CleanedSolanaBurnEvents, "Solana")
@@ -1282,7 +1282,7 @@ func (o *Oracle) buildFinalState(
 		lastSolRockBurnSig = sig.String()
 	}
 
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	currentState := o.currentState.Load()
 
 	// Apply fallbacks for nil values
 	o.applyFallbacks(update, currentState)
@@ -2142,7 +2142,7 @@ func (o *Oracle) processBackfillRequests(
 		defer updateMutex.Unlock()
 
 		// Get cleaned events from the persisted state to check against duplicates
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		currentState := o.currentState.Load()
 
 		// Use helper function to merge backfilled events with existing ones
 		update.solanaBurnEvents = mergeNewBurnEvents(update.solanaBurnEvents, currentState.CleanedSolanaBurnEvents, newBurnEvents, "backfilled Solana")
@@ -2330,7 +2330,7 @@ func (o *Oracle) processPendingTransactionsPersistent(ctx context.Context) {
 			return
 		default:
 			// Check if there are any pending transactions to process
-			currentState := o.currentState.Load().(*sidecartypes.OracleState)
+			currentState := o.currentState.Load()
 			pendingCount := len(currentState.PendingSolanaTxs)
 
 			if pendingCount == 0 {
@@ -2426,9 +2426,8 @@ func (o *Oracle) processPendingTransactions(ctx context.Context, wg *sync.WaitGr
 // Returns (processedCount, successCount) where processedCount is attempts and successCount is completed
 func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *oracleStateUpdate, updateMutex *sync.Mutex) pendingTransactionStats {
 	// Create a copy to iterate over to avoid modifying map while iterating
-	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
 	updateMutex.Lock()
-	maps.Copy(pendingCopy, update.pendingTransactions)
+	pendingCopy := maps.Clone(update.pendingTransactions)
 	updateMutex.Unlock()
 
 	stats := pendingTransactionStats{
@@ -2592,13 +2591,10 @@ func (o *Oracle) processPendingTransactionsRound(ctx context.Context, update *or
 // processPendingTransactionsRoundPersistent processes one round of pending transactions from the current state
 // This version works with the persistent background processor and modifies the live oracle state
 func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) {
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	currentState := o.currentState.Load()
 
 	// Create a copy to iterate over to avoid modifying map while iterating
-	pendingCopy := make(map[string]sidecartypes.PendingTxInfo)
-	for k, v := range currentState.PendingSolanaTxs {
-		pendingCopy[k] = v
-	}
+	pendingCopy := maps.Clone(currentState.PendingSolanaTxs)
 
 	processedCount := 0
 	successCount := 0
@@ -2616,7 +2612,7 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 		}
 
 		// Get current transaction info (may have been updated by other goroutines)
-		currentState = o.currentState.Load().(*sidecartypes.OracleState)
+		currentState = o.currentState.Load()
 		current, exists := currentState.PendingSolanaTxs[signature]
 		if !exists {
 			continue
@@ -2710,13 +2706,9 @@ func (o *Oracle) processPendingTransactionsRoundPersistent(ctx context.Context) 
 // Helper functions for managing pending transactions in the current state
 func (o *Oracle) removePendingTransactionFromState(signature string) {
 	for {
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
-		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
-		for k, v := range currentState.PendingSolanaTxs {
-			if k != signature {
-				newPendingTxs[k] = v
-			}
-		}
+		currentState := o.currentState.Load()
+		newPendingTxs := maps.Clone(currentState.PendingSolanaTxs)
+		delete(newPendingTxs, signature)
 
 		newState := *currentState
 		newState.PendingSolanaTxs = newPendingTxs
@@ -2730,11 +2722,8 @@ func (o *Oracle) removePendingTransactionFromState(signature string) {
 
 func (o *Oracle) updatePendingTransactionInState(signature string, txInfo sidecartypes.PendingTxInfo) {
 	for {
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
-		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
-		for k, v := range currentState.PendingSolanaTxs {
-			newPendingTxs[k] = v
-		}
+		currentState := o.currentState.Load()
+		newPendingTxs := maps.Clone(currentState.PendingSolanaTxs)
 
 		// Update the transaction with incremented retry count
 		updated := sidecartypes.PendingTxInfo{
@@ -2758,7 +2747,7 @@ func (o *Oracle) updatePendingTransactionInState(signature string, txInfo sideca
 
 func (o *Oracle) addEventsToCurrentState(events []any, eventType string) {
 	for {
-		currentState := o.currentState.Load().(*sidecartypes.OracleState)
+		currentState := o.currentState.Load()
 		newState := *currentState
 
 		// Add events based on event type
