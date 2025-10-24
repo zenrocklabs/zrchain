@@ -42,7 +42,7 @@ func NewOracleService(oracle *Oracle) *oracleService {
 }
 
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
-	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
+	currentState := s.oracle.currentState.Load()
 
 	b, _ := json.Marshal(struct{}{})
 
