@@ -20,7 +20,7 @@ var (
 
 	defaultZenZECCfg = types.AssetParams{
 		Asset:               types.Asset_ASSET_ZENZEC,
-		DepositKeyringAddr:  "keyring1k6vc6vhp6e6l3rxalue9v4ux",
+		DepositKeyringAddr:  "keyring1pfnq7r04rept47gaf5cpdew2",
 		StakerKeyId:         6,
 		EthMinterKeyId:      2,
 		UnstakerKeyId:       4,
