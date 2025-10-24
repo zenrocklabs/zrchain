@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc"
@@ -342,6 +343,34 @@ func (t *TreasuryQueryClient) GetKeyByAddress(ctx context.Context, address strin
 		KeyType:     keytype,
 		Prefixes:    prefixes,
 		KeyringAddr: keyringaddr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// GetDctWallets retrieves Dct wallets for a specific address and wallet type.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - page: Pagination parameters
+//   - assetType: The asset type to filter wallets
+//   - mintChainId: The chain ID to filter wallets
+//   - walletType: The type of wallet to filter
+//   - recipientAddr: The recipient address to filter wallets
+//
+// Returns:
+//   - *types.QueryDctWalletsResponse: Contains the Dct wallets
+//   - error: An error if the query fails
+func (t *TreasuryQueryClient) GetDctWallets(ctx context.Context, page *PageRequest, assetType dcttypes.Asset, recipientAddr, mintChainId string, walletType types.WalletType) (*types.QueryDctWalletsResponse, error) {
+	res, err := t.client.DctWallets(ctx, &types.QueryDctWalletsRequest{
+		AssetType:     assetType,
+		WalletType:    walletType,
+		MintChainId:   mintChainId,
+		RecipientAddr: recipientAddr,
+		Pagination:    page,
 	})
 	if err != nil {
 		return nil, err
