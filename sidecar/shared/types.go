@@ -36,8 +36,11 @@ var (
 		ETH: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", // ETH/USD Chainlink feed
 	}
 
-	// ZEC Price URL from Binance
+	// ZEC Price URL from Binance - RISK OF SLASHING IF CHANGED
 	ZECUSDPriceURL = "https://api.binance.com/api/v3/ticker/price?symbol=ZECUSDT"
+
+	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
+	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{
@@ -86,27 +89,27 @@ var (
 	}
 
 	ZenZECSolanaProgramID = map[string]string{
-		NetworkLocalnet: "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
-		NetworkRegnet:   "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
-		NetworkDevnet:   "Ney4F3GUe5BhPP1cFEmXRVWtzSUGhG4DrRkfERRYedh",
-		NetworkTestnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
-		NetworkMainnet:  "DycqLiyxNiqLLY49yRRjdghGC65c5vabiXgpgwDdf6M5",
+		NetworkLocalnet: "",
+		NetworkRegnet:   "",
+		NetworkDevnet:   "HcN9Pve4mszb5ictmwTEyhjCMqQMzn4LkBtzx8xEGJ1E",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	ZenZECEventStoreProgramID = map[string]string{
-		NetworkLocalnet: "7zecEvtStreProg11111111111111111111111111111",
-		NetworkRegnet:   "7zecEvtStreProg11111111111111111111111111111",
-		NetworkDevnet:   "HbUWCsvZzkQtHakTX6QovPKcaCeP1Pf34W9Bpw6j18J8",
-		NetworkTestnet:  "7zecEvtStreProg11111111111111111111111111111",
-		NetworkMainnet:  "7zecEvtStreProg11111111111111111111111111111",
+		NetworkLocalnet: "",
+		NetworkRegnet:   "",
+		NetworkDevnet:   "DqhdKEQ3Go45RjXWjBtTPATp57j6LgZ2naPoxyiR6fL2",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	ZenZECMintAddress = map[string]string{
-		NetworkLocalnet: "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
-		NetworkRegnet:   "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
-		NetworkDevnet:   "4q9DEzEHLqNG637jsGMYSg8E56SbotNcGeH3GjtaYYJT",
-		NetworkTestnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
-		NetworkMainnet:  "ZC3hZPnfYg1y5SP62x9XyLJmMnt4zUpfcu8JZenZEC",
+		NetworkLocalnet: "",
+		NetworkRegnet:   "",
+		NetworkDevnet:   "Dqj6hHmWGC9gtBHfxSTRSxtxfGMi33hAiwdb4Yyute5V",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	SolRockProgramID = map[string]string{
@@ -127,13 +130,10 @@ var (
 		NetworkMainnet:  "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
-	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
-	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
-
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
 	MainLoopTickerInterval         = 60 * time.Second
-	OracleCacheSize                = 10
+	OracleCacheSize                = 5
 	EthBurnEventsBlockRange        = 1000
 	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
 	SolanaEventScanTxLimit         = 64
@@ -173,11 +173,11 @@ var (
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 
-	SidecarVersionName = "sturgeon_moon"
+	SidecarVersionName = "sturgeon_moon_r1"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r1"}
 
 	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.
