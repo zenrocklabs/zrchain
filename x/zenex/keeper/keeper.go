@@ -31,6 +31,7 @@ type (
 		validationKeeper types.ValidationKeeper
 		bankKeeper       types.BankKeeper
 		accountKeeper    types.AccountKeeper
+		zenbtcKeeper     types.ZenbtcKeeper
 
 		Schema     collections.Schema
 		SwapsCount collections.Item[uint64]
@@ -47,6 +48,7 @@ func NewKeeper(
 	identityKeeper types.IdentityKeeper,
 	treasuryKeeper types.TreasuryKeeper,
 	validationKeeper types.ValidationKeeper,
+	zenbtcKeeper types.ZenbtcKeeper,
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 ) Keeper {
@@ -65,6 +67,7 @@ func NewKeeper(
 		identityKeeper:   identityKeeper,
 		treasuryKeeper:   treasuryKeeper,
 		validationKeeper: validationKeeper,
+		zenbtcKeeper:     zenbtcKeeper,
 		bankKeeper:       bankKeeper,
 		accountKeeper:    accountKeeper,
 
@@ -92,6 +95,8 @@ func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// Returns the pair and trade pair price
+// including the asset prices, base and quote token
 func (k Keeper) GetPair(ctx sdk.Context, pair types.TradePair) (*types.SwapPair, math.LegacyDec, error) {
 	var pairType types.SwapPair
 
@@ -152,6 +157,7 @@ func (k Keeper) GetPair(ctx sdk.Context, pair types.TradePair) (*types.SwapPair,
 	return &pairType, price, nil
 }
 
+// Returns all swaps from the swaps store
 func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
 	swapStore, err := k.SwapsStore.Iterate(ctx, nil)
 	if err != nil {
@@ -164,6 +170,8 @@ func (k Keeper) GetSwaps(ctx sdk.Context) ([]types.Swap, error) {
 	return swaps, nil
 }
 
+// Returns the price for a given trade pair
+// based on the asset prices from the validation keeper
 func (k Keeper) GetPrice(ctx sdk.Context, pair types.TradePair) (math.LegacyDec, error) {
 	switch pair {
 	case types.TradePair_TRADE_PAIR_ROCK_BTC:
@@ -175,6 +183,7 @@ func (k Keeper) GetPrice(ctx sdk.Context, pair types.TradePair) (math.LegacyDec,
 	}
 }
 
+// Calculates the amount out for a given pair and amount in
 func (k Keeper) GetAmountOut(ctx sdk.Context, pair types.TradePair, amountIn uint64, price math.LegacyDec) (uint64, error) {
 	switch pair {
 	case types.TradePair_TRADE_PAIR_ROCK_BTC:
@@ -199,6 +208,7 @@ func (k Keeper) GetAmountOut(ctx sdk.Context, pair types.TradePair, amountIn uin
 	}
 }
 
+// Escrows rock from the sender key to the zenex collector from a swap
 func (k Keeper) EscrowRock(ctx sdk.Context, senderKey treasurytypes.Key, amount uint64) error {
 
 	if senderKey.Type != treasurytypes.KeyType_KEY_TYPE_ECDSA_SECP256K1 {
@@ -218,6 +228,8 @@ func (k Keeper) EscrowRock(ctx sdk.Context, senderKey treasurytypes.Key, amount 
 	return nil
 }
 
+// Returns the rock address for the given rock key id
+// as a recipient address for zenex swaps
 func (k Keeper) GetRockAddress(ctx sdk.Context, rockKeyId uint64) (string, error) {
 	rockKey, err := k.treasuryKeeper.GetKey(ctx, rockKeyId)
 	if err != nil {
@@ -230,11 +242,112 @@ func (k Keeper) GetRockAddress(ctx sdk.Context, rockKeyId uint64) (string, error
 	return rockAddress, nil
 }
 
+// Checks if we have enough rock balance to swap for BTC
 func (k Keeper) CheckRedeemableAsset(ctx sdk.Context, amountOut uint64, price math.LegacyDec) error {
 	availableRockBalance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ZenexCollectorName), params.BondDenom).Amount.Uint64()
 
 	if amountOut > availableRockBalance {
 		return fmt.Errorf("amount %d is greater than the available rock balance %d", amountOut, availableRockBalance)
+	}
+
+	return nil
+}
+
+// Calculates the minimum rock balance required to swap for BTC
+func (k Keeper) GetRequiredRockBalance(ctx sdk.Context) (uint64, error) {
+
+	rockBtcPrice, err := k.validationKeeper.GetRockBtcPrice(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	if rockBtcPrice.IsZero() || rockBtcPrice.IsNegative() {
+		return 0, fmt.Errorf("rock to btc price must be positive, got: %s", rockBtcPrice.String())
+	}
+
+	thresholdSatoshis := math.LegacyNewDecFromInt(math.NewIntFromUint64(k.GetParams(ctx).SwapThresholdSatoshis))
+
+	requiredRockBalance := thresholdSatoshis.Quo(rockBtcPrice)
+
+	if requiredRockBalance.IsZero() || requiredRockBalance.IsNegative() {
+		return 0, fmt.Errorf("required rock balance is zero or negative, got: %s", requiredRockBalance.String())
+	}
+
+	return requiredRockBalance.TruncateInt().Uint64(), nil
+}
+
+// Returns the balance of the zenbtc rewards collector
+func (k Keeper) GetZenBtcRewardsCollectorBalance(ctx sdk.Context) uint64 {
+	balance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.ZenBtcRewardsCollectorName), params.BondDenom)
+	return balance.Amount.Uint64()
+}
+
+// swaps ROCK for BTC and funds the zenbtc reward address with BTC
+// if the rock fee pool balance is greater than the required rock balance
+// checks if it's over the minimum amount of satoshis
+func (k Keeper) CreateRockBtcSwap(ctx sdk.Context, amountIn uint64) error {
+
+	swapPair, price, err := k.GetPair(ctx, types.TradePair_TRADE_PAIR_ROCK_BTC)
+	if err != nil {
+		return err
+	}
+
+	amountOutRaw, err := k.GetAmountOut(ctx, types.TradePair_TRADE_PAIR_ROCK_BTC, amountIn, price)
+	if err != nil {
+		return err
+	}
+
+	zenbtcparams, err := k.zenbtcKeeper.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ZenBtcRewardsCollectorName, types.ZenexCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(amountIn))))
+	if err != nil {
+		return err
+	}
+
+	swapCount, err := k.SwapsCount.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	swapCount++
+	swap := types.Swap{
+		Creator: "",
+		SwapId:  swapCount,
+		Status:  types.SwapStatus_SWAP_STATUS_INITIATED,
+		Pair:    types.TradePair_TRADE_PAIR_ROCK_BTC,
+		Data: &types.SwapData{
+			BaseToken: &validationtypes.AssetData{
+				Asset:     validationtypes.Asset_ROCK,
+				PriceUSD:  swapPair.BaseToken.PriceUSD,
+				Precision: 6,
+			},
+			QuoteToken: &validationtypes.AssetData{
+				Asset:     validationtypes.Asset_BTC,
+				PriceUSD:  swapPair.QuoteToken.PriceUSD,
+				Precision: 8,
+			},
+			Price:     price,
+			AmountIn:  amountIn,
+			AmountOut: amountOutRaw, // TODO: consider reducing the amount out by 500 satoshis for btc fee
+		},
+		RockKeyId:      0,
+		BtcKeyId:       zenbtcparams.RewardsDepositKeyID,
+		ZenexPoolKeyId: k.GetParams(ctx).ZenexPoolKeyId,
+		Workspace:      "",
+		ZenbtcSwap:     true,
+	}
+
+	err = k.SwapsStore.Set(ctx, swapCount, swap)
+	if err != nil {
+		return err
+	}
+
+	err = k.SwapsCount.Set(ctx, swapCount)
+	if err != nil {
+		return err
 	}
 
 	return nil

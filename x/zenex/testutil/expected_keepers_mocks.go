@@ -18,6 +18,7 @@ import (
 	types0 "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	types1 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 	types2 "github.com/cosmos/cosmos-sdk/types"
+	types3 "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -316,6 +317,20 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToAccount(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToAccount", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToAccount), arg0, arg1, arg2, arg3)
 }
 
+// SendCoinsFromModuleToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(arg0 context.Context, arg1, arg2 string, arg3 types2.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromModuleToModule indicates an expected call of SendCoinsFromModuleToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(arg0, arg1, arg2, arg3 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), arg0, arg1, arg2, arg3)
+}
+
 // SpendableCoins mocks base method.
 func (m *MockBankKeeper) SpendableCoins(arg0 context.Context, arg1 types2.AccAddress) types2.Coins {
 	m.ctrl.T.Helper()
@@ -376,4 +391,43 @@ func (m *MockParamSubspace) Set(arg0 context.Context, arg1 []byte, arg2 any) {
 func (mr *MockParamSubspaceMockRecorder) Set(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockParamSubspace)(nil).Set), arg0, arg1, arg2)
+}
+
+// MockZenbtcKeeper is a mock of ZenbtcKeeper interface.
+type MockZenbtcKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockZenbtcKeeperMockRecorder
+	isgomock struct{}
+}
+
+// MockZenbtcKeeperMockRecorder is the mock recorder for MockZenbtcKeeper.
+type MockZenbtcKeeperMockRecorder struct {
+	mock *MockZenbtcKeeper
+}
+
+// NewMockZenbtcKeeper creates a new mock instance.
+func NewMockZenbtcKeeper(ctrl *gomock.Controller) *MockZenbtcKeeper {
+	mock := &MockZenbtcKeeper{ctrl: ctrl}
+	mock.recorder = &MockZenbtcKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockZenbtcKeeper) EXPECT() *MockZenbtcKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetParams mocks base method.
+func (m *MockZenbtcKeeper) GetParams(ctx context.Context) (types3.Params, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParams", ctx)
+	ret0, _ := ret[0].(types3.Params)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetParams indicates an expected call of GetParams.
+func (mr *MockZenbtcKeeperMockRecorder) GetParams(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockZenbtcKeeper)(nil).GetParams), ctx)
 }

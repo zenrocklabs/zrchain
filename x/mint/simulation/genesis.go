@@ -25,6 +25,9 @@ const (
 	ProtocolWalletRate       = "protocol_wallet_rate"
 	ProtocolWalletAddress    = "protocol_wallet_address"
 	BurnRate                 = "burn_rate"
+	ZenbtcRewardRate         = "zenbtc_reward_rate"
+	ZrWalletRate             = "zr_wallet_rate"
+	ZrWalletAddress          = "zr_wallet_address"
 )
 
 // GenInflation randomized Inflation
@@ -87,6 +90,21 @@ func GenBurnRate(r *rand.Rand) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(10, 2)
 }
 
+// GenZenbtcRewardRate randomized ZenbtcRewardRate
+func GenZenbtcRewardRate(r *rand.Rand) math.LegacyDec {
+	return math.LegacyNewDecWithPrec(35, 2)
+}
+
+// GenZrWalletRate randomized ZrWalletRate
+func GenZrWalletRate(r *rand.Rand) math.LegacyDec {
+	return math.LegacyNewDecWithPrec(35, 2)
+}
+
+// GenZrWalletAddress randomized ZrWalletAddress
+func GenZrWalletAddress(r *rand.Rand) string {
+	return "zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn"
+}
+
 // RandomizedGenState generates a random GenesisState for mint
 func RandomizedGenState(simState *module.SimulationState) {
 	// minter
@@ -127,11 +145,21 @@ func RandomizedGenState(simState *module.SimulationState) {
 	var burnRate math.LegacyDec
 	simState.AppParams.GetOrGenerate(BurnRate, &burnRate, simState.Rand, func(r *rand.Rand) { burnRate = GenBurnRate(r) })
 
+	var zenbtcRewardRate math.LegacyDec
+	simState.AppParams.GetOrGenerate(ZenbtcRewardRate, &zenbtcRewardRate, simState.Rand, func(r *rand.Rand) { zenbtcRewardRate = GenZenbtcRewardRate(r) })
+
+	var zrWalletRate math.LegacyDec
+	simState.AppParams.GetOrGenerate(ZrWalletRate, &zrWalletRate, simState.Rand, func(r *rand.Rand) { zrWalletRate = GenZrWalletRate(r) })
+
+	var zrWalletAddress string
+	simState.AppParams.GetOrGenerate(ZrWalletAddress, &zrWalletAddress, simState.Rand, func(r *rand.Rand) { zrWalletAddress = GenZrWalletAddress(r) })
+
 	mintDenom := simState.BondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
 	params := types.NewParams(
 		mintDenom,
 		protocolWalletAddress,
+		zrWalletAddress,
 		inflationRateChange,
 		inflationMax,
 		inflationMin,
@@ -142,6 +170,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 		additionalBurnRate,
 		protocolWalletRate,
 		burnRate,
+		zenbtcRewardRate,
+		zrWalletRate,
 		blocksPerYear,
 	)
 
