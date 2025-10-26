@@ -31,6 +31,7 @@ const (
 	Query_ZrSignKeys_FullMethodName                 = "/zrchain.treasury.Query/ZrSignKeys"
 	Query_KeyByAddress_FullMethodName               = "/zrchain.treasury.Query/KeyByAddress"
 	Query_ZenbtcWallets_FullMethodName              = "/zrchain.treasury.Query/ZenbtcWallets"
+	Query_DctWallets_FullMethodName                 = "/zrchain.treasury.Query/DctWallets"
 )
 
 // QueryClient is the client API for Query service.
@@ -63,6 +64,8 @@ type QueryClient interface {
 	KeyByAddress(ctx context.Context, in *QueryKeyByAddressRequest, opts ...grpc.CallOption) (*QueryKeyByAddressResponse, error)
 	// Queries a list of ZenbtcWallets items.
 	ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsRequest, opts ...grpc.CallOption) (*QueryZenbtcWalletsResponse, error)
+	// Queries a list of DctWallets items.
+	DctWallets(ctx context.Context, in *QueryDctWalletsRequest, opts ...grpc.CallOption) (*QueryDctWalletsResponse, error)
 }
 
 type queryClient struct {
@@ -193,6 +196,16 @@ func (c *queryClient) ZenbtcWallets(ctx context.Context, in *QueryZenbtcWalletsR
 	return out, nil
 }
 
+func (c *queryClient) DctWallets(ctx context.Context, in *QueryDctWalletsRequest, opts ...grpc.CallOption) (*QueryDctWalletsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryDctWalletsResponse)
+	err := c.cc.Invoke(ctx, Query_DctWallets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
@@ -223,6 +236,8 @@ type QueryServer interface {
 	KeyByAddress(context.Context, *QueryKeyByAddressRequest) (*QueryKeyByAddressResponse, error)
 	// Queries a list of ZenbtcWallets items.
 	ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error)
+	// Queries a list of DctWallets items.
+	DctWallets(context.Context, *QueryDctWalletsRequest) (*QueryDctWalletsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -268,6 +283,9 @@ func (UnimplementedQueryServer) KeyByAddress(context.Context, *QueryKeyByAddress
 }
 func (UnimplementedQueryServer) ZenbtcWallets(context.Context, *QueryZenbtcWalletsRequest) (*QueryZenbtcWalletsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ZenbtcWallets not implemented")
+}
+func (UnimplementedQueryServer) DctWallets(context.Context, *QueryDctWalletsRequest) (*QueryDctWalletsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DctWallets not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -506,6 +524,24 @@ func _Query_ZenbtcWallets_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_DctWallets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDctWalletsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DctWallets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_DctWallets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DctWallets(ctx, req.(*QueryDctWalletsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -560,6 +596,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ZenbtcWallets",
 			Handler:    _Query_ZenbtcWallets_Handler,
+		},
+		{
+			MethodName: "DctWallets",
+			Handler:    _Query_DctWallets_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
