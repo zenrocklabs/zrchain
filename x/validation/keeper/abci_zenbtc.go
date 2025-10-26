@@ -821,3 +821,14 @@ func (k *Keeper) rebalanceBedrockAsset(ctx sdk.Context, asset types.Asset) error
 
 	return nil
 }
+
+// rebalanceAllBedrockAssets recalculates distributions for every bedrock-tracked asset.
+func (k *Keeper) rebalanceAllBedrockAssets(ctx sdk.Context) error {
+	assets := []types.Asset{types.Asset_BTC, types.Asset_ZEC}
+	for _, asset := range assets {
+		if err := k.rebalanceBedrockAsset(ctx, asset); err != nil {
+			return err
+		}
+	}
+	return nil
+}

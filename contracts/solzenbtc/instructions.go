@@ -93,6 +93,9 @@ func Wrap(
 		zenbtcWrapShard,
 	)
 
+	if account := builder.GetGlobalConfigAccount(); account != nil {
+		account.WRITE()
+	}
 	if account := builder.GetZenbtcWrapShardAccount(); account != nil {
 		account.WRITE()
 	}
