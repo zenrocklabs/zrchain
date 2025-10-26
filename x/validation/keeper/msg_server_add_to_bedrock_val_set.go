@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
 )
@@ -19,19 +21,18 @@ func (k msgServer) AddToBedrockValSet(ctx context.Context, msg *types.MsgAddToBe
 	}
 
 	// Verify the validator exists
-	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
-	if err != nil {
-		return nil, fmt.Errorf("invalid validator address: %w", err)
-	}
-
-	_, err = k.GetValidator(ctx, valAddr)
-	if err != nil {
+	if _, err := k.GetZenrockValidatorFromBech32(ctx, msg.ValidatorAddress); err != nil {
 		return nil, fmt.Errorf("validator not found: %w", err)
 	}
 
 	// Add to bedrock validator set
 	if err := k.BedrockValidatorSet.Set(ctx, msg.ValidatorAddress, true); err != nil {
 		return nil, err
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := k.rebalanceAllBedrockAssets(sdkCtx); err != nil {
+		return nil, fmt.Errorf("failed to rebalance bedrock assets: %w", err)
 	}
 
 	return &types.MsgAddToBedrockValSetResponse{}, nil

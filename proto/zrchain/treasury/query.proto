@@ -10,6 +10,7 @@ import "zrchain/treasury/key.proto";
 import "zrchain/treasury/mpcsign.proto";
 import "zrchain/treasury/params.proto";
 import "zrchain/treasury/wallet.proto";
+import "zrchain/dct/params.proto";
 
 option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types";
 
@@ -88,6 +89,13 @@ service Query {
       returns (QueryZenbtcWalletsResponse) {
     option (google.api.http).get =
         "/zrchain/treasury/zenbtc_wallets";
+  }
+
+    // Queries a list of DctWallets items.
+    rpc DctWallets(QueryDctWalletsRequest)
+    returns (QueryDctWalletsResponse) {
+    option (google.api.http).get =
+        "/zrchain/treasury/dct_wallets";
   }
 }
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -274,5 +282,22 @@ message QueryZenbtcWalletsRequest {
 // Query/ZenbtcWalletsResponse RPC method.
 message QueryZenbtcWalletsResponse {
   repeated KeyAndWalletResponse zenbtc_wallets = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDctWalletsRequest is request type for the
+// Query/DctWalletsRequest RPC method.
+message QueryDctWalletsRequest {
+  zrchain.dct.Asset asset_type = 1; // Optional
+  WalletType wallet_type = 2; // Optional
+  string mint_chain_id = 3;  // Optional
+  string recipient_addr = 4;    // Optional
+  cosmos.base.query.v1beta1.PageRequest pagination = 5;
+}
+
+// QueryDctWalletsResponse is response type for the
+// Query/DctWalletsResponse RPC method.
+message QueryDctWalletsResponse {
+  repeated KeyAndWalletResponse dct_wallets = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

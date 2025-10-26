@@ -2038,6 +2038,9 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			if err != nil {
 				return nil, err
 			}
+			if err := ensureZenbtcWrapAccountsWritable(wrapInstruction, programID, eventStoreProgramPub, eventID); err != nil {
+				return nil, err
+			}
 		} else {
 			k.Logger(ctx).Info("Using legacy zenBTC wrap instruction without event store",
 				"asset", "ZENBTC",
@@ -2096,6 +2099,49 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 	return txBytes, nil
+}
+
+// ensureZenbtcWrapAccountsWritable forces key PDAs in the zenbtc wrap instruction to be writable.
+func ensureZenbtcWrapAccountsWritable(
+	inst solana.Instruction,
+	programID solana.PublicKey,
+	eventStoreProgramID solana.PublicKey,
+	eventID *big.Int,
+) error {
+	wrapInst, ok := inst.(*zenbtc_spl_token.Instruction)
+	if !ok || eventID == nil {
+		return nil
+	}
+
+	globalConfigPDA, err := solzenbtc.GetGlobalConfigPDA(programID)
+	if err != nil {
+		return fmt.Errorf("failed to derive zenbtc global config PDA: %w", err)
+	}
+
+	zenbtcWrapShard, err := solzenbtc.GetEventStoreZenbtcWrapShardPDA(eventStoreProgramID, eventID)
+	if err != nil {
+		return fmt.Errorf("failed to derive zenbtc wrap shard PDA: %w", err)
+	}
+
+	requiredAccounts := map[string]bool{
+		globalConfigPDA.String(): false,
+		zenbtcWrapShard.String(): false,
+	}
+
+	for _, meta := range wrapInst.Accounts() {
+		if _, ok := requiredAccounts[meta.PublicKey.String()]; ok {
+			meta.IsWritable = true
+			requiredAccounts[meta.PublicKey.String()] = true
+		}
+	}
+
+	for key, found := range requiredAccounts {
+		if !found {
+			return fmt.Errorf("wrap instruction missing required account %s", key)
+		}
+	}
+
+	return nil
 }
 
 func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
