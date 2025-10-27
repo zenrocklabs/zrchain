@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	
+
 	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
 
@@ -22,13 +22,13 @@ const (
 
 	// Default zenBTC program ID on Solana mainnet
 	defaultProgramID = "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb"
-	
+
 	// Default Ethereum mainnet RPC endpoint
 	defaultEthereumRPC = "https://eth.llamarpc.com"
-	
+
 	// zenBTC token contract address on Ethereum mainnet
 	ethereumZenBTCAddress = "0x2fE9754d5D28bac0ea8971C0Ca59428b8644C776"
-	
+
 	// zenBTC decimals (same as Bitcoin)
 	zenBTCDecimals = 8
 )
@@ -73,7 +73,7 @@ func FormatZenBTC(amount *big.Int) string {
 	divisor := new(big.Int).Exp(big.NewInt(10), big.NewInt(zenBTCDecimals), nil)
 	whole := new(big.Int).Div(amount, divisor)
 	remainder := new(big.Int).Mod(amount, divisor)
-	
+
 	// Format with 8 decimal places
 	return fmt.Sprintf("%s.%08d", whole.String(), remainder.Int64())
 }
@@ -125,12 +125,29 @@ func main() {
 	// Calculate total supply across both chains
 	totalSupply := new(big.Int).Add(solanaSupplyRaw, ethSupply)
 
+	// Calculate percentages
+	solanaPercent := 0.0
+	ethPercent := 0.0
+	if totalSupply.Sign() > 0 {
+		totalFloat := new(big.Float).SetInt(totalSupply)
+		solanaFloat := new(big.Float).SetInt(solanaSupplyRaw)
+		ethFloat := new(big.Float).SetInt(ethSupply)
+
+		solanaRatio := new(big.Float).Quo(solanaFloat, totalFloat)
+		ethRatio := new(big.Float).Quo(ethFloat, totalFloat)
+
+		solanaPercent, _ = solanaRatio.Float64()
+		ethPercent, _ = ethRatio.Float64()
+		solanaPercent *= 100
+		ethPercent *= 100
+	}
+
 	// Print results
 	fmt.Println("═══════════════════════════════════════════════════════════")
 	fmt.Println("          zenBTC Cross-Chain Total Value Locked")
 	fmt.Println("═══════════════════════════════════════════════════════════")
 	fmt.Println()
-	
+
 	// Solana section
 	fmt.Println("┌─────────────────────────────────────────────────────────┐")
 	fmt.Println("│                    SOLANA MAINNET                       │")
@@ -143,9 +160,10 @@ func main() {
 	fmt.Println()
 	fmt.Printf("Total Supply:      %s zenBTC\n", solanaSupply.Value.UiAmountString)
 	fmt.Printf("Raw Amount:        %s\n", solanaSupply.Value.Amount)
+	fmt.Printf("Percentage:        %.2f%%\n", solanaPercent)
 	fmt.Printf("Slot:              %d\n", solanaSupply.Context.Slot)
 	fmt.Println()
-	
+
 	// Ethereum section
 	fmt.Println("┌─────────────────────────────────────────────────────────┐")
 	fmt.Println("│                   ETHEREUM MAINNET                      │")
@@ -156,8 +174,9 @@ func main() {
 	fmt.Println()
 	fmt.Printf("Total Supply:      %s zenBTC\n", FormatZenBTC(ethSupply))
 	fmt.Printf("Raw Amount:        %s\n", ethSupply.String())
+	fmt.Printf("Percentage:        %.2f%%\n", ethPercent)
 	fmt.Println()
-	
+
 	// Total section
 	fmt.Println("═══════════════════════════════════════════════════════════")
 	fmt.Println("                   TOTAL ACROSS CHAINS")
@@ -165,6 +184,10 @@ func main() {
 	fmt.Println()
 	fmt.Printf("Combined TVL:      %s zenBTC\n", FormatZenBTC(totalSupply))
 	fmt.Printf("Raw Amount:        %s\n", totalSupply.String())
+	fmt.Println()
+	fmt.Println("Distribution:")
+	fmt.Printf("  Solana:          %.2f%%\n", solanaPercent)
+	fmt.Printf("  Ethereum:        %.2f%%\n", ethPercent)
 	fmt.Println()
 	fmt.Println("═══════════════════════════════════════════════════════════")
 }
