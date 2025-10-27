@@ -336,6 +336,19 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		assetKey := asset.String()
+		counters, err := k.SolanaCounters.Get(ctx, assetKey)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+			} else {
+				k.Logger(ctx).Error("failed to get Solana counters before mint confirmation", "asset", assetKey, "error", err)
+				continue
+			}
+		}
+
+		expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
+
 		var matchedEvent *sidecarapitypes.SolanaMintEvent
 		for _, event := range oracleData.SolanaMintEvents {
 			if event.Coint != coin {
@@ -361,59 +374,54 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 
 			evtCopy := event
 			matchedEvent = &evtCopy
+			eventHash := base64.StdEncoding.EncodeToString(matchedEvent.SigHash)
+			eventKey := collections.Join(asset.String(), eventHash)
+
+			if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
+				k.Logger(ctx).Warn("processSolanaDCTMintEvents: Solana event already processed",
+					"asset", asset.String(),
+					"tx_id", pendingMint.Id,
+					"event_hash", eventHash,
+				)
+				matchedEvent = nil
+				continue
+			} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to read processed event map",
+					"asset", asset.String(),
+					"tx_id", pendingMint.Id,
+					"event_hash", eventHash,
+					"error", err,
+				)
+				matchedEvent = nil
+				continue
+			}
+
+			eventID, err := eventIDFromSolanaMintEvent(event)
+			if err != nil {
+				k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to parse event ID", "asset", asset.String(), "tx_sig", event.TxSig, "error", err)
+				matchedEvent = nil
+				continue
+			}
+			if eventID.Cmp(expectedEventID) != 0 {
+				k.Logger(ctx).Info("processSolanaDCTMintEvents: skipping event with unexpected ID",
+					"asset", asset.String(),
+					"tx_id", pendingMint.Id,
+					"expected_event_id", expectedEventID.String(),
+					"event_id", eventID.String(),
+					"tx_sig", event.TxSig,
+				)
+				matchedEvent = nil
+				continue
+			}
+
 			break
 		}
 		if matchedEvent == nil {
 			k.Logger(ctx).Info("processSolanaDCTMintEvents: no matching Solana mint event yet", "asset", asset.String(), "tx_id", pendingMint.Id)
 			continue
 		}
-
 		eventHash := base64.StdEncoding.EncodeToString(matchedEvent.SigHash)
 		eventKey := collections.Join(asset.String(), eventHash)
-		if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
-			k.Logger(ctx).Warn("processSolanaDCTMintEvents: Solana event already processed",
-				"asset", asset.String(),
-				"tx_id", pendingMint.Id,
-				"event_hash", eventHash,
-			)
-			continue
-		} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to read processed event map",
-				"asset", asset.String(),
-				"tx_id", pendingMint.Id,
-				"event_hash", eventHash,
-				"error", err,
-			)
-			continue
-		}
-
-		assetKey := asset.String()
-		counters, err := k.SolanaCounters.Get(ctx, assetKey)
-		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
-			} else {
-				k.Logger(ctx).Error("failed to get Solana counters before mint confirmation", "asset", assetKey, "error", err)
-				continue
-			}
-		}
-
-		expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
-		eventID, err := eventIDFromTxSig(matchedEvent.TxSig)
-		if err != nil {
-			k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to parse event ID", "asset", asset.String(), "tx_sig", matchedEvent.TxSig, "error", err)
-			continue
-		}
-		if eventID.Cmp(expectedEventID) != 0 {
-			k.Logger(ctx).Info("processSolanaDCTMintEvents: skipping event with unexpected ID",
-				"asset", asset.String(),
-				"tx_id", pendingMint.Id,
-				"expected_event_id", expectedEventID.String(),
-				"event_id", eventID.String(),
-				"tx_sig", matchedEvent.TxSig,
-			)
-			continue
-		}
 
 		supply, err := k.dctKeeper.GetSupply(ctx, asset)
 		if err != nil {
