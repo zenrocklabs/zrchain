@@ -178,6 +178,7 @@ func TestProcessSolanaDCTMintEvents_ProcessesNextEventID(t *testing.T) {
 
 	event1 := newMintEvent(1, sidecarapitypes.Coin_ZENZEC, recipient, mint, amount)
 	event2 := newMintEvent(2, sidecarapitypes.Coin_ZENZEC, recipient, mint, amount)
+	event2.TxSig = "3tUVumxTY1KH2tYv7moeVkqsjBNtKPQoCbH69WomvnXgRzcAWvTQkMT9Np9PBg7KuPMokXcod9GFqhMrLz16LUPz"
 
 	require.NoError(t, k.SolanaCounters.Set(ctx, asset.String(), validationtypes.SolanaCounters{MintCounter: 1}))
 	recordProcessedEvent(t, k, ctx, asset, event1)
@@ -244,6 +245,7 @@ func TestProcessSolanaDCTMintEvents_SkipsUnexpectedEventID(t *testing.T) {
 	}
 
 	eventOld := newMintEvent(1, sidecarapitypes.Coin_ZENZEC, recipient, mint, amount)
+	eventOld.TxSig = "5o5gfb3cpdRLMQFaVUUWDa758JGmBTp4rjqLcVBetcT1DaRvdGb7btmEnB4curLXvByRdk8LH6yL5Yg3HWdbqQHM"
 
 	require.NoError(t, k.SolanaCounters.Set(ctx, asset.String(), validationtypes.SolanaCounters{MintCounter: 2}))
 
