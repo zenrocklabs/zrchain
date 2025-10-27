@@ -42,7 +42,7 @@ var (
 	// Start new keys from 101 and increment sequentially. This creates a safe separation
 	// from legacy byte slice keys below (e.g., 0x11, 0x12) to prevent storage collisions.
 	//
-	// The next available key currently is 110.
+	// The next available key currently is 111.
 	// ====================================================================================================
 	BackfillRequestsKey                = collections.NewPrefix(100)
 	LatestBtcHeaderHeightKey           = collections.NewPrefix(101)
@@ -54,6 +54,7 @@ var (
 	ZcashBlockHeadersKey               = collections.NewPrefix(107)
 	LatestZcashHeaderHeightKey         = collections.NewPrefix(108)
 	SolanaCountersKey                  = collections.NewPrefix(109)
+	ProcessedSolanaMintEventsKey       = collections.NewPrefix(110)
 )
 var (
 	// Keys for store prefixes
@@ -116,6 +117,7 @@ var (
 	ZcashBlockHeadersIndex                 = "zcash_block_headers"
 	LatestZcashHeaderHeightIndex           = "latest_zcash_header_height"
 	SolanaCountersIndex                    = "solana_counters"
+	ProcessedSolanaMintEventsIndex         = "processed_solana_mint_events"
 )
 
 const (

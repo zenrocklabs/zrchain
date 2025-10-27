@@ -35,6 +35,7 @@ const (
 	Query_Params_FullMethodName                        = "/zrchain.validation.Query/Params"
 	Query_ValidatorPower_FullMethodName                = "/zrchain.validation.Query/ValidatorPower"
 	Query_QueryBackfillRequests_FullMethodName         = "/zrchain.validation.Query/QueryBackfillRequests"
+	Query_SolanaCounters_FullMethodName                = "/zrchain.validation.Query/SolanaCounters"
 )
 
 // QueryClient is the client API for Query service.
@@ -100,6 +101,8 @@ type QueryClient interface {
 	ValidatorPower(ctx context.Context, in *QueryPowerRequest, opts ...grpc.CallOption) (*QueryPowerResponse, error)
 	// BackfillRequests queries the backfill requests.
 	QueryBackfillRequests(ctx context.Context, in *QueryBackfillRequestsRequest, opts ...grpc.CallOption) (*QueryBackfillRequestsResponse, error)
+	// SolanaCounters queries stored Solana counters.
+	SolanaCounters(ctx context.Context, in *QuerySolanaCountersRequest, opts ...grpc.CallOption) (*QuerySolanaCountersResponse, error)
 }
 
 type queryClient struct {
@@ -270,6 +273,16 @@ func (c *queryClient) QueryBackfillRequests(ctx context.Context, in *QueryBackfi
 	return out, nil
 }
 
+func (c *queryClient) SolanaCounters(ctx context.Context, in *QuerySolanaCountersRequest, opts ...grpc.CallOption) (*QuerySolanaCountersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QuerySolanaCountersResponse)
+	err := c.cc.Invoke(ctx, Query_SolanaCounters_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
@@ -333,6 +346,8 @@ type QueryServer interface {
 	ValidatorPower(context.Context, *QueryPowerRequest) (*QueryPowerResponse, error)
 	// BackfillRequests queries the backfill requests.
 	QueryBackfillRequests(context.Context, *QueryBackfillRequestsRequest) (*QueryBackfillRequestsResponse, error)
+	// SolanaCounters queries stored Solana counters.
+	SolanaCounters(context.Context, *QuerySolanaCountersRequest) (*QuerySolanaCountersResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -390,6 +405,9 @@ func (UnimplementedQueryServer) ValidatorPower(context.Context, *QueryPowerReque
 }
 func (UnimplementedQueryServer) QueryBackfillRequests(context.Context, *QueryBackfillRequestsRequest) (*QueryBackfillRequestsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryBackfillRequests not implemented")
+}
+func (UnimplementedQueryServer) SolanaCounters(context.Context, *QuerySolanaCountersRequest) (*QuerySolanaCountersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SolanaCounters not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -700,6 +718,24 @@ func _Query_QueryBackfillRequests_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_SolanaCounters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySolanaCountersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).SolanaCounters(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_SolanaCounters_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).SolanaCounters(ctx, req.(*QuerySolanaCountersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -770,6 +806,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryBackfillRequests",
 			Handler:    _Query_QueryBackfillRequests_Handler,
+		},
+		{
+			MethodName: "SolanaCounters",
+			Handler:    _Query_SolanaCounters_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

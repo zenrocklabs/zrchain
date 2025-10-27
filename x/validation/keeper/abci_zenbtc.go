@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -313,6 +314,16 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	sigHash := sha256.Sum256(concatenated)
 	for _, event := range oracleData.SolanaMintEvents {
 		if hex.EncodeToString(event.SigHash) == hex.EncodeToString(sigHash[:]) {
+			eventHash := base64.StdEncoding.EncodeToString(event.SigHash)
+			eventKey := collections.Join("ZENBTC", eventHash)
+			if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
+				k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: Solana event already processed", "event_hash", eventHash)
+				break
+			} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to read processed event map", "event_hash", eventHash, "error", err)
+				break
+			}
+
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return
@@ -351,6 +362,10 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 
 			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
 				k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
+			}
+
+			if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
+				k.Logger(ctx).Error("failed to record processed Solana mint event", "event_hash", eventHash, "error", err)
 			}
 			break
 		}

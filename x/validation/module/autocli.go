@@ -16,6 +16,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			Service: modulev3.Query_ServiceDesc.ServiceName,
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
+					RpcMethod: "SolanaCounters",
+					Use:       "solana-counters [asset]",
+					Short:     "Query Solana mint/redemption counters",
+					Long:      "Query the stored Solana counters for all assets or a single asset.",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "asset", Optional: true},
+					},
+				},
+				{
 					RpcMethod: "ValidatorPower",
 					Short:     "Query for validators power",
 					Long:      "Query details about validators powers on a network.",
