@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"math/big"
+	"net/http"
 	"os"
 	"time"
 
@@ -31,7 +34,19 @@ const (
 
 	// zenBTC decimals (same as Bitcoin)
 	zenBTCDecimals = 8
+
+	// Zenrock API endpoint for zenBTC supply info
+	zenrockAPIURL = "https://api.diamond.zenrocklabs.io/zenbtc/supply"
 )
+
+// ZenrockSupplyResponse represents the response from Zenrock API
+type ZenrockSupplyResponse struct {
+	CustodiedBTC  string `json:"custodiedBTC"`
+	TotalZenBTC   string `json:"totalZenBTC"`
+	MintedZenBTC  string `json:"mintedZenBTC"`
+	PendingZenBTC string `json:"pendingZenBTC"`
+	ExchangeRate  string `json:"exchangeRate"`
+}
 
 // GetMintAddress derives the zenBTC mint address from the program ID
 // using the "wrapped_mint" seed
@@ -78,6 +93,42 @@ func FormatZenBTC(amount *big.Int) string {
 	return fmt.Sprintf("%s.%08d", whole.String(), remainder.Int64())
 }
 
+// QueryCustodiedBTC queries the Zenrock API for the amount of BTC custodied
+func QueryCustodiedBTC(ctx context.Context) (*big.Int, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", zenrockAPIURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query Zenrock API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var supplyResp ZenrockSupplyResponse
+	if err := json.Unmarshal(body, &supplyResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	custodiedBTC := new(big.Int)
+	if _, ok := custodiedBTC.SetString(supplyResp.CustodiedBTC, 10); !ok {
+		return nil, fmt.Errorf("failed to parse custodiedBTC value: %s", supplyResp.CustodiedBTC)
+	}
+
+	return custodiedBTC, nil
+}
+
 func main() {
 	// Define command-line flags
 	solanaRPC := flag.String("solana-rpc", defaultSolanaRPC, "Solana RPC endpoint URL")
@@ -115,6 +166,13 @@ func main() {
 	ethSupply, err := QueryEthereumSupply(ctx, *ethereumRPC)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Failed to query Ethereum token supply: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Query custodied BTC from Zenrock API
+	custodiedBTC, err := QueryCustodiedBTC(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Failed to query custodied BTC: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -188,6 +246,25 @@ func main() {
 	fmt.Println("Distribution:")
 	fmt.Printf("  Solana:          %.2f%%\n", solanaPercent)
 	fmt.Printf("  Ethereum:        %.2f%%\n", ethPercent)
+	fmt.Println()
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Println("                     BACKING ASSETS")
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Println()
+	fmt.Printf("Locked BTC:        %s BTC\n", FormatZenBTC(custodiedBTC))
+	fmt.Printf("Raw Satoshis:      %s\n", custodiedBTC.String())
+	fmt.Println()
+
+	// Calculate collateralization ratio
+	collateralRatio := 0.0
+	if totalSupply.Sign() > 0 {
+		custodiedFloat := new(big.Float).SetInt(custodiedBTC)
+		totalFloat := new(big.Float).SetInt(totalSupply)
+		ratio := new(big.Float).Quo(custodiedFloat, totalFloat)
+		collateralRatio, _ = ratio.Float64()
+	}
+
+	fmt.Printf("Backing Ratio:     %.6f (%.4f%%)\n", collateralRatio, collateralRatio*100)
 	fmt.Println()
 	fmt.Println("═══════════════════════════════════════════════════════════")
 }
