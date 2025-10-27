@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
@@ -324,6 +325,31 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 				break
 			}
 
+			counters, err := k.SolanaCounters.Get(ctx, "ZENBTC")
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to get Solana counters", "error", err)
+					break
+				}
+			}
+
+			expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
+			eventID, err := eventIDFromTxSig(event.TxSig)
+			if err != nil {
+				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to parse event ID", "tx_sig", event.TxSig, "error", err)
+				break
+			}
+			if eventID.Cmp(expectedEventID) != 0 {
+				k.Logger(ctx).Info("processSolanaZenBTCMintEvents: skipping event with unexpected ID",
+					"expected_event_id", expectedEventID.String(),
+					"event_id", eventID.String(),
+					"tx_sig", event.TxSig,
+				)
+				break
+			}
+
 			supply, err := k.zenBTCKeeper.GetSupply(ctx)
 			if err != nil {
 				return
@@ -341,14 +367,6 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 
 			// Increment mint counter after confirmed successful mint
 			assetKey := "ZENBTC"
-			counters, err := k.SolanaCounters.Get(ctx, assetKey)
-			if err != nil {
-				if errors.Is(err, collections.ErrNotFound) {
-					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
-				} else {
-					k.Logger(ctx).Error("failed to get Solana counters after successful mint", "asset", assetKey, "error", err)
-				}
-			}
 			counters.MintCounter++
 			if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
 				k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)

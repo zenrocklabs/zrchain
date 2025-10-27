@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
@@ -386,6 +387,34 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		assetKey := asset.String()
+		counters, err := k.SolanaCounters.Get(ctx, assetKey)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+			} else {
+				k.Logger(ctx).Error("failed to get Solana counters before mint confirmation", "asset", assetKey, "error", err)
+				continue
+			}
+		}
+
+		expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
+		eventID, err := eventIDFromTxSig(matchedEvent.TxSig)
+		if err != nil {
+			k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to parse event ID", "asset", asset.String(), "tx_sig", matchedEvent.TxSig, "error", err)
+			continue
+		}
+		if eventID.Cmp(expectedEventID) != 0 {
+			k.Logger(ctx).Info("processSolanaDCTMintEvents: skipping event with unexpected ID",
+				"asset", asset.String(),
+				"tx_id", pendingMint.Id,
+				"expected_event_id", expectedEventID.String(),
+				"event_id", eventID.String(),
+				"tx_sig", matchedEvent.TxSig,
+			)
+			continue
+		}
+
 		supply, err := k.dctKeeper.GetSupply(ctx, asset)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -416,15 +445,6 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 		}
 
 		// Increment mint counter after confirmed successful mint
-		assetKey := asset.String()
-		counters, err := k.SolanaCounters.Get(ctx, assetKey)
-		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
-			} else {
-				k.Logger(ctx).Error("failed to get Solana counters after successful mint", "asset", assetKey, "error", err)
-			}
-		}
 		counters.MintCounter++
 		if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
 			k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)
