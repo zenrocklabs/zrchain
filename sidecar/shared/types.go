@@ -92,7 +92,7 @@ var (
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "CfA179tLmrg9HeADSmGdQxZkRe85gxdNxjiARx5PXjiD",
-		NetworkTestnet:  "",
+		NetworkTestnet:  "7y6tokt7ua3t8BaPVbpzS6wKS9PzKupQUBmXFrpAh83T",
 		NetworkMainnet:  "",
 	}
 
@@ -100,7 +100,7 @@ var (
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
-		NetworkTestnet:  "",
+		NetworkTestnet:  "9gzutLMGsSPboaaXuyK87Uu3VsM1mRgFTddsCEFWwYVV",
 		NetworkMainnet:  "",
 	}
 
@@ -108,7 +108,7 @@ var (
 		NetworkLocalnet: "",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
-		NetworkTestnet:  "",
+		NetworkTestnet:  "H8X7ogzmLEuU36tHPFGFrMtFhHPNwbjuZW6FSGDgS9Jt",
 		NetworkMainnet:  "",
 	}
 
