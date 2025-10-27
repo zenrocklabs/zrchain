@@ -95,6 +95,11 @@ class QueryStub(object):
                 request_serializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.FromString,
                 )
+        self.SolanaCounters = channel.unary_unary(
+                '/zrchain.validation.Query/SolanaCounters',
+                request_serializer=zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersRequest.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersResponse.FromString,
+                )
 
 
 class QueryServicer(object):
@@ -238,6 +243,13 @@ class QueryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SolanaCounters(self, request, context):
+        """SolanaCounters queries stored Solana counters.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_QueryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -320,6 +332,11 @@ def add_QueryServicer_to_server(servicer, server):
                     servicer.QueryBackfillRequests,
                     request_deserializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.FromString,
                     response_serializer=zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.SerializeToString,
+            ),
+            'SolanaCounters': grpc.unary_unary_rpc_method_handler(
+                    servicer.SolanaCounters,
+                    request_deserializer=zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersRequest.FromString,
+                    response_serializer=zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -601,5 +618,22 @@ class Query(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Query/QueryBackfillRequests',
             zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsRequest.SerializeToString,
             zrchain_dot_validation_dot_query__pb2.QueryBackfillRequestsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SolanaCounters(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Query/SolanaCounters',
+            zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersRequest.SerializeToString,
+            zrchain_dot_validation_dot_query__pb2.QuerySolanaCountersResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

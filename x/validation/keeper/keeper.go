@@ -91,6 +91,8 @@ type Keeper struct {
 	BedrockValidatorSet collections.Map[string, bool]
 	// SolanaCounters - key: asset name | value: mint and redemption counters for that asset
 	SolanaCounters collections.Map[string, types.SolanaCounters]
+	// ProcessedSolanaMintEvents - key: (asset, event hash) | value: bool (event already used)
+	ProcessedSolanaMintEvents collections.Map[collections.Pair[string, string], bool]
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -188,6 +190,7 @@ func NewKeeper(
 		LastCompletedZentpMintID:          collections.NewItem(sb, types.LastCompletedZentpMintIDKey, types.LastCompletedZentpMintIDIndex, collections.Uint64Value),
 		BedrockValidatorSet:               collections.NewMap(sb, types.BedrockValidatorSetKey, types.BedrockValidatorSetIndex, collections.StringKey, collections.BoolValue),
 		SolanaCounters:                    collections.NewMap(sb, types.SolanaCountersKey, types.SolanaCountersIndex, collections.StringKey, codec.CollValue[types.SolanaCounters](cdc)),
+		ProcessedSolanaMintEvents:         collections.NewMap(sb, types.ProcessedSolanaMintEventsKey, types.ProcessedSolanaMintEventsIndex, collections.PairKeyCodec(collections.StringKey, collections.StringKey), collections.BoolValue),
 	}
 }
 

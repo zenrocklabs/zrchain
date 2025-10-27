@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -169,7 +170,7 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 				)
 
 				txPrepReq := &solanaMintTxRequest{
-					amount:              tx.Amount,
+					amount: tx.Amount,
 					// fee:               fee,
 					fee:                 0,
 					recipient:           tx.RecipientAddress,
@@ -366,6 +367,25 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 			continue
 		}
 
+		eventHash := base64.StdEncoding.EncodeToString(matchedEvent.SigHash)
+		eventKey := collections.Join(asset.String(), eventHash)
+		if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
+			k.Logger(ctx).Warn("processSolanaDCTMintEvents: Solana event already processed",
+				"asset", asset.String(),
+				"tx_id", pendingMint.Id,
+				"event_hash", eventHash,
+			)
+			continue
+		} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("processSolanaDCTMintEvents: failed to read processed event map",
+				"asset", asset.String(),
+				"tx_id", pendingMint.Id,
+				"event_hash", eventHash,
+				"error", err,
+			)
+			continue
+		}
+
 		supply, err := k.dctKeeper.GetSupply(ctx, asset)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
@@ -417,6 +437,10 @@ func (k *Keeper) processSolanaDCTMintEvents(ctx sdk.Context, oracleData OracleDa
 		}
 
 		k.advanceDCTFirstPendingSolMintTransaction(ctx, asset, pendingMint.Id)
+
+		if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
+			k.Logger(ctx).Error("failed to record processed Solana mint event", "asset", asset.String(), "event_hash", eventHash, "error", err)
+		}
 
 		k.Logger(ctx).Info("completed DCT Solana mint", "asset", asset.String(), "tx_id", pendingMint.Id, "recipient", pendingMint.RecipientAddress, "amount", pendingMint.Amount)
 	}

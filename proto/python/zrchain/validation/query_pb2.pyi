@@ -5,6 +5,7 @@ from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.api import annotations_pb2 as _annotations_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
+from zrchain.validation import solana_pb2 as _solana_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
 from zrchain.validation import tx_pb2 as _tx_pb2
 from google.protobuf.internal import containers as _containers
@@ -255,3 +256,22 @@ class QueryBackfillRequestsResponse(_message.Message):
     BACKFILL_REQUESTS_FIELD_NUMBER: _ClassVar[int]
     backfill_requests: _tx_pb2.BackfillRequests
     def __init__(self, backfill_requests: _Optional[_Union[_tx_pb2.BackfillRequests, _Mapping]] = ...) -> None: ...
+
+class QuerySolanaCountersRequest(_message.Message):
+    __slots__ = ("asset",)
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    asset: str
+    def __init__(self, asset: _Optional[str] = ...) -> None: ...
+
+class QuerySolanaCountersResponse(_message.Message):
+    __slots__ = ("counters",)
+    class CountersEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: _solana_pb2.SolanaCounters
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[_solana_pb2.SolanaCounters, _Mapping]] = ...) -> None: ...
+    COUNTERS_FIELD_NUMBER: _ClassVar[int]
+    counters: _containers.MessageMap[str, _solana_pb2.SolanaCounters]
+    def __init__(self, counters: _Optional[_Mapping[str, _solana_pb2.SolanaCounters]] = ...) -> None: ...
