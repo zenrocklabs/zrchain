@@ -378,12 +378,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 	// Update asset prices if there's consensus on the price fields
 	k.updateAssetPrices(ctx, oracleData)
 
-	// Validator updates - only if EigenDelegationsHash has consensus
-	// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldEigenDelegationsHash) {
-	// 	k.UpdateValidatorStakes(ctx, oracleData)
-	// 	k.updateAVSDelegationStore(ctx, oracleData)
-	// }
-
 	// Bitcoin header processing - only if BTC header fields have consensus
 	btcHeaderFields := []VoteExtensionField{VEFieldLatestBtcHeaderHash, VEFieldRequestedBtcHeaderHash}
 	if anyFieldHasConsensus(oracleData.FieldVotePowers, btcHeaderFields) {
@@ -417,11 +411,6 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 			k.storeNewZenBTCBurnEventsEthereum(ctx, oracleData)
 		}
 
-		// Skipping EigenLayer-based redemptions ingestion; redemptions will be initiated directly on burn
-		// if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldRedemptionsHash) {
-		// 	k.storeNewZenBTCRedemptions(ctx, oracleData)
-		// }
-
 		if fieldHasConsensus(oracleData.FieldVotePowers, VEFieldSolanaMintEventsHash) {
 			k.processSolanaZenBTCMintEvents(ctx, oracleData)
 			k.processSolanaROCKMintEvents(ctx, oracleData)
@@ -435,10 +424,10 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		}
 
 		k.processMatureZenBTCBurns(ctx)
-		k.processMatureDCTBurns(ctx)
+		// k.processMatureDCTBurns(ctx) // TODO: uncomment
 
 		// 2. Process pending transaction queues based on the latest state
-		// Request nonces/accounts for direct minting (no EigenLayer staking)
+		// Request nonces/accounts for direct minting
 		k.requestMintDispatches(ctx)
 
 		// Mint directly on destination chains
@@ -447,9 +436,8 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processZenBTCMintsSolana(ctx, oracleData)
 		k.processSolanaROCKMints(ctx, oracleData)
 
-		// Skip EigenLayer unstake and completion; proceed directly to BTC redemption monitoring
 		k.checkForRedemptionFulfilment(ctx)
-		k.checkForDCTRedemptionFulfilment(ctx)
+		// k.checkForDCTRedemptionFulfilment(ctx) // TODO: uncomment
 
 		// 3. Final cleanup steps for the block
 		k.clearSolanaAccounts(ctx)
