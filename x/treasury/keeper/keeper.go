@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	shared "github.com/Zenrock-Foundation/zrchain/v6/shared"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -537,9 +538,16 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 }
 
 func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
-	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
-		req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) {
-		return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+	dctProxy, _ := k.dctKeeper.GetProxyAddress(ctx, dcttypes.Asset_ASSET_ZENZEC)
+
+	if key.ZenbtcMetadata == nil ||
+		key.ZenbtcMetadata.RecipientAddr == "" ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENBTC &&
+			req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENZEC &&
+			req.Creator != dctProxy ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
+		return fmt.Errorf("only the designated proxy service can request signatures from deposit keys for asset %s", key.ZenbtcMetadata.Asset.String())
 	}
 	return nil
 }

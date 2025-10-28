@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -27,6 +28,8 @@ func (k Keeper) ZenbtcWallets(
 			}
 
 			switch {
+			case value.ZenbtcMetadata.Asset != dcttypes.Asset_ASSET_ZENBTC:
+				return false, nil
 			case req.MintChainId != "" && value.ZenbtcMetadata.Caip2ChainId != req.MintChainId:
 				return false, nil
 			case req.ChainType != types.WalletType_WALLET_TYPE_UNSPECIFIED && value.ZenbtcMetadata.ChainType != req.ChainType:
@@ -37,11 +40,7 @@ func (k Keeper) ZenbtcWallets(
 				return false, nil
 			}
 
-			recipientAddressMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
-			chainIdMatch := (req.MintChainId == "" || value.ZenbtcMetadata.Caip2ChainId == req.MintChainId)
-			returnAddrMatch := (req.ReturnAddr == "" || value.ZenbtcMetadata.ReturnAddress == req.ReturnAddr)
-
-			return recipientAddressMatch && chainIdMatch && returnAddrMatch, nil
+			return true, nil
 		},
 		func(key uint64, value types.Key) (*types.KeyAndWalletResponse, error) {
 			return &types.KeyAndWalletResponse{
