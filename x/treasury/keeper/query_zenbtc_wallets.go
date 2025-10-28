@@ -40,7 +40,7 @@ func (k Keeper) ZenbtcWallets(
 				return false, nil
 			}
 
-			return false, nil
+			return true, nil
 		},
 		func(key uint64, value types.Key) (*types.KeyAndWalletResponse, error) {
 			return &types.KeyAndWalletResponse{
