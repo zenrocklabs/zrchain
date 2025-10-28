@@ -399,7 +399,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("key %v not found", keyID)
 		}
 
-		if err := k.validateZenBTCSignRequest(ctx, *req, key); err != nil {
+		if err := k.validateDCTSignRequest(ctx, *req, key); err != nil {
 			return 0, err
 		}
 
@@ -537,18 +537,28 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	return &types.MsgNewSignTransactionRequestResponse{Id: tID, SignatureRequestId: id}, nil
 }
 
-func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
-	dctProxy, _ := k.dctKeeper.GetProxyAddress(ctx, dcttypes.Asset_ASSET_ZENZEC)
-
-	if key.ZenbtcMetadata == nil ||
-		key.ZenbtcMetadata.RecipientAddr == "" ||
-		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENBTC &&
-			req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) ||
-		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENZEC &&
-			req.Creator != dctProxy ||
-		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
-		return fmt.Errorf("only the designated proxy service can request signatures from deposit keys for asset %s", key.ZenbtcMetadata.Asset.String())
+func (k *Keeper) validateDCTSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
+	// If no metadata or no recipient address, allow the request
+	if key.ZenbtcMetadata == nil || key.ZenbtcMetadata.RecipientAddr == "" {
+		return nil
 	}
+
+	// Validate based on asset type
+	switch key.ZenbtcMetadata.Asset {
+	case dcttypes.Asset_ASSET_ZENBTC:
+		if req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) {
+			return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+		}
+	case dcttypes.Asset_ASSET_ZENZEC:
+		dctProxy, _ := k.dctKeeper.GetProxyAddress(ctx, dcttypes.Asset_ASSET_ZENZEC)
+		if req.Creator != dctProxy {
+			return fmt.Errorf("only the Zcash proxy service can request signatures from zenZEC deposit keys")
+		}
+	default:
+		// For any other asset type with metadata, reject it as we don't have a proxy defined
+		return fmt.Errorf("unsupported asset type %s for deposit key signatures", key.ZenbtcMetadata.Asset.String())
+	}
+
 	return nil
 }
 
