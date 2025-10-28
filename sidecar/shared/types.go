@@ -173,11 +173,11 @@ var (
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 
-	SidecarVersionName = "sturgeon_moon_r1"
+	SidecarVersionName = "sturgeon_moon_r2"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r1"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r2", "sturgeon_moon_r1"}
 
 	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.

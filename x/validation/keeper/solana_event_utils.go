@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -10,21 +9,10 @@ import (
 )
 
 func eventIDFromSolanaMintEvent(event sidecarapitypes.SolanaMintEvent) (*big.Int, error) {
-	if len(event.SigHash) > 0 && len(event.SigHash) <= 16 {
-		return eventIDFromLEBytes(event.SigHash), nil
+	if len(event.SigHash) != 16 {
+		return nil, fmt.Errorf("unsupported Solana event sig hash length: %d", len(event.SigHash))
 	}
-	return eventIDFromTxSig(event.TxSig)
-}
-
-func eventIDFromTxSig(txSig string) (*big.Int, error) {
-	decoded, err := hex.DecodeString(txSig)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tx_sig hex: %w", err)
-	}
-	if len(decoded) > 16 {
-		return nil, fmt.Errorf("tx_sig length %d exceeds expected 16 bytes", len(decoded))
-	}
-	return eventIDFromLEBytes(decoded), nil
+	return eventIDFromLEBytes(event.SigHash), nil
 }
 
 func eventIDFromLEBytes(b []byte) *big.Int {
