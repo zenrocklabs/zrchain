@@ -43,7 +43,7 @@ func (k Keeper) DctWallets(
 			assetMatch := (value.ZenbtcMetadata.Asset == req.AssetType)
 			recipientAddressMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
 			chainIdMatch := (req.MintChainId == "" || value.ZenbtcMetadata.Caip2ChainId == req.MintChainId)
-			returnAddrMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
+			returnAddrMatch := (req.ReturnAddr == "" || value.ZenbtcMetadata.ReturnAddr == req.ReturnAddr)
 
 			return assetMatch && recipientAddressMatch && chainIdMatch && returnAddrMatch, nil
 		},
