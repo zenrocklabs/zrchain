@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
@@ -314,7 +313,6 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 	}
 	sigHash := sha256.Sum256(concatenated)
 	assetKey := "ZENBTC"
-	var matchedEvent *sidecarapitypes.SolanaMintEvent
 	for _, event := range oracleData.SolanaMintEvents {
 		if hex.EncodeToString(event.SigHash) != hex.EncodeToString(sigHash[:]) {
 			continue
@@ -330,85 +328,30 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 			continue
 		}
 
-		counters, err := k.SolanaCounters.Get(ctx, assetKey)
+		supply, err := k.zenBTCKeeper.GetSupply(ctx)
 		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
-			} else {
-				k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to get Solana counters", "error", err)
-				continue
-			}
-		}
-
-		expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
-		eventID, err := eventIDFromSolanaMintEvent(event)
-		if err != nil {
-			k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to parse event ID", "tx_sig", event.TxSig, "error", err)
-			continue
-		}
-		if eventID.Cmp(expectedEventID) != 0 {
-			k.Logger(ctx).Info("processSolanaZenBTCMintEvents: skipping event with unexpected ID",
-				"expected_event_id", expectedEventID.String(),
-				"event_id", eventID.String(),
-				"tx_sig", event.TxSig,
-			)
-			continue
-		}
-
-		evtCopy := event
-		matchedEvent = &evtCopy
-		break
-	}
-	if matchedEvent == nil {
-		return
-	}
-
-	eventHash := base64.StdEncoding.EncodeToString(matchedEvent.SigHash)
-	eventKey := collections.Join(assetKey, eventHash)
-
-	counters, err := k.SolanaCounters.Get(ctx, assetKey)
-	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
-		} else {
-			k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to get Solana counters", "error", err)
 			return
 		}
-	}
+		supply.PendingZenBTC -= pendingMint.Amount
+		supply.MintedZenBTC += pendingMint.Amount
+		if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+			return
+		}
+		pendingMint.TxHash = event.TxSig
+		pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+			k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
+		}
 
-	supply, err := k.zenBTCKeeper.GetSupply(ctx)
-	if err != nil {
+		if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
+			k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
+		}
+
+		if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
+			k.Logger(ctx).Error("failed to record processed Solana mint event", "event_hash", eventHash, "error", err)
+		}
+
 		return
-	}
-	supply.PendingZenBTC -= pendingMint.Amount
-	supply.MintedZenBTC += pendingMint.Amount
-	if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-		return
-	}
-	pendingMint.TxHash = matchedEvent.TxSig
-	pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-	if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
-		k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
-	}
-
-	// Increment mint counter after confirmed successful mint
-	counters.MintCounter++
-	if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
-		k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)
-	} else {
-		k.Logger(ctx).Info("Incremented Solana mint counter after confirmed successful mint",
-			"asset", assetKey,
-			"new_mint_counter", counters.MintCounter,
-			"tx_id", pendingMint.Id,
-		)
-	}
-
-	if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
-		k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
-	}
-
-	if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
-		k.Logger(ctx).Error("failed to record processed Solana mint event", "event_hash", eventHash, "error", err)
 	}
 }
 
