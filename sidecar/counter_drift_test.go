@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"math/big"
-	"os"
 	"testing"
 
 	bin "github.com/gagliardetto/binary"
@@ -24,10 +23,6 @@ import (
 // This test requires live network access. Set RUN_COUNTER_CHECK=1 to run it manually.
 func TestSolanaCounterParity(t *testing.T) {
 	t.Skip("skipping on CI")
-
-	if os.Getenv("RUN_COUNTER_CHECK") == "" {
-		t.Skip("set RUN_COUNTER_CHECK=1 to enable Solana counter parity check")
-	}
 
 	cfg := LoadConfig("", "")
 	rpcURL := cfg.SolanaRPC[cfg.Network]
