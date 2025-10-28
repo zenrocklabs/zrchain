@@ -10,10 +10,10 @@ import (
 )
 
 func eventIDFromSolanaMintEvent(event sidecarapitypes.SolanaMintEvent) (*big.Int, error) {
-	if len(event.SigHash) > 0 && len(event.SigHash) <= 16 {
-		return eventIDFromLEBytes(event.SigHash), nil
+	if len(event.SigHash) != 16 {
+		return nil, fmt.Errorf("unsupported Solana event sig hash length: %d", len(event.SigHash))
 	}
-	return eventIDFromTxSig(event.TxSig)
+	return eventIDFromLEBytes(event.SigHash), nil
 }
 
 func eventIDFromTxSig(txSig string) (*big.Int, error) {
