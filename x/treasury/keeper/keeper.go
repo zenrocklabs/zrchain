@@ -538,9 +538,16 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 }
 
 func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
-	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
-		req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) && key.ZenbtcMetadata.Asset != dcttypes.Asset_ASSET_ZENBTC {
-		return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys for asset %s", key.ZenbtcMetadata.Asset.String())
+	dctProxy, _ := k.dctKeeper.GetProxyAddress(ctx, dcttypes.Asset_ASSET_ZENZEC)
+
+	if key.ZenbtcMetadata == nil ||
+		key.ZenbtcMetadata.RecipientAddr == "" ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENBTC &&
+			req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENZEC &&
+			req.Creator != dctProxy ||
+		key.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
+		return fmt.Errorf("only the designated proxy service can request signatures from deposit keys for asset %s", key.ZenbtcMetadata.Asset.String())
 	}
 	return nil
 }

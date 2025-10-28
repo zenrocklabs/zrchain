@@ -40,12 +40,7 @@ func (k Keeper) ZenbtcWallets(
 				return false, nil
 			}
 
-			assetMatch := (value.ZenbtcMetadata.Asset == dcttypes.Asset_ASSET_ZENBTC)
-			recipientAddressMatch := (req.RecipientAddr == "" || value.ZenbtcMetadata.RecipientAddr == req.RecipientAddr)
-			chainIdMatch := (req.MintChainId == "" || value.ZenbtcMetadata.Caip2ChainId == req.MintChainId)
-			returnAddrMatch := (req.ReturnAddr == "" || value.ZenbtcMetadata.ReturnAddress == req.ReturnAddr)
-
-			return assetMatch && recipientAddressMatch && chainIdMatch && returnAddrMatch, nil
+			return true, nil
 		},
 		func(key uint64, value types.Key) (*types.KeyAndWalletResponse, error) {
 			return &types.KeyAndWalletResponse{
