@@ -46,8 +46,6 @@ import (
 	solana "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
-	// Added for bin.Marshal
 )
 
 func NewOracle(
@@ -211,13 +209,6 @@ func parseEventStoreCursor(hexStr string) ([16]byte, *big.Int, error) {
 }
 
 func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
-	serviceManager, err := middleware.NewContractZrServiceManager(
-		common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]),
-		o.EthClient,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
 	zenBTCController, err := zenbtc.NewZenBTController(
 		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
 		o.EthClient,
@@ -259,7 +250,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
 		var initialTickCtx context.Context
 		initialTickCtx, tickCancel = context.WithCancel(ctx)
-		go o.processOracleTick(initialTickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
+		go o.processOracleTick(initialTickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -287,14 +278,13 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			tickCtx, tickCancel = context.WithCancel(ctx)
 
 			// Start the new tick's processing in a goroutine.
-			go o.processOracleTick(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
+			go o.processOracleTick(tickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
 }
 
 func (o *Oracle) processOracleTick(
 	tickCtx context.Context,
-	serviceManager *middleware.ContractZrServiceManager,
 	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
@@ -303,7 +293,7 @@ func (o *Oracle) processOracleTick(
 ) {
 	// Perform scheduled reset if due (evaluated using the tick's aligned time)
 	o.maybePerformScheduledReset(tickTime.UTC())
-	newState, err := o.fetchAndProcessState(tickCtx, serviceManager, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
@@ -397,7 +387,6 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
-	serviceManager *middleware.ContractZrServiceManager,
 	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
@@ -587,26 +576,12 @@ func fetchAndUpdateState[T any](
 func (o *Oracle) fetchEthereumContractData(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	serviceManager *middleware.ContractZrServiceManager,
 	zenBTCController *zenbtc.ZenBTController,
 	targetBlockNumber *big.Int,
 	update *oracleStateUpdate,
 	updateMutex *sync.Mutex,
 	errChan chan<- error,
 ) {
-	// Fetches the state of AVS delegations from the service manager contract.
-	fetchAndUpdateState(
-		ctx, wg, errChan, updateMutex,
-		func(ctx context.Context) (map[string]map[string]*big.Int, error) {
-			return o.getServiceManagerState(ctx, serviceManager, targetBlockNumber)
-		},
-		func(result map[string]map[string]*big.Int, update *oracleStateUpdate) {
-			update.eigenDelegations = result
-		},
-		update,
-		"failed to get contract state",
-	)
-
 	// Fetches pending zenBTC redemptions from the zenBTC controller contract.
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
@@ -1314,7 +1289,6 @@ func (o *Oracle) buildFinalState(
 	})
 
 	newState := sidecartypes.OracleState{
-		EigenDelegations:        update.eigenDelegations,
 		EthBlockHeight:          targetBlockNumber.Uint64(),
 		EthGasLimit:             update.estimatedGas,
 		EthBaseFee:              latestHeader.BaseFee.Uint64(),
@@ -1385,61 +1359,6 @@ func (o *Oracle) applyFallbacks(update *oracleStateUpdate, currentState *sidecar
 		update.estimatedGas = currentState.EthGasLimit
 		slog.Warn("estimatedGas was 0, using last known state value")
 	}
-}
-
-func (o *Oracle) getServiceManagerState(ctx context.Context, contractInstance *middleware.ContractZrServiceManager, height *big.Int) (map[string]map[string]*big.Int, error) {
-	delegations := make(map[string]map[string]*big.Int)
-
-	callOpts := &bind.CallOpts{
-		BlockNumber: height,
-		Context:     ctx,
-	}
-
-	// Retrieve all validators from the contract
-	allValidators, err := contractInstance.GetAllValidator(callOpts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get all validators: %w", err)
-	}
-
-	quorumNumber := sidecartypes.EigenLayerQuorumNumber
-
-	// Iterate over all validators
-	for _, validator := range allValidators {
-		validatorAddr := validator.ValidatorAddr
-		operators := validator.Operators
-
-		// Initialize the map for this validator if not already
-		if delegations[validatorAddr] == nil {
-			delegations[validatorAddr] = make(map[string]*big.Int)
-		}
-
-		// Iterate over operators associated with the validator
-		for _, operator := range operators {
-			// TODO: remove this optimisation when we support multiple EigenLayer operators
-			if operator != common.HexToAddress("0x4B2D2fE4DFa633C8a43FcECC05eAE4f4A84EF9f7") {
-				continue
-			}
-			// Get the stake amount for the operator
-			amount, err := contractInstance.GetEigenStake(callOpts, operator, quorumNumber)
-			if err != nil {
-				slog.Error("Failed to get stake for operator", "operator", operator.Hex(), "error", err)
-				continue
-			}
-
-			// Only consider positive stake amounts
-			if amount.Cmp(big.NewInt(0)) > 0 {
-				operatorAddr := operator.Hex()
-				// Sum up the stake if operator already exists under this validator
-				if existingAmount, exists := delegations[validatorAddr][operatorAddr]; exists {
-					delegations[validatorAddr][operatorAddr] = new(big.Int).Add(existingAmount, amount)
-				} else {
-					delegations[validatorAddr][operatorAddr] = amount
-				}
-			}
-		}
-	}
-
-	return delegations, nil
 }
 
 func (o *Oracle) getEthBurnEvents(ctx context.Context, fromBlock, toBlock *big.Int) ([]api.BurnEvent, error) {

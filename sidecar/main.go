@@ -116,15 +116,6 @@ func main() {
 		}
 	}()
 
-	if !*flags.noAVS {
-		go func() {
-			if err := oracle.runEigenOperator(); err != nil {
-				slog.Error("Error starting EigenLayer Operator", "error", err)
-				os.Exit(1)
-			}
-		}()
-	}
-
 	// Graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -145,7 +136,6 @@ type flagConfig struct {
 	configFile      *string
 	configDir       *string
 	version         *bool
-	noAVS           *bool
 	skipInitialWait *bool
 	noSolana        *bool
 	testReset       *bool
@@ -163,7 +153,6 @@ func parseFlags() *flagConfig {
 		configFile:      flag.String("config", "", "Override config file path (default: config.yaml)"),
 		configDir:       flag.String("config-dir", "", "Directory to search for config.yaml"),
 		version:         flag.Bool("version", false, "Display version information and exit"),
-		noAVS:           flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)"),
 		skipInitialWait: flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately"),
 		noSolana:        flag.Bool("no-solana", false, "Disable Solana functionality for testing"),
 		testReset:       flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)"),

@@ -72,7 +72,7 @@ message BurnEvent {
 message SidecarStateRequest {}
 
 message SidecarStateResponse {
-  bytes EigenDelegations = 1;
+  bytes EigenDelegations = 1 [deprecated = true];
   uint64 EthBlockHeight = 2;
   uint64 EthGasLimit = 3;
   uint64 EthBaseFee = 4;
