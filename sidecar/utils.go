@@ -376,7 +376,6 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	}
 
 	return &oracleStateUpdate{
-		eigenDelegations:        make(map[string]map[string]*big.Int),
 		suggestedTip:            big.NewInt(0),
 		estimatedGas:            0,
 		ROCKUSDPrice:            math.LegacyZeroDec(),

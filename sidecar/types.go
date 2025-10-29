@@ -21,7 +21,6 @@ import (
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
-		EigenDelegations:        make(map[string]map[string]*big.Int),
 		EthBlockHeight:          0,
 		EthGasLimit:             0,
 		EthBaseFee:              0,
@@ -92,7 +91,6 @@ type CachedTxResult struct {
 }
 
 type oracleStateUpdate struct {
-	eigenDelegations        map[string]map[string]*big.Int
 	redemptions             []api.Redemption
 	suggestedTip            *big.Int
 	estimatedGas            uint64
