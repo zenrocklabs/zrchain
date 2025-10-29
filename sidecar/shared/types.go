@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"math/big"
 	"time"
 
 	"cosmossdk.io/math"
@@ -21,15 +20,6 @@ const (
 // NB: these constants should not be changed as they are important for synchronicity.
 // Modifying them will exponentially increase the risk of your validator being slashed
 var (
-	// ServiceManagerAddresses maps network names to service manager contract addresses
-	ServiceManagerAddresses = map[string]string{
-		NetworkLocalnet: "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
-		NetworkRegnet:   "0xa6c639cC8506B13d7cb37bFa143318908050Fb70",
-		NetworkDevnet:   "0xe2Aaf5A9a04cac7f3D43b4Afb7463850E1caEfB3",
-		NetworkTestnet:  "0xa559CDb9e029fc4078170122eBf7A3e622a764E4",
-		NetworkMainnet:  "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
-	}
-
 	// PriceFeedAddresses contains addresses for different price feed contracts on Ethereum mainnet
 	PriceFeedAddresses = PriceFeed{
 		BTC: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c", // BTC/USD Chainlink feed
@@ -159,7 +149,6 @@ var (
 	SolanaRateLimiterTimeout    = 10 * time.Second
 	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
 	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
-	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
 	// Oracle processing constants
@@ -223,7 +212,6 @@ type PendingTxInfo struct {
 }
 
 type OracleState struct {
-	EigenDelegations        map[string]map[string]*big.Int `json:"eigenDelegations"`
 	EthBlockHeight          uint64                         `json:"ethBlockHeight"`
 	EthGasLimit             uint64                         `json:"ethGasLimit"`
 	EthBaseFee              uint64                         `json:"ethBaseFee"`
@@ -260,7 +248,6 @@ type Config struct {
 	GRPCPort               int               `yaml:"grpc_port"`
 	StateFile              string            `yaml:"state_file"`
 	ZRChainRPC             string            `yaml:"zrchain_rpc"`
-	OperatorConfig         string            `yaml:"operator_config"`
 	Network                string            `yaml:"network"`
 	EthRPC                 map[string]string `yaml:"eth_rpc"`
 	SolanaRPC              map[string]string `yaml:"solana_rpc"`
