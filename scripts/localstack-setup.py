@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.8"
+# dependencies = [
+#   "boto3",
+# ]
+# ///
+
 import boto3
 
 if __name__ == "__main__":
