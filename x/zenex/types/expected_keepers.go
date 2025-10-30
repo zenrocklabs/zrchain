@@ -7,8 +7,8 @@ import (
 	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 type IdentityKeeper interface {

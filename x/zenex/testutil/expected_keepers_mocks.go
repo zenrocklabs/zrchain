@@ -17,8 +17,8 @@ import (
 	types "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	types0 "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	types1 "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	types2 "github.com/cosmos/cosmos-sdk/types"
-	types3 "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	types2 "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
+	types3 "github.com/cosmos/cosmos-sdk/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -47,7 +47,7 @@ func (m *MockIdentityKeeper) EXPECT() *MockIdentityKeeperMockRecorder {
 }
 
 // GetWorkspace mocks base method.
-func (m *MockIdentityKeeper) GetWorkspace(ctx types2.Context, id string) (*types.Workspace, error) {
+func (m *MockIdentityKeeper) GetWorkspace(ctx types3.Context, id string) (*types.Workspace, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWorkspace", ctx, id)
 	ret0, _ := ret[0].(*types.Workspace)
@@ -86,7 +86,7 @@ func (m *MockTreasuryKeeper) EXPECT() *MockTreasuryKeeperMockRecorder {
 }
 
 // GetKey mocks base method.
-func (m *MockTreasuryKeeper) GetKey(ctx types2.Context, keyID uint64) (*types0.Key, error) {
+func (m *MockTreasuryKeeper) GetKey(ctx types3.Context, keyID uint64) (*types0.Key, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetKey", ctx, keyID)
 	ret0, _ := ret[0].(*types0.Key)
@@ -101,7 +101,7 @@ func (mr *MockTreasuryKeeperMockRecorder) GetKey(ctx, keyID any) *gomock.Call {
 }
 
 // HandleSignatureRequest mocks base method.
-func (m *MockTreasuryKeeper) HandleSignatureRequest(ctx types2.Context, msg *types0.MsgNewSignatureRequest) (*types0.MsgNewSignatureRequestResponse, error) {
+func (m *MockTreasuryKeeper) HandleSignatureRequest(ctx types3.Context, msg *types0.MsgNewSignatureRequest) (*types0.MsgNewSignatureRequestResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HandleSignatureRequest", ctx, msg)
 	ret0, _ := ret[0].(*types0.MsgNewSignatureRequestResponse)
@@ -224,10 +224,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(arg0 context.Context, arg1 types2.AccAddress) types2.AccountI {
+func (m *MockAccountKeeper) GetAccount(arg0 context.Context, arg1 types3.AccAddress) types3.AccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccount", arg0, arg1)
-	ret0, _ := ret[0].(types2.AccountI)
+	ret0, _ := ret[0].(types3.AccountI)
 	return ret0
 }
 
@@ -238,10 +238,10 @@ func (mr *MockAccountKeeperMockRecorder) GetAccount(arg0, arg1 any) *gomock.Call
 }
 
 // GetModuleAddress mocks base method.
-func (m *MockAccountKeeper) GetModuleAddress(name string) types2.AccAddress {
+func (m *MockAccountKeeper) GetModuleAddress(name string) types3.AccAddress {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAddress", name)
-	ret0, _ := ret[0].(types2.AccAddress)
+	ret0, _ := ret[0].(types3.AccAddress)
 	return ret0
 }
 
@@ -276,10 +276,10 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // GetBalance mocks base method.
-func (m *MockBankKeeper) GetBalance(arg0 context.Context, arg1 types2.AccAddress, arg2 string) types2.Coin {
+func (m *MockBankKeeper) GetBalance(arg0 context.Context, arg1 types3.AccAddress, arg2 string) types3.Coin {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBalance", arg0, arg1, arg2)
-	ret0, _ := ret[0].(types2.Coin)
+	ret0, _ := ret[0].(types3.Coin)
 	return ret0
 }
 
@@ -290,7 +290,7 @@ func (mr *MockBankKeeperMockRecorder) GetBalance(arg0, arg1, arg2 any) *gomock.C
 }
 
 // SendCoinsFromAccountToModule mocks base method.
-func (m *MockBankKeeper) SendCoinsFromAccountToModule(arg0 context.Context, arg1 types2.AccAddress, arg2 string, arg3 types2.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromAccountToModule(arg0 context.Context, arg1 types3.AccAddress, arg2 string, arg3 types3.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromAccountToModule", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -304,7 +304,7 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromAccountToModule(arg0, arg1, a
 }
 
 // SendCoinsFromModuleToAccount mocks base method.
-func (m *MockBankKeeper) SendCoinsFromModuleToAccount(arg0 context.Context, arg1 string, arg2 types2.AccAddress, arg3 types2.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromModuleToAccount(arg0 context.Context, arg1 string, arg2 types3.AccAddress, arg3 types3.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromModuleToAccount", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -318,7 +318,7 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToAccount(arg0, arg1, a
 }
 
 // SendCoinsFromModuleToModule mocks base method.
-func (m *MockBankKeeper) SendCoinsFromModuleToModule(arg0 context.Context, arg1, arg2 string, arg3 types2.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(arg0 context.Context, arg1, arg2 string, arg3 types3.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -332,10 +332,10 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(arg0, arg1, ar
 }
 
 // SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(arg0 context.Context, arg1 types2.AccAddress) types2.Coins {
+func (m *MockBankKeeper) SpendableCoins(arg0 context.Context, arg1 types3.AccAddress) types3.Coins {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SpendableCoins", arg0, arg1)
-	ret0, _ := ret[0].(types2.Coins)
+	ret0, _ := ret[0].(types3.Coins)
 	return ret0
 }
 
@@ -418,10 +418,10 @@ func (m *MockZenbtcKeeper) EXPECT() *MockZenbtcKeeperMockRecorder {
 }
 
 // GetParams mocks base method.
-func (m *MockZenbtcKeeper) GetParams(ctx context.Context) (types3.Params, error) {
+func (m *MockZenbtcKeeper) GetParams(ctx context.Context) (types2.Params, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetParams", ctx)
-	ret0, _ := ret[0].(types3.Params)
+	ret0, _ := ret[0].(types2.Params)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
