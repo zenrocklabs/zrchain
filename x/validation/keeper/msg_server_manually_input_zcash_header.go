@@ -49,14 +49,17 @@ func (k msgServer) ManuallyInputZcashHeader(ctx context.Context, msg *types.MsgM
 	}
 
 	header := sidecarapitypes.BTCBlockHeader{
-		Version:     msg.Header.Version,
-		PrevBlock:   msg.Header.PrevBlock,
-		MerkleRoot:  msg.Header.MerkleRoot,
-		TimeStamp:   msg.Header.TimeStamp,
-		Bits:        msg.Header.Bits,
-		Nonce:       msg.Header.Nonce,
-		BlockHash:   msg.Header.BlockHash,
-		BlockHeight: msg.Header.BlockHeight,
+		Version:          msg.Header.Version,
+		PrevBlock:        msg.Header.PrevBlock,
+		MerkleRoot:       msg.Header.MerkleRoot,
+		TimeStamp:        msg.Header.TimeStamp,
+		Bits:             msg.Header.Bits,
+		Nonce:            msg.Header.Nonce,
+		BlockHash:        msg.Header.BlockHash,
+		BlockHeight:      msg.Header.BlockHeight,
+		NonceHex:         msg.Header.NonceHex,
+		BlockCommitments: msg.Header.BlockCommitments,
+		Solution:         msg.Header.Solution,
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)

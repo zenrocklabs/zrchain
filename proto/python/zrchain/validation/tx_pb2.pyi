@@ -228,7 +228,7 @@ class MsgManuallyInputZcashHeader(_message.Message):
     def __init__(self, authority: _Optional[str] = ..., header: _Optional[_Union[ZcashHeader, _Mapping]] = ...) -> None: ...
 
 class ZcashHeader(_message.Message):
-    __slots__ = ("version", "prev_block", "merkle_root", "time_stamp", "bits", "nonce", "block_hash", "block_height")
+    __slots__ = ("version", "prev_block", "merkle_root", "time_stamp", "bits", "nonce", "block_hash", "block_height", "nonce_hex", "block_commitments", "solution")
     VERSION_FIELD_NUMBER: _ClassVar[int]
     PREV_BLOCK_FIELD_NUMBER: _ClassVar[int]
     MERKLE_ROOT_FIELD_NUMBER: _ClassVar[int]
@@ -237,6 +237,9 @@ class ZcashHeader(_message.Message):
     NONCE_FIELD_NUMBER: _ClassVar[int]
     BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
     BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    NONCE_HEX_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_COMMITMENTS_FIELD_NUMBER: _ClassVar[int]
+    SOLUTION_FIELD_NUMBER: _ClassVar[int]
     version: int
     prev_block: str
     merkle_root: str
@@ -245,7 +248,10 @@ class ZcashHeader(_message.Message):
     nonce: int
     block_hash: str
     block_height: int
-    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., time_stamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
+    nonce_hex: str
+    block_commitments: str
+    solution: str
+    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., time_stamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ..., nonce_hex: _Optional[str] = ..., block_commitments: _Optional[str] = ..., solution: _Optional[str] = ...) -> None: ...
 
 class MsgManuallyInputZcashHeaderResponse(_message.Message):
     __slots__ = ()
