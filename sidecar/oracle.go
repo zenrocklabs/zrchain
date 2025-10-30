@@ -25,14 +25,13 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
+	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/eventstore"
 	neutrino "github.com/Zenrock-Foundation/zrchain/v6/sidecar/neutrino"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
-	middleware "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
 	"github.com/beevik/ntp"
 	sdkBech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	aggregatorv3 "github.com/smartcontractkit/chainlink/v2/core/gethwrappers/generated/aggregator_v3_interface"
-    "github.com/Zenrock-Foundation/zrchain/v6/sidecar/eventstore"
 
 	validationkeeper "github.com/Zenrock-Foundation/zrchain/v6/x/validation/keeper"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
@@ -210,13 +209,6 @@ func parseEventStoreCursor(hexStr string) ([16]byte, *big.Int, error) {
 }
 
 func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
-	zenBTCController, err := zenbtc.NewZenBTController(
-		common.HexToAddress(sidecartypes.ZenBTCControllerAddresses[o.Config.Network]),
-		o.EthClient,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create contract instance: %w", err)
-	}
 	mainnetEthClient, btcPriceFeed, ethPriceFeed := o.initPriceFeed()
 
 	// Allow customization of ticker interval in regnet network
@@ -251,7 +243,7 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 		slog.Info("Skipping initial alignment wait due to --skip-initial-wait flag. Firing initial tick immediately.")
 		var initialTickCtx context.Context
 		initialTickCtx, tickCancel = context.WithCancel(ctx)
-		go o.processOracleTick(initialTickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
+		go o.processOracleTick(initialTickCtx, btcPriceFeed, ethPriceFeed, mainnetEthClient, time.Now())
 	}
 
 	mainLoopTicker := time.NewTicker(mainLoopTickerIntervalDuration)
@@ -279,14 +271,13 @@ func (o *Oracle) runOracleMainLoop(ctx context.Context) error {
 			tickCtx, tickCancel = context.WithCancel(ctx)
 
 			// Start the new tick's processing in a goroutine.
-			go o.processOracleTick(tickCtx, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
+			go o.processOracleTick(tickCtx, btcPriceFeed, ethPriceFeed, mainnetEthClient, tickTime)
 		}
 	}
 }
 
 func (o *Oracle) processOracleTick(
 	tickCtx context.Context,
-	zenBTCController *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	mainnetEthClient *ethclient.Client,
@@ -294,7 +285,7 @@ func (o *Oracle) processOracleTick(
 ) {
 	// Perform scheduled reset if due (evaluated using the tick's aligned time)
 	o.maybePerformScheduledReset(tickTime.UTC())
-	newState, err := o.fetchAndProcessState(tickCtx, nil, zenBTCController, btcPriceFeed, ethPriceFeed, mainnetEthClient)
+	newState, err := o.fetchAndProcessState(tickCtx, btcPriceFeed, ethPriceFeed, mainnetEthClient)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("Data fetch time limit reached. Applying partially gathered state to meet tick deadline.", "tickTime", tickTime.Format(sidecartypes.TimeFormatPrecise))
@@ -388,8 +379,6 @@ func (o *Oracle) applyStateUpdate(newState sidecartypes.OracleState) {
 
 func (o *Oracle) fetchAndProcessState(
 	tickCtx context.Context,
-	_ *middleware.ContractZrServiceManager,
-	_ *zenbtc.ZenBTController,
 	btcPriceFeed *aggregatorv3.AggregatorV3Interface,
 	ethPriceFeed *aggregatorv3.AggregatorV3Interface,
 	tempEthClient *ethclient.Client,
