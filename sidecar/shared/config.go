@@ -83,7 +83,7 @@ var (
 		NetworkRegnet:   "",
 		NetworkDevnet:   "CfA179tLmrg9HeADSmGdQxZkRe85gxdNxjiARx5PXjiD",
 		NetworkTestnet:  "7y6tokt7ua3t8BaPVbpzS6wKS9PzKupQUBmXFrpAh83T",
-		NetworkMainnet:  "",
+		NetworkMainnet:  "BTzxmuLgNUfBeNCFxsoSVpEKjRTma75eWcaPjyDCUF88",
 	}
 
 	ZenZECEventStoreProgramID = map[string]string{
@@ -91,7 +91,7 @@ var (
 		NetworkRegnet:   "",
 		NetworkDevnet:   "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
 		NetworkTestnet:  "9gzutLMGsSPboaaXuyK87Uu3VsM1mRgFTddsCEFWwYVV",
-		NetworkMainnet:  "",
+		NetworkMainnet:  "7nT8EmELLWf4gSiWxT2xH5oR6GsWRn3X6dv2AY2bpa53",
 	}
 
 	ZenZECMintAddress = map[string]string{
@@ -99,7 +99,7 @@ var (
 		NetworkRegnet:   "",
 		NetworkDevnet:   "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
 		NetworkTestnet:  "H8X7ogzmLEuU36tHPFGFrMtFhHPNwbjuZW6FSGDgS9Jt",
-		NetworkMainnet:  "",
+		NetworkMainnet:  "JDt9rRGaieF6aN1cJkXFeUmsy7ZE4yY3CZb8tVMXVroS",
 	}
 
 	SolRockProgramID = map[string]string{
@@ -162,11 +162,11 @@ var (
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 
-	SidecarVersionName = "sturgeon_moon_r2"
+	SidecarVersionName = "sturgeon_moon_r3"
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r2", "sturgeon_moon_r1"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r3"}
 
 	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.
@@ -212,21 +212,21 @@ type PendingTxInfo struct {
 }
 
 type OracleState struct {
-	EthBlockHeight          uint64                         `json:"ethBlockHeight"`
-	EthGasLimit             uint64                         `json:"ethGasLimit"`
-	EthBaseFee              uint64                         `json:"ethBaseFee"`
-	EthTipCap               uint64                         `json:"ethTipCap"`
-	EthBurnEvents           []api.BurnEvent                `json:"ethBurnEvents"`
-	CleanedEthBurnEvents    map[string]bool                `json:"cleanedEthBurnEvents"`
-	SolanaBurnEvents        []api.BurnEvent                `json:"solanaBurnEvents"`
-	CleanedSolanaBurnEvents map[string]bool                `json:"cleanedSolanaBurnEvents"`
-	Redemptions             []api.Redemption               `json:"redemptions"`
-	ROCKUSDPrice            math.LegacyDec                 `json:"rockUSDPrice"`
-	BTCUSDPrice             math.LegacyDec                 `json:"btcUSDPrice"`
-	ETHUSDPrice             math.LegacyDec                 `json:"ethUSDPrice"`
-	ZECUSDPrice             math.LegacyDec                 `json:"zecUSDPrice"`
-	SolanaMintEvents        []api.SolanaMintEvent          `json:"solanaMintEvents"`
-	CleanedSolanaMintEvents map[string]bool                `json:"cleanedSolanaMintEvents"`
+	EthBlockHeight          uint64                `json:"ethBlockHeight"`
+	EthGasLimit             uint64                `json:"ethGasLimit"`
+	EthBaseFee              uint64                `json:"ethBaseFee"`
+	EthTipCap               uint64                `json:"ethTipCap"`
+	EthBurnEvents           []api.BurnEvent       `json:"ethBurnEvents"`
+	CleanedEthBurnEvents    map[string]bool       `json:"cleanedEthBurnEvents"`
+	SolanaBurnEvents        []api.BurnEvent       `json:"solanaBurnEvents"`
+	CleanedSolanaBurnEvents map[string]bool       `json:"cleanedSolanaBurnEvents"`
+	Redemptions             []api.Redemption      `json:"redemptions"`
+	ROCKUSDPrice            math.LegacyDec        `json:"rockUSDPrice"`
+	BTCUSDPrice             math.LegacyDec        `json:"btcUSDPrice"`
+	ETHUSDPrice             math.LegacyDec        `json:"ethUSDPrice"`
+	ZECUSDPrice             math.LegacyDec        `json:"zecUSDPrice"`
+	SolanaMintEvents        []api.SolanaMintEvent `json:"solanaMintEvents"`
+	CleanedSolanaMintEvents map[string]bool       `json:"cleanedSolanaMintEvents"`
 	// ZCash block headers
 	LatestZcashBlockHeight    int64               `json:"latestZcashBlockHeight,omitempty"`
 	LatestZcashBlockHeader    *api.BTCBlockHeader `json:"latestZcashBlockHeader,omitempty"`
