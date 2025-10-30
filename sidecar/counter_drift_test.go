@@ -44,7 +44,7 @@ func TestSolanaCounterParity(t *testing.T) {
 		expectedChain.Sub(expectedChain, big.NewInt(1))
 	}
 
-	zrConn, err := client.NewClientConn(cfg.ZRChainRPC, true)
+	zrConn, err := client.NewClientConn(cfg.ZRChainRPC, false)
 	require.NoError(t, err)
 	defer zrConn.Close()
 
