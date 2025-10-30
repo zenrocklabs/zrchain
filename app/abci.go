@@ -87,7 +87,7 @@ func (app *ZenrockApp) processTransactions(ctx sdk.Context, req *abci.RequestPro
 }
 
 func extractTxsFromRequest(ctx sdk.Context, req *abci.RequestProcessProposal, txUnmarshaler sdk.TxDecoder) [][]byte {
-	if req.Txs == nil || len(req.Txs) == 0 {
+	if len(req.Txs) == 0 {
 		return nil
 	}
 

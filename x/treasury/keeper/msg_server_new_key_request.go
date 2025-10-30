@@ -7,6 +7,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	pol "github.com/Zenrock-Foundation/zrchain/v6/policy"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	identitytypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	policykeeper "github.com/Zenrock-Foundation/zrchain/v6/x/policy/keeper"
 	policytypes "github.com/Zenrock-Foundation/zrchain/v6/x/policy/types"
@@ -66,25 +67,30 @@ func (k msgServer) NewKeyRequest(goCtx context.Context, msg *types.MsgNewKeyRequ
 	}
 
 	if metadata := msg.ZenbtcMetadata; metadata != nil {
+		// Validate asset type is specified
+		if metadata.Asset == dcttypes.Asset_ASSET_UNSPECIFIED {
+			return nil, fmt.Errorf("asset type must be specified for deposit key")
+		}
+
 		// Validate chain ID
 		if _, err := validationtypes.ValidateChainID(ctx, metadata.Caip2ChainId); err != nil {
-			return nil, fmt.Errorf("invalid mint recipient chainID for zenBTC deposit key: %w", err)
+			return nil, fmt.Errorf("invalid mint recipient chainID for deposit key: %w", err)
 		}
 
 		// Validate recipient address based on chain type
 		switch metadata.ChainType {
 		case types.WalletType_WALLET_TYPE_EVM:
 			if !common.IsHexAddress(metadata.RecipientAddr) {
-				return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Ethereum address")
+				return nil, fmt.Errorf("mint recipient address for deposit key must be a valid Ethereum address")
 			}
 		case types.WalletType_WALLET_TYPE_SOLANA:
 			if _, err := solana.PublicKeyFromBase58(metadata.RecipientAddr); err != nil {
-				return nil, fmt.Errorf("mint recipient address for zenBTC deposit key must be a valid Solana address")
+				return nil, fmt.Errorf("mint recipient address for deposit key must be a valid Solana address")
 			}
 		case types.WalletType_WALLET_TYPE_UNSPECIFIED:
-			return nil, fmt.Errorf("chain type must be specified for zenBTC deposit key")
+			return nil, fmt.Errorf("chain type must be specified for deposit key")
 		default:
-			return nil, fmt.Errorf("unsupported chain type %s for zenBTC deposit key", metadata.ChainType)
+			return nil, fmt.Errorf("unsupported chain type %s for deposit key", metadata.ChainType)
 		}
 	}
 

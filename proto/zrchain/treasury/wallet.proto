@@ -20,4 +20,8 @@ enum WalletType {
   WALLET_TYPE_BTC_REGNET = 5;
   // Wallet type for Solana
   WALLET_TYPE_SOLANA = 6;
+  // The Wallet type for Mainnet ZCash
+  WALLET_TYPE_ZCASH_MAINNET = 7;
+  // The Wallet type for Testnet ZCash (also used for Regtest)
+  WALLET_TYPE_ZCASH_TESTNET = 8;
 }

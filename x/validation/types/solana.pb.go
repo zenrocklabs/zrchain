@@ -67,25 +67,82 @@ func (m *SolanaNonce) GetNonce() []byte {
 	return nil
 }
 
+// SolanaCounters stores the mint and redemption counters for a Solana asset.
+type SolanaCounters struct {
+	MintCounter       uint64 `protobuf:"varint,1,opt,name=mint_counter,json=mintCounter,proto3" json:"mint_counter,omitempty"`
+	RedemptionCounter uint64 `protobuf:"varint,2,opt,name=redemption_counter,json=redemptionCounter,proto3" json:"redemption_counter,omitempty"`
+}
+
+func (m *SolanaCounters) Reset()         { *m = SolanaCounters{} }
+func (m *SolanaCounters) String() string { return proto.CompactTextString(m) }
+func (*SolanaCounters) ProtoMessage()    {}
+func (*SolanaCounters) Descriptor() ([]byte, []int) {
+	return fileDescriptor_09177ff1d3c319ef, []int{1}
+}
+func (m *SolanaCounters) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SolanaCounters) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SolanaCounters.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SolanaCounters) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SolanaCounters.Merge(m, src)
+}
+func (m *SolanaCounters) XXX_Size() int {
+	return m.Size()
+}
+func (m *SolanaCounters) XXX_DiscardUnknown() {
+	xxx_messageInfo_SolanaCounters.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SolanaCounters proto.InternalMessageInfo
+
+func (m *SolanaCounters) GetMintCounter() uint64 {
+	if m != nil {
+		return m.MintCounter
+	}
+	return 0
+}
+
+func (m *SolanaCounters) GetRedemptionCounter() uint64 {
+	if m != nil {
+		return m.RedemptionCounter
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*SolanaNonce)(nil), "zrchain.validation.SolanaNonce")
+	proto.RegisterType((*SolanaCounters)(nil), "zrchain.validation.SolanaCounters")
 }
 
 func init() { proto.RegisterFile("zrchain/validation/solana.proto", fileDescriptor_09177ff1d3c319ef) }
 
 var fileDescriptor_09177ff1d3c319ef = []byte{
-	// 164 bytes of a gzipped FileDescriptorProto
+	// 221 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0xaf, 0x2a, 0x4a, 0xce,
 	0x48, 0xcc, 0xcc, 0xd3, 0x2f, 0x4b, 0xcc, 0xc9, 0x4c, 0x49, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x2f,
 	0xce, 0xcf, 0x49, 0xcc, 0x4b, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x82, 0x2a, 0xd0,
 	0x43, 0x28, 0x50, 0x52, 0xe6, 0xe2, 0x0e, 0x06, 0xab, 0xf1, 0xcb, 0xcf, 0x4b, 0x4e, 0x15, 0x12,
-	0xe1, 0x62, 0xcd, 0x03, 0x31, 0x24, 0x18, 0x15, 0x18, 0x35, 0x78, 0x82, 0x20, 0x1c, 0xa7, 0xd0,
-	0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39,
-	0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0xb2, 0x4e, 0xcf, 0x2c, 0xc9, 0x28,
-	0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x8f, 0x4a, 0xcd, 0x2b, 0xca, 0x4f, 0xce, 0xd6, 0x75, 0xcb,
-	0x2f, 0xcd, 0x83, 0x5a, 0x0f, 0x77, 0x91, 0x99, 0x7e, 0x05, 0xb2, 0xb3, 0x4a, 0x2a, 0x0b, 0x52,
-	0x8b, 0x93, 0xd8, 0xc0, 0xce, 0x32, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x5d, 0x8c, 0x06, 0x62,
-	0xb9, 0x00, 0x00, 0x00,
+	0xe1, 0x62, 0xcd, 0x03, 0x31, 0x24, 0x18, 0x15, 0x18, 0x35, 0x78, 0x82, 0x20, 0x1c, 0xa5, 0x24,
+	0x2e, 0x3e, 0x88, 0x22, 0xe7, 0xfc, 0xd2, 0xbc, 0x92, 0xd4, 0xa2, 0x62, 0x21, 0x45, 0x2e, 0x9e,
+	0xdc, 0xcc, 0xbc, 0x92, 0xf8, 0x64, 0x88, 0x00, 0x58, 0x39, 0x4b, 0x10, 0x37, 0x48, 0x0c, 0xaa,
+	0x46, 0x48, 0x97, 0x4b, 0xa8, 0x28, 0x35, 0x25, 0x35, 0xb7, 0x00, 0x64, 0x0f, 0x5c, 0x21, 0x13,
+	0x58, 0xa1, 0x20, 0x42, 0x06, 0xaa, 0xdc, 0x29, 0xf4, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4,
+	0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f,
+	0xe5, 0x18, 0xa2, 0xac, 0xd3, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0xa3,
+	0x52, 0xf3, 0x8a, 0xf2, 0x93, 0xb3, 0x75, 0xdd, 0xf2, 0x4b, 0xf3, 0xa0, 0x5e, 0x84, 0xfb, 0xda,
+	0x4c, 0xbf, 0x02, 0xd9, 0xeb, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0x60, 0xaf, 0x1b, 0x03,
+	0x02, 0x00, 0x00, 0xff, 0xff, 0x2a, 0x0c, 0xed, 0x27, 0x1d, 0x01, 0x00, 0x00,
 }
 
 func (m *SolanaNonce) Marshal() (dAtA []byte, err error) {
@@ -118,6 +175,39 @@ func (m *SolanaNonce) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *SolanaCounters) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SolanaCounters) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SolanaCounters) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.RedemptionCounter != 0 {
+		i = encodeVarintSolana(dAtA, i, uint64(m.RedemptionCounter))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.MintCounter != 0 {
+		i = encodeVarintSolana(dAtA, i, uint64(m.MintCounter))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintSolana(dAtA []byte, offset int, v uint64) int {
 	offset -= sovSolana(v)
 	base := offset
@@ -138,6 +228,21 @@ func (m *SolanaNonce) Size() (n int) {
 	l = len(m.Nonce)
 	if l > 0 {
 		n += 1 + l + sovSolana(uint64(l))
+	}
+	return n
+}
+
+func (m *SolanaCounters) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MintCounter != 0 {
+		n += 1 + sovSolana(uint64(m.MintCounter))
+	}
+	if m.RedemptionCounter != 0 {
+		n += 1 + sovSolana(uint64(m.RedemptionCounter))
 	}
 	return n
 }
@@ -211,6 +316,94 @@ func (m *SolanaNonce) Unmarshal(dAtA []byte) error {
 				m.Nonce = []byte{}
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSolana(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthSolana
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SolanaCounters) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSolana
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SolanaCounters: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SolanaCounters: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MintCounter", wireType)
+			}
+			m.MintCounter = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSolana
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MintCounter |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionCounter", wireType)
+			}
+			m.RedemptionCounter = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSolana
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RedemptionCounter |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipSolana(dAtA[iNdEx:])

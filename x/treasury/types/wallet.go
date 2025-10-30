@@ -28,6 +28,10 @@ func NewWallet(k *Key, w WalletType) (Wallet, error) {
 		return NewBTCWallet(k, &chaincfg.RegressionNetParams)
 	case WalletType_WALLET_TYPE_SOLANA:
 		return NewSolanaWallet(k)
+	case WalletType_WALLET_TYPE_ZCASH_MAINNET:
+		return NewZCashWallet(k, "mainnet")
+	case WalletType_WALLET_TYPE_ZCASH_TESTNET:
+		return NewZCashWallet(k, "testnet")
 	}
 	return nil, ErrUnknownWalletType
 }

@@ -141,7 +141,6 @@ func TestInitializeStateUpdate(t *testing.T) {
 	assert.NotNil(t, update.latestSolanaSigs)
 	assert.NotNil(t, update.SolanaMintEvents)
 	assert.NotNil(t, update.solanaBurnEvents)
-	assert.NotNil(t, update.eigenDelegations)
 	assert.NotNil(t, update.redemptions)
 	assert.NotNil(t, update.ethBurnEvents)
 }
@@ -180,7 +179,6 @@ func TestBuildFinalState(t *testing.T) {
 	}
 	oracle.currentState.Store(&currentState)
 	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
 		redemptions:      []api.Redemption{},
 		suggestedTip:     big.NewInt(1500000000),
 		estimatedGas:     231000,
@@ -395,7 +393,6 @@ func BenchmarkInitializeStateUpdate(b *testing.B) {
 func TestBuildFinalState_NilCurrentState(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
 		redemptions:      []api.Redemption{},
 		suggestedTip:     big.NewInt(1500000000),
 		estimatedGas:     231000,
@@ -417,7 +414,6 @@ func TestBuildFinalState_NilCurrentState(t *testing.T) {
 func TestBuildFinalState_NilHeader(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
 		redemptions:      []api.Redemption{},
 		suggestedTip:     big.NewInt(1500000000),
 		estimatedGas:     231000,
@@ -447,7 +443,6 @@ func TestBuildFinalState_NilUpdate(t *testing.T) {
 func TestBuildFinalState_NilTargetBlockNumber(t *testing.T) {
 	oracle := createTestOracle()
 	update := &oracleStateUpdate{
-		eigenDelegations: make(map[string]map[string]*big.Int),
 		redemptions:      []api.Redemption{},
 		suggestedTip:     big.NewInt(1500000000),
 		estimatedGas:     231000,

@@ -20,7 +20,10 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
+	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtclegacy"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	zentptypes "github.com/Zenrock-Foundation/zrchain/v6/x/zentp/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
@@ -38,12 +41,13 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/zenrocklabs/goem/ethereum"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	bindings "github.com/zenrocklabs/zenbtc/bindings"
+	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
+
+const redemptionDelaySeconds int64 = 7 * 24 * 60 * 60
 
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
 	resp, err := k.sidecarClient.GetSidecarState(ctx, &sidecar.SidecarStateRequest{})
@@ -87,6 +91,7 @@ func (k Keeper) processOracleResponse(ctx context.Context, resp *sidecar.Sidecar
 		ROCKUSDPrice:         resp.ROCKUSDPrice,
 		BTCUSDPrice:          resp.BTCUSDPrice,
 		ETHUSDPrice:          resp.ETHUSDPrice,
+		ZECUSDPrice:          resp.ZECUSDPrice,
 		ConsensusData:        abci.ExtendedCommitInfo{},
 		SolanaBurnEvents:     resp.SolanaBurnEvents,
 		SolanaMintEvents:     resp.SolanaMintEvents,
@@ -124,12 +129,15 @@ func (k Keeper) processDelegations(delegations map[string]map[string]*big.Int) (
 // of the values. This ensures all validators will select the same consensus value regardless
 // of iteration order.
 func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeight int64, extCommit abci.ExtendedCommitInfo) (VoteExtension, VoteExtension, map[VoteExtensionField]int64, error) {
+	// Get field handlers first
+	fieldHandlers := initializeFieldHandlers()
+
 	// Use a generic map to store votes for all fields
 	fieldVotes := make(map[VoteExtensionField]map[string]fieldVote)
 
-	// Initialize maps for each field type
-	for i := VEFieldEigenDelegationsHash; i <= VEFieldSolanaMintEventsHash; i++ {
-		fieldVotes[i] = make(map[string]fieldVote)
+	// Initialize maps for each field handler to ensure all fields have a map
+	for _, handler := range fieldHandlers {
+		fieldVotes[handler.Field] = make(map[string]fieldVote)
 	}
 
 	var totalVotePower int64
@@ -137,9 +145,6 @@ func (k Keeper) GetConsensusAndPluralityVEData(ctx context.Context, currentHeigh
 
 	// Track informational fields that don't require consensus
 	var firstSidecarVersionName string
-
-	// Get field handlers
-	fieldHandlers := initializeFieldHandlers()
 
 	// Process all votes
 	for _, vote := range extCommit.Votes {
@@ -277,7 +282,7 @@ func (k Keeper) logConsensusResults(ctx context.Context, fieldVotePowers map[Vot
 	fieldsWithConsensus := make([]string, 0)
 	fieldsWithoutConsensus := make([]string, 0)
 
-	for field := VEFieldEigenDelegationsHash; field <= VEFieldSolanaMintEventsHash; field++ {
+	for field := VEFieldEigenDelegationsHash; field <= VEFieldLatestZcashHeaderHash; field++ {
 		_, hasConsensus := fieldVotePowers[field]
 		if hasConsensus {
 			fieldsWithConsensus = append(fieldsWithConsensus, field.String())
@@ -705,6 +710,55 @@ func (k *Keeper) retrieveBitcoinHeaders(ctx context.Context, requestedBtcHeaderH
 	return latest, nil, nil
 }
 
+// retrieveZcashHeaders retrieves the latest and optionally a requested ZCash block header from the sidecar
+func (k *Keeper) retrieveZcashHeaders(ctx context.Context, requestedZcashHeaderHeight int64) (*sidecar.BitcoinBlockHeaderResponse, *sidecar.BitcoinBlockHeaderResponse, error) {
+	// Always get the latest ZCash header
+	latest, err := k.sidecarClient.GetLatestZcashBlockHeader(ctx, &sidecar.LatestBitcoinBlockHeaderRequest{
+		ChainName: "", // ZCash doesn't use chain name like Bitcoin (no regnet/testnet/mainnet distinction in same way)
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get latest ZCash header: %w", err)
+	}
+
+	// Check if there are requested historical headers
+	requestedZcashHeaders, err := k.RequestedHistoricalZcashHeaders.Get(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, nil, err
+		}
+		requestedZcashHeaders = dcttypes.RequestedZcashHeaders{}
+		if err = k.RequestedHistoricalZcashHeaders.Set(ctx, requestedZcashHeaders); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// If a consensus-selected requested height is provided, fetch exactly that
+	if requestedZcashHeaderHeight > 0 {
+		requested, err := k.sidecarClient.GetZcashBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   "",
+			BlockHeight: requestedZcashHeaderHeight,
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested ZCash header at height %d: %w", requestedZcashHeaderHeight, err)
+		}
+		return latest, requested, nil
+	}
+
+	// Otherwise fall back to the first pending requested height if any
+	if len(requestedZcashHeaders.Heights) > 0 {
+		requested, err := k.sidecarClient.GetZcashBlockHeaderByHeight(ctx, &sidecar.BitcoinBlockHeaderByHeightRequest{
+			ChainName:   "",
+			BlockHeight: requestedZcashHeaders.Heights[0],
+		})
+		if err != nil {
+			return latest, nil, fmt.Errorf("failed to get requested ZCash header at height %d: %w", requestedZcashHeaders.Heights[0], err)
+		}
+		return latest, requested, nil
+	}
+
+	return latest, nil, nil
+}
+
 func (k *Keeper) marshalOracleData(req *abci.RequestPrepareProposal, oracleData *OracleData) ([]byte, error) {
 	oracleDataBz, err := json.Marshal(oracleData)
 	if err != nil {
@@ -738,14 +792,16 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 	rockPrice, rockPriceErr := math.LegacyNewDecFromStr(oracleData.ROCKUSDPrice)
 	btcPrice, btcPriceErr := math.LegacyNewDecFromStr(oracleData.BTCUSDPrice)
 	ethPrice, ethPriceErr := math.LegacyNewDecFromStr(oracleData.ETHUSDPrice)
+	zecPrice, zecPriceErr := math.LegacyNewDecFromStr(oracleData.ZECUSDPrice)
 
 	// Check if prices are valid
 	pricesAreValid := true
-	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" ||
-		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil ||
+	if oracleData.ROCKUSDPrice == "" || oracleData.BTCUSDPrice == "" || oracleData.ETHUSDPrice == "" || oracleData.ZECUSDPrice == "" ||
+		rockPriceErr != nil || btcPriceErr != nil || ethPriceErr != nil || zecPriceErr != nil ||
 		rockPrice.IsNil() || rockPrice.IsZero() ||
 		btcPrice.IsNil() || btcPrice.IsZero() ||
-		ethPrice.IsNil() || ethPrice.IsZero() {
+		ethPrice.IsNil() || ethPrice.IsZero() ||
+		zecPrice.IsNil() || zecPrice.IsZero() {
 		pricesAreValid = false
 	}
 
@@ -794,6 +850,10 @@ func (k *Keeper) updateAssetPrices(ctx sdk.Context, oracleData OracleData) {
 
 	if err := k.AssetPrices.Set(ctx, types.Asset_ETH, ethPrice); err != nil {
 		k.Logger(ctx).Error("error setting ETH price", "height", ctx.BlockHeight(), "err", err)
+	}
+
+	if err := k.AssetPrices.Set(ctx, types.Asset_ZEC, zecPrice); err != nil {
+		k.Logger(ctx).Error("error setting ZEC price", "height", ctx.BlockHeight(), "err", err)
 	}
 }
 
@@ -969,7 +1029,43 @@ func (k *Keeper) getPendingMintTransactions(ctx sdk.Context, status zenbtctypes.
 	return results, err
 }
 
-// getPendingBurnEvents retrieves up to 2 pending burn events with status BURNED.
+func (k *Keeper) getPendingDCTMintTransactions(ctx sdk.Context, asset dcttypes.Asset, status dcttypes.MintTransactionStatus, walletType dcttypes.WalletType) ([]dcttypes.PendingMintTransaction, error) {
+	firstPendingID := uint64(0)
+	var err error
+	if status == dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED {
+		if walletType == dcttypes.WalletType_WALLET_TYPE_SOLANA {
+			firstPendingID, err = k.dctKeeper.GetFirstPendingSolMintTransaction(ctx, asset)
+		} else if walletType == dcttypes.WalletType_WALLET_TYPE_EVM {
+			firstPendingID, err = k.dctKeeper.GetFirstPendingEthMintTransaction(ctx, asset)
+		}
+	}
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		firstPendingID = 0
+	}
+
+	results := make([]dcttypes.PendingMintTransaction, 0, 2)
+	err = k.dctKeeper.WalkPendingMintTransactions(ctx, asset, func(id uint64, tx dcttypes.PendingMintTransaction) (bool, error) {
+		if id < firstPendingID {
+			return false, nil
+		}
+		if tx.Status == status && tx.ChainType == walletType {
+			results = append(results, tx)
+			if len(results) >= 2 {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// getPendingBurnEvents retrieves up to 2 pending burn events with status UNSTAKING.
 func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
 	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
 	if err != nil {
@@ -984,7 +1080,7 @@ func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent,
 			return false, nil // continue walking
 		}
 
-		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_BURNED {
+		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
 			results = append(results, event)
 			if len(results) >= 2 {
 				return true, nil // stop walking
@@ -1015,6 +1111,221 @@ func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.Rede
 	})
 
 	return results, err
+}
+
+// GetDCTRedemptionsByStatus retrieves DCT redemptions for a specific asset with the specified status.
+// If limit is 0, all matching redemptions will be returned.
+func (k *Keeper) GetDCTRedemptionsByStatus(ctx sdk.Context, asset dcttypes.Asset, status dcttypes.RedemptionStatus, limit int, startingIndex uint64) ([]dcttypes.Redemption, error) {
+	var results []dcttypes.Redemption
+	err := k.dctKeeper.WalkRedemptions(ctx, asset, func(id uint64, r dcttypes.Redemption) (bool, error) {
+		if id < startingIndex {
+			return false, nil // continue walking
+		}
+
+		if r.Status == status {
+			results = append(results, r)
+			if limit > 0 && len(results) >= limit {
+				return true, nil // stop walking
+			}
+		}
+		return false, nil // continue walking
+	})
+
+	return results, err
+}
+
+func (k Keeper) calculateRedemptionDelayBlocks(ctx sdk.Context) int64 {
+	blockTime := k.GetBlockTime(ctx)
+	if blockTime <= 0 {
+		blockTime = types.DefaultBlockTime
+	}
+	delay := redemptionDelaySeconds / blockTime
+	if redemptionDelaySeconds%blockTime != 0 {
+		delay++
+	}
+	if delay <= 0 {
+		delay = 1
+	}
+	return delay
+}
+
+func (k Keeper) calculateRedemptionMaturityHeight(ctx sdk.Context) int64 {
+	delay := k.calculateRedemptionDelayBlocks(ctx)
+	return ctx.BlockHeight() + delay
+}
+
+func (k *Keeper) processMatureZenBTCBurns(ctx sdk.Context) {
+	currentHeight := ctx.BlockHeight()
+	err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, burn zenbtctypes.BurnEvent) (bool, error) {
+		if burn.Status != zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			return false, nil
+		}
+		if burn.MaturityHeight == 0 {
+			burn.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKED
+			burn.MaturityHeight = currentHeight
+			if err := k.zenBTCKeeper.SetBurnEvent(ctx, id, burn); err != nil {
+				k.Logger(ctx).Error("error updating legacy zenBTC burn event", "burn_id", id, "error", err)
+			}
+			return false, nil
+		}
+		if burn.MaturityHeight > 0 && burn.MaturityHeight > currentHeight {
+			return false, nil
+		}
+		if err := k.createZenBTCRedemptionFromBurn(ctx, id, burn); err != nil {
+			k.Logger(ctx).Error("error maturing zenBTC burn event", "burn_id", id, "error", err)
+		}
+		return false, nil
+	})
+	if err != nil {
+		k.Logger(ctx).Error("error scanning zenBTC burn events for maturity", "error", err)
+	}
+	if err := k.updateFirstPendingZenBTCBurn(ctx); err != nil {
+		k.Logger(ctx).Error("error updating zenBTC first pending burn pointer", "error", err)
+	}
+}
+
+func (k *Keeper) createZenBTCRedemptionFromBurn(ctx sdk.Context, burnID uint64, burn zenbtctypes.BurnEvent) error {
+	nextRedemptionID := uint64(0)
+	if err := k.zenBTCKeeper.WalkRedemptionsDescending(ctx, func(id uint64, _ zenbtctypes.Redemption) (bool, error) {
+		nextRedemptionID = id + 1
+		return true, nil
+	}); err != nil {
+		return err
+	}
+	if nextRedemptionID == 0 {
+		nextRedemptionID = 1
+	}
+
+	if err := k.zenBTCKeeper.SetRedemption(ctx, nextRedemptionID, zenbtctypes.Redemption{
+		Data: zenbtctypes.RedemptionData{
+			Id:                 nextRedemptionID,
+			DestinationAddress: burn.DestinationAddr,
+			Amount:             burn.Amount,
+		},
+		Status: zenbtctypes.RedemptionStatus_UNSTAKED,
+	}); err != nil {
+		return err
+	}
+
+	burn.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKED
+	if burn.MaturityHeight == 0 {
+		burn.MaturityHeight = ctx.BlockHeight()
+	}
+	if err := k.zenBTCKeeper.SetBurnEvent(ctx, burnID, burn); err != nil {
+		return err
+	}
+
+	k.Logger(ctx).Info("matured zenBTC burn event", "burn_id", burnID, "redemption_id", nextRedemptionID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+	return nil
+}
+
+func (k *Keeper) updateFirstPendingZenBTCBurn(ctx sdk.Context) error {
+	var nextPending uint64
+	err := k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, burn zenbtctypes.BurnEvent) (bool, error) {
+		if burn.Status == zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			nextPending = id
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	return k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, nextPending)
+}
+
+func (k *Keeper) processMatureDCTBurns(ctx sdk.Context) {
+	if k.dctKeeper == nil {
+		return
+	}
+
+	assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("error listing DCT assets for burn maturity processing", "error", err)
+		return
+	}
+
+	for _, asset := range assets {
+		err := k.dctKeeper.WalkBurnEvents(ctx, asset, func(id uint64, burn dcttypes.BurnEvent) (bool, error) {
+			if burn.Status != dcttypes.BurnStatus_BURN_STATUS_UNSTAKING {
+				return false, nil
+			}
+			if burn.MaturityHeight == 0 {
+				burn.Status = dcttypes.BurnStatus_BURN_STATUS_UNSTAKED
+				burn.MaturityHeight = ctx.BlockHeight()
+				if err := k.dctKeeper.SetBurnEvent(ctx, asset, id, burn); err != nil {
+					k.Logger(ctx).Error("error updating legacy DCT burn event", "asset", asset.String(), "burn_id", id, "error", err)
+				}
+				return false, nil
+			}
+			if burn.MaturityHeight > 0 && burn.MaturityHeight > ctx.BlockHeight() {
+				return false, nil
+			}
+			if err := k.createDCTRedemptionFromBurn(ctx, asset, id, burn); err != nil {
+				k.Logger(ctx).Error("error maturing DCT burn event", "asset", asset.String(), "burn_id", id, "error", err)
+			}
+			return false, nil
+		})
+		if err != nil {
+			k.Logger(ctx).Error("error scanning DCT burn events for maturity", "asset", asset.String(), "error", err)
+			continue
+		}
+
+		if err := k.updateFirstPendingDCTBurn(ctx, asset); err != nil {
+			k.Logger(ctx).Error("error updating DCT first pending burn pointer", "asset", asset.String(), "error", err)
+		}
+	}
+}
+
+func (k *Keeper) createDCTRedemptionFromBurn(ctx sdk.Context, asset dcttypes.Asset, burnID uint64, burn dcttypes.BurnEvent) error {
+	nextRedemptionID := uint64(0)
+	if err := k.dctKeeper.WalkRedemptionsDescending(ctx, asset, func(id uint64, _ dcttypes.Redemption) (bool, error) {
+		nextRedemptionID = id + 1
+		return true, nil
+	}); err != nil {
+		return err
+	}
+	if nextRedemptionID == 0 {
+		nextRedemptionID = 1
+	}
+
+	if err := k.dctKeeper.SetRedemption(ctx, asset, nextRedemptionID, dcttypes.Redemption{
+		Data: dcttypes.RedemptionData{
+			Id:                 nextRedemptionID,
+			DestinationAddress: burn.DestinationAddr,
+			Amount:             burn.Amount,
+			Asset:              asset,
+		},
+		Status: dcttypes.RedemptionStatus_INITIATED,
+	}); err != nil {
+		return err
+	}
+
+	burn.Status = dcttypes.BurnStatus_BURN_STATUS_UNSTAKED
+	if burn.MaturityHeight == 0 {
+		burn.MaturityHeight = ctx.BlockHeight()
+	}
+	if err := k.dctKeeper.SetBurnEvent(ctx, asset, burnID, burn); err != nil {
+		return err
+	}
+
+	k.Logger(ctx).Info("matured DCT burn event", "asset", asset.String(), "burn_id", burnID, "redemption_id", nextRedemptionID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+	return nil
+}
+
+func (k *Keeper) updateFirstPendingDCTBurn(ctx sdk.Context, asset dcttypes.Asset) error {
+	var nextPending uint64
+	err := k.dctKeeper.WalkBurnEvents(ctx, asset, func(id uint64, burn dcttypes.BurnEvent) (bool, error) {
+		if burn.Status == dcttypes.BurnStatus_BURN_STATUS_UNSTAKING {
+			nextPending = id
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	return k.dctKeeper.SetFirstPendingBurnEvent(ctx, asset, nextPending)
 }
 
 func (k *Keeper) recordMismatchedVoteExtensions(ctx sdk.Context, height int64, pluralityVoteExt VoteExtension, consensusData abci.ExtendedCommitInfo) {
@@ -1343,6 +1654,11 @@ func (k *Keeper) validateOracleData(ctx context.Context, voteExt VoteExtension, 
 			recordMismatch(VEFieldETHUSDPrice, voteExt.ETHUSDPrice, oracleData.ETHUSDPrice)
 		}
 	}
+	if fieldHasConsensus(fieldVotePowers, VEFieldZECUSDPrice) {
+		if voteExt.ZECUSDPrice != oracleData.ZECUSDPrice {
+			recordMismatch(VEFieldZECUSDPrice, voteExt.ZECUSDPrice, oracleData.ZECUSDPrice)
+		}
+	}
 
 	// Check Latest Bitcoin height and hash fields
 	if fieldHasConsensus(fieldVotePowers, VEFieldLatestBtcBlockHeight) {
@@ -1405,10 +1721,10 @@ func (k *Keeper) submitEthereumTransaction(ctx sdk.Context, creator string, keyI
 	return err
 }
 
-// Helper function to submit Ethereum transactions
+// Helper function to submit Solana transactions
 func (k *Keeper) submitSolanaTransaction(ctx sdk.Context, creator string, keyIDs []uint64, walletType treasurytypes.WalletType, chainID string, unsignedTx []byte) (uint64, error) {
 	metadata, err := codectypes.NewAnyWithValue(&treasurytypes.MetadataSolana{
-		Network: zentptypes.Caip2ToSolananNetwork(chainID)})
+		Network: zentptypes.Caip2ToSolanaNetwork(chainID)})
 	if err != nil {
 		return 0, err
 	}
@@ -1499,6 +1815,37 @@ func (k Keeper) GetSolanaTokenAccount(goCtx context.Context, address, mint strin
 	return *tokenAccount, nil
 }
 
+func (k Keeper) GetZenbtcGlobalConfigAccount(goCtx context.Context, programID string) (*zenbtc_spl_token.GlobalConfigAccount, solana.PublicKey, error) {
+	programPubKey, err := solana.PublicKeyFromBase58(programID)
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	globalConfigPDA, err := solzenbtc.GetGlobalConfigPDA(programPubKey)
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	resp, err := k.sidecarClient.GetSolanaAccountInfo(goCtx, &sidecar.SolanaAccountInfoRequest{
+		PubKey: globalConfigPDA.String(),
+	})
+	if err != nil {
+		return nil, solana.PublicKey{}, err
+	}
+
+	if resp.Account == nil {
+		return nil, globalConfigPDA, fmt.Errorf("global config account %s is empty", globalConfigPDA.String())
+	}
+
+	decoder := bin.NewBorshDecoder(resp.Account)
+	account := new(zenbtc_spl_token.GlobalConfigAccount)
+	if err := account.UnmarshalWithDecoder(decoder); err != nil {
+		return nil, globalConfigPDA, fmt.Errorf("failed to unmarshal zenbtc global config: %w", err)
+	}
+
+	return account, globalConfigPDA, nil
+}
+
 // newCreateATAIdempotentInstruction creates an idempotent ATA creation instruction.
 // This instruction will succeed even if the ATA already exists, preventing race conditions.
 // The idempotent version uses instruction data [1] instead of [] (empty bytes).
@@ -1518,19 +1865,23 @@ func newCreateATAIdempotentInstruction(payer, wallet, mint solana.PublicKey) sol
 }
 
 type solanaMintTxRequest struct {
-	amount            uint64
-	fee               uint64
-	recipient         string
-	nonce             *system.NonceAccount
-	fundReceiver      bool
-	programID         string
-	mintAddress       string
-	feeWallet         string
-	nonceAccountKey   uint64
-	nonceAuthorityKey uint64
-	signerKey         uint64
-	rock              bool
-	zenbtc            bool
+	amount              uint64
+	fee                 uint64
+	recipient           string
+	nonce               *system.NonceAccount
+	fundReceiver        bool
+	programID           string
+	mintAddress         string
+	feeWallet           string
+	nonceAccountKey     uint64
+	nonceAuthorityKey   uint64
+	signerKey           uint64
+	multisigKey         string
+	rock                bool
+	zenbtc              bool
+	eventStoreProgramID string
+	mintCounter         uint64
+	assetName           string // "ZENBTC", "ASSET_ZENZEC", etc. - used to determine if event store should be used
 }
 
 func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequest) ([]byte, error) {
@@ -1633,24 +1984,93 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			receiverAta,
 		))
 	} else if req.zenbtc {
-		multiSigKey, err := solana.PublicKeyFromBase58(k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress)
-		if err != nil {
-			return nil, err
+		var multiSigKey solana.PublicKey
+		if req.multisigKey != "" {
+			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			multiSigKeyAddress := k.zenBTCKeeper.GetSolanaParams(ctx).MultisigKeyAddress
+			multiSigKey, err = solana.PublicKeyFromBase58(multiSigKeyAddress)
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		instructions = append(instructions, solzenbtc.Wrap(
-			programID,
-			zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
-			*signerPubKey,
-			mintKey,
-			multiSigKey,
-			feeKey,
-			feeWalletAta,
-			recipientPubKey,
-			receiverAta,
-		))
+		// ZENZEC (and other DCT assets) use event store, ZENBTC does not
+		useEventStore := req.assetName != "" && req.assetName != "ZENBTC"
+
+		var wrapInstruction solana.Instruction
+
+		if useEventStore {
+			// ZENZEC and other DCT assets: use new bindings WITH event store
+			if req.eventStoreProgramID == "" {
+				return nil, fmt.Errorf("event store program id not provided for %s mint", req.assetName)
+			}
+
+			eventID := new(big.Int).SetUint64(req.mintCounter)
+			k.Logger(ctx).Info("Using Solana mint counter from chain state with event store",
+				"asset", req.assetName,
+				"programID", req.programID,
+				"mint_counter", req.mintCounter,
+				"event_id", eventID.String(),
+			)
+
+			eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
+			if err != nil {
+				return nil, err
+			}
+
+			wrapInstruction, err = solzenbtc.Wrap(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+			if err != nil {
+				return nil, err
+			}
+			if err := ensureZenbtcWrapAccountsWritable(wrapInstruction, programID, eventStoreProgramPub, eventID); err != nil {
+				return nil, err
+			}
+		} else {
+			k.Logger(ctx).Info("Using legacy zenBTC wrap instruction without event store",
+				"asset", "ZENBTC",
+				"programID", req.programID,
+			)
+
+			wrapInstruction, err = solzenbtclegacy.Wrap(
+				programID,
+				solzenbtclegacy.WrapArgs{
+					Value: req.amount,
+					Fee:   req.fee,
+				},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		instructions = append(instructions, wrapInstruction)
 
 		k.Logger(ctx).Info("Added wrap instruction to tx",
+			"asset", req.assetName,
+			"use_event_store", useEventStore,
 			"programID", programID.String(),
 			"amount", req.amount,
 			"fee", req.fee,
@@ -1679,6 +2099,49 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 	return txBytes, nil
+}
+
+// ensureZenbtcWrapAccountsWritable forces key PDAs in the zenbtc wrap instruction to be writable.
+func ensureZenbtcWrapAccountsWritable(
+	inst solana.Instruction,
+	programID solana.PublicKey,
+	eventStoreProgramID solana.PublicKey,
+	eventID *big.Int,
+) error {
+	wrapInst, ok := inst.(*zenbtc_spl_token.Instruction)
+	if !ok || eventID == nil {
+		return nil
+	}
+
+	globalConfigPDA, err := solzenbtc.GetGlobalConfigPDA(programID)
+	if err != nil {
+		return fmt.Errorf("failed to derive zenbtc global config PDA: %w", err)
+	}
+
+	zenbtcWrapShard, err := solzenbtc.GetEventStoreZenbtcWrapShardPDA(eventStoreProgramID, eventID)
+	if err != nil {
+		return fmt.Errorf("failed to derive zenbtc wrap shard PDA: %w", err)
+	}
+
+	requiredAccounts := map[string]bool{
+		globalConfigPDA.String(): false,
+		zenbtcWrapShard.String(): false,
+	}
+
+	for _, meta := range wrapInst.Accounts() {
+		if _, ok := requiredAccounts[meta.PublicKey.String()]; ok {
+			meta.IsWritable = true
+			requiredAccounts[meta.PublicKey.String()] = true
+		}
+	}
+
+	for key, found := range requiredAccounts {
+		if !found {
+			return fmt.Errorf("wrap instruction missing required account %s", key)
+		}
+	}
+
+	return nil
 }
 
 func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {
@@ -1727,6 +2190,41 @@ func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.
 		nonces[zenBTCsolParams.NonceAccountKey] = &nonceAcc
 	}
 	//}
+
+	// Retrieve nonce accounts for all DCT assets (zenZEC, etc.)
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(goCtx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list DCT assets: %w", err)
+		}
+
+		for _, asset := range assets {
+			dctSolParams, err := k.dctKeeper.GetSolanaParams(goCtx, asset)
+			if err != nil {
+				// Skip assets without Solana params
+				continue
+			}
+			if dctSolParams == nil {
+				continue
+			}
+
+			dctNonceRequested, err := k.SolanaNonceRequested.Get(goCtx, dctSolParams.NonceAccountKey)
+			if err != nil {
+				if !errors.Is(err, collections.ErrNotFound) {
+					return nil, fmt.Errorf("failed to check nonce request for asset %s: %w", asset.String(), err)
+				}
+				dctNonceRequested = false
+			}
+
+			if dctNonceRequested {
+				nonceAcc, err := k.GetSolanaNonceAccount(goCtx, dctSolParams.NonceAccountKey)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get nonce account for asset %s (key %d): %w", asset.String(), dctSolParams.NonceAccountKey, err)
+				}
+				nonces[dctSolParams.NonceAccountKey] = &nonceAcc
+			}
+		}
+	}
 
 	return nonces, nil
 }
@@ -1791,6 +2289,46 @@ func (k Keeper) populateAccountsForSolanaMints(
 	return nil
 }
 
+// populateDCTAccountsForAsset collects Solana token accounts for DCT assets scoped by asset identifier.
+func (k Keeper) populateDCTAccountsForAsset(
+	ctx context.Context,
+	asset dcttypes.Asset,
+	mintAddress string,
+	flowDescription string,
+	solAccs map[string]token.Account,
+) error {
+	assetKey := asset.String()
+	rangeForAsset := collections.NewPrefixedPairRange[string, string](assetKey)
+	return k.SolanaDCTAccountsRequested.Walk(ctx, rangeForAsset, func(key collections.Pair[string, string], requested bool) (bool, error) {
+		if !requested {
+			return false, nil
+		}
+		ownerAddressStr := key.K2()
+		ownerPubKey, err := solana.PublicKeyFromBase58(ownerAddressStr)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Invalid owner address for %s", flowDescription), "owner", ownerAddressStr, "error", err)
+			return false, nil
+		}
+		mintPubKey, err := solana.PublicKeyFromBase58(mintAddress)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Invalid %s mint address", flowDescription), "mint", mintAddress, "error", err)
+			return false, nil
+		}
+		ataAddress, _, err := solana.FindAssociatedTokenAddress(ownerPubKey, mintPubKey)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to derive ATA for %s account", flowDescription), "owner", ownerAddressStr, "mint", mintAddress, "error", err)
+			return false, nil
+		}
+
+		acc, err := k.GetSolanaTokenAccount(ctx, ownerAddressStr, mintAddress)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to get Solana token account for %s", flowDescription), "owner", ownerAddressStr, "mint", mintAddress, "ata", ataAddress.String(), "error", err)
+		}
+		solAccs[ataAddress.String()] = acc
+		return false, nil
+	})
+}
+
 // retrieveSolanaAccounts retrieves all requested Solana token accounts.
 // The returned map keys are ATA addresses.
 func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Account, error) {
@@ -1825,6 +2363,27 @@ func (k Keeper) retrieveSolanaAccounts(ctx context.Context) (map[string]token.Ac
 		}
 	}
 
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets for Solana account collection", "error", err)
+		} else {
+			for _, asset := range assets {
+				solParams, err := k.dctKeeper.GetSolanaParams(ctx, asset)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching DCT Solana params", "asset", asset.String(), "error", err)
+					continue
+				}
+				if solParams == nil || solParams.MintAddress == "" {
+					continue
+				}
+				if err := k.populateDCTAccountsForAsset(ctx, asset, solParams.MintAddress, fmt.Sprintf("DCT-%s", asset.String()), solAccs); err != nil {
+					return nil, fmt.Errorf("error processing DCT Solana account requests for asset %s: %w", asset.String(), err)
+				}
+			}
+		}
+	}
+
 	return solAccs, nil
 }
 
@@ -1850,6 +2409,27 @@ func (k Keeper) clearSolanaAccounts(ctx sdk.Context) {
 	if len(pendingsROCK) == 0 {
 		if err = k.SolanaZenTPAccountsRequested.Clear(ctx, nil); err != nil {
 			k.Logger(ctx).Error("Error clearing SolanaZenTPAccountsRequested: " + err.Error())
+		}
+	}
+
+	if k.dctKeeper != nil {
+		assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+		if err != nil {
+			k.Logger(ctx).Error("error listing DCT assets for clearing Solana accounts", "error", err)
+		} else {
+			for _, asset := range assets {
+				pendingDCT, err := k.getPendingDCTMintTransactions(ctx, asset, dcttypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_DEPOSITED, dcttypes.WalletType_WALLET_TYPE_SOLANA)
+				if err != nil {
+					k.Logger(ctx).Error("error fetching pending DCT Solana mints during cleanup", "asset", asset.String(), "error", err)
+					continue
+				}
+				if len(pendingDCT) == 0 {
+					rangeForAsset := collections.NewPrefixedPairRange[string, string](asset.String())
+					if err := k.SolanaDCTAccountsRequested.Clear(ctx, rangeForAsset); err != nil {
+						k.Logger(ctx).Error("error clearing DCT Solana account requests", "asset", asset.String(), "error", err)
+					}
+				}
+			}
 		}
 	}
 }

@@ -70,6 +70,31 @@ class MsgStub(object):
                 request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.SerializeToString,
                 response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.FromString,
                 )
+        self.ManuallyInputZcashHeader = channel.unary_unary(
+                '/zrchain.validation.Msg/ManuallyInputZcashHeader',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeader.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeaderResponse.FromString,
+                )
+        self.AddToBedrockValSet = channel.unary_unary(
+                '/zrchain.validation.Msg/AddToBedrockValSet',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.FromString,
+                )
+        self.RemoveFromBedrockValSet = channel.unary_unary(
+                '/zrchain.validation.Msg/RemoveFromBedrockValSet',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
+                )
+        self.AdvanceSolanaNonce = channel.unary_unary(
+                '/zrchain.validation.Msg/AdvanceSolanaNonce',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
+                )
+        self.SetSolanaCounters = channel.unary_unary(
+                '/zrchain.validation.Msg/SetSolanaCounters',
+                request_serializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.SerializeToString,
+                response_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.FromString,
+                )
 
 
 class MsgServicer(object):
@@ -163,6 +188,44 @@ class MsgServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ManuallyInputZcashHeader(self, request, context):
+        """ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddToBedrockValSet(self, request, context):
+        """AddToBedrockValSet adds a validator to the bedrock validator set.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveFromBedrockValSet(self, request, context):
+        """RemoveFromBedrockValSet removes a validator from the bedrock validator set.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AdvanceSolanaNonce(self, request, context):
+        """AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+        advances a configured Solana durable nonce account using a supplied recent
+        blockhash.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetSolanaCounters(self, request, context):
+        """SetSolanaCounters allows an authorized account to set the mint and redemption
+        counters for a specific Solana asset and global config PDA.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MsgServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -220,6 +283,31 @@ def add_MsgServicer_to_server(servicer, server):
                     servicer.ManuallyInputBitcoinHeader,
                     request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.FromString,
                     response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.SerializeToString,
+            ),
+            'ManuallyInputZcashHeader': grpc.unary_unary_rpc_method_handler(
+                    servicer.ManuallyInputZcashHeader,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeader.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeaderResponse.SerializeToString,
+            ),
+            'AddToBedrockValSet': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddToBedrockValSet,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.SerializeToString,
+            ),
+            'RemoveFromBedrockValSet': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveFromBedrockValSet,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.SerializeToString,
+            ),
+            'AdvanceSolanaNonce': grpc.unary_unary_rpc_method_handler(
+                    servicer.AdvanceSolanaNonce,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.SerializeToString,
+            ),
+            'SetSolanaCounters': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetSolanaCounters,
+                    request_deserializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.FromString,
+                    response_serializer=zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -416,5 +504,90 @@ class Msg(object):
         return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/ManuallyInputBitcoinHeader',
             zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeader.SerializeToString,
             zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputBitcoinHeaderResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ManuallyInputZcashHeader(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/ManuallyInputZcashHeader',
+            zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeader.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgManuallyInputZcashHeaderResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AddToBedrockValSet(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/AddToBedrockValSet',
+            zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSet.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgAddToBedrockValSetResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RemoveFromBedrockValSet(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/RemoveFromBedrockValSet',
+            zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSet.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgRemoveFromBedrockValSetResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AdvanceSolanaNonce(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/AdvanceSolanaNonce',
+            zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonce.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgAdvanceSolanaNonceResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetSolanaCounters(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zrchain.validation.Msg/SetSolanaCounters',
+            zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCounters.SerializeToString,
+            zrchain_dot_validation_dot_tx__pb2.MsgSetSolanaCountersResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

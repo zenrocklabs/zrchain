@@ -86,6 +86,24 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpda
 		)
 	}
 
+	// Reconcile bedrock tokens from supply stores to validator holdings
+	if err := k.reconcileBedrockTokens(sdkCtx); err != nil {
+		k.Logger(ctx).Error("failed to reconcile bedrock tokens", "error", err)
+		// Don't return error here to avoid halting the chain
+	}
+
+	// Rebalance bedrock BTC across validator set to keep proportions aligned with native stake
+	if err := k.rebalanceBedrockBTC(sdkCtx); err != nil {
+		k.Logger(ctx).Error("failed to rebalance bedrock BTC", "error", err)
+		// Don't return error here to avoid halting the chain
+	}
+
+	// Rebalance bedrock ZEC across validator set to keep proportions aligned with native stake
+	if err := k.rebalanceBedrockAsset(sdkCtx, types.Asset_ZEC); err != nil {
+		k.Logger(ctx).Error("failed to rebalance bedrock ZEC", "error", err)
+		// Don't return error here to avoid halting the chain
+	}
+
 	// Remove all mature redelegations from the red queue.
 	matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, sdkCtx.BlockHeader().Time)
 	if err != nil {
@@ -277,20 +295,15 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 	}
 
-	// Identify native (ROCK) and primary AVS (BTC) asset data from the fetched list.
-	// This assumes fixed asset types for native and primary AVS.
-	// A more dynamic system might involve looking up asset types based on validator's specific holdings.
+	// Build a map of asset type to asset data for easy lookup
+	assetDataMap := make(map[types.Asset]*types.AssetData)
 	var nativeAssetData *types.AssetData
-	var primaryAVSAssetData *types.AssetData // e.g., for BTC
 
 	for _, asset := range stakeableAssetsWithPrices {
-		if asset.Asset == types.Asset_ROCK { // Assuming types.Asset_ROCK is your native asset enum/const
+		assetDataMap[asset.Asset] = asset
+		if asset.Asset == types.Asset_ROCK {
 			nativeAssetData = asset
 		}
-		if asset.Asset == types.Asset_BTC { // Assuming types.Asset_BTC is your primary AVS asset enum/const
-			primaryAVSAssetData = asset
-		}
-		// Add more AVS asset types if a validator can hold multiple, and adjust logic below.
 	}
 
 	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
@@ -304,8 +317,15 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		// If we get to a zero-power validator (which we don't bond),
 		// there are no more possible bonded validators.
 		// This check relies on PotentialConsensusPower using the *native* tokens primarily.
-		// Consider bedrock BTC stake as an additional signal.
-		if validator.PotentialConsensusPower(powerReduction) == 0 && k.getBedrockTokenAmount(validator, types.Asset_BTC).IsZero() {
+		// Consider all bedrock assets as additional signals.
+		hasBedrockStake := false
+		for _, tokenData := range validator.TokensBedrock {
+			if tokenData != nil && tokenData.Amount.IsPositive() {
+				hasBedrockStake = true
+				break
+			}
+		}
+		if validator.PotentialConsensusPower(powerReduction) == 0 && !hasBedrockStake {
 			break
 		}
 
@@ -334,14 +354,12 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 		}
 		oldPowerBytes, found := last[valAddrStr]
 
-		// Use the new helper function to calculate power
-		// Pass bedrock BTC tokens in place of deprecated TokensAVS
-		finalConsensusPower, nativeValueDecimal, avsValueDecimal := k.calculateValidatorPowerComponents(
+		// Calculate power contributions from all bedrock assets
+		finalConsensusPower, nativeValueDecimal, bedrockValueDecimal := k.calculateValidatorPowerWithAllBedrockAssets(
 			validator,
 			powerReduction,
 			nativeAssetData,
-			primaryAVSAssetData, // data for BTC asset (price/precision)
-			k.getBedrockTokenAmount(validator, types.Asset_BTC),
+			assetDataMap,
 			pricesAreValid,
 		)
 
@@ -350,16 +368,23 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) (updates 
 			return nil, err
 		}
 
-		configuredAVSAssetType := "AVS_STAKE_DISABLED" // Default if AVS asset isn't configured/found
-		if primaryAVSAssetData != nil {
-			configuredAVSAssetType = primaryAVSAssetData.GetAsset().String()
+		// Build a debug string showing all bedrock assets
+		bedrockDebugStr := ""
+		for _, tokenData := range validator.TokensBedrock {
+			if tokenData != nil && tokenData.Amount.IsPositive() {
+				assetName := tokenData.Asset.String()
+				bedrockDebugStr += fmt.Sprintf("%s=%s ", assetName, tokenData.Amount.String())
+			}
+		}
+		if bedrockDebugStr == "" {
+			bedrockDebugStr = "none"
 		}
 
 		k.Logger(ctx).Debug(fmt.Sprintf(
-			"\nvalidator: %s | %s\ntoken stake: native_units=%d, bedrock_btc_raw_units=%s (for %s)\nstake value: native_contrib=%s, avs_contrib=%s, total_power_calc=%d",
+			"\nvalidator: %s | %s\ntoken stake: native_units=%d, bedrock_assets=[%s]\nstake value: native_contrib=%s, bedrock_contrib=%s, total_power_calc=%d",
 			valAddrStr, sdk.ConsAddress(consAddr).String(),
-			validator.ConsensusPower(powerReduction), k.getBedrockTokenAmount(validator, types.Asset_BTC).String(), configuredAVSAssetType,
-			nativeValueDecimal.String(), avsValueDecimal.String(), finalConsensusPower,
+			validator.ConsensusPower(powerReduction), bedrockDebugStr,
+			nativeValueDecimal.String(), bedrockValueDecimal.String(), finalConsensusPower,
 		))
 
 		newPowerBytes := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: finalConsensusPower})
@@ -542,6 +567,95 @@ func (k Keeper) calculateValidatorPowerComponents(
 	// '!calculatedTotalDecimal.IsNegative()' condition above.
 
 	return totalConsensusPower, nativePowerContribution, avsPowerContribution
+}
+
+// calculateValidatorPowerWithAllBedrockAssets computes power for a validator summing all their bedrock assets
+func (k Keeper) calculateValidatorPowerWithAllBedrockAssets(
+	validator types.ValidatorHV,
+	powerReduction math.Int,
+	nativeAssetData *types.AssetData,
+	assetDataMap map[types.Asset]*types.AssetData,
+	pricesAreValid bool,
+) (totalConsensusPower int64, nativePowerContribution math.LegacyDec, bedrockPowerContribution math.LegacyDec) {
+
+	nativePowerContribution = math.LegacyZeroDec()
+	bedrockPowerContribution = math.LegacyZeroDec()
+
+	// Calculate Native Power Contribution
+	nativeConsensusPowerUnits := validator.ConsensusPower(powerReduction)
+	if nativeAssetData != nil {
+		if pricesAreValid {
+			nativePowerContribution = nativeAssetData.PriceUSD.MulInt64(nativeConsensusPowerUnits)
+		} else {
+			nativePowerContribution = math.LegacyNewDec(nativeConsensusPowerUnits)
+		}
+	} else if !pricesAreValid {
+		nativePowerContribution = math.LegacyNewDec(nativeConsensusPowerUnits)
+	}
+
+	// Sum up power contributions from all bedrock assets
+	for _, tokenData := range validator.TokensBedrock {
+		if tokenData == nil || !tokenData.Amount.IsPositive() {
+			continue
+		}
+
+		assetData, hasAssetData := assetDataMap[tokenData.Asset]
+		if !hasAssetData {
+			continue
+		}
+
+		if pricesAreValid && !assetData.PriceUSD.IsZero() {
+			// Convert raw tokens (math.Int) to math.LegacyDec
+			tokensDec := math.LegacyNewDecFromInt(tokenData.Amount)
+
+			// Calculate the divisor (10^assetPrecision) as math.LegacyDec
+			if assetData.Precision > 0 {
+				powerOf10DenominatorBigInt := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(assetData.Precision)), nil)
+				divisorDec := math.LegacyNewDecFromBigInt(powerOf10DenominatorBigInt)
+
+				if !divisorDec.IsZero() {
+					// Calculate whole units as math.LegacyDec
+					wholeUnitsDec := tokensDec.Quo(divisorDec)
+					bedrockPowerContribution = bedrockPowerContribution.Add(assetData.PriceUSD.Mul(wholeUnitsDec))
+				}
+			} else {
+				// asset.Precision is 0, so 10^0 = 1. Treat tokens as whole units.
+				bedrockPowerContribution = bedrockPowerContribution.Add(assetData.PriceUSD.Mul(tokensDec))
+			}
+		}
+	}
+
+	calculatedTotalDecimal := nativePowerContribution.Add(bedrockPowerContribution)
+
+	// Prevent panic from TruncateInt64 and ensure power is not negative
+	maxInt64AsDec := math.LegacyNewDec(m.MaxInt64)
+
+	if calculatedTotalDecimal.GT(maxInt64AsDec) {
+		totalConsensusPower = m.MaxInt64
+	} else if calculatedTotalDecimal.IsNegative() {
+		totalConsensusPower = 0
+	} else {
+		totalConsensusPower = calculatedTotalDecimal.TruncateInt64()
+	}
+
+	// If calculated power is 0 but validator has some stake, set to 1
+	if totalConsensusPower == 0 && !calculatedTotalDecimal.IsNegative() {
+		hasAnyStake := !validator.TokensNative.IsZero()
+		for _, tokenData := range validator.TokensBedrock {
+			if tokenData != nil && tokenData.Amount.IsPositive() {
+				hasAnyStake = true
+				break
+			}
+		}
+		if calculatedTotalDecimal.IsZero() && !hasAnyStake {
+			// Truly valueless, power remains 0
+		} else {
+			// Had some small positive value that truncated to 0, gets power 1
+			totalConsensusPower = 1
+		}
+	}
+
+	return totalConsensusPower, nativePowerContribution, bedrockPowerContribution
 }
 
 // Validator state transitions

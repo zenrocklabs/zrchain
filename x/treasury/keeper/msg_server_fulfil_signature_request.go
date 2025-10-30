@@ -32,7 +32,7 @@ func (k msgServer) FulfilSignatureRequest(goCtx context.Context, msg *types.MsgF
 		return nil, fmt.Errorf("request is not pending/partial, can't be updated")
 	}
 
-	if err := k.validateZenBTCSignRequest(ctx, *req, *key); err != nil {
+	if err := k.validateDCTSignRequest(ctx, *req, *key); err != nil {
 		req.Status = types.SignRequestStatus_SIGN_REQUEST_STATUS_REJECTED
 		req.RejectReason = err.Error()
 	} else {

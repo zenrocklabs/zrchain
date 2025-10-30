@@ -207,6 +207,144 @@ sequenceDiagram
 zenTP is used for bridging native zrChain assets (currently only ROCK) to other blockchains (currently only Solana).
 The protocol is a stripped-back iteration of zenBTC's bridging system, omitting restaking features amongst others.
 
+## DCT (Digital Currency Tokens) Protocol
+
+DCT is the v1+ generalized framework for wrapped assets other than Bitcoin. Currently supports zenZEC (wrapped ZCash) with the same architecture as zenBTC.
+
+### Key Differences from zenBTC:
+- **Module**: Uses `x/dct` module instead of `x/zenbtc`
+- **Endpoint**: `zrchain.dct.Msg/VerifyDepositBlockInclusion`
+- **Assets**: Handles zenZEC (ASSET_ZENZEC) and future wrapped assets
+- **Headers**: Uses asset-specific header collections (ZcashBlockHeaders for zenZEC)
+- **Extensible**: Designed to support multiple wrapped assets in a single module
+
+### zenZEC Deposit and Mint
+
+This flow shows depositing ZEC to receive zenZEC tokens on Solana. The process mirrors zenBTC but uses ZCash block headers.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Web Frontend
+    participant zrChain
+    participant MPC Stack
+    participant ZCash
+    participant ZCash Proxy
+    participant Sidecar
+    participant Relayer
+    participant Solana
+
+    User->>Web Frontend: Request ZEC Deposit Address
+    Web Frontend->>zrChain: Request new deposit address (ASSET_ZENZEC)
+    Note over zrChain: Create new ZCash key request
+    MPC Stack->>zrChain: Poll for key requests
+    zrChain-->>MPC Stack: ZCash key request found
+    MPC Stack->>MPC Stack: Generate new ZCash key (same as Bitcoin P2WPKH)
+    MPC Stack->>zrChain: Submit key request fulfillment transaction
+    zrChain-->>Web Frontend: Return deposit address
+    Web Frontend-->>User: Display ZEC deposit address
+
+    User->>ZCash: Deposit ZEC to provided address
+
+    Note over ZCash: Block mined (deposit tx included)
+
+    Sidecar->>ZCash: Polls for new ZCash block headers
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars for ZCash headers
+    zrChain->>Sidecar: PrepareProposal: Proposer validates sidecar state against vote extensions
+    Note over zrChain: Vote Extensions reach supermajority consensus on ZCash headers
+
+    ZCash Proxy->>ZCash: Detects ZEC deposit
+    ZCash Proxy->>ZCash Proxy: Generate Merkle proof of ZEC deposit transaction
+    ZCash Proxy->>zrChain: MsgVerifyDepositBlockInclusion(asset=ASSET_ZENZEC, proof)
+
+    zrChain->>zrChain: Verify Merkle proof against ZCash block headers (ZcashBlockHeaders collection)
+    zrChain->>zrChain: Validate transaction outputs and amounts
+    zrChain->>zrChain: Create DCT PendingMintTransaction (status: DEPOSITED)
+    zrChain->>zrChain: Update DCT Supply: CustodiedAmount += deposit, PendingAmount += wrapped
+    zrChain->>zrChain: Request Solana Nonce & mark recipient account requested
+
+    Sidecar->>Solana: Polls for nonce and account data
+    zrChain->>Sidecar: ExtendVoteHandler: Validators populate vote extensions with nonces/accounts/prices
+    zrChain->>Sidecar: PrepareProposal: Proposer validates Solana data against vote extensions
+    Note over zrChain: Vote Extensions reach supermajority consensus on required fields
+
+    Note over zrChain: PreBlocker: processDCTMintsSolana()
+    zrChain->>zrChain: Calculate zenZEC mint fee (flat) from BTC price & exchange rate
+    zrChain->>zrChain: Create SignTransactionRequest for Solana zenZEC mint
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: Solana zenZEC mint transaction request found
+    MPC Stack->>MPC Stack: Generate signature(s)
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
+    Relayer->>zrChain: Poll for fulfilled requests
+    zrChain-->>Relayer: Signed Mint Tx picked up
+    Relayer->>Solana: Broadcast zenZEC Mint Tx
+
+    Sidecar->>Solana: Scans for zenZEC mint events
+    zrChain->>Sidecar: ExtendVoteHandler: Validators populate vote extensions with mint events
+    Note over zrChain: Vote Extensions reach supermajority consensus on mint events
+    Note over zrChain: PreBlocker: processSolanaDCTMintEvents()
+    zrChain->>zrChain: Match event signature hash to PendingMintTransaction
+    zrChain->>zrChain: Update DCT Supply: PendingAmount -= amount, MintedAmount += amount
+    zrChain->>zrChain: Update status to MINTED
+    zrChain-->>User: zenZEC minted on Solana
+```
+
+### zenZEC Redemption and Burn
+
+This flow describes burning zenZEC on Solana to redeem ZEC.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Solana
+    participant Sidecar
+    participant zrChain
+    participant MPC Stack
+    participant ZCash Proxy
+    participant ZCash
+
+    User->>Solana: Burn zenZEC (with ZCash destination address)
+    Sidecar->>Solana: Scans for zenZEC Burn Events
+    zrChain->>Sidecar: ExtendVoteHandler: Validators query sidecars for burn events
+    zrChain->>Sidecar: PrepareProposal: Proposer validates burn events against vote extensions
+    Note over zrChain: Vote Extensions reach supermajority consensus on burn events
+
+    Note over zrChain: PreBlocker: storeNewDCTBurnEvents()
+    zrChain->>zrChain: Check burn event not already processed
+    zrChain->>zrChain: Create DCT BurnEvent (status: BURNED, asset: ASSET_ZENZEC)
+    zrChain->>zrChain: Create DCT Redemption (status: UNSTAKED)
+
+    ZCash Proxy->>zrChain: Poll for UNSTAKED DCT redemptions (asset=ASSET_ZENZEC)
+    zrChain-->>ZCash Proxy: Redemption Info (amount, ZCash address)
+    ZCash Proxy->>ZCash: Query UTXOs for available funds
+    ZCash Proxy->>ZCash Proxy: Construct unsigned ZCash redemption transaction
+    ZCash Proxy->>zrChain: MsgSubmitUnsignedRedemptionTx(asset=ASSET_ZENZEC, unsigned_tx)
+    zrChain->>zrChain: Parse and verify unsigned ZCash transaction outputs
+    zrChain->>zrChain: Validate invariants (minted zenZEC ≥ redemption amount)
+    zrChain->>zrChain: Calculate ZEC redemption amount using exchange rate
+    zrChain->>zrChain: Update redemption status to AWAITING_SIGN
+    zrChain->>zrChain: Create SignTransactionRequest for ZCash redemption
+    MPC Stack->>zrChain: Poll for signature requests
+    zrChain-->>MPC Stack: ZCash redemption transaction request found
+    MPC Stack->>MPC Stack: Generate signature
+    MPC Stack->>zrChain: Submit signature request fulfillment transaction
+
+    Note over zrChain: checkForDCTRedemptionFulfilment() monitors AWAITING_SIGN redemptions
+    Note over zrChain: When MPC signature is fulfilled, update status to COMPLETED
+    zrChain->>zrChain: Update DCT Supply: MintedAmount -= amount, CustodiedAmount -= native_amount
+
+    ZCash Proxy->>zrChain: Poll for fulfilled ZCash tx
+    zrChain-->>ZCash Proxy: Signed ZCash Transaction
+    ZCash Proxy->>ZCash: Broadcast signed tx
+    ZCash-->>User: Receives redeemed ZEC
+    zrChain->>zrChain: Mark redemption as COMPLETED
+```
+
+## zenTP (Zenrock Transport Protocol)
+
+zenTP is used for bridging native zrChain assets (currently only ROCK) to other blockchains (currently only Solana).
+The protocol is a stripped-back iteration of zenBTC's bridging system, omitting restaking features amongst others.
+
 ### Bridge to Solana (Mint solROCK)
 
 This flow describes bridging a native asset from zrChain to Solana, resulting in the minting of a corresponding SPL token (e.g., solROCK).

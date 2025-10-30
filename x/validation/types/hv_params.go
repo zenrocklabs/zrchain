@@ -17,15 +17,15 @@ var (
 	DefaultVEWindowSize             int64 = 320                              // 320 blocks window for VE mismatch tracking
 	DefaultVEJailThreshold          int64 = 160                              // 160 mismatches before jailing
 
-	// Default bedrock validator operator address (v1) used for TokensBedrock BTC accounting
-	DefaultBedrockValidatorOperAddr      = "zenvaloper1apxnaymsp7drsjp9dhej05j5yjz8q0zj28z9wm"
-
 	DefaultTestnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_ZEC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
 	}
 	DefaultMainnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
 		{Asset: Asset_BTC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
+		{Asset: Asset_ZEC, Precision: 8, PriceUSD: math.LegacyZeroDec()},
 	}
 )
 

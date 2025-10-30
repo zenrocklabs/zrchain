@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	shared "github.com/Zenrock-Foundation/zrchain/v6/shared"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	idtypes "github.com/Zenrock-Foundation/zrchain/v6/x/identity/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -61,6 +62,8 @@ type Keeper struct {
 	policyKeeper       types.PolicyKeeper
 	zenBTCKeeper       shared.ZenBTCKeeper
 	zentpKeeper        types.ZentpKeeper
+	dctKeeper          shared.DCTKeeper
+	zenexKeeper        types.ZenexKeeper
 }
 
 type ValidationKeeper interface {
@@ -77,6 +80,8 @@ func NewKeeper(
 	policyKeeper types.PolicyKeeper,
 	zenBTCKeeper shared.ZenBTCKeeper,
 	zentpKeeper types.ZentpKeeper,
+	dctKeeper shared.DCTKeeper,
+	zenexKeeper types.ZenexKeeper,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -94,6 +99,8 @@ func NewKeeper(
 		policyKeeper:   policyKeeper,
 		zenBTCKeeper:   zenBTCKeeper,
 		zentpKeeper:    zentpKeeper,
+		dctKeeper:      dctKeeper,
+		zenexKeeper:    zenexKeeper,
 
 		ParamStore:                  collections.NewItem(sb, types.ParamsKey, types.ParamsIndex, codec.CollValue[types.Params](cdc)),
 		KeyStore:                    collections.NewMap(sb, types.KeysKey, types.KeysIndex, collections.Uint64Key, codec.CollValue[types.Key](cdc)),
@@ -392,7 +399,7 @@ func (k *Keeper) processSignatureRequests(ctx sdk.Context, dataForSigning [][]by
 			return 0, fmt.Errorf("key %v not found", keyID)
 		}
 
-		if err := k.validateZenBTCSignRequest(ctx, *req, key); err != nil {
+		if err := k.validateDCTSignRequest(ctx, *req, key); err != nil {
 			return 0, err
 		}
 
@@ -463,6 +470,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	if data == nil {
 		return nil, fmt.Errorf("data for signing is empty")
 	}
+	if len(msg.KeyIds) == 0 {
+		return nil, fmt.Errorf("no key ids provided for sign transaction request")
+	}
 
 	dataForSigning, err := dataForSigning(string(data))
 	if err != nil {
@@ -484,6 +494,9 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 		for i := 1; i < keys; i++ {
 			dataForSigning = append(dataForSigning, dataForSigning[0])
 		}
+	}
+	if len(dataForSigning) != keys {
+		return nil, fmt.Errorf("sign request payload mismatch: %d data blobs for %d keys", len(dataForSigning), keys)
 	}
 	id, err := k.processSignatureRequests(
 		ctx,
@@ -524,11 +537,28 @@ func (k *Keeper) HandleSignTransactionRequest(ctx sdk.Context, msg *types.MsgNew
 	return &types.MsgNewSignTransactionRequestResponse{Id: tID, SignatureRequestId: id}, nil
 }
 
-func (k *Keeper) validateZenBTCSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
-	if key.ZenbtcMetadata != nil && key.ZenbtcMetadata.RecipientAddr != "" &&
-		req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) {
-		return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+func (k *Keeper) validateDCTSignRequest(ctx context.Context, req types.SignRequest, key types.Key) error {
+	// If no metadata or no recipient address, allow the request
+	if key.ZenbtcMetadata == nil || key.ZenbtcMetadata.RecipientAddr == "" {
+		return nil
 	}
+
+	// Validate based on asset type
+	switch key.ZenbtcMetadata.Asset {
+	case dcttypes.Asset_ASSET_ZENBTC:
+		if req.Creator != k.zenBTCKeeper.GetBitcoinProxyAddress(ctx) {
+			return fmt.Errorf("only the Bitcoin proxy service can request signatures from zenBTC deposit keys")
+		}
+	case dcttypes.Asset_ASSET_ZENZEC:
+		dctProxy, _ := k.dctKeeper.GetProxyAddress(ctx, dcttypes.Asset_ASSET_ZENZEC)
+		if req.Creator != dctProxy {
+			return fmt.Errorf("only the Zcash proxy service can request signatures from zenZEC deposit keys")
+		}
+	default:
+		// For any other asset type with metadata, reject it as we don't have a proxy defined
+		return fmt.Errorf("unsupported asset type %s for deposit key signatures", key.ZenbtcMetadata.Asset.String())
+	}
+
 	return nil
 }
 
@@ -773,7 +803,14 @@ func (k Keeper) isKeyReserved(ctx sdk.Context, keyID uint64) (bool, string, erro
 	if k.zentpKeeper == nil {
 		return false, "", fmt.Errorf("zentp keeper is not set")
 	}
+	if k.dctKeeper == nil {
+		return false, "", fmt.Errorf("dct keeper is not set")
+	}
+	if k.zenexKeeper == nil {
+		return false, "", fmt.Errorf("zenex keeper is not set")
+	}
 
+	// Check zenBTC keys
 	if keyID == k.zenBTCKeeper.GetStakerKeyID(ctx) ||
 		keyID == k.zenBTCKeeper.GetEthMinterKeyID(ctx) ||
 		keyID == k.zenBTCKeeper.GetUnstakerKeyID(ctx) ||
@@ -785,10 +822,64 @@ func (k Keeper) isKeyReserved(ctx sdk.Context, keyID uint64) (bool, string, erro
 		slices.Contains(k.zenBTCKeeper.GetChangeAddressKeyIDs(ctx), keyID) {
 		return true, "zenbtc", nil
 	}
+
+	// Check zenTP keys
 	if keyID == k.zentpKeeper.GetSignerKeyID(ctx) ||
 		keyID == k.zentpKeeper.GetNonceAccountKey(ctx) ||
 		keyID == k.zentpKeeper.GetNonceAuthorityKey(ctx) {
 		return true, "zentp", nil
+	}
+
+	// Check DCT assets (zenZEC and any other supported assets)
+	assets, err := k.dctKeeper.ListSupportedAssets(ctx)
+	if err != nil {
+		return false, "", fmt.Errorf("failed to list DCT assets: %w", err)
+	}
+
+	for _, asset := range assets {
+		// Check staker key
+		if stakerKeyID, err := k.dctKeeper.GetStakerKeyID(ctx, asset); err == nil && keyID == stakerKeyID {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check eth minter key
+		if ethMinterKeyID, err := k.dctKeeper.GetEthMinterKeyID(ctx, asset); err == nil && keyID == ethMinterKeyID {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check unstaker key
+		if unstakerKeyID, err := k.dctKeeper.GetUnstakerKeyID(ctx, asset); err == nil && keyID == unstakerKeyID {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check completer key
+		if completerKeyID, err := k.dctKeeper.GetCompleterKeyID(ctx, asset); err == nil && keyID == completerKeyID {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check rewards deposit key
+		if rewardsKeyID, err := k.dctKeeper.GetRewardsDepositKeyID(ctx, asset); err == nil && keyID == rewardsKeyID {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check change address keys
+		if changeKeyIDs, err := k.dctKeeper.GetChangeAddressKeyIDs(ctx, asset); err == nil && slices.Contains(changeKeyIDs, keyID) {
+			return true, "dct/" + asset.String(), nil
+		}
+
+		// Check Solana keys if they exist
+		if solanaParams, err := k.dctKeeper.GetSolanaParams(ctx, asset); err == nil && solanaParams != nil {
+			if keyID == solanaParams.SignerKeyId ||
+				keyID == solanaParams.NonceAccountKey ||
+				keyID == solanaParams.NonceAuthorityKey {
+				return true, "dct/" + asset.String(), nil
+			}
+		}
+	}
+
+	// Check zenex pool key
+	if keyID == k.zenexKeeper.GetZenexPoolKeyId(ctx) {
+		return true, "zenex", nil
 	}
 
 	return false, "", nil

@@ -44,13 +44,10 @@ func NewOracleService(oracle *Oracle) *oracleService {
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
 	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
 
-	contractState, err := json.Marshal(currentState.EigenDelegations)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal state: %w", err)
-	}
+	b, _ := json.Marshal(struct{}{})
 
 	return &api.SidecarStateResponse{
-		EigenDelegations:   contractState,
+		EigenDelegations:   b,
 		EthBlockHeight:     currentState.EthBlockHeight,
 		EthGasLimit:        currentState.EthGasLimit,
 		EthBaseFee:         currentState.EthBaseFee,
@@ -60,6 +57,7 @@ func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarSta
 		ROCKUSDPrice:       currentState.ROCKUSDPrice.String(),
 		BTCUSDPrice:        currentState.BTCUSDPrice.String(),
 		ETHUSDPrice:        currentState.ETHUSDPrice.String(),
+		ZECUSDPrice:        currentState.ZECUSDPrice.String(),
 		SolanaBurnEvents:   currentState.SolanaBurnEvents,
 		SolanaMintEvents:   currentState.SolanaMintEvents,
 		SidecarVersionName: sidecartypes.SidecarVersionName,
@@ -72,13 +70,10 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		return nil, err
 	}
 
-	contractState, err := json.Marshal(state.EigenDelegations)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal state: %w", err)
-	}
+	b, _ := json.Marshal(struct{}{})
 
 	return &api.SidecarStateResponse{
-		EigenDelegations:   contractState,
+		EigenDelegations:   b,
 		EthBlockHeight:     state.EthBlockHeight,
 		EthGasLimit:        state.EthGasLimit,
 		EthBaseFee:         state.EthBaseFee,
@@ -88,6 +83,7 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		ROCKUSDPrice:       state.ROCKUSDPrice.String(),
 		BTCUSDPrice:        state.BTCUSDPrice.String(),
 		ETHUSDPrice:        state.ETHUSDPrice.String(),
+		ZECUSDPrice:        state.ZECUSDPrice.String(),
 		SolanaMintEvents:   state.SolanaMintEvents,
 		SolanaBurnEvents:   state.SolanaBurnEvents,
 		SidecarVersionName: sidecartypes.SidecarVersionName,
@@ -139,6 +135,45 @@ func (s *oracleService) GetLatestBitcoinBlockHeader(ctx context.Context, req *ap
 		BlockHeader: bh,
 		BlockHeight: int64(tipHeight),
 		TipHeight:   int64(tipHeight),
+	}, nil
+}
+
+func (s *oracleService) GetZcashBlockHeaderByHeight(ctx context.Context, req *api.BitcoinBlockHeaderByHeightRequest) (*api.BitcoinBlockHeaderResponse, error) {
+	if s.oracle.zcashClient == nil {
+		return nil, fmt.Errorf("ZCash client not initialized")
+	}
+
+	blockHeader, err := s.oracle.zcashClient.GetBlockHeaderByHeight(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetZcashBlockHeaderByHeight: %w", err)
+	}
+
+	tipHeight, err := s.oracle.zcashClient.GetBlockCount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ZCash tip height: %w", err)
+	}
+
+	return &api.BitcoinBlockHeaderResponse{
+		BlockHeader: blockHeader,
+		BlockHeight: req.BlockHeight,
+		TipHeight:   tipHeight,
+	}, nil
+}
+
+func (s *oracleService) GetLatestZcashBlockHeader(ctx context.Context, req *api.LatestBitcoinBlockHeaderRequest) (*api.BitcoinBlockHeaderResponse, error) {
+	if s.oracle.zcashClient == nil {
+		return nil, fmt.Errorf("ZCash client not initialized")
+	}
+
+	blockHeader, tipHeight, err := s.oracle.zcashClient.GetLatestBlockHeader(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetLatestZcashBlockHeader: %w", err)
+	}
+
+	return &api.BitcoinBlockHeaderResponse{
+		BlockHeader: blockHeader,
+		BlockHeight: blockHeader.BlockHeight,
+		TipHeight:   tipHeight,
 	}, nil
 }
 

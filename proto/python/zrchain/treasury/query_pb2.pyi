@@ -6,6 +6,7 @@ from zrchain.treasury import key_pb2 as _key_pb2
 from zrchain.treasury import mpcsign_pb2 as _mpcsign_pb2
 from zrchain.treasury import params_pb2 as _params_pb2
 from zrchain.treasury import wallet_pb2 as _wallet_pb2
+from zrchain.dct import params_pb2 as _params_pb2_1
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -252,3 +253,25 @@ class QueryZenbtcWalletsResponse(_message.Message):
     zenbtc_wallets: _containers.RepeatedCompositeFieldContainer[KeyAndWalletResponse]
     pagination: _pagination_pb2.PageResponse
     def __init__(self, zenbtc_wallets: _Optional[_Iterable[_Union[KeyAndWalletResponse, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...
+
+class QueryDctWalletsRequest(_message.Message):
+    __slots__ = ("asset_type", "wallet_type", "mint_chain_id", "recipient_addr", "pagination")
+    ASSET_TYPE_FIELD_NUMBER: _ClassVar[int]
+    WALLET_TYPE_FIELD_NUMBER: _ClassVar[int]
+    MINT_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_ADDR_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    asset_type: _params_pb2_1.Asset
+    wallet_type: _wallet_pb2.WalletType
+    mint_chain_id: str
+    recipient_addr: str
+    pagination: _pagination_pb2.PageRequest
+    def __init__(self, asset_type: _Optional[_Union[_params_pb2_1.Asset, str]] = ..., wallet_type: _Optional[_Union[_wallet_pb2.WalletType, str]] = ..., mint_chain_id: _Optional[str] = ..., recipient_addr: _Optional[str] = ..., pagination: _Optional[_Union[_pagination_pb2.PageRequest, _Mapping]] = ...) -> None: ...
+
+class QueryDctWalletsResponse(_message.Message):
+    __slots__ = ("dct_wallets", "pagination")
+    DCT_WALLETS_FIELD_NUMBER: _ClassVar[int]
+    PAGINATION_FIELD_NUMBER: _ClassVar[int]
+    dct_wallets: _containers.RepeatedCompositeFieldContainer[KeyAndWalletResponse]
+    pagination: _pagination_pb2.PageResponse
+    def __init__(self, dct_wallets: _Optional[_Iterable[_Union[KeyAndWalletResponse, _Mapping]]] = ..., pagination: _Optional[_Union[_pagination_pb2.PageResponse, _Mapping]] = ...) -> None: ...

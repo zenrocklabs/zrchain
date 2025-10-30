@@ -20,13 +20,22 @@ func VerifyBTCLockTransaction(rawTX string, chainName string, index int, proof [
 
 	merkleRootBytes, err := hex.DecodeString(blockHeader.MerkleRoot)
 	merkleRootBytes = ReverseBytes(merkleRootBytes)
-	calculatedTxID := CalculateTXID(rawTX)
+	calculatedTxID, err := CalculateTXID(rawTX, chainName)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to calculate txid: %w", err)
+	}
 	calculatedIDString := ReverseHex(calculatedTxID.String())
 
-	targetHash, _ := chainhash.NewHashFromStr(calculatedIDString)
+	targetHash, err := chainhash.NewHashFromStr(calculatedIDString)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to parse tx hash: %w", err)
+	}
 	i := index
 	for _, sibling := range proof {
-		siblingHash, _ := chainhash.NewHashFromStr(sibling)
+		siblingHash, err := chainhash.NewHashFromStr(sibling)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to parse sibling hash: %w", err)
+		}
 		if i%2 == 0 {
 			targetHash = MergeHashes(targetHash, siblingHash)
 		} else {
@@ -94,7 +103,18 @@ func CheckBlockHeader(b *api.BTCBlockHeader) error {
 }
 
 func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
-	buf := make([]byte, 80) // Bitcoin block headers are always 80 bytes
+	// Check if this is a Zcash header (has NonceHex populated)
+	isZcash := b.NonceHex != ""
+
+	var buf []byte
+	if isZcash {
+		// Zcash block headers are 140 bytes
+		buf = make([]byte, 140)
+	} else {
+		// Bitcoin block headers are 80 bytes
+		buf = make([]byte, 80)
+	}
+
 	version := b.Version
 	prevBlock, err := hex.DecodeString(ReverseHex(b.PrevBlock))
 	if err != nil {
@@ -109,21 +129,64 @@ func deriveBlockHash(b *api.BTCBlockHeader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	binary.LittleEndian.PutUint32(buf[0:4], uint32(version))
 	copy(buf[4:36], prevBlock)
 	copy(buf[36:68], merkleRoot)
-	binary.LittleEndian.PutUint32(buf[68:72], uint32(b.TimeStamp))
-	copy(buf[72:76], bits)
-	binary.LittleEndian.PutUint32(buf[76:80], uint32(b.Nonce))
+
+	if isZcash {
+		// Zcash has a 32-byte block commitments field (hashReserved) after merkleRoot
+		// BlockCommitments from RPC is in big-endian (display order), reverse to little-endian for header
+		blockCommitments, err := hex.DecodeString(ReverseHex(b.BlockCommitments))
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash BlockCommitments: %w", err)
+		}
+		if len(blockCommitments) != 32 {
+			return false, fmt.Errorf("invalid Zcash BlockCommitments length: expected 32 bytes, got %d", len(blockCommitments))
+		}
+		copy(buf[68:100], blockCommitments)
+
+		binary.LittleEndian.PutUint32(buf[100:104], uint32(b.TimeStamp))
+		copy(buf[104:108], bits)
+
+		// Zcash uses a 256-bit (32-byte) nonce
+		// The nonce from RPC needs to be reversed for the header
+		nonceBytes, err := hex.DecodeString(ReverseHex(b.NonceHex))
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash nonce: %w", err)
+		}
+		if len(nonceBytes) != 32 {
+			return false, fmt.Errorf("invalid Zcash nonce length: expected 32 bytes, got %d", len(nonceBytes))
+		}
+		copy(buf[108:140], nonceBytes)
+	} else {
+		// Bitcoin format
+		binary.LittleEndian.PutUint32(buf[68:72], uint32(b.TimeStamp))
+		copy(buf[72:76], bits)
+		binary.LittleEndian.PutUint32(buf[76:80], uint32(b.Nonce))
+	}
 
 	//hash := doubleSha256(serializedHeader)
-	first := sha256.Sum256(buf)
+	// For Zcash, include the solution in the hash calculation
+	var hashInput []byte
+	if isZcash && b.Solution != "" {
+		// Decode the solution and append it to the header
+		solutionBytes, err := hex.DecodeString(b.Solution)
+		if err != nil {
+			return false, fmt.Errorf("failed to decode Zcash solution: %w", err)
+		}
+		hashInput = append(buf, solutionBytes...)
+	} else {
+		hashInput = buf
+	}
+
+	first := sha256.Sum256(hashInput)
 	second := sha256.Sum256(first[:])
 
-	for i, j := 0, len(second)-1; i < j; i, j = i+1, j-1 {
-		second[i], second[j] = second[j], second[i]
-	}
-	blockHash, err := chainhash.NewHash(ReverseBytes(second[:]))
+	// For both Bitcoin and Zcash, use the hash directly
+	// chainhash.NewHash expects bytes in internal format (little-endian for block hashes)
+	// SHA256 outputs big-endian, so we don't reverse
+	blockHash, err := chainhash.NewHash(second[:])
 	if err != nil {
 		return false, err
 	}

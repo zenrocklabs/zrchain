@@ -21,7 +21,6 @@ import (
 
 var (
 	EmptyOracleState = sidecartypes.OracleState{
-		EigenDelegations:        make(map[string]map[string]*big.Int),
 		EthBlockHeight:          0,
 		EthGasLimit:             0,
 		EthBaseFee:              0,
@@ -36,6 +35,7 @@ var (
 		ROCKUSDPrice:            math.LegacyNewDec(0),
 		BTCUSDPrice:             math.LegacyNewDec(0),
 		ETHUSDPrice:             math.LegacyNewDec(0),
+		ZECUSDPrice:             math.LegacyNewDec(0),
 		PendingSolanaTxs:        make(map[string]sidecartypes.PendingTxInfo),
 	}
 )
@@ -46,6 +46,7 @@ type Oracle struct {
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
 	neutrinoServer     *neutrino.NeutrinoServer
+	zcashClient        *ZcashClient
 	solanaClient       *solana.Client
 	zrChainQueryClient *client.QueryClient
 	mainLoopTicker     *time.Ticker
@@ -61,7 +62,12 @@ type Oracle struct {
 	lastSolRockMintSigStr   string
 	lastSolZenBTCMintSigStr string
 	lastSolZenBTCBurnSigStr string
+	lastSolZenZECMintSigStr string
+	lastSolZenZECBurnSigStr string
 	lastSolRockBurnSigStr   string
+
+	// ZCash header tracking
+	lastZcashHeaderHeight int64
 
 	// Performance optimization fields
 	solanaRateLimiter     chan struct{}              // Semaphore for Solana RPC rate limiting
@@ -70,6 +76,7 @@ type Oracle struct {
 
 	// Function fields for mocking
 	getSolanaZenBTCBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
+	getSolanaZenZECBurnEventsFn func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	getSolanaRockBurnEventsFn   func(ctx context.Context, programID string, lastKnownSig sol.Signature) ([]api.BurnEvent, sol.Signature, error)
 	rpcCallBatchFn              func(ctx context.Context, rpcs jsonrpc.RPCRequests) (jsonrpc.RPCResponses, error)
 	getTransactionFn            func(ctx context.Context, signature sol.Signature, opts *solana.GetTransactionOpts) (out *solana.GetTransactionResult, err error)
@@ -84,7 +91,6 @@ type CachedTxResult struct {
 }
 
 type oracleStateUpdate struct {
-	eigenDelegations        map[string]map[string]*big.Int
 	redemptions             []api.Redemption
 	suggestedTip            *big.Int
 	estimatedGas            uint64
@@ -95,9 +101,11 @@ type oracleStateUpdate struct {
 	ROCKUSDPrice            math.LegacyDec
 	BTCUSDPrice             math.LegacyDec
 	ETHUSDPrice             math.LegacyDec
+	ZECUSDPrice             math.LegacyDec
 	SolanaMintEvents        []api.SolanaMintEvent
 	cleanedSolanaMintEvents map[string]bool
 	latestSolanaSigs        map[sidecartypes.SolanaEventType]sol.Signature
+	latestEventStoreCursors map[sidecartypes.SolanaEventType]string
 	pendingTransactions     map[string]sidecartypes.PendingTxInfo
 }
 

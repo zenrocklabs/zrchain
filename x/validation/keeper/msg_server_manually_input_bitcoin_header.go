@@ -14,7 +14,7 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/shared"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func (k msgServer) ManuallyInputBitcoinHeader(ctx context.Context, msg *types.MsgManuallyInputBitcoinHeader) (*types.MsgManuallyInputBitcoinHeaderResponse, error) {
@@ -52,7 +52,7 @@ func (k msgServer) ManuallyInputBitcoinHeader(ctx context.Context, msg *types.Ms
 		Version:     msg.Header.Version,
 		PrevBlock:   msg.Header.PrevBlock,
 		MerkleRoot:  msg.Header.MerkleRoot,
-		TimeStamp:   msg.Header.Timestamp,
+		TimeStamp:   msg.Header.TimeStamp,
 		Bits:        msg.Header.Bits,
 		Nonce:       msg.Header.Nonce,
 		BlockHash:   msg.Header.BlockHash,

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package zrchain.dct;
+
+import "zrchain/dct/params.proto";
+
+option go_package = "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types";
+
+message NonceData {
+  uint64 nonce = 1;
+  uint64 counter = 2;
+  bool skip = 3;
+  uint64 prev_nonce = 4;
+}
+
+message RequestedBitcoinHeaders {
+  repeated int64 heights = 1;
+}
+
+message RequestedZcashHeaders {
+  repeated int64 heights = 1;
+}
+
+message LockTransaction {
+  string raw_tx = 1;
+  uint64 vout = 2;
+  string sender = 3;
+  string mint_recipient = 4;
+  uint64 amount = 5;
+  int64 block_height = 6;
+  Asset asset = 7;
+}
+
+// PendingMintTransaction is the metadata for a pending zenBTC mint transaction.
+message PendingMintTransaction {
+  WalletType chain_type = 1;
+  string recipient_address = 2;
+  uint64 amount = 3;
+  string creator = 4;
+  string caip2_chain_id = 5;
+  uint64 id = 6;
+  MintTransactionStatus status = 7;
+  uint64 zrchain_tx_id = 8;
+  int64 block_height = 9;
+  int64 awaiting_event_since = 10;
+  string tx_hash = 11;
+  Asset asset = 12;
+}
+
+enum MintTransactionStatus {
+  MINT_TRANSACTION_STATUS_UNSPECIFIED = 0;
+  MINT_TRANSACTION_STATUS_DEPOSITED = 1;
+  MINT_TRANSACTION_STATUS_MINTED = 2;
+}
+
+// WalletType specifies the Layer 1 blockchain that this wallet will be used
+// for.
+enum WalletType {
+  // The wallet type is missing (all wallets will be derived)
+  WALLET_TYPE_UNSPECIFIED = 0;
+  // The wallet type for native cosmos accounts
+  WALLET_TYPE_NATIVE = 1;
+  // The wallet type for mainnet ETH and its ERC-20 tokens
+  WALLET_TYPE_EVM = 2;
+  // The Wallet type for Testnet BTC
+  WALLET_TYPE_BTC_TESTNET = 3;
+  // The Wallet type for Mainnet BTC
+  WALLET_TYPE_BTC_MAINNET = 4;
+  // The Wallet type for RegNet - Local Test Network
+  WALLET_TYPE_BTC_REGNET = 5;
+  // Wallet type for Solana
+  WALLET_TYPE_SOLANA = 6;
+}

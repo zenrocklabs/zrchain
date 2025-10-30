@@ -2,17 +2,21 @@ package keeper
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
+	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	solana "github.com/gagliardetto/solana-go"
 	solToken "github.com/gagliardetto/solana-go/programs/token"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 )
 
 // =========================
@@ -179,19 +183,42 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			if !ok {
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for nonce account key: %d", solParams.NonceAccountKey)
 			}
+
+			// Get current Solana counters for zenBTC from chain state
+			assetKey := "ZENBTC"
+			counters, err := k.SolanaCounters.Get(ctx, assetKey)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Initialize counters if not found
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					return fmt.Errorf("failed to get Solana counters for zenBTC: %w", err)
+				}
+			}
+			nextMintCounter := counters.MintCounter + 1
+			k.Logger(ctx).Info("Read Solana mint counter from chain state",
+				"asset", assetKey,
+				"current_mint_counter", counters.MintCounter,
+				"next_mint_counter", nextMintCounter,
+			)
+
 			txPrepReq := &solanaMintTxRequest{
-				amount:            tx.Amount,
-				fee:               feeZenBTC,
-				recipient:         tx.RecipientAddress,
-				nonce:             nonce,
-				fundReceiver:      fundReceiver,
-				programID:         solParams.ProgramId,
-				mintAddress:       solParams.MintAddress,
-				feeWallet:         solParams.FeeWallet,
-				nonceAccountKey:   solParams.NonceAccountKey,
-				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:         solParams.SignerKeyId,
-				zenbtc:            true,
+				amount:              tx.Amount,
+				fee:                 feeZenBTC,
+				recipient:           tx.RecipientAddress,
+				nonce:               nonce,
+				fundReceiver:        fundReceiver,
+				programID:           solParams.ProgramId,
+				mintAddress:         solParams.MintAddress,
+				feeWallet:           solParams.FeeWallet,
+				nonceAccountKey:     solParams.NonceAccountKey,
+				nonceAuthorityKey:   solParams.NonceAuthorityKey,
+				signerKey:           solParams.SignerKeyId,
+				multisigKey:         solParams.MultisigKeyAddress,
+				zenbtc:              true,
+				eventStoreProgramID: solParams.EventStoreProgramId,
+				mintCounter:         nextMintCounter,
+				assetName:           "ZENBTC", // ZENBTC uses legacy bindings without event store
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {
@@ -213,6 +240,14 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			if err = k.zenBTCKeeper.SetPendingMintTransaction(ctx, tx); err != nil {
 				return err
 			}
+
+			k.Logger(ctx).Info("Dispatched Solana zenBTC mint transaction",
+				"tx_id", tx.Id,
+				"zrchain_tx_id", txID,
+				"mint_counter_used", nextMintCounter,
+			)
+
+			// Counter will be incremented in processSolanaZenBTCMintEvents when mint is confirmed successful
 			solNonce := types.SolanaNonce{Nonce: nonce.Nonce[:]}
 			return k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, solNonce)
 		},
@@ -277,27 +312,46 @@ func (k *Keeper) processSolanaZenBTCMintEvents(ctx sdk.Context, oracleData Oracl
 		concatenated = append(concatenated, s...)
 	}
 	sigHash := sha256.Sum256(concatenated)
+	assetKey := "ZENBTC"
 	for _, event := range oracleData.SolanaMintEvents {
-		if hex.EncodeToString(event.SigHash) == hex.EncodeToString(sigHash[:]) {
-			supply, err := k.zenBTCKeeper.GetSupply(ctx)
-			if err != nil {
-				return
-			}
-			supply.PendingZenBTC -= pendingMint.Amount
-			supply.MintedZenBTC += pendingMint.Amount
-			if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
-				return
-			}
-			pendingMint.TxHash = event.TxSig
-			pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
-			if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
-				k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
-			}
-			if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
-				k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
-			}
-			break
+		if hex.EncodeToString(event.SigHash) != hex.EncodeToString(sigHash[:]) {
+			continue
 		}
+
+		eventHash := base64.StdEncoding.EncodeToString(event.SigHash)
+		eventKey := collections.Join(assetKey, eventHash)
+		if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
+			k.Logger(ctx).Warn("processSolanaZenBTCMintEvents: Solana event already processed", "event_hash", eventHash)
+			continue
+		} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("processSolanaZenBTCMintEvents: failed to read processed event map", "event_hash", eventHash, "error", err)
+			continue
+		}
+
+		supply, err := k.zenBTCKeeper.GetSupply(ctx)
+		if err != nil {
+			return
+		}
+		supply.PendingZenBTC -= pendingMint.Amount
+		supply.MintedZenBTC += pendingMint.Amount
+		if err := k.zenBTCKeeper.SetSupply(ctx, supply); err != nil {
+			return
+		}
+		pendingMint.TxHash = event.TxSig
+		pendingMint.Status = zenbtctypes.MintTransactionStatus_MINT_TRANSACTION_STATUS_MINTED
+		if err := k.zenBTCKeeper.SetPendingMintTransaction(ctx, pendingMint); err != nil {
+			k.Logger(ctx).Error("error updating pending mint transaction", "tx_id", pendingMint.Id, "error", err)
+		}
+
+		if err := k.adjustDefaultValidatorBedrockBTC(ctx, sdkmath.NewIntFromUint64(pendingMint.Amount)); err != nil {
+			k.Logger(ctx).Error("error adjusting bedrock BTC on solana event mint", "amount", pendingMint.Amount, "error", err)
+		}
+
+		if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
+			k.Logger(ctx).Error("failed to record processed Solana mint event", "event_hash", eventHash, "error", err)
+		}
+
+		return
 	}
 }
 
@@ -344,117 +398,94 @@ func (k *Keeper) storeNewZenBTCBurnEvents(ctx sdk.Context, burnEvents []sidecara
 			ChainID:         burn.ChainID,
 			DestinationAddr: burn.DestinationAddr,
 			Amount:          burn.Amount,
-			Status:          zenbtctypes.BurnStatus_BURN_STATUS_BURNED,
+			Status:          zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING,
+			MaturityHeight:  k.calculateRedemptionMaturityHeight(ctx),
 		}
-		_, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn)
-		if createErr != nil {
+		if _, createErr := k.zenBTCKeeper.CreateBurnEvent(ctx, &newBurn); createErr != nil {
 			k.Logger(ctx).Error("error creating burn event", "burn_tx", burn.TxID, "chain_id", burn.ChainID, "error", createErr)
 			continue
 		}
 
-		// Get next redemption ID by finding the highest existing ID + 1
-		// Walk in descending order and stop after first item (highest ID)
-		nextRedemptionID := uint64(0)
-		if err := k.zenBTCKeeper.WalkRedemptionsDescending(ctx, func(id uint64, _ zenbtctypes.Redemption) (bool, error) {
-			nextRedemptionID = id + 1
-			return true, nil // stop after first (highest) ID
-		}); err != nil {
-			k.Logger(ctx).Error("error walking redemptions to find next ID", "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		if err := k.zenBTCKeeper.SetRedemption(ctx, nextRedemptionID, zenbtctypes.Redemption{
-			Data: zenbtctypes.RedemptionData{
-				Id:                 nextRedemptionID,
-				DestinationAddress: burn.DestinationAddr,
-				Amount:             burn.Amount,
-			},
-			Status: zenbtctypes.RedemptionStatus_UNSTAKED,
-		}); err != nil {
-			k.Logger(ctx).Error("error creating redemption from burn event", "burn_tx", burn.TxID, "error", err)
-			continue
-		}
-
-		k.Logger(ctx).Info("created redemption for burn event", "redemption_id", nextRedemptionID, "burn_tx", burn.TxID, "amount", burn.Amount, "destination", hex.EncodeToString(burn.DestinationAddr))
+		k.Logger(ctx).Info("recorded zenBTC burn awaiting maturity", "burn_id", newBurn.Id, "burn_tx", burn.TxID, "amount", burn.Amount, "maturity_height", newBurn.MaturityHeight, "destination", hex.EncodeToString(burn.DestinationAddr))
 		processedTxHashes[burn.TxID] = true
 	}
 	k.ClearProcessedBackfillRequests(ctx, types.EventType_EVENT_TYPE_ZENBTC_BURN, processedTxHashes)
 }
 
 // processZenBTCBurnEvents constructs unstake transactions for BURNED events.
-func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
-	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
-		KeyID:                    k.zenBTCKeeper.GetUnstakerKeyID(ctx),
-		RequestedNonce:           oracleData.RequestedUnstakerNonce,
-		DispatchRequestedChecker: TxDispatchRequestHandler[uint64]{Store: k.EthereumNonceRequested},
-		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-			return k.getPendingBurnEvents(ctx)
-		},
-		DispatchTx: func(be zenbtctypes.BurnEvent) error {
-			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
-				return err
-			}
-			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
-			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", fmt.Sprintf("burn_id: %d", be.Id)); err != nil {
-				return nil
-			}
-			if len(be.DestinationAddr) == 0 {
-				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
-			}
-			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
-				ctx,
-				getChainIDForEigen(ctx),
-				be.DestinationAddr,
-				be.Amount,
-				oracleData.RequestedUnstakerNonce,
-				oracleData.EthBaseFee,
-				oracleData.EthTipCap,
-			)
-			if err != nil {
-				return err
-			}
-			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
-			if err != nil {
-				return err
-			}
-			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
-		},
-		OnTxConfirmed: func(be zenbtctypes.BurnEvent) error {
-			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
-			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
-		},
-	})
-}
+// func (k *Keeper) processZenBTCBurnEvents(ctx sdk.Context, oracleData OracleData) {
+// 	processEthereumTxQueue(k, ctx, EthereumTxQueueArgs[zenbtctypes.BurnEvent]{
+// 		KeyID:                    k.zenBTCKeeper.GetUnstakerKeyID(ctx),
+// 		RequestedNonce:           oracleData.RequestedUnstakerNonce,
+// 		DispatchRequestedChecker: TxDispatchRequestHandler[uint64]{Store: k.EthereumNonceRequested},
+// 		GetPendingTxs: func(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
+// 			return k.getPendingBurnEvents(ctx)
+// 		},
+// 		DispatchTx: func(be zenbtctypes.BurnEvent) error {
+// 			if err := k.zenBTCKeeper.SetFirstPendingBurnEvent(ctx, be.Id); err != nil {
+// 				return err
+// 			}
+// 			requiredFields := []VoteExtensionField{VEFieldRequestedUnstakerNonce, VEFieldBTCUSDPrice, VEFieldETHUSDPrice}
+// 			if err := k.validateConsensusForTxFields(ctx, oracleData, requiredFields, "zenBTC burn unstake", fmt.Sprintf("burn_id: %d", be.Id)); err != nil {
+// 				return nil
+// 			}
+// 			if len(be.DestinationAddr) == 0 {
+// 				return fmt.Errorf("burn event %d has empty DestinationAddr", be.Id)
+// 			}
+// 			unsignedTxHash, unsignedTx, err := k.constructUnstakeTx(
+// 				ctx,
+// 				getChainIDForEigen(ctx),
+// 				be.DestinationAddr,
+// 				be.Amount,
+// 				oracleData.RequestedUnstakerNonce,
+// 				oracleData.EthBaseFee,
+// 				oracleData.EthTipCap,
+// 			)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			creator, err := k.getAddressByKeyID(ctx, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_NATIVE)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			return k.submitEthereumTransaction(ctx, creator, k.zenBTCKeeper.GetUnstakerKeyID(ctx), treasurytypes.WalletType_WALLET_TYPE_EVM, getChainIDForEigen(ctx), unsignedTx, unsignedTxHash)
+// 		},
+// 		OnTxConfirmed: func(be zenbtctypes.BurnEvent) error {
+// 			be.Status = zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING
+// 			return k.zenBTCKeeper.SetBurnEvent(ctx, be.Id, be)
+// 		},
+// 	})
+// }
 
-// storeNewZenBTCRedemptions ingests new redemptions and requests completer nonce if needed.
-func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
-	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
-	if err != nil {
-		return
-	}
-	foundNew := false
-	for _, redemption := range oracleData.Redemptions {
-		if exists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); err != nil || exists {
-			if err != nil {
-				k.Logger(ctx).Error("error checking redemption existence", "id", redemption.Id, "error", err)
-			}
-			continue
-		}
-		foundNew = true
-		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
-		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
-			Data:   zenbtctypes.RedemptionData{Id: redemption.Id, DestinationAddress: redemption.DestinationAddress, Amount: uint64(btcAmount)},
-			Status: zenbtctypes.RedemptionStatus_INITIATED,
-		}); err != nil {
-			k.Logger(ctx).Error("error setting redemption", "id", redemption.Id, "error", err)
-		}
-	}
-	if foundNew {
-		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
-			k.Logger(ctx).Error("error setting completer nonce requested flag", "error", err)
-		}
-	}
-}
+// // storeNewZenBTCRedemptions ingests new redemptions and requests completer nonce if needed.
+// func (k *Keeper) storeNewZenBTCRedemptions(ctx sdk.Context, oracleData OracleData) {
+// 	exchangeRate, err := k.zenBTCKeeper.GetExchangeRate(ctx)
+// 	if err != nil {
+// 		return
+// 	}
+// 	foundNew := false
+// 	for _, redemption := range oracleData.Redemptions {
+// 		if exists, err := k.zenBTCKeeper.HasRedemption(ctx, redemption.Id); err != nil || exists {
+// 			if err != nil {
+// 				k.Logger(ctx).Error("error checking redemption existence", "id", redemption.Id, "error", err)
+// 			}
+// 			continue
+// 		}
+// 		foundNew = true
+// 		btcAmount := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(redemption.Amount)).Mul(exchangeRate).TruncateInt64()
+// 		if err := k.zenBTCKeeper.SetRedemption(ctx, redemption.Id, zenbtctypes.Redemption{
+// 			Data:   zenbtctypes.RedemptionData{Id: redemption.Id, DestinationAddress: redemption.DestinationAddress, Amount: uint64(btcAmount)},
+// 			Status: zenbtctypes.RedemptionStatus_INITIATED,
+// 		}); err != nil {
+// 			k.Logger(ctx).Error("error setting redemption", "id", redemption.Id, "error", err)
+// 		}
+// 	}
+// 	if foundNew {
+// 		if err := k.EthereumNonceRequested.Set(ctx, k.zenBTCKeeper.GetCompleterKeyID(ctx), true); err != nil {
+// 			k.Logger(ctx).Error("error setting completer nonce requested flag", "error", err)
+// 		}
+// 	}
+// }
 
 // checkForRedemptionFulfilment updates supplies when treasury sign requests for redemptions are fulfilled.
 func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
@@ -508,31 +539,294 @@ func (k *Keeper) checkForRedemptionFulfilment(ctx sdk.Context) {
 }
 
 // adjustDefaultValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to the default validator's TokensBedrock (Asset_BTC)
+// DEPRECATED: This function is kept for backward compatibility. Use distributeBedrockBTC instead.
 func (k *Keeper) adjustDefaultValidatorBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
-	oper := k.GetBedrockDefaultValOperAddr(ctx)
-	v, err := k.GetZenrockValidatorFromBech32(ctx, oper)
+	return k.distributeBedrockBTC(ctx, delta)
+}
+
+// distributeBedrockBTC adds (positive) or subtracts (negative) BTC sats across the bedrock validator set
+// proportional to each validator's native stake (TokensNative)
+func (k *Keeper) distributeBedrockBTC(ctx sdk.Context, delta sdkmath.Int) error {
+	return k.distributeBedrockTokens(ctx, types.Asset_BTC, delta)
+}
+
+// adjustValidatorBedrockBTC adds (positive) or subtracts (negative) BTC sats to a validator's TokensBedrock (Asset_BTC)
+func (k *Keeper) adjustValidatorBedrockBTC(ctx sdk.Context, validator types.ValidatorHV, delta sdkmath.Int) error {
+	return k.adjustValidatorBedrockToken(ctx, validator, types.Asset_BTC, delta)
+}
+
+// reconcileBedrockTokens reconciles the total bedrock tokens held by validators
+// with the actual supply in the module stores. This ensures validators have the
+// correct total amount of bedrock tokens matching custodied supplies.
+func (k *Keeper) reconcileBedrockTokens(ctx sdk.Context) error {
+	// Reconcile BTC (zenBTC)
+	if err := k.reconcileBedrockAsset(ctx, types.Asset_BTC); err != nil {
+		k.Logger(ctx).Error("failed to reconcile bedrock BTC", "error", err)
+		// Don't return error to avoid halting the chain
+	}
+
+	// Reconcile ZEC (zenZEC via DCT module)
+	if err := k.reconcileBedrockAsset(ctx, types.Asset_ZEC); err != nil {
+		k.Logger(ctx).Error("failed to reconcile bedrock ZEC", "error", err)
+		// Don't return error to avoid halting the chain
+	}
+
+	return nil
+}
+
+// reconcileBedrockAsset reconciles a specific asset type between supply and validator holdings
+func (k *Keeper) reconcileBedrockAsset(ctx sdk.Context, asset types.Asset) error {
+	// Get total supply for this asset
+	var totalSupply sdkmath.Int
+	switch asset {
+	case types.Asset_BTC:
+		if k.zenBTCKeeper == nil {
+			return nil
+		}
+		supply, err := k.zenBTCKeeper.GetSupply(ctx)
+		if err != nil {
+			return err
+		}
+		totalSupply = sdkmath.NewIntFromUint64(supply.CustodiedBTC)
+	case types.Asset_ZEC:
+		if k.dctKeeper == nil {
+			return nil
+		}
+		supply, err := k.dctKeeper.GetSupply(ctx, dcttypes.Asset_ASSET_ZENZEC)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				totalSupply = sdkmath.ZeroInt()
+			} else {
+				return err
+			}
+		} else {
+			totalSupply = sdkmath.NewIntFromUint64(supply.CustodiedAmount)
+		}
+	default:
+		return nil
+	}
+
+	// Sum up all validator holdings for this asset
+	totalValidatorHoldings := sdkmath.ZeroInt()
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			return false, nil
+		}
+		totalValidatorHoldings = totalValidatorHoldings.Add(k.getBedrockTokenAmount(validator, asset))
+		return false, nil
+	})
 	if err != nil {
 		return err
 	}
+
+	// Calculate delta and distribute if needed
+	delta := totalSupply.Sub(totalValidatorHoldings)
+	if !delta.IsZero() {
+		k.Logger(ctx).Info("reconciling bedrock tokens",
+			"asset", asset.String(),
+			"total_supply", totalSupply.String(),
+			"total_validator_holdings", totalValidatorHoldings.String(),
+			"delta", delta.String(),
+		)
+		if err := k.distributeBedrockTokens(ctx, asset, delta); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// distributeBedrockTokens distributes tokens of a specific asset across the bedrock validator set
+func (k *Keeper) distributeBedrockTokens(ctx sdk.Context, asset types.Asset, delta sdkmath.Int) error {
+	if delta.IsZero() {
+		return nil
+	}
+
+	// Get all validators in the bedrock set
+	bedrockValidators := make([]types.ValidatorHV, 0)
+	totalNativeStake := sdkmath.ZeroInt()
+
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			k.Logger(ctx).Error("validator in bedrock set not found", "address", valAddr, "error", err)
+			return false, nil
+		}
+
+		bedrockValidators = append(bedrockValidators, validator)
+		totalNativeStake = totalNativeStake.Add(validator.TokensNative)
+		return false, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// If no validators in bedrock set, log warning and skip
+	if len(bedrockValidators) == 0 {
+		k.Logger(ctx).Warn("no validators in bedrock set, skipping bedrock token distribution", "asset", asset.String(), "delta", delta.String())
+		return nil
+	}
+
+	// If total native stake is zero, distribute equally
+	if totalNativeStake.IsZero() {
+		k.Logger(ctx).Warn("total native stake is zero, distributing bedrock tokens equally", "asset", asset.String())
+		amountPerValidator := delta.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
+		for _, validator := range bedrockValidators {
+			if err := k.adjustValidatorBedrockToken(ctx, validator, asset, amountPerValidator); err != nil {
+				k.Logger(ctx).Error("failed to adjust bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
+			}
+		}
+		return nil
+	}
+
+	// Distribute proportionally based on native stake
+	remainingDelta := delta
+	for i, validator := range bedrockValidators {
+		var allocation sdkmath.Int
+		if i == len(bedrockValidators)-1 {
+			// Last validator gets the remaining amount to handle rounding
+			allocation = remainingDelta
+		} else {
+			// Calculate proportional allocation: (validator.TokensNative / totalNativeStake) * delta
+			allocation = validator.TokensNative.Mul(delta).Quo(totalNativeStake)
+			remainingDelta = remainingDelta.Sub(allocation)
+		}
+
+		if err := k.adjustValidatorBedrockToken(ctx, validator, asset, allocation); err != nil {
+			k.Logger(ctx).Error("failed to adjust bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
+		}
+	}
+
+	return nil
+}
+
+// adjustValidatorBedrockToken adds (positive) or subtracts (negative) tokens of a specific asset to a validator's TokensBedrock
+func (k *Keeper) adjustValidatorBedrockToken(ctx sdk.Context, validator types.ValidatorHV, asset types.Asset, delta sdkmath.Int) error {
 	idx := -1
-	for i, td := range v.TokensBedrock {
-		if td != nil && td.Asset == types.Asset_BTC {
+	for i, td := range validator.TokensBedrock {
+		if td != nil && td.Asset == asset {
 			idx = i
 			break
 		}
 	}
+
 	if idx >= 0 {
-		newAmt := v.TokensBedrock[idx].Amount.Add(delta)
+		newAmt := validator.TokensBedrock[idx].Amount.Add(delta)
 		if newAmt.IsNegative() {
 			newAmt = sdkmath.ZeroInt()
 		}
-		v.TokensBedrock[idx].Amount = newAmt
+		validator.TokensBedrock[idx].Amount = newAmt
 	} else {
 		amt := delta
 		if amt.IsNegative() {
 			amt = sdkmath.ZeroInt()
 		}
-		v.TokensBedrock = append(v.TokensBedrock, &types.TokenData{Asset: types.Asset_BTC, Amount: amt})
+		validator.TokensBedrock = append(validator.TokensBedrock, &types.TokenData{Asset: asset, Amount: amt})
 	}
-	return k.SetValidator(ctx, v)
+
+	return k.SetValidator(ctx, validator)
+}
+
+// rebalanceBedrockBTC rebalances bedrock BTC across the bedrock validator set
+// to keep proportions aligned with native stake. This is called every block.
+func (k *Keeper) rebalanceBedrockBTC(ctx sdk.Context) error {
+	return k.rebalanceBedrockAsset(ctx, types.Asset_BTC)
+}
+
+// rebalanceBedrockAsset rebalances a specific bedrock asset across the bedrock validator set
+// to keep proportions aligned with native stake.
+func (k *Keeper) rebalanceBedrockAsset(ctx sdk.Context, asset types.Asset) error {
+	// Get all validators in the bedrock set
+	bedrockValidators := make([]types.ValidatorHV, 0)
+	totalNativeStake := sdkmath.ZeroInt()
+	totalBedrockTokens := sdkmath.ZeroInt()
+
+	err := k.BedrockValidatorSet.Walk(ctx, nil, func(valAddr string, inSet bool) (bool, error) {
+		if !inSet {
+			return false, nil
+		}
+
+		validator, err := k.GetZenrockValidatorFromBech32(ctx, valAddr)
+		if err != nil {
+			k.Logger(ctx).Error("validator in bedrock set not found during rebalance", "address", valAddr, "error", err)
+			return false, nil
+		}
+
+		// Get current bedrock tokens for this validator
+		currentTokens := k.getBedrockTokenAmount(validator, asset)
+
+		bedrockValidators = append(bedrockValidators, validator)
+		totalNativeStake = totalNativeStake.Add(validator.TokensNative)
+		totalBedrockTokens = totalBedrockTokens.Add(currentTokens)
+		return false, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// If no validators in bedrock set or no tokens to rebalance, skip
+	if len(bedrockValidators) == 0 || totalBedrockTokens.IsZero() {
+		return nil
+	}
+
+	// If total native stake is zero, distribute equally
+	if totalNativeStake.IsZero() {
+		amountPerValidator := totalBedrockTokens.Quo(sdkmath.NewInt(int64(len(bedrockValidators))))
+		for _, validator := range bedrockValidators {
+			currentTokens := k.getBedrockTokenAmount(validator, asset)
+			adjustment := amountPerValidator.Sub(currentTokens)
+			if !adjustment.IsZero() {
+				if err := k.adjustValidatorBedrockToken(ctx, validator, asset, adjustment); err != nil {
+					k.Logger(ctx).Error("failed to rebalance bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
+				}
+			}
+		}
+		return nil
+	}
+
+	// Calculate target amounts and adjust
+	remainingTokens := totalBedrockTokens
+	for i, validator := range bedrockValidators {
+		var targetAmount sdkmath.Int
+		if i == len(bedrockValidators)-1 {
+			// Last validator gets the remaining amount to handle rounding
+			targetAmount = remainingTokens
+		} else {
+			// Calculate proportional target: (validator.TokensNative / totalNativeStake) * totalBedrockTokens
+			targetAmount = validator.TokensNative.Mul(totalBedrockTokens).Quo(totalNativeStake)
+			remainingTokens = remainingTokens.Sub(targetAmount)
+		}
+
+		currentTokens := k.getBedrockTokenAmount(validator, asset)
+		adjustment := targetAmount.Sub(currentTokens)
+
+		if !adjustment.IsZero() {
+			if err := k.adjustValidatorBedrockToken(ctx, validator, asset, adjustment); err != nil {
+				k.Logger(ctx).Error("failed to rebalance bedrock tokens for validator", "asset", asset.String(), "validator", validator.OperatorAddress, "error", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// rebalanceAllBedrockAssets recalculates distributions for every bedrock-tracked asset.
+func (k *Keeper) rebalanceAllBedrockAssets(ctx sdk.Context) error {
+	assets := []types.Asset{types.Asset_BTC, types.Asset_ZEC}
+	for _, asset := range assets {
+		if err := k.rebalanceBedrockAsset(ctx, asset); err != nil {
+			return err
+		}
+	}
+	return nil
 }

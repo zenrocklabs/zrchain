@@ -90,6 +90,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Validate and create ZCash client
+	zcashClient, err := validateZcashClient(cfg)
+	if err != nil {
+		slog.Error("ZCash client validation failed", "error", err)
+		os.Exit(1)
+	}
+
 	// Create zrChain client without validation for better UX
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
@@ -97,7 +104,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zrChainQueryClient, *flags.debug, *flags.skipInitialWait, *flags.testReset)
+	oracle := NewOracle(cfg, ethClient, &neutrinoServer, solanaClient, zcashClient, zrChainQueryClient, *flags.debug, *flags.skipInitialWait, *flags.testReset)
 
 	go startGRPCServer(oracle, cfg.GRPCPort)
 
@@ -108,15 +115,6 @@ func main() {
 			slog.Error("Error in Ethereum oracle loop", "error", err)
 		}
 	}()
-
-	if !*flags.noAVS {
-		go func() {
-			if err := oracle.runEigenOperator(); err != nil {
-				slog.Error("Error starting EigenLayer Operator", "error", err)
-				os.Exit(1)
-			}
-		}()
-	}
 
 	// Graceful shutdown
 	sigChan := make(chan os.Signal, 1)
@@ -138,7 +136,6 @@ type flagConfig struct {
 	configFile      *string
 	configDir       *string
 	version         *bool
-	noAVS           *bool
 	skipInitialWait *bool
 	noSolana        *bool
 	testReset       *bool
@@ -156,7 +153,6 @@ func parseFlags() *flagConfig {
 		configFile:      flag.String("config", "", "Override config file path (default: config.yaml)"),
 		configDir:       flag.String("config-dir", "", "Directory to search for config.yaml"),
 		version:         flag.Bool("version", false, "Display version information and exit"),
-		noAVS:           flag.Bool("no-avs", false, "Disable EigenLayer Operator (AVS)"),
 		skipInitialWait: flag.Bool("skip-initial-wait", false, "Skip initial NTP alignment wait and fire tick immediately"),
 		noSolana:        flag.Bool("no-solana", false, "Disable Solana functionality for testing"),
 		testReset:       flag.Bool("test-reset", false, "Force periodic oracle state reset every 2 minutes (testing only)"),
@@ -219,6 +215,31 @@ func validateSolanaClient(cfg sidecartypes.Config, noSolana bool) (*solana.Clien
 	}
 
 	return solanaClient, nil
+}
+
+// validateZcashClient creates and validates a ZCash client connection if configured
+func validateZcashClient(cfg sidecartypes.Config) (*ZcashClient, error) {
+	// Validate ZCash RPC endpoint is configured
+	zcashEndpoint, ok := cfg.ZcashRPC[cfg.Network]
+	if !ok || zcashEndpoint == "" {
+		slog.Info("No ZCash RPC endpoint configured, ZCash block header tracking disabled", "network", cfg.Network)
+		return nil, nil
+	}
+
+	// Create ZCash client
+	zcashClient := NewZcashClient(zcashEndpoint, true)
+
+	// Test connectivity
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	blockCount, err := zcashClient.GetBlockCount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify ZCash client connectivity: %w", err)
+	}
+
+	slog.Info("Successfully verified ZCash client connectivity", "endpoint", zcashEndpoint, "blockHeight", blockCount)
+	return zcashClient, nil
 }
 
 // validateZrChainClient creates and validates a zrChain query client connection

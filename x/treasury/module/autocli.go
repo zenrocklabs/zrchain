@@ -90,6 +90,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "zenbtc-wallets --recipient-addr [recipient-addr] --chain-type [chain-type] --chain-id [chain-id] --return-addr [return-addr]",
 					Short:     "query-zenbtc-wallets optionally filtering by recipient address, chain type, chain id, and return address",
 				},
+				{
+					RpcMethod: "DctWallets",
+					Use:       "dct-wallets --asset-type [asset-type] --wallet-type [wallet-type] --chain-id [chain-id] --recipient-addr [recipient-addr]",
+					Short:     "query-dct-wallets optionally filtering by asset type, wallet type, chain id, and recipient address",
+				},
 
 				// this line is used by ignite scaffolding # autocli/query
 			},

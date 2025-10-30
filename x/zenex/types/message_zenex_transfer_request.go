@@ -29,7 +29,11 @@ func (msg *MsgZenexTransferRequest) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
-	if msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET && msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET && msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET {
+	if msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_MAINNET &&
+		msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_TESTNET &&
+		msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET &&
+		msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_ZCASH_MAINNET &&
+		msg.WalletType != treasurytypes.WalletType_WALLET_TYPE_ZCASH_TESTNET {
 		return fmt.Errorf("invalid wallet type: %s", msg.WalletType.String())
 	}
 

@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/zenrocklabs/zenbtc/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 // ZenBTCTxClient provides a client interface for interacting with the ZenBTC module.

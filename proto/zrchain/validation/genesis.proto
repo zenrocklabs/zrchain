@@ -12,6 +12,7 @@ import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
 import "api/sidecar_service.proto";
 import "zrchain/zenbtc/mint.proto";
+import "zrchain/dct/mint.proto";
 
 // GenesisState defines the staking module's genesis state.
 message GenesisState {
@@ -148,6 +149,23 @@ message GenesisState {
   // latest_btc_header_height defines the latest Bitcoin header height at genesis.
   int64 latest_btc_header_height = 29
       [ (amino.dont_omitempty) = true ];    
+
+  // solana_dct_accounts_requested defines the Solana accounts requested for DCT assets at genesis.
+  map<string, bool> solana_dct_accounts_requested = 30
+      [ (amino.dont_omitempty) = true ];
+
+  // zcash_block_headers defines the ZCash block headers at genesis.
+  map<int64, api.BTCBlockHeader> zcash_block_headers = 31
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  // requested_historical_zcash_headers defines the requested historical ZCash headers at genesis.
+  dct.RequestedZcashHeaders requested_historical_zcash_headers = 32
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  // latest_zcash_header_height defines the latest ZCash header height at genesis.
+  int64 latest_zcash_header_height = 33
+      [ (amino.dont_omitempty) = true ];
+
 }
 
 // LastValidatorPower required for validator set update logic.

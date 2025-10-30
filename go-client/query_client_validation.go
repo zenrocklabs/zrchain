@@ -53,3 +53,8 @@ func (c *ValidationQueryClient) UnbondingValidators(ctx context.Context, pageReq
 func (c *ValidationQueryClient) BackfillRequests(ctx context.Context) (*types.QueryBackfillRequestsResponse, error) {
 	return c.client.QueryBackfillRequests(ctx, &types.QueryBackfillRequestsRequest{})
 }
+
+// SolanaCounters queries the stored Solana counters, optionally filtering by asset.
+func (c *ValidationQueryClient) SolanaCounters(ctx context.Context, asset string) (*types.QuerySolanaCountersResponse, error) {
+	return c.client.SolanaCounters(ctx, &types.QuerySolanaCountersRequest{Asset: asset})
+}

@@ -14,6 +14,7 @@ import (
 )
 
 func (s *IntegrationTestSuite) TestMsgSwapRequest() {
+	s.T().Skip("zenex module is currently disabled")
 
 	tests := []struct {
 		name           string

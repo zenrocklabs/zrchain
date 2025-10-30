@@ -5,6 +5,7 @@ from cosmos_proto import cosmos_pb2 as _cosmos_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.protobuf import any_pb2 as _any_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
+from zrchain.dct import params_pb2 as _params_pb2
 from zrchain.validation import hybrid_validation_pb2 as _hybrid_validation_pb2
 from zrchain.validation import staking_pb2 as _staking_pb2
 from google.protobuf.internal import containers as _containers
@@ -195,11 +196,11 @@ class MsgManuallyInputBitcoinHeader(_message.Message):
     def __init__(self, authority: _Optional[str] = ..., header: _Optional[_Union[BitcoinHeader, _Mapping]] = ...) -> None: ...
 
 class BitcoinHeader(_message.Message):
-    __slots__ = ("version", "prev_block", "merkle_root", "timestamp", "bits", "nonce", "block_hash", "block_height")
+    __slots__ = ("version", "prev_block", "merkle_root", "time_stamp", "bits", "nonce", "block_hash", "block_height")
     VERSION_FIELD_NUMBER: _ClassVar[int]
     PREV_BLOCK_FIELD_NUMBER: _ClassVar[int]
     MERKLE_ROOT_FIELD_NUMBER: _ClassVar[int]
-    TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
+    TIME_STAMP_FIELD_NUMBER: _ClassVar[int]
     BITS_FIELD_NUMBER: _ClassVar[int]
     NONCE_FIELD_NUMBER: _ClassVar[int]
     BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
@@ -207,14 +208,46 @@ class BitcoinHeader(_message.Message):
     version: int
     prev_block: str
     merkle_root: str
-    timestamp: int
+    time_stamp: int
     bits: int
     nonce: int
     block_hash: str
     block_height: int
-    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., timestamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
+    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., time_stamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
 
 class MsgManuallyInputBitcoinHeaderResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgManuallyInputZcashHeader(_message.Message):
+    __slots__ = ("authority", "header")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    HEADER_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    header: ZcashHeader
+    def __init__(self, authority: _Optional[str] = ..., header: _Optional[_Union[ZcashHeader, _Mapping]] = ...) -> None: ...
+
+class ZcashHeader(_message.Message):
+    __slots__ = ("version", "prev_block", "merkle_root", "time_stamp", "bits", "nonce", "block_hash", "block_height")
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    PREV_BLOCK_FIELD_NUMBER: _ClassVar[int]
+    MERKLE_ROOT_FIELD_NUMBER: _ClassVar[int]
+    TIME_STAMP_FIELD_NUMBER: _ClassVar[int]
+    BITS_FIELD_NUMBER: _ClassVar[int]
+    NONCE_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
+    BLOCK_HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    version: int
+    prev_block: str
+    merkle_root: str
+    time_stamp: int
+    bits: int
+    nonce: int
+    block_hash: str
+    block_height: int
+    def __init__(self, version: _Optional[int] = ..., prev_block: _Optional[str] = ..., merkle_root: _Optional[str] = ..., time_stamp: _Optional[int] = ..., bits: _Optional[int] = ..., nonce: _Optional[int] = ..., block_hash: _Optional[str] = ..., block_height: _Optional[int] = ...) -> None: ...
+
+class MsgManuallyInputZcashHeaderResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
@@ -223,3 +256,61 @@ class BackfillRequests(_message.Message):
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
     requests: _containers.RepeatedCompositeFieldContainer[MsgTriggerEventBackfill]
     def __init__(self, requests: _Optional[_Iterable[_Union[MsgTriggerEventBackfill, _Mapping]]] = ...) -> None: ...
+
+class MsgAddToBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgAddToBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgRemoveFromBedrockValSet(_message.Message):
+    __slots__ = ("authority", "validator_address")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    VALIDATOR_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    validator_address: str
+    def __init__(self, authority: _Optional[str] = ..., validator_address: _Optional[str] = ...) -> None: ...
+
+class MsgRemoveFromBedrockValSetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgAdvanceSolanaNonce(_message.Message):
+    __slots__ = ("authority", "zenbtc", "asset", "recent_blockhash", "caip2_chain_id")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    ZENBTC_FIELD_NUMBER: _ClassVar[int]
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    RECENT_BLOCKHASH_FIELD_NUMBER: _ClassVar[int]
+    CAIP2_CHAIN_ID_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    zenbtc: bool
+    asset: _params_pb2.Asset
+    recent_blockhash: str
+    caip2_chain_id: str
+    def __init__(self, authority: _Optional[str] = ..., zenbtc: bool = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ..., recent_blockhash: _Optional[str] = ..., caip2_chain_id: _Optional[str] = ...) -> None: ...
+
+class MsgAdvanceSolanaNonceResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MsgSetSolanaCounters(_message.Message):
+    __slots__ = ("authority", "asset", "mint_counter", "redemption_counter")
+    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
+    ASSET_FIELD_NUMBER: _ClassVar[int]
+    MINT_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    REDEMPTION_COUNTER_FIELD_NUMBER: _ClassVar[int]
+    authority: str
+    asset: _params_pb2.Asset
+    mint_counter: int
+    redemption_counter: int
+    def __init__(self, authority: _Optional[str] = ..., asset: _Optional[_Union[_params_pb2.Asset, str]] = ..., mint_counter: _Optional[int] = ..., redemption_counter: _Optional[int] = ...) -> None: ...
+
+class MsgSetSolanaCountersResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

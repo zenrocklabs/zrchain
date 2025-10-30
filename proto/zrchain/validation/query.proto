@@ -8,6 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "zrchain/validation/hybrid_validation.proto";
+import "zrchain/validation/solana.proto";
 import "zrchain/validation/staking.proto";
 import "zrchain/validation/tx.proto";
 
@@ -158,6 +159,12 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
         "/cosmos/validation/v1beta1/backfill_requests";
+  }
+
+  // SolanaCounters queries stored Solana counters.
+  rpc SolanaCounters(QuerySolanaCountersRequest) returns (QuerySolanaCountersResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/cosmos/validation/v1beta1/solana_counters";
   }
 }
 
@@ -477,4 +484,14 @@ message QueryBackfillRequestsRequest {}
 message QueryBackfillRequestsResponse {
   // backfill_requests contains the list of backfill requests.
   BackfillRequests backfill_requests = 1;
+}
+
+// QuerySolanaCountersRequest allows querying Solana counters, optionally filtered by asset.
+message QuerySolanaCountersRequest {
+  string asset = 1;
+}
+
+// QuerySolanaCountersResponse returns stored counters keyed by asset name.
+message QuerySolanaCountersResponse {
+  map<string, SolanaCounters> counters = 1;
 }

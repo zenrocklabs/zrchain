@@ -15,6 +15,10 @@ service SidecarService {
       returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestBitcoinBlockHeader(LatestBitcoinBlockHeaderRequest)
       returns (BitcoinBlockHeaderResponse) {}
+  rpc GetZcashBlockHeaderByHeight(BitcoinBlockHeaderByHeightRequest)
+      returns (BitcoinBlockHeaderResponse) {}
+  rpc GetLatestZcashBlockHeader(LatestBitcoinBlockHeaderRequest)
+      returns (BitcoinBlockHeaderResponse) {}
   rpc GetLatestEthereumNonceForAccount(LatestEthereumNonceForAccountRequest)
       returns (LatestEthereumNonceForAccountResponse) {}
   rpc GetSolanaAccountInfo(SolanaAccountInfoRequest)
@@ -43,6 +47,9 @@ message BTCBlockHeader {
   int64 Nonce = 6;
   string BlockHash = 7;
   int64 BlockHeight = 8;
+  string NonceHex = 9; // For Zcash 256-bit nonce (32 bytes as hex string)
+  string BlockCommitments = 10; // For Zcash block commitments hash (hashReserved field, 32 bytes as hex string)
+  string Solution = 11; // For Zcash Equihash solution (variable length hex string)
 }
 
 message Redemption {
@@ -59,12 +66,13 @@ message BurnEvent {
   uint64 amount = 5;
   bool IsZenBTC = 6;
   uint64 height = 7;
+  Coin coin = 8;
 }
 
 message SidecarStateRequest {}
 
 message SidecarStateResponse {
-  bytes EigenDelegations = 1;
+  bytes EigenDelegations = 1 [deprecated = true];
   uint64 EthBlockHeight = 2;
   uint64 EthGasLimit = 3;
   uint64 EthBaseFee = 4;
@@ -75,6 +83,7 @@ message SidecarStateResponse {
   string ROCKUSDPrice = 9;
   string BTCUSDPrice = 10;
   string ETHUSDPrice = 11;
+  string ZECUSDPrice = 15;
   repeated SolanaMintEvent SolanaMintEvents = 12
       [ (gogoproto.nullable) = false ];
   repeated BurnEvent SolanaBurnEvents = 13 [ (gogoproto.nullable) = false ];
@@ -95,6 +104,7 @@ enum Coin {
   UNSPECIFIED = 0;
   ZENBTC = 1;
   ROCK = 2;
+  ZENZEC = 3;
 }
 
 message SolanaMintEvent {

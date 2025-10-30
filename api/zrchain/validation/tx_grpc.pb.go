@@ -30,6 +30,11 @@ const (
 	Msg_TriggerEventBackfill_FullMethodName       = "/zrchain.validation.Msg/TriggerEventBackfill"
 	Msg_RequestHeaderBackfill_FullMethodName      = "/zrchain.validation.Msg/RequestHeaderBackfill"
 	Msg_ManuallyInputBitcoinHeader_FullMethodName = "/zrchain.validation.Msg/ManuallyInputBitcoinHeader"
+	Msg_ManuallyInputZcashHeader_FullMethodName   = "/zrchain.validation.Msg/ManuallyInputZcashHeader"
+	Msg_AddToBedrockValSet_FullMethodName         = "/zrchain.validation.Msg/AddToBedrockValSet"
+	Msg_RemoveFromBedrockValSet_FullMethodName    = "/zrchain.validation.Msg/RemoveFromBedrockValSet"
+	Msg_AdvanceSolanaNonce_FullMethodName         = "/zrchain.validation.Msg/AdvanceSolanaNonce"
+	Msg_SetSolanaCounters_FullMethodName          = "/zrchain.validation.Msg/SetSolanaCounters"
 )
 
 // MsgClient is the client API for Msg service.
@@ -67,6 +72,19 @@ type MsgClient interface {
 	RequestHeaderBackfill(ctx context.Context, in *MsgRequestHeaderBackfill, opts ...grpc.CallOption) (*MsgRequestHeaderBackfillResponse, error)
 	// ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
 	ManuallyInputBitcoinHeader(ctx context.Context, in *MsgManuallyInputBitcoinHeader, opts ...grpc.CallOption) (*MsgManuallyInputBitcoinHeaderResponse, error)
+	// ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+	ManuallyInputZcashHeader(ctx context.Context, in *MsgManuallyInputZcashHeader, opts ...grpc.CallOption) (*MsgManuallyInputZcashHeaderResponse, error)
+	// AddToBedrockValSet adds a validator to the bedrock validator set.
+	AddToBedrockValSet(ctx context.Context, in *MsgAddToBedrockValSet, opts ...grpc.CallOption) (*MsgAddToBedrockValSetResponse, error)
+	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
+	RemoveFromBedrockValSet(ctx context.Context, in *MsgRemoveFromBedrockValSet, opts ...grpc.CallOption) (*MsgRemoveFromBedrockValSetResponse, error)
+	// AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+	// advances a configured Solana durable nonce account using a supplied recent
+	// blockhash.
+	AdvanceSolanaNonce(ctx context.Context, in *MsgAdvanceSolanaNonce, opts ...grpc.CallOption) (*MsgAdvanceSolanaNonceResponse, error)
+	// SetSolanaCounters allows an authorized account to set the mint and redemption
+	// counters for a specific Solana asset and global config PDA.
+	SetSolanaCounters(ctx context.Context, in *MsgSetSolanaCounters, opts ...grpc.CallOption) (*MsgSetSolanaCountersResponse, error)
 }
 
 type msgClient struct {
@@ -187,6 +205,56 @@ func (c *msgClient) ManuallyInputBitcoinHeader(ctx context.Context, in *MsgManua
 	return out, nil
 }
 
+func (c *msgClient) ManuallyInputZcashHeader(ctx context.Context, in *MsgManuallyInputZcashHeader, opts ...grpc.CallOption) (*MsgManuallyInputZcashHeaderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgManuallyInputZcashHeaderResponse)
+	err := c.cc.Invoke(ctx, Msg_ManuallyInputZcashHeader_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) AddToBedrockValSet(ctx context.Context, in *MsgAddToBedrockValSet, opts ...grpc.CallOption) (*MsgAddToBedrockValSetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgAddToBedrockValSetResponse)
+	err := c.cc.Invoke(ctx, Msg_AddToBedrockValSet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveFromBedrockValSet(ctx context.Context, in *MsgRemoveFromBedrockValSet, opts ...grpc.CallOption) (*MsgRemoveFromBedrockValSetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgRemoveFromBedrockValSetResponse)
+	err := c.cc.Invoke(ctx, Msg_RemoveFromBedrockValSet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) AdvanceSolanaNonce(ctx context.Context, in *MsgAdvanceSolanaNonce, opts ...grpc.CallOption) (*MsgAdvanceSolanaNonceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgAdvanceSolanaNonceResponse)
+	err := c.cc.Invoke(ctx, Msg_AdvanceSolanaNonce_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) SetSolanaCounters(ctx context.Context, in *MsgSetSolanaCounters, opts ...grpc.CallOption) (*MsgSetSolanaCountersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgSetSolanaCountersResponse)
+	err := c.cc.Invoke(ctx, Msg_SetSolanaCounters_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
@@ -222,6 +290,19 @@ type MsgServer interface {
 	RequestHeaderBackfill(context.Context, *MsgRequestHeaderBackfill) (*MsgRequestHeaderBackfillResponse, error)
 	// ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
 	ManuallyInputBitcoinHeader(context.Context, *MsgManuallyInputBitcoinHeader) (*MsgManuallyInputBitcoinHeaderResponse, error)
+	// ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+	ManuallyInputZcashHeader(context.Context, *MsgManuallyInputZcashHeader) (*MsgManuallyInputZcashHeaderResponse, error)
+	// AddToBedrockValSet adds a validator to the bedrock validator set.
+	AddToBedrockValSet(context.Context, *MsgAddToBedrockValSet) (*MsgAddToBedrockValSetResponse, error)
+	// RemoveFromBedrockValSet removes a validator from the bedrock validator set.
+	RemoveFromBedrockValSet(context.Context, *MsgRemoveFromBedrockValSet) (*MsgRemoveFromBedrockValSetResponse, error)
+	// AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+	// advances a configured Solana durable nonce account using a supplied recent
+	// blockhash.
+	AdvanceSolanaNonce(context.Context, *MsgAdvanceSolanaNonce) (*MsgAdvanceSolanaNonceResponse, error)
+	// SetSolanaCounters allows an authorized account to set the mint and redemption
+	// counters for a specific Solana asset and global config PDA.
+	SetSolanaCounters(context.Context, *MsgSetSolanaCounters) (*MsgSetSolanaCountersResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -264,6 +345,21 @@ func (UnimplementedMsgServer) RequestHeaderBackfill(context.Context, *MsgRequest
 }
 func (UnimplementedMsgServer) ManuallyInputBitcoinHeader(context.Context, *MsgManuallyInputBitcoinHeader) (*MsgManuallyInputBitcoinHeaderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ManuallyInputBitcoinHeader not implemented")
+}
+func (UnimplementedMsgServer) ManuallyInputZcashHeader(context.Context, *MsgManuallyInputZcashHeader) (*MsgManuallyInputZcashHeaderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ManuallyInputZcashHeader not implemented")
+}
+func (UnimplementedMsgServer) AddToBedrockValSet(context.Context, *MsgAddToBedrockValSet) (*MsgAddToBedrockValSetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddToBedrockValSet not implemented")
+}
+func (UnimplementedMsgServer) RemoveFromBedrockValSet(context.Context, *MsgRemoveFromBedrockValSet) (*MsgRemoveFromBedrockValSetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromBedrockValSet not implemented")
+}
+func (UnimplementedMsgServer) AdvanceSolanaNonce(context.Context, *MsgAdvanceSolanaNonce) (*MsgAdvanceSolanaNonceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdvanceSolanaNonce not implemented")
+}
+func (UnimplementedMsgServer) SetSolanaCounters(context.Context, *MsgSetSolanaCounters) (*MsgSetSolanaCountersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetSolanaCounters not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -484,6 +580,96 @@ func _Msg_ManuallyInputBitcoinHeader_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ManuallyInputZcashHeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgManuallyInputZcashHeader)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ManuallyInputZcashHeader(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_ManuallyInputZcashHeader_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ManuallyInputZcashHeader(ctx, req.(*MsgManuallyInputZcashHeader))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_AddToBedrockValSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddToBedrockValSet)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddToBedrockValSet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AddToBedrockValSet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddToBedrockValSet(ctx, req.(*MsgAddToBedrockValSet))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveFromBedrockValSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveFromBedrockValSet)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveFromBedrockValSet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_RemoveFromBedrockValSet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveFromBedrockValSet(ctx, req.(*MsgRemoveFromBedrockValSet))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_AdvanceSolanaNonce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAdvanceSolanaNonce)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AdvanceSolanaNonce(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AdvanceSolanaNonce_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AdvanceSolanaNonce(ctx, req.(*MsgAdvanceSolanaNonce))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_SetSolanaCounters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetSolanaCounters)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetSolanaCounters(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_SetSolanaCounters_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetSolanaCounters(ctx, req.(*MsgSetSolanaCounters))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -534,6 +720,26 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ManuallyInputBitcoinHeader",
 			Handler:    _Msg_ManuallyInputBitcoinHeader_Handler,
+		},
+		{
+			MethodName: "ManuallyInputZcashHeader",
+			Handler:    _Msg_ManuallyInputZcashHeader_Handler,
+		},
+		{
+			MethodName: "AddToBedrockValSet",
+			Handler:    _Msg_AddToBedrockValSet_Handler,
+		},
+		{
+			MethodName: "RemoveFromBedrockValSet",
+			Handler:    _Msg_RemoveFromBedrockValSet_Handler,
+		},
+		{
+			MethodName: "AdvanceSolanaNonce",
+			Handler:    _Msg_AdvanceSolanaNonce_Handler,
+		},
+		{
+			MethodName: "SetSolanaCounters",
+			Handler:    _Msg_SetSolanaCounters_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

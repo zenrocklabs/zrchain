@@ -1,6 +1,9 @@
 package solzenbtc
 
 import (
+	"fmt"
+	"math/big"
+
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
 	"github.com/gagliardetto/solana-go"
 )
@@ -10,12 +13,17 @@ func Initialize(
 	args zenbtc_spl_token.InitializeArgs,
 	signer solana.PublicKey,
 	mint solana.PublicKey,
-
-) *zenbtc_spl_token.Instruction {
+) (*zenbtc_spl_token.Instruction, error) {
 	zenbtc_spl_token.SetProgramID(programID)
 
-	globalConfigPDA, _ := GetGlobalConfigPDA(programID)
-	wrappedMetadataPDA, _ := GetMetadataPDA(mint)
+	globalConfigPDA, err := GetGlobalConfigPDA(programID)
+	if err != nil {
+		return nil, err
+	}
+	wrappedMetadataPDA, err := GetMetadataPDA(mint)
+	if err != nil {
+		return nil, err
+	}
 
 	instruction := zenbtc_spl_token.NewInitializeInstruction(
 		args,
@@ -29,11 +37,13 @@ func Initialize(
 		solana.SysVarRentPubkey,
 	).Build()
 
-	return instruction
+	return instruction, nil
 }
 
 func Wrap(
 	programID solana.PublicKey,
+	eventStoreProgramID solana.PublicKey,
+	eventID *big.Int,
 	args zenbtc_spl_token.WrapArgs,
 	signer solana.PublicKey,
 	mint solana.PublicKey,
@@ -42,12 +52,29 @@ func Wrap(
 	feeWalletAta solana.PublicKey,
 	receiver solana.PublicKey,
 	receiverAta solana.PublicKey,
-) *zenbtc_spl_token.Instruction {
+) (*zenbtc_spl_token.Instruction, error) {
 	zenbtc_spl_token.SetProgramID(programID)
 
-	globalConfigPDA, _ := GetGlobalConfigPDA(programID)
+	if eventID == nil {
+		return nil, fmt.Errorf("eventID is required")
+	}
 
-	instruction := zenbtc_spl_token.NewWrapInstruction(
+	globalConfigPDA, err := GetGlobalConfigPDA(programID)
+	if err != nil {
+		return nil, err
+	}
+
+	eventStoreGlobalConfig, err := GetEventStoreGlobalConfigPDA(eventStoreProgramID)
+	if err != nil {
+		return nil, err
+	}
+
+	zenbtcWrapShard, err := GetEventStoreZenbtcWrapShardPDA(eventStoreProgramID, eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := zenbtc_spl_token.NewWrapInstruction(
 		args,
 		signer,
 		globalConfigPDA,
@@ -60,26 +87,61 @@ func Wrap(
 		solana.SystemProgramID,
 		solana.TokenProgramID,
 		solana.SPLAssociatedTokenAccountProgramID,
-	).Build()
+		eventStoreProgramID,
+		eventStoreGlobalConfig,
+		programID,
+		zenbtcWrapShard,
+	)
 
-	return instruction
+	if account := builder.GetGlobalConfigAccount(); account != nil {
+		account.WRITE()
+	}
+	if account := builder.GetZenbtcWrapShardAccount(); account != nil {
+		account.WRITE()
+	}
+
+	instruction, err := builder.ValidateAndBuild()
+	if err != nil {
+		return nil, err
+	}
+
+	return instruction, nil
 }
 
 func Unwrap(
 	programID solana.PublicKey,
+	eventStoreProgramID solana.PublicKey,
+	eventID *big.Int,
 	args zenbtc_spl_token.UnwrapArgs,
 	signer solana.PublicKey,
 	mint solana.PublicKey,
 	multisigKey solana.PublicKey,
 	feeWallet solana.PublicKey,
-) *zenbtc_spl_token.Instruction {
+) (*zenbtc_spl_token.Instruction, error) {
 	zenbtc_spl_token.SetProgramID(programID)
 
-	globalConfigPDA, _ := GetGlobalConfigPDA(programID)
+	if eventID == nil {
+		return nil, fmt.Errorf("eventID is required")
+	}
+
+	globalConfigPDA, err := GetGlobalConfigPDA(programID)
+	if err != nil {
+		return nil, err
+	}
+	eventStoreGlobalConfig, err := GetEventStoreGlobalConfigPDA(eventStoreProgramID)
+	if err != nil {
+		return nil, err
+	}
+
+	zenbtcUnwrapShard, err := GetEventStoreZenbtcUnwrapShardPDA(eventStoreProgramID, eventID)
+	if err != nil {
+		return nil, err
+	}
+
 	signerAta, _, _ := solana.FindAssociatedTokenAddress(signer, mint)
 	feeWalletAta, _, _ := solana.FindAssociatedTokenAddress(feeWallet, mint)
 
-	instruction := zenbtc_spl_token.NewUnwrapInstruction(
+	builder := zenbtc_spl_token.NewUnwrapInstruction(
 		args,
 		signer,
 		globalConfigPDA,
@@ -91,7 +153,20 @@ func Unwrap(
 		solana.SystemProgramID,
 		solana.TokenProgramID,
 		solana.SPLAssociatedTokenAccountProgramID,
-	).Build()
+		eventStoreProgramID,
+		eventStoreGlobalConfig,
+		programID,
+		zenbtcUnwrapShard,
+	)
 
-	return instruction
+	if account := builder.GetZenbtcUnwrapShardAccount(); account != nil {
+		account.WRITE()
+	}
+
+	instruction, err := builder.ValidateAndBuild()
+	if err != nil {
+		return nil, err
+	}
+
+	return instruction, nil
 }

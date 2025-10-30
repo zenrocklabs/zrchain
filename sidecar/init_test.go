@@ -2,10 +2,8 @@ package main_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -13,13 +11,9 @@ import (
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar"
 	"github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/require"
-	servicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
-	taskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 )
 
 func initTestOracle() *sidecar.Oracle {
@@ -39,12 +33,19 @@ func initTestOracle() *sidecar.Oracle {
 
 	solanaClient := solanarpc.New(cfg.SolanaRPC[cfg.Network])
 
+	// Initialize ZCash client if configured
+	var zcashClient *sidecar.ZcashClient
+	if zcashEndpoint, ok := cfg.ZcashRPC[cfg.Network]; ok && zcashEndpoint != "" {
+		zcashClient = sidecar.NewZcashClient(zcashEndpoint, true)
+		log.Printf("Initialized ZCash client with endpoint: %s", zcashEndpoint)
+	}
+
 	zrChainQueryClient, err := client.NewQueryClient(cfg.ZRChainRPC, true)
 	if err != nil {
 		log.Fatalf("Refresh Address Client: failed to get new client: %v", err)
 	}
 
-	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zrChainQueryClient, true, true, false)
+	return sidecar.NewOracle(cfg, ethClient, nil, solanaClient, zcashClient, zrChainQueryClient, true, true, false)
 }
 
 func TestGetSidecarStateByEthHeight(t *testing.T) {
@@ -54,26 +55,20 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 
 	// Sample states
 	price1, _ := math.LegacyNewDecFromStr("123.45")
-	delegations1 := map[string]map[string]*big.Int{
-		"validator1": {"operator1": big.NewInt(1000)},
-	}
+
 	state1 := sidecartypes.OracleState{
-		EthBlockHeight:   100,
-		ROCKUSDPrice:     price1,
-		EthBaseFee:       50,
-		EigenDelegations: delegations1,
+		EthBlockHeight: 100,
+		ROCKUSDPrice:   price1,
+		EthBaseFee:     50,
 		// Populate other fields as necessary for thorough testing
 	}
 
 	price2, _ := math.LegacyNewDecFromStr("678.90")
-	delegations2 := map[string]map[string]*big.Int{
-		"validator2": {"operator2": big.NewInt(2000)},
-	}
+
 	state2 := sidecartypes.OracleState{
-		EthBlockHeight:   200,
-		ROCKUSDPrice:     price2,
-		EthBaseFee:       75,
-		EigenDelegations: delegations2,
+		EthBlockHeight: 200,
+		ROCKUSDPrice:   price2,
+		EthBaseFee:     75,
 	}
 
 	oracle.SetStateCacheForTesting([]sidecartypes.OracleState{state1, state2})
@@ -91,9 +86,6 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 		require.Equal(t, uint64(100), resp.EthBlockHeight)
 		require.Equal(t, state1.ROCKUSDPrice.String(), resp.ROCKUSDPrice)
 		require.Equal(t, state1.EthBaseFee, resp.EthBaseFee)
-
-		expectedDelegations1JSON, _ := json.Marshal(state1.EigenDelegations)
-		require.JSONEq(t, string(expectedDelegations1JSON), string(resp.EigenDelegations))
 	})
 
 	// Test Case 2: State not found
@@ -116,30 +108,7 @@ func TestGetSidecarStateByEthHeight(t *testing.T) {
 		require.Equal(t, uint64(200), resp.EthBlockHeight)
 		require.Equal(t, state2.ROCKUSDPrice.String(), resp.ROCKUSDPrice)
 		require.Equal(t, state2.EthBaseFee, resp.EthBaseFee)
-
-		expectedDelegations2JSON, _ := json.Marshal(state2.EigenDelegations)
-		require.JSONEq(t, string(expectedDelegations2JSON), string(resp.EigenDelegations))
 	})
-}
-
-func TestGetTaskManagerAndStakeRegistryAddrs(t *testing.T) {
-	t.Skip("Skipping test on CI")
-
-	o := initTestOracle()
-
-	contractServiceManager, err := servicemanager.NewContractZrServiceManager(common.HexToAddress(sidecartypes.ServiceManagerAddresses[o.Config.Network]), o.EthClient)
-	require.NoError(t, err)
-
-	taskManagerAddr, err := contractServiceManager.TaskManager(&bind.CallOpts{})
-	require.NoError(t, err)
-	fmt.Println("Task Manager Address:", taskManagerAddr)
-
-	contractInstance, err := taskmanager.NewContractZrTaskManager(taskManagerAddr, o.EthClient)
-	require.NoError(t, err)
-
-	stakeRegistryAddr, err := contractInstance.StakeRegistry(&bind.CallOpts{})
-	require.NoError(t, err)
-	fmt.Println("Stake Registry Address:", stakeRegistryAddr)
 }
 
 func TestGetSolanaAccountInfo(t *testing.T) {
@@ -202,4 +171,33 @@ func TestGetSolanaAccountInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetLatestZcashBlockHeader(t *testing.T) {
+	t.Skip("Skipping test on CI")
+
+	oracle := initTestOracle()
+	service := sidecar.NewOracleService(oracle)
+	require.NotNil(t, service)
+
+	req := &api.LatestBitcoinBlockHeaderRequest{
+		ChainName: "zcash",
+	}
+	resp, err := service.GetLatestZcashBlockHeader(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.BlockHeader)
+
+	fmt.Printf("\n=== Latest ZCash Block Header ===\n")
+	fmt.Printf("Block Height: %d\n", resp.BlockHeight)
+	fmt.Printf("Tip Height: %d\n", resp.TipHeight)
+	fmt.Printf("Block Hash: %s\n", resp.BlockHeader.BlockHash)
+	fmt.Printf("Previous Block: %s\n", resp.BlockHeader.PrevBlock)
+	fmt.Printf("Merkle Root: %s\n", resp.BlockHeader.MerkleRoot)
+	fmt.Printf("Timestamp: %d\n", resp.BlockHeader.TimeStamp)
+	fmt.Printf("Version: %d\n", resp.BlockHeader.Version)
+	fmt.Printf("Bits: %d\n", resp.BlockHeader.Bits)
+	fmt.Printf("Nonce: %d\n", resp.BlockHeader.Nonce)
+	fmt.Printf("================================\n\n")
 }

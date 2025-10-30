@@ -13,6 +13,8 @@ class WalletType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     WALLET_TYPE_BTC_MAINNET: _ClassVar[WalletType]
     WALLET_TYPE_BTC_REGNET: _ClassVar[WalletType]
     WALLET_TYPE_SOLANA: _ClassVar[WalletType]
+    WALLET_TYPE_ZCASH_MAINNET: _ClassVar[WalletType]
+    WALLET_TYPE_ZCASH_TESTNET: _ClassVar[WalletType]
 WALLET_TYPE_UNSPECIFIED: WalletType
 WALLET_TYPE_NATIVE: WalletType
 WALLET_TYPE_EVM: WalletType
@@ -20,3 +22,5 @@ WALLET_TYPE_BTC_TESTNET: WalletType
 WALLET_TYPE_BTC_MAINNET: WalletType
 WALLET_TYPE_BTC_REGNET: WalletType
 WALLET_TYPE_SOLANA: WalletType
+WALLET_TYPE_ZCASH_MAINNET: WalletType
+WALLET_TYPE_ZCASH_TESTNET: WalletType

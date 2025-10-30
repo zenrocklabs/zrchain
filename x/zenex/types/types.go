@@ -30,6 +30,10 @@ func ChainFromWalletType(walletType treasurytypes.WalletType) *chaincfg.Params {
 		return &chaincfg.TestNet3Params
 	case treasurytypes.WalletType_WALLET_TYPE_BTC_REGNET:
 		return &chaincfg.RegressionNetParams
+	case treasurytypes.WalletType_WALLET_TYPE_ZCASH_MAINNET:
+		return &chaincfg.MainNetParams // ZCash uses similar params structure
+	case treasurytypes.WalletType_WALLET_TYPE_ZCASH_TESTNET:
+		return &chaincfg.TestNet3Params // ZCash testnet (also used for regtest)
 	default:
 		return nil
 	}

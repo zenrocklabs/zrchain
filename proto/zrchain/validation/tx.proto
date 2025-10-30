@@ -9,6 +9,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
+import "zrchain/dct/params.proto";
 import "zrchain/validation/hybrid_validation.proto";
 import "zrchain/validation/staking.proto";
 
@@ -62,6 +63,29 @@ service Msg {
   // ManuallyInputBitcoinHeader injects a Bitcoin header directly into consensus state.
   rpc ManuallyInputBitcoinHeader(MsgManuallyInputBitcoinHeader)
       returns (MsgManuallyInputBitcoinHeaderResponse);
+
+  // ManuallyInputZcashHeader injects a Zcash header directly into consensus state.
+  rpc ManuallyInputZcashHeader(MsgManuallyInputZcashHeader)
+      returns (MsgManuallyInputZcashHeaderResponse);
+
+  // AddToBedrockValSet adds a validator to the bedrock validator set.
+  rpc AddToBedrockValSet(MsgAddToBedrockValSet)
+      returns (MsgAddToBedrockValSetResponse);
+
+  // RemoveFromBedrockValSet removes a validator from the bedrock validator set.
+  rpc RemoveFromBedrockValSet(MsgRemoveFromBedrockValSet)
+      returns (MsgRemoveFromBedrockValSetResponse);
+
+  // AdvanceSolanaNonce constructs and dispatches a maintenance transaction that
+  // advances a configured Solana durable nonce account using a supplied recent
+  // blockhash.
+  rpc AdvanceSolanaNonce(MsgAdvanceSolanaNonce)
+      returns (MsgAdvanceSolanaNonceResponse);
+
+  // SetSolanaCounters allows an authorized account to set the mint and redemption
+  // counters for a specific Solana asset and global config PDA.
+  rpc SetSolanaCounters(MsgSetSolanaCounters)
+      returns (MsgSetSolanaCountersResponse);
 }
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
@@ -340,7 +364,7 @@ message BitcoinHeader {
   int64 version = 1;
   string prev_block = 2;
   string merkle_root = 3;
-  int64 timestamp = 4;
+  int64 time_stamp = 4;
   int64 bits = 5;
   int64 nonce = 6;
   string block_hash = 7;
@@ -350,6 +374,37 @@ message BitcoinHeader {
 // MsgManuallyInputBitcoinHeaderResponse defines the response structure for
 // a manually provided Bitcoin header.
 message MsgManuallyInputBitcoinHeaderResponse {}
+
+// MsgManuallyInputZcashHeader allows an authorized account to provide all
+// fields of a Zcash block header manually.
+message MsgManuallyInputZcashHeader {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgManuallyInputZcashHeader";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // header contains the Zcash block header data to store.
+  ZcashHeader header = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// ZcashHeader mirrors the fields required for a Zcash block header.
+message ZcashHeader {
+  int64 version = 1;
+  string prev_block = 2;
+  string merkle_root = 3;
+  int64 time_stamp = 4;
+  int64 bits = 5;
+  int64 nonce = 6;
+  string block_hash = 7;
+  int64 block_height = 8;
+}
+
+// MsgManuallyInputZcashHeaderResponse defines the response structure for
+// a manually provided Zcash header.
+message MsgManuallyInputZcashHeaderResponse {}
 
 // EventType enumerates the possible event types for backfill requests.
 enum EventType {
@@ -371,3 +426,78 @@ message BackfillRequests {
   // requests is the list of backfill requests.
   repeated MsgTriggerEventBackfill requests = 1;
 }
+
+// MsgAddToBedrockValSet adds a validator to the bedrock validator set.
+message MsgAddToBedrockValSet {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgAddToBedrockValSet";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // validator_address is the address of the validator to add to the bedrock set.
+  string validator_address = 2
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+}
+
+// MsgAddToBedrockValSetResponse defines the response structure for
+// MsgAddToBedrockValSet.
+message MsgAddToBedrockValSetResponse {}
+
+// MsgRemoveFromBedrockValSet removes a validator from the bedrock validator set.
+message MsgRemoveFromBedrockValSet {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgRemoveFromBedrockValSet";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // validator_address is the address of the validator to remove from the bedrock set.
+  string validator_address = 2
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+}
+
+// MsgRemoveFromBedrockValSetResponse defines the response structure for
+// MsgRemoveFromBedrockValSet.
+message MsgRemoveFromBedrockValSetResponse {}
+
+// MsgAdvanceSolanaNonce submits a request to advance a Solana durable nonce
+// account using a provided recent blockhash.
+message MsgAdvanceSolanaNonce {
+  option (cosmos.msg.v1.signer) = "authority";
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // If true, the zenBTC Solana nonce account will be advanced. If false, a DCT
+  // asset must be provided.
+  bool zenbtc = 2;
+  zrchain.dct.Asset asset = 3;
+  string recent_blockhash = 4;
+  string caip2_chain_id = 5;
+}
+
+message MsgAdvanceSolanaNonceResponse {}
+
+// MsgSetSolanaCounters allows an authorized account to manually set the mint
+// and redemption counters for a specific Solana asset.
+message MsgSetSolanaCounters {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "zrchain/x/validation/MsgSetSolanaCounters";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset is the DCT asset for which to set the counters (e.g., ASSET_ZENBTC).
+  zrchain.dct.Asset asset = 2;
+
+  // mint_counter is the new mint counter value to set.
+  uint64 mint_counter = 3;
+
+  // redemption_counter is the new redemption counter value to set.
+  uint64 redemption_counter = 4;
+}
+
+// MsgSetSolanaCountersResponse defines the response structure for
+// MsgSetSolanaCounters.
+message MsgSetSolanaCountersResponse {}

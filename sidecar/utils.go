@@ -376,12 +376,12 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	}
 
 	return &oracleStateUpdate{
-		eigenDelegations:        make(map[string]map[string]*big.Int),
 		suggestedTip:            big.NewInt(0),
 		estimatedGas:            0,
 		ROCKUSDPrice:            math.LegacyZeroDec(),
 		BTCUSDPrice:             math.LegacyZeroDec(),
 		ETHUSDPrice:             math.LegacyZeroDec(),
+		ZECUSDPrice:             math.LegacyZeroDec(),
 		ethBurnEvents:           make([]api.BurnEvent, 0),
 		cleanedEthBurnEvents:    make(map[string]bool),
 		solanaBurnEvents:        make([]api.BurnEvent, 0),
@@ -390,6 +390,7 @@ func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 		SolanaMintEvents:        make([]api.SolanaMintEvent, 0),
 		cleanedSolanaMintEvents: make(map[string]bool),
 		latestSolanaSigs:        make(map[sidecartypes.SolanaEventType]solana.Signature),
+		latestEventStoreCursors: make(map[sidecartypes.SolanaEventType]string),
 		pendingTransactions:     pendingTransactions,
 	}
 }

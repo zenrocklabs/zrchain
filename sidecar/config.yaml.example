@@ -2,18 +2,18 @@ enabled: true
 grpc_port: 9191
 state_file: "cache.json"
 zrchain_rpc: "localhost:9090"
-operator_config: "eigen_operator_config.yaml"
 network: "mainnet"
 e2e_tests_ticker_interval: 60
 eth_rpc:
-  devnet: "https://hoodi.gateway.tenderly.co/"
   testnet: "https://hoodi.gateway.tenderly.co/"
   mainnet: "https://mainnet.gateway.tenderly.co/"
 # Contract addresses + more are now defined in shared/types.go
 solana_rpc:
-  devnet: ""
-  testnet: ""
-  mainnet: ""
+  testnet: "https://api.devnet.solana.com"
+  mainnet: "https://api.mainnet-beta.solana.com"
+zcash_rpc:
+  testnet: "http://127.0.0.1:18232"
+  mainnet: "http://127.0.0.1:8232"
 neutrino:
   path: "./neutrino"
 
