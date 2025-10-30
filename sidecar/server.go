@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -43,7 +44,10 @@ func NewOracleService(oracle *Oracle) *oracleService {
 func (s *oracleService) GetSidecarState(ctx context.Context, req *api.SidecarStateRequest) (*api.SidecarStateResponse, error) {
 	currentState := s.oracle.currentState.Load().(*sidecartypes.OracleState)
 
+	b, _ := json.Marshal(struct{}{})
+
 	return &api.SidecarStateResponse{
+		EigenDelegations:   b,
 		EthBlockHeight:     currentState.EthBlockHeight,
 		EthGasLimit:        currentState.EthGasLimit,
 		EthBaseFee:         currentState.EthBaseFee,
@@ -66,7 +70,10 @@ func (s *oracleService) GetSidecarStateByEthHeight(ctx context.Context, req *api
 		return nil, err
 	}
 
+	b, _ := json.Marshal(struct{}{})
+
 	return &api.SidecarStateResponse{
+		EigenDelegations:   b,
 		EthBlockHeight:     state.EthBlockHeight,
 		EthGasLimit:        state.EthGasLimit,
 		EthBaseFee:         state.EthBaseFee,
