@@ -55,8 +55,8 @@ type Oracle struct {
 
 	// Periodic reset control (scheduled UTC boundary resets). Interval derived on-the-fly from sidecartypes.OracleStateResetIntervalHours (or test flag).
 	nextScheduledReset time.Time
-	ForceTestReset     bool       // when true (set via test flag) use a 2-minute interval for rapid testing
-	resetMutex         sync.Mutex // guards scheduling updates
+	ForceTestReset     bool         // when true (set via test flag) use a 2-minute interval for rapid testing
+	stateCacheMutex    sync.RWMutex // guards stateCache access and scheduled resets (RLock for reads, Lock for writes)
 
 	// Last processed Solana signatures (managed as strings for persistence)
 	lastSolRockMintSigStr   string

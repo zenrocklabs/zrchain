@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -1596,4 +1598,211 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 			t.Logf("Test passed: %s (%d expected errors)", tt.description, errorCount)
 		})
 	}
+}
+
+// TestStateCacheDataRace verifies that Oracle.stateCache is properly protected from data races.
+// This test will PASS when run with `go test -race` because the RWMutex protection is in place.
+//
+// The test verifies the following scenarios work correctly with RWMutex protection:
+// 1. Concurrent AppendStateToCache() operations (exclusive Lock for writes)
+// 2. Concurrent read (getStateByEthHeight with RLock) and write (AppendStateToCache with Lock) operations
+// 3. Concurrent SaveToFile() operations (RLock for reads, allowing concurrent read access)
+// 4. Concurrent read and reset operations (SetStateCacheForTesting with exclusive Lock)
+//
+// Run with: go test -race -run TestStateCacheDataRace ./sidecar/
+func TestStateCacheDataRace(t *testing.T) {
+	oracle := createTestOracle()
+
+	// Cleanup test state file created by AppendStateToCache() calls
+	t.Cleanup(func() {
+		os.Remove("test_state.json")
+		os.Remove("test_state.json.tmp")
+	})
+
+	// Initialize with some states
+	initialStates := []sidecartypes.OracleState{
+		{EthBlockHeight: 100, ROCKUSDPrice: math.LegacyNewDec(1)},
+		{EthBlockHeight: 200, ROCKUSDPrice: math.LegacyNewDec(2)},
+		{EthBlockHeight: 300, ROCKUSDPrice: math.LegacyNewDec(3)},
+	}
+	oracle.SetStateCacheForTesting(initialStates)
+
+	const numGoroutines = 10
+	const iterations = 100
+	var wg sync.WaitGroup
+
+	// Scenario 1: Concurrent AppendStateToCache() calls (appending to stateCache)
+	t.Run("Concurrent AppendStateToCache", func(t *testing.T) {
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					// Simulate what happens during normal oracle operation
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(1000 + i*iterations + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache() // Protected by stateCacheMutex
+				}
+			})
+		}
+		wg.Wait()
+
+		// If we got here without panicking, the slice wasn't corrupted
+		// RWMutex prevents races
+		t.Logf("Completed %d concurrent AppendStateToCache operations", numGoroutines*iterations)
+	})
+
+	// Scenario 2: Concurrent getStateByEthHeight() reads during AppendStateToCache() writes
+	t.Run("Concurrent Read and Write", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Readers
+		for range numGoroutines {
+			wg.Go(func() {
+				for range iterations {
+					// Try to read from stateCache
+					_, err := oracle.getStateByEthHeight(100) // Protected by stateCacheMutex
+					if err != nil {
+						// Expected if state was not found
+					}
+				}
+			})
+		}
+
+		// Writers
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(400 + i*iterations + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache() // Protected by stateCacheMutex
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed concurrent read/write operations without panic")
+	})
+
+	// Scenario 3: Concurrent SaveToFile() and AppendStateToCache() operations
+	t.Run("Concurrent SaveToFile", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Cleanup test state files after test completes
+		t.Cleanup(func() {
+			for i := range numGoroutines {
+				for j := range 10 {
+					filename := fmt.Sprintf("test_state_%d_%d.json", i, j)
+					os.Remove(filename)
+					os.Remove(filename + ".tmp") // Also remove any temp files
+				}
+			}
+		})
+
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range 10 { // Fewer iterations since file I/O is slow
+					// Get a copy of stateCache with RLock, then pass to SaveToFile
+					oracle.stateCacheMutex.RLock()
+					stateCopy := slices.Clone(oracle.stateCache)
+					oracle.stateCacheMutex.RUnlock()
+
+					err := saveStatesToFile(fmt.Sprintf("test_state_%d_%d.json", i, j), stateCopy)
+					if err != nil {
+						t.Logf("SaveToFile error (expected in concurrent test): %v", err)
+					}
+				}
+			})
+		}
+
+		// Concurrent modifications
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range 10 {
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(500 + i*10 + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache()
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed concurrent SaveToFile operations")
+	})
+
+	// Scenario 4: Simulated scheduled reset during operations
+	// Now tests that the mutex protection works correctly
+	t.Run("Simulated Reset During Operations", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Readers - will iterate over stateCache using the proper API
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					// Use the proper API which now has mutex protection
+					height := uint64((i*100 + j) % 5000)
+					_, _ = oracle.getStateByEthHeight(height)
+				}
+			})
+		}
+
+		// Simulate reset operations using the proper API
+		for range 5 {
+			wg.Go(func() {
+				for range 10 {
+					// Use the proper API which now has mutex protection
+					oracle.SetStateCacheForTesting([]sidecartypes.OracleState{EmptyOracleState})
+					time.Sleep(time.Millisecond)
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed simulated reset operations with proper mutex protection")
+	})
+}
+
+// TestStateCacheRaceWithSetStateCacheForTesting verifies concurrent access to SetStateCacheForTesting is safe
+// This function is used in tests and is now properly protected by stateCacheMutex
+func TestStateCacheRaceWithSetStateCacheForTesting(t *testing.T) {
+	oracle := createTestOracle()
+
+	const numGoroutines = 20
+	var wg sync.WaitGroup
+
+	// Multiple goroutines calling SetStateCacheForTesting concurrently
+	for i := range numGoroutines {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				testStates := []sidecartypes.OracleState{
+					{
+						EthBlockHeight: uint64(id*100 + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(id)),
+					},
+				}
+				// Protected by stateCacheMutex
+				oracle.SetStateCacheForTesting(testStates)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	t.Logf("Completed concurrent SetStateCacheForTesting operations")
+
+	// Verify we can still read the state without panicking
+	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	assert.NotNil(t, currentState)
+	assert.Equal(t, 1, len(oracle.stateCache))
 }
