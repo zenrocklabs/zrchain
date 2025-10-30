@@ -42,10 +42,12 @@ func TestFetchSolanaBurnEvents_Integration(t *testing.T) {
 		Amount:   100,
 		IsZenBTC: false, // It's a ROCK burn
 	}
-	initialState := oracle.currentState.Load().(*sidecartypes.OracleState)
-	initialState.SolanaBurnEvents = []api.BurnEvent{preExistingBurnEvent}
-	initialState.CleanedSolanaBurnEvents = make(map[string]bool)
-	oracle.currentState.Store(initialState)
+	// Use copy-on-write pattern to avoid data race
+	oldState := oracle.currentState.Load()
+	newState := *oldState // Copy the struct
+	newState.SolanaBurnEvents = []api.BurnEvent{preExistingBurnEvent}
+	newState.CleanedSolanaBurnEvents = make(map[string]bool)
+	oracle.currentState.Store(&newState) // Store pointer to NEW struct
 
 	// 3. Execute the function
 	var wg sync.WaitGroup
@@ -120,9 +122,11 @@ func TestFetchSolanaBurnEvents_UnitTest(t *testing.T) {
 		Amount:   1000,
 		IsZenBTC: true,
 	}
-	initialState := oracle.currentState.Load().(*sidecartypes.OracleState)
-	initialState.SolanaBurnEvents = []api.BurnEvent{preExistingEvent}
-	oracle.currentState.Store(initialState)
+	// Use copy-on-write pattern to avoid data race
+	oldState := oracle.currentState.Load()
+	newState := *oldState // Copy the struct
+	newState.SolanaBurnEvents = []api.BurnEvent{preExistingEvent}
+	oracle.currentState.Store(&newState) // Store pointer to NEW struct
 
 	// 3. Simulate newly fetched events via the mock functions
 	newEvent := api.BurnEvent{
