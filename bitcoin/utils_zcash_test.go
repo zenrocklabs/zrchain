@@ -67,3 +67,80 @@ func TestDecodeOutputs_ZcashV5_WithOrchard(t *testing.T) {
 	require.Equal(t, uint64(30000000), outputs[0].Amount, "Should be 0.3 ZEC = 30000000 zatoshis")
 	require.Equal(t, "tmGMMrVJneKbZfCe1rKb96B79kYbinMpgPD", outputs[0].Address)
 }
+
+// TestZcashV1 tests version 1 transactions
+func TestZcashV1(t *testing.T) {
+	rawTx := "010000000194a33cd0da142112b5ef2f3ce173840a104329f35d63ac06367d469beef30eec000000006b483045022100fc3548bd728533c1f07dfd76188412426267249e406eb440d4ffee467df4ae2802206b123abe22df099072f6202436ccb07cdf06cbc82262db5931f5c322c6985669012103590f25b9248ff4b8dcb344b43fce95e4801c31f28e5cd335b553b0f7298719c2ffffffff02404b4c00000000001976a91448d094e575ccdb18c021ef25feed53b885decba088ac30517d01000000001976a9145fc0e3503739df8b38b312ceca28a024404162eb88ac00000000"
+	expectedTxID := "889cb4b6383ca4056f7c837b55c5b32acbf90f0d1c239af4cc99b779fa279a1d"
+
+	txID, err := CalculateTXID(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, expectedTxID, ReverseHex(txID.String()))
+
+	outputs, err := DecodeOutputs(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Len(t, outputs, 2)
+	require.Equal(t, uint64(5000000), outputs[0].Amount)
+	require.Equal(t, "tmGMMrVJneKbZfCe1rKb96B79kYbinMpgPD", outputs[0].Address)
+}
+
+// TestZcashV2 tests version 2 transactions
+func TestZcashV2(t *testing.T) {
+	rawTx := "0200000001ec0ef3ee9b467d3606ac635df32943100a8473e13c2fefb5122114dad03ca394000000006a473044022056d4490970d3759101f0a80b2755d15a46ea7cc9a27a3850468a4ca34d95c5c702201de7960c0a57b6535dc2d5f7eff0d7fb31080b42158709c1deb4187e8cadaed9012103590f25b9248ff4b8dcb344b43fce95e4801c31f28e5cd335b553b0f7298719c2ffffffff02404b4c00000000001976a91448d094e575ccdb18c021ef25feed53b885decba088ac30517d01000000001976a9145fc0e3503739df8b38b312ceca28a024404162eb88ac0000000000"
+	expectedTxID := "f0cba0e7a29ae6d4f68d77b0b1685b112b5f36566daf818592578ba520f36861"
+
+	txID, err := CalculateTXID(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, expectedTxID, ReverseHex(txID.String()))
+
+	outputs, err := DecodeOutputs(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Len(t, outputs, 2)
+	require.Equal(t, uint64(5000000), outputs[0].Amount)
+}
+
+// TestZcashV3 tests version 3 transactions (Sapling)
+func TestZcashV3(t *testing.T) {
+	rawTx := "030000807082c40301ec0ef3ee9b467d3606ac635df32943100a8473e13c2fefb5122114dad03ca394000000006b48304502210091fd1aea5ea95a6ca2f16d2af8368cb085c238046e84ea458e7d7c33f750b0e4022050f3a1ef3e6bb80d04957d06978515a597a4d7b611ab26756266c4ec9d17a360012103590f25b9248ff4b8dcb344b43fce95e4801c31f28e5cd335b553b0f7298719c2ffffffff02404b4c00000000001976a91448d094e575ccdb18c021ef25feed53b885decba088ac30517d01000000001976a9145fc0e3503739df8b38b312ceca28a024404162eb88ac000000000000000000"
+	expectedTxID := "f1b8a772a347edc6e91a0a51b307bf63dbe4ea7a6b6585f4e60209e34fbb4611"
+
+	txID, err := CalculateTXID(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, expectedTxID, ReverseHex(txID.String()))
+
+	outputs, err := DecodeOutputs(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Len(t, outputs, 2)
+	require.Equal(t, uint64(5000000), outputs[0].Amount)
+}
+
+// TestZcashV4 tests version 4 transactions
+func TestZcashV4(t *testing.T) {
+	rawTx := "0400008085202f8901ec0ef3ee9b467d3606ac635df32943100a8473e13c2fefb5122114dad03ca394000000006a473044022020794c702dc1b8f14649937be5d73ddc41f9409ca187ce6db2beb753b4c7a652022038ee8d30003f6e7cc3e22853131179de68e2db8b48d814505deccbf9d2dc642a012103590f25b9248ff4b8dcb344b43fce95e4801c31f28e5cd335b553b0f7298719c2ffffffff02404b4c00000000001976a91448d094e575ccdb18c021ef25feed53b885decba088ac30517d01000000001976a9145fc0e3503739df8b38b312ceca28a024404162eb88ac00000000000000000000000000000000000000"
+	expectedTxID := "9034536fe147dea52f61341ad88a4d1afa4cf4c5a1e212b73d73bbe597e7b0e9"
+
+	txID, err := CalculateTXID(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, expectedTxID, ReverseHex(txID.String()))
+
+	outputs, err := DecodeOutputs(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Len(t, outputs, 2)
+	require.Equal(t, uint64(5000000), outputs[0].Amount)
+}
+
+// TestZcashV5_Additional tests an additional v5 transaction
+func TestZcashV5_Additional(t *testing.T) {
+	rawTx := "050000800a27a72621965137000000000000000001ec0ef3ee9b467d3606ac635df32943100a8473e13c2fefb5122114dad03ca394000000006a473044022030d750337aa3ccff4fcc3571f12dc0780dc854599dc68e50d6c1f3b771d5ebd402207edbdfc20a5336065e2e0b4bf5145f399fbf22e97cb0d05859bec8372dec28b5012103590f25b9248ff4b8dcb344b43fce95e4801c31f28e5cd335b553b0f7298719c2ffffffff02404b4c00000000001976a91448d094e575ccdb18c021ef25feed53b885decba088ac30517d01000000001976a9145fc0e3503739df8b38b312ceca28a024404162eb88ac000000"
+	expectedTxID := "dc2a960c3e8be30a47ff9b77922bebc967feffcb9736789e421ef6cd9d79472f"
+
+	txID, err := CalculateTXID(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, expectedTxID, ReverseHex(txID.String()))
+
+	outputs, err := DecodeOutputs(rawTx, "zcashtestnet")
+	require.NoError(t, err)
+	require.Len(t, outputs, 2)
+	require.Equal(t, uint64(5000000), outputs[0].Amount)
+	require.Equal(t, "tmGMMrVJneKbZfCe1rKb96B79kYbinMpgPD", outputs[0].Address)
+}

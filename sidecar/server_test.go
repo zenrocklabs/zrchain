@@ -13,6 +13,8 @@ import (
 )
 
 func TestGetSidecarState(t *testing.T) {
+	t.Skip("Skipping test on CI")
+
 	// Connect to the sidecar gRPC server
 	conn, err := grpc.Dial("localhost:9191",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
