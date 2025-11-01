@@ -37,6 +37,7 @@ func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	mockIdentityKeeper := &zenextestutil.MockIdentityKeeper{}
 	mockTreasuryKeeper := &zenextestutil.MockTreasuryKeeper{}
 	mockValidationKeeper := &zenextestutil.MockValidationKeeper{}
+	mockZenbtcKeeper := &zenextestutil.MockZenbtcKeeper{}
 	mockBankKeeper := &zenextestutil.MockBankKeeper{}
 	mockAccountKeeper := &zenextestutil.MockAccountKeeper{}
 
@@ -48,6 +49,7 @@ func ZenexKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 		mockIdentityKeeper,
 		mockTreasuryKeeper,
 		mockValidationKeeper,
+		mockZenbtcKeeper,
 		mockBankKeeper,
 		mockAccountKeeper,
 	)
