@@ -52,14 +52,12 @@ services:
         target: 4566
 
   localstack-setup:
-    image: python:3.11
+    image: astral/uv:python3.12-bookworm-slim
     depends_on:
       - localstack
     container_name: localstack-setup
-    entrypoint:
-      - /bin/sh
     command:
-      - /localstack-setup.sh
+      - /localstack-setup.py
     environment:
       AWS_ACCESS_KEY_ID: dummy
       AWS_SECRET_ACCESS_KEY: dummy
@@ -67,7 +65,6 @@ services:
       AWS_DEFAULT_REGION: eu-west-1
       AWS_ENPOINT_URL: http://localstack:4566
     volumes:
-      - ./scripts/localstack-setup.sh:/localstack-setup.sh
       - ./scripts/localstack-setup.py:/localstack-setup.py
 
   postgres:
