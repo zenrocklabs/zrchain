@@ -15,7 +15,6 @@ import (
 )
 
 func (s *IntegrationTestSuite) TestMsgAcknowledgePoolTransfer() {
-	s.T().Skip("zenex module is currently disabled")
 
 	tests := []struct {
 		name      string

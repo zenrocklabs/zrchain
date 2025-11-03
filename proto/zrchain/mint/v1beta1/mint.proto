@@ -73,7 +73,8 @@ message Params {
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (amino.dont_omitempty) = true,
+    deprecated = true
   ];
 
   // rewards protocol wallet rate
@@ -81,18 +82,22 @@ message Params {
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (amino.dont_omitempty) = true,
+    deprecated = true
   ];
 
   // address of protocol wallet
-  string protocol_wallet_address = 10;
+  string protocol_wallet_address = 10 [
+    deprecated = true
+  ];
 
   // additional staking rewards rate
   string additional_staking_rewards = 11 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (amino.dont_omitempty) = true,
+    deprecated = true
   ];
 
   // additional MPC rewards rate
@@ -100,11 +105,30 @@ message Params {
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (amino.dont_omitempty) = true,
+    deprecated = true
   ];
 
   // additional burn rate
   string additional_burn_rate = 13 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    deprecated = true
+  ];
+
+  // address of zr wallet
+  string zr_wallet_address = 14;
+
+  string zr_wallet_rate = 15 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  string zenbtc_reward_rate = 16 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,

@@ -53,11 +53,12 @@ func (s *GenesisTestSuite) SetupTest() {
 	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
 	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
 	zentpKeeper := minttestutil.NewMockZentpKeeper(ctrl)
+	zenexKeeper := minttestutil.NewMockZenexKeeper(ctrl)
 	s.accountKeeper = accountKeeper
 	accountKeeper.EXPECT().GetModuleAddress(minterAcc.Name).Return(minterAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAccount(s.sdkCtx, minterAcc.Name).Return(minterAcc)
 
-	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, zentpKeeper, authtypes.FeeCollectorName, "")
+	s.keeper = keeper.NewKeeper(s.cdc, runtime.NewKVStoreService(key), stakingKeeper, accountKeeper, bankKeeper, zentpKeeper, zenexKeeper, authtypes.FeeCollectorName, "")
 }
 
 func (s *GenesisTestSuite) TestImportExportGenesis() {
@@ -65,6 +66,7 @@ func (s *GenesisTestSuite) TestImportExportGenesis() {
 	genesisState.Minter = types.NewMinter(math.LegacyNewDecWithPrec(20, 2), math.LegacyNewDec(1))
 	genesisState.Params = types.NewParams(
 		"testDenom",
+		"zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn",
 		"zen1qwnafe2s9eawhah5x6v4593v3tljdntl9zcqpn",
 		math.LegacyNewDecWithPrec(15, 2),
 		math.LegacyNewDecWithPrec(22, 2),
@@ -76,6 +78,8 @@ func (s *GenesisTestSuite) TestImportExportGenesis() {
 		math.LegacyNewDecWithPrec(10, 2),
 		math.LegacyNewDecWithPrec(10, 2),
 		math.LegacyNewDecWithPrec(10, 2),
+		math.LegacyNewDecWithPrec(35, 2),
+		math.LegacyNewDecWithPrec(35, 2),
 		uint64(60*60*8766/5),
 	)
 

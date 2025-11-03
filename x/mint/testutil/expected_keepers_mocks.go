@@ -296,3 +296,70 @@ func (mr *MockZentpKeeperMockRecorder) UpdateZentpFees(ctx, fees any) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateZentpFees", reflect.TypeOf((*MockZentpKeeper)(nil).UpdateZentpFees), ctx, fees)
 }
+
+// MockZenexKeeper is a mock of ZenexKeeper interface.
+type MockZenexKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockZenexKeeperMockRecorder
+	isgomock struct{}
+}
+
+// MockZenexKeeperMockRecorder is the mock recorder for MockZenexKeeper.
+type MockZenexKeeperMockRecorder struct {
+	mock *MockZenexKeeper
+}
+
+// NewMockZenexKeeper creates a new mock instance.
+func NewMockZenexKeeper(ctrl *gomock.Controller) *MockZenexKeeper {
+	mock := &MockZenexKeeper{ctrl: ctrl}
+	mock.recorder = &MockZenexKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockZenexKeeper) EXPECT() *MockZenexKeeperMockRecorder {
+	return m.recorder
+}
+
+// CreateRockBtcSwap mocks base method.
+func (m *MockZenexKeeper) CreateRockBtcSwap(ctx types.Context, amountIn uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRockBtcSwap", ctx, amountIn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateRockBtcSwap indicates an expected call of CreateRockBtcSwap.
+func (mr *MockZenexKeeperMockRecorder) CreateRockBtcSwap(ctx, amountIn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRockBtcSwap", reflect.TypeOf((*MockZenexKeeper)(nil).CreateRockBtcSwap), ctx, amountIn)
+}
+
+// GetRequiredRockBalance mocks base method.
+func (m *MockZenexKeeper) GetRequiredRockBalance(ctx types.Context) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRequiredRockBalance", ctx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRequiredRockBalance indicates an expected call of GetRequiredRockBalance.
+func (mr *MockZenexKeeperMockRecorder) GetRequiredRockBalance(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRequiredRockBalance", reflect.TypeOf((*MockZenexKeeper)(nil).GetRequiredRockBalance), ctx)
+}
+
+// GetZenBtcRewardsCollectorBalance mocks base method.
+func (m *MockZenexKeeper) GetZenBtcRewardsCollectorBalance(ctx types.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetZenBtcRewardsCollectorBalance", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetZenBtcRewardsCollectorBalance indicates an expected call of GetZenBtcRewardsCollectorBalance.
+func (mr *MockZenexKeeperMockRecorder) GetZenBtcRewardsCollectorBalance(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZenBtcRewardsCollectorBalance", reflect.TypeOf((*MockZenexKeeper)(nil).GetZenBtcRewardsCollectorBalance), ctx)
+}

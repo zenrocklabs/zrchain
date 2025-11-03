@@ -25,8 +25,8 @@ service Msg {
   
   // ZenexTransfer defines the message for transferring funds 
   // to or from the change address.
-  rpc ZenexTransferRequest    (MsgZenexTransferRequest   ) returns (MsgZenexTransferRequestResponse   );
-
+  rpc ZenexTransferRequest (MsgZenexTransferRequest) returns (MsgZenexTransferRequestResponse);
+  
   // AcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
   rpc AcknowledgePoolTransfer (MsgAcknowledgePoolTransfer) returns (MsgAcknowledgePoolTransferResponse);
 }
@@ -51,12 +51,12 @@ message MsgUpdateParamsResponse {}
 // MsgSwapRequest defines a (cross-chain) swap operation.
 message MsgSwapRequest {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator     = 1;
+  string    creator     = 1;
   TradePair pair        = 2;
-  string workspace   = 3;
-  uint64 amount_in   = 4;
-  uint64 rock_key_id = 5;
-  uint64 btc_key_id  = 6;
+  string    workspace   = 3;
+  uint64    amount_in   = 4;
+  uint64    rock_key_id = 5;
+  uint64    btc_key_id  = 6;
 }
 
 // MsgSwapResponse defines the response structure for executing a
@@ -69,13 +69,13 @@ message MsgSwapRequestResponse {
 // to or from the change address.
 message MsgZenexTransferRequest {
   option (cosmos.msg.v1.signer) = "creator";
-  string                      creator     = 1;
-  uint64                      swap_id     = 2;
-  repeated InputHashes        data_for_signing = 3;
-  zrchain.treasury.WalletType wallet_type = 4;
-  bytes                       cache_id = 5;
-  bytes                       unsigned_plus_tx = 6;
-  string                      reject_reason = 7; // optional
+           string                      creator          = 1;
+           uint64                      swap_id          = 2;
+  repeated InputHashes                 data_for_signing = 3;
+           zrchain.treasury.WalletType wallet_type      = 4;
+           bytes                       cache_id         = 5;
+           bytes                       unsigned_plus_tx = 6;
+           string                      reject_reason    = 7; // optional
 }
 
 // MsgZenexTransferResponse defines the response structure for executing a
@@ -87,11 +87,11 @@ message MsgZenexTransferRequestResponse {
 // MsgAcknowledgePoolTransfer defines the message for acknowledging a pool transfer.
 message MsgAcknowledgePoolTransfer {
   option (cosmos.msg.v1.signer) = "creator";
-  string creator      = 1;
-  uint64 swap_id       = 2;
-  string source_tx_hash = 3;
-  zrchain.zenex.SwapStatus status = 4;
-  string reject_reason = 5; // optional
+  string                   creator        = 1;
+  uint64                   swap_id        = 2;
+  string                   source_tx_hash = 3;
+  zrchain.zenex.SwapStatus status         = 4;
+  string                   reject_reason  = 5; // optional
 }
 
 // MsgAcknowledgePoolTransferResponse defines the response structure for executing a

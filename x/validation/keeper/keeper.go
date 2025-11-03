@@ -615,11 +615,21 @@ func (k Keeper) GetValidatorMismatchCounts(ctx context.Context) (map[string]type
 func (k Keeper) GetRockBtcPrice(ctx context.Context) (math.LegacyDec, error) {
 	rockPrice, err := k.AssetPrices.Get(ctx, types.Asset_ROCK)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return math.LegacyDec{}, fmt.Errorf("ROCK asset price not found: %w", err)
+		}
 		return math.LegacyDec{}, err
 	}
 	btcPrice, err := k.AssetPrices.Get(ctx, types.Asset_BTC)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return math.LegacyDec{}, fmt.Errorf("BTC asset price not found: %w", err)
+		}
 		return math.LegacyDec{}, err
+	}
+
+	if rockPrice.IsZero() || btcPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=%s, BTC=%s", rockPrice.String(), btcPrice.String())
 	}
 
 	return rockPrice.Quo(btcPrice), nil
@@ -628,11 +638,21 @@ func (k Keeper) GetRockBtcPrice(ctx context.Context) (math.LegacyDec, error) {
 func (k Keeper) GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error) {
 	rockPrice, err := k.AssetPrices.Get(ctx, types.Asset_ROCK)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return math.LegacyDec{}, fmt.Errorf("ROCK asset price not found: %w", err)
+		}
 		return math.LegacyDec{}, err
 	}
 	btcPrice, err := k.AssetPrices.Get(ctx, types.Asset_BTC)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return math.LegacyDec{}, fmt.Errorf("BTC asset price not found: %w", err)
+		}
 		return math.LegacyDec{}, err
+	}
+
+	if rockPrice.IsZero() || btcPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=%s, BTC=%s", rockPrice.String(), btcPrice.String())
 	}
 
 	return btcPrice.Quo(rockPrice), nil

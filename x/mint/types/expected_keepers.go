@@ -39,3 +39,9 @@ type BankKeeper interface {
 type ZentpKeeper interface {
 	UpdateZentpFees(ctx context.Context, fees uint64) error
 }
+
+type ZenexKeeper interface {
+	GetRequiredRockBalance(ctx sdk.Context) (uint64, error)
+	GetZenBtcRewardsCollectorBalance(ctx sdk.Context) uint64
+	CreateRockBtcSwap(ctx sdk.Context, amountIn uint64) error
+}

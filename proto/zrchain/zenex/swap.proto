@@ -24,6 +24,7 @@ message Swap {
   string source_tx_hash = 11;
   string reject_reason = 12;
   repeated bytes unsigned_plus_tx = 13;
+  bool zenbtc_swap = 14;
 }
 
 // SwapStatus defines the status of the swap.

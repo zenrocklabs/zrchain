@@ -207,16 +207,18 @@ var maccPerms = map[string][]string{
 	govtypes.ModuleName:               {authtypes.Burner},
 	nft.ModuleName:                    nil,
 	// non sdk modules
-	ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
-	ibcfeetypes.ModuleName:             nil,
-	icatypes.ModuleName:                nil,
-	wasmtypes.ModuleName:               {authtypes.Burner},
-	identitytypes.ModuleName:           nil,
-	treasurytypes.KeyringCollectorName: nil,
-	treasurytypes.KeyringEscrowName:    nil,
-	zentptypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
-	zentptypes.ZentpCollectorName:      nil,
-	zenextypes.ZenexCollectorName:      nil,
+	ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+	ibcfeetypes.ModuleName:                nil,
+	icatypes.ModuleName:                   nil,
+	wasmtypes.ModuleName:                  {authtypes.Burner},
+	identitytypes.ModuleName:              nil,
+	treasurytypes.KeyringCollectorName:    nil,
+	treasurytypes.KeyringEscrowName:       nil,
+	zentptypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
+	zentptypes.ZentpCollectorName:         nil,
+	zenextypes.ZenexCollectorName:         nil,
+	zenextypes.ZenexFeeCollectorName:      nil,
+	zenextypes.ZenBtcRewardsCollectorName: nil,
 }
 
 var (
@@ -490,6 +492,7 @@ func NewZenrockApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		&app.ZentpKeeper,
+		&app.ZenexKeeper,
 		authtypes.FeeCollectorName,
 		authAddr,
 	)
@@ -769,6 +772,7 @@ func NewZenrockApp(
 		app.IdentityKeeper,
 		&app.TreasuryKeeper,
 		app.ValidationKeeper,
+		app.ZenBTCKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
 	)
@@ -1386,6 +1390,8 @@ func BlockedAddresses() map[string]bool {
 	// allow the following addresses to receive funds
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	delete(modAccAddrs, authtypes.NewModuleAddress(minttypes.ModuleName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(zenextypes.ZenexFeeCollectorName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(zenextypes.ZenBtcRewardsCollectorName).String())
 
 	return modAccAddrs
 }
@@ -1418,6 +1424,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(dcttypes.ModuleName)
 	paramsKeeper.Subspace(zenbtctypes.ModuleName)
 	paramsKeeper.Subspace(zentptypes.ModuleName)
+	paramsKeeper.Subspace(zenextypes.ModuleName)
 	return paramsKeeper
 }
 

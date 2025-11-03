@@ -40,6 +40,9 @@ jq '.app_state.mint.params = {
 echo "direct category any favorite alert symbol consider name always term patrol initial join profit mule arena glare problem whale critic choice world zebra inherit" | /zenrockd keys add "validator" --recover
 /zenrockd genesis add-genesis-account "validator" 100000000000000000000000000urock
 /zenrockd genesis add-genesis-account zen1m3h30wlvsf8llruxtpukdvsy0km2kum8ju4et3 100000000000000urock --module-name mint
+/zenrockd genesis add-genesis-account zen1234wz2aaavp089ttnrj9jwjqraaqxkkadq0k03 0urock --module-name zenex_collector
+/zenrockd genesis add-genesis-account zen1fpq2t9ygrst5lp5hl9d7fylppljp3xhhu37n4c 0urock --module-name zenex_fee_collector
+/zenrockd genesis add-genesis-account zen14l8vvehfy0af0djxjx0uug0ladm57r6plfntx6 0urock --module-name zenex_btc_rewards_collector
 /zenrockd genesis gentx "validator" 1000000000000urock --moniker "validator"
 /zenrockd genesis collect-gentxs
 
