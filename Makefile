@@ -222,6 +222,16 @@ test-coverage:
 	@go test -coverprofile=coverage.out $(shell go list ./... | grep -v '/tests/e2e')
 	@go tool cover -html=coverage.out -o coverage.html
 
+# Run all tests except e2e with race detector (slower but catches concurrency bugs)
+test-race:
+	@echo "Running all tests except e2e with race detector..."
+	@go test -race $(shell go list ./... | grep -v '/tests/e2e')
+
+# Run only sidecar tests with race detector (fast, focused race detection)
+test-race-sidecar:
+	@echo "Running sidecar tests with race detector..."
+	@go test -race -v ./sidecar/...
+
 # Run only e2e tests (only show failures)
 test-e2e:
 	@echo "Running e2e tests..."
@@ -232,4 +242,9 @@ test-all:
 	@echo "Running all tests including e2e..."
 	@go test ./...
 
-.PHONY: test tests test-coverage test-e2e test-all
+# Run all tests including e2e with race detector
+test-all-race:
+	@echo "Running all tests including e2e with race detector..."
+	@go test -race ./...
+
+.PHONY: test tests test-coverage test-race test-race-sidecar test-race-statecache test-e2e test-all test-all-race
