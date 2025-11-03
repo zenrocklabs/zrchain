@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"sync/atomic"
 	"testing"
 
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
@@ -25,11 +24,9 @@ func TestHandleBackfillRequests(t *testing.T) {
 		solanaClient: solanaClient,
 		DebugMode:    true,
 	}
-	var state atomic.Value
-	state.Store(&sidecartypes.OracleState{
+	oracle.currentState.Store(&sidecartypes.OracleState{
 		CleanedSolanaBurnEvents: make(map[string]bool),
 	})
-	oracle.currentState = state
 
 	// 3. Create the backfill request struct directly
 	txHash := "fjBQLA8qFKtreJEpcTf5a8YdgaQbipmBACiWpaV4a6Ubx1caN6SzphJQvue4159VVKugZ6EUUHVNJbsqPpUc81B"

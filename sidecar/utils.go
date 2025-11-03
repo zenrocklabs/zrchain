@@ -105,7 +105,7 @@ func saveStatesToFile(filename string, states []sidecartypes.OracleState) error 
 
 // appendStateToCache appends the current state to the state cache and saves it to the file.
 func (o *Oracle) appendStateToCache() {
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	currentState := o.currentState.Load()
 	newState := *currentState // Create a copy of the current state
 
 	// o.currentState is already updated by processUpdates before appendStateToCache is called.
@@ -214,7 +214,7 @@ func readConfig(configFile string) (sidecartypes.Config, error) {
 }
 
 func (o *Oracle) GetSidecarState() *sidecartypes.OracleState {
-	return o.currentState.Load().(*sidecartypes.OracleState)
+	return o.currentState.Load()
 }
 
 func (o *Oracle) GetZrChainQueryClient() *client.QueryClient {
@@ -388,7 +388,7 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	// Copy pending transactions from current state to preserve them across ticks
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	currentState := o.currentState.Load()
 	pendingTransactions := make(map[string]sidecartypes.PendingTxInfo)
 	if currentState.PendingSolanaTxs != nil {
 		for k, v := range currentState.PendingSolanaTxs {

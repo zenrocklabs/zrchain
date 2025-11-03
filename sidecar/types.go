@@ -41,7 +41,25 @@ var (
 )
 
 type Oracle struct {
-	currentState       atomic.Value // *types.OracleState
+	// currentState stores the oracle's current state atomically for lock-free reads.
+	// Uses atomic.Pointer[T] for type-safe access without type assertions.
+	//
+	// IMMUTABILITY CONTRACT: Use copy-on-write pattern for all updates:
+	//
+	//   old := o.currentState.Load()  // Type-safe: returns *OracleState
+	//   new := *old                   // Copy the struct
+	//   new.Field = newValue          // Modify the copy
+	//   o.currentState.Store(&new)    // Store new pointer
+	//
+	// NEVER mutate in-place (causes data race):
+	//   state := o.currentState.Load()
+	//   state.Field = newValue          // ❌ Mutates shared state!
+	//   o.currentState.Store(state)     // ❌ Same pointer
+	//
+	// See docs/reports/2024-10-24-atomic-value-pointer-vs-value-storage-analysis.md
+	// for detailed analysis of pointer vs value storage and concurrency patterns.
+	currentState atomic.Pointer[sidecartypes.OracleState]
+
 	stateCache         []sidecartypes.OracleState
 	Config             sidecartypes.Config
 	EthClient          *ethclient.Client
