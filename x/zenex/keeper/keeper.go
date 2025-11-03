@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"slices"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
@@ -185,6 +186,18 @@ func (k Keeper) GetPrice(ctx sdk.Context, pair types.TradePair) (math.LegacyDec,
 
 // Calculates the amount out for a given pair and amount in
 func (k Keeper) GetAmountOut(ctx sdk.Context, pair types.TradePair, amountIn uint64, price math.LegacyDec) (uint64, error) {
+	if !slices.Contains(types.ValidPairTypes, pair.String()) {
+		return 0, fmt.Errorf("unknown pair: %s", pair)
+	}
+
+	if price.IsZero() || price.IsNegative() {
+		return 0, fmt.Errorf("price must be positive, got: %s", price.String())
+	}
+
+	if amountIn == 0 {
+		return 0, fmt.Errorf("amount in is zero")
+	}
+
 	switch pair {
 	case types.TradePair_TRADE_PAIR_ROCK_BTC:
 		// returns BTC amount in satoshis to transfer
@@ -267,13 +280,22 @@ func (k Keeper) GetRequiredRockBalance(ctx sdk.Context) (uint64, error) {
 
 	thresholdSatoshis := math.LegacyNewDecFromInt(math.NewIntFromUint64(k.GetParams(ctx).SwapThresholdSatoshis))
 
+	if thresholdSatoshis.IsZero() || thresholdSatoshis.IsNegative() {
+		return 0, fmt.Errorf("threshold satoshis is zero or negative, got: %s", thresholdSatoshis.String())
+	}
+
 	requiredRockBalance := thresholdSatoshis.Quo(rockBtcPrice)
 
 	if requiredRockBalance.IsZero() || requiredRockBalance.IsNegative() {
 		return 0, fmt.Errorf("required rock balance is zero or negative, got: %s", requiredRockBalance.String())
 	}
 
-	return requiredRockBalance.TruncateInt().Uint64(), nil
+	requiredRockBalanceInt := requiredRockBalance.TruncateInt()
+	if !requiredRockBalanceInt.IsUint64() {
+		return 0, fmt.Errorf("required rock balance %s exceeds max uint64 (price too small: %s)", requiredRockBalanceInt.String(), rockBtcPrice.String())
+	}
+
+	return requiredRockBalanceInt.Uint64(), nil
 }
 
 // Returns the balance of the zenbtc rewards collector

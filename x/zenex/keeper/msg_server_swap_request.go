@@ -11,7 +11,6 @@ import (
 )
 
 func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest) (*types.MsgSwapRequestResponse, error) {
-	return nil, fmt.Errorf("zenex module is currently disabled")
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -55,6 +54,10 @@ func (k msgServer) SwapRequest(goCtx context.Context, msg *types.MsgSwapRequest)
 	pair, price, err := k.GetPair(ctx, msg.Pair)
 	if err != nil {
 		return nil, err
+	}
+
+	if price.IsZero() || price.IsNegative() {
+		return nil, fmt.Errorf("price must be positive, got: %s", price.String())
 	}
 
 	// either returns BTC or ROCK amount to transfer

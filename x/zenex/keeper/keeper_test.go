@@ -11,6 +11,7 @@ import (
 	treasurytestutil "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/testutil"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	validationtypes "github.com/Zenrock-Foundation/zrchain/v6/x/validation/types"
+	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/keeper"
 	zenextestutil "github.com/Zenrock-Foundation/zrchain/v6/x/zenex/testutil"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenex/types"
@@ -22,7 +23,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	zenbtctypes "github.com/zenrocklabs/zenbtc/x/zenbtc/types"
 	ubermock "go.uber.org/mock/gomock"
 )
 

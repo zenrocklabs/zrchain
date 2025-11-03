@@ -12,7 +12,6 @@ import (
 )
 
 func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.MsgAcknowledgePoolTransfer) (*types.MsgAcknowledgePoolTransferResponse, error) {
-	return nil, fmt.Errorf("zenex module is currently disabled")
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -41,7 +40,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			return nil, err
 		}
 		// Release previously pending escrowed funds
-		if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && swap.ZenbtcSwap == false {
+		if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && !swap.ZenbtcSwap {
 			rockAddress, err := k.GetRockAddress(ctx, swap.RockKeyId)
 			if err != nil {
 				return nil, err
@@ -51,7 +50,7 @@ func (k msgServer) AcknowledgePoolTransfer(goCtx context.Context, msg *types.Msg
 			if err != nil {
 				return nil, err
 			}
-		} else if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && swap.ZenbtcSwap == true {
+		} else if swap.Pair == types.TradePair_TRADE_PAIR_ROCK_BTC && swap.ZenbtcSwap {
 			// Sending Swap.AmountIn to the zenbtc rewards collector
 			err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ZenexCollectorName, types.ZenBtcRewardsCollectorName, sdk.NewCoins(sdk.NewCoin(params.BondDenom, math.NewIntFromUint64(swap.Data.AmountIn))))
 			if err != nil {

@@ -628,6 +628,10 @@ func (k Keeper) GetRockBtcPrice(ctx context.Context) (math.LegacyDec, error) {
 		return math.LegacyDec{}, err
 	}
 
+	if rockPrice.IsZero() || btcPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=%s, BTC=%s", rockPrice.String(), btcPrice.String())
+	}
+
 	return rockPrice.Quo(btcPrice), nil
 }
 
@@ -645,6 +649,10 @@ func (k Keeper) GetBtcRockPrice(ctx context.Context) (math.LegacyDec, error) {
 			return math.LegacyDec{}, fmt.Errorf("BTC asset price not found: %w", err)
 		}
 		return math.LegacyDec{}, err
+	}
+
+	if rockPrice.IsZero() || btcPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("price is zero, check sidecar consensus, got: ROCK=%s, BTC=%s", rockPrice.String(), btcPrice.String())
 	}
 
 	return btcPrice.Quo(rockPrice), nil
