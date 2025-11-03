@@ -160,7 +160,7 @@ func NewOracle(
 		}
 	}
 	// Initialize periodic reset scheduling (interval computed dynamically; may be overridden later by test flag)
-	o.scheduleNextReset(time.Now().UTC(), time.Duration(sidecartypes.OracleStateResetIntervalHours)*time.Hour)
+	o.scheduleNextReset(time.Now().UTC(), sidecartypes.OracleStateResetInterval)
 
 	return o
 }
@@ -1979,7 +1979,7 @@ func (o *Oracle) getSolanaBurnEventFromSig(ctx context.Context, sigStr string, p
 		&solrpc.GetTransactionOpts{
 			Encoding:                       solana.EncodingBase64,
 			Commitment:                     solrpc.CommitmentConfirmed,
-			MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
+			MaxSupportedTransactionVersion: sidecartypes.MaxSupportedSolanaTxVersion,
 		},
 	)
 	if err != nil {
@@ -2891,7 +2891,7 @@ func (o *Oracle) buildBatchRequests(currentBatch []*solrpc.TransactionSignature)
 				map[string]any{
 					"encoding":                       solana.EncodingBase64,
 					"commitment":                     solrpc.CommitmentConfirmed,
-					"maxSupportedTransactionVersion": &sidecartypes.MaxSupportedSolanaTxVersion,
+					"maxSupportedTransactionVersion": sidecartypes.MaxSupportedSolanaTxVersion,
 				},
 			},
 			ID:      uint64(j),
@@ -3402,7 +3402,7 @@ func (o *Oracle) retryIndividualTransaction(ctx context.Context, sig solana.Sign
 	txResult, err := o.getTransactionFn(retryCtx, sig, &solrpc.GetTransactionOpts{
 		Encoding:                       solana.EncodingBase64,
 		Commitment:                     solrpc.CommitmentConfirmed,
-		MaxSupportedTransactionVersion: &sidecartypes.MaxSupportedSolanaTxVersion,
+		MaxSupportedTransactionVersion: sidecartypes.MaxSupportedSolanaTxVersion,
 	})
 
 	if err != nil {
@@ -3791,12 +3791,9 @@ func (o *Oracle) maybePerformScheduledReset(nowUTC time.Time) {
 	defer o.resetMutex.Unlock()
 
 	// Derive interval dynamically (test flag overrides).
-	interval := time.Duration(sidecartypes.OracleStateResetIntervalHours) * time.Hour
+	interval := sidecartypes.OracleStateResetInterval
 	if o.ForceTestReset {
 		interval = 2 * time.Minute
-	}
-	if interval <= 0 {
-		interval = 24 * time.Hour
 	}
 
 	// If nextScheduledReset not set OR we switched into a shorter test interval, (re)compute it.

@@ -120,6 +120,14 @@ var (
 		NetworkMainnet:  "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
 	}
 
+	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
+	// This protects against subtle state incompatibilities after major upgrades.
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r3"}
+	MaxSupportedSolanaTxVersion = func() *uint64 { u := uint64(0); return &u }() // Solana transaction version 0
+)
+
+const (
+
 	// Oracle tuning parameters - RISK OF SLASHING IF CHANGED
 
 	MainLoopTickerInterval         = 60 * time.Second
@@ -148,7 +156,6 @@ var (
 	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
 	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
-	MaxSupportedSolanaTxVersion = uint64(0)   // Solana transaction version 0
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
 	// Oracle processing constants
@@ -164,18 +171,14 @@ var (
 
 	SidecarVersionName = "sturgeon_moon_r3"
 
-	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
-	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r3"}
-
-	// OracleStateResetIntervalHours controls how often (in UTC hours) the oracle
+	// OracleStateResetInterval controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.
 	// Default: 24 (reset at the first tick after each UTC midnight).
 	// Example values:
 	//   24 => once per day (midnight UTC)
 	//   12 => twice per day (00:00 UTC, 12:00 UTC)
 	//    6 => every 6 hours, etc.
-	OracleStateResetIntervalHours = 12
+	OracleStateResetInterval = 12 * time.Hour
 )
 
 // PriceFeed struct with fields for different price feeds
