@@ -122,7 +122,7 @@ var (
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r2", "sturgeon_moon_r1"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r3"}
 	MaxSupportedSolanaTxVersion = func() *uint64 { u := uint64(0); return &u }() // Solana transaction version 0
 )
 
@@ -156,7 +156,6 @@ const (
 	SolanaBatchTimeout          = 20 * time.Second // Even longer for batch operations
 	SolanaRateLimiterTimeout    = 10 * time.Second
 	SolanaMaxConcurrentRPCCalls = 20          // Maximum concurrent Solana RPC calls (semaphore size)
-	EigenLayerQuorumNumber      = uint8(0)    // EigenLayer quorum number for service manager
 	GasEstimationBuffer         = uint64(110) // 110% buffer for gas estimation (10% extra)
 
 	// Oracle processing constants
