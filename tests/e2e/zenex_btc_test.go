@@ -20,7 +20,6 @@ var _ = Describe("Zenex BTC flow:", func() {
 	var bitcoinPoolKeyAddress string
 	var workspaceAddress string
 	var swapID uint64
-	var swap zenextypes.Swap
 	var amountRockIn uint64
 	BeforeEach(func() {
 		env = setupTestEnv(GinkgoT())
