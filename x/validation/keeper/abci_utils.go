@@ -47,8 +47,6 @@ import (
 	bindings "github.com/Zenrock-Foundation/zrchain/v6/zenbtc/bindings"
 )
 
-const redemptionDelaySeconds int64 = 7 * 24 * 60 * 60
-
 func (k Keeper) GetSidecarState(ctx context.Context, height int64) (*OracleData, error) {
 	resp, err := k.sidecarClient.GetSidecarState(ctx, &sidecar.SidecarStateRequest{})
 	if err != nil {
@@ -1112,6 +1110,7 @@ func (k Keeper) calculateRedemptionDelayBlocks(ctx sdk.Context) int64 {
 	if blockTime <= 0 {
 		blockTime = types.DefaultBlockTime
 	}
+	redemptionDelaySeconds := k.GetRedemptionDelaySeconds(ctx)
 	delay := redemptionDelaySeconds / blockTime
 	if redemptionDelaySeconds%blockTime != 0 {
 		delay++
