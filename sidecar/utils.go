@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sync"
 	"time"
 
 	"cosmossdk.io/math"
@@ -65,7 +66,14 @@ func loadStateDataFromFile(filename string) (latestState *sidecartypes.OracleSta
 	return &states[len(states)-1], states, nil
 }
 
-func (o *Oracle) SaveToFile(filename string) error {
+var fileIOMutex sync.Mutex
+
+// saveStatesToFile writes the oracle states to a file.
+func saveStatesToFile(filename string, states []sidecartypes.OracleState) error {
+	// Serialize file I/O operations to prevent concurrent writes to the same file
+	fileIOMutex.Lock()
+	defer fileIOMutex.Unlock()
+
 	// Write to a temporary file first for atomicity
 	tempFile := filename + ".tmp"
 	file, err := os.Create(tempFile)
@@ -74,7 +82,7 @@ func (o *Oracle) SaveToFile(filename string) error {
 	}
 	defer file.Close()
 
-	if err := json.NewEncoder(file).Encode(o.stateCache); err != nil {
+	if err := json.NewEncoder(file).Encode(states); err != nil {
 		os.Remove(tempFile) // Clean up on error
 		return fmt.Errorf("failed to encode state: %w", err)
 	}
@@ -95,25 +103,34 @@ func (o *Oracle) SaveToFile(filename string) error {
 	return nil
 }
 
-func (o *Oracle) CacheState() {
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+// appendStateToCache appends the current state to the state cache and saves it to the file.
+func (o *Oracle) appendStateToCache() {
+	currentState := o.currentState.Load()
 	newState := *currentState // Create a copy of the current state
 
-	// o.currentState is already updated by processUpdates before CacheState is called.
+	// o.currentState is already updated by processUpdates before appendStateToCache is called.
 	// The line o.currentState.Store(&newState) was redundant here.
 
-	// Cache the new state
+	// Acquire exclusive lock to safely modify stateCache (write operation)
+	o.stateCacheMutex.Lock()
 	o.stateCache = append(o.stateCache, newState)
 	if len(o.stateCache) > sidecartypes.OracleCacheSize {
 		o.stateCache = o.stateCache[1:]
 	}
+	// Make a copy while holding the lock to pass to SaveToFile
+	stateCacheCopy := slices.Clone(o.stateCache)
+	o.stateCacheMutex.Unlock()
 
-	if err := o.SaveToFile(o.Config.StateFile); err != nil {
+	if err := saveStatesToFile(o.Config.StateFile, stateCacheCopy); err != nil {
 		log.Printf("Error saving state to file: %v", err)
 	}
 }
 
 func (o *Oracle) getStateByEthHeight(height uint64) (*sidecartypes.OracleState, error) {
+	// Acquire read lock to safely read stateCache (allows concurrent reads)
+	o.stateCacheMutex.RLock()
+	defer o.stateCacheMutex.RUnlock()
+
 	// Search in reverse order to efficiently find the most recent state with matching height
 	for i := len(o.stateCache) - 1; i >= 0; i-- {
 		if o.stateCache[i].EthBlockHeight == height {
@@ -197,7 +214,7 @@ func readConfig(configFile string) (sidecartypes.Config, error) {
 }
 
 func (o *Oracle) GetSidecarState() *sidecartypes.OracleState {
-	return o.currentState.Load().(*sidecartypes.OracleState)
+	return o.currentState.Load()
 }
 
 func (o *Oracle) GetZrChainQueryClient() *client.QueryClient {
@@ -208,6 +225,10 @@ func (o *Oracle) GetZrChainQueryClient() *client.QueryClient {
 // If states is not empty, the last state in the slice becomes the current state.
 // If states is empty or nil, it initializes with an empty state.
 func (o *Oracle) SetStateCacheForTesting(states []sidecartypes.OracleState) {
+	// Acquire exclusive lock to safely modify stateCache (write operation)
+	o.stateCacheMutex.Lock()
+	defer o.stateCacheMutex.Unlock()
+
 	if len(states) > 0 {
 		o.stateCache = make([]sidecartypes.OracleState, len(states))
 		copy(o.stateCache, states)
@@ -367,7 +388,7 @@ func mergeNewMintEvents(existingEvents []api.SolanaMintEvent, cleanedEvents map[
 
 func (o *Oracle) initializeStateUpdate() *oracleStateUpdate {
 	// Copy pending transactions from current state to preserve them across ticks
-	currentState := o.currentState.Load().(*sidecartypes.OracleState)
+	currentState := o.currentState.Load()
 	pendingTransactions := make(map[string]sidecartypes.PendingTxInfo)
 	if currentState.PendingSolanaTxs != nil {
 		for k, v := range currentState.PendingSolanaTxs {

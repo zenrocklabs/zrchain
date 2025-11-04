@@ -1,3 +1,9 @@
+# Run sidecar tests with race detector
+test-sidecar:
+    @echo "Running sidecar tests with race detector..."
+    @go test -race -v ./sidecar/...
+alias ts := test-sidecar
+
 # Switch to a branch in a new git worktree with fuzzy search
 worktree-switch:
     @./scripts/git/worktree-switch.sh

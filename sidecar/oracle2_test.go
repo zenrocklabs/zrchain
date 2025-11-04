@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -236,7 +238,7 @@ func TestSetStateCacheForTesting(t *testing.T) {
 	}
 	oracle.SetStateCacheForTesting(testStates)
 	assert.Equal(t, len(testStates), len(oracle.stateCache))
-	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	currentState := oracle.currentState.Load()
 	assert.Equal(t, uint64(200), currentState.EthBlockHeight)
 	assert.True(t, currentState.ROCKUSDPrice.Equal(math.LegacyNewDec(2)))
 }
@@ -245,7 +247,7 @@ func TestSetStateCacheForTesting_Empty(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.SetStateCacheForTesting([]sidecartypes.OracleState{})
 	assert.Equal(t, 1, len(oracle.stateCache))
-	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	currentState := oracle.currentState.Load()
 	assert.Equal(t, EmptyOracleState, *currentState)
 }
 
@@ -343,7 +345,7 @@ func TestCreateTestOracle(t *testing.T) {
 	assert.Equal(t, sidecartypes.NetworkDevnet, oracle.Config.Network)
 	assert.Equal(t, "test_state.json", oracle.Config.StateFile)
 	assert.False(t, oracle.DebugMode)
-	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	currentState := oracle.currentState.Load()
 	assert.NotNil(t, currentState)
 	assert.Equal(t, EmptyOracleState, *currentState)
 	assert.Equal(t, 1, len(oracle.stateCache))
@@ -506,7 +508,7 @@ func TestSetStateCacheForTesting_NilStates(t *testing.T) {
 	oracle := createTestOracle()
 	oracle.SetStateCacheForTesting(nil)
 	assert.Equal(t, 1, len(oracle.stateCache))
-	currentState := oracle.currentState.Load().(*sidecartypes.OracleState)
+	currentState := oracle.currentState.Load()
 	assert.Equal(t, EmptyOracleState, *currentState)
 }
 
@@ -1202,11 +1204,8 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 	var wg sync.WaitGroup
 	errorCounts := make([]int, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-
+	for i := range numGoroutines {
+		wg.Go(func() {
 			update := oracle.initializeStateUpdate()
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
@@ -1221,8 +1220,8 @@ func TestFetchSolanaBurnEventsRaceConditions(t *testing.T) {
 				errorCount++
 			}
 
-			errorCounts[index] = errorCount
-		}(i)
+			errorCounts[i] = errorCount
+		})
 	}
 
 	wg.Wait()
@@ -1445,11 +1444,8 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 	errorCount := 0
 	var errorMutex sync.Mutex
 
-	for i := 0; i < numConcurrent; i++ {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-
+	for range numConcurrent {
+		wg.Go(func() {
 			update := oracle.initializeStateUpdate()
 			var updateMutex sync.Mutex
 			errChan := make(chan error, 2)
@@ -1464,7 +1460,7 @@ func TestFetchSolanaBurnEventsConcurrentAccess(t *testing.T) {
 				errorCount++
 				errorMutex.Unlock()
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -1596,4 +1592,399 @@ func TestFetchSolanaBurnEventsEdgeCases(t *testing.T) {
 			t.Logf("Test passed: %s (%d expected errors)", tt.description, errorCount)
 		})
 	}
+}
+
+// TestStateCacheDataRace verifies that Oracle.stateCache is properly protected from data races.
+// This test will PASS when run with `go test -race` because the RWMutex protection is in place.
+//
+// The test verifies the following scenarios work correctly with RWMutex protection:
+// 1. Concurrent AppendStateToCache() operations (exclusive Lock for writes)
+// 2. Concurrent read (getStateByEthHeight with RLock) and write (AppendStateToCache with Lock) operations
+// 3. Concurrent SaveToFile() operations (RLock for reads, allowing concurrent read access)
+// 4. Concurrent read and reset operations (SetStateCacheForTesting with exclusive Lock)
+//
+// Run with: go test -race -run TestStateCacheDataRace ./sidecar/
+func TestStateCacheDataRace(t *testing.T) {
+	oracle := createTestOracle()
+
+	// Cleanup test state file created by AppendStateToCache() calls
+	t.Cleanup(func() {
+		os.Remove("test_state.json")
+		os.Remove("test_state.json.tmp")
+	})
+
+	// Initialize with some states
+	initialStates := []sidecartypes.OracleState{
+		{EthBlockHeight: 100, ROCKUSDPrice: math.LegacyNewDec(1)},
+		{EthBlockHeight: 200, ROCKUSDPrice: math.LegacyNewDec(2)},
+		{EthBlockHeight: 300, ROCKUSDPrice: math.LegacyNewDec(3)},
+	}
+	oracle.SetStateCacheForTesting(initialStates)
+
+	const numGoroutines = 10
+	const iterations = 100
+	var wg sync.WaitGroup
+
+	// Scenario 1: Concurrent AppendStateToCache() calls (appending to stateCache)
+	t.Run("Concurrent AppendStateToCache", func(t *testing.T) {
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					// Simulate what happens during normal oracle operation
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(1000 + i*iterations + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache() // Protected by stateCacheMutex
+				}
+			})
+		}
+		wg.Wait()
+
+		// If we got here without panicking, the slice wasn't corrupted
+		// RWMutex prevents races
+		t.Logf("Completed %d concurrent AppendStateToCache operations", numGoroutines*iterations)
+	})
+
+	// Scenario 2: Concurrent getStateByEthHeight() reads during AppendStateToCache() writes
+	t.Run("Concurrent Read and Write", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Readers
+		for range numGoroutines {
+			wg.Go(func() {
+				for range iterations {
+					// Try to read from stateCache
+					_, err := oracle.getStateByEthHeight(100) // Protected by stateCacheMutex
+					if err != nil {
+						// Expected if state was not found
+					}
+				}
+			})
+		}
+
+		// Writers
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(400 + i*iterations + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache() // Protected by stateCacheMutex
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed concurrent read/write operations without panic")
+	})
+
+	// Scenario 3: Concurrent SaveToFile() and AppendStateToCache() operations
+	t.Run("Concurrent SaveToFile", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Cleanup test state files after test completes
+		t.Cleanup(func() {
+			for i := range numGoroutines {
+				for j := range 10 {
+					filename := fmt.Sprintf("test_state_%d_%d.json", i, j)
+					os.Remove(filename)
+					os.Remove(filename + ".tmp") // Also remove any temp files
+				}
+			}
+		})
+
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range 10 { // Fewer iterations since file I/O is slow
+					// Get a copy of stateCache with RLock, then pass to SaveToFile
+					oracle.stateCacheMutex.RLock()
+					stateCopy := slices.Clone(oracle.stateCache)
+					oracle.stateCacheMutex.RUnlock()
+
+					err := saveStatesToFile(fmt.Sprintf("test_state_%d_%d.json", i, j), stateCopy)
+					if err != nil {
+						t.Logf("SaveToFile error (expected in concurrent test): %v", err)
+					}
+				}
+			})
+		}
+
+		// Concurrent modifications
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range 10 {
+					newState := sidecartypes.OracleState{
+						EthBlockHeight: uint64(500 + i*10 + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i + 1)),
+					}
+					oracle.currentState.Store(&newState)
+					oracle.appendStateToCache()
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed concurrent SaveToFile operations")
+	})
+
+	// Scenario 4: Simulated scheduled reset during operations
+	// Now tests that the mutex protection works correctly
+	t.Run("Simulated Reset During Operations", func(t *testing.T) {
+		// Reset state
+		oracle.SetStateCacheForTesting(initialStates)
+
+		// Readers - will iterate over stateCache using the proper API
+		for i := range numGoroutines {
+			wg.Go(func() {
+				for j := range iterations {
+					// Use the proper API which now has mutex protection
+					height := uint64((i*100 + j) % 5000)
+					_, _ = oracle.getStateByEthHeight(height)
+				}
+			})
+		}
+
+		// Simulate reset operations using the proper API
+		for range 5 {
+			wg.Go(func() {
+				for range 10 {
+					// Use the proper API which now has mutex protection
+					oracle.SetStateCacheForTesting([]sidecartypes.OracleState{EmptyOracleState})
+					time.Sleep(time.Millisecond)
+				}
+			})
+		}
+
+		wg.Wait()
+		t.Logf("Completed simulated reset operations with proper mutex protection")
+	})
+}
+
+// TestCurrentStateCopyOnWrite verifies the copy-on-write pattern for currentState modifications
+func TestCurrentStateCopyOnWrite(t *testing.T) {
+	oracle := createTestOracle()
+
+	// Set initial state
+	initialState := sidecartypes.OracleState{
+		EthBlockHeight:          100,
+		ROCKUSDPrice:            math.LegacyNewDec(1),
+		SolanaBurnEvents:        []api.BurnEvent{{TxID: "initial", Amount: 100}},
+		CleanedSolanaBurnEvents: map[string]bool{"key1": true},
+	}
+	oracle.currentState.Store(&initialState)
+
+	// Get pointer to verify immutability later
+	storedPtr := oracle.currentState.Load()
+
+	// CORRECT: Copy-on-write pattern
+	oldState := oracle.currentState.Load()
+	newState := *oldState // Copy the struct
+	newState.EthBlockHeight = 200
+	newState.ROCKUSDPrice = math.LegacyNewDec(2)
+	newState.SolanaBurnEvents = []api.BurnEvent{{TxID: "modified", Amount: 200}}
+	oracle.currentState.Store(&newState) // Store new pointer
+
+	// Verify old state was NOT mutated (immutability preserved)
+	assert.Equal(t, uint64(100), storedPtr.EthBlockHeight, "Original state should not be mutated")
+	assert.True(t, storedPtr.ROCKUSDPrice.Equal(math.LegacyNewDec(1)), "Original price should not be mutated")
+	assert.Equal(t, "initial", storedPtr.SolanaBurnEvents[0].TxID, "Original events should not be mutated")
+
+	// Verify new state is correct
+	currentState := oracle.currentState.Load()
+	assert.Equal(t, uint64(200), currentState.EthBlockHeight)
+	assert.True(t, currentState.ROCKUSDPrice.Equal(math.LegacyNewDec(2)))
+	assert.Equal(t, "modified", currentState.SolanaBurnEvents[0].TxID)
+
+	// Verify they're different pointers
+	assert.NotSame(t, storedPtr, currentState, "Should store different pointer after copy-on-write")
+}
+
+// TestCurrentStateConcurrentReads verifies concurrent reads are safe with copy-on-write
+func TestCurrentStateConcurrentReads(t *testing.T) {
+	oracle := createTestOracle()
+
+	// Initialize with known state
+	initialState := sidecartypes.OracleState{
+		EthBlockHeight: 1000,
+		ROCKUSDPrice:   math.LegacyNewDec(100),
+	}
+	oracle.currentState.Store(&initialState)
+
+	const numReaders = 20
+	const numWrites = 50
+	var wg sync.WaitGroup
+
+	// Start concurrent readers
+	for range numReaders {
+		wg.Go(func() {
+			for range 100 {
+				// Read current state (should never panic or see torn reads)
+				state := oracle.currentState.Load()
+				_ = state.EthBlockHeight
+				_ = state.ROCKUSDPrice
+			}
+		})
+	}
+
+	// Concurrent writer using copy-on-write
+	wg.Go(func() {
+		for i := range numWrites {
+			// CORRECT copy-on-write pattern
+			oldState := oracle.currentState.Load()
+			newState := *oldState
+			newState.EthBlockHeight = uint64(1000 + i)
+			newState.ROCKUSDPrice = math.LegacyNewDec(int64(100 + i))
+			oracle.currentState.Store(&newState)
+			time.Sleep(time.Microsecond) // Small delay to increase race chance
+		}
+	})
+
+	wg.Wait()
+	t.Log("Concurrent reads and copy-on-write updates completed successfully")
+}
+
+// TestCurrentStateMapMutationSafety verifies map/slice field updates use copy-on-write
+func TestCurrentStateMapMutationSafety(t *testing.T) {
+	oracle := createTestOracle()
+
+	// Set initial state with maps and slices
+	initialState := sidecartypes.OracleState{
+		CleanedSolanaBurnEvents: map[string]bool{
+			"key1": true,
+			"key2": false,
+		},
+		SolanaBurnEvents: []api.BurnEvent{
+			{TxID: "event1", Amount: 100},
+			{TxID: "event2", Amount: 200},
+		},
+		PendingSolanaTxs: map[string]sidecartypes.PendingTxInfo{
+			"sig1": {Signature: "sig1", RetryCount: 1},
+		},
+	}
+	oracle.currentState.Store(&initialState)
+
+	// Get pointer to verify immutability
+	oldPtr := oracle.currentState.Load()
+
+	// CORRECT: Copy struct and create new maps/slices
+	oldState := oracle.currentState.Load()
+	newState := *oldState // Copy struct (shallow copy)
+
+	// Create new map instances (don't modify shared ones)
+	newState.CleanedSolanaBurnEvents = map[string]bool{
+		"key1": true,
+		"key2": false,
+		"key3": true, // Added
+	}
+	newState.SolanaBurnEvents = []api.BurnEvent{
+		{TxID: "event1", Amount: 100},
+		{TxID: "event2", Amount: 200},
+		{TxID: "event3", Amount: 300}, // Added
+	}
+	newState.PendingSolanaTxs = map[string]sidecartypes.PendingTxInfo{
+		"sig1": {Signature: "sig1", RetryCount: 1},
+		"sig2": {Signature: "sig2", RetryCount: 2}, // Added
+	}
+
+	oracle.currentState.Store(&newState)
+
+	// Verify old state was NOT mutated
+	assert.Len(t, oldPtr.CleanedSolanaBurnEvents, 2, "Old map should not be mutated")
+	assert.Len(t, oldPtr.SolanaBurnEvents, 2, "Old slice should not be mutated")
+	assert.Len(t, oldPtr.PendingSolanaTxs, 1, "Old pending txs should not be mutated")
+
+	// Verify new state has updates
+	currentState := oracle.currentState.Load()
+	assert.Len(t, currentState.CleanedSolanaBurnEvents, 3, "New map should have 3 entries")
+	assert.Len(t, currentState.SolanaBurnEvents, 3, "New slice should have 3 entries")
+	assert.Len(t, currentState.PendingSolanaTxs, 2, "New pending txs should have 2 entries")
+}
+
+// TestCurrentStateCompareAndSwapPattern verifies CAS usage requires pointer storage
+func TestCurrentStateCompareAndSwapPattern(t *testing.T) {
+	oracle := createTestOracle()
+
+	initialState := sidecartypes.OracleState{
+		EthBlockHeight: 100,
+		PendingSolanaTxs: map[string]sidecartypes.PendingTxInfo{
+			"sig1": {Signature: "sig1", RetryCount: 1},
+			"sig2": {Signature: "sig2", RetryCount: 2},
+		},
+	}
+	oracle.currentState.Store(&initialState)
+
+	// Simulate CompareAndSwap pattern used in production code
+	// (e.g., removePendingTransactionFromState)
+	success := false
+	attempts := 0
+	for !success && attempts < 10 {
+		attempts++
+		currentState := oracle.currentState.Load()
+
+		// Create new map without one entry
+		newPendingTxs := make(map[string]sidecartypes.PendingTxInfo)
+		for k, v := range currentState.PendingSolanaTxs {
+			if k != "sig1" {
+				newPendingTxs[k] = v
+			}
+		}
+
+		// Copy-on-write
+		newState := *currentState
+		newState.PendingSolanaTxs = newPendingTxs
+
+		// CAS: Only succeeds if currentState pointer hasn't changed
+		if oracle.currentState.CompareAndSwap(currentState, &newState) {
+			success = true
+		}
+		// If CAS failed, loop retries with fresh state
+	}
+
+	assert.True(t, success, "CompareAndSwap should succeed")
+	assert.Less(t, attempts, 5, "Should succeed quickly without contention")
+
+	// Verify the removal worked
+	finalState := oracle.currentState.Load()
+	assert.Len(t, finalState.PendingSolanaTxs, 1, "Should have 1 pending tx")
+	assert.NotContains(t, finalState.PendingSolanaTxs, "sig1", "sig1 should be removed")
+	assert.Contains(t, finalState.PendingSolanaTxs, "sig2", "sig2 should remain")
+}
+
+// TestStateCacheRaceWithSetStateCacheForTesting verifies concurrent access to SetStateCacheForTesting is safe
+// This function is used in tests and is now properly protected by stateCacheMutex
+func TestStateCacheRaceWithSetStateCacheForTesting(t *testing.T) {
+	oracle := createTestOracle()
+
+	const numGoroutines = 20
+	var wg sync.WaitGroup
+
+	// Multiple goroutines calling SetStateCacheForTesting concurrently
+	for i := range numGoroutines {
+		wg.Go(func() {
+			for j := range 50 {
+				testStates := []sidecartypes.OracleState{
+					{
+						EthBlockHeight: uint64(i*100 + j),
+						ROCKUSDPrice:   math.LegacyNewDec(int64(i)),
+					},
+				}
+				// Protected by stateCacheMutex
+				oracle.SetStateCacheForTesting(testStates)
+			}
+		})
+	}
+
+	wg.Wait()
+	t.Logf("Completed concurrent SetStateCacheForTesting operations")
+
+	// Verify we can still read the state without panicking
+	currentState := oracle.currentState.Load()
+	assert.NotNil(t, currentState)
+	assert.Equal(t, 1, len(oracle.stateCache))
 }
