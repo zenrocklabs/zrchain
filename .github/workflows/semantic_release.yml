@@ -9,6 +9,9 @@ on:
 jobs:
   release:
     name: Release
+    concurrency:
+      group: semantic-release
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
