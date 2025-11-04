@@ -424,7 +424,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		}
 
 		k.processMatureZenBTCBurns(ctx)
-		// k.processMatureDCTBurns(ctx) // TODO: uncomment
+		k.processMatureDCTBurns(ctx)
 
 		// 2. Process pending transaction queues based on the latest state
 		// Request nonces/accounts for direct minting
@@ -437,7 +437,7 @@ func (k *Keeper) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) err
 		k.processSolanaROCKMints(ctx, oracleData)
 
 		k.checkForRedemptionFulfilment(ctx)
-		// k.checkForDCTRedemptionFulfilment(ctx) // TODO: uncomment
+		k.checkForDCTRedemptionFulfilment(ctx)
 
 		// 3. Final cleanup steps for the block
 		k.clearSolanaAccounts(ctx)
