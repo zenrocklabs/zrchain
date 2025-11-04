@@ -1065,33 +1065,6 @@ func (k *Keeper) getPendingDCTMintTransactions(ctx sdk.Context, asset dcttypes.A
 	return results, nil
 }
 
-// getPendingBurnEvents retrieves up to 2 pending burn events with status UNSTAKING.
-func (k *Keeper) getPendingBurnEvents(ctx sdk.Context) ([]zenbtctypes.BurnEvent, error) {
-	firstPendingID, err := k.zenBTCKeeper.GetFirstPendingBurnEvent(ctx)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return nil, err
-		}
-		firstPendingID = 0
-	}
-	var results []zenbtctypes.BurnEvent
-	err = k.zenBTCKeeper.WalkBurnEvents(ctx, func(id uint64, event zenbtctypes.BurnEvent) (bool, error) {
-		if id < firstPendingID {
-			return false, nil // continue walking
-		}
-
-		if event.Status == zenbtctypes.BurnStatus_BURN_STATUS_UNSTAKING {
-			results = append(results, event)
-			if len(results) >= 2 {
-				return true, nil // stop walking
-			}
-		}
-		return false, nil // continue walking
-	})
-
-	return results, err
-}
-
 // getPendingRedemptions retrieves pending redemptions with the specified status.
 // If limit is 0, all matching redemptions will be returned.
 func (k *Keeper) GetRedemptionsByStatus(ctx sdk.Context, status zenbtctypes.RedemptionStatus, limit int, startingIndex uint64) ([]zenbtctypes.Redemption, error) {
