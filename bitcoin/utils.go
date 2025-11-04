@@ -198,7 +198,23 @@ func decodeZcashOutputs(rawTxBytes []byte, chainName string) ([]TXOutputs, error
 		return decodeZcashV5Outputs(rawTxBytes, chainName)
 	}
 
-	// For older Zcash versions (v4 and below), try Bitcoin-style parsing
+	// Check if it's Zcash v2, v3, or v4 overwintered (has overwintered flag set in version)
+	isOverwintered := (rawTxBytes[3] & 0x80) != 0
+	if isOverwintered {
+		if version == 4 || rawTxBytes[0] == 0x04 {
+			return decodeZcashV4Outputs(rawTxBytes, chainName)
+		}
+		if version == 3 || rawTxBytes[0] == 0x03 {
+			// V3 (Sapling) has same structure as V4 for transparent outputs
+			return decodeZcashV4Outputs(rawTxBytes, chainName)
+		}
+		if version == 2 || rawTxBytes[0] == 0x02 {
+			// V2 (Overwinter) has same structure as V4 for transparent outputs
+			return decodeZcashV4Outputs(rawTxBytes, chainName)
+		}
+	}
+
+	// For non-overwintered transactions (v1, v2), try Bitcoin-style parsing
 	reader := bytes.NewReader(rawTxBytes)
 	var msgTx wire.MsgTx
 	err := msgTx.Deserialize(reader)
@@ -250,6 +266,110 @@ func decodeZcashV5Outputs(rawTxBytes []byte, chainName string) ([]TXOutputs, err
 
 	if len(rawTxBytes) < offset {
 		return nil, fmt.Errorf("zcash v5 transaction too short")
+	}
+
+	// Read transparent input count (varint)
+	inputCount, bytesRead := readVarInt(rawTxBytes[offset:])
+	offset += bytesRead
+
+	// Skip all transparent inputs
+	for i := uint64(0); i < inputCount; i++ {
+		// Previous output (36 bytes: 32 byte hash + 4 byte index)
+		offset += 36
+		if offset > len(rawTxBytes) {
+			return nil, fmt.Errorf("transaction data truncated at input %d", i)
+		}
+
+		// Script length (varint)
+		scriptLen, bytesRead := readVarInt(rawTxBytes[offset:])
+		offset += bytesRead
+
+		// Script bytes
+		offset += int(scriptLen)
+
+		// Sequence (4 bytes)
+		offset += 4
+
+		if offset > len(rawTxBytes) {
+			return nil, fmt.Errorf("transaction data truncated at input %d", i)
+		}
+	}
+
+	// Read transparent output count (varint)
+	outputCount, bytesRead := readVarInt(rawTxBytes[offset:])
+	offset += bytesRead
+
+	chain := ChainFromString(chainName)
+	var outputs []TXOutputs
+
+	// Parse transparent outputs
+	for i := uint64(0); i < outputCount; i++ {
+		if offset+8 > len(rawTxBytes) {
+			return nil, fmt.Errorf("transaction data truncated at output %d", i)
+		}
+
+		// Amount (8 bytes, little-endian)
+		amount := uint64(rawTxBytes[offset]) |
+			uint64(rawTxBytes[offset+1])<<8 |
+			uint64(rawTxBytes[offset+2])<<16 |
+			uint64(rawTxBytes[offset+3])<<24 |
+			uint64(rawTxBytes[offset+4])<<32 |
+			uint64(rawTxBytes[offset+5])<<40 |
+			uint64(rawTxBytes[offset+6])<<48 |
+			uint64(rawTxBytes[offset+7])<<56
+		offset += 8
+
+		// Script length (varint)
+		scriptLen, bytesRead := readVarInt(rawTxBytes[offset:])
+		offset += bytesRead
+
+		if offset+int(scriptLen) > len(rawTxBytes) {
+			return nil, fmt.Errorf("transaction data truncated at output %d script", i)
+		}
+
+		// Script bytes
+		pkScript := rawTxBytes[offset : offset+int(scriptLen)]
+		offset += int(scriptLen)
+
+		// Extract address from script
+		var address string
+		if len(pkScript) > 0 && chain != nil {
+			_, addrs, _, err := txscript.ExtractPkScriptAddrs(pkScript, chain)
+			if err == nil && len(addrs) > 0 {
+				if converted, ok := convertAddressForChain(addrs[0], chainName); ok {
+					address = converted
+				} else {
+					address = addrs[0].String()
+				}
+			}
+		}
+
+		outputs = append(outputs, TXOutputs{
+			OutputIndex: uint(i),
+			Amount:      amount,
+			Address:     address,
+		})
+	}
+
+	return outputs, nil
+}
+
+// decodeZcashV4Outputs parses outputs from a Zcash v4 overwintered transaction
+func decodeZcashV4Outputs(rawTxBytes []byte, chainName string) ([]TXOutputs, error) {
+	// Zcash v4 overwintered transaction structure:
+	// - Header (4 bytes): version (with overwintered flag)
+	// - Header (4 bytes): version group id
+	// - Transparent inputs (varint count + inputs)
+	// - Transparent outputs (varint count + outputs) <- we want this
+	// - Lock time (4 bytes)
+	// - Expiry height (4 bytes)
+	// - Value balance (8 bytes)
+	// - Shielded spends/outputs...
+
+	offset := 4 + 4 // Skip version and version group id (8 bytes total)
+
+	if len(rawTxBytes) < offset {
+		return nil, fmt.Errorf("zcash v4 transaction too short")
 	}
 
 	// Read transparent input count (varint)

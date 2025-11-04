@@ -400,6 +400,9 @@ message ZcashHeader {
   int64 nonce = 6;
   string block_hash = 7;
   int64 block_height = 8;
+  string nonce_hex = 9;           // 256-bit nonce as hex string (32 bytes)
+  string block_commitments = 10;  // 32-byte block commitments (hashReserved)
+  string solution = 11;            // Equihash solution (variable length)
 }
 
 // MsgManuallyInputZcashHeaderResponse defines the response structure for
