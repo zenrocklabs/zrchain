@@ -16,6 +16,7 @@ var (
 	DefaultVEJailDurationMinutes    int64 = 60                               // 60 minutes jail duration
 	DefaultVEWindowSize             int64 = 320                              // 320 blocks window for VE mismatch tracking
 	DefaultVEJailThreshold          int64 = 160                              // 160 mismatches before jailing
+	DefaultRedemptionDelaySeconds   int64 = 7 * 24 * 60 * 60                 // 7 days in seconds
 
 	DefaultTestnetStakeableAssets = []*AssetData{
 		{Asset: Asset_ROCK, Precision: 6, PriceUSD: math.LegacyZeroDec()},
@@ -30,7 +31,7 @@ var (
 )
 
 // NewParams creates a new Params instance
-func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64, veJailingEnabled bool, veJailDurationMinutes int64, veWindowSize int64, veJailThreshold int64) *HVParams {
+func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets []*AssetData, priceRetentionBlockRange int64, veJailingEnabled bool, veJailDurationMinutes int64, veWindowSize int64, veJailThreshold int64, redemptionDelaySeconds int64) *HVParams {
 	return &HVParams{
 		AVSRewardsRate:           avsRewardsRate,
 		BlockTime:                blockTime,
@@ -40,6 +41,7 @@ func NewHVParams(avsRewardsRate math.LegacyDec, blockTime int64, stakeableAssets
 		VEJailDurationMinutes:    veJailDurationMinutes,
 		VEWindowSize:             veWindowSize,
 		VEJailThreshold:          veJailThreshold,
+		RedemptionDelaySeconds:   redemptionDelaySeconds,
 	}
 }
 
@@ -54,6 +56,7 @@ func DefaultHVParams(ctx context.Context) *HVParams {
 		DefaultVEJailDurationMinutes,
 		DefaultVEWindowSize,
 		DefaultVEJailThreshold,
+		GetDefaultRedemptionDelaySeconds(ctx),
 	)
 }
 
@@ -62,4 +65,12 @@ func GetDefaultStakeableAssets(ctx context.Context) []*AssetData {
 		return DefaultMainnetStakeableAssets
 	}
 	return DefaultTestnetStakeableAssets
+}
+
+func GetDefaultRedemptionDelaySeconds(ctx context.Context) int64 {
+	chainID := sdk.UnwrapSDKContext(ctx).ChainID()
+	if strings.HasPrefix(chainID, "zenrock") || strings.HasPrefix(chainID, "amber") {
+		return 120 // 120 seconds for zenrock and amber chains
+	}
+	return DefaultRedemptionDelaySeconds
 }

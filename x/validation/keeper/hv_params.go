@@ -79,3 +79,12 @@ func (k Keeper) GetVEJailThreshold(ctx context.Context) int64 {
 	}
 	return params.VEJailThreshold
 }
+
+// GetRedemptionDelaySeconds returns the redemption delay in seconds
+func (k Keeper) GetRedemptionDelaySeconds(ctx context.Context) int64 {
+	params, err := k.HVParams.Get(ctx)
+	if err != nil || params.RedemptionDelaySeconds <= 0 {
+		return types.GetDefaultRedemptionDelaySeconds(ctx)
+	}
+	return params.RedemptionDelaySeconds
+}
