@@ -65,6 +65,19 @@ To contribute a change proposal, use the following workflow:
 - Keep your Pull Requests as atomic as possible. They should leave the system
   in a working state.
 
+### Commit Messages & Semantic Versioning
+
+We use [`semantic-release`](https://semantic-release.gitbook.io/) to publish releases automatically based on commit history. Every commit that lands on `main` must follow the `type(optional-scope)!: description` Conventional Commits format so the release pipeline can determine the correct semantic version bump.
+
+| Commit type / note        | Release impact | When to use |
+|---------------------------|----------------|-------------|
+| `feat`                    | Minor          | New functionality that is backwards compatible |
+| `fix`, `perf`             | Patch          | Bug fixes or performance improvements |
+| `BREAKING CHANGE` note or `type!` | Major          | Backwards-incompatible changes (document the breaking change in the commit body) |
+| `docs`, `chore`, `refactor`, `test`, etc. | No version bump | Internal-only changes that should still follow the Conventional Commits format |
+
+Because PRs are squashed, make sure the final squash commit message (and PR title) also follows this format.
+
 ## Scaffolder
 
 We recommend using the `make proto` scaffolder to generate messages, queries, types and other features. The script builds the proto files as well as the messages, types, and other elements automatically. Before pushing, we highly recommend to run the [init script](./README.md#commands) to make sure the chain builds correctly. 
