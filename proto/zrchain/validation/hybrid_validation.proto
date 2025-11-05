@@ -151,6 +151,7 @@ message HVParams {
   int64 VEJailDurationMinutes = 6;    // jail duration in minutes for VE mismatches
   int64 VEWindowSize = 7;             // block window size for VE mismatch tracking
   int64 VEJailThreshold = 8;          // number of VE mismatches before jailing
+  int64 RedemptionDelaySeconds = 9;   // redemption delay in seconds
 }
 
 // ValidationInfo defines the validation info.
