@@ -29,8 +29,11 @@ var (
 	// ZEC Price URL from Binance - RISK OF SLASHING IF CHANGED
 	ZECUSDPriceURL = "https://api.binance.com/api/v3/ticker/price?symbol=ZECUSDT"
 
-	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
-	ROCKUSDPriceURL = "https://lite-api.jup.ag/price/v3?ids=5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
+	// ROCK Token ID on Solana - RISK OF SLASHING IF CHANGED
+	ROCKTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
+
+	// ROCK Price feed URL from Jupiter API - RISK OF SLASHING IF CHANGED
+	ROCKUSDPriceURL = "https://lite-api.jup.ag/price/v3?ids=" + ROCKTokenID
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,8 +125,7 @@ func TestJupiterPriceResponse_Parsing(t *testing.T) {
 
 			require.NoError(t, err)
 
-			const rockTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-			priceData, ok := jupiterResp[rockTokenID]
+			priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
 
 			if tt.shouldError && tt.errorContains == "not found" {
 				assert.False(t, ok, "Expected token not to be found")
@@ -219,8 +219,7 @@ func TestJupiterAPI_Integration(t *testing.T) {
 
 			require.NoError(t, err)
 
-			const rockTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-			priceData, ok := jupiterResp[rockTokenID]
+			priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
 
 			if !ok {
 				// Token not found - this is expected for some tests
@@ -245,9 +244,7 @@ func TestJupiterAPI_RealEndpoint(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	const jupiterURL = "https://lite-api.jup.ag/price/v3?ids=5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-
-	resp, err := http.Get(jupiterURL)
+	resp, err := http.Get(sidecartypes.ROCKUSDPriceURL)
 	require.NoError(t, err, "Failed to fetch from Jupiter API")
 	defer resp.Body.Close()
 
@@ -257,8 +254,7 @@ func TestJupiterAPI_RealEndpoint(t *testing.T) {
 	err = json.NewDecoder(resp.Body).Decode(&jupiterResp)
 	require.NoError(t, err, "Failed to decode Jupiter response")
 
-	const rockTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-	priceData, ok := jupiterResp[rockTokenID]
+	priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
 	require.True(t, ok, "ROCK token not found in Jupiter response")
 	require.Greater(t, priceData.USDPrice, 0.0, "Price should be positive")
 
@@ -286,8 +282,7 @@ func TestJupiterAPI_ErrorHandling(t *testing.T) {
 		err := json.Unmarshal([]byte(jsonResp), &jupiterResp)
 		require.NoError(t, err)
 
-		const rockTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-		priceData, ok := jupiterResp[rockTokenID]
+		priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
 		require.True(t, ok)
 		assert.Equal(t, 0.0, priceData.USDPrice, "Missing price field should default to 0")
 	})
@@ -346,7 +341,7 @@ func TestJupiterAPI_PriceConversion(t *testing.T) {
 				// For invalid prices (0 or negative), parsing succeeds but value check should fail
 				require.NoError(t, err)
 				if tc.floatPrice <= 0 {
-					assert.False(t, priceDec.IsPositive() || priceDec.IsNil(),
+					assert.False(t, priceDec.IsPositive() && !priceDec.IsNil(),
 						"Zero/negative price should not be positive: %f", tc.floatPrice)
 				}
 			}

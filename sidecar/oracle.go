@@ -666,8 +666,7 @@ func (o *Oracle) fetchPriceData(
 			}
 
 			// Jupiter returns data as a map with token ID as key
-			const rockTokenID = "5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
-			priceData, ok := jupiterResp[rockTokenID]
+			priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
 			if !ok {
 				return math.LegacyDec{}, fmt.Errorf("ROCK token price not found in Jupiter response")
 			}
