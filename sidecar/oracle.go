@@ -647,7 +647,7 @@ func (o *Oracle) fetchPriceData(
 ) {
 	httpTimeout := sidecartypes.DefaultHTTPTimeout
 
-	// Fetches the latest ROCK/USD price from the specified public endpoint.
+	// Fetches the latest ROCK/USD price from Jupiter API.
 	fetchAndUpdateState(
 		ctx, wg, errChan, updateMutex,
 		func(ctx context.Context) (math.LegacyDec, error) {
@@ -660,13 +660,26 @@ func (o *Oracle) fetchPriceData(
 			}
 			defer resp.Body.Close()
 
-			var priceData []PriceData
-			if err := json.NewDecoder(resp.Body).Decode(&priceData); err != nil || len(priceData) == 0 {
-				return math.LegacyDec{}, fmt.Errorf("failed to decode ROCK price data or empty data: %w", err)
+			var jupiterResp JupiterPriceResponse
+			if err := json.NewDecoder(resp.Body).Decode(&jupiterResp); err != nil {
+				return math.LegacyDec{}, fmt.Errorf("failed to decode Jupiter price response: %w", err)
 			}
-			priceDec, err := math.LegacyNewDecFromStr(priceData[0].Last)
+
+			// Jupiter returns data as a map with token ID as key
+			priceData, ok := jupiterResp[sidecartypes.ROCKTokenID]
+			if !ok {
+				return math.LegacyDec{}, fmt.Errorf("ROCK token price not found in Jupiter response")
+			}
+
+			if priceData.USDPrice <= 0 {
+				return math.LegacyDec{}, fmt.Errorf("ROCK price is invalid in Jupiter response: %f", priceData.USDPrice)
+			}
+
+			// Convert float64 to string with sufficient precision and then to LegacyDec
+			priceStr := fmt.Sprintf("%.18f", priceData.USDPrice)
+			priceDec, err := math.LegacyNewDecFromStr(priceStr)
 			if err != nil {
-				return math.LegacyDec{}, fmt.Errorf("failed to parse ROCK price data: %w", err)
+				return math.LegacyDec{}, fmt.Errorf("failed to parse ROCK price from Jupiter: %w", err)
 			}
 			return priceDec, nil
 		},
