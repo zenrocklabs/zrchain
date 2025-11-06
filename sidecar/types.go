@@ -127,6 +127,7 @@ type oracleStateUpdate struct {
 	pendingTransactions     map[string]sidecartypes.PendingTxInfo
 }
 
+// PriceData represents Gate.io price response (deprecated, kept for reference)
 type PriceData struct {
 	CurrencyPair     string `json:"currency_pair"`
 	Last             string `json:"last"`
@@ -139,4 +140,16 @@ type PriceData struct {
 	QuoteVolume      string `json:"quote_volume"`
 	High24h          string `json:"high_24h"`
 	Low24h           string `json:"low_24h"`
+}
+
+// JupiterPriceResponse represents the response from Jupiter Price API v3
+// The response is a map where keys are token addresses
+type JupiterPriceResponse map[string]JupiterPriceData
+
+// JupiterPriceData represents individual price data from Jupiter API
+type JupiterPriceData struct {
+	USDPrice       float64 `json:"usdPrice"`
+	BlockID        int64   `json:"blockId"`
+	Decimals       int     `json:"decimals"`
+	PriceChange24h float64 `json:"priceChange24h"`
 }

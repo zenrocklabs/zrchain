@@ -30,7 +30,7 @@ var (
 	ZECUSDPriceURL = "https://api.binance.com/api/v3/ticker/price?symbol=ZECUSDT"
 
 	// ROCK Price feed URL - RISK OF SLASHING IF CHANGED
-	ROCKUSDPriceURL = "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ROCK_USDT"
+	ROCKUSDPriceURL = "https://lite-api.jup.ag/price/v3?ids=5VsPJ2EG7jjo3k2LPzQVriENKKQkNUTzujEzuaj4Aisf"
 
 	// ZenBTCControllerAddresses maps network names to ZenBTC controller contract addresses
 	ZenBTCControllerAddresses = map[string]string{
@@ -79,7 +79,7 @@ var (
 	}
 
 	ZenZECSolanaProgramID = map[string]string{
-		NetworkLocalnet: "",
+		NetworkLocalnet: "CfA179tLmrg9HeADSmGdQxZkRe85gxdNxjiARx5PXjiD",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "CfA179tLmrg9HeADSmGdQxZkRe85gxdNxjiARx5PXjiD",
 		NetworkTestnet:  "7y6tokt7ua3t8BaPVbpzS6wKS9PzKupQUBmXFrpAh83T",
@@ -87,7 +87,7 @@ var (
 	}
 
 	ZenZECEventStoreProgramID = map[string]string{
-		NetworkLocalnet: "",
+		NetworkLocalnet: "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
 		NetworkTestnet:  "9gzutLMGsSPboaaXuyK87Uu3VsM1mRgFTddsCEFWwYVV",
@@ -95,7 +95,7 @@ var (
 	}
 
 	ZenZECMintAddress = map[string]string{
-		NetworkLocalnet: "",
+		NetworkLocalnet: "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
 		NetworkTestnet:  "H8X7ogzmLEuU36tHPFGFrMtFhHPNwbjuZW6FSGDgS9Jt",
@@ -122,7 +122,7 @@ var (
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r3"}
+	VersionsRequiringCacheReset = []string{"sturgeon_moon_r4"}
 	MaxSupportedSolanaTxVersion = func() *uint64 { u := uint64(0); return &u }() // Solana transaction version 0
 )
 
@@ -134,7 +134,7 @@ const (
 	OracleCacheSize                = 5
 	EthBurnEventsBlockRange        = 1000
 	EthBlocksBeforeFinality        = int64(8) // TODO: should this be increased?
-	SolanaEventScanTxLimit         = 64
+	SolanaEventScanTxLimit         = 50
 	SolanaMaxBackfillPages         = 10 // Max pages to fetch when filling a signature gap.
 	SolanaEventFetchBatchSize      = 10
 	SolanaEventFetchMinBatchSize   = 2
@@ -169,7 +169,7 @@ const (
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 
-	SidecarVersionName = "sturgeon_moon_r3"
+	SidecarVersionName = "sturgeon_moon_r4"
 
 	// OracleStateResetInterval controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.
@@ -177,8 +177,9 @@ const (
 	// Example values:
 	//   24 => once per day (midnight UTC)
 	//   12 => twice per day (00:00 UTC, 12:00 UTC)
-	//    6 => every 6 hours, etc.
-	OracleStateResetInterval = 12 * time.Hour
+	//    6 => every 6 hours
+	//    3 => every 3 hours, etc.
+	OracleStateResetInterval = 3 * time.Hour
 )
 
 // PriceFeed struct with fields for different price feeds
