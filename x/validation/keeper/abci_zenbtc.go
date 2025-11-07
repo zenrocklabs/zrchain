@@ -185,7 +185,8 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 
 			// Get current Solana counters for zenBTC from chain state
-			assetKey := "ZENBTC"
+			asset := types.Asset_BTC
+			assetKey := asset.String()
 			counters, err := k.SolanaCounters.Get(ctx, assetKey)
 			if err != nil {
 				if errors.Is(err, collections.ErrNotFound) {
@@ -197,7 +198,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 			}
 			nextMintCounter := counters.MintCounter + 1
 			k.Logger(ctx).Info("Read Solana mint counter from chain state",
-				"asset", assetKey,
+				"asset", asset.String(),
 				"current_mint_counter", counters.MintCounter,
 				"next_mint_counter", nextMintCounter,
 			)
@@ -215,10 +216,9 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				nonceAuthorityKey:   solParams.NonceAuthorityKey,
 				signerKey:           solParams.SignerKeyId,
 				multisigKey:         solParams.MultisigKeyAddress,
-				zenbtc:              true,
 				eventStoreProgramID: solParams.EventStoreProgramId,
 				mintCounter:         nextMintCounter,
-				assetName:           "ZENBTC", // ZENBTC uses legacy bindings without event store
+				assetName:           asset.String(),
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {

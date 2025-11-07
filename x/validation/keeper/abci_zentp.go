@@ -1,10 +1,12 @@
 package keeper
 
 import (
-	"bytes"
-	"crypto/sha256"
+	"encoding/base64"
+	"errors"
 	"fmt"
+	"math/big"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -39,6 +41,7 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 				return fmt.Errorf("validateConsensusForTxFields: %w", err)
 			}
 			solParams := k.zentpKeeper.GetSolanaParams(ctx)
+
 			// Derive the ATA for the recipient and check its state
 			recipientPubKey, err := solana.PublicKeyFromBase58(tx.RecipientAddress)
 			if err != nil {
@@ -60,19 +63,42 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if !ok {
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for solParams.NonceAccountKey: %d", solParams.NonceAccountKey)
 			}
+
+			// Get current Solana counters for ROCK from chain state
+			asset := types.Asset_ROCK
+			assetKey := asset.String()
+			counters, err := k.SolanaCounters.Get(ctx, assetKey)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Initialize counters if not found
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					return fmt.Errorf("failed to get Solana counters for ROCK: %w", err)
+				}
+			}
+			nextMintCounter := counters.MintCounter + 1
+			k.Logger(ctx).Info("Read Solana mint counter from chain state",
+				"asset", asset.String(),
+				"current_mint_counter", counters.MintCounter,
+				"next_mint_counter", nextMintCounter,
+			)
+
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
-				amount:            tx.Amount,
-				fee:               min(solParams.Fee, tx.Amount),
-				recipient:         tx.RecipientAddress,
-				nonce:             nonce,
-				fundReceiver:      fundReceiver,
-				programID:         solParams.ProgramId,
-				mintAddress:       solParams.MintAddress,
-				feeWallet:         solParams.FeeWallet,
-				nonceAccountKey:   solParams.NonceAccountKey,
-				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:         solParams.SignerKeyId,
-				rock:              true,
+				amount:              tx.Amount,
+				fee:                 min(solParams.Fee, tx.Amount),
+				recipient:           tx.RecipientAddress,
+				nonce:               nonce,
+				fundReceiver:        fundReceiver,
+				programID:           solParams.ProgramId,
+				mintAddress:         solParams.MintAddress,
+				feeWallet:           solParams.FeeWallet,
+				nonceAccountKey:     solParams.NonceAccountKey,
+				nonceAuthorityKey:   solParams.NonceAuthorityKey,
+				signerKey:           solParams.SignerKeyId,
+				multisigKey:         solParams.MultisigKeyAddress,
+				eventStoreProgramID: solParams.EventStoreProgramId,
+				mintCounter:         nextMintCounter,
+				assetName:           asset.String(),
 			})
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -84,6 +110,14 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			tx.State = zentptypes.BridgeStatus_BRIDGE_STATUS_PENDING
 			tx.TxId = id
 			tx.BlockHeight = ctx.BlockHeight()
+
+			k.Logger(ctx).Info("Dispatched Solana ROCK mint transaction",
+				"tx_id", tx.Id,
+				"zrchain_tx_id", id,
+				"mint_counter_used", nextMintCounter,
+			)
+
+			// Counter will be incremented in processSolanaROCKMintEvents when mint is confirmed successful
 			if err := k.LastUsedSolanaNonce.Set(ctx, solParams.NonceAccountKey, types.SolanaNonce{Nonce: nonce.Nonce[:]}); err != nil {
 				return fmt.Errorf("LastUsedSolanaNonce.Set: %w", err)
 			}
@@ -110,69 +144,179 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 
 // processSolanaROCKMintEvents finalizes pending ROCK mints based on oracle events and supply invariants.
 func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleData) {
+	k.Logger(ctx).Info("processSolanaROCKMintEvents: Started", "oracle_event_count", len(oracleData.SolanaMintEvents))
+
 	pendingMints, err := k.zentpKeeper.GetMintsWithStatusPending(ctx)
 	if err != nil || len(pendingMints) == 0 {
 		return
 	}
-	for _, pendingMint := range pendingMints {
-		tx, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.TxId)
-		if err != nil {
+
+	// Process only the first pending mint (FIFO order)
+	pendingMint := pendingMints[0]
+	if pendingMint.TxId == 0 {
+		k.Logger(ctx).Info("processSolanaROCKMintEvents: pending mint missing zrchain tx id", "tx_id", pendingMint.Id)
+		return
+	}
+
+	signTxReq, err := k.treasuryKeeper.GetSignTransactionRequest(ctx, pendingMint.TxId)
+	if err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to fetch sign transaction request", "tx_id", pendingMint.TxId, "error", err)
+		return
+	}
+
+	mainSignReq, err := k.treasuryKeeper.GetSignRequest(ctx, signTxReq.SignRequestId)
+	if err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to fetch sign request", "sign_req_id", signTxReq.SignRequestId, "error", err)
+		return
+	}
+
+	var signatures [][]byte
+	for _, childReqID := range mainSignReq.ChildReqIds {
+		childReq, err := k.treasuryKeeper.GetSignRequest(ctx, childReqID)
+		if err != nil || len(childReq.SignedData) == 0 || len(childReq.SignedData[0].SignedData) == 0 {
+			k.Logger(ctx).Warn("processSolanaROCKMintEvents: missing signatures for sign request", "child_req", childReqID)
 			return
 		}
-		sigReq, err := k.treasuryKeeper.GetSignRequest(ctx, tx.SignRequestId)
-		if err != nil {
-			continue
-		}
-		var signatures []byte
-		for _, id := range sigReq.ChildReqIds {
-			childReq, err := k.treasuryKeeper.GetSignRequest(ctx, id)
-			if err != nil || len(childReq.SignedData) != 1 {
-				continue
-			}
-			signatures = append(signatures, childReq.SignedData[0].SignedData...)
-		}
-		sigHash := sha256.Sum256(signatures)
-		for _, event := range oracleData.SolanaMintEvents {
-			if bytes.Equal(event.SigHash, sigHash[:]) {
-				if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
-					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
-					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
-						k.Logger(ctx).Error("error marking solROCK mint as failed (cap)", "id", pendingMint.Id, "error", err)
-					}
-					continue
-				}
-				totalSupplyBefore, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
-				if err != nil {
-					continue
-				}
-				if err := k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount)))); err != nil {
-					continue
-				}
-				solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
-				if err != nil {
-					continue
-				}
-				if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))); err != nil {
-					continue
-				}
-				if err := k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id); err != nil {
-					k.Logger(ctx).Error("error setting last completed zentp mint id", "id", pendingMint.Id, "error", err)
-				}
-				totalSupplyAfter, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
-				if err != nil || !totalSupplyBefore.Equal(totalSupplyAfter) {
-					pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
-					if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
-						k.Logger(ctx).Error("error marking solROCK mint failed (supply invariant)", "id", pendingMint.Id, "error", err)
-					}
-					continue
-				}
-				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
-				if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
-					k.Logger(ctx).Error("error marking solROCK mint completed", "id", pendingMint.Id, "error", err)
-				}
-			}
+		signatures = append(signatures, childReq.SignedData[0].SignedData)
+	}
+	if len(signatures) == 0 {
+		return
+	}
+
+	// Get expected event ID from chain state
+	asset := types.Asset_ROCK
+	assetKey := asset.String()
+	counters, err := k.SolanaCounters.Get(ctx, assetKey)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+		} else {
+			k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to get Solana counters", "asset", assetKey, "error", err)
+			return
 		}
 	}
+	expectedEventID := new(big.Int).SetUint64(counters.MintCounter + 1)
+
+	// Find matching event with correct event ID
+	var matchedEvent *sidecarapitypes.SolanaMintEvent
+	for _, event := range oracleData.SolanaMintEvents {
+		// Check if this is a ROCK event (no coin field means ROCK - legacy behavior)
+		if event.Coint != sidecarapitypes.Coin_UNSPECIFIED {
+			continue
+		}
+
+		eventHash := base64.StdEncoding.EncodeToString(event.SigHash)
+		eventKey := collections.Join(assetKey, eventHash)
+
+		// Check if already processed
+		if alreadyProcessed, err := k.ProcessedSolanaMintEvents.Get(ctx, eventKey); err == nil && alreadyProcessed {
+			k.Logger(ctx).Warn("processSolanaROCKMintEvents: Solana event already processed", "tx_id", pendingMint.Id, "event_hash", eventHash)
+			continue
+		} else if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to read processed event map", "tx_id", pendingMint.Id, "event_hash", eventHash, "error", err)
+			continue
+		}
+
+		// Extract and validate event ID
+		eventID, err := eventIDFromSolanaMintEvent(event)
+		if err != nil {
+			k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to parse event ID", "tx_sig", event.TxSig, "error", err)
+			continue
+		}
+		if eventID.Cmp(expectedEventID) != 0 {
+			k.Logger(ctx).Info("processSolanaROCKMintEvents: skipping event with unexpected ID",
+				"tx_id", pendingMint.Id,
+				"expected_event_id", expectedEventID.String(),
+				"event_id", eventID.String(),
+				"tx_sig", event.TxSig,
+			)
+			continue
+		}
+
+		evtCopy := event
+		matchedEvent = &evtCopy
+		break
+	}
+
+	if matchedEvent == nil {
+		k.Logger(ctx).Info("processSolanaROCKMintEvents: no matching Solana mint event yet", "tx_id", pendingMint.Id)
+		return
+	}
+
+	eventHash := base64.StdEncoding.EncodeToString(matchedEvent.SigHash)
+	eventKey := collections.Join(assetKey, eventHash)
+
+	// Perform supply cap check
+	if err := k.zentpKeeper.CheckROCKSupplyCap(ctx, sdkmath.ZeroInt()); err != nil {
+		pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
+		if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+			k.Logger(ctx).Error("error marking solROCK mint as failed (cap)", "id", pendingMint.Id, "error", err)
+		}
+		return
+	}
+
+	totalSupplyBefore, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to get total supply before", "error", err)
+		return
+	}
+
+	// Burn coins from zentp module
+	if err := k.bankKeeper.BurnCoins(ctx, zentptypes.ModuleName, sdk.NewCoins(sdk.NewCoin(pendingMint.Denom, sdkmath.NewIntFromUint64(pendingMint.Amount)))); err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to burn coins", "error", err)
+		return
+	}
+
+	// Update Solana supply
+	solanaSupply, err := k.zentpKeeper.GetSolanaROCKSupply(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to get Solana supply", "error", err)
+		return
+	}
+	if err := k.zentpKeeper.SetSolanaROCKSupply(ctx, solanaSupply.Add(sdkmath.NewIntFromUint64(pendingMint.Amount))); err != nil {
+		k.Logger(ctx).Error("processSolanaROCKMintEvents: failed to set Solana supply", "error", err)
+		return
+	}
+
+	if err := k.LastCompletedZentpMintID.Set(ctx, pendingMint.Id); err != nil {
+		k.Logger(ctx).Error("error setting last completed zentp mint id", "id", pendingMint.Id, "error", err)
+	}
+
+	// Verify supply invariant
+	totalSupplyAfter, err := k.zentpKeeper.GetTotalROCKSupply(ctx)
+	if err != nil || !totalSupplyBefore.Equal(totalSupplyAfter) {
+		pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_FAILED
+		if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+			k.Logger(ctx).Error("error marking solROCK mint failed (supply invariant)", "id", pendingMint.Id, "error", err)
+		}
+		return
+	}
+
+	// Mark as completed
+	pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
+	if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
+		k.Logger(ctx).Error("error marking solROCK mint completed", "id", pendingMint.Id, "error", err)
+		return
+	}
+
+	// Increment mint counter after confirmed successful mint
+	counters.MintCounter++
+	if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
+		k.Logger(ctx).Error("failed to increment Solana mint counter after successful mint", "asset", assetKey, "error", err)
+	} else {
+		k.Logger(ctx).Info("Incremented Solana mint counter after confirmed successful mint",
+			"asset", assetKey,
+			"new_mint_counter", counters.MintCounter,
+			"tx_id", pendingMint.Id,
+		)
+	}
+
+	// Mark event as processed
+	if err := k.ProcessedSolanaMintEvents.Set(ctx, eventKey, true); err != nil {
+		k.Logger(ctx).Error("failed to record processed Solana mint event", "asset", assetKey, "event_hash", eventHash, "error", err)
+	}
+
+	k.Logger(ctx).Info("completed ROCK Solana mint", "tx_id", pendingMint.Id, "amount", pendingMint.Amount)
 }
 
 // processSolanaROCKBurnEvents handles ROCK burns on Solana by minting ROCK on zrchain and crediting recipients.

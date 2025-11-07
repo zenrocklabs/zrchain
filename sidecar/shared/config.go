@@ -81,6 +81,22 @@ var (
 		NetworkMainnet:  "9t9RfpterTs95eXbKQWeAriZqET13TbjwDa6VW6LJHFb",
 	}
 
+	ZenBTCEventStoreProgramID = map[string]string{
+		NetworkLocalnet: "", // TODO: Add event store program ID for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
+	}
+
+	ZenBTCMintAddress = map[string]string{
+		NetworkLocalnet: "", // TODO: Add mint address for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
+	}
+
 	ZenZECSolanaProgramID = map[string]string{
 		NetworkLocalnet: "CfA179tLmrg9HeADSmGdQxZkRe85gxdNxjiARx5PXjiD",
 		NetworkRegnet:   "",
@@ -111,6 +127,22 @@ var (
 		NetworkDevnet:   "AgoRvPWg2R7nkKhxvipvms79FmxQr75r2GwNSpPtxcLg",
 		NetworkTestnet:  "4qXvX1jzVH2deMQGLZ8DXyQNkPdnMNQxHudyZEZAEa4f",
 		NetworkMainnet:  "3WyacwnCNiz4Q1PedWyuwodYpLFu75jrhgRTZp69UcA9",
+	}
+
+	SOLROCKEventStoreProgramID = map[string]string{
+		NetworkLocalnet: "", // TODO: Add event store program ID for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
+	}
+
+	SOLROCKMintAddress = map[string]string{
+		NetworkLocalnet: "", // TODO: Add mint address for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	// Solana CAIP-2 Identifiers (Map network name to CAIP-2 string)

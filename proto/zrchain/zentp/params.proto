@@ -33,4 +33,6 @@ message Solana {
   string fee_wallet = 6;
   uint64 fee = 7;
   int64 btl = 8;
+  string multisig_key_address = 9;
+  string event_store_program_id = 10;
 }

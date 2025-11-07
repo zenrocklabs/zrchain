@@ -796,14 +796,13 @@ func (o *Oracle) processSolanaMintEvents(
 		defer wg.Done()
 		currentState := o.currentState.Load()
 
-		// Parallel fetch of ROCK, zenBTC, and zenZEC mint events
+		// Parallel fetch of ROCK, zenBTC, and zenZEC mint events (all using event store)
 		var rockEvents, zenbtcEvents, zenzecEvents []api.SolanaMintEvent
-		var newRockSig, newZenBTCSig solana.Signature
-		var newZenZECEventID string
+		var newROCKEventID, newZenBTCEventID, newZenZECEventID string
 		var rockErr, zenbtcErr, zenzecErr error
 		var mintWg sync.WaitGroup
 
-		// Fetch ROCK mint events in parallel
+		// Fetch ROCK mint events in parallel (using event store)
 		mintWg.Add(1)
 		go func() {
 			defer func() {
@@ -813,11 +812,17 @@ func (o *Oracle) processSolanaMintEvents(
 				}
 				mintWg.Done()
 			}()
-			lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-			rockEvents, newRockSig, rockErr = o.getSolROCKMints(ctx, sidecartypes.SolRockProgramID[o.Config.Network], lastKnownRockSig, update, updateMutex)
+			lastRockCursor := o.lastSolRockMintSigStr
+			rockEvents, newROCKEventID, rockErr = o.getSolROCKMints(
+				ctx,
+				sidecartypes.SOLROCKEventStoreProgramID[o.Config.Network],
+				lastRockCursor,
+				update,
+				updateMutex,
+			)
 		}()
 
-		// Fetch zenBTC mint events in parallel
+		// Fetch zenBTC mint events in parallel (using event store)
 		mintWg.Add(1)
 		go func() {
 			defer func() {
@@ -827,8 +832,14 @@ func (o *Oracle) processSolanaMintEvents(
 				}
 				mintWg.Done()
 			}()
-			lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
-			zenbtcEvents, newZenBTCSig, zenbtcErr = o.getSolZenBTCMints(ctx, sidecartypes.ZenBTCSolanaProgramID[o.Config.Network], lastKnownZenBTCSig, update, updateMutex)
+			lastZenBTCCursor := o.lastSolZenBTCMintSigStr
+			zenbtcEvents, newZenBTCEventID, zenbtcErr = o.getSolZenBTCMints(
+				ctx,
+				sidecartypes.ZenBTCEventStoreProgramID[o.Config.Network],
+				lastZenBTCCursor,
+				update,
+				updateMutex,
+			)
 		}()
 
 		// Fetch zenZEC mint events in parallel
@@ -950,37 +961,37 @@ func (o *Oracle) processSolanaMintEvents(
 			"duplicatesRemoved", duplicatesRemoved,
 			"reconcileErr", reconcileErr != nil)
 
-		// Get current watermarks for comparison
-		lastKnownRockSig := o.GetLastProcessedSolSignature(sidecartypes.SolRockMint)
-		lastKnownZenBTCSig := o.GetLastProcessedSolSignature(sidecartypes.SolZenBTCMint)
+		// Get current event store cursors for comparison (all assets now use event store)
+		lastKnownROCKEventID := o.lastSolRockMintSigStr
+		lastKnownZenBTCEventID := o.lastSolZenBTCMintSigStr
 		lastKnownZenZECEventID := o.lastSolZenZECMintSigStr
 
-		// Update watermarks if we have valid new signatures and they represent progress
+		// Update event store cursors if we have valid new cursors and they represent progress
 		// Allow advancement even on timeout errors as long as failed transactions are in pending queue
-		// Fatal errors (like pending store failures) are indicated by unchanged watermark signatures
-		if !newRockSig.IsZero() && (!newRockSig.Equals(lastKnownRockSig) || rockErr == nil) {
-			update.latestSolanaSigs[sidecartypes.SolRockMint] = newRockSig
+		// Fatal errors (like pending store failures) are indicated by unchanged cursors
+		if newROCKEventID != "" && (newROCKEventID != lastKnownROCKEventID || rockErr == nil) {
+			update.latestEventStoreCursors[sidecartypes.SolRockMint] = newROCKEventID
 			if rockErr != nil {
 				slog.Info("Advancing ROCK mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
-					"newWatermark", newRockSig,
+					"newWatermark", newROCKEventID,
 					"partialError", rockErr)
 			}
-		} else if rockErr != nil && !newRockSig.IsZero() && newRockSig.Equals(lastKnownRockSig) {
+		} else if rockErr != nil && newROCKEventID != "" && newROCKEventID == lastKnownROCKEventID {
 			slog.Warn("Blocking ROCK mint watermark advancement due to fatal error",
-				"unchangedWatermark", newRockSig,
+				"unchangedWatermark", newROCKEventID,
 				"fatalError", rockErr)
 		}
 
-		if !newZenBTCSig.IsZero() && (!newZenBTCSig.Equals(lastKnownZenBTCSig) || zenbtcErr == nil) {
-			update.latestSolanaSigs[sidecartypes.SolZenBTCMint] = newZenBTCSig
+		if newZenBTCEventID != "" && (newZenBTCEventID != lastKnownZenBTCEventID || zenbtcErr == nil) {
+			update.latestEventStoreCursors[sidecartypes.SolZenBTCMint] = newZenBTCEventID
 			if zenbtcErr != nil {
 				slog.Info("Advancing zenBTC mint watermark despite partial processing error (failed transactions safely stored in pending queue)",
-					"newWatermark", newZenBTCSig,
+					"newWatermark", newZenBTCEventID,
 					"partialError", zenbtcErr)
 			}
-		} else if zenbtcErr != nil && !newZenBTCSig.IsZero() && newZenBTCSig.Equals(lastKnownZenBTCSig) {
+		} else if zenbtcErr != nil && newZenBTCEventID != "" && newZenBTCEventID == lastKnownZenBTCEventID {
 			slog.Warn("Blocking zenBTC mint watermark advancement due to fatal error",
-				"unchangedWatermark", newZenBTCSig,
+				"unchangedWatermark", newZenBTCEventID,
 				"fatalError", zenbtcErr)
 		}
 
@@ -1211,7 +1222,7 @@ func (o *Oracle) buildFinalState(
 	latestHeader *ethtypes.Header,
 	targetBlockNumber *big.Int,
 ) (sidecartypes.OracleState, error) {
-	// Start with the current watermarks and update them if new signatures were found.
+	// Start with the current watermarks and update them if new cursors/signatures were found.
 	lastSolRockMintSig := o.lastSolRockMintSigStr
 	lastSolZenBTCMintSig := o.lastSolZenBTCMintSigStr
 	lastSolZenBTCBurnSig := o.lastSolZenBTCBurnSigStr
@@ -1219,11 +1230,12 @@ func (o *Oracle) buildFinalState(
 	lastSolZenZECBurnSig := o.lastSolZenZECBurnSigStr
 	lastSolRockBurnSig := o.lastSolRockBurnSigStr
 
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolRockMint]; ok && !sig.IsZero() {
-		lastSolRockMintSig = sig.String()
+	// ROCK, zenBTC, and zenZEC mints now use event store cursors
+	if cursor, ok := update.latestEventStoreCursors[sidecartypes.SolRockMint]; ok && cursor != "" {
+		lastSolRockMintSig = cursor
 	}
-	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCMint]; ok && !sig.IsZero() {
-		lastSolZenBTCMintSig = sig.String()
+	if cursor, ok := update.latestEventStoreCursors[sidecartypes.SolZenBTCMint]; ok && cursor != "" {
+		lastSolZenBTCMintSig = cursor
 	}
 	if sig, ok := update.latestSolanaSigs[sidecartypes.SolZenBTCBurn]; ok && !sig.IsZero() {
 		lastSolZenBTCBurnSig = sig.String()
@@ -1505,92 +1517,178 @@ func (o *Oracle) reconcileMintEventsWithZRChain(
 	return remaining, updatedCleanedEvents, nil
 }
 
-func (o *Oracle) getSolROCKMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolROCKMints(ctx context.Context, eventStoreProgramID string, lastCursor string, _ *oracleStateUpdate, _ *sync.Mutex) ([]api.SolanaMintEvent, string, error) {
 	eventTypeName := "Solana ROCK mint"
-	// processor defines how to extract ROCK mint events from a single Solana transaction.
-	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
-	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
-		return o.processMintTransaction(txResult, program, sig, debugMode,
-			// Decode all events for the ROCK SPL token from the given transaction.
-			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
-				events, err := rock_spl_token.DecodeEvents(tx, prog)
-				if err != nil {
-					return nil, err
-				}
-				var interfaceEvents []any
-				for _, event := range events {
-					interfaceEvents = append(interfaceEvents, event)
-				}
-				return interfaceEvents, nil
-			},
-			// Extract the relevant details (recipient, value, fee, mint) from a specific
-			// TokensMintedWithFee event for the ROCK SPL token.
-			func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
-				eventData, ok := data.(*rock_spl_token.TokensMintedWithFeeEventData)
-				if !ok {
-					return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
-				}
-				return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
-			},
-			eventTypeName,
-			api.Coin_ROCK,
-		)
+
+	if o.solanaClient == nil {
+		return nil, lastCursor, fmt.Errorf("%s: solana client not configured", eventTypeName)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
-
-	// Always process partial results, even if an error occurred.
-	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
-	for i, untypedEvent := range untypedEvents {
-		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
+	if eventStoreProgramID == "" {
+		return nil, lastCursor, fmt.Errorf("%s: event store program ID not configured for network %s", eventTypeName, o.Config.Network)
 	}
 
-	// Return the (potentially partial) events and the updated watermark along with the error.
-	return mintEvents, newWatermark, err
+	programKey, err := solana.PublicKeyFromBase58(eventStoreProgramID)
+	if err != nil {
+		return nil, lastCursor, fmt.Errorf("%s: invalid event store program ID: %w", eventTypeName, err)
+	}
+
+	client := eventstore.NewClient(o.solanaClient, &programKey)
+
+	mintFilter := sidecartypes.SOLROCKMintAddress[o.Config.Network]
+	var mintFilterPub solana.PublicKey
+	hasMintFilter := false
+	if mintFilter != "" {
+		pk, err := solana.PublicKeyFromBase58(mintFilter)
+		if err != nil {
+			return nil, lastCursor, fmt.Errorf("%s: invalid mint address configured: %w", eventTypeName, err)
+		}
+		mintFilterPub = pk
+		hasMintFilter = true
+	}
+
+	events, err := client.GetZenbtcWrapEvents(ctx)
+	if err != nil {
+		return nil, lastCursor, fmt.Errorf("%s: failed to fetch events from event store: %w", eventTypeName, err)
+	}
+
+	prevIDBytes, lastValue, err := parseEventStoreCursor(lastCursor)
+	if err != nil {
+		slog.Warn("Invalid ROCK event store cursor, resetting to zero", "cursor", lastCursor, "error", err)
+		lastValue = big.NewInt(0)
+		prevIDBytes = [16]byte{}
+	}
+
+	newEvents := make([]api.SolanaMintEvent, 0, len(events))
+	highestValue := new(big.Int).Set(lastValue)
+	highestID := prevIDBytes
+	haveNewCursor := false
+
+	for _, evt := range events {
+		if hasMintFilter {
+			eventMint := solana.PublicKeyFromBytes(evt.Mint[:])
+			if eventMint != mintFilterPub {
+				continue
+			}
+		}
+
+		eventValue := eventStoreIDToBigInt(evt.ID)
+		if eventValue.Cmp(lastValue) <= 0 {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{
+			Coint:     api.Coin_UNSPECIFIED, // ROCK uses UNSPECIFIED (not ROCK enum)
+			SigHash:   append([]byte(nil), evt.ID[:]...),
+			Recipient: append([]byte(nil), evt.Recipient[:]...),
+			Height:    0,
+			Value:     evt.Value,
+			Fee:       evt.Fee,
+			Mint:      append([]byte(nil), evt.Mint[:]...),
+			TxSig:     hex.EncodeToString(evt.ID[:]),
+		}
+
+		newEvents = append(newEvents, mintEvent)
+
+		if eventValue.Cmp(highestValue) > 0 {
+			highestValue = eventValue
+			highestID = evt.ID
+			haveNewCursor = true
+		}
+	}
+
+	if haveNewCursor {
+		return newEvents, hex.EncodeToString(highestID[:]), nil
+	}
+
+	return newEvents, lastCursor, nil
 }
 
-func (o *Oracle) getSolZenBTCMints(ctx context.Context, programID string, lastKnownSig solana.Signature, update *oracleStateUpdate, updateMutex *sync.Mutex) ([]api.SolanaMintEvent, solana.Signature, error) {
+func (o *Oracle) getSolZenBTCMints(ctx context.Context, eventStoreProgramID string, lastCursor string, _ *oracleStateUpdate, _ *sync.Mutex) ([]api.SolanaMintEvent, string, error) {
 	eventTypeName := "Solana zenBTC mint"
-	// processor defines how to extract zenBTC mint events from a single Solana transaction.
-	// It's passed to the generic getSolanaEvents function to handle the specific logic for this token type.
-	processor := func(txResult *solrpc.GetTransactionResult, program solana.PublicKey, sig solana.Signature, debugMode bool) ([]any, error) {
-		return o.processMintTransaction(txResult, program, sig, debugMode,
-			// Decode all events for the zenBTC SPL token from the given transaction.
-			func(tx *solrpc.GetTransactionResult, prog solana.PublicKey) ([]any, error) {
-				events, err := zenbtc_spl_token.DecodeEvents(tx, prog)
-				if err != nil {
-					return nil, err
-				}
-				var interfaceEvents []any
-				for _, event := range events {
-					interfaceEvents = append(interfaceEvents, event)
-				}
-				return interfaceEvents, nil
-			},
-			// Extract the relevant details (recipient, value, fee, mint) from a specific
-			// TokensMintedWithFee event for the zenBTC SPL token.
-			func(data any) (solana.PublicKey, uint64, uint64, solana.PublicKey, bool) {
-				eventData, ok := data.(*zenbtc_spl_token.TokensMintedWithFeeEventData)
-				if !ok {
-					return solana.PublicKey{}, 0, 0, solana.PublicKey{}, false
-				}
-				return eventData.Recipient, eventData.Value, eventData.Fee, eventData.Mint, true
-			},
-			eventTypeName,
-			api.Coin_ZENBTC,
-		)
+
+	if o.solanaClient == nil {
+		return nil, lastCursor, fmt.Errorf("%s: solana client not configured", eventTypeName)
 	}
 
-	untypedEvents, newWatermark, err := o.getSolanaEvents(ctx, programID, lastKnownSig, eventTypeName, processor, update, updateMutex)
-
-	// Always process partial results, even if an error occurred.
-	mintEvents := make([]api.SolanaMintEvent, len(untypedEvents))
-	for i, untypedEvent := range untypedEvents {
-		mintEvents[i] = untypedEvent.(api.SolanaMintEvent)
+	if eventStoreProgramID == "" {
+		return nil, lastCursor, fmt.Errorf("%s: event store program ID not configured for network %s", eventTypeName, o.Config.Network)
 	}
 
-	// Return the (potentially partial) events and the updated watermark along with the error.
-	return mintEvents, newWatermark, err
+	programKey, err := solana.PublicKeyFromBase58(eventStoreProgramID)
+	if err != nil {
+		return nil, lastCursor, fmt.Errorf("%s: invalid event store program ID: %w", eventTypeName, err)
+	}
+
+	client := eventstore.NewClient(o.solanaClient, &programKey)
+
+	mintFilter := sidecartypes.ZenBTCMintAddress[o.Config.Network]
+	var mintFilterPub solana.PublicKey
+	hasMintFilter := false
+	if mintFilter != "" {
+		pk, err := solana.PublicKeyFromBase58(mintFilter)
+		if err != nil {
+			return nil, lastCursor, fmt.Errorf("%s: invalid mint address configured: %w", eventTypeName, err)
+		}
+		mintFilterPub = pk
+		hasMintFilter = true
+	}
+
+	events, err := client.GetZenbtcWrapEvents(ctx)
+	if err != nil {
+		return nil, lastCursor, fmt.Errorf("%s: failed to fetch events from event store: %w", eventTypeName, err)
+	}
+
+	prevIDBytes, lastValue, err := parseEventStoreCursor(lastCursor)
+	if err != nil {
+		slog.Warn("Invalid zenBTC event store cursor, resetting to zero", "cursor", lastCursor, "error", err)
+		lastValue = big.NewInt(0)
+		prevIDBytes = [16]byte{}
+	}
+
+	newEvents := make([]api.SolanaMintEvent, 0, len(events))
+	highestValue := new(big.Int).Set(lastValue)
+	highestID := prevIDBytes
+	haveNewCursor := false
+
+	for _, evt := range events {
+		if hasMintFilter {
+			eventMint := solana.PublicKeyFromBytes(evt.Mint[:])
+			if eventMint != mintFilterPub {
+				continue
+			}
+		}
+
+		eventValue := eventStoreIDToBigInt(evt.ID)
+		if eventValue.Cmp(lastValue) <= 0 {
+			continue
+		}
+
+		mintEvent := api.SolanaMintEvent{
+			Coint:     api.Coin_ZENBTC,
+			SigHash:   append([]byte(nil), evt.ID[:]...),
+			Recipient: append([]byte(nil), evt.Recipient[:]...),
+			Height:    0,
+			Value:     evt.Value,
+			Fee:       evt.Fee,
+			Mint:      append([]byte(nil), evt.Mint[:]...),
+			TxSig:     hex.EncodeToString(evt.ID[:]),
+		}
+
+		newEvents = append(newEvents, mintEvent)
+
+		if eventValue.Cmp(highestValue) > 0 {
+			highestValue = eventValue
+			highestID = evt.ID
+			haveNewCursor = true
+		}
+	}
+
+	if haveNewCursor {
+		return newEvents, hex.EncodeToString(highestID[:]), nil
+	}
+
+	return newEvents, lastCursor, nil
 }
 
 func (o *Oracle) getSolZenZECMints(ctx context.Context, eventStoreProgramID string, lastCursor string, _ *oracleStateUpdate, _ *sync.Mutex) ([]api.SolanaMintEvent, string, error) {
@@ -2072,8 +2170,16 @@ func (o *Oracle) GetLastProcessedSolSignature(eventType sidecartypes.SolanaEvent
 	switch eventType {
 	case sidecartypes.SolRockMint:
 		sigStr = o.lastSolRockMintSigStr
+		if sigStr != "" && isHexString(sigStr) {
+			// Event-store based cursor, not a real Solana signature.
+			return solana.Signature{}
+		}
 	case sidecartypes.SolZenBTCMint:
 		sigStr = o.lastSolZenBTCMintSigStr
+		if sigStr != "" && isHexString(sigStr) {
+			// Event-store based cursor, not a real Solana signature.
+			return solana.Signature{}
+		}
 	case sidecartypes.SolZenBTCBurn:
 		sigStr = o.lastSolZenBTCBurnSigStr
 	case sidecartypes.SolZenZECMint:

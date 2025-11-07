@@ -184,7 +184,6 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 					nonceAuthorityKey:   solParams.NonceAuthorityKey,
 					signerKey:           solParams.SignerKeyId,
 					multisigKey:         solParams.MultisigKeyAddress,
-					zenbtc:              true,
 					eventStoreProgramID: solParams.EventStoreProgramId,
 					mintCounter:         nextMintCounter,
 					assetName:           asset.String(), // Pass asset name to determine event store usage
