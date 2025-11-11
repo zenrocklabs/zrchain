@@ -122,19 +122,19 @@ var (
 	}
 
 	ZenBTCMintAddress = map[string]string{
-		NetworkLocalnet: "", // TODO: Add zenBTC mint address for localnet
+		NetworkLocalnet: "78s1EK4dVRxNYwvoFU8paozrATb4QCq8639KKLTrdoCa",
 		NetworkRegnet:   "",
-		NetworkDevnet:   "", // TODO: Add zenBTC mint address for devnet
-		NetworkTestnet:  "", // TODO: Add zenBTC mint address for testnet
-		NetworkMainnet:  "", // TODO: Add zenBTC mint address for mainnet
+		NetworkDevnet:   "78s1EK4dVRxNYwvoFU8paozrATb4QCq8639KKLTrdoCa",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	ROCKMintAddress = map[string]string{
-		NetworkLocalnet: "", // TODO: Add ROCK mint address for localnet
+		NetworkLocalnet: "4oUDGAy46CmemmozTt6kWT5E3rqkLp2rCvAumpMWqR5T",
 		NetworkRegnet:   "",
-		NetworkDevnet:   "", // TODO: Add ROCK mint address for devnet
-		NetworkTestnet:  "", // TODO: Add ROCK mint address for testnet
-		NetworkMainnet:  "", // TODO: Add ROCK mint address for mainnet
+		NetworkDevnet:   "4oUDGAy46CmemmozTt6kWT5E3rqkLp2rCvAumpMWqR5T",
+		NetworkTestnet:  "",
+		NetworkMainnet:  "",
 	}
 
 	SolRockProgramID = map[string]string{
