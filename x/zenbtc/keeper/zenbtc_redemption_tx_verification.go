@@ -11,10 +11,10 @@ import (
 	"github.com/Zenrock-Foundation/zrchain/v6/bitcoin"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
+	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
-	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 )
 
 func (k msgServer) VerifyUnsignedRedemptionTX(ctx sdk.Context, msg *types.MsgSubmitUnsignedRedemptionTx) error {
@@ -78,7 +78,7 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 	}
 
 	// Decode the transactions
-	msgTX, err := bitcoin.DecodeTX(msg.Txbytes)
+	msgTX, err := bitcoin.DecodeTX(msg.Txbytes, msg.ChainName)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding txbytes: %w", err)
 	}
