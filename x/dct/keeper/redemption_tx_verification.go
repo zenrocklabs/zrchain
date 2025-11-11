@@ -81,7 +81,7 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 	}
 
 	// Decode the transactions
-	msgTX, err := bitcoin.DecodeTX(msg.Txbytes)
+	msgTX, err := bitcoin.DecodeTX(msg.Txbytes, msg.ChainName)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding txbytes: %w", err)
 	}

@@ -25,9 +25,15 @@ import (
 // Zcash encrypted ciphertext boundaries (ZIP-244)
 // encCiphertext is structured as: [compact (52 bytes)][memo (512 bytes)][non-compact (remainder)]
 const (
-	encCiphertextCompactSize    = 52  // Size of compact encrypted data
-	encCiphertextMemoSize       = 512 // Size of memo field
+	encCiphertextCompactSize     = 52                                               // Size of compact encrypted data
+	encCiphertextMemoSize        = 512                                              // Size of memo field
 	encCiphertextNonCompactStart = encCiphertextCompactSize + encCiphertextMemoSize // 564: start of non-compact data
+)
+
+const (
+	versionGroupOverwinter = 0x03C48270
+	versionGroupSapling    = 0x892F2085
+	versionGroupNU5        = 0x26A7270A
 )
 
 type saplingSpend struct {
@@ -115,15 +121,243 @@ func MergeHashes(left, right *chainhash.Hash) *chainhash.Hash {
 	return &mergedHash
 }
 
-func DecodeTX(rawTx []byte) (*wire.MsgTx, error) {
+func DecodeTX(rawTx []byte, chainName string) (*wire.MsgTx, error) {
 	reader := bytes.NewReader(rawTx)
-	// Parse the transaction bytes into a wire.MsgTx object
 	var msgTx wire.MsgTx
-	err := msgTx.Deserialize(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize transaction: %w", err)
+	if err := msgTx.Deserialize(reader); err == nil {
+		return &msgTx, nil
+	} else {
+		if !isZcashChain(chainName) {
+			return nil, fmt.Errorf("failed to deserialize transaction: %w", err)
+		}
+		zcashTx, zErr := decodeZcashTransparentTx(rawTx)
+		if zErr != nil {
+			return nil, fmt.Errorf("failed to deserialize zcash transaction: %w (btc decode err: %v)", zErr, err)
+		}
+		return zcashTx, nil
 	}
-	return &msgTx, nil
+}
+
+func decodeZcashTransparentTx(raw []byte) (*wire.MsgTx, error) {
+	if len(raw) < 4 {
+		return nil, fmt.Errorf("transaction too short")
+	}
+
+	versionLE := binary.LittleEndian.Uint32(raw[:4])
+	effectiveVersion := versionLE & 0x7fffffff
+
+	switch effectiveVersion {
+	case 5:
+		return decodeZcashNu5Tx(raw)
+	case 2, 3, 4:
+		return decodeZcashPreV5Tx(raw, effectiveVersion)
+	default:
+		return nil, fmt.Errorf("unsupported zcash transaction version %d", effectiveVersion)
+	}
+}
+
+func decodeZcashPreV5Tx(raw []byte, effectiveVersion uint32) (*wire.MsgTx, error) {
+	offset := 0
+	versionBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	version := binary.LittleEndian.Uint32(versionBytes)
+
+	tx := wire.NewMsgTx(int32(effectiveVersion))
+	tx.Version = int32(version & 0x7fffffff)
+
+	// v3+ transactions include a version group id
+	if effectiveVersion >= 3 {
+		if _, err := readBytes(raw, &offset, 4); err != nil {
+			return nil, err
+		}
+	}
+
+	inputs, err := parseTransparentInputs(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	tx.TxIn = inputs
+
+	outputs, err := parseTransparentOutputs(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	tx.TxOut = outputs
+
+	lockBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	tx.LockTime = binary.LittleEndian.Uint32(lockBytes)
+
+	if effectiveVersion >= 3 {
+		if _, err := readBytes(raw, &offset, 4); err != nil {
+			return nil, err
+		}
+	}
+
+	if effectiveVersion >= 4 {
+		// value balance
+		if _, err := readBytes(raw, &offset, 8); err != nil {
+			return nil, err
+		}
+		nSpends, _, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		nOutputs, _, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		if nSpends > 0 || nOutputs > 0 {
+			return nil, fmt.Errorf("zcash sapling components unsupported in transparent decoder (spends=%d outputs=%d)", nSpends, nOutputs)
+		}
+	}
+
+	// nJoinSplit is optional in some Sapling encodings. Only read if bytes remain.
+	if offset < len(raw) {
+		nJoinSplits, _, err := readCompactSize(raw, &offset)
+		if err != nil {
+			return nil, err
+		}
+		if nJoinSplits != 0 {
+			return nil, fmt.Errorf("zcash joinsplit components unsupported in transparent decoder (joinsplits=%d)", nJoinSplits)
+		}
+	}
+
+	return tx, nil
+}
+
+func decodeZcashNu5Tx(raw []byte) (*wire.MsgTx, error) {
+	offset := 0
+
+	versionBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	version := binary.LittleEndian.Uint32(versionBytes)
+
+	tx := wire.NewMsgTx(int32(version & 0x7fffffff))
+
+	if _, err := readBytes(raw, &offset, 4); err != nil { // version group id
+		return nil, err
+	}
+	if _, err := readBytes(raw, &offset, 4); err != nil { // branch id
+		return nil, err
+	}
+
+	lockBytes, err := readBytes(raw, &offset, 4)
+	if err != nil {
+		return nil, err
+	}
+	tx.LockTime = binary.LittleEndian.Uint32(lockBytes)
+
+	if _, err := readBytes(raw, &offset, 4); err != nil { // expiry height
+		return nil, err
+	}
+
+	inputs, err := parseTransparentInputs(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	tx.TxIn = inputs
+
+	outputs, err := parseTransparentOutputs(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	tx.TxOut = outputs
+
+	nSpends, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	nOutputs, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+	nActions, _, err := readCompactSize(raw, &offset)
+	if err != nil {
+		return nil, err
+	}
+
+	if nSpends > 0 || nOutputs > 0 || nActions > 0 {
+		return nil, fmt.Errorf("nu5 shielded/orchard components unsupported in transparent decoder (spends=%d outputs=%d actions=%d)", nSpends, nOutputs, nActions)
+	}
+
+	return tx, nil
+}
+
+func parseTransparentInputs(raw []byte, offset *int) ([]*wire.TxIn, error) {
+	txInCount, _, err := readCompactSize(raw, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	inputs := make([]*wire.TxIn, 0, txInCount)
+	for i := uint64(0); i < txInCount; i++ {
+		prevout, err := readBytes(raw, offset, 36)
+		if err != nil {
+			return nil, err
+		}
+		var hash chainhash.Hash
+		copy(hash[:], prevout[:32])
+		index := binary.LittleEndian.Uint32(prevout[32:])
+
+		scriptLen, _, err := readCompactSize(raw, offset)
+		if err != nil {
+			return nil, err
+		}
+		if scriptLen > uint64(len(raw)-*offset) {
+			return nil, io.ErrUnexpectedEOF
+		}
+		script := make([]byte, scriptLen)
+		copy(script, raw[*offset:*offset+int(scriptLen)])
+		*offset += int(scriptLen)
+
+		seqBytes, err := readBytes(raw, offset, 4)
+		if err != nil {
+			return nil, err
+		}
+		sequence := binary.LittleEndian.Uint32(seqBytes)
+
+		txIn := wire.NewTxIn(wire.NewOutPoint(&hash, index), script, nil)
+		txIn.Sequence = sequence
+		inputs = append(inputs, txIn)
+	}
+	return inputs, nil
+}
+
+func parseTransparentOutputs(raw []byte, offset *int) ([]*wire.TxOut, error) {
+	txOutCount, _, err := readCompactSize(raw, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	outputs := make([]*wire.TxOut, 0, txOutCount)
+	for i := uint64(0); i < txOutCount; i++ {
+		amountBytes, err := readBytes(raw, offset, 8)
+		if err != nil {
+			return nil, err
+		}
+		amount := int64(binary.LittleEndian.Uint64(amountBytes))
+
+		scriptLen, _, err := readCompactSize(raw, offset)
+		if err != nil {
+			return nil, err
+		}
+		if scriptLen > uint64(len(raw)-*offset) {
+			return nil, io.ErrUnexpectedEOF
+		}
+		script := make([]byte, scriptLen)
+		copy(script, raw[*offset:*offset+int(scriptLen)])
+		*offset += int(scriptLen)
+
+		outputs = append(outputs, wire.NewTxOut(amount, script))
+	}
+	return outputs, nil
 }
 
 func DecodeOutputs(rawTx string, chainName string) ([]TXOutputs, error) {
