@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -921,10 +922,11 @@ func (o *Oracle) processSolanaMintEvents(
 		}
 
 		// Then add any pending events that weren't already included (O(1) lookup)
-		for sig, event := range existingPendingEvents {
-			if !newEventSigs[sig] {
-				finalEvents = append(finalEvents, event)
+		for _, sig := range slices.Sorted(maps.Keys(existingPendingEvents)) {
+			if newEventSigs[sig] {
+				continue
 			}
+			finalEvents = append(finalEvents, existingPendingEvents[sig])
 		}
 
 		slog.Info("FINAL UPDATE COMPOSITION",
@@ -1181,10 +1183,11 @@ func (o *Oracle) fetchSolanaBurnEvents(
 		}
 
 		// Then add any pending events that weren't already included (O(1) lookup)
-		for txID, event := range existingPendingEvents {
-			if !mergedEventTxIDs[txID] {
-				finalEvents = append(finalEvents, event)
+		for _, txID := range slices.Sorted(maps.Keys(existingPendingEvents)) {
+			if mergedEventTxIDs[txID] {
+				continue
 			}
+			finalEvents = append(finalEvents, existingPendingEvents[txID])
 		}
 
 		update.solanaBurnEvents = finalEvents
